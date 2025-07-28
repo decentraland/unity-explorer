@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Profiles;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 
@@ -14,18 +15,15 @@ namespace DCL.Chat.ChatUseCases
     {
         private readonly IEventBus eventBus;
         private readonly ProfileRepositoryWrapper profileRepository;
-        private readonly GetProfileThumbnailCommand getThumbnailCommand;
         private readonly ChatConfig chatConfig;
 
         public GetTitlebarViewModelCommand(
             IEventBus eventBus,
             ProfileRepositoryWrapper profileRepository,
-            GetProfileThumbnailCommand getThumbnailCommand,
             ChatConfig chatConfig)
         {
             this.eventBus = eventBus;
             this.profileRepository = profileRepository;
-            this.getThumbnailCommand = getThumbnailCommand;
             this.chatConfig = chatConfig;
         }
 
@@ -48,23 +46,19 @@ namespace DCL.Chat.ChatUseCases
                 }
 
                 viewModel.Id = profile.UserId;
-                viewModel.IsLoadingProfile = false;
                 viewModel.Username = profile.Name;
                 viewModel.HasClaimedName = profile.HasClaimedName;
                 viewModel.WalletId = profile.WalletId;
                 viewModel.ProfileColor = profile.UserNameColor;
-                viewModel.ProfileSprite = await getThumbnailCommand.ExecuteAsync(
-                    profile.UserId,
-                    profile.Avatar.FaceSnapshotUrl,
-                    ct
-                );
+
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
             }
             else
             {
                 viewModel.ViewMode = Mode.Nearby;
                 viewModel.Username = chatConfig.NearbyConversationName;
                 viewModel.HasClaimedName = false;
-                viewModel.ProfileSprite = chatConfig.NearbyConversationIcon;
+                viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true));
             }
 
             return viewModel;

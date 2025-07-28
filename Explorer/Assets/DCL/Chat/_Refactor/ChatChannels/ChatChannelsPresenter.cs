@@ -26,7 +26,7 @@ public class ChatChannelsPresenter : IDisposable
 
     private CancellationTokenSource lifeCts;
     private EventSubscriptionScope scope = new();
-    
+
     public ChatChannelsPresenter(IChatChannelsView view,
         IEventBus eventBus,
         IChatEventBus chatEventBus,
@@ -48,18 +48,18 @@ public class ChatChannelsPresenter : IDisposable
         this.createChannelViewModelCommand = createChannelViewModelCommand;
 
         lifeCts = new CancellationTokenSource();
-        
+
         view.ConversationSelected += OnViewConversationSelected;
         view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
 
         chatHistory.ChannelAdded += OnRuntimeChannelAdded;
+        chatHistory.ReadMessagesChanged += OnUnreadMessagesUpdated;
         chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
 
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
-        scope.Add(this.eventBus.Subscribe<ChatEvents.UnreadMessagesUpdatedEvent>(OnUnreadMessagesUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnUserStatusUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
     }
@@ -85,7 +85,7 @@ public class ChatChannelsPresenter : IDisposable
         lifeCts.Cancel();
         lifeCts.Dispose();
         lifeCts = new CancellationTokenSource();
-        
+
         view.Clear();
         viewModels.Clear();
 
@@ -114,9 +114,10 @@ public class ChatChannelsPresenter : IDisposable
         view.RemoveConversation(evt.Channel);
     }
 
-    private void OnUnreadMessagesUpdated(ChatEvents.UnreadMessagesUpdatedEvent evt)
+    private void OnUnreadMessagesUpdated(ChatChannel changedChannel)
     {
-        view.SetUnreadMessages(evt.ChannelId.Id, evt.Count);
+        int unreadCount = changedChannel.Messages.Count - changedChannel.ReadMessages;
+        view.SetUnreadMessages(changedChannel.Id.Id, unreadCount);
     }
 
     private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent evt)
@@ -150,7 +151,7 @@ public class ChatChannelsPresenter : IDisposable
     {
         chatHistory.ChannelAdded -= OnRuntimeChannelAdded;
         lifeCts.SafeCancelAndDispose();
-        
+
         chatEventBus.OpenPrivateConversationRequested -= OnOpenConversationUsingUserId;
         view.ConversationSelected -= OnViewConversationSelected;
         view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;

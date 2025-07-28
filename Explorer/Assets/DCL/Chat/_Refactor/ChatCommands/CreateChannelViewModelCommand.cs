@@ -11,6 +11,7 @@ using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 
 using Utility;
@@ -21,7 +22,6 @@ public class CreateChannelViewModelCommand
     private readonly ICommunityDataService communityDataService;
     private readonly ChatConfig chatConfig;
     private readonly ProfileRepositoryWrapper profileRepository;
-    private readonly GetProfileThumbnailCommand getProfileThumbnailCommand;
     private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
 
     public CreateChannelViewModelCommand(
@@ -29,14 +29,12 @@ public class CreateChannelViewModelCommand
         ICommunityDataService communityDataService,
         ChatConfig chatConfig,
         ProfileRepositoryWrapper profileRepository,
-        GetProfileThumbnailCommand getProfileThumbnailCommand,
         GetCommunityThumbnailCommand getCommunityThumbnailCommand)
     {
         this.eventBus = eventBus;
         this.communityDataService = communityDataService;
         this.chatConfig = chatConfig;
         this.profileRepository = profileRepository;
-        this.getProfileThumbnailCommand = getProfileThumbnailCommand;
         this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
     }
 
@@ -106,16 +104,11 @@ public class CreateChannelViewModelCommand
         viewModel.IsOnline = true;
         viewModel.ImageUrl = profile.Avatar.FaceSnapshotUrl;
 
-        var thumbnail = await getProfileThumbnailCommand
-            .ExecuteAsync(profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
-
-        if (ct.IsCancellationRequested) return;
-
-        viewModel.ProfilePicture = thumbnail;
-
         eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
         {
             ViewModel = viewModel
         });
+
+        await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
     }
 }

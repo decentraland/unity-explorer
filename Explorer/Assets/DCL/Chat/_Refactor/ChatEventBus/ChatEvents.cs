@@ -8,7 +8,7 @@ namespace DCL.Chat.EventBus
     public class ChatEvents
     {
         #region Initialization events
-        
+
         /// <summary>
         /// Event:          InitialUserStatusLoadedEvent (NOT-USED)
         /// Triggered By:   InitializeChatSystemCommand
@@ -19,7 +19,7 @@ namespace DCL.Chat.EventBus
         {
             public HashSet<string> Users;
         }
-        
+
         /// <summary>
         /// Event:          InitialChannelsLoadedEvent
         /// Triggered By:   InitializeChatSystemCommand
@@ -30,11 +30,11 @@ namespace DCL.Chat.EventBus
         {
             public IReadOnlyList<ChatChannel> Channels;
         }
-        
+
         #endregion
-        
+
         #region Channel/Conversation events
-        
+
         /// <summary>
         /// Event:          ChannelUpdatedEvent
         /// Triggered By:   CreateChannelViewModelCommand
@@ -45,7 +45,7 @@ namespace DCL.Chat.EventBus
         {
             public BaseChannelViewModel ViewModel;
         }
-        
+
         /// <summary>
         /// Event:          ChannelSelectedEvent
         /// Triggered By:   SelectChannelCommand (on user click) or InitializeChatSystemCommand (on startup).
@@ -56,7 +56,7 @@ namespace DCL.Chat.EventBus
         ///                 - ChatInputPresenter: Checks permissions for the new channel and updates the input field.
         /// </summary>
         public struct ChannelSelectedEvent { public ChatChannel Channel; }
-        
+
         /// <summary>
         /// Event:          ChannelAddedEvent
         /// Triggered By:   (Future) A use case like OpenPrivateConversationCommand.
@@ -102,7 +102,7 @@ namespace DCL.Chat.EventBus
             public string UserId;
             public bool IsOnline;
         }
-        
+
         /// <summary>
         /// Event:          ChannelReadEvent (NOT-USED)
         /// Triggered By:   MarkChannelAsReadCommand
@@ -132,9 +132,9 @@ namespace DCL.Chat.EventBus
         }
 
         #endregion
-        
+
         #region General Chat Events
-        
+
         /// <summary>
         /// Event:          FocusRequestedEvent
         /// Triggered By:   ChatInputPresenter
@@ -142,7 +142,7 @@ namespace DCL.Chat.EventBus
         /// Subscribers:    ChatFsmController: Transitions the UI to the FocusedChatState.
         /// </summary>
         public struct FocusRequestedEvent { }
-        
+
         /// <summary>
         /// Event:          CloseChatEvent
         /// Triggered By:   ChatTitlebarPresenter
@@ -150,11 +150,11 @@ namespace DCL.Chat.EventBus
         /// Subscribers:    ChatFsmController: Transitions the UI to the MinimizedChatState.
         /// </summary>
         public struct CloseChatEvent { }
-        
+
         #endregion
-        
+
         #region Chat Message Events
-        
+
         /// <summary>
         /// Event:          MessageSentEvent (NOT-USED)
         /// Triggered By:   (Future) A service that confirms a message was successfully sent to the backend.
@@ -162,49 +162,23 @@ namespace DCL.Chat.EventBus
         /// Subscribers:    Could be used for analytics or to update a message's UI from "sending..." to "sent".
         /// </summary>
         public struct MessageSentEvent { public string MessageBody; }
-        
-        /// <summary>
-        /// Event:          MessageReceivedEvent (NOT-USED)
-        /// Triggered By:   A low-level chat service listening to the backend
-        /// When:           A new message arrives from the server for any channel.
-        /// Subscribers:    ChatMessageFeedPresenter: If the message is for the active channel, it appends it to the view.
-        /// </summary>
-        public struct MessageReceivedEvent
-        {
-            public ChatMessage Message;
-            public ChatChannel.ChannelId ChannelId;
-        }
 
-        /// <summary>
-        ///     Event:          MessageReceivedEvent
-        ///     Triggered By:   LoadAndDisplayMessagesCommand
-        ///     When:           When channel history is loaded, or when a new message arrives.
-        ///     Subscribers:    ChatMessageFeedPresenter: finds the message in the list and updates its visuals (thumbnail)
-        /// </summary>
-        public struct ChatMessageUpdatedEvent
-        {
-            public ChatMessageViewModel ViewModel;
-        }
-        
-        #endregion
-
-        #region Member List Events
-
-        /// <summary>
-        ///     Event:          ChannelMemberUpdatedEvent
-        ///     Triggered By:   GetChannelMembersCommand
-        ///     When:           An individual member's async data (like a profile thumbnail) has finished loading.
-        ///     Subscribers:    ChatMemberListPresenter: Finds the specific member entry in the view and updates its visuals.
-        /// </summary>
-        public struct ChannelMemberUpdatedEvent
-        {
-            public ChatMemberListViewModel ViewModel;
-        }
+        // /// <summary>
+        // /// Event:          MessageReceivedEvent (NOT-USED)
+        // /// Triggered By:   A low-level chat service listening to the backend
+        // /// When:           A new message arrives from the server for any channel.
+        // /// Subscribers:    ChatMessageFeedPresenter: If the message is for the active channel, it appends it to the view.
+        // /// </summary>
+        // public struct MessageReceivedEvent
+        // {
+        //     public ChatMessage Message;
+        //     public ChatChannel.ChannelId ChannelId;
+        // }
 
         #endregion
-        
+
         #region Miscellaneous Events
-        
+
         /// <summary>
         /// Event:          ToggleMembersEvent
         /// Triggered By:   ChatTitlebarPresenter
@@ -212,7 +186,7 @@ namespace DCL.Chat.EventBus
         /// Subscribers:    ChatFsmController: Transitions the UI to/from the MembersChatState.
         /// </summary>
         public struct ToggleMembersEvent { }
-        
+
         /// <summary>
         /// Event:          CurrentChannelStateUpdatedEvent
         /// Triggered By:   ChatUserStateBridge or ChatFsmController states.
@@ -220,7 +194,7 @@ namespace DCL.Chat.EventBus
         /// Subscribers:    ChatInputPresenter: Re-runs its permission checks for the current channel and updates the input view.
         /// </summary>
         public struct CurrentChannelStateUpdatedEvent { }
-        
+
         #endregion
     }
 }

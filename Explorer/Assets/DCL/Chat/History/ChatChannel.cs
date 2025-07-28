@@ -68,7 +68,7 @@ namespace DCL.Chat.History
         }
 
         public delegate void ClearedDelegate(ChatChannel clearedChannel);
-        public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
+        public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage, int index);
         public delegate void ReadMessagesChangedDelegate(ChatChannel changedChannel);
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace DCL.Chat.History
         /// <summary>
         /// Raised when a message is added to the channel.
         /// </summary>
-        public event MessageAddedDelegate MessageAdded;
+        public event MessageAddedDelegate? MessageAdded;
 
         /// <summary>
         /// Raised when a message is read, added or removed.
@@ -157,13 +157,16 @@ namespace DCL.Chat.History
             }
 
             // Removing padding element and reversing list due to infinite scroll view behaviour
-            messages.Remove(messages[^1]);
-            messages.Reverse();
-            messages.Add(message);
-            messages.Add(PADDING_MESSAGE);
-            messages.Reverse();
+            // messages.Remove(messages[^1]);
+            // messages.Reverse();
+            // messages.Add(message);
+            // messages.Add(PADDING_MESSAGE);
+            // messages.Reverse();
 
-            MessageAdded?.Invoke(this, message);
+            // Insert new message after first padding element (index 1)
+            messages.Insert(1, message);
+
+            MessageAdded?.Invoke(this, message, 1);
         }
 
         private void InitializeChannel()

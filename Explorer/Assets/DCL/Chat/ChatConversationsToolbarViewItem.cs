@@ -4,6 +4,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -20,7 +21,7 @@ namespace DCL.Chat
 
         [SerializeField]
         private ProfilePictureView profilePictureView;
-        
+
         [SerializeField]
         protected GameObject thumbnailView;
 
@@ -115,7 +116,7 @@ namespace DCL.Chat
             connectionStatusIndicatorContainer.gameObject.SetActive(isPrivate);
         }
 
-        
+
 
         /// <summary>
         /// Changes the color of the background and the letters of the tooltip.
@@ -159,19 +160,11 @@ namespace DCL.Chat
                 openButton.OnDeselect(null);
         }
 
-        /// <summary>
-        ///     Provides the data required to display the profile picture.
-        /// </summary>
-        /// <param name="profileDataProvider">A way to access Profile data asynchronously.</param>
-        /// <param name="userColor">The color of the user's profile picture. It affects the tooltip too.</param>
-        /// <param name="faceSnapshotUrl">The URL to the profile picture.</param>
-        /// <param name="userId">The Id of the user (wallet Id).</param>
-        public void SetProfileData(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
+        public void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel> viewModel, Color userColor)
         {
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);
-            profilePictureView.Setup(profileDataProvider, userColor, faceSnapshotUrl, userId);
-            tooltipText.color = userColor;
+            profilePictureView.Bind(viewModel, userColor);
         }
 
         public void SetPicture(Sprite? sprite)

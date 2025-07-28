@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatViewModels;
+using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,7 +7,7 @@ namespace DCL.Chat
 {
     public class ChatProfileView : MonoBehaviour
     {
-        [SerializeField] private ChatProfilePictureView chatProfilePictureView;
+        [SerializeField] private ProfilePictureView profilePictureView;
         [SerializeField] private ChatUsernameView usernameElement;
         [SerializeField] private Button buttonOpenProfile;
 
@@ -14,14 +15,9 @@ namespace DCL.Chat
 
         public void Setup(ChatTitlebarViewModel model)
         {
-            chatProfilePictureView.Setup(model.ProfileSprite, model.IsLoadingProfile);
+            profilePictureView.Bind(model.Thumbnail, model.ProfileColor);
             usernameElement.Setup(model.Username, model.WalletId, model.HasClaimedName,
                 model.ProfileColor);
-        }
-
-        public void SetProfileBackgroundColor(Color color)
-        {
-            chatProfilePictureView.SetBackgroundColor(color);
         }
     }
 }

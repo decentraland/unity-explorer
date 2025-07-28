@@ -5,6 +5,7 @@ using DCL.Chat.Services;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Chat.EventBus;
+using DCL.UI.ProfileElements;
 using UnityEngine;
 
 using Utility;
@@ -15,15 +16,16 @@ namespace DCL.Chat.ChatUseCases
     {
         private readonly IEventBus eventBus;
         private readonly ChatMemberListService memberListService;
-        private readonly GetProfileThumbnailCommand getProfileThumbnailCommand;
+        private readonly ChatConfig chatConfig;
 
-        public GetChannelMembersCommand(IEventBus eventBus,
+        public GetChannelMembersCommand(
+            IEventBus eventBus,
             ChatMemberListService memberListService,
-            GetProfileThumbnailCommand getProfileThumbnailCommand)
+            ChatConfig chatConfig)
         {
             this.eventBus = eventBus;
             this.memberListService = memberListService;
-            this.getProfileThumbnailCommand = getProfileThumbnailCommand;
+            this.chatConfig = chatConfig;
         }
 
         public void GetInitialMembersAndStartLoadingThumbnails(
@@ -40,26 +42,13 @@ namespace DCL.Chat.ChatUseCases
 
                 targetList.Add(viewModel);
 
-                FetchThumbnailAndUpdateAsync(viewModel, member.FaceSnapshotUrl, ct).Forget();
+                GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileThumbnail, chatConfig.DefaultProfileThumbnail,
+                                               viewModel.UserId, member.FaceSnapshotUrl, ct)
+                                          .Forget();
             }
 
             targetList.Sort(static (a, b)
                 => string.Compare(a.UserName, b.UserName, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private async UniTaskVoid FetchThumbnailAndUpdateAsync(ChatMemberListViewModel viewModel, string faceSnapshotUrl, CancellationToken ct)
-        {
-            var thumbnail = await getProfileThumbnailCommand.ExecuteAsync(viewModel.UserId, faceSnapshotUrl, ct);
-
-            if (ct.IsCancellationRequested) return;
-
-            viewModel.ProfilePicture = thumbnail;
-            viewModel.IsLoading = false;
-
-            eventBus.Publish(new ChatEvents.ChannelMemberUpdatedEvent
-            {
-                ViewModel = viewModel
-            });
         }
     }
 }

@@ -1,41 +1,48 @@
-﻿using System;
+﻿using DCL.Chat.History;
+using DCL.UI.ProfileElements;
+using DCL.Utilities;
+using System;
+using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.Chat.ChatViewModels
 {
     public class ChatMessageViewModel
     {
-        // Identification
-        public string ModelId { get; } = Guid.NewGuid().ToString();
-        public string SenderValidatedName { get; set; }
+        internal static readonly ObjectPool<ChatMessageViewModel> POOL = new (
+            () => new ChatMessageViewModel(),
+            actionOnGet: viewModel => { viewModel.cancellationTokenSource = new CancellationTokenSource(); },
+            actionOnRelease: viewModel =>
+            {
+                viewModel.Message = default(ChatMessage);
+                viewModel.Thumbnail.ClearSubscriptionsList();
+                viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.Default());
+                viewModel.IsSeparator = false;
+                viewModel.cancellationTokenSource.SafeCancelAndDispose();
+            });
 
-        // Content
-        public string Message { get; set; }
-        public string FormattedBody { get; set; }
-        public string SenderName { get; set; }
+        internal static readonly Action<ChatMessageViewModel> RELEASE = viewModel => POOL.Release(viewModel);
 
-        // Used if the sender's name is not claimed
-        // Example Mirko#434356
-        public string SenderWalletId { get; set; } 
-        public string SenderWalletAddress { get; set; }
-        public Color SenderNameColor { get; set; }
-        public long Timestamp { get; set; }
+        private CancellationTokenSource cancellationTokenSource;
 
-        // Boolean flags for rendering logic
-        public bool IsPaddingElement { get; set; }
-        public bool IsSentByOwnUser { get; set; }
-        public bool IsSystemMessage { get; set; }
-        public bool IsMention { get; set; }
-        public bool IsSeparator { get; set; }
-        public string FaceSnapshotUrl { get; set; }
+        public ChatMessage Message { get; internal set; }
 
-        public bool IsLoadingPicture { get; set; }
+        // In case we need more profile information in the future, create a separate ProfileViewModel and update it at once
+        public IReactiveProperty<Color?> UserNameColor { get; }
+            = new ReactiveProperty<Color?>(null);
 
-        // Null if the profile picture is not loaded yet
-        public Sprite ProfilePicture { get; set; }
+        public IReactiveProperty<ProfileThumbnailViewModel> Thumbnail { get; }
+            = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
 
-        public bool IsProfilePictureLoading =>
-            ProfilePicture == null &&
-            !string.IsNullOrEmpty(FaceSnapshotUrl);
+        public bool IsSeparator { get; internal set; }
+
+        /// <summary>
+        ///     Will be fired when the object is released back to the pool.
+        /// </summary>
+        internal CancellationToken cancellationToken => cancellationTokenSource.Token;
+
+        private ChatMessageViewModel() { }
     }
 }

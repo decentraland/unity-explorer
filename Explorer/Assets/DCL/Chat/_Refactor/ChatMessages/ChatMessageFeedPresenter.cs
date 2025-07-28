@@ -1,217 +1,299 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.History;
-using DCL.Chat;
 using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.Services;
 using DCL.Diagnostics;
 using DCL.UI;
-using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using Utility;
 
-public class ChatMessageFeedPresenter : IDisposable
+namespace DCL.Chat.ChatMessages
 {
-    private readonly ChatMessageFeedView view;
-    private readonly IEventBus eventBus;
-    private readonly IChatMessagesBus chatMessageBus;
-    private readonly ICurrentChannelService currentChannelService;
-    private readonly ChatContextMenuService contextMenuService;
-    private readonly GetMessageHistoryCommand getMessageHistoryCommand;
-    private readonly LoadAndDisplayMessagesCommand loadAndDisplayMessagesCommand;
-    private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
-    private readonly ProcessAndAddMessageCommand processAndAddMessageCommand;
-    private readonly MarkChannelAsReadCommand markChannelAsReadCommand;
-
-    private readonly EventSubscriptionScope scope = new();
-    private CancellationTokenSource loadChannelCts = new();
-
-    public ChatMessageFeedPresenter(ChatMessageFeedView view,
-        IEventBus eventBus,
-        IChatMessagesBus chatMessageBus,
-        ICurrentChannelService currentChannelService,
-        ChatContextMenuService contextMenuService,
-        ProfileRepositoryWrapper profileRepositoryWrapper,
-        GetMessageHistoryCommand getMessageHistoryCommand,
-        CreateMessageViewModelCommand createMessageViewModelCommand,
-        LoadAndDisplayMessagesCommand loadAndDisplayMessagesCommand,
-        ProcessAndAddMessageCommand processAndAddMessageCommand,
-        MarkChannelAsReadCommand markChannelAsReadCommand)
+    public class ChatMessageFeedPresenter : IndependentMVCState, IDisposable
     {
-        this.view = view;
-        this.eventBus = eventBus;
-        this.chatMessageBus = chatMessageBus;
-        this.currentChannelService = currentChannelService;
-        this.contextMenuService = contextMenuService;
-        this.getMessageHistoryCommand = getMessageHistoryCommand;
-        this.createMessageViewModelCommand = createMessageViewModelCommand;
-        this.loadAndDisplayMessagesCommand = loadAndDisplayMessagesCommand;
-        this.processAndAddMessageCommand = processAndAddMessageCommand;
-        this.markChannelAsReadCommand = markChannelAsReadCommand;
+        private readonly ChatMessageFeedView view;
+        private readonly IEventBus eventBus;
+        private readonly IChatHistory chatHistory;
+        private readonly ICurrentChannelService currentChannelService;
+        private readonly ChatContextMenuService contextMenuService;
+        private readonly GetMessageHistoryCommand getMessageHistoryCommand;
+        private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
+        private readonly MarkMessagesAsReadCommand markMessagesAsReadCommand;
 
-        view.SetExternalDependencies(profileRepositoryWrapper, createMessageViewModelCommand);
-        view.Initialize();
+        private readonly EventSubscriptionScope scope = new ();
+        private CancellationTokenSource loadChannelCts = new ();
 
-        view.OnFakeMessageRequested += OnFakeMessageRequested;
-        view.OnChatContextMenuRequested += OnChatContextMenuRequested;
-        view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
-        view.OnScrollToBottom += MarkCurrentChannelAsRead;
-        
-        scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
-        scope.Add(eventBus.Subscribe<ChatEvents.MessageReceivedEvent>(OnMessageReceived));
-        scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
-        scope.Add(eventBus.Subscribe<ChatEvents.ChatMessageUpdatedEvent>(OnMessageUpdated));
+        private readonly List<ChatMessageViewModel> viewModels = new (500);
 
-        chatMessageBus.MessageAdded += OnMessageAdded;
-    }
+        private readonly ChatMessageViewModel separatorViewModel;
 
-    private void OnMessageUpdated(ChatEvents.ChatMessageUpdatedEvent evt)
-    {
-        //view.UpdateMessage(evt.ViewModel);
-    }
+        // The index of the separator becomes fixed when the new message arrives and the scroll is not at the bottom
+        private int separatorFixedIndexFromBottom = -1;
 
-    private void OnMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage message)
-    {
-        if (!currentChannelService.CurrentChannelId.Equals(channelId))
-            return;
+        private int? messageCountWhenSeparatorViewed;
 
-        // var viewModel = processAndAddMessageCommand.Execute(channelId, currentChannelService.CurrentChannelType, message, loadChannelCts.Token);
-        // ReportHub.Log(ReportData.UNSPECIFIED, $"OnMessageAdded: {viewModel.Message} in channel {channelId.Id}");
-        // view.AppendMessage(viewModel);
-        view.AppendMessage(message, true);
-    }
-
-    private void OnProfileContextMenuRequested(string userId, Vector2 position)
-    {
-        var request = new UserProfileMenuRequest
+        public ChatMessageFeedPresenter(ChatMessageFeedView view,
+            IEventBus eventBus,
+            IChatHistory chatHistory,
+            ICurrentChannelService currentChannelService,
+            ChatContextMenuService contextMenuService,
+            GetMessageHistoryCommand getMessageHistoryCommand,
+            CreateMessageViewModelCommand createMessageViewModelCommand,
+            MarkMessagesAsReadCommand markMessagesAsReadCommand)
         {
-            WalletAddress = new Web3Address(userId), Position = position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
-        };
+            this.view = view;
+            this.eventBus = eventBus;
+            this.chatHistory = chatHistory;
+            this.currentChannelService = currentChannelService;
+            this.contextMenuService = contextMenuService;
+            this.getMessageHistoryCommand = getMessageHistoryCommand;
+            this.createMessageViewModelCommand = createMessageViewModelCommand;
+            this.markMessagesAsReadCommand = markMessagesAsReadCommand;
 
-        contextMenuService.ShowUserProfileMenuAsync(request).Forget();
-    }
+            separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
 
-    private void OnChatContextMenuRequested(string message, ChatEntryView? chatEntry)
-    {
-        var request = new ChatEntryMenuPopupData(chatEntry.messageBubbleElement.PopupPosition,
-            message, chatEntry.messageBubbleElement.HideOptionsButton);
+            view.Initialize(viewModels);
+        }
 
-        contextMenuService.ShowChatOptionsAsync(request).Forget();
-    }
+        private bool separatorIsVisible => separatorFixedIndexFromBottom > -1;
 
-    private void OnFakeMessageRequested()
-    {
-        var currentChannelId = currentChannelService.CurrentChannelId;
-        eventBus.Publish(new ChatEvents.MessageReceivedEvent
+        private void OnScrollPositionChanged(Vector2 _)
         {
-            Message = new ChatMessage("some message", "validated name",
+            if (!separatorIsVisible)
+                return;
+
+            if (!view.IsItemVisible(separatorFixedIndexFromBottom))
+                return;
+
+            messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel!.Messages.Count;
+        }
+
+        private void AddNewMessagesSeparatorAfterPendingMessages()
+        {
+            // If the separator is already fixed, it remains in the same position
+            // Otherwise, calculate the reversed index based on the pending messages count
+            if (!separatorIsVisible)
+            {
+                ChatChannel currentChannel = currentChannelService.CurrentChannel!;
+                int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
+                separatorFixedIndexFromBottom = unreadMessagesCount > 0 ? unreadMessagesCount : -1; // After the read message from the bottom
+            }
+        }
+
+        private void IncrementSeparatorIndex()
+        {
+            if (separatorIsVisible)
+            {
+                separatorFixedIndexFromBottom++;
+                viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
+            }
+        }
+
+        /// <summary>
+        ///     Entirely removed when:
+        ///     The channel has changed
+        ///     The view has been minimized
+        /// </summary>
+        private void RemoveNewMessagesSeparator(bool unfix)
+        {
+            // Remove separator from the current position
+            if (separatorIsVisible)
+                viewModels.RemoveAt(separatorFixedIndexFromBottom);
+
+            if (unfix)
+                separatorFixedIndexFromBottom = -1;
+        }
+
+        private void OnMessageAddedToChatHistory(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
+        {
+            // Bubbles logic should be separated from the presenter
+
+            if (currentChannelService.CurrentChannel != destinationChannel)
+                return;
+
+            bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
+
+            ChatMessageViewModel newMessageViewModel = createMessageViewModelCommand.Execute(addedMessage);
+
+            RemoveNewMessagesSeparator(false);
+
+            viewModels.Insert(index, newMessageViewModel);
+
+            if (isSentByOwnUser)
+            {
+                MarkCurrentChannelAsRead();
+
+                IncrementSeparatorIndex();
+
+                view.ReconstructScrollView(false);
+                view.ShowLastMessage();
+            }
+            else
+            {
+                if (view.IsAtBottom())
+                    MarkCurrentChannelAsRead();
+                else
+                {
+                    if (messageCountWhenSeparatorViewed.HasValue)
+                        markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!, messageCountWhenSeparatorViewed.Value);
+
+                    AddNewMessagesSeparatorAfterPendingMessages();
+                }
+
+                IncrementSeparatorIndex();
+
+                messageCountWhenSeparatorViewed = null;
+                view.ReconstructScrollView(false);
+            }
+        }
+
+        private void ScrollToNewMessagesSeparator()
+        {
+            if (separatorIsVisible)
+                view.ShowItem(separatorFixedIndexFromBottom - 1);
+        }
+
+        private void OnReadMessagesChanged(ChatChannel changedChannel)
+        {
+            // if (currentChannelService.CurrentChannel != changedChannel)
+            //     return;
+            //
+            // MoveNewMessagesSeparatorAfterPendingMessages();
+            // view.ReconstructScrollView(false);
+        }
+
+        private void OnProfileContextMenuRequested(string userId, Vector2 position)
+        {
+            var request = new UserProfileMenuRequest
+            {
+                WalletAddress = new Web3Address(userId), Position = position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero,
+            };
+
+            contextMenuService.ShowUserProfileMenuAsync(request).Forget();
+        }
+
+        private void OnChatContextMenuRequested(string message, ChatEntryView? chatEntry)
+        {
+            var request = new ChatEntryMenuPopupData(chatEntry.messageBubbleElement.PopupPosition,
+                message, chatEntry.messageBubbleElement.HideOptionsButton);
+
+            contextMenuService.ShowChatOptionsAsync(request).Forget();
+        }
+
+        private void OnFakeMessageRequested()
+        {
+            ChatChannel.ChannelId currentChannelId = currentChannelService.CurrentChannelId;
+
+            chatHistory.AddMessage(currentChannelId, currentChannelService.CurrentChannelType, new ChatMessage("some message", "validated name",
                 currentChannelId.Id,
-                true, "sds"),
-            ChannelId = currentChannelService.CurrentChannelId
-        });
-    }
+                true, "sds"));
+        }
 
-    private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
-    {
-        loadChannelCts = loadChannelCts.SafeRestart();
-        LoadChannelAsync(evt.Channel.Id, loadChannelCts.Token).Forget();
-    }
+        private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
+        {
+            UpdateChannelMessages();
+        }
 
-    public void Activate()
-    {
-        view.OnScrollToBottom += MarkCurrentChannelAsRead;
-    }
+        private void UpdateChannelMessages()
+        {
+            loadChannelCts = loadChannelCts.SafeRestart();
 
-    public void Deactivate()
-    {
-        view.OnScrollToBottom -= MarkCurrentChannelAsRead;
-    }
+            RemoveNewMessagesSeparator(true);
 
-    private async UniTask LoadChannelAsync(ChatChannel.ChannelId channelId, CancellationToken token)
-    {
-        var messages = await getMessageHistoryCommand
-            .GetChatMessagesExecuteAsync(channelId, token);
-        
-        if (token.IsCancellationRequested) return;
+            LoadChannelHistory(loadChannelCts.Token).Forget();
 
-        view.SetData(messages);
-        view.ShowLastMessage();
+            async UniTaskVoid LoadChannelHistory(CancellationToken ct)
+            {
+                try
+                {
+                    await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
+                    AddNewMessagesSeparatorAfterPendingMessages();
+                    view.ReconstructScrollView(false);
+                    ScrollToNewMessagesSeparator();
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_HISTORY); }
+            }
+        }
 
-        await UniTask.Yield();
-        if (token.IsCancellationRequested) return;
-        MarkCurrentChannelAsRead();
-    }
+        private void MarkCurrentChannelAsRead()
+        {
+            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
+        }
 
-    private void OnMessageReceived(ChatEvents.MessageReceivedEvent evt)
-    {
-        if (!currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
-            return;
+        private void OnChatHistoryCleared(ChatEvents.ChatHistoryClearedEvent evt)
+        {
+            if (currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
+            {
+                RemoveNewMessagesSeparator(true);
+                viewModels.ForEach(ChatMessageViewModel.RELEASE);
+                view.Clear();
+            }
+        }
 
-        AddNewMessageByRecreatingList(evt.Message);
-        
-        // var viewModel = createMessageViewModelCommand.Execute(evt.Message);
-        // view.AppendMessage(viewModel, true);
-        //
-        // if (view.IsAtBottom())
-        //     MarkCurrentChannelAsRead();
-    }
+        private void Subscribe()
+        {
+            view.OnFakeMessageRequested += OnFakeMessageRequested;
+            view.OnChatContextMenuRequested += OnChatContextMenuRequested;
+            view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
+            view.OnScrolledToBottom += MarkCurrentChannelAsRead;
+            view.OnScrollPositionChanged += OnScrollPositionChanged;
 
-    private void AddNewMessageByRecreatingList(ChatMessage newMessage)
-    {
-        // 1. Get the current list of messages from the view.
-        var currentMessages = new List<ChatMessage>(view.GetCurrentMessages());
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
 
-        // 2. Add the new message.
-        currentMessages.Add(newMessage);
+            chatHistory.MessageAdded += OnMessageAddedToChatHistory;
+            chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
+        }
 
-        // 3. Tell the view to render this new, complete list.
-        view.SetData(currentMessages);
+        private void Unsubscribe()
+        {
+            view.OnFakeMessageRequested -= OnFakeMessageRequested;
+            view.OnChatContextMenuRequested -= OnChatContextMenuRequested;
+            view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
+            view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
+            view.OnScrollPositionChanged -= OnScrollPositionChanged;
 
-        // 4. Ensure we are scrolled to the bottom to see the new message.
-        view.ShowLastMessage();
-    }
+            scope.Dispose();
+            chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
+            chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
+        }
 
-    private void MarkCurrentChannelAsRead()
-    {
-        markChannelAsReadCommand.Execute(currentChannelService.CurrentChannelId);
-    }
+        protected override void Activate(ControllerNoData input)
+        {
+            view.Show();
+            Subscribe();
+            UpdateChannelMessages();
+        }
 
-    private void OnChatHistoryCleared(ChatEvents.ChatHistoryClearedEvent evt)
-    {
-        if (currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
-            view.Clear();
-    }
+        protected override void Deactivate()
+        {
+            view.Hide();
+            Unsubscribe();
 
-    public void Show()
-    {
-        view.Show();
-    }
+            // When the view is minimized the current channel is marked as read and the separator is removed
+            RemoveNewMessagesSeparator(true);
+            MarkCurrentChannelAsRead();
+        }
 
-    public void Hide()
-    {
-        view.Hide();
-    }
+        public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
+        {
+            view.SetFocusedState(isFocused, animate, duration, easing);
+        }
 
-    public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
-    {
-        view.SetFocusedState(isFocused, animate, duration, easing);
-    }
-
-    public void Dispose()
-    {
-        chatMessageBus.MessageAdded -= OnMessageAdded;
-        
-        loadChannelCts.SafeCancelAndDispose();
-        Deactivate();
-        scope.Dispose();
-        if (view != null)
-            view.OnScrollToBottom -= MarkCurrentChannelAsRead;
+        public void Dispose()
+        {
+            loadChannelCts.SafeCancelAndDispose();
+            Deactivate();
+        }
     }
 }

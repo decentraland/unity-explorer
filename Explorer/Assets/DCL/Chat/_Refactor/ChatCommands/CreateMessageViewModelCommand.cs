@@ -1,35 +1,55 @@
-﻿using DCL.Chat.ChatViewModels;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
-using DCL.UI.InputFieldFormatting;
+using DCL.Profiles;
+using DCL.Profiles.Helpers;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 
 namespace DCL.Chat.ChatUseCases
 {
     public class CreateMessageViewModelCommand
     {
-        private readonly ITextFormatter hyperlinkFormatter;
+        private readonly ProfileRepositoryWrapper profileRepository;
+        private readonly ChatConfig chatConfig;
 
-        public CreateMessageViewModelCommand(ITextFormatter hyperlinkFormatter)
+        public CreateMessageViewModelCommand(ProfileRepositoryWrapper profileRepository, ChatConfig chatConfig)
         {
-            this.hyperlinkFormatter = hyperlinkFormatter;
+            this.profileRepository = profileRepository;
+            this.chatConfig = chatConfig;
+        }
+
+        public ChatMessageViewModel ExecuteForSeparator()
+        {
+            ChatMessageViewModel? viewModel = ChatMessageViewModel.POOL.Get();
+            viewModel.IsSeparator = true;
+            return viewModel;
         }
 
         public ChatMessageViewModel Execute(ChatMessage message)
         {
-            if (message.IsSeparator)
-                return new ChatMessageViewModel { IsSeparator = true };
+            ChatMessageViewModel? viewModel = ChatMessageViewModel.POOL.Get();
+            viewModel.Message = message;
 
-            return new ChatMessageViewModel
+            if (message.IsSystemMessage)
+                viewModel.UserNameColor.UpdateValue(ProfileNameColorHelper.GetNameColor(message.SenderValidatedName));
+            else
+                FetchProfileAsync(message.SenderWalletAddress, viewModel).Forget();
+
+            return viewModel;
+        }
+
+        private async UniTaskVoid FetchProfileAsync(string walletId, ChatMessageViewModel viewModel)
+        {
+            Profile? profile = await profileRepository.GetProfileAsync(walletId, viewModel.cancellationToken);
+
+            if (profile != null)
             {
-                Message = hyperlinkFormatter.FormatText(message.Message),
-                SenderValidatedName = message.SenderValidatedName,
-                SenderWalletId = message.SenderWalletId,
-                SenderWalletAddress = message.SenderWalletAddress,
-                IsPaddingElement = message.IsPaddingElement,
-                IsSentByOwnUser = message.IsSentByOwnUser,
-                IsSystemMessage = message.IsSystemMessage,
-                IsMention = message.IsMention,
-                IsSeparator = message.IsSeparator,
-            };
+                viewModel.UserNameColor.UpdateValue(profile.UserNameColor);
+
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail,
+                    walletId, profile.Avatar.FaceSnapshotUrl, viewModel.cancellationToken);
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ using MVC;
 using System.Threading;
 using DCL.Chat._Refactor.ChatStates;
 using DCL.Chat.ChatMediator;
+using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
@@ -112,15 +113,12 @@ namespace DCL.Chat
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(viewInstance.MessageFeedView,
                 eventBus,
-                chatMessagesBus,
+                chatHistory,
                 currentChannelService,
                 chatContextMenuService,
-                profileRepositoryWrapper,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,
-                commandRegistry.LoadAndDisplayMessages,
-                commandRegistry.ProcessAndAddMessage,
-                commandRegistry.MarkChannelAsRead);
+                commandRegistry.MarkMessagesAsRead);
 
             var inputPresenter = new ChatInputPresenter(
                 viewInstance.InputView,

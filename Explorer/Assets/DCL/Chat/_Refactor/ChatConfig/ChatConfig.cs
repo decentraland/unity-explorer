@@ -10,14 +10,14 @@ namespace DCL.Chat
 
         [field: Header("General")]
         [field: SerializeField]
-        public Sprite DefaultProfileThumbnail { get; set; }
+        public Sprite DefaultProfileThumbnail { get; private set; }
 
         [field: SerializeField]
-        public Sprite DefaultCommunityThumbnail { get; set; }
+        public Sprite DefaultCommunityThumbnail { get; private set; }
 
         [field: SerializeField]
-        public Sprite ClearChatHistoryContextMenuIcon { get; set; }
-        
+        public Sprite ClearChatHistoryContextMenuIcon { get; private set; }
+
         [field: Header("Prefabs")]
         [field: SerializeField]
         public ChatConversationsToolbarViewItem ItemPrefab { get; private set; }
@@ -41,7 +41,7 @@ namespace DCL.Chat
         [field: Tooltip("Chat messages fade out duration in seconds.")]
         [field: SerializeField] [field: Range(0f, 20f)]
         public float chatEntriesFadeTime { get; private set; } = 3f;
-        
+
 
         [field: Tooltip("The easing function to use for the panel fade animation.")]
         [field: SerializeField]
@@ -65,5 +65,7 @@ namespace DCL.Chat
 
         [Tooltip("Message when status is being checked.")]
         public string CheckingUserStatusMessage = "Checking user status...";
+
+        // TODO add sounds here
     }
 }

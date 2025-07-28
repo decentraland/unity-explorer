@@ -1,7 +1,9 @@
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using DG.Tweening;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,6 +33,15 @@ namespace DCL.Chat
         private ChatMessageViewModel chatMessageViewModel;
         private readonly Vector3[] cornersCache = new Vector3[4];
 
+        private Action<string, ChatEntryView>? onMessageContextMenuClicked;
+
+        private void Awake()
+        {
+            profileButton.onClick.AddListener(OnProfileButtonClicked);
+            usernameElement.UserNameClicked += OnUsernameClicked;
+            messageBubbleElement.messageOptionsButton.onClick.AddListener(() => onMessageContextMenuClicked?.Invoke(chatMessage.Message, this));
+        }
+
         public void AnimateChatEntry()
         {
             chatEntryCanvasGroup.alpha = 0;
@@ -45,10 +56,22 @@ namespace DCL.Chat
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
         }
 
-        private void Awake()
+        public void SetItemData(ChatMessageViewModel viewModel, Action<string, ChatEntryView> onMessageContextMenuClicked, ChatEntryClickedDelegate? onProfileContextMenuClicked)
         {
-            profileButton.onClick.AddListener(OnProfileButtonClicked);
-            usernameElement.UserNameClicked += OnUsernameClicked;
+            SetItemData(viewModel.Message);
+
+            this.onMessageContextMenuClicked = onMessageContextMenuClicked;
+            ChatEntryClicked = onProfileContextMenuClicked;
+
+            viewModel.UserNameColor.ReactOnceWhenNotNull
+            ((this, viewModel), static (Color color, (ChatEntryView view, ChatMessageViewModel viewModel) data) =>
+            {
+                data.view.usernameElement.userName.color = color;
+
+                // Binding is done for non-system messages only
+                if (!data.viewModel.Message.IsSystemMessage)
+                    data.view.ProfilePictureView.Bind(data.viewModel.Thumbnail, color);
+            }, destroyCancellationToken);
         }
 
         private void OnProfileButtonClicked()
@@ -59,7 +82,7 @@ namespace DCL.Chat
             float posX = cornersCache[3].x;
             float posY = cornersCache[3].y + PROFILE_BUTTON_Y_OFFSET;
 
-            OpenContextMenu(posX, posY);
+            OpenProfileContextMenu(posX, posY);
         }
 
         private void OnUsernameClicked()
@@ -69,10 +92,10 @@ namespace DCL.Chat
             float posX = cornersCache[3].x;
             float posY = cornersCache[3].y + USERNAME_Y_OFFSET;
 
-            OpenContextMenu(posX, posY);
+            OpenProfileContextMenu(posX, posY);
         }
 
-        private void OpenContextMenu(float posX, float posY)
+        private void OpenProfileContextMenu(float posX, float posY)
         {
             ChatEntryClicked?.Invoke(chatMessage.SenderWalletAddress, new Vector2(posX, posY));
         }

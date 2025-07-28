@@ -24,18 +24,15 @@ namespace DCL.Chat.ChatUseCases
         public CreateMessageViewModelCommand CreateMessageViewModel { get; }
         public SelectChannelCommand SelectChannel { get; }
         public GetMessageHistoryCommand GetMessageHistory { get; }
-        public MarkChannelAsReadCommand MarkChannelAsRead { get; }
+        public MarkMessagesAsReadCommand MarkMessagesAsRead { get; }
         public GetTitlebarViewModelCommand GetTitlebarViewModel { get; }
-        public GetProfileThumbnailCommand GetProfileThumbnail { get; }
         public GetCommunityThumbnailCommand GetCommunityThumbnail { get; }
         public SendMessageCommand SendMessage { get; }
         public LeaveChannelCommand LeaveChannel { get; }
-        public LoadAndDisplayMessagesCommand LoadAndDisplayMessages { get; }
         public CreateChannelViewModelCommand CreateChannelViewModel { get; }
         public OpenPrivateConversationCommand OpenPrivateConversation { get; }
         public DeleteChatHistoryCommand DeleteChatHistory { get; }
         public GetChannelMembersCommand GetChannelMembersCommand { get; }
-        public ProcessAndAddMessageCommand ProcessAndAddMessage { get; }
         public GetParticipantProfilesCommand GetParticipantProfilesCommand { get; }
 
         public CommandRegistry(
@@ -70,7 +67,7 @@ namespace DCL.Chat.ChatUseCases
                 chatUserStateUpdater,
                 currentChannelService);
 
-            CreateMessageViewModel = new CreateMessageViewModelCommand(textFormatter);
+            CreateMessageViewModel = new CreateMessageViewModelCommand(profileRepositoryWrapper, chatConfig);
 
             SelectChannel = new SelectChannelCommand(eventBus,
                 chatHistory,
@@ -79,36 +76,25 @@ namespace DCL.Chat.ChatUseCases
             DeleteChatHistory = new DeleteChatHistoryCommand(eventBus,
                 chatHistory,
                 currentChannelService);
-            
+
             GetMessageHistory = new GetMessageHistoryCommand(chatHistory,
                 chatHistoryStorage,
                 CreateMessageViewModel);
 
-            MarkChannelAsRead = new MarkChannelAsReadCommand(eventBus,
-                chatHistory);
-
-            GetProfileThumbnail = new GetProfileThumbnailCommand(eventBus,
-                chatConfig,
-                profileRepositoryWrapper);
+            MarkMessagesAsRead = new MarkMessagesAsReadCommand();
 
             GetCommunityThumbnail = new GetCommunityThumbnailCommand(spriteCache,
                 chatConfig);
 
             GetChannelMembersCommand = new GetChannelMembersCommand(eventBus,
-                chatMemberListService,
-                GetProfileThumbnail);
-
-            LoadAndDisplayMessages = new LoadAndDisplayMessagesCommand(eventBus,
-                GetMessageHistory,
-                GetProfileThumbnail);
+                chatMemberListService, chatConfig);
 
             OpenPrivateConversation = new OpenPrivateConversationCommand(eventBus,
                 chatHistory,
                 SelectChannel);
-            
+
             GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,
                 profileRepositoryWrapper,
-                GetProfileThumbnail,
                 chatConfig);
 
             SendMessage = new SendMessageCommand(
@@ -126,14 +112,7 @@ namespace DCL.Chat.ChatUseCases
                 communityDataService,
                 chatConfig,
                 profileRepositoryWrapper,
-                GetProfileThumbnail,
                 GetCommunityThumbnail);
-
-            ProcessAndAddMessage = new ProcessAndAddMessageCommand(eventBus,
-                chatHistory,
-                textFormatter,
-                CreateMessageViewModel,
-                GetProfileThumbnail);
         }
 
         public void Dispose()

@@ -596,8 +596,7 @@ namespace DCL.Chat
 #endregion
 
 #region Chat History Events
-
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
@@ -1050,7 +1049,6 @@ namespace DCL.Chat
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
-            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
 
             chatUserStateEventBus.FriendConnected += OnFriendConnected;
             chatUserStateEventBus.UserDisconnected += OnUserDisconnected;
@@ -1137,7 +1135,6 @@ namespace DCL.Chat
 
             chatHistory.ChannelAdded -= OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved -= OnChatHistoryChannelRemoved;
-            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
 
             chatUserStateEventBus.FriendConnected -= OnFriendConnected;
             chatUserStateEventBus.UserDisconnected -= OnUserDisconnected;

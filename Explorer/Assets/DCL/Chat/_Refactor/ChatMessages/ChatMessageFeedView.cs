@@ -2,13 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat._Refactor.ChatMessages.ScrollLists;
-using DCL.Chat.ChatMessages;
-using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
-using DCL.Profiles;
-using DCL.Profiles.Helpers;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DG.Tweening;
 using SuperScrollView;
@@ -20,107 +15,121 @@ namespace DCL.Chat
 {
     public class ChatMessageFeedView : MonoBehaviour, IDisposable
     {
-        private enum ChatItemPrefabIndex
-        {
-            ChatEntry, ChatEntryOwn, Padding, SystemChatEntry, Separator, BlockedUser
-        }
-
-        public Action OnFakeMessageRequested;
-        public event Action<string, ChatEntryView> OnChatContextMenuRequested;
-        public event Action<string, Vector2> OnProfileContextMenuRequested;
-        
-        public event Action OnScrollToBottom;
-        public event Action OnSeparatorBecameVisible;
-        public event Action<string, ChatEntryView> OnMessageContextMenuRequested;
-
         // NOTE: IChatListViewController is an interface that defines the
         // NOTE: methods and properties needed for the chat list view controller.
         // NOTE: can be implemented by any class that manages the chat list view
         // NOTE: SuperScrollView or for example OptimizedScrollViewAdapter
-        [SerializeField] private IChatListViewController listController;
-        
+        //[SerializeField] private ChatListViewAdapterBase listAdapter;
+
         [SerializeField] private float chatEntriesFadeTime = 3f;
         [SerializeField] private int chatEntriesWaitBeforeFading = 10000;
         [SerializeField] private CanvasGroup scrollbarCanvasGroup;
         [SerializeField] private CanvasGroup chatEntriesCanvasGroup;
         [SerializeField] private LoopListView2 loopList;
         [SerializeField] private ScrollRect scrollRect;
-
-        // View's internal data source
-        private readonly List<ChatMessage> messages = new ();
-
-        private CreateMessageViewModelCommand createMessageViewModelCommand;
-        private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private CancellationTokenSource? fadeoutCts;
         private int entriesPendingToAnimate;
 
-        // Separator State
-        private bool isSeparatorVisible;
-        private int separatorPositionIndex;
+        private CancellationTokenSource? fadeoutCts;
 
-        public void Initialize()
+        public event Action? OnFakeMessageRequested;
+
+        // View models are reused and set by reference from the presenter
+        private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
+
+        // private void OnEnable()
+        // {
+        //     loopList.RefreshAllShownItem();
+        // }
+
+        public void Dispose()
         {
+            fadeoutCts.SafeCancelAndDispose();
+        }
+
+        public event Action<Vector2>? OnScrollPositionChanged;
+        public event Action<string, ChatEntryView>? OnChatContextMenuRequested;
+        public event Action<string, Vector2>? OnProfileContextMenuRequested;
+
+        public event Action? OnScrolledToBottom;
+
+        public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels)
+        {
+            this.viewModels = viewModels;
+
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
-        public void SetExternalDependencies(ProfileRepositoryWrapper profileRepo, CreateMessageViewModelCommand viewModelCommand)
+        internal bool IsItemVisible(int itemIndex)
         {
-            profileRepositoryWrapper = profileRepo;
-            createMessageViewModelCommand = viewModelCommand;
+            LoopListViewItem2 item = loopList.GetShownItemByItemIndex(itemIndex);
+
+            if (item != null)
+            {
+                float itemVerticalPosition = item.transform.position.y;
+                return itemVerticalPosition > loopList.ViewPortTrans.position.y && itemVerticalPosition < loopList.ViewPortTrans.position.y + loopList.ViewPortHeight;
+            }
+
+            return false;
         }
 
-        
-        public void SetData(IReadOnlyList<ChatMessage> newMessages)
+        /// <summary>
+        ///     Reconstructs the scroll view with the data source that was previously set.
+        /// </summary>
+        /// <param name="resetPosition"></param>
+        public void ReconstructScrollView(bool resetPosition)
         {
-            //listController.SetItems(newMessages);
-            
-            messages.Clear();
-            messages.AddRange(newMessages);
-            loopList.SetListItemCount(0, false);
-            loopList.SetListItemCount(messages.Count);
-            loopList.RefreshAllShownItem();
-        }
+            // TODO Restart fadeout?
+            // TODO animation - entries pending to animate
 
-        public IReadOnlyList<ChatMessage> GetCurrentMessages()
-        {
-            return messages;
-        }
-        
-        public void AppendMessage(ChatMessage message, bool animated)
-        {
-            bool wasAtBottom = IsAtBottom();
-            int previousCount = messages.Count;
-            messages.Add(message);
+            int newEntries = viewModels.Count - loopList.ItemTotalCount;
 
-            if (animated)
-                entriesPendingToAnimate = messages.Count - previousCount;
+            if (newEntries < 0)
+                newEntries = 0;
 
-            loopList.SetListItemCount(messages.Count, false);
+            loopList.SetListItemCount(viewModels.Count, resetPosition);
 
-            if (wasAtBottom)
-                ShowLastMessage(animated);
+            // Scroll view adjustment
+            if (IsAtBottom())
+                loopList.MovePanelToItemIndex(0, 0);
             else
-                RefreshAllVisibleItems();
+            {
+                loopList.RefreshAllShownItem();
+
+                if (loopList.ItemList.Count >= newEntries + 1)
+                {
+                    // When the scroll view is not at the bottom, chat messages should not move if a new message is added
+                    // An offset has to be applied to the scroll view in order to prevent messages from moving
+                    var offsetToPreventScrollViewMovement = 0.0f;
+
+                    for (var i = 1; i < newEntries + 1; ++i) // Note: newEntries + 1 because the first item is always a padding
+                        offsetToPreventScrollViewMovement -= loopList.ItemList[i].ItemSize + loopList.ItemList[i].Padding;
+
+                    loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
+
+                    // TODO Known issue: When the scroll view is at the top, the scroll view moves a bit downwards
+                }
+            }
         }
 
         public void Clear()
         {
-            messages.Clear();
             loopList.SetListItemCount(0, false);
         }
 
         public void ShowLastMessage(bool useSmoothScroll = false)
         {
-            if (messages.Count == 0) return;
-            loopList.MovePanelToItemIndex(0, 0);
+            if (viewModels.Count == 0) return;
+
+            if (useSmoothScroll)
+                loopList.ScrollRect.DONormalizedPos(Vector2.right, 0.5f);
+            else
+                loopList.MovePanelToItemIndex(0, 0);
         }
 
-        public void RefreshAllVisibleItems()
-        {
-            loopList.RefreshAllShownItem();
-        }
+        public void ShowItem(int index) =>
+            loopList.MovePanelToItemIndex(index, loopList.ViewPortHeight - 170f); // Who knows what magic number is this
 
         public void Show()
         {
@@ -147,53 +156,41 @@ namespace DCL.Chat
                 StartChatEntriesFadeout();
         }
 
-        public bool IsAtBottom()
-        {
-            return messages.Count == 0 || loopList.ScrollRect.normalizedPosition.y <= 0.001f;
-        }
+        internal bool IsAtBottom() =>
+            viewModels.Count == 0 || loopList.ScrollRect.normalizedPosition.y <= 0.001f;
 
-        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
+        private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
-            if (index < 0 || index >= messages.Count)
+            if (index < 0 || index >= viewModels.Count)
                 return null;
 
-            var itemData = messages[index];
+            ChatMessageViewModel? viewModel = viewModels[index];
+            ChatMessage chatMessage = viewModel.Message;
+
             LoopListViewItem2 item;
 
-            if (itemData.IsPaddingElement)
+            if (chatMessage.IsPaddingElement)
                 item = listView.NewListViewItem(GetPrefabName(ChatItemPrefabIndex.Padding));
-            else if (itemData.IsSeparator)
+            else if (viewModel.IsSeparator)
                 item = listView.NewListViewItem(GetPrefabName(ChatItemPrefabIndex.Separator));
             else
             {
-                var prefabIndex = itemData.IsSystemMessage
-                    ? ChatItemPrefabIndex.SystemChatEntry
-                    : itemData.IsSentByOwnUser
-                        ? ChatItemPrefabIndex.ChatEntryOwn
-                        : ChatItemPrefabIndex.ChatEntry;
+                ChatItemPrefabIndex prefabIndex = chatMessage.IsSystemMessage ? ChatItemPrefabIndex.SystemChatEntry :
+                    chatMessage.IsSentByOwnUser ? ChatItemPrefabIndex.ChatEntryOwn : ChatItemPrefabIndex.ChatEntry;
 
                 item = listView.NewListViewItem(GetPrefabName(prefabIndex));
-                var itemScript = item.GetComponent<ChatEntryView>();
+                ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
+                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
 
-                // The view model is now created here, just before rendering
-                // var viewModel = createMessageViewModelCommand.Execute(itemData);
-                // itemScript.SetItemData(viewModel);
-                itemScript.SetItemData(itemData);
-                var messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
-                messageOptionsButton?.onClick.RemoveAllListeners();
-                messageOptionsButton?.onClick.AddListener(() =>
-                    OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
-                SetupProfilePictureAsync(itemData, itemScript).Forget();
+                // TODO animation
+                // if (entriesPendingToAnimate > 0)
+                // {
+                //     itemScript.AnimateChatEntry();
+                //     entriesPendingToAnimate--;
+                // }
 
-                if (entriesPendingToAnimate > 0)
-                {
-                    itemScript.AnimateChatEntry();
-                    entriesPendingToAnimate--;
-                }
-
-                itemScript.ChatEntryClicked -= OnEntryClicked;
-                if (!itemData.IsSentByOwnUser)
-                    itemScript.ChatEntryClicked += OnEntryClicked;
+                if (!chatMessage.IsSentByOwnUser)
+                    itemScript.ChatEntryClicked = OnProfileClicked;
             }
 
             return item;
@@ -204,23 +201,7 @@ namespace DCL.Chat
             OnChatContextMenuRequested?.Invoke(itemDataMessage, itemScript);
         }
 
-        private async UniTaskVoid SetupProfilePictureAsync(ChatMessage itemData, ChatEntryView itemView)
-        {
-            if (itemData.IsSystemMessage)
-            {
-                itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
-                return;
-            }
-
-            var profile = await profileRepositoryWrapper.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
-            if (profile != null)
-            {
-                itemView.usernameElement.userName.color = profile.UserNameColor;
-                itemView.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
-            }
-        }
-
-        private void OnEntryClicked(string walletAddress, Vector2 position)
+        private void OnProfileClicked(string walletAddress, Vector2 position)
         {
             OnProfileContextMenuRequested?.Invoke(walletAddress, position);
         }
@@ -228,7 +209,7 @@ namespace DCL.Chat
         private void OnScrollRectValueChanged(Vector2 scrollPosition)
         {
             if (IsAtBottom())
-                OnScrollToBottom?.Invoke();
+                OnScrolledToBottom?.Invoke();
 
             // Check if separator is visible
             // This logic is complex and better suited for the presenter to handle based on data
@@ -253,25 +234,18 @@ namespace DCL.Chat
             await chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime).ToUniTask(cancellationToken: ct);
         }
 
-        private string GetPrefabName(ChatItemPrefabIndex index)
-        {
-            return loopList.ItemPrefabDataList[(int)index].mItemPrefab.name;
-        }
-
-        private void OnEnable()
-        {
-            loopList.RefreshAllShownItem();
-        }
-
-        public void Dispose()
-        {
-            fadeoutCts.SafeCancelAndDispose();
-        }
+        private string GetPrefabName(ChatItemPrefabIndex index) =>
+            loopList.ItemPrefabDataList[(int)index].mItemPrefab.name;
 
         [ContextMenu("Fake Message")]
         public void FakeMessage()
         {
             OnFakeMessageRequested?.Invoke();
+        }
+
+        private enum ChatItemPrefabIndex
+        {
+            ChatEntry, ChatEntryOwn, Padding, SystemChatEntry, Separator, BlockedUser,
         }
     }
 }

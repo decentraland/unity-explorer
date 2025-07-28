@@ -7,7 +7,7 @@ using DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.Services;
-
+using DCL.Optimization.Pools;
 using Utility;
 
 public class ChatMemberListPresenter : IDisposable
@@ -21,7 +21,7 @@ public class ChatMemberListPresenter : IDisposable
     private readonly EventSubscriptionScope scope = new ();
     private CancellationTokenSource lifeCts = new ();
 
-    private List<ChatMemberListViewModel> currentMembers = new ();
+    private readonly List<ChatMemberListViewModel> currentMembers = new (PoolConstants.AVATARS_COUNT);
 
     public ChatMemberListPresenter(
         ChannelMemberFeedView view,
@@ -37,7 +37,6 @@ public class ChatMemberListPresenter : IDisposable
         this.chatContextMenuService = chatContextMenuService;
 
         this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
-        scope.Add(eventBus.Subscribe<ChatEvents.ChannelMemberUpdatedEvent>(OnMemberUpdated));
     }
 
     public void ShowAndLoad()
@@ -46,16 +45,6 @@ public class ChatMemberListPresenter : IDisposable
         lifeCts = new CancellationTokenSource();
         memberListService.OnMemberListUpdated += HandleLiveUpdate;
         memberListService.RequestRefresh();
-    }
-
-    private void OnMemberUpdated(ChatEvents.ChannelMemberUpdatedEvent evt)
-    {
-        int index = currentMembers.FindIndex(m => m.UserId == evt.ViewModel.UserId);
-        if (index != -1)
-        {
-            currentMembers[index] = evt.ViewModel;
-            view.UpdateMember(index);
-        }
     }
 
     private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)

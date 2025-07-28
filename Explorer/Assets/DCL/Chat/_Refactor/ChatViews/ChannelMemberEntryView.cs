@@ -1,5 +1,6 @@
 ﻿using System;
 using DCL.Chat.ChatViewModels;
+using DCL.UI.ProfileElements;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,7 +20,7 @@ namespace DCL.Chat
 
         [Header("UI References")]
         [SerializeField] private TMP_Text userNameText;
-        [SerializeField] private ChatProfilePictureView profilePictureView;
+        [SerializeField] private ProfilePictureView profilePictureView;
         [SerializeField] private ChatUsernameView usernameView;
         [SerializeField] private GameObject onlineIndicator;
         [SerializeField] private Button contextMenuButton;
@@ -44,7 +45,7 @@ namespace DCL.Chat
         {
             this.model = model;
             onlineIndicator.SetActive(model.IsOnline);
-            profilePictureView.Setup(model.ProfilePicture, model.IsLoading);
+            profilePictureView.Bind(model.ProfileThumbnail, model.ProfileColor);
             usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, model.ProfileColor);
         }
 

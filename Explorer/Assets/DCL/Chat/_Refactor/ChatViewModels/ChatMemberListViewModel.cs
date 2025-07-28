@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using DCL.UI.ProfileElements;
+using DCL.Utilities;
+using UnityEngine;
 
 namespace DCL.Chat.ChatViewModels
 {
@@ -11,8 +13,7 @@ namespace DCL.Chat.ChatViewModels
         public readonly Color ProfileColor;
         public readonly bool HasClaimedName;
 
-        public bool IsLoading;
-        public Sprite? ProfilePicture;
+        public readonly IReactiveProperty<ProfileThumbnailViewModel> ProfileThumbnail;
 
         public ChatMemberListViewModel(string userId, string walletId, string userName, bool isOnline, Color profileColor,
             bool hasClaimedName)
@@ -24,8 +25,7 @@ namespace DCL.Chat.ChatViewModels
             ProfileColor = profileColor;
             HasClaimedName = hasClaimedName;
 
-            ProfilePicture = null;
-            IsLoading = true;
+            ProfileThumbnail = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
         }
     }
 }

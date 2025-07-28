@@ -1,4 +1,6 @@
-﻿namespace DCL.Chat.ChatMediator
+﻿using DCL.Chat.ChatMessages;
+
+namespace DCL.Chat.ChatMediator
 {
     using DG.Tweening;
 
@@ -36,7 +38,7 @@
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
 
             channelListPresenter.Show();
-            messageFeedPresenter.Show();
+            messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowUnfocused();
             memberListPresenter.Hide();
 
@@ -49,7 +51,7 @@
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
 
             channelListPresenter.Show();
-            messageFeedPresenter.Show();
+            messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowFocusedAsync().Forget();
             memberListPresenter.Hide();
 
@@ -62,7 +64,7 @@
             titleBarPresenter.ShowMembersView(isMemberListVisible:true);
 
             channelListPresenter.Hide();
-            messageFeedPresenter.Hide();
+            messageFeedPresenter.TryDeactivate();
             chatInputPresenter.Hide();
             memberListPresenter.Show();
 
@@ -75,7 +77,7 @@
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
 
             channelListPresenter.Hide();
-            messageFeedPresenter.Hide();
+            messageFeedPresenter.TryActivate();
             memberListPresenter.Hide();
             chatInputPresenter.ShowUnfocused();
 
@@ -88,7 +90,7 @@
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
 
             channelListPresenter.Hide();
-            messageFeedPresenter.Hide();
+            messageFeedPresenter.TryDeactivate();
             chatInputPresenter.Hide();
             memberListPresenter.Hide();
 

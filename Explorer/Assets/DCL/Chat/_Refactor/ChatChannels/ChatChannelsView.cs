@@ -26,7 +26,7 @@ namespace DCL.Chat
 
         [SerializeField]
         private CanvasGroup conversationsToolbarCanvasGroup;
-        
+
         [SerializeField]
         private ChatConversationsToolbarViewItem itemPrefab;
 
@@ -44,7 +44,7 @@ namespace DCL.Chat
 
         private Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
-        
+
         public event Action<ChatChannel.ChannelId> ConversationSelected;
         public event Action<ChatChannel.ChannelId> ConversationRemovalRequested;
 
@@ -232,7 +232,7 @@ namespace DCL.Chat
             newItem.Initialize();
             newItem.Id = viewModel.Id;
             newItem.SetUnreadMessages(viewModel.UnreadMessagesCount);
-            
+
             newItem.OpenButtonClicked += OpenButtonClicked;
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;
             newItem.TooltipShown += OnItemTooltipShown;
@@ -251,17 +251,7 @@ namespace DCL.Chat
                     newItem.SetConversationType(isPrivate: true);
                     newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
                     newItem.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
-                    if (!string.IsNullOrEmpty(user.ImageUrl))
-                    {
-                        newItem.SetPicture(user.ProfilePicture);
-                        // newItem.SetProfileData(
-                        //     profileRepositoryWrapper,
-                        //     user.ProfileColor,
-                        //     user.ImageUrl,
-                        //     user.Id.Id
-                        // );
-                    }
-
+                    newItem.BindProfileThumbnail(user.ProfilePicture, user.ProfileColor);
                     break;
 
                 case CommunityChannelViewModel community:
@@ -275,7 +265,7 @@ namespace DCL.Chat
 
                     break;
             }
-            
+
             items.Add(viewModel.Id, newItem);
             UpdateScrollButtonsVisibility();
         }
@@ -287,12 +277,12 @@ namespace DCL.Chat
                 UnityObjectUtils.SafeDestroyGameObject(itemToRemove);
                 items.Remove(channel.Id);
                 UpdateScrollButtonsVisibility(); // Refresh scrollbar state
-            } 
+            }
         }
 
         public void SetUnreadMessages(string channelId, int count)
         {
-            
+
         }
 
         public void UpdateConversation(BaseChannelViewModel viewModel)
@@ -304,16 +294,6 @@ namespace DCL.Chat
                 case UserChannelViewModel user:
                     itemToUpdate.SetConversationName(user.DisplayName);
                     itemToUpdate.SetClaimedNameIconVisibility(user.HasClaimedName);
-                    if (!string.IsNullOrEmpty(user.ImageUrl))
-                    {
-                        itemToUpdate.SetPicture(user.ProfilePicture);
-                        // itemToUpdate.SetProfileData(
-                        //     profileRepositoryWrapper,
-                        //     user.ProfileColor,
-                        //     user.ImageUrl,
-                        //     user.Id.Id
-                        // );
-                    }
 
                     break;
                 case CommunityChannelViewModel community:
@@ -334,11 +314,11 @@ namespace DCL.Chat
         public void AddItem(ChatConversationsToolbarViewItem newItem)
         {
             if (!items.TryAdd(newItem.Id, newItem)) return;
-            
+
             newItem.OpenButtonClicked += OpenButtonClicked;
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;
             newItem.TooltipShown += OnItemTooltipShown;
-            
+
             if (items.Count == 1)
             {
                 SelectConversation(newItem.Id);
@@ -349,7 +329,7 @@ namespace DCL.Chat
         {
             items.Clear();
         }
-        
+
         public void Show()
         {
             gameObject.SetActive(true);
@@ -359,7 +339,7 @@ namespace DCL.Chat
         {
             gameObject.SetActive(false);
         }
-        
+
         /// <summary>
         /// Sets the visual focus state for the conversations toolbar.
         /// </summary>
