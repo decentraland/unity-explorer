@@ -13,6 +13,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using DCL.Optimization.PerformanceBudgeting;
+using ECS;
 using NSubstitute;
 using UnityEngine;
 using LoadDefaultWearablesSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadDefaultWearablesSystem;
@@ -37,9 +38,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableStorage = new WearableStorage();
             emptyDefaultWearable = new GameObject();
 
+            IRealmData realm = Substitute.For<IRealmData>();
+            realm.Configured.Returns(true);
+
             system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(repoolableList),
                 emptyDefaultWearable,
-                wearableStorage);
+                wearableStorage,
+                realm);
 
             system.Initialize();
         }

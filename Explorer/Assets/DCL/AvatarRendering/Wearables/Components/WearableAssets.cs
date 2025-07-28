@@ -15,11 +15,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// </summary>
         public StreamableLoadingResult<AttachmentAssetBase>?[]? Results;
 
-        /// <summary>
-        ///     Whether the results were replaced with default ones
-        /// </summary>
-        public bool ReplacedWithDefaults;
-
         public void AddReference()
         {
             for (var i = 0; i < Results?.Length; i++)

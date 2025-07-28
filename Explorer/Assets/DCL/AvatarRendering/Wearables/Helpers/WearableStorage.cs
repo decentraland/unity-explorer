@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -14,6 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
         private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(), URNIgnoreCaseEqualityComparer.Default);
+        private readonly Dictionary<URN, IWearable> defaultWearablesCache = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
 
         private readonly object lockObject = new ();
 
@@ -62,8 +64,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             lock (lockObject)
             {
                 string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
-                UpdateListedCachePriority(wearableURN);
-                return wearablesCache.TryGetValue(wearableURN, out IWearable wearable) ? wearable : null;
+                return defaultWearablesCache.GetValueOrDefault(wearableURN);
+            }
+        }
+
+        public IWearable AddDefaultWearableByDTO(WearableDTO dto)
+        {
+            lock (lockObject)
+            {
+                var wearable = new Wearable(new StreamableLoadingResult<WearableDTO>(dto));
+                defaultWearablesCache.Add(dto.metadata.id, wearable);
+                return wearable;
             }
         }
 

@@ -55,8 +55,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     AssetValidation.ValidateSceneAssetBundleManifest(result.Asset, AssetValidation.SceneIDError, result.Asset.GetSceneID());
                     wearable.ManifestResult = result;
                 }
-                else
-                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
 
                 wearable.UpdateLoadingStatus(false);
                 World.Destroy(entity);
@@ -72,7 +70,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             int index
         )
         {
-            FinalizeAssetLoading<AssetBundleData, GetAssetBundleIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
+            FinalizeAssetLoading(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
     }
 }

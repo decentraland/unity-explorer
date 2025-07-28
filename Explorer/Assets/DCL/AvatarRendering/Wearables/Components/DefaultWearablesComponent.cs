@@ -12,6 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Components
     {
         public enum State
         {
+            None,
             InProgress,
             Fail,
             Success,
@@ -24,7 +25,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public DefaultWearablesComponent(AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[] promisePerBodyShape)
         {
             PromisePerBodyShape = promisePerBodyShape;
-            ResolvedState = State.InProgress;
+            ResolvedState = State.None;
         }
     }
 }

@@ -16,5 +16,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <param name="category">The category.</param>
         /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
         IWearable? GetDefaultWearable(BodyShape bodyShape, string category);
+
+        IWearable AddDefaultWearableByDTO(WearableDTO dto);
     }
 }

@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using System.Collections.Generic;
 using DCL.WebRequests;
 using UnityEngine;
@@ -55,8 +56,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 foreach (string facialFeature in WearablesConstants.FACIAL_FEATURES)
                 {
+                    string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, facialFeature);
+
+                    if (!wearableStorage.TryGetElement(wearableURN, out IWearable wearable)) continue;
+
                     // TODO it's quite dangerous to call it like this without any checks
-                    var result = (AttachmentTextureAsset) wearableStorage.GetDefaultWearable(bodyShape, facialFeature)
+                    var result = (AttachmentTextureAsset) wearable
                                                 .WearableAssetResults[bodyShape]
                                                 .Results[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]!
                                                 .Value.Asset;
@@ -70,6 +75,4 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
     }
-
-
 }

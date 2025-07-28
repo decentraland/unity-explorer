@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
@@ -48,9 +49,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearable?[] fallbackBodyShape = new IWearable[1];
+        private SingleInstanceEntity defaultWearablesState;
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
-
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
@@ -76,6 +77,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         protected override void OnDispose()
         {
             vertOutBuffer.Dispose();
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+
+            defaultWearablesState = World!.CacheDefaultWearablesState();
         }
 
         protected override void Update(float t)
@@ -185,14 +193,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
 
             var facialFeatureTexture = defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(avatarShapeComponent.BodyShape);
-
             var attachPoint = avatarBase.transform;
 
             for (var i = 0; i < visibleWearables.Count; i++)
             {
                 IWearable resultWearable = visibleWearables[i];
 
-                GameObject instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint);
+                GameObject? instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint);
 
                 if (resultWearable.Type == WearableType.BodyShape)
                     bodyShape = instance;
@@ -224,6 +231,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
-            avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
+            avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget()
+            // We need default wearables finished so we can use facial features
+            && defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
     }
 }
