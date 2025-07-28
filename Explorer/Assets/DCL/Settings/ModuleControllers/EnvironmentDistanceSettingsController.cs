@@ -1,6 +1,7 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
+using System;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -23,13 +24,16 @@ namespace DCL.Settings.ModuleControllers
             landscapeData.OnDetailDistanceChanged += OnEnvironmentDistanceSettingsChangedFromOutside;
         }
 
-        private void SetEnvironmentDistanceSettings(float distance) =>
-            landscapeData.DetailDistance = distance;
-
         private void OnEnvironmentDistanceSettingsChangedFromOutside(float newDistance)
         {
             view.SliderView.Slider.value = newDistance;
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE, newDistance, save: true);
+        }
+
+        private void SetEnvironmentDistanceSettings(float distance)
+        {
+            landscapeData.DetailDistance = distance;
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE, distance, save: true);
         }
 
         public override void Dispose()

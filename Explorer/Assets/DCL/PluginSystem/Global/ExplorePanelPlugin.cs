@@ -51,6 +51,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Rendering.GPUInstancing;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
@@ -60,6 +61,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
+using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -123,6 +125,7 @@ namespace DCL.PluginSystem.Global
         private readonly INftNamesProvider nftNamesProvider;
 
         private readonly bool includeCameraReel;
+        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -191,7 +194,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
-            INftNamesProvider nftNamesProvider, bool isVoiceChatEnabled)
+            INftNamesProvider nftNamesProvider, bool isVoiceChatEnabled, GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -247,6 +250,7 @@ namespace DCL.PluginSystem.Global
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
             this.isVoiceChatEnabled = isVoiceChatEnabled;
+            this.roadsSettings = roadsSettings;
         }
 
         public void Dispose()
@@ -363,6 +367,7 @@ namespace DCL.PluginSystem.Global
                 realmPartitionSettings.Value,
                 videoPrioritizationSettings.Value,
                 landscapeData.Value,
+                roadsSettings,
                 qualitySettingsAsset.Value,
                 controlsSettingsAsset.Value,
                 systemMemoryCap,

@@ -32,6 +32,7 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 5242998342527483909
       - rid: 5242998342527483910
+      - rid: 1050560664644616286
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
@@ -64,6 +65,20 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
+    - rid: 1050560664644616286
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Roads Distance
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          sliderType: 0
+          minValue: 20
+          maxValue: 150
+          wholeNumbers: 1
+          defaultValue: 40
+        <Feature>k__BackingField: 11
     - rid: 1708279571579404288
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

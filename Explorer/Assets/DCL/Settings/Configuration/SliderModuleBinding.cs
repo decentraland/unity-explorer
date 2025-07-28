@@ -2,6 +2,7 @@
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -32,6 +33,7 @@ namespace DCL.Settings.Configuration
             AVATAR_SOUNDS_VOLUME_FEATURE,
             VOICE_CHAT_VOLUME_FEATURE,
             UPSCALER_FEATURE,
+            ROADS_DISTANCE_FEATURE,
             // add other features...
         }
 
@@ -40,6 +42,7 @@ namespace DCL.Settings.Configuration
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
@@ -60,6 +63,7 @@ namespace DCL.Settings.Configuration
                                                    {
                                                        SliderFeatures.SCENE_DISTANCE_FEATURE => new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset),
                                                        SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => new EnvironmentDistanceSettingsController(viewInstance, landscapeData),
+                                                       SliderFeatures.ROADS_DISTANCE_FEATURE => new RoadsDistanceSettingsController(viewInstance, roadsSettings),
                                                        SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE => new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                                                        SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                                                        SliderFeatures.MASTER_VOLUME_FEATURE => new MasterVolumeSettingsController(viewInstance, generalAudioMixer, worldVolumeMacBus),
@@ -69,7 +73,7 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer, isVoiceChatEnabled),
                                                        SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
                                                        // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(),
+                                                       _ => throw new ArgumentOutOfRangeException(nameof(Feature), Feature, $"Unsupported feature: {Feature}"),
                                                    };
 
             return controller;
