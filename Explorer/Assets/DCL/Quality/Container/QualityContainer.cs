@@ -8,11 +8,13 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Quality.Debug;
 using DCL.Quality.Runtime;
+using DCL.SDKComponents.LightSource;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 #nullable disable
 
@@ -37,6 +39,7 @@ namespace DCL.Quality
             var videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, CancellationToken.None);
             var lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, CancellationToken.None);
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, CancellationToken.None);
+            var lightSourceSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourceSettings, CancellationToken.None);
 
             var rendererFeaturesCache = new RendererFeaturesCache();
             IQualityLevelController controller = QualityRuntimeFactory.Create(
@@ -45,7 +48,8 @@ namespace DCL.Quality
                 realmPartitionSettings.Value,
                 videoPrioritizationSettings.Value,
                 lodSettingsAsset.Value,
-                landscapeData.Value);
+                landscapeData.Value,
+                lightSourceSettings.Value);
 
             return new QualityContainer
             {
@@ -117,6 +121,9 @@ namespace DCL.Quality
 
             [field: SerializeField]
             public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<LightSourceSettings> LightSourceSettings { get; private set; }
         }
     }
 }

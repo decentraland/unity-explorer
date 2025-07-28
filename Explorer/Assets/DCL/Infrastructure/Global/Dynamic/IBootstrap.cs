@@ -29,6 +29,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
+            bool hasDebugFlag,
             CancellationToken ct
         );
 

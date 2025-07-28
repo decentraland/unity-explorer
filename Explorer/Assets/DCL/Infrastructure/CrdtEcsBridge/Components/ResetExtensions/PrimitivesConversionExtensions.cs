@@ -48,22 +48,7 @@ namespace CrdtEcsBridge.Components.Conversion
                 a = protoColor.A,
             };
 
-        public static LightShadows PBLightSourceShadowToUnityLightShadow(PBLightSource.Types.ShadowType shadow)
-        {
-            switch (shadow)
-            {
-                case PBLightSource.Types.ShadowType.StNone: return LightShadows.None;
-                case PBLightSource.Types.ShadowType.StSoft: return LightShadows.Soft;
-                case PBLightSource.Types.ShadowType.StHard: return LightShadows.Hard;
-                default:
-                {
-                    ReportHub.LogError(ReportCategory.UNSPECIFIED, "Null shadow type provided, using None instead");
-                    return LightShadows.None;
-                }
-            }
-        }
-
-        public static float PBBrightnessInLumensToUnityCandels(float lumens) =>
+        public static float PBIntensityInLumensToUnityCandels(float lumens) =>
             lumens / (4f * Mathf.PI);
     }
 }

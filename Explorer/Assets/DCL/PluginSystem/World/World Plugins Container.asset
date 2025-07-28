@@ -182,7 +182,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
     - rid: 3414978285727645699
-      type: {class: LightSourcePlugin/LightSourceSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      type: {class: LightSourcePlugin/LightSourcePluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         LightSourcePrefab:
           m_AssetGUID: 7f09a2d0d9adc4e43b67879ab9cdf360
@@ -190,12 +190,59 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        LightSourceDefaultValues:
+        LightSourceSettings:
           m_AssetGUID: 52c856180dc5d6447b902f06d38f4161
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        SpotLightsLods:
+        - Distance: 0
+          IsCulled: 0
+          Shadows: 2
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 10
+          IsCulled: 0
+          Shadows: 2
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 20
+          IsCulled: 0
+          Shadows: 1
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 30
+          IsCulled: 0
+          Shadows: 0
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 40
+          IsCulled: 1
+          Shadows: 0
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        PointLightsLods:
+        - Distance: 0
+          IsCulled: 0
+          Shadows: 2
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 10
+          IsCulled: 0
+          Shadows: 1
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 20
+          IsCulled: 0
+          Shadows: 0
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 40
+          IsCulled: 1
+          Shadows: 0
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
