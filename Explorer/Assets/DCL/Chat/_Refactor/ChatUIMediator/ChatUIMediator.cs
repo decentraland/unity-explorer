@@ -77,7 +77,7 @@ namespace DCL.Chat.ChatMediator
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
 
             channelListPresenter.Hide();
-            messageFeedPresenter.TryActivate();
+            messageFeedPresenter.TryDeactivate();
             memberListPresenter.Hide();
             chatInputPresenter.ShowUnfocused();
 

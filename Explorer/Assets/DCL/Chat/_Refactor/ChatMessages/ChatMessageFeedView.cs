@@ -36,18 +36,10 @@ namespace DCL.Chat
         // View models are reused and set by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
 
-        // private void OnEnable()
-        // {
-        //     loopList.RefreshAllShownItem();
-        // }
-
-        public void Dispose()
-        {
-            fadeoutCts.SafeCancelAndDispose();
-        }
-
         public event Action<Vector2>? OnScrollPositionChanged;
+
         public event Action<string, ChatEntryView>? OnChatContextMenuRequested;
+
         public event Action<string, Vector2>? OnProfileContextMenuRequested;
 
         public event Action? OnScrolledToBottom;
@@ -59,6 +51,11 @@ namespace DCL.Chat
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        public void Dispose()
+        {
+            fadeoutCts.SafeCancelAndDispose();
         }
 
         internal bool IsItemVisible(int itemIndex)
@@ -209,11 +206,10 @@ namespace DCL.Chat
 
         private void OnScrollRectValueChanged(Vector2 scrollPosition)
         {
+            OnScrollPositionChanged?.Invoke(scrollPosition);
+
             if (IsAtBottom())
                 OnScrolledToBottom?.Invoke();
-
-            // Check if separator is visible
-            // This logic is complex and better suited for the presenter to handle based on data
         }
 
         private void StartChatEntriesFadeout()
