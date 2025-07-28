@@ -5,10 +5,10 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS;
@@ -16,7 +16,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -251,9 +250,9 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private void TryCreateAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
         {
-            AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
+            ContentDefinition[]? content = component.Model.Asset!.content;
 
-            foreach (AvatarAttachmentDTO.Content item in content ?? Array.Empty<AvatarAttachmentDTO.Content>())
+            foreach (ContentDefinition item in content ?? Array.Empty<ContentDefinition>())
             {
                 var audioType = item.file.ToAudioType();
 

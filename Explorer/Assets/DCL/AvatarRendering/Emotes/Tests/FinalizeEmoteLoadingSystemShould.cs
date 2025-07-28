@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
@@ -549,7 +550,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                             : new[] { AvatarAttachmentDTO.Representation.NewFakeRepresentation() },
                     },
                 },
-                content = Array.Empty<AvatarAttachmentDTO.Content>(),
+                content = Array.Empty<ContentDefinition>(),
             };
 
         public class MockStreamableDataWithURN : IStreamableRefCountData

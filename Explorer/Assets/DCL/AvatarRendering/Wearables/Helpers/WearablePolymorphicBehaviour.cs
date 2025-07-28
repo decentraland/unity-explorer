@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -214,7 +215,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             if (!string.IsNullOrEmpty(wearable.DTO.ContentDownloadUrl))
             {
-                foreach (AvatarAttachmentDTO.Content content in wearable.DTO.content)
+                foreach (ContentDefinition content in wearable.DTO.content)
                 {
                     if (content.hash == hash)
                     {
@@ -255,7 +256,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         ///     wearables or a Texture2DData promise for Facial Feature wearables.
         /// </summary>
         private static void CreateRawWearablePromise<T>(
-            AvatarAttachmentDTO.Content content,
+            ContentDefinition content,
             GetWearablesByPointersIntention intention,
             T wearable,
             int index,

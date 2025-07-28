@@ -1,4 +1,4 @@
-﻿using DCL.Infrastructure.ECS.StreamableLoading.AssetBundles.AssetBundleManifestHelper;
+﻿using DCL.Ipfs;
 using System;
 
 namespace DCL.AvatarRendering.Loading.DTO
@@ -13,19 +13,9 @@ namespace DCL.AvatarRendering.Loading.DTO
     /// <summary>
     /// Contains common serialization data for Wearables and Emotes
     /// </summary>
-    public abstract class AvatarAttachmentDTO : IApplyAssetBundleManifestResult
+    public abstract class AvatarAttachmentDTO : EntityDefinitionBase
     {
-        public string id;
-        public string type;
-        public string[] pointers;
-        public long timestamp;
-        public string version;
-        public Content[] content;
         public string? ContentDownloadUrl { get; protected set; }
-
-        public string assetBundleManifestVersion;
-        public bool hasSceneInPath;
-        public bool assetBundleManifestRequestFailed;
 
         public abstract MetadataBase Metadata { get; }
 
@@ -78,28 +68,10 @@ namespace DCL.AvatarRendering.Loading.DTO
         }
 
         [Serializable]
-        public struct Content
-        {
-            public string file;
-            public string hash;
-        }
-
-        [Serializable]
         public struct I18n
         {
             public string code;
             public string text;
-        }
-
-        public void ApplyAssetBundleManifestResult(string assetBundleManifestVersion, bool hasSceneIDInPath)
-        {
-            this.assetBundleManifestVersion  = assetBundleManifestVersion;
-            this.hasSceneInPath = hasSceneIDInPath;
-        }
-
-        public void ApplyFailedManifestResult()
-        {
-            assetBundleManifestRequestFailed = true;
         }
     }
 
