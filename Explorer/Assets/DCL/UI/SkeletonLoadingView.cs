@@ -29,8 +29,9 @@ namespace DCL.UI
             foreach (var bone in bones)
             {
                 bone.DOKill();
-                bone.localPosition = new Vector3(0f, bone.localPosition.y, bone.localPosition.z);
-                bone.DOLocalMoveX(bone.position.x + (bone.sizeDelta.x / 2f), tweenDuration)
+                bone.anchoredPosition = new Vector2(0f, bone.anchoredPosition.y);
+                bone.DOAnchorPos3DX(bone.sizeDelta.x, tweenDuration)
+                    .SetEase(Ease.Linear)
                     .SetLoops(-1, LoopType.Restart);
             }
         }
