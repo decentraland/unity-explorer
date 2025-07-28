@@ -115,6 +115,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33891647b85dc47319f39490bb24594d
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithCheck.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 35aa85d68d15435418848a03a2db81ec
     m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-Regular SDF.asset
     m_ReadOnly: 0
@@ -147,6 +152,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4362b43091b0d462db2641f8c866e9b9
     m_Address: Assets/DCL/UI/Profile/Names/Assets/ProfileNameEditor.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 497073cedbc8540c2b17104cfee96158
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/SubMenuButton.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -287,6 +297,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 79eb8e4682b784de1b1b18eaeba27edc
     m_Address: Assets/DCL/Backpack/Assets/BackpackEmoteGridItem.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a24101494a664ee59a8952e20b8f441
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ControlsContainer.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

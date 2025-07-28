@@ -518,12 +518,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <PlayerEntryView>k__BackingField:
-          m_AssetGUID: 1f35770447348416ab31f59bfd77ac2b
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -617,6 +611,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <FallbackTipsConfiguration>k__BackingField:
+          m_AssetGUID: dc412497f06504faeb6e30b848c0842d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <FallbackTipsTable>k__BackingField: SceneLoadingDefaultTips
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
@@ -662,6 +662,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        ControlsContainerPrefab:
+          m_AssetGUID: 7a24101494a664ee59a8952e20b8f441
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         GenericContextMenuSeparatorPrefab:
           m_AssetGUID: 52bc5c5fe83f743cdba8dab60b247e96
           m_SubObjectName: 
@@ -700,6 +706,18 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         GenericContextMenuTextPrefab:
           m_AssetGUID: 9c27490a499144f85bed4593943fe86a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuToggleWithCheckPrefab:
+          m_AssetGUID: 33891647b85dc47319f39490bb24594d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuSubMenuButtonPrefab:
+          m_AssetGUID: 497073cedbc8540c2b17104cfee96158
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

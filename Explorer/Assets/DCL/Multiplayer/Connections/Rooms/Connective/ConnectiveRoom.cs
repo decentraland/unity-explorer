@@ -12,9 +12,9 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
-using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
 using System;
 using System.Threading;
 using UnityEngine.Pool;
@@ -204,14 +204,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             var credentials = new ConnectionStringCredentials(connectionString);
 
-            (bool connectResult, RoomSelection roomSelection) = await ChangeRoomsAsync(roomPool, credentials, token);
+            (Result connectResult, RoomSelection roomSelection) = await ChangeRoomsAsync(roomPool, credentials, token);
 
-            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
+            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
-            if (connectResult == false)
+            if (connectResult.Success == false)
             {
-                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}, error: {connectResult.ErrorMessage}");
                 return roomSelection;
             }
 
@@ -236,13 +236,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         ///     This way the flow of events is preserved so room status will be propagated properly to the subscribers
         /// </summary>
         /// <returns>Previous room</returns>
-        private async UniTask<(bool connectResult, RoomSelection selection)> ChangeRoomsAsync<T>(IObjectPool<IRoom> roomsPool, T credentials, CancellationToken ct)
+        private async UniTask<(Result connectResult, RoomSelection selection)> ChangeRoomsAsync<T>(IObjectPool<IRoom> roomsPool, T credentials, CancellationToken ct)
             where T: ICredentials
         {
             IRoom? newRoom = roomsPool.Get();
             IRoom previous = room.assigned;
 
-            bool connectResult;
+            Result connectResult;
 
             try
             {
@@ -257,7 +257,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 throw;
             }
 
-            if (connectResult == false)
+            if (connectResult.Success == false)
             {
                 roomsPool.Release(newRoom);
                 return (connectResult, RoomSelection.PREVIOUS);

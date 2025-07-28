@@ -10,6 +10,7 @@ using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
 using System.Threading.Tasks;
+using RichTypes;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -46,8 +47,8 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public void SetLocalName(string name) { }
 
-        public Task<(bool success, string? errorMessage)> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
-            Task.FromResult((true, (string?)null));
+        public Task<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            Task.FromResult(Result.SuccessResult());
 
         public Task DisconnectAsync(CancellationToken cancellationToken) =>
             Task.CompletedTask;

@@ -13,6 +13,7 @@ using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
 using System.Threading.Tasks;
+using RichTypes;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -210,13 +211,13 @@ namespace DCL.Multiplayer.Connections.Rooms
             origin.SetLocalName(name);
         }
 
-        public async Task<(bool success, string? errorMessage)> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
+        public async Task<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} connect start {url} with token {authToken}");
 
-            var result = await origin.ConnectAsync(url, authToken, cancelToken, autoSubscribe);
+            Result result = await origin.ConnectAsync(url, authToken, cancelToken, autoSubscribe);
 
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)

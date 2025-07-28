@@ -74,7 +74,10 @@
       "version": "https://github.com/decentraland/client-sdk-unity.git#featfix/expose_disconnect_reason",
       "depth": 0,
       "source": "git",
-      "dependencies": {},
+      "dependencies": {
+        "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+        "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
+      },
       "hash": "e902186a0000c3ca7bc9b5c8609ad97cbac52c9a"
     },
     "com.decentraland.rpc-csharp": {
@@ -117,6 +120,13 @@
       "source": "registry",
       "dependencies": {},
       "url": "https://package.openupm.com"
+    },
+    "com.nickkhalow.richtypes": {
+      "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "ae15a0351cbc1f15d955024802c2eb8f9c70cb9e"
     },
     "com.olegknyazev.softmask": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask",

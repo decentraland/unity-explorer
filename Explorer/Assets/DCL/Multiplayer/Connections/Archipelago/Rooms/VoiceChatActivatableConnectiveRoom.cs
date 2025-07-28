@@ -16,6 +16,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
 using System;
 using System.ComponentModel;
 using System.Threading;
@@ -184,19 +185,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             // Create a fresh room instance each time to ensure clean state
             var freshRoom = CreateFreshRoom();
 
-            var connectResultTuple = await freshRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
-            bool connectResult = connectResultTuple.success;
+            Result connectResult = await freshRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
 
-            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
+            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
-            if (connectResult)
+            if (connectResult.Success)
             {
                 room.Assign(freshRoom, out IRoom _);
                 roomState.Set(IConnectiveRoom.State.Running);
             }
 
-            return connectResult;
+            return connectResult.Success;
         }
 
         private static IRoom CreateFreshRoom()
