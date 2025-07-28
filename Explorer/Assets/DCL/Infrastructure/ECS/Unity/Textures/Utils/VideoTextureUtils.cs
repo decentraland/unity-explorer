@@ -37,8 +37,6 @@ namespace ECS.Unity.Textures.Utils
             if (hasRenderer)
                 consumer.AddConsumerMeshRenderer(meshRenderer.MeshRenderer);
 
-            info.VideoRenderer = hasRenderer ? meshRenderer.MeshRenderer : null;
-
             return true;
         }
 
@@ -58,10 +56,7 @@ namespace ECS.Unity.Textures.Utils
         public struct VideoRenderingInfo
         {
             public Entity VideoPlayer;
-
             public Texture2DData? VideoTexture;
-
-            public Renderer? VideoRenderer;
         }
     }
 }
