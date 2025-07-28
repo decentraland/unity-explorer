@@ -261,7 +261,7 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService
             );
 
-            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig);
+            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, chatSettingsAsset.Value);
 
             pluginScope.Add(chatMainController);
 

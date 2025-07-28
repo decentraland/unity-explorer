@@ -1,5 +1,7 @@
-﻿using DCL.Chat.History;
+﻿using DCL.Audio;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using System;
 
@@ -14,12 +16,14 @@ namespace DCL.Chat.Services
         private readonly IChatHistory chatHistory;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatConfig chatConfig;
+        private readonly ChatSettingsAsset chatSettings;
 
-        public ChatHistoryService(IChatMessagesBus chatMessagesBus, IChatHistory chatHistory, ITextFormatter hyperlinkTextFormatter, ChatConfig chatConfig)
+        public ChatHistoryService(IChatMessagesBus chatMessagesBus, IChatHistory chatHistory, ITextFormatter hyperlinkTextFormatter, ChatConfig chatConfig, ChatSettingsAsset chatSettings)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.chatConfig = chatConfig;
+            this.chatSettings = chatSettings;
             this.chatHistory = chatHistory;
 
             chatMessagesBus.MessageAdded += OnChatMessageAdded;
@@ -32,9 +36,10 @@ namespace DCL.Chat.Services
 
         private void OnChatMessageAdded(ChatChannel.ChannelId channel, ChatChannel.ChatChannelType type, ChatMessage message)
         {
-            // TODO communities logic
-            // if (channelType == ChatChannel.ChatChannelType.COMMUNITY && !userCommunities.ContainsKey(channelId))
-            // return;
+            // Don't create a channel for foreign communities
+            // For our communities the channel should be created on join and on initialization
+            if (type == ChatChannel.ChatChannelType.COMMUNITY && !chatHistory.Channels.ContainsKey(channel))
+                return;
 
             if (!message.IsSystemMessage)
             {
@@ -44,28 +49,24 @@ namespace DCL.Chat.Services
             }
             else
                 chatHistory.AddMessage(channel, type, message);
+
+            HandleMessageAudioFeedback(message);
         }
 
         private void HandleMessageAudioFeedback(ChatMessage message)
         {
-            // TODO
-            // Move audio to the chat config
-            // play it here: it has nothing to do with the view
+            if (message.IsSentByOwnUser)
+                return;
 
-            // if (IsViewReady)
-            //     return;
-            //
-            // switch (chatSettings.chatAudioSettings)
-            // {
-            //     case ChatAudioSettings.NONE:
-            //         return;
-            //     case ChatAudioSettings.MENTIONS_ONLY when message.IsMention:
-            //     case ChatAudioSettings.ALL:
-            //         UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ?
-            //             viewInstance!.ChatReceiveMentionMessageAudio :
-            //             viewInstance!.ChatReceiveMessageAudio);
-            //         break;
-            // }
+            switch (chatSettings.chatAudioSettings)
+            {
+                case ChatAudioSettings.NONE:
+                    return;
+                case ChatAudioSettings.MENTIONS_ONLY when message.IsMention:
+                case ChatAudioSettings.ALL:
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ? chatConfig.ChatReceiveMentionMessageAudio : chatConfig.ChatReceiveMessageAudio);
+                    break;
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DG.Tweening;
 using UnityEngine;
 
@@ -66,6 +67,8 @@ namespace DCL.Chat
         [Tooltip("Message when status is being checked.")]
         public string CheckingUserStatusMessage = "Checking user status...";
 
-        // TODO add sounds here
+        [field: Header("Audio")]
+        [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
+        [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio { get; private set; }
     }
 }
