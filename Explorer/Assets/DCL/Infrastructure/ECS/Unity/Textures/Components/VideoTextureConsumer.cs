@@ -47,7 +47,7 @@ namespace ECS.Unity.Textures.Components
         }
 
         // All the renderers that use the video texture
-        private readonly List<MeshRenderer> renderers;
+        private readonly List<Renderer> renderers;
 
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,
@@ -60,13 +60,13 @@ namespace ECS.Unity.Textures.Components
         public VideoTextureConsumer(Texture2D texture)
         {
             Texture = new Texture2DData(texture);
-            renderers = new List<MeshRenderer>();
+            renderers = new List<Renderer>();
         }
 
         public VideoTextureConsumer(Texture2DData t2dd)
         {
             Texture = t2dd;
-            renderers = new List<MeshRenderer>();
+            renderers = new List<Renderer>();
         }
 
         public void Dispose()
@@ -80,7 +80,7 @@ namespace ECS.Unity.Textures.Components
         /// Stores a reference to a renderer that consumes the same texture.
         /// </summary>
         /// <param name="renderer">The renderer using the video texture.</param>
-        public void AddConsumerMeshRenderer(MeshRenderer renderer)
+        public void AddConsumer(Renderer renderer)
         {
             renderers.Add(renderer);
         }
@@ -89,7 +89,7 @@ namespace ECS.Unity.Textures.Components
         /// Removes a reference to a renderer that was consuming the same texture.
         /// </summary>
         /// <param name="renderer">The renderer to stop referencing to.</param>
-        public void RemoveConsumerMeshRenderer(MeshRenderer renderer)
+        public void RemoveConsumer(Renderer renderer)
         {
             renderers.Remove(renderer);
         }

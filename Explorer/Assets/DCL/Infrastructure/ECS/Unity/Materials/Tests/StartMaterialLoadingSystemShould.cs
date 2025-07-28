@@ -12,6 +12,7 @@ using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Materials.Systems;
+using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using NSubstitute;
@@ -63,7 +64,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial material = CreatePBRMaterial1();
 
-            Entity e = world.Create(material, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(material, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
 
             system.Update(0);
 
@@ -82,7 +83,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial basic = CreateBasicMaterial();
 
-            Entity e = world.Create(basic, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(basic, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
 
             system.Update(0);
 
@@ -110,7 +111,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial material1 = CreatePBRMaterial1();
 
-            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
 
             // First run -> create material component
 
@@ -142,7 +143,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial material1 = CreatePBRMaterial1();
 
-            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
 
             // First run -> create material component
 
@@ -173,7 +174,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial sdkComponent = CreateBasicMaterial();
 
-            Entity e = world.Create(sdkComponent, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(sdkComponent, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
 
             system.Update(0);
 
@@ -188,7 +189,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial sdkComponent = CreatePBRMaterial1();
 
-            Entity e = world.Create(sdkComponent, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(sdkComponent, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
 
             system.Update(0);
 
@@ -206,7 +207,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial material1 = CreatePBRMaterial1();
 
-            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY, new PrimitiveMeshRendererComponent());
 
             // First run -> create material component
 

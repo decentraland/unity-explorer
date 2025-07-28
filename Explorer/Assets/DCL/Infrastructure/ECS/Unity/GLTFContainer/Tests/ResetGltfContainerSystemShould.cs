@@ -5,7 +5,6 @@ using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -19,6 +18,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -83,6 +83,46 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(c.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
             entityCollidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
             ecsToCRDTWriter.Received().DeleteMessage<PBGltfContainerLoadingState>(new CRDTEntity(100));
+        }
+
+        [Test]
+        public void ReleaseContainerWhenEntityHasGltfNodeModifiers()
+        {
+            // Arrange
+            var originalMaterial = new Material(DefaultMaterial.Get());
+            var newMaterial = new Material(DefaultMaterial.Get());
+            var testGameObject = new GameObject("TestRenderer");
+            var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = newMaterial;
+
+            var rootGameObject = new GameObject();
+            var asset = GltfContainerAsset.Create(rootGameObject, null);
+            asset.Renderers.Add(meshRenderer);
+
+            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
+            world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+
+            var gltfContainerComponent = new GltfContainerComponent
+            {
+                Promise = promise,
+                State = LoadingState.Finished,
+            };
+
+            // Add the GltfNodeModifiers component to simulate an entity with node modifiers
+            var entity = world.Create(gltfContainerComponent, new CRDTEntity(100), new GltfNodeModifiers.Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>()));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(world.Has<GltfContainerComponent>(entity), Is.False);
+            Assert.That(gltfContainerComponent.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
+
+            // Cleanup
+            Object.DestroyImmediate(testGameObject);
+            Object.DestroyImmediate(rootGameObject);
+            Object.DestroyImmediate(originalMaterial);
+            Object.DestroyImmediate(newMaterial);
         }
     }
 }

@@ -7,7 +7,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -91,6 +90,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                 // It will be a signal to create a new promise
                 component.State = LoadingState.Unknown;
                 component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
+                component.RootGameObject = null;
+
                 eventsBuffer.Add(entity, component);
                 RemoveAnimationMarker(entity);
             }
