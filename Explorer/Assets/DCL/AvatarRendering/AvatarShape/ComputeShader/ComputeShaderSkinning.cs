@@ -147,7 +147,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture));
                 auxVertCounter += currentVertexCount;
 
-                if (avatarShapeComponent.IsBodyInvisible)
+                if (avatarShapeComponent.ShowOnlyWearables)
                 {
                     string name = meshData.OriginalMaterial.name;
 

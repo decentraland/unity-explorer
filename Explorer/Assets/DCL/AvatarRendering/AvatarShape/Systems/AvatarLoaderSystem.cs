@@ -97,7 +97,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
             avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
-            avatarShapeComponent.IsBodyInvisible = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
+            avatarShapeComponent.ShowOnlyWearables = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
             pbAvatarShape.IsDirty = false;
         }
 
