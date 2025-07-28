@@ -221,11 +221,11 @@ namespace ECS.Unity.Materials.Systems
             if (textureComponentValue.IsVideoTexture)
             {
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
-                
+
                 bool foundConsumerEntity = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out VideoTextureConsumer info);
                 if (!foundConsumerEntity) return false;
 
-                StreamableLoadingResult<Texture2DData> result = new StreamableLoadingResult<Texture2DData>(videoTextureConsumer.Texture);
+                StreamableLoadingResult<Texture2DData> result = new StreamableLoadingResult<Texture2DData>(info.Texture);
 
                 promise = Promise.CreateFinalized(intention, result);
             }

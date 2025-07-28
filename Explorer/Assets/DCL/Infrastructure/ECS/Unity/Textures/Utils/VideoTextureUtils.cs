@@ -34,12 +34,10 @@ namespace ECS.Unity.Textures.Utils
 
             if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
             {
-                info.VideoRenderer = primitiveMeshComponent.MeshRenderer;
                 consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
             }
             else if (world.TryGet(entity, out GltfNode gltfNode))
             {
-                info.VideoRenderer = gltfNode.Renderers.Count > 0 ? gltfNode.Renderers[0] : null;
                 foreach (var renderer in gltfNode.Renderers)
                     consumer.AddConsumer(renderer);
             }
