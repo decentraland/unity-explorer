@@ -801,8 +801,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 51.015, y: -14}
-  m_SizeDelta: {x: 18.03, y: 28}
+  m_AnchoredPosition: {x: 51.055, y: -14}
+  m_SizeDelta: {x: 18.11, y: 28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5791249021391754608
 CanvasRenderer:
@@ -2479,7 +2479,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 3549040772072870632}
+  <skeletonLoadingView>k__BackingField: {fileID: 0}
   <Image>k__BackingField: {fileID: 6296225220407222590}
+  <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 1338662176729295832}
+  rectTransform: {fileID: 6055750018662083017}
 --- !u!114 &8626749671046439750
 MonoBehaviour:
   m_ObjectHideFlags: 0
