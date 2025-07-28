@@ -10,7 +10,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -27,52 +26,32 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
     {
         private readonly WearablesDTOList defaultWearableDefinition;
         private readonly IWearableStorage wearableStorage;
-        private readonly IRealmData realm;
         private readonly GameObject emptyDefaultWearable;
 
         internal LoadDefaultWearablesSystem(World world,
             WearablesDTOList defaultWearableDefinition, GameObject emptyDefaultWearable,
-            IWearableStorage wearableStorage,
-            IRealmData realm) : base(world)
+            IWearableStorage wearableStorage) : base(world)
         {
             this.defaultWearableDefinition = defaultWearableDefinition;
             this.wearableStorage = wearableStorage;
-            this.realm = realm;
             this.emptyDefaultWearable = emptyDefaultWearable;
         }
 
         public override void Initialize()
         {
-            AddEmptyWearable();
-
-            World.Create(new DefaultWearablesComponent(new AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[BodyShape.COUNT]));
-        }
-
-        protected override void Update(float t)
-        {
-            TryInitializeDefaultWearablesQuery(World);
-            TryConsumeDefaultWearablesPromiseQuery(World);
-        }
-
-        [Query]
-        private void TryInitializeDefaultWearables(ref DefaultWearablesComponent state)
-        {
-            // We need to wait until the realm is configured so we can generate GetWearablesByPointersIntention for the assets
-            if (!realm.Configured) return;
-            if (state.ResolvedState != DefaultWearablesComponent.State.None) return;
-
-            state.ResolvedState = DefaultWearablesComponent.State.InProgress;
-
             var pointersRequest = new List<URN>[BodyShape.COUNT];
             using var consumedDefaultWearableDefinition = defaultWearableDefinition.ConsumeAttachments();
 
             for (var i = 0; i < BodyShape.VALUES.Count; i++)
                 pointersRequest[BodyShape.VALUES[i]] = new List<URN>(consumedDefaultWearableDefinition.Value.Count);
 
+            var state = new DefaultWearablesComponent(new AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[BodyShape.COUNT]);
+
             for (var i = 0; i < consumedDefaultWearableDefinition.Value.Count; i++)
             {
                 WearableDTO dto = consumedDefaultWearableDefinition.Value[i];
-                IWearable wearable = wearableStorage.AddDefaultWearableByDTO(dto);
+                IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
+
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
                 pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());
             }
@@ -85,39 +64,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                 state.PromisePerBodyShape[bodyShape] = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>
                    .Create(World, new GetWearablesByPointersIntention(pointers, bodyShape, Array.Empty<string>(), AssetSource.EMBEDDED, false), PartitionComponent.TOP_PRIORITY);
             }
-        }
 
-        [Query]
-        private void TryConsumeDefaultWearablesPromise(ref DefaultWearablesComponent defaultWearablesComponent)
-        {
-            if (defaultWearablesComponent.ResolvedState != DefaultWearablesComponent.State.InProgress)
-                return;
-
-            if (defaultWearablesComponent.ResolvedState == DefaultWearablesComponent.State.None)
-                return;
-
-            var allPromisesAreConsumed = true;
-            DefaultWearablesComponent.State finalState = DefaultWearablesComponent.State.Success;
-
-            for (var i = 0; i < defaultWearablesComponent.PromisePerBodyShape.Length; i++)
-            {
-                ref AssetPromise<WearablesResolution, GetWearablesByPointersIntention> promise = ref defaultWearablesComponent.PromisePerBodyShape[i];
-                if (promise.IsConsumed) continue;
-
-                if (promise.TryConsume(World, out StreamableLoadingResult<WearablesResolution> result))
-                {
-                    if (!result.Succeeded)
-                        finalState = DefaultWearablesComponent.State.Fail;
-                }
-                else allPromisesAreConsumed = false;
-            }
-
-            if (allPromisesAreConsumed)
-                defaultWearablesComponent.ResolvedState = finalState;
-        }
-
-        private void AddEmptyWearable()
-        {
             // Add empty default wearable
             var wearableDTO = new WearableDTO
             {
@@ -154,6 +101,39 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             // only game-objects here
             emptyWearable.AssignWearableAsset(wearableAsset, BodyShape.MALE);
             emptyWearable.AssignWearableAsset(wearableAsset, BodyShape.FEMALE);
+
+            World.Create(state);
+        }
+
+        protected override void Update(float t)
+        {
+            TryConsumeDefaultWearablesPromiseQuery(World);
+        }
+
+        [Query]
+        private void TryConsumeDefaultWearablesPromise(ref DefaultWearablesComponent defaultWearablesComponent)
+        {
+            if (defaultWearablesComponent.ResolvedState != DefaultWearablesComponent.State.InProgress)
+                return;
+
+            var allPromisesAreConsumed = true;
+            DefaultWearablesComponent.State finalState = DefaultWearablesComponent.State.Success;
+
+            for (var i = 0; i < defaultWearablesComponent.PromisePerBodyShape.Length; i++)
+            {
+                ref AssetPromise<WearablesResolution, GetWearablesByPointersIntention> promise = ref defaultWearablesComponent.PromisePerBodyShape[i];
+                if (promise.IsConsumed) continue;
+
+                if (promise.TryConsume(World, out StreamableLoadingResult<WearablesResolution> result))
+                {
+                    if (!result.Succeeded)
+                        finalState = DefaultWearablesComponent.State.Fail;
+                }
+                else allPromisesAreConsumed = false;
+            }
+
+            if (allPromisesAreConsumed)
+                defaultWearablesComponent.ResolvedState = finalState;
         }
     }
 }
