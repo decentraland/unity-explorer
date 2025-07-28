@@ -13,17 +13,5 @@ namespace DCL.UI.SceneDebugConsole.MessageBus
             SceneDebugConsoleLogEntry logEntry = SceneDebugConsoleLogEntry.FromUnityLog(logType, message, stackTrace);
             MessageAdded?.Invoke(logEntry);
         }
-
-        public void SendCommand(string command)
-        {
-            SceneDebugConsoleLogEntry logEntry = SceneDebugConsoleLogEntry.Command(command);
-            MessageAdded?.Invoke(logEntry);
-        }
-
-        public void SendCommandResponse(string response)
-        {
-            SceneDebugConsoleLogEntry logEntry = SceneDebugConsoleLogEntry.CommandResponse(response);
-            MessageAdded?.Invoke(logEntry);
-        }
     }
 }

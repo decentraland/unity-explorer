@@ -1,29 +1,21 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.UI.SceneDebugConsole.LogHistory
 {
     public class SceneDebugConsoleLogHistory
     {
         public readonly List<SceneDebugConsoleLogEntry> LogMessages = new();
-        private readonly int maxLogMessages;
+        public List<SceneDebugConsoleLogEntry> FilteredLogMessages { get; private set; } = new ();
 
         public event Action<SceneDebugConsoleLogEntry> LogMessageAdded;
 
-        // TODO: Connect max log messages to existent setting
-        public SceneDebugConsoleLogHistory(int maxLogMessages = 1000)
-        {
-            this.maxLogMessages = maxLogMessages;
-        }
+
+        public SceneDebugConsoleLogHistory() { }
 
         public void AddLogMessage(SceneDebugConsoleLogEntry logEntry)
         {
-            // Remove oldest entry if we've reached the limit
-            // if (LogMessages.Count >= maxLogMessages)
-            // {
-            //     LogMessages.RemoveAt(0);
-            // }
-
             LogMessages.Add(logEntry);
             LogMessageAdded?.Invoke(logEntry);
         }
@@ -32,5 +24,18 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         {
             LogMessages.Clear();
         }
+
+        public List<SceneDebugConsoleLogEntry> ApplyFilter(string targetText)
+        {
+            FilteredLogMessages.Clear();
+            FilteredLogMessages = LogMessages.FindAll(entry => entry.Message.Contains(targetText, StringComparison.OrdinalIgnoreCase));
+            // Debug.Log($"PRAVS - new filtered count for '{targetText}': { FilteredLogMessages.Count }");
+            return FilteredLogMessages;
+        }
+
+        // public IReadOnlyList<SceneDebugConsoleLogEntry> ApplyLogTypeFilter(LogMessageType targetLogtype)
+        // {
+        //
+        // }
     }
 }

@@ -12,8 +12,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         CommandResponse
     }
 
-    // TODO: Maybe better if it's a struct??
-    public class SceneDebugConsoleLogEntry
+    public struct SceneDebugConsoleLogEntry
     {
         /// <summary>
         /// The type of message (log, warning, error, etc.)
@@ -91,22 +90,6 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
             }
 
             return new SceneDebugConsoleLogEntry(type, message, stackTrace);
-        }
-
-        /// <summary>
-        /// Creates a new command message
-        /// </summary>
-        public static SceneDebugConsoleLogEntry Command(string commandText)
-        {
-            return new SceneDebugConsoleLogEntry(LogMessageType.Command, commandText);
-        }
-
-        /// <summary>
-        /// Creates a new command response message
-        /// </summary>
-        public static SceneDebugConsoleLogEntry CommandResponse(string responseText)
-        {
-            return new SceneDebugConsoleLogEntry(LogMessageType.CommandResponse, responseText);
         }
     }
 }

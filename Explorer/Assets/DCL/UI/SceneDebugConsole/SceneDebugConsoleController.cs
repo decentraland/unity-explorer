@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.SceneDebugConsole.MessageBus;
 using System;
@@ -13,6 +15,7 @@ namespace DCL.UI.SceneDebugConsole
     {
         private readonly SceneDebugConsoleLogEntryBus logEntriesBus;
         private readonly SceneDebugConsoleLogHistory logsHistory;
+        private readonly IInputBlock inputBlock;
 
         private UIDocument uiDocument;
         private VisualElement uiDocumentRoot;
@@ -21,12 +24,11 @@ namespace DCL.UI.SceneDebugConsole
         private Button clearButton;
         private bool isInputSelected;
 
-        public SceneDebugConsoleController(
-            SceneDebugConsoleLogEntryBus logEntriesBus,
-            SceneDebugConsoleLogHistory logsHistory)
+        public SceneDebugConsoleController(SceneDebugConsoleLogEntryBus logEntriesBus, IInputBlock inputBlock)
         {
+            this.inputBlock = inputBlock;
             this.logEntriesBus = logEntriesBus;
-            this.logsHistory = logsHistory;
+            this.logsHistory = new SceneDebugConsoleLogHistory();
 
             InstantiateRootGO();
         }
@@ -35,13 +37,14 @@ namespace DCL.UI.SceneDebugConsole
         private void InstantiateRootGO()
         {
             logEntriesBus.MessageAdded += OnEntryBusEntryAdded;
-            logsHistory.LogMessageAdded += OnLogsHistoryEntryAdded;
+            // logsHistory.LogMessageAdded += OnLogsHistoryEntryAdded;
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
 
             uiDocument = Object.Instantiate(Resources.Load<GameObject>("SceneDebugConsoleRootCanvas")).GetComponent<UIDocument>();
             uiDocumentRoot = uiDocument.rootVisualElement;
             uiDocumentRoot.visible = false;
 
+            // ListView
             var logEntryUXML = Resources.Load<VisualTreeAsset>("SceneDebugConsoleLogEntry");
             consoleListView = uiDocumentRoot.Q<ListView>();
             consoleListView.makeItem = () => logEntryUXML.Instantiate();
@@ -63,15 +66,42 @@ namespace DCL.UI.SceneDebugConsole
 
             scrollView = consoleListView.Q<ScrollView>();
 
+            // Clear button
             clearButton = uiDocumentRoot.Q<Button>(name: "ClearButton");
             clearButton.clicked += ClearLogEntries;
+
+            // Search filter
+            var textField = uiDocumentRoot.Q<TextField>(name: "FilterTextField");
+            // React to text changes while typing
+            textField.RegisterCallback<ChangeEvent<string>>((evt) =>
+            {
+                // Debug.Log($"Text changed from '{evt.previousValue}' to '{evt.newValue}'");
+
+                if (string.IsNullOrEmpty(evt.newValue))
+                    RemoveFilter();
+                else
+                    ApplyFilter(evt.newValue);
+            });
+
+            textField.RegisterCallback<FocusInEvent>((evt) => inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT));
+            textField.RegisterCallback<FocusOutEvent>((evt) => inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT));
+
+            // React to submission (Enter key press)
+            // textField.RegisterCallback<NavigationSubmitEvent>((evt) =>
+            // {
+            //     Debug.Log($"PRAVS - Text submitted: {textField.value}");
+            //     ProcessUserInput(textField.value);
+            //
+            //     // Stop event propagation to prevent other handlers
+            //     evt.StopPropagation();
+            // }, TrickleDown.TrickleDown);
         }
 
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
             logEntriesBus.MessageAdded -= OnEntryBusEntryAdded;
-            logsHistory.LogMessageAdded -= OnLogsHistoryEntryAdded;
+            // logsHistory.LogMessageAdded -= OnLogsHistoryEntryAdded;
             clearButton.clicked -= ClearLogEntries;
 
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
@@ -84,39 +114,26 @@ namespace DCL.UI.SceneDebugConsole
             RefreshListViewAsync(IsScrollAtBottom()).Forget();
         }
 
-        private void OnLogsHistoryEntryAdded(SceneDebugConsoleLogEntry logEntry)
-        {
-            Debug.Log($"PRAVS - Controller.OnLogsHistoryEntryAdded({logEntry.Message})");
-            RefreshListViewAsync(IsScrollAtBottom()).Forget();
-        }
-
-        /*private void DisableUnwantedInputs()
-        {
-            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
-        }
-
-        private void EnableUnwantedInputs()
-        {
-            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
-        }
-
-        private void OnViewInputBoxFocusChanged(bool hasFocus)
-        {
-            if (hasFocus)
-                DisableUnwantedInputs();
-            else
-                EnableUnwantedInputs();
-        }*/
-
         private void OnToggleConsoleShortcutPerformed(InputAction.CallbackContext obj)
         {
             uiDocumentRoot.visible = !uiDocumentRoot.visible;
         }
 
-        // TODO: IS THE LOG MESSAGEBUS + HISTORY NEEDED? CAN WE HAVE ONLY 1 COLLECTION ??
         private void OnEntryBusEntryAdded(SceneDebugConsoleLogEntry entry)
         {
             logsHistory.AddLogMessage(entry);
+            RefreshListViewAsync(IsScrollAtBottom()).Forget();
+        }
+
+        private void ApplyFilter(string targetText)
+        {
+            consoleListView.itemsSource = logsHistory.ApplyFilter(targetText);
+            RefreshListViewAsync(IsScrollAtBottom()).Forget();
+        }
+
+        private void RemoveFilter()
+        {
+            consoleListView.itemsSource = logsHistory.LogMessages;
         }
 
         // It can only be refreshed on the MAIN THREAD, otherwise it doesn't work and fails silently...
