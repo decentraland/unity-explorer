@@ -81,6 +81,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private ChatUserStateUpdater chatUserStateUpdater;
+        private ChatBusListenerService? chatBusListenerService;
         private readonly IEventBus eventBus = new EventBus();
         private readonly EventSubscriptionScope pluginScope = new ();
 
@@ -153,6 +154,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             chatStorage?.Dispose();
+            chatBusListenerService?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -172,7 +174,7 @@ namespace DCL.PluginSystem.Global
             }
 
             var viewInstance = mainUIView.ChatView2;
-            
+
             var chatUserStateEventBus = new ChatUserStateEventBus();
             var chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
@@ -183,13 +185,13 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 roomHub.ChatRoom(),
                 friendsServiceProxy);
-            
+
             var chatMemberService = new ChatMemberListService(roomHub,
                 profileCache,
                 friendsServiceProxy);
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
-            
+
             // Ignore buttons that would lead to the conflicting state
             var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
                 viewInstance.TitlebarView.CloseChatButton.transform,
@@ -208,7 +210,7 @@ namespace DCL.PluginSystem.Global
                 new ChatUserStateBridge(chatUserStateEventBus, eventBus, currentChannelService);
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
-            
+
             var useCaseFactory = new CommandRegistry(
                 chatConfig,
                 chatSettingsAsset.Value,
@@ -254,6 +256,8 @@ namespace DCL.PluginSystem.Global
                 chatContextMenuService,
                 chatClickDetectionService
             );
+
+            chatBusListenerService = new ChatBusListenerService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig);
 
             pluginScope.Add(chatMainController);
 
