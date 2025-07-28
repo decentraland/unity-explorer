@@ -1,4 +1,5 @@
 using System;
+using DCL.Chat.ChatViewModels;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +14,7 @@ public class ChatMemberTitlebarView : MonoBehaviour
     [SerializeField] private Button closeButton;
     [SerializeField] private Button backButton;
     [SerializeField] private TMP_Text membersCountText;
+    [SerializeField] private TMP_Text channelNameText;
 
     private void Awake()
     {
@@ -23,4 +25,12 @@ public class ChatMemberTitlebarView : MonoBehaviour
     public void SetMemberCount(string count) => membersCountText.text = count;
 
     public void Activate(bool activate) => gameObject.SetActive(activate);
+
+    public void SetChannelName(ChatTitlebarViewModel model)
+    {
+        if (channelNameText != null)
+        {
+            channelNameText.SetText(model.ViewMode == TitlebarViewMode.Nearby ? "Nearby  -" : $"{model.Username}  -");
+        }
+    }
 }

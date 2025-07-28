@@ -78,6 +78,13 @@ namespace DCL.Chat
             this.chatMemberListService = chatMemberListService;
             this.chatContextMenuService = chatContextMenuService;
             this.chatClickDetectionService = chatClickDetectionService;
+
+            this.chatMessagesBus.MessageAdded += OnRawMessageReceived;
+        }
+
+        private void OnRawMessageReceived(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage chatMessage)
+        {
+            commandRegistry.ProcessAndAddMessage.AddRawMessage(channelId, channelType, chatMessage);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -97,6 +104,7 @@ namespace DCL.Chat
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,
+                currentChannelService,
                 chatMemberListService,
                 chatContextMenuService,
                 chatClickDetectionService,
@@ -105,9 +113,11 @@ namespace DCL.Chat
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
+                chatMessagesBus,
                 chatEventBus,
                 userStateEventBus,
                 chatHistory,
+                currentChannelService,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.LeaveChannel,
@@ -209,6 +219,8 @@ namespace DCL.Chat
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
             }
+
+            chatMessagesBus.MessageAdded -= OnRawMessageReceived;
 
             base.Dispose();
             initCts?.Cancel();
