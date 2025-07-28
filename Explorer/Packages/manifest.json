@@ -7,9 +7,9 @@
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
     "com.brunomikoski.animationsequencer": "0.5.4",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
-    "com.decentraland.filebrowserpro": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
+    "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
     "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git",
+    "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
     "com.decentraland.rpc-csharp": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
     "com.decentraland.unity-shared-dependencies": "git@github.com:decentraland/unity-shared-dependencies.git#scene_shader_indirect_tiling",
     "com.gurbu.gpui-pro": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -66,7 +66,8 @@
     "com.unity.modules.unitywebrequesttexture": "1.0.0",
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
-    "com.unity.modules.wind": "1.0.0"
+    "com.unity.modules.wind": "1.0.0",
+    "com.decentraland.filebrowserpro": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro"
   },
   "scopedRegistries": [
     {

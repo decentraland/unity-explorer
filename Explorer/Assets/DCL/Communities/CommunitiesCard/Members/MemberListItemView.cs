@@ -107,7 +107,11 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             addFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.ALL);
             acceptFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.ALL);
-            removeFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL);
+
+            // Disable this button as part of the UI/UX decision to reduce the entry clutter, highlighting only non-friends. The old condition was:
+            // !isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL
+            removeFriendButton.gameObject.SetActive(false);
+
             cancelFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.ALL);
             unblockFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.ALL);
         }
