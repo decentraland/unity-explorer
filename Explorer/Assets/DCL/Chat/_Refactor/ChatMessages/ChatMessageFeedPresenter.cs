@@ -77,7 +77,8 @@ public class ChatMessageFeedPresenter : IDisposable
         //view.UpdateMessage(evt.ViewModel);
     }
 
-    private void OnMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage message)
+    private void OnMessageAdded(ChatChannel.ChannelId channelId,
+        ChatChannel.ChatChannelType channelType, ChatMessage message)
     {
         if (!currentChannelService.CurrentChannelId.Equals(channelId))
             return;

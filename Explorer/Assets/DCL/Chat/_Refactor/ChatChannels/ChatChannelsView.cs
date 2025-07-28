@@ -87,7 +87,10 @@ namespace DCL.Chat
         /// <param name="unreadMessages">The amount of unread messages in the conversation.</param>
         public void SetUnreadMessages(ChatChannel.ChannelId destinationChannel, int unreadMessages)
         {
-            items[destinationChannel].SetUnreadMessages(unreadMessages);
+            if (items.TryGetValue(destinationChannel, out var item))
+            {
+                item.SetUnreadMessages(unreadMessages);
+            }
         }
 
         /// <summary>

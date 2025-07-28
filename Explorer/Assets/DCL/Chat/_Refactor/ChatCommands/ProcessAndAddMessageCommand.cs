@@ -72,5 +72,23 @@ namespace DCL.Chat.ChatUseCases
                 ViewModel = viewModel
             });
         }
+
+        public void AddRawMessage(ChatChannel.ChannelId channelId,
+            ChatChannel.ChatChannelType? channelType,
+            ChatMessage rawMessage)
+        {
+            ChatMessage messageToAdd;
+            if (!rawMessage.IsSystemMessage)
+            {
+                string formattedText = hyperlinkFormatter.FormatText(rawMessage.Message);
+                messageToAdd = ChatMessage.CopyWithNewMessage(formattedText, rawMessage);
+            }
+            else
+            {
+                messageToAdd = rawMessage;
+            }
+
+            chatHistory.AddMessage(channelId, channelType, messageToAdd);
+        }
     }
 }
