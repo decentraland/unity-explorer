@@ -26,12 +26,13 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         public void InitializeMaterial(Entity entity, ref InitializeVideoPlayerMaterialRequest request)
         {
-            if (!TryHandleRequest<InitializeVideoPlayerMaterialRequest>(entity, request.MediaPlayerComponentEntity, out Vector2 texScale)) return;
+            if (!TryHandleRequest(request.MediaPlayerComponentEntity, out Vector2 texScale)) return;
             request.Consumer.SetTextureScale(texScale);
+            World.Destroy(entity);
         }
 
 
-        private bool TryHandleRequest<T>(Entity entity, in Entity mediaPlayerComponentEntity, out Vector2 texScale)
+        private bool TryHandleRequest(in Entity mediaPlayerComponentEntity, out Vector2 texScale)
         {
             texScale = Vector2.zero;
 
@@ -50,8 +51,6 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             texScale = mediaPlayerComponent.MediaPlayer.GetTexureScale;
-
-            World.Destroy(entity);
 
             return true;
         }
