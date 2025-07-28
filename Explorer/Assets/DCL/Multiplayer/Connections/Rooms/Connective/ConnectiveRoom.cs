@@ -249,7 +249,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 // Don't disconnect the current room as it can be used instead of the new one according to the SelectValidRoom delegate
                 // Subscribers will miss connection callback
                 var connectResultTuple = await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
-                connectResult = connectResultTuple.success;
+                connectResult = connectResultTuple;
             }
             catch (Exception)
             {

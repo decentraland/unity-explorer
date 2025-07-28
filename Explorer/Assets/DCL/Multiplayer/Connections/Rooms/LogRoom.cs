@@ -221,7 +221,7 @@ namespace DCL.Multiplayer.Connections.Rooms
 
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} connect start {url} with token {authToken} with result {result.success}");
+               .Log($"{PREFIX} connect start {url} with token {authToken} with result {result.Success}");
 
             return result;
         }

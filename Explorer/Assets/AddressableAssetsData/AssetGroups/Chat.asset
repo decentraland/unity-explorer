@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f35770447348416ab31f59bfd77ac2b
+    m_Address: PlayerEntry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 51646f2adc3264ba7bf9b4f90febbd22
     m_Address: EmojiPanelConfig
     m_ReadOnly: 0
