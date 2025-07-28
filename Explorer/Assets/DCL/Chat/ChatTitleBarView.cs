@@ -261,22 +261,22 @@ namespace DCL.Chat
         private void InitializeChannelContextMenu()
         {
             ToggleGroup toggleGroup = gameObject.AddComponent<ToggleGroup>();
-                notificationPingToggles = new ToggleWithCheckContextMenuControlSettings[3];
-                ButtonContextMenuControlSettings deleteChatHistoryButton = new ButtonContextMenuControlSettings(chatContextMenuSettings.DeleteChatHistoryText, chatContextMenuSettings.DeleteChatHistorySprite, OnDeleteChatHistoryButtonClicked);
-                SubMenuContextMenuButtonSettings subMenuSettings = new SubMenuContextMenuButtonSettings(
-                    chatContextMenuSettings.NotificationPingText,
-                    chatContextMenuSettings.NotificationPingSprite,
-                    new GenericContextMenu(chatContextMenuSettings.ContextMenuWidth,
-                                                 verticalLayoutPadding: chatContextMenuSettings.VerticalPadding,
-                                                 elementsSpacing: chatContextMenuSettings.ElementsSpacing,
-                                                 offsetFromTarget: new Vector2(0f, -12f))
-                                            .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] = new ToggleWithCheckContextMenuControlSettings("All Messages", x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
-                                            .AddControl(notificationPingToggles[(int)ChatAudioSettings.MENTIONS_ONLY] = new ToggleWithCheckContextMenuControlSettings("Mentions Only", x => OnNotificationPingOptionSelected(ChatAudioSettings.MENTIONS_ONLY), toggleGroup))
-                                            .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] = new ToggleWithCheckContextMenuControlSettings("None", x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
+            notificationPingToggles = new ToggleWithCheckContextMenuControlSettings[3];
+            ButtonContextMenuControlSettings deleteChatHistoryButton = new ButtonContextMenuControlSettings(chatContextMenuSettings.DeleteChatHistoryText, chatContextMenuSettings.DeleteChatHistorySprite, OnDeleteChatHistoryButtonClicked);
+            SubMenuContextMenuButtonSettings subMenuSettings = new SubMenuContextMenuButtonSettings(
+                chatContextMenuSettings.NotificationPingText,
+                chatContextMenuSettings.NotificationPingSprite,
+                new GenericContextMenu(chatContextMenuSettings.ContextMenuWidth,
+                                             verticalLayoutPadding: chatContextMenuSettings.VerticalPadding,
+                                             elementsSpacing: chatContextMenuSettings.ElementsSpacing,
+                                             offsetFromTarget: chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget)
+                                        .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] = new ToggleWithCheckContextMenuControlSettings("All Messages", x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
+                                        .AddControl(notificationPingToggles[(int)ChatAudioSettings.MENTIONS_ONLY] = new ToggleWithCheckContextMenuControlSettings("Mentions Only", x => OnNotificationPingOptionSelected(ChatAudioSettings.MENTIONS_ONLY), toggleGroup))
+                                        .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] = new ToggleWithCheckContextMenuControlSettings("None", x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
 
-                contextMenuInstance = new UI.GenericContextMenuParameter.GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
-                   .AddControl(subMenuSettings)
-                   .AddControl(deleteChatHistoryButton);
+            contextMenuInstance = new UI.GenericContextMenuParameter.GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
+               .AddControl(subMenuSettings)
+               .AddControl(deleteChatHistoryButton);
         }
     }
 }

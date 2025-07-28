@@ -12,6 +12,7 @@ namespace DCL.Chat
         [field: SerializeField] public int ElementsSpacing { get; private set; } = 5;
         [field: SerializeField] public Vector2 OffsetFromTarget { get; private set; }
         [field: SerializeField] public RectOffset VerticalPadding { get; private set; } = null!;
+        [field: SerializeField] public Vector2 NotificationPingSubMenuOffsetFromTarget { get; private set; }
 
         [field: SerializeField] public Sprite DeleteChatHistorySprite { get; private set; } = null!;
         [field: SerializeField] public string DeleteChatHistoryText { get; private set; } = "Delete Chat History";
