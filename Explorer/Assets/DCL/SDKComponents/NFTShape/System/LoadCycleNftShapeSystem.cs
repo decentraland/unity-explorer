@@ -90,7 +90,7 @@ namespace DCL.SDKComponents.NFTShape.System
                 World.Add(entity, pbVideo, vtc);
             }
 
-            World.Add(entity, new InitializeNftVideoMaterialRequest { Renderer = nftRenderer });
+            World.Create(new InitializeNftVideoMaterialRequest { Renderer = nftRenderer, MediaPlayerComponentEntity = entity });
         }
     }
 }
