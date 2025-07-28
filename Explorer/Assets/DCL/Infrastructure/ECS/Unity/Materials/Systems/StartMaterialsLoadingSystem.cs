@@ -196,9 +196,9 @@ namespace ECS.Unity.Materials.Systems
             {
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
-                bool hasConsumer = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out var info);
+                bool hasConsumer = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out VideoTextureConsumer videoTextureConsumer);
                 StreamableLoadingResult<Texture2DData> result = hasConsumer
-                    ? new StreamableLoadingResult<Texture2DData>(info.VideoTexture!)
+                    ? new StreamableLoadingResult<Texture2DData>(videoTextureConsumer.Texture)
                     : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponentValue.VideoPlayerEntity, $"Entity {textureComponentValue.VideoPlayerEntity} not found!. VideoTexture will not be created.")));
 
                 promise = Promise.CreateFinalized(intention, result);

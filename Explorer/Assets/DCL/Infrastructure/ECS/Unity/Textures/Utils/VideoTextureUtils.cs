@@ -17,26 +17,26 @@ namespace ECS.Unity.Textures.Utils
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IObjectPool<Texture2D> videoTexturesPool,
             World world,
-            out VideoRenderingInfo info)
+            out VideoTextureConsumer videoTextureConsumer)
         {
-            info = default(VideoRenderingInfo);
+            videoTextureConsumer = default(VideoTextureConsumer);
 
-            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out info.VideoPlayer) || !world.IsAlive(info.VideoPlayer))
+            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out Entity videoEntity) || !world.IsAlive(videoEntity))
                 return false;
 
-            ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(info.VideoPlayer, out bool hasConsumer);
+            ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(videoEntity, out bool hasConsumer);
 
             if (!hasConsumer)
-                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), info.VideoPlayer);
+                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), videoEntity);
 
-            info.VideoTexture = consumer.Texture;
-            info.VideoTexture.AddReference();
+            consumer.Texture.AddReference();
 
             ref PrimitiveMeshRendererComponent meshRenderer = ref world.TryGetRef<PrimitiveMeshRendererComponent>(entity, out bool hasRenderer);
 
             if (hasRenderer)
                 consumer.AddConsumerMeshRenderer(meshRenderer.MeshRenderer);
 
+            videoTextureConsumer = consumer;
             return true;
         }
 
@@ -53,10 +53,5 @@ namespace ECS.Unity.Textures.Utils
             return ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
         }
 
-        public struct VideoRenderingInfo
-        {
-            public Entity VideoPlayer;
-            public Texture2DData? VideoTexture;
-        }
     }
 }
