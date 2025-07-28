@@ -24,7 +24,7 @@ namespace DCL.Chat
         {
             base.Start();
             removeButton.gameObject.SetActive(true);
-            connectionStatusIndicatorContainer.gameObject.SetActive(true);
+            connectionStatusIndicatorContainer.SetActive(true);
         }
     }
 }

@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatUseCases.DCL.Chat.ChatUseCases;
-using DCL.Chat.ChatViewModels;
 using DCL.Chat.ChatViewModels.ChannelViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
@@ -13,7 +12,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-
+using UnityEngine;
 using Utility;
 
 public class CreateChannelViewModelCommand
@@ -23,18 +22,22 @@ public class CreateChannelViewModelCommand
     private readonly ChatConfig chatConfig;
     private readonly ProfileRepositoryWrapper profileRepository;
     private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+    private readonly GetUserChatStatusCommand getUserChatStatusCommand;
 
     public CreateChannelViewModelCommand(
         IEventBus eventBus,
         ICommunityDataService communityDataService,
         ChatConfig chatConfig,
         ProfileRepositoryWrapper profileRepository,
+        GetUserChatStatusCommand getUserChatStatusCommand,
         GetCommunityThumbnailCommand getCommunityThumbnailCommand)
     {
         this.eventBus = eventBus;
         this.communityDataService = communityDataService;
         this.chatConfig = chatConfig;
         this.profileRepository = profileRepository;
+        this.getUserChatStatusCommand = getUserChatStatusCommand;
+        this.getProfileThumbnailCommand = getProfileThumbnailCommand;
         this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
     }
 
@@ -62,6 +65,7 @@ public class CreateChannelViewModelCommand
     {
         var viewModel = new UserChannelViewModel(channel.Id);
         FetchProfileAndUpdateAsync(viewModel, ct).Forget();
+        FetchInitialStatusAndUpdateAsync(viewModel, ct).Forget();
         return viewModel;
     }
 
@@ -72,6 +76,7 @@ public class CreateChannelViewModelCommand
         {
             viewModel.DisplayName = communityData.name;
             viewModel.ImageUrl = communityData.thumbnails?.raw;
+
             FetchCommunityThumbnailAndUpdateAsync(viewModel, ct).Forget();
         }
 
@@ -96,19 +101,45 @@ public class CreateChannelViewModelCommand
     private async UniTaskVoid FetchProfileAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
     {
         var profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct);
-        if (ct.IsCancellationRequested || profile == null) return;
 
-        viewModel.DisplayName = profile.ValidatedName;
-        viewModel.ProfileColor = profile.UserNameColor;
-        viewModel.HasClaimedName = profile.HasClaimedName;
-        viewModel.IsOnline = true;
-        viewModel.ImageUrl = profile.Avatar.FaceSnapshotUrl;
+        if (ct.IsCancellationRequested) return;
+
+        if (profile != null)
+        {
+            viewModel.DisplayName = profile.ValidatedName;
+            viewModel.ProfileColor = profile.UserNameColor;
+            viewModel.HasClaimedName = profile.HasClaimedName;
+            viewModel.ImageUrl = profile.Avatar.FaceSnapshotUrl;
+
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+        }
+        else
+        {
+            string userId = viewModel.Id.Id;
+            viewModel.DisplayName = $"{userId.Substring(0, 6)}...{userId.Substring(userId.Length - 4)}";
+            viewModel.ProfileColor = Color.gray;
+            viewModel.HasClaimedName = false;
+            viewModel.ImageUrl = null;
+            viewModel.ProfilePicture = chatConfig.DefaultProfileThumbnail;
+        }
 
         eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
         {
             ViewModel = viewModel
         });
+    }
 
-        await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+    private async UniTaskVoid FetchInitialStatusAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
+    {
+        var status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
+
+        if (ct.IsCancellationRequested) return;
+
+        viewModel.IsOnline = status == ChatUserStateUpdater.ChatUserState.CONNECTED;
+
+        eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+        {
+            ViewModel = viewModel
+        });
     }
 }

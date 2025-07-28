@@ -55,7 +55,7 @@ public class ChatTitlebarPresenter : IDisposable
         view.OnContextMenuRequested += OnChatContextMenuRequested;
         view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
 
-        chatMemberListService.OnMemberListUpdated += OnMemberListUpdated;
+        chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
     }
@@ -64,7 +64,7 @@ public class ChatTitlebarPresenter : IDisposable
     {
         view.OnCloseRequested -= OnCloseRequested;
         view.OnMembersToggleRequested -= OnMembersToggleRequested;
-        chatMemberListService.OnMemberListUpdated -= OnMemberListUpdated;
+        chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
 
         lifeCts.SafeCancelAndDispose();
         profileLoadCts.SafeCancelAndDispose();
@@ -84,7 +84,7 @@ public class ChatTitlebarPresenter : IDisposable
     {
         var options = new ChatOptionsContextMenuData
         {
-            DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon,
+            DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon
         };
 
         data.contextMenuData = options;
@@ -92,12 +92,12 @@ public class ChatTitlebarPresenter : IDisposable
         chatContextMenuService.ShowChannelOptionsAsync(data).Forget();
     }
 
-    private void OnMemberListUpdated(IReadOnlyList<ChatMemberListView.MemberData> memberList)
+    private void OnMemberCountUpdated(int memberCount)
     {
-        var memberCount = memberList.Count.ToString();
+        string memberCountText = memberCount.ToString();
 
-        view.defaultTitlebarView.SetMemberCount(memberCount);
-        view.membersTitlebarView.SetMemberCount(memberCount);
+        view.defaultTitlebarView.SetMemberCount(memberCountText);
+        view.membersTitlebarView.SetMemberCount(memberCountText);
     }
 
     private void OnCloseRequested() =>
@@ -116,16 +116,23 @@ public class ChatTitlebarPresenter : IDisposable
 
         try
         {
-            var loadingViewModel = ChatTitlebarViewModel
-               .CreateLoading(channel.ChannelType == ChatChannel.ChatChannelType.NEARBY ? Mode.Nearby : Mode.DirectMessage);
+            var loadingViewModel = ChatTitlebarViewModel.CreateLoading(channel.ChannelType switch
+            {
+                ChatChannel.ChatChannelType.NEARBY => TitlebarViewMode.Nearby,
+                ChatChannel.ChatChannelType.USER => TitlebarViewMode.DirectMessage,
+                ChatChannel.ChatChannelType.COMMUNITY => TitlebarViewMode.Community,
+                _ => TitlebarViewMode.Nearby
+            });
 
             view.defaultTitlebarView.Setup(loadingViewModel);
 
             ChatTitlebarViewModel? finalViewModel = await getTitlebarViewModel.ExecuteAsync(channel, ct);
+            
             if (ct.IsCancellationRequested) return;
 
-            view.defaultTitlebarView.Setup(finalViewModel);
             currentViewModel = finalViewModel;
+            view.defaultTitlebarView.Setup(finalViewModel);
+            
         }
         catch (OperationCanceledException) { }
         catch (Exception e)

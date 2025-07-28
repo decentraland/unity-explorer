@@ -31,6 +31,7 @@ namespace DCL.Chat
         private readonly ChatMemberListService chatMemberListService;
         private readonly ICurrentChannelService currentChannelService;
         private readonly ChatUserStateBridge chatUserStateBridge;
+        private readonly IChatUserStateEventBus userStateEventBus;
         private readonly ChatConfig chatConfig;
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
@@ -44,7 +45,7 @@ namespace DCL.Chat
         public event Action? PointerEntered;
         public event Action? PointerExited;
 
-        public bool IsVisibleInSharedSpace => chatStateMachine!.IsFocused;
+        public bool IsVisibleInSharedSpace => chatStateMachine != null && chatStateMachine!.IsFocused;
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig chatConfig,
@@ -66,6 +67,7 @@ namespace DCL.Chat
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
             this.chatMessagesBus = chatMessagesBus;
+            this.userStateEventBus = userStateEventBus;
             this.chatEventBus = chatEventBus;
             this.chatUserStateBridge = chatUserStateBridge;
             this.currentChannelService = currentChannelService;
@@ -104,6 +106,7 @@ namespace DCL.Chat
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
                 chatEventBus,
+                userStateEventBus,
                 chatHistory,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,

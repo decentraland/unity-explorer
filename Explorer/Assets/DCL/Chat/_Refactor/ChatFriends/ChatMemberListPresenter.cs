@@ -43,8 +43,10 @@ public class ChatMemberListPresenter : IDisposable
     {
         view.Show();
         lifeCts = new CancellationTokenSource();
+        memberListService.StartLiveMemberUpdates();
         memberListService.OnMemberListUpdated += HandleLiveUpdate;
-        memberListService.RequestRefresh();
+        memberListService.RequestInitialMemberListAsync().Forget();
+        
     }
 
     private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)
@@ -65,6 +67,7 @@ public class ChatMemberListPresenter : IDisposable
     public void Hide()
     {
         view.Hide();
+        memberListService.StopLiveMemberUpdates();
         memberListService.OnMemberListUpdated -= HandleLiveUpdate;
 
         currentMembers.Clear();

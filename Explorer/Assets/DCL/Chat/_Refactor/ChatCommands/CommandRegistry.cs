@@ -34,6 +34,7 @@ namespace DCL.Chat.ChatUseCases
         public DeleteChatHistoryCommand DeleteChatHistory { get; }
         public GetChannelMembersCommand GetChannelMembersCommand { get; }
         public GetParticipantProfilesCommand GetParticipantProfilesCommand { get; }
+        public GetUserChatStatusCommand GetUserChatStatusCommand { get; }
 
         public CommandRegistry(
             ChatConfig chatConfig,
@@ -89,12 +90,17 @@ namespace DCL.Chat.ChatUseCases
             GetChannelMembersCommand = new GetChannelMembersCommand(eventBus,
                 chatMemberListService, chatConfig);
 
+            GetUserChatStatusCommand = new GetUserChatStatusCommand(chatUserStateUpdater,
+                eventBus);
+
             OpenPrivateConversation = new OpenPrivateConversationCommand(eventBus,
                 chatHistory,
                 SelectChannel);
 
             GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,
+                communityDataService,
                 profileRepositoryWrapper,
+                GetCommunityThumbnail,
                 chatConfig);
 
             SendMessage = new SendMessageCommand(
@@ -112,6 +118,7 @@ namespace DCL.Chat.ChatUseCases
                 communityDataService,
                 chatConfig,
                 profileRepositoryWrapper,
+                GetUserChatStatusCommand,
                 GetCommunityThumbnail);
         }
 

@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System;
+using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.History;
 using System.Threading;
@@ -14,6 +15,8 @@ namespace DCL.Chat.Services
 
         Result<ChatUserStateUpdater.ChatUserState> InputState { get; }
 
+        event Action<ChatChannel?>? OnChannelChanged;
+        
         void SetCurrentChannel(ChatChannel newChannel);
 
         UniTask<Result<ChatUserStateUpdater.ChatUserState>> ResolveInputStateAsync(CancellationToken ct);
@@ -21,6 +24,7 @@ namespace DCL.Chat.Services
 
     public class CurrentChannelService : ICurrentChannelService
     {
+        public event Action<ChatChannel?>? OnChannelChanged;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
 
         public CurrentChannelService(GetUserChatStatusCommand getUserChatStatusCommand)
@@ -35,7 +39,12 @@ namespace DCL.Chat.Services
 
         public void SetCurrentChannel(ChatChannel newChannel)
         {
+            if (CurrentChannel == newChannel)
+                return;
+
             CurrentChannel = newChannel;
+
+            OnChannelChanged?.Invoke(CurrentChannel);
         }
 
         public async UniTask<Result<ChatUserStateUpdater.ChatUserState>> ResolveInputStateAsync(CancellationToken ct)
@@ -63,7 +72,7 @@ namespace DCL.Chat.Services
 
         public void Clear()
         {
-            CurrentChannel = null;
+            SetCurrentChannel(null);
         }
     }
 }
