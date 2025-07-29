@@ -84,11 +84,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void CloseListenersSection()
         {
             view.CommunityVoiceChatSearchView.gameObject.SetActive(false);
+            view.CommunityVoiceChatInCallView.gameObject.SetActive(true);
         }
 
         private void OpenListenersSection()
         {
             view.CommunityVoiceChatSearchView.gameObject.SetActive(true);
+            view.CommunityVoiceChatInCallView.gameObject.SetActive(false);
         }
 
         private void OnParticipantLeft(string participantId) =>
