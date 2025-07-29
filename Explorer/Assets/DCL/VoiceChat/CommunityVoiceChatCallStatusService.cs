@@ -198,6 +198,13 @@ namespace DCL.VoiceChat
             catch (Exception e) { }
         }
 
+        public void KickPlayerFromCurrentCall(string walletId)
+        {
+            if (CallId.IsNullOrEmpty()) return;
+
+            KickPlayer(CallId, walletId);
+        }
+
         public void KickPlayer(string communityId, string walletId)
         {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;

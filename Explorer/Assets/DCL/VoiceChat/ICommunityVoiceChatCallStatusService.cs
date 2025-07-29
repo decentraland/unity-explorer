@@ -28,6 +28,6 @@ namespace DCL.VoiceChat
 
         void DemoteFromSpeakerInCurrentCall(string walletId);
 
-        void KickPlayer(string communityId, string walletId);
+        void KickPlayerFromCurrentCall(string walletId);
     }
 }

@@ -96,8 +96,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CommunityVoiceChatInCallView.gameObject.SetActive(false);
         }
 
-        private void OnParticipantLeft(string participantId) =>
+        private void OnParticipantLeft(string participantId)
+        {
             RemoveParticipant(participantId);
+            inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count);
+        }
 
         private void OnParticipantJoined(string participantId, VoiceChatParticipantsStateService.ParticipantState participantState)
         {
@@ -105,6 +108,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 AddSpeaker(participantState);
             else
                 AddListener(participantState);
+
+            inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count);
         }
 
         private void OnParticipantStateRefreshed(List<(string participantId, VoiceChatParticipantsStateService.ParticipantState state)> joinedParticipants, List<string> leftParticipantIds)
@@ -135,11 +140,20 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             usedPlayerEntries.Remove(leftParticipantId);
         }
 
-        private void OnPromoteToSpeaker(VoiceChatParticipantsStateService.ParticipantState member) { }
+        private void OnPromoteToSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
+        {
+            voiceChatOrchestrator.CommunityStatusService.PromoteToSpeakerInCurrentCall(member.WalletId);
+        }
 
-        private void OnDemoteSpeaker(VoiceChatParticipantsStateService.ParticipantState member) { }
+        private void OnDemoteSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
+        {
+            voiceChatOrchestrator.CommunityStatusService.DemoteFromSpeakerInCurrentCall(member.WalletId);
+        }
 
-        private void OnKickUser(VoiceChatParticipantsStateService.ParticipantState member) { }
+        private void OnKickUser(VoiceChatParticipantsStateService.ParticipantState member)
+        {
+            voiceChatOrchestrator.CommunityStatusService.KickPlayerFromCurrentCall(member.WalletId);
+        }
 
         private void OnBanUser(VoiceChatParticipantsStateService.ParticipantState member) { }
 
@@ -188,7 +202,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             PlayerEntryView entryView = GetAndConfigurePlayerEntry(participantState);
             entryView.transform.parent = view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
-            communityVoiceChatSearchController.AddListener();
+            communityVoiceChatSearchController.IncreaseListenerCounter();
         }
 
         private PlayerEntryView GetAndConfigurePlayerEntry(VoiceChatParticipantsStateService.ParticipantState participantState)
@@ -197,7 +211,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             usedPlayerEntries.Add(participantState.WalletId, entryView);
 
             entryView.profileView.SetupAsync(new Web3Address(participantState.WalletId), profileRepositoryWrapper, CancellationToken.None).Forget();
-            view.ConfigureEntry(entryView, participantState);
+
+            view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
 
             participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
             participantState.IsSpeaker.OnUpdate += isSpeaker => SetUserEntryParent(isSpeaker, entryView);
@@ -207,6 +222,17 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void SetUserEntryParent(bool isSpeaker, PlayerEntryView entryView)
         {
+            if (isSpeaker)
+            {
+                communityVoiceChatSearchController.DecreaseListenerCounter();
+                inCallController.IncreaseSpeakerCounter();
+            }
+            else
+            {
+                communityVoiceChatSearchController.IncreaseListenerCounter();
+                inCallController.DecreaseSpeakerCounter();
+            }
+
             entryView.transform.parent = isSpeaker ? inCallController.SpeakersParent : view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
         }

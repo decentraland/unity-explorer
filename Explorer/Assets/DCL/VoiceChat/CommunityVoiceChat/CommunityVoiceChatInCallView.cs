@@ -12,6 +12,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public TMP_Text ParticipantCount { get; private set; }
 
         [field: SerializeField]
+        public TMP_Text SpeakersCount { get; private set; }
+
+        [field: SerializeField]
         public RectTransform SpeakersParent { get; private set; }
 
         [field: SerializeField]

@@ -8,7 +8,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class PlayerEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
+        public event Action<VoiceChatParticipantsStateService.ParticipantState, VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
 
         [SerializeField] private RectTransform hoverElement;
 
@@ -17,16 +17,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [SerializeField] public SimpleProfileView profileView;
 
         private VoiceChatParticipantsStateService.ParticipantState userProfile;
+        private VoiceChatParticipantsStateService.ParticipantState localUserProfile;
 
         private void Start()
         {
             hoverElement.gameObject.SetActive(false);
-            contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, contextMenuButton.transform.position, this));
+            contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, localUserProfile!, contextMenuButton.transform.position, this));
         }
 
-        public void SetUserProfile(VoiceChatParticipantsStateService.ParticipantState participantState)
+        public void SetUserProfile(VoiceChatParticipantsStateService.ParticipantState participantState, VoiceChatParticipantsStateService.ParticipantState localParticipantState)
         {
             userProfile = participantState;
+            localUserProfile = localParticipantState;
             userProfile.IsSpeaking.OnUpdate -= OnChangeIsSpeaking;
             userProfile.IsSpeaking.OnUpdate += OnChangeIsSpeaking;
         }
@@ -36,7 +38,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             //Handle is speaking logic and visuals
         }
 
-        public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu)
+        public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu)
         {
             RemoveAllListeners();
 

@@ -24,15 +24,26 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void AddSpeaker(PlayerEntryView entryView)
         {
-            speakersCount++;
-            view.ParticipantCount.text = speakersCount.ToString();
+            IncreaseSpeakerCounter();
             entryView.transform.parent = view.SpeakersParent;
             entryView.transform.localScale = Vector3.one;
         }
 
-        public void RemoveSpeaker()
+        public void IncreaseSpeakerCounter()
+        {
+            speakersCount++;
+            view.SpeakersCount.text = string.Format("({0})", speakersCount);
+        }
+
+        public void DecreaseSpeakerCounter()
         {
             speakersCount--;
+            view.SpeakersCount.text = string.Format("({0})", speakersCount);
+        }
+
+        public void SetParticipantCount(int participantCount)
+        {
+            view.SetParticipantCount(participantCount);
         }
     }
 }
