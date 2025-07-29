@@ -114,6 +114,8 @@ namespace DCL.VoiceChat
         {
             cts = cts.SafeRestart();
             DisableAllSections();
+            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL) return;
+
             Web3Address wallet = new Web3Address(walletId);
             switch (status)
             {

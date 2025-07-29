@@ -56,6 +56,8 @@ namespace DCL.VoiceChat
         {
             if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
+            if (!view.gameObject.activeSelf) return;
+
             if (orchestrator.CurrentCallId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
             {
                 //If it's the current call, we can get the call information directly from the orchestrator

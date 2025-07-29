@@ -19,7 +19,7 @@ namespace DCL.VoiceChat
     {
         private const int DEFAULT_LIVEKIT_CHANNELS = 1;
         private const int DEFAULT_BUFFER_SIZE = 8192;
-        private const int LIVEKIT_FRAME_SIZE = 0;//480; // 10ms at 48kHz
+        private const int LIVEKIT_FRAME_SIZE = 480;//480; // 10ms at 48kHz
         private const int PROCESSING_QUEUE_SIZE = 10; // Buffer for processing thread
 
         private bool isFilterActive = true;

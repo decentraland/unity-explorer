@@ -188,7 +188,7 @@ namespace DCL.VoiceChat
             if (currentVoiceChatType.Value == VoiceChatType.PRIVATE) { currentCallStatus.Value = status; }
 
             // Handle transitions to/from private call
-            if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
+            if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR || status== VoiceChatStatus.VOICE_CHAT_BUSY)
             {
                 if (currentVoiceChatType.Value == VoiceChatType.PRIVATE) { SetActiveCallService(VoiceChatType.NONE); }
             }
@@ -210,7 +210,7 @@ namespace DCL.VoiceChat
             if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY) { currentCallStatus.Value = status; }
 
             // Handle transitions to/from community call
-            if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
+            if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR || status== VoiceChatStatus.VOICE_CHAT_BUSY)
             {
                 if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY) { SetActiveCallService(VoiceChatType.NONE); }
             }
