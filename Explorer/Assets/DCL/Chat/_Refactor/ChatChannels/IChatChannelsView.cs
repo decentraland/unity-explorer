@@ -16,7 +16,7 @@ public interface IChatChannelsView
     RectTransform ItemsContainer { get; }
     void AddConversation(BaseChannelViewModel data);
     void RemoveConversation(ChatChannel channel);
-    void SetUnreadMessages(string channelId, int count);
+    void SetUnreadMessages(ChatChannel.ChannelId channelId, int unreadMessages);
     void UpdateConversation(BaseChannelViewModel viewModel);
     void SetOnlineStatus(string userId, bool isOnline);
     void SelectConversation(ChatChannel.ChannelId channelId);

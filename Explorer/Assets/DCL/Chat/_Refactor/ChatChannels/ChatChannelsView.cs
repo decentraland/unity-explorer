@@ -87,7 +87,10 @@ namespace DCL.Chat
         /// <param name="unreadMessages">The amount of unread messages in the conversation.</param>
         public void SetUnreadMessages(ChatChannel.ChannelId destinationChannel, int unreadMessages)
         {
-            items[destinationChannel].SetUnreadMessages(unreadMessages);
+            if (items.TryGetValue(destinationChannel, out var item))
+            {
+                item.SetUnreadMessages(unreadMessages);
+            }
         }
 
         /// <summary>
@@ -317,6 +320,12 @@ namespace DCL.Chat
             {
                 SelectConversation(newItem.Id);
             }
+        }
+
+        public void MoveChannelToTop(ChatChannel.ChannelId channel)
+        {
+            if (items.ContainsKey(channel))
+                items[channel].transform.SetSiblingIndex(1);
         }
 
         public void Clear()

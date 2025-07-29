@@ -21,6 +21,7 @@ public class ChatTitlebarPresenter : IDisposable
     private readonly IEventBus eventBus;
     private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
     private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
+    private readonly ICurrentChannelService currentChannelService;
     private readonly ChatContextMenuService chatContextMenuService;
     private readonly ChatMemberListService chatMemberListService;
     private readonly CancellationTokenSource lifeCts = new ();
@@ -35,6 +36,7 @@ public class ChatTitlebarPresenter : IDisposable
         ChatTitlebarView2 view,
         ChatConfig chatConfig,
         IEventBus eventBus,
+        ICurrentChannelService currentChannelService,
         ChatMemberListService chatMemberListService,
         ChatContextMenuService chatContextMenuService,
         ChatClickDetectionService chatClickDetectionService,
@@ -45,6 +47,7 @@ public class ChatTitlebarPresenter : IDisposable
         this.chatConfig = chatConfig;
         this.eventBus = eventBus;
         this.chatMemberListService = chatMemberListService;
+        this.currentChannelService = currentChannelService;
         this.chatContextMenuService = chatContextMenuService;
         this.getTitlebarViewModel = getTitlebarViewModel;
         this.deleteChatHistoryCommand = deleteChatHistoryCommand;
@@ -132,6 +135,7 @@ public class ChatTitlebarPresenter : IDisposable
 
             currentViewModel = finalViewModel;
             view.defaultTitlebarView.Setup(finalViewModel);
+            view.membersTitlebarView.SetChannelName(finalViewModel);
             
         }
         catch (OperationCanceledException) { }
@@ -146,8 +150,10 @@ public class ChatTitlebarPresenter : IDisposable
         }
     }
 
-    public void ShowMembersView(bool isMemberListVisible) =>
+    public void ShowMembersView(bool isMemberListVisible)
+    {
         view.SetMemberListMode(isMemberListVisible);
+    }
 
     public void Show() =>
         view.Show();

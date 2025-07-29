@@ -36,8 +36,6 @@ namespace DCL.Chat.Services
         private readonly IProfileCache profileCache;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
 
-        public IReadOnlyList<ChatMemberListView.MemberData> LastKnownMemberList => membersBuffer;
-        private readonly List<Profile> profilesBuffer = new();
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new();
 
         private readonly CancellationTokenSource lifeCts = new();
@@ -48,8 +46,6 @@ namespace DCL.Chat.Services
         
         private int lastKnownParticipantCount = -1;
         private int lastKnownMemberCount = -1;
-
-        private const int COMMUNITY_POLL_INTERVAL_MS = 5000;
 
         /// <summary>
         ///     Fires when the total number of members in the current channel changes.
@@ -93,8 +89,6 @@ namespace DCL.Chat.Services
 
             currentChannelService.OnChannelChanged += OnChannelChanged;
             OnChannelChanged(currentChannelService.CurrentChannel);
-
-            // Task.Run(UpdateLoopAsync);
         }
 
         /// <summary>
@@ -102,6 +96,7 @@ namespace DCL.Chat.Services
         /// </summary>
         private void Stop()
         {
+            StopLiveMemberUpdates();
             TearDownCurrentChannelListeners();
             currentChannelService.OnChannelChanged -= OnChannelChanged;
             lifeCts.SafeCancelAndDispose();

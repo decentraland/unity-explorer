@@ -155,6 +155,7 @@ namespace DCL.PluginSystem.Global
         {
             chatStorage?.Dispose();
             chatBusListenerService?.Dispose();
+            pluginScope.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -174,8 +175,17 @@ namespace DCL.PluginSystem.Global
             }
 
             var viewInstance = mainUIView.ChatView2;
-
+            var chatWorldBubbleService = new ChatWorldBubbleService(world,
+                playerEntity,
+                entityParticipantTable,
+                profileCache,
+                nametagsData,
+                chatSettingsAsset.Value,
+                chatHistory,
+                communityDataService);
+                
             var chatUserStateEventBus = new ChatUserStateEventBus();
+            
             var chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
                 roomHub.ChatRoom().Participants,
@@ -264,7 +274,8 @@ namespace DCL.PluginSystem.Global
             chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, chatSettingsAsset.Value);
 
             pluginScope.Add(chatMainController);
-
+            pluginScope.Add(chatWorldBubbleService);
+            
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
             mvcManager.RegisterController(chatMainController);
 

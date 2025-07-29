@@ -97,6 +97,7 @@ namespace DCL.Chat
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,
+                currentChannelService,
                 chatMemberListService,
                 chatContextMenuService,
                 chatClickDetectionService,
@@ -105,9 +106,11 @@ namespace DCL.Chat
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
+                chatMessagesBus,
                 chatEventBus,
                 userStateEventBus,
                 chatHistory,
+                currentChannelService,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.LeaveChannel,
@@ -211,9 +214,17 @@ namespace DCL.Chat
             }
 
             base.Dispose();
-            initCts?.Cancel();
-            initCts?.Dispose();
+
+            if (initCts != null)
+            {
+                initCts.Cancel();
+                initCts.Dispose();
+                initCts = null;
+            }
+            
             uiScope?.Dispose();
+
+            chatMemberListService.Dispose();
         }
     }
 }
