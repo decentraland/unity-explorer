@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
@@ -183,7 +182,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 visibleWearables = fallbackBodyShape!;
             }
 
-            var facialFeatureTextures = facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape].Clone();
+            FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape].Clone();
             var attachPoint = avatarBase.transform;
 
             for (var i = 0; i < visibleWearables.Count; i++)
@@ -217,6 +216,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 wearablesResult.Asset.Dispose();
 
             avatarShapeComponent.IsDirty = false;
+
+            facialFeatureTextures.Dispose();
 
             return skinningComponent;
         }

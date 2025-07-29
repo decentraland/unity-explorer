@@ -148,8 +148,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
         {
-            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results.Length; i++)
-                if (wearable.WearableAssetResults[bodyShape].Results[i] is not { IsInitialized: true })
+            if (wearable.WearableAssetResults[bodyShape].Results == null) return false;
+
+            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results!.Length; i++)
+                if (wearable.WearableAssetResults[bodyShape].Results![i] is { IsInitialized: false })
                     return false;
 
             return true;

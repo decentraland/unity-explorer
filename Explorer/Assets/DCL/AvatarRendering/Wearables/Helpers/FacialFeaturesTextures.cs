@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public readonly struct FacialFeaturesTextures
+    public readonly struct FacialFeaturesTextures : IDisposable
     {
         public readonly IReadOnlyDictionary<string, Dictionary<int, Texture>> Value;
 
@@ -16,15 +18,27 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public FacialFeaturesTextures Clone()
         {
-            var texturesByCategory = new Dictionary<string, Dictionary<int, Texture>>();
+            var texturesByCategory = DictionaryPool<string, Dictionary<int, Texture>>.Get();
 
-            foreach (var kvp in Value)
+            foreach ((string? category, Dictionary<int, Texture>? existingTextures) in Value)
             {
-                var textures = new Dictionary<int, Texture>(kvp.Value);
-                texturesByCategory[kvp.Key] = textures;
+                var newTextures = DictionaryPool<int, Texture>.Get();
+
+                foreach ((int textureId, Texture? texture) in existingTextures)
+                    newTextures[textureId] = texture;
+
+                texturesByCategory[category] = newTextures;
             }
 
             return new FacialFeaturesTextures(texturesByCategory);
+        }
+
+        public void Dispose()
+        {
+            foreach (var textures in Value.Values)
+                DictionaryPool<int, Texture>.Release(textures);
+
+            DictionaryPool<string, Dictionary<int, Texture>>.Release((Dictionary<string, Dictionary<int, Texture>>)Value);
         }
     }
 }
