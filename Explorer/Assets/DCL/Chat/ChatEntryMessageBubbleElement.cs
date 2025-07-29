@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using MVC;
 using System;
+using DCL.Chat.ChatViewModels;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,7 +21,7 @@ namespace DCL.Chat
         [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
         [field: SerializeField] internal RectTransform backgroundRectTransform { get; private set; }
         [field: SerializeField] internal Image backgroundImage { get; private set; }
-        [field: SerializeField] internal Button? messageOptionsButton { get; private set; }
+        [field: SerializeField] internal Button messageOptionsButton { get; private set; }
         [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; }
         [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
         [field: SerializeField] internal RectTransform popupPosition { get; private set; }
@@ -66,6 +67,21 @@ namespace DCL.Chat
             backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
             messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
         }
+
+        // public void SetMessageData(ChatMessageViewModel data)
+        // {
+        //     usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
+        //     messageContentElement.SetMessageContent(data.Message);
+        //
+        //     backgroundSize = backgroundRectTransform.sizeDelta;
+        //     backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
+        //     backgroundSize.x = CalculatePreferredWidth(data);
+        //     backgroundRectTransform.sizeDelta = backgroundSize;
+        //     mentionedOutline.SetActive(data.IsMention);
+        //
+        //     backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
+        //     messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
+        // }
 
         private void OnMessageOptionsClicked()
         {

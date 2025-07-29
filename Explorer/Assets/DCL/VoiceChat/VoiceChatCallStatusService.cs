@@ -50,7 +50,7 @@ namespace DCL.VoiceChat
                 voiceChatService.Dispose();
             }
 
-            statusProperty.Dispose();
+            statusProperty.ClearSubscriptionsList();
             cts.SafeCancelAndDispose();
         }
 

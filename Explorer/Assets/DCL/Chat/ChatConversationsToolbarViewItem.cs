@@ -1,7 +1,10 @@
+using System.Threading;
 using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
+using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -15,6 +18,9 @@ namespace DCL.Chat
         public delegate void OpenButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void RemoveButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void TooltipShownDelegate(GameObject tooltip);
+
+        [SerializeField]
+        private ProfilePictureView profilePictureView;
 
         [SerializeField]
         protected GameObject thumbnailView;
@@ -100,6 +106,12 @@ namespace DCL.Chat
             tooltipText.text = newName;
         }
 
+        public void Configure(bool isClosable, bool hasOnlineStatus)
+        {
+            removeButton.gameObject.SetActive(isClosable);
+            connectionStatusIndicatorContainer.SetActive(hasOnlineStatus);
+        }
+
         /// <summary>
         /// Changes the color of the background and the letters of the tooltip.
         /// </summary>
@@ -124,7 +136,8 @@ namespace DCL.Chat
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
-            connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicator.color =
+                onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
         }
 
         /// <summary>
@@ -139,6 +152,28 @@ namespace DCL.Chat
                 openButton.OnSelect(null);
             else
                 openButton.OnDeselect(null);
+        }
+
+        public void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel> viewModel, Color userColor)
+        {
+            customIcon.gameObject.SetActive(false);
+            profilePictureView.gameObject.SetActive(true);
+            profilePictureView.Bind(viewModel, userColor);
+        }
+
+        public void SetPicture(Sprite? sprite)
+        {
+            profilePictureView.gameObject.SetActive(true);
+            customIcon.gameObject.SetActive(false);
+
+            bool isLoading = sprite == null;
+
+            profilePictureView.SetLoadingState(isLoading);
+
+            if (!isLoading)
+            {
+                profilePictureView.SetImage(sprite);
+            }
         }
 
         /// <summary>
@@ -199,6 +234,10 @@ namespace DCL.Chat
 
         public void Initialize()
         {
+            tooltip.gameObject.SetActive(false);
+            removeButton.gameObject.SetActive(false);
+            connectionStatusIndicatorContainer.SetActive(false);
+
             openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
             removeButton.onClick.AddListener(() =>
             {
@@ -210,9 +249,11 @@ namespace DCL.Chat
 
         protected virtual void Start()
         {
-            tooltip.gameObject.SetActive(false);
-            removeButton.gameObject.SetActive(false);
-            connectionStatusIndicatorContainer.gameObject.SetActive(false);
+
+        }
+
+        public void SetCommunityThumbnailData(ISpriteCache spriteCache, string communityImageUrl, CancellationToken none)
+        {
         }
     }
 }

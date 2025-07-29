@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.ResourcesUnloading;
 using ECS.LifeCycle.Systems;
-using ECS.StreamableLoading.Cache;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
