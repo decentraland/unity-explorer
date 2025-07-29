@@ -36,14 +36,13 @@ namespace SceneRuntime.Factory.JsSource
             );
         }
 
-        public UniTask<Result<string>> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public UniTask<string> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             var charSpan = MemoryMarshal.Cast<byte, char>(data.Memory.Span);
             var output = new string(charSpan);
             data.Dispose();
-            var result = Result<string>.SuccessResult(output);
             
-            return UniTask.FromResult(result);
+            return UniTask.FromResult(output);
         }
     }
 }

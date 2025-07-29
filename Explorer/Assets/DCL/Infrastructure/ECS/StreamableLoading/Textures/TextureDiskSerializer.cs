@@ -12,7 +12,7 @@ namespace ECS.StreamableLoading.Textures
 {
     public class TextureDiskSerializer : IDiskSerializer<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>
     {
-        public async UniTask<Result<Texture2DData>> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public async UniTask<Texture2DData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             var meta = Meta.FromSpan(data.Memory.Span);
             
@@ -28,27 +28,14 @@ namespace ECS.StreamableLoading.Textures
             
             using var handle = data.Memory.Pin();
 
-            try
-            {
-                unsafe { texture.LoadRawTextureData((IntPtr)handle.Pointer + meta.ArrayLength, data.Memory.Length - meta.ArrayLength); }
-            }
-            catch (Exception _)
-            {
-                ReportHub.Log(ReportCategory.DISK_CACHE, 
-                    "Texture in disk cache outdated, it will be updated. This error should not appear second time for same texture.");
-                return Result<Texture2DData>.SuccessResult(null);
-            }
+            unsafe { texture.LoadRawTextureData((IntPtr)handle.Pointer + meta.ArrayLength, data.Memory.Length - meta.ArrayLength); }
             
-
             texture.Apply();
 
             // LoadRawTextureData copies the data
             data.Dispose();
-
-            var texture2DData = new Texture2DData(texture);
-            var result = Result<Texture2DData>.SuccessResult(texture2DData);
             
-            return result;
+            return new Texture2DData(texture);
         }
 
         public SerializeMemoryIterator<State> Serialize(Texture2DData data)

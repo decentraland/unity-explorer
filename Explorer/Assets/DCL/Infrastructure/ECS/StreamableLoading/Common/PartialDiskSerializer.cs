@@ -47,7 +47,7 @@ namespace ECS.StreamableLoading.Common
             );
         }
 
-        public UniTask<Result<PartialLoadingState>> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             using (data)
             {
@@ -57,9 +57,7 @@ namespace ECS.StreamableLoading.Common
                 var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
                 partialLoadingState.AppendData(fileData);
                 
-                var result = Result<PartialLoadingState>.SuccessResult(partialLoadingState);
-                
-                return UniTask.FromResult(result);
+                return UniTask.FromResult(partialLoadingState);
             }
         }
 

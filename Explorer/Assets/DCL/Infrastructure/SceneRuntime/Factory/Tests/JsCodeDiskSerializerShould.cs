@@ -53,10 +53,10 @@ namespace SceneRuntime.Factory.Tests
             for (int i = 0; i < output.Count; i++)
                 slicedOwnedMemory.Memory.Span[i] = output[i];
 
-            Result<string> deserializedResult = await serializer.DeserializeAsync(slicedOwnedMemory, token);
+            string deserializedResult = await serializer.DeserializeAsync(slicedOwnedMemory, token);
             
             // Assert
-            Assert.AreEqual(data, deserializedResult.Value);
+            Assert.AreEqual(data, deserializedResult);
         }
 
         private class Owner : IMemoryOwner<byte>
