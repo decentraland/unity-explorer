@@ -190,12 +190,16 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                 if (!emoteStorage.TryGetElement(shortenedPointer, out IEmote emote))
                 {
+                    IEmote newEmote = IEmote.NewEmpty();
+                    newEmote.UpdateLoadingStatus(true);
+                    emoteStorage.Set(shortenedPointer, newEmote);
+                    //TODO (JUANI) : The same emote can be twice in the requested pointer?
                     if (!intention.RequestedPointers.Contains(loadingIntentionPointer))
                     {
+                        Debug.Log($"JUANI ADDING SHORTENED POINTER TO MISSING EMOTES {shortenedPointer}");
                         missingPointers.Add(shortenedPointer);
                         intention.RequestedPointers.Add(loadingIntentionPointer);
                     }
-
                     continue;
                 }
 

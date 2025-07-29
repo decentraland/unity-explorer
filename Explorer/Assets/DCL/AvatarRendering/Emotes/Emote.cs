@@ -22,6 +22,9 @@ namespace DCL.AvatarRendering.Emotes
 
         public bool IsLoading { get; private set; }
 
+        public Emote() { }
+
+
         public Emote(StreamableLoadingResult<EmoteDTO> model, bool isLoading = true)
         {
             Model = model;
