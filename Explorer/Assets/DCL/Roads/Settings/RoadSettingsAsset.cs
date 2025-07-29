@@ -82,7 +82,9 @@ namespace DCL.Roads.Settings
                                .OrderBy(group => group.LODGroup.Name)
                                .ToList();
 
+            UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
+            UnityEditor.AssetDatabase.Refresh();
             return;
 
             bool IsOutOfRange(Vector2Int roadCoordinate) =>
