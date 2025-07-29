@@ -5,23 +5,34 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
+using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
-    public class PlacesSectionController : CommunityFetchingControllerBase<PlaceInfo, PlacesSectionView>
+    public class PlacesSectionController : CommunityFetchingControllerBase<PlaceData, PlacesSectionView>
     {
+        public struct PlaceData
+        {
+            public PlaceInfo PlaceInfo;
+            public string OwnerName;
+        }
+
         private const int PAGE_SIZE = 10;
+        private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
         private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
@@ -29,6 +40,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
         private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
         private const string COMMUNITY_PLACES_DELETE_ERROR_MESSAGE = "There was an error deleting the community place. Please try again.";
+        private const string GET_OWNERS_NAMES_ERROR_MESSAGE = "There was an error getting owners names. Please try again.";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
@@ -39,7 +51,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private readonly PlacesSectionView view;
         private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData<PlaceData> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly WarningNotificationView inWorldSuccessNotificationView;
@@ -48,10 +60,12 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly Dictionary<string, string> userNames = new (StringComparer.OrdinalIgnoreCase);
 
         private string[] communityPlaceIds;
 
-        protected override SectionFetchData<PlaceInfo> currentSectionFetchData => placesFetchData;
+        protected override SectionFetchData<PlaceData> currentSectionFetchData => placesFetchData;
 
         private CommunityData? communityData = null;
         private bool userCanModify = false;
@@ -66,7 +80,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser) : base (view, PAGE_SIZE)
+            IWebBrowser webBrowser,
+            LambdasProfilesProvider lambdasProfilesProvider) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -78,6 +93,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.thumbnailLoader = thumbnailLoader;
+            this.lambdasProfilesProvider = lambdasProfilesProvider;
 
             view.InitGrid(thumbnailLoader, cancellationToken);
 
@@ -141,7 +157,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                     return;
                 }
 
-                placesFetchData.Items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
+                placesFetchData.Items.RemoveAll(elem => elem.PlaceInfo.id.Equals(placeInfo.id));
                 RefreshGrid(false);
             }
         }
@@ -308,7 +324,37 @@ namespace DCL.Communities.CommunitiesCard.Places
                 return placesFetchData.TotalToFetch;
             }
 
-            placesFetchData.Items.AddRange(response.Value.data);
+            using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
+            foreach (var place in response.Value.data)
+               if (!userNames.ContainsKey(place.owner))
+                   userIds.Value.Add(place.owner);
+
+            if (userIds.Value.Count > 0)
+            {
+                var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
+                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!getAvatarsDetailsResult.Success)
+                    await inWorldWarningNotificationView.AnimatedShowAsync(GET_OWNERS_NAMES_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                else
+                    foreach (var avatarDetails in getAvatarsDetailsResult.Value)
+                    {
+                        if (avatarDetails.avatars.Count == 0)
+                            continue;
+
+                        ProfileJsonDto avatar = avatarDetails.avatars[0];
+                        userNames.Add(avatar.userId, avatar.name);
+                        break;
+                    }
+            }
+
+            foreach (var place in response.Value.data)
+                placesFetchData.Items.Add(new PlaceData
+                {
+                    PlaceInfo = place,
+                    OwnerName = userNames.GetValueOrDefault(place.owner, string.Empty)
+                });
 
             return response.Value.total;
         }
