@@ -128,7 +128,7 @@ namespace DCL.VoiceChat
 
         private void AcceptCall()
         {
-            voiceChatOrchestrator.AcceptCall();
+            voiceChatOrchestrator.AcceptPrivateCall();
         }
 
         public void Dispose()

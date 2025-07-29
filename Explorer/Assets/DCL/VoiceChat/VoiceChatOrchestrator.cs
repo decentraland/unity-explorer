@@ -35,7 +35,7 @@ namespace DCL.VoiceChat
     public interface IVoiceChatOrchestratorActions
     {
         void StartCall(string callId, VoiceChatType callType);
-        void AcceptCall();
+        void AcceptPrivateCall();
         void HangUp();
         void RejectCall();
         void HandleConnectionError();
@@ -51,7 +51,7 @@ namespace DCL.VoiceChat
     /// </summary>
     public interface IVoiceChatOrchestrator : IVoiceChatOrchestratorState, IVoiceChatOrchestratorActions, IVoiceChatOrchestratorUIEvents
     {
-        string CurrentRoomUrl { get; }
+        string CurrentConnectiveString { get; }
         string CurrentCallId { get; }
         IPrivateVoiceChatCallStatusService PrivateStatusService { get; }
         ICommunityVoiceChatCallStatusService CommunityStatusService { get; }
@@ -73,13 +73,13 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new(VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new(VoiceChatPanelSize.DEFAULT);
 
-        private VoiceChatCallStatusServiceBase activeCallStatusService;
+        private VoiceChatCallStatusServiceBase activeCallStatusService = null;
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
 
-        public string CurrentRoomUrl => activeCallStatusService?.RoomUrl ?? string.Empty;
+        public string CurrentConnectiveString => activeCallStatusService?.RoomUrl ?? string.Empty;
         public string CurrentCallId => activeCallStatusService?.CallId ?? string.Empty;
         public IPrivateVoiceChatCallStatusService PrivateStatusService => privateVoiceChatCallStatusService;
         public ICommunityVoiceChatCallStatusService CommunityStatusService => communityVoiceChatCallStatusService;
@@ -127,25 +127,13 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            SetActiveCallService(callType == VoiceChatType.PRIVATE? privateVoiceChatCallStatusService : communityVoiceChatCallStatusService);
+            SetActiveCallService(callType);
             activeCallStatusService.StartCall(callId);
         }
 
-        public void StartCommunityCall(string communityId)
+        public void AcceptPrivateCall()
         {
-            if (currentVoiceChatType.Value == VoiceChatType.PRIVATE)
-            {
-                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Cannot start community call when in a private call");
-                return;
-            }
-
-            SetActiveCallService(communityVoiceChatCallStatusService);
-            communityVoiceChatCallStatusService.StartCall(communityId);
-        }
-
-        public void AcceptCall()
-        {
-            if (activeCallStatusService is PrivateVoiceChatCallStatusService  privateService)
+            if (activeCallStatusService is PrivateVoiceChatCallStatusService privateService)
                 privateService.AcceptCall();
             else
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "AcceptCall not supported for current voice chat type");
@@ -182,6 +170,7 @@ namespace DCL.VoiceChat
         {
             if (currentVoiceChatType.Value != VoiceChatType.COMMUNITY)
             {
+                SetActiveCallService(VoiceChatType.PRIVATE);
                 privateVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
             }
         }
@@ -199,8 +188,7 @@ namespace DCL.VoiceChat
             {
                 if (currentVoiceChatType.Value == VoiceChatType.PRIVATE)
                 {
-                    SetVoiceChatType(VoiceChatType.NONE);
-                    activeCallStatusService = null;
+                    SetActiveCallService(VoiceChatType.NONE);
                 }
             }
             else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL ||
@@ -208,8 +196,7 @@ namespace DCL.VoiceChat
                      status == VoiceChatStatus.VOICE_CHAT_STARTED_CALL ||
                      status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
-                SetVoiceChatType(VoiceChatType.PRIVATE);
-                activeCallStatusService = privateVoiceChatCallStatusService;
+                SetActiveCallService(VoiceChatType.PRIVATE);
                 currentCallStatus.Value = status;
             }
 
@@ -229,8 +216,7 @@ namespace DCL.VoiceChat
             {
                 if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY)
                 {
-                    SetVoiceChatType(VoiceChatType.NONE);
-                    activeCallStatusService = null;
+                    SetActiveCallService(VoiceChatType.NONE);
                 }
             }
             else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL ||
@@ -238,25 +224,30 @@ namespace DCL.VoiceChat
                      status == VoiceChatStatus.VOICE_CHAT_STARTED_CALL ||
                      status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
-                SetVoiceChatType(VoiceChatType.COMMUNITY);
-                activeCallStatusService = communityVoiceChatCallStatusService;
+                SetActiveCallService(VoiceChatType.COMMUNITY);
                 currentCallStatus.Value = status;
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");
         }
 
-        private void SetVoiceChatType(VoiceChatType newType)
+        private void SetActiveCallService(VoiceChatType newType)
         {
-            if (currentVoiceChatType.Value != newType)
-            {
-                currentVoiceChatType.Value = newType;
-            }
-        }
+            currentVoiceChatType.UpdateValue(newType);
 
-        private void SetActiveCallService(VoiceChatCallStatusServiceBase service)
-        {
-            activeCallStatusService = service;
+            switch (newType)
+            {
+                case VoiceChatType.NONE:
+                    activeCallStatusService = null;
+                    break;
+                case VoiceChatType.PRIVATE:
+                    activeCallStatusService = privateVoiceChatCallStatusService;
+                    break;
+                case VoiceChatType.COMMUNITY:
+                    activeCallStatusService = communityVoiceChatCallStatusService;
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(newType), newType, null);
+            }
         }
 
         public void ChangePanelSize(VoiceChatPanelSize panelSize)

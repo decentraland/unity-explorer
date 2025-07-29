@@ -27,8 +27,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
         private ITrack microphoneTrack;
-        //private OptimizedMonoRtcAudioSource monoRtcAudioSource;
-        private MicrophoneRtcAudioSource microphoneRtcAudioSource;
+        private MicrophoneRtcAudioSource2 rtcAudioSource;
         private CancellationTokenSource trackPublishingCts;
         private bool isDisposed;
 
@@ -69,13 +68,16 @@ namespace DCL.VoiceChat
 
             try
             {
-                microphoneHandler.InitializeMicrophone();
-                microphoneRtcAudioSource = microphoneHandler.MicrophoneRtcAudioSource;//new OptimizedMonoRtcAudioSource(microphoneHandler.AudioFilter);
-                //microphoneRtcAudioSource.Start();
+                var result = MicrophoneRtcAudioSource2.New(microphoneHandler.AudioFilter, combinedStreamsAudioSource.AudioFilter);
+                if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
+
+                //monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneHandler.AudioFilter);
+                rtcAudioSource = result.Value;
+                rtcAudioSource.Start();
 
                 microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
-                    microphoneRtcAudioSource);
+                    rtcAudioSource);
 
                 var options = new TrackPublishOptions
                 {
@@ -247,8 +249,8 @@ namespace DCL.VoiceChat
         private void CleanupLocalTrack()
         {
             microphoneTrack = null;
-            microphoneRtcAudioSource?.Stop();
-            //monoRtcAudioSource = null;
+            rtcAudioSource?.Dispose();
+            rtcAudioSource = null;
             trackPublishingCts?.SafeCancelAndDispose();
             trackPublishingCts = null;
         }

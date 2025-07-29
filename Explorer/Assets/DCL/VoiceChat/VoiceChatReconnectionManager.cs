@@ -135,7 +135,7 @@ namespace DCL.VoiceChat
                     }
 
                     Result<bool> result = await roomHub.VoiceChatRoom()
-                        .TrySetConnectionStringAndActivateAsync(voiceChatOrchestrator.CurrentRoomUrl)
+                        .TrySetConnectionStringAndActivateAsync(voiceChatOrchestrator.CurrentConnectiveString)
                         .SuppressToResultAsync();
 
                     if (result.Success)

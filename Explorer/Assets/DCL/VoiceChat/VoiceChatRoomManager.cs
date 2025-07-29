@@ -131,15 +131,13 @@ namespace DCL.VoiceChat
 
                 Result<bool> result = await roomHub.VoiceChatRoom()
                                                    .TrySetConnectionStringAndActivateAsync(
-                                                        (voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL ?
-                                                            voiceChatOrchestrator.CurrentRoomUrl
-                                                            : null) ?? string.Empty)
+                                                        (voiceChatOrchestrator.CurrentConnectiveString))
                                                    .SuppressToResultAsync();
 
                 if (!result.Success)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Initial connection failed for room {voiceChatOrchestrator.CurrentRoomUrl}: {result.ErrorMessage}");
+                        $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectiveString}: {result.ErrorMessage}");
 
                     voiceChatOrchestrator.HandleConnectionError();
                 }
