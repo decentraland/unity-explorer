@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public Texture this[string category, int originalTextureId] => Value[category][originalTextureId];
 
-        public FacialFeaturesTextures Clone()
+        public FacialFeaturesTextures CreateCopy()
         {
             var texturesByCategory = DictionaryPool<string, Dictionary<int, Texture>>.Get();
 

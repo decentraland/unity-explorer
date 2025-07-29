@@ -182,7 +182,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 visibleWearables = fallbackBodyShape!;
             }
 
-            FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape].Clone();
+            FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape].CreateCopy();
             var attachPoint = avatarBase.transform;
 
             for (var i = 0; i < visibleWearables.Count; i++)
