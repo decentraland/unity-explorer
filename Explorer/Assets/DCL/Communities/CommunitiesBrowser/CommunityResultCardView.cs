@@ -39,7 +39,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text communityPrivacyText = null!;
         [SerializeField] private GameObject communityMembersSeparator = null!;
         [SerializeField] private TMP_Text communityMembersCountText = null!;
-        [SerializeField] private GameObject communityLiveMark = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private GameObject buttonsContainer = null!;
         [SerializeField] private Button viewCommunityButton = null!;
@@ -135,9 +134,6 @@ namespace DCL.Communities.CommunitiesBrowser
             joinCommunityButton.gameObject.SetActive(!isMember);
             viewCommunityButton.gameObject.SetActive(isMember);
         }
-
-        public void SetLiveMarkAsActive(bool isLiveMark) =>
-            communityLiveMark.SetActive(isLiveMark);
 
         public void SetJoiningLoadingActive(bool isActive)
         {
