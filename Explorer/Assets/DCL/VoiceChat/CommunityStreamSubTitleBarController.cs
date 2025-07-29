@@ -99,7 +99,7 @@ namespace DCL.VoiceChat
             }
             else
             {
-                //If its not the current call, we need to get the call information from the communities data
+                //If it's not the current call, we need to get the call information from the communities data
                 isCurrentCall = false;
                 HandleOtherCommunityCallAsync(communityId).Forget();
             }

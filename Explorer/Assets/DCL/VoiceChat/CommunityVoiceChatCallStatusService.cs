@@ -3,7 +3,6 @@ using Castle.Core.Internal;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
 using System;
@@ -278,9 +277,7 @@ namespace DCL.VoiceChat
         {
             if (string.IsNullOrEmpty(communityId)) { return false; }
 
-            if (communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? callData)) { return callData.Value; }
-
-            return false;
+            return communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? callData) && callData.Value;
         }
 
         public ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId)

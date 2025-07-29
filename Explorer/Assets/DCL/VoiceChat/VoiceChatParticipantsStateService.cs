@@ -1,4 +1,5 @@
 #nullable enable
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
 using DCL.Web3.Identities;
@@ -147,79 +148,133 @@ namespace DCL.VoiceChat
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
         {
-            switch (update)
+            if (!PlayerLoopHelper.IsMainThread)
             {
-                case UpdateFromParticipant.Connected:
-                    if (connectedParticipants.Add(participant.Identity))
-                    {
-                        ParticipantState state;
+                OnParticipantUpdatedAsync().Forget();
+                return;
+            }
 
-                        if (participant.Identity == LocalParticipantId)
+            OnParticipantUpdatedInternal();
+            return;
+
+            async UniTaskVoid OnParticipantUpdatedAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                OnParticipantUpdatedInternal();
+            }
+
+            void OnParticipantUpdatedInternal()
+            {
+                switch (update)
+                {
+                    case UpdateFromParticipant.Connected:
+                        if (connectedParticipants.Add(participant.Identity))
                         {
-                            // Update local participant state
-                            RefreshParticipantStateFromMetadata(participant, LocalParticipantState);
-                            state = LocalParticipantState;
+                            ParticipantState state;
+
+                            if (participant.Identity == LocalParticipantId)
+                            {
+                                // Update local participant state
+                                RefreshParticipantStateFromMetadata(participant, LocalParticipantState);
+                                state = LocalParticipantState;
+                            }
+                            else { state = CreateParticipantState(participant); }
+
+                            ParticipantJoined?.Invoke(participant.Identity, state);
+                            SetOnlineStatus(participant.Identity, true);
+                            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant joined: {participant.Identity}");
                         }
-                        else { state = CreateParticipantState(participant); }
 
-                        ParticipantJoined?.Invoke(participant.Identity, state);
-                        SetOnlineStatus(participant.Identity, true);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant joined: {participant.Identity}");
-                    }
+                        break;
 
-                    break;
+                    case UpdateFromParticipant.MetadataChanged:
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Metadata changed for {participant.Identity}: {participant.Metadata}");
+                        OnParticipantMetadataChanged(participant.Identity, participant.Metadata);
+                        break;
 
-                case UpdateFromParticipant.MetadataChanged:
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Metadata changed for {participant.Identity}: {participant.Metadata}");
-                    OnParticipantMetadataChanged(participant.Identity, participant.Metadata);
-                    break;
+                    case UpdateFromParticipant.Disconnected:
+                        if (connectedParticipants.Remove(participant.Identity))
+                        {
+                            SetOnlineStatus(participant.Identity, false);
+                            RemoveParticipantState(participant.Identity);
+                            ParticipantLeft?.Invoke(participant.Identity);
+                            activeSpeakers.Remove(participant.Identity);
+                            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant left: {participant.Identity}");
+                        }
 
-                case UpdateFromParticipant.Disconnected:
-                    if (connectedParticipants.Remove(participant.Identity))
-                    {
-                        SetOnlineStatus(participant.Identity, false);
-                        RemoveParticipantState(participant.Identity);
-                        ParticipantLeft?.Invoke(participant.Identity);
-                        activeSpeakers.Remove(participant.Identity);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant left: {participant.Identity}");
-                    }
-
-                    break;
+                        break;
+                }
             }
         }
 
         private void OnActiveSpeakersUpdated()
         {
-            var newActiveSpeakers = new HashSet<string>();
-
-            foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
+            if (!PlayerLoopHelper.IsMainThread)
             {
-                newActiveSpeakers.Add(speakerId);
-
-                if (!activeSpeakers.Contains(speakerId)) { UpdateParticipantSpeaking(speakerId, true); }
+                OnActiveSpeakersUpdatedAsync().Forget();
+                return;
             }
 
-            foreach (string oldSpeakerId in activeSpeakers)
+            OnActiveSpeakersUpdatedInternal();
+            return;
+
+            async UniTaskVoid OnActiveSpeakersUpdatedAsync()
             {
-                if (!newActiveSpeakers.Contains(oldSpeakerId)) { UpdateParticipantSpeaking(oldSpeakerId, false); }
+                await UniTask.SwitchToMainThread();
+                OnActiveSpeakersUpdatedInternal();
             }
 
-            activeSpeakers = newActiveSpeakers;
+            void OnActiveSpeakersUpdatedInternal()
+            {
+                var newActiveSpeakers = new HashSet<string>();
+
+                foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
+                {
+                    newActiveSpeakers.Add(speakerId);
+
+                    if (!activeSpeakers.Contains(speakerId)) { UpdateParticipantSpeaking(speakerId, true); }
+                }
+
+                foreach (string oldSpeakerId in activeSpeakers)
+                {
+                    if (!newActiveSpeakers.Contains(oldSpeakerId)) { UpdateParticipantSpeaking(oldSpeakerId, false); }
+                }
+
+                activeSpeakers = newActiveSpeakers;
+            }
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            switch (connectionUpdate)
+            if (!PlayerLoopHelper.IsMainThread)
             {
-                case ConnectionUpdate.Connected:
-                case ConnectionUpdate.Reconnected:
-                    RefreshAllParticipantStates();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection {connectionUpdate}, refreshed participant states");
-                    break;
+                OnConnectionUpdatedAsync().Forget();
+                return;
+            }
 
-                case ConnectionUpdate.Disconnected:
-                    HandleDisconnection(disconnectReason);
-                    break;
+            OnConnectionUpdatedInternal();
+            return;
+
+            async UniTaskVoid OnConnectionUpdatedAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                OnConnectionUpdatedInternal();
+            }
+
+            void OnConnectionUpdatedInternal()
+            {
+                switch (connectionUpdate)
+                {
+                    case ConnectionUpdate.Connected:
+                    case ConnectionUpdate.Reconnected:
+                        RefreshAllParticipantStates();
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection {connectionUpdate}, refreshed participant states");
+                        break;
+
+                    case ConnectionUpdate.Disconnected:
+                        HandleDisconnection(disconnectReason);
+                        break;
+                }
             }
         }
 
@@ -417,10 +472,7 @@ namespace DCL.VoiceChat
 
             foreach (Participant participant in currentParticipants)
             {
-                if (participantStates.TryGetValue(participant.Identity, out ParticipantState existingState))
-                {
-                    RefreshParticipantState(participant, existingState);
-                }
+                if (participantStates.TryGetValue(participant.Identity, out ParticipantState existingState)) { RefreshParticipantState(participant, existingState); }
                 else
                 {
                     ParticipantState state = CreateParticipantState(participant);
