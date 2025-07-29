@@ -15,13 +15,53 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             R = 0.283f, G = 0.142f, B = 0f,
         };
 
-        public static Color3 GetEyeColor(this PBAvatarShape self) =>
-            self.EyeColor ?? new Color3(NEUTRAL_COLOR);
+        public static Color4 GetEyeColor(this PBAvatarShape self)
+        {
+            Color3 rgb = self.EyeColor ?? NEUTRAL_COLOR;
 
-        public static Color3 GetHairColor(this PBAvatarShape self) =>
-            self.HairColor ?? new Color3(HAIR_DEFAULT_COLOR);
+            return new Color4
+            {
+                A = self.GetAlpha(),
+                R = rgb.R,
+                G = rgb.G,
+                B = rgb.B,
+            };
+        }
 
-        public static Color3 GetSkinColor(this PBAvatarShape self) =>
-            self.SkinColor ?? new Color3(NEUTRAL_COLOR);
+        public static Color4 GetHairColor(this PBAvatarShape self)
+        {
+            Color3 rgb = self.HairColor ?? NEUTRAL_COLOR;
+
+            return new Color4
+            {
+                A = self.GetAlpha(),
+                R = rgb.R,
+                G = rgb.G,
+                B = rgb.B,
+            };
+        }
+
+        public static Color4 GetSkinColor(this PBAvatarShape self)
+        {
+            Color3 rgb = self.SkinColor ?? NEUTRAL_COLOR;
+
+            return new Color4
+            {
+                A = self.GetAlpha(),
+                R = rgb.R,
+                G = rgb.G,
+                B = rgb.B,
+            };
+        }
+
+        private static float GetAlpha(this PBAvatarShape self)
+        {
+            var alpha = 1f;
+
+            if (self.HasShowOnlyWearables)
+                alpha = self.ShowOnlyWearables ? 0f : 1f;
+
+            return alpha;
+        }
     }
 }
