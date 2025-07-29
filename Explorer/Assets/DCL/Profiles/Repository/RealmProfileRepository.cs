@@ -80,12 +80,12 @@ namespace DCL.Profiles
             new (string.Empty, profileJsonRootDto)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
-                content = new List<ContentDefinition>
+                content = new ContentDefinition[]
                 {
                     new () { file = "body.png", hash = bodyHash },
                     new () { file = "face256.png", hash = faceHash },
                 },
-                pointers = new List<string> { profile.UserId },
+                pointers = new[] { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };

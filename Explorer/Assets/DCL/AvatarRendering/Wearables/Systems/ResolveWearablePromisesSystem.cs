@@ -172,10 +172,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
             bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
 
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (!dtoHasContentDownloadUrl && component.ManifestResult is { Succeeded: false }) return false;
+            if (!dtoHasContentDownloadUrl && component.DTO.assetBundleManifestRequestFailed) return false;
 
             if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) // Manifest is required for Web loading only
-                && !dtoHasContentDownloadUrl && component.ManifestResult == null)
+                && !dtoHasContentDownloadUrl && string.IsNullOrEmpty(component.DTO.assetBundleManifestVersion))
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
             if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
