@@ -4,7 +4,6 @@ using DCL.UI;
 using DCL.WebRequests;
 using MVC;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.RewardPanel
 {
