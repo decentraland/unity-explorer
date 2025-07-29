@@ -451,32 +451,47 @@
         }
     },
     {
-        "version": "v3",
-        "id": "bafkreidgriccv7fhdvwkf2v7wlupffibrwkf5kpotyp24mycmutcm5ncc4",
+        "id": "bafkreifk6axit55wmki3rngqqitphphreyuieq7qbbcqfhzj2ewm73p2fq",
         "type": "wearable",
         "pointers": [
             "urn:decentraland:off-chain:base-avatars:green_hoodie"
         ],
-        "timestamp": 1689946320565,
         "content": [
             {
-                "file": "AvatarWearables_TX.png",
-                "hash": "bafkreie2zkxkaboe6lo2yuafimiu4rzdlyuw4cvyaaocx4szwyranfpoaa"
+                "file": "F_uBody_Hoodie_01.glb",
+                "hash": "bafkreicaziie4otf6dvueb4gdltyqbz2arkzvzzqfyvxrklwrihbf3akuy"
+            },
+            {
+                "file": "basicGreenHoodie_diffuse512.png.png",
+                "hash": "bafkreid7dfijkdhifxlsblrbniex4uwkdaga5j6zsvei7oh6gbrfz5oy74"
             },
             {
                 "file": "M_uBody_Hoodie_01.glb",
-                "hash": "bafkreig6vxcfgbids553saql76wjhz43ixwc42skpx5ymznmtjomnspium"
+                "hash": "bafkreihropqyljimuzfogzyuxabo5ks4uq6pesf2snufjq2o3n4cx3bt2q"
             },
             {
                 "file": "thumbnail.png",
-                "hash": "bafkreig3eig6jxbygvhz7c6wgyaaqey5t253lscyx5szsvdkplrmb2eksi"
+                "hash": "bafybeih6i6knk7trrrcr7aiikzje6ntxyjhvgjhdqsd2v4mt2nfggz5rhy"
             }
         ],
+        "version": "v3",
+        "timestamp": 1753291656482,
         "metadata": {
             "id": "urn:decentraland:off-chain:base-avatars:green_hoodie",
             "name": "green_hoodie",
             "description": "",
+            "image": "",
             "thumbnail": "thumbnail.png",
+            "i18n": [
+                {
+                    "code": "en",
+                    "text": "Green Hoodie"
+                },
+                {
+                    "code": "es",
+                    "text": "Sudadera Verde con Capucha"
+                }
+            ],
             "data": {
                 "replaces": [],
                 "hides": [],
@@ -484,9 +499,11 @@
                     "hands"
                 ],
                 "tags": [
-                    "top",
-                    "male",
-                    "man",
+                    "unisex",
+                    "upper",
+                    "body",
+                    "Green",
+                    "Hoodie",
                     "base-wearable"
                 ],
                 "category": "upper_body",
@@ -499,62 +516,84 @@
                         "overrideReplaces": [],
                         "overrideHides": [],
                         "contents": [
-                            "AvatarWearables_TX.png",
+                            "F_uBody_Hoodie_01.glb",
+                            "basicGreenHoodie_diffuse512.png.png",
+                            "M_uBody_Hoodie_01.glb"
+                        ]
+                    },
+                    {
+                        "bodyShapes": [
+                            "urn:decentraland:off-chain:base-avatars:BaseFemale"
+                        ],
+                        "mainFile": "F_uBody_Hoodie_01.glb",
+                        "overrideReplaces": [],
+                        "overrideHides": [],
+                        "contents": [
+                            "F_uBody_Hoodie_01.glb",
+                            "basicGreenHoodie_diffuse512.png.png",
                             "M_uBody_Hoodie_01.glb"
                         ]
                     }
                 ]
-            },
-            "i18n": [
-                {
-                    "code": "en",
-                    "text": "Green Hoodie"
-                },
-                {
-                    "code": "es",
-                    "text": "Sudadera Verde con Capucha"
-                }
-            ],
-            "createdAt": 1689946320408,
-            "updatedAt": 1689946320408
+            }
         }
     },
     {
-        "version": "v3",
-        "id": "QmTfZCbV4kbbieVkBmfdNEPzqqTPCvuAuAo7xq39mBRjNN",
+        "id": "bafkreieglfbel576oazo4rsf2h7ylap5dudpicqbmhcz3aqim6g7ermcse",
         "type": "wearable",
         "pointers": [
             "urn:decentraland:off-chain:base-avatars:brown_pants"
         ],
-        "timestamp": 1637005602186,
         "content": [
             {
-                "file": "Avatar_MaleSkinBase.png",
-                "hash": "QmXZnxX4hbKjCRJkLmVrPzGv876aUzY8dGxmVGngThnX7t"
+                "file": "F_lBody_LongPants_01.glb",
+                "hash": "bafkreifj25jokpy4p4m2xa264mr4dajaokopq7x77vqkfljinvygyyvar4"
             },
             {
-                "file": "AvatarWearables_TX.png",
-                "hash": "QmYktkLr5rnn9zPPARkavhVowvTNTih8uWq8BVscTGxtZD"
+                "file": "Avatar_MaleSkinBase.png",
+                "hash": "bafkreiaubk2exzcqiutttnjajktvu6uys3zeb4poxpzauv6yccghz5heta"
+            },
+            {
+                "file": "F_lBody_LongPants_512.png",
+                "hash": "bafkreiduw5bsr5jtgsqlpv6giasbfdxjf6sig666opdew634ndpzyrrk24"
             },
             {
                 "file": "M_lBody_LongPants_01.glb",
-                "hash": "QmfHa4fYZgh3q8wFDnczRQzuMAzqPeYKDmbeFPsG1JZXbL"
+                "hash": "bafkreidltkgsfhhlrky5u7chcttkrd5vrl7ljwqzwdy4u5cfipsw3wtap4"
             },
             {
                 "file": "thumbnail.png",
-                "hash": "QmUCGcebD4uSrNrmmQMiR2KoC3CcwaDisAUMQHvskuWJD4"
+                "hash": "bafkreidgsmnojpvskjqnrotclgehpkpiqbgyebjuxxzkh4jyanod4jnlsm"
             }
         ],
+        "version": "v3",
+        "timestamp": 1753301044494,
         "metadata": {
             "id": "urn:decentraland:off-chain:base-avatars:brown_pants",
+            "name": "brown_pants",
             "description": "",
+            "image": "",
             "thumbnail": "thumbnail.png",
-            "rarity": "",
+            "i18n": [
+                {
+                    "code": "en",
+                    "text": "Brown Pants"
+                },
+                {
+                    "code": "es",
+                    "text": "Pantalón Marrón"
+                }
+            ],
             "data": {
+                "replaces": [],
+                "hides": [],
+                "removesDefaultHiding": [],
                 "tags": [
-                    "bottom",
-                    "male",
-                    "man",
+                    "unisex",
+                    "lower",
+                    "body",
+                    "Brown",
+                    "Pants",
                     "base-wearable"
                 ],
                 "category": "lower_body",
@@ -567,25 +606,28 @@
                         "overrideReplaces": [],
                         "overrideHides": [],
                         "contents": [
-                            "AvatarWearables_TX.png",
+                            "F_lBody_LongPants_01.glb",
                             "Avatar_MaleSkinBase.png",
+                            "F_lBody_LongPants_512.png",
+                            "M_lBody_LongPants_01.glb"
+                        ]
+                    },
+                    {
+                        "bodyShapes": [
+                            "urn:decentraland:off-chain:base-avatars:BaseFemale"
+                        ],
+                        "mainFile": "F_lBody_LongPants_01.glb",
+                        "overrideReplaces": [],
+                        "overrideHides": [],
+                        "contents": [
+                            "F_lBody_LongPants_01.glb",
+                            "Avatar_MaleSkinBase.png",
+                            "F_lBody_LongPants_512.png",
                             "M_lBody_LongPants_01.glb"
                         ]
                     }
                 ]
-            },
-            "i18n": [
-                {
-                    "code": "en",
-                    "text": "Brown Pants"
-                },
-                {
-                    "code": "es",
-                    "text": "Pantalón Marrón"
-                }
-            ],
-            "createdAt": 1637005601886,
-            "updatedAt": 1637005601886
+            }
         }
     },
     {
@@ -743,28 +785,35 @@
     },
     {
         "version": "v3",
-        "id": "QmPp8szvQQYGFhSqWdsdVwvjeFad1VqyJsmnbB768yz2zY",
+        "id": "bafkreieo5d4supbvllegfyrzduucownpqbfn4xoyce33rc5j3tok3jqo54",
         "type": "wearable",
         "pointers": [
             "urn:decentraland:off-chain:base-avatars:f_eyebrows_00"
         ],
-        "timestamp": 1637005580271,
+        "timestamp": 1699288905395,
         "content": [
             {
                 "file": "F_Eyebrows_00.png",
-                "hash": "QmTQZXMoieaUbTVmvoL1wgTfuxFMTCgrTfSoLD5sJQr1E4"
+                "hash": "bafkreicljlsrh7upl5guvinmtjjqn7eagyu7e6wsef4a5nyerjuyw7t5fu"
+            },
+            {
+                "file": "image.png",
+                "hash": "bafkreicljlsrh7upl5guvinmtjjqn7eagyu7e6wsef4a5nyerjuyw7t5fu"
             },
             {
                 "file": "thumbnail.png",
-                "hash": "Qmf9s38fC4tyHJ6G4JEeUPA5EU31ttnJj4pYKZ2GFFmHkC"
+                "hash": "bafkreihz2m5gxlbuigstyjwjgdgebaebwue2yo6jpa5wnp7joythzfsaze"
             }
         ],
         "metadata": {
             "id": "urn:decentraland:off-chain:base-avatars:f_eyebrows_00",
+            "name": "f_eyebrows_00",
             "description": "",
+            "image": "image.png",
             "thumbnail": "thumbnail.png",
-            "rarity": "",
             "data": {
+                "replaces": [],
+                "hides": [],
                 "tags": [
                     "face",
                     "eyebrows",
@@ -806,34 +855,41 @@
                     "text": "f_EyeBrows_00"
                 }
             ],
-            "createdAt": 1637005579334,
-            "updatedAt": 1637005579334
+            "createdAt": 1699288904613,
+            "updatedAt": 1699288904613
         }
     },
     {
         "version": "v3",
-        "id": "QmYSPas3Tn76ooAzEpUvhAgEUxihDBY7CpHpLRFavrCPyP",
+        "id": "bafkreidiurv6wufy6hycravsatlk6kjrmikzkm34jybmnlg4g6lqhy7qpq",
         "type": "wearable",
         "pointers": [
             "urn:decentraland:off-chain:base-avatars:f_mouth_00"
         ],
-        "timestamp": 1637005604782,
+        "timestamp": 1699288905415,
         "content": [
             {
                 "file": "F_Mouth_00.png",
-                "hash": "QmPXyMRVprmqrhtZ43bF647k1uVvLQHMgdmk8h5mGiNNZa"
+                "hash": "bafkreiaryit63vshyvyddoo3dfjdapvlfcyf2jfbd6enktal3kbv2pcdru"
+            },
+            {
+                "file": "image.png",
+                "hash": "bafkreiaryit63vshyvyddoo3dfjdapvlfcyf2jfbd6enktal3kbv2pcdru"
             },
             {
                 "file": "thumbnail.png",
-                "hash": "QmQRrm48f8WzZWqKZqziKmzLMNffRJcoEQcvQXfKZQPQFB"
+                "hash": "bafkreia7bttwa53qxobnkpkj4vpsbtklmxvekix3qohf2ywmlx7vxnoa2i"
             }
         ],
         "metadata": {
             "id": "urn:decentraland:off-chain:base-avatars:f_mouth_00",
+            "name": "f_mouth_00",
             "description": "",
+            "image": "image.png",
             "thumbnail": "thumbnail.png",
-            "rarity": "",
             "data": {
+                "replaces": [],
+                "hides": [],
                 "tags": [
                     "face",
                     "mouth",
@@ -875,8 +931,8 @@
                     "text": "f_Mouth_00"
                 }
             ],
-            "createdAt": 1637005603877,
-            "updatedAt": 1637005603877
+            "createdAt": 1699288904628,
+            "updatedAt": 1699288904628
         }
     },
     {
@@ -955,32 +1011,51 @@
         }
     },
     {
-        "version": "v3",
-        "id": "bafkreig2t5muxj23zntokjoxfxsqkwhrlyjiuv6z7evav6junxfsdxkrca",
+        "id": "bafkreie4p2j6ai76tvqr76vewa37irhjjmdipyquuyvsebmhtdzf3bnri4",
         "type": "wearable",
         "pointers": [
             "urn:decentraland:off-chain:base-avatars:f_sweater"
         ],
-        "timestamp": 1689946320563,
         "content": [
             {
-                "file": "AvatarWearables_TX.png",
-                "hash": "bafkreie2zkxkaboe6lo2yuafimiu4rzdlyuw4cvyaaocx4szwyranfpoaa"
+                "file": "F_uBody_Sweater_01.glb",
+                "hash": "bafkreieudawdjb26fgxu5ftzv4dd3sqknkvhqgf5dypxsw3jescj6yozvy"
             },
             {
-                "file": "F_uBody_Sweater_01.glb",
-                "hash": "bafkreidwlfqvt73akcrlyjzxbe56jv4kc4kkp5mwt6v2detzyaqc4j5diy"
+                "file": "M_uBody_Sweater_01b_512.png.png",
+                "hash": "bafkreid5qpdjss4m6au7frktvg4wfu5dlkzfghgpa3de6dabypib52qfhq"
+            },
+            {
+                "file": "Avatar_MaleSkinBase.png",
+                "hash": "bafkreiaubk2exzcqiutttnjajktvu6uys3zeb4poxpzauv6yccghz5heta"
+            },
+            {
+                "file": "M_uBody_Sweater_01.glb",
+                "hash": "bafkreif5fhmu5v7za465ojbd7az6zbg4bhkaco7afunq6swyw5xs3qs4f4"
             },
             {
                 "file": "thumbnail.png",
-                "hash": "bafkreibszaqdxgvhybnozg23g3ay2thmktvr7alteta7qoh2xfshpuobhy"
+                "hash": "bafybeihaa4n5q5qvisvcp7wkqyd7thvw3iuhl6le3ptn2hrecnctf24koq"
             }
         ],
+        "version": "v3",
+        "timestamp": 1753291649317,
         "metadata": {
             "id": "urn:decentraland:off-chain:base-avatars:f_sweater",
             "name": "f_sweater",
             "description": "",
+            "image": "",
             "thumbnail": "thumbnail.png",
+            "i18n": [
+                {
+                    "code": "en",
+                    "text": "Yellow Sweater"
+                },
+                {
+                    "code": "es",
+                    "text": "Suéter Amarillo"
+                }
+            ],
             "data": {
                 "replaces": [],
                 "hides": [],
@@ -988,9 +1063,11 @@
                     "hands"
                 ],
                 "tags": [
-                    "top",
-                    "female",
-                    "woman",
+                    "unisex",
+                    "upper",
+                    "body",
+                    "Yellow",
+                    "Sweater",
                     "base-wearable"
                 ],
                 "category": "upper_body",
@@ -1003,58 +1080,81 @@
                         "overrideReplaces": [],
                         "overrideHides": [],
                         "contents": [
-                            "AvatarWearables_TX.png",
-                            "F_uBody_Sweater_01.glb"
+                            "F_uBody_Sweater_01.glb",
+                            "M_uBody_Sweater_01b_512.png.png",
+                            "Avatar_MaleSkinBase.png",
+                            "M_uBody_Sweater_01.glb"
+                        ]
+                    },
+                    {
+                        "bodyShapes": [
+                            "urn:decentraland:off-chain:base-avatars:BaseMale"
+                        ],
+                        "mainFile": "M_uBody_Sweater_01.glb",
+                        "overrideReplaces": [],
+                        "overrideHides": [],
+                        "contents": [
+                            "F_uBody_Sweater_01.glb",
+                            "M_uBody_Sweater_01b_512.png.png",
+                            "Avatar_MaleSkinBase.png",
+                            "M_uBody_Sweater_01.glb"
                         ]
                     }
                 ]
-            },
-            "i18n": [
-                {
-                    "code": "en",
-                    "text": "Yellow Sweater"
-                },
-                {
-                    "code": "es",
-                    "text": "Suéter Amarillo"
-                }
-            ],
-            "createdAt": 1689946320408,
-            "updatedAt": 1689946320408
+            }
         }
     },
     {
-        "version": "v3",
-        "id": "QmVebGrbmNRSPeFfzyM46Ky3eBYgcWUSEY7AQtwCpPr28W",
+        "id": "bafkreicxkeshdihokg3j7pjpjccw2yey3klxxpmztnes6lgcgrkhobcf6e",
         "type": "wearable",
         "pointers": [
             "urn:decentraland:off-chain:base-avatars:f_jeans"
         ],
-        "timestamp": 1637005599547,
         "content": [
             {
-                "file": "AvatarWearables_TX.png",
-                "hash": "QmYktkLr5rnn9zPPARkavhVowvTNTih8uWq8BVscTGxtZD"
+                "file": "F_lBody_Jeans_01.glb",
+                "hash": "bafkreicwvizw7pedhonlwlprp4yzrwwejypcysurfishsy5d4cbh5d5lv4"
             },
             {
-                "file": "F_lBody_Jeans_01.glb",
-                "hash": "QmXZ1mj5Y6QKZiGH7u8SsSamV3gYCADd9ipUiKNPRTRL7d"
+                "file": "F_lBody_Jeans_01_512.png.png",
+                "hash": "bafkreiee2sqfxmxxi6ub7vusbgzxjzr7rdbvfcbyhsa5ghha4e57jxftju"
+            },
+            {
+                "file": "M_lBody_Jeans_01.glb",
+                "hash": "bafkreibjbvrb6oiglea4y57syw5ukf3prj2l764ji4yl2beswmrewdq3lq"
             },
             {
                 "file": "thumbnail.png",
-                "hash": "QmXiHQSkDh2qyFTqyekLyeTFm57umPZAFwK34tMv5R1oXq"
+                "hash": "bafybeiepd2dutkluo7pe7pcjrnmd34u2esvnqmhg7cs5cfrdwxvaci3tly"
             }
         ],
+        "version": "v3",
+        "timestamp": 1753291613888,
         "metadata": {
             "id": "urn:decentraland:off-chain:base-avatars:f_jeans",
+            "name": "f_jeans",
             "description": "",
+            "image": "",
             "thumbnail": "thumbnail.png",
-            "rarity": "",
+            "i18n": [
+                {
+                    "code": "en",
+                    "text": "Jeans"
+                },
+                {
+                    "code": "es",
+                    "text": "Jeans"
+                }
+            ],
             "data": {
+                "replaces": [],
+                "hides": [],
+                "removesDefaultHiding": [],
                 "tags": [
-                    "bottom",
-                    "female",
-                    "woman",
+                    "unisex",
+                    "lower",
+                    "body",
+                    "Jeans",
                     "base-wearable"
                 ],
                 "category": "lower_body",
@@ -1067,62 +1167,79 @@
                         "overrideReplaces": [],
                         "overrideHides": [],
                         "contents": [
-                            "AvatarWearables_TX.png",
-                            "F_lBody_Jeans_01.glb"
+                            "F_lBody_Jeans_01.glb",
+                            "F_lBody_Jeans_01_512.png.png",
+                            "M_lBody_Jeans_01.glb"
+                        ]
+                    },
+                    {
+                        "bodyShapes": [
+                            "urn:decentraland:off-chain:base-avatars:BaseMale"
+                        ],
+                        "mainFile": "M_lBody_Jeans_01.glb",
+                        "overrideReplaces": [],
+                        "overrideHides": [],
+                        "contents": [
+                            "F_lBody_Jeans_01.glb",
+                            "F_lBody_Jeans_01_512.png.png",
+                            "M_lBody_Jeans_01.glb"
                         ]
                     }
                 ]
-            },
-            "i18n": [
-                {
-                    "code": "en",
-                    "text": "Jeans"
-                },
-                {
-                    "code": "es",
-                    "text": "Jeans"
-                }
-            ],
-            "createdAt": 1637005599020,
-            "updatedAt": 1637005599020
+            }
         }
     },
     {
-        "version": "v3",
-        "id": "QmUfsCJCddcwo8KdcAxCeemdpSuwi293tmGv4jpAo5KvwV",
+        "id": "bafkreig2xqrh6mxnrtiah2lo6dkdlgvucioqcuejscyjqorincgrfvtaxy",
         "type": "wearable",
         "pointers": [
             "urn:decentraland:off-chain:base-avatars:bun_shoes"
         ],
-        "timestamp": 1637005590193,
         "content": [
             {
-                "file": "Avatar_MaleSkinBase.png",
-                "hash": "QmXZnxX4hbKjCRJkLmVrPzGv876aUzY8dGxmVGngThnX7t"
+                "file": "F_BunShoes_01.glb",
+                "hash": "bafkreic5wx77nqcnielr2ltkuczvk5km36missrbbod4kjzumaioduyr7e"
             },
             {
                 "file": "AvatarWearables_TX.png",
-                "hash": "QmYktkLr5rnn9zPPARkavhVowvTNTih8uWq8BVscTGxtZD"
+                "hash": "bafkreie2zkxkaboe6lo2yuafimiu4rzdlyuw4cvyaaocx4szwyranfpoaa"
             },
             {
-                "file": "F_BunShoes_01.glb",
-                "hash": "QmWF5V3axxX17zxzExAzQFovbM3quwdmwigipp9RMMfbBQ"
+                "file": "Avatar_MaleSkinBase.png",
+                "hash": "bafkreiejc4htqz5iwjxipwhabye7p4pazlvyvkuxmgip4v2bm2stv4ymz4"
             },
             {
                 "file": "thumbnail.png",
-                "hash": "QmY3Z7S6WdXRMK6RqVRAX5CzneDikWPMFdm6XDZfW2z4aV"
+                "hash": "bafkreieqgovidopga6vpot5ur3d5vlxey5tk77viup5hlxs5a762ommlti"
             }
         ],
+        "version": "v3",
+        "timestamp": 1753291570887,
         "metadata": {
             "id": "urn:decentraland:off-chain:base-avatars:bun_shoes",
+            "name": "bun_shoes",
             "description": "",
+            "image": "",
             "thumbnail": "thumbnail.png",
-            "rarity": "",
+            "i18n": [
+                {
+                    "code": "en",
+                    "text": "Bun shoes"
+                },
+                {
+                    "code": "es",
+                    "text": "Zapatillas de Lona"
+                }
+            ],
             "data": {
+                "replaces": [],
+                "hides": [],
+                "removesDefaultHiding": [],
                 "tags": [
+                    "unisex",
+                    "feet",
+                    "Bun",
                     "shoes",
-                    "woman",
-                    "women",
                     "base-wearable"
                 ],
                 "category": "feet",
@@ -1135,25 +1252,26 @@
                         "overrideReplaces": [],
                         "overrideHides": [],
                         "contents": [
+                            "F_BunShoes_01.glb",
                             "AvatarWearables_TX.png",
-                            "Avatar_MaleSkinBase.png",
-                            "F_BunShoes_01.glb"
+                            "Avatar_MaleSkinBase.png"
+                        ]
+                    },
+                    {
+                        "bodyShapes": [
+                            "urn:decentraland:off-chain:base-avatars:BaseMale"
+                        ],
+                        "mainFile": "F_BunShoes_01.glb",
+                        "overrideReplaces": [],
+                        "overrideHides": [],
+                        "contents": [
+                            "F_BunShoes_01.glb",
+                            "AvatarWearables_TX.png",
+                            "Avatar_MaleSkinBase.png"
                         ]
                     }
                 ]
-            },
-            "i18n": [
-                {
-                    "code": "en",
-                    "text": "Bun shoes"
-                },
-                {
-                    "code": "es",
-                    "text": "Zapatillas de Lona"
-                }
-            ],
-            "createdAt": 1637005589534,
-            "updatedAt": 1637005589534
+            }
         }
     }
 ]

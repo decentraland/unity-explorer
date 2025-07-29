@@ -52,8 +52,16 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                 WearableDTO dto = consumedDefaultWearableDefinition.Value[i];
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
 
-                BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
-                pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());
+                if (wearable.IsUnisex())
+                {
+                    pointersRequest[BodyShape.MALE].Add(wearable.GetUrn());
+                    pointersRequest[BodyShape.FEMALE].Add(wearable.GetUrn());
+                }
+                else
+                {
+                    BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
+                    pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());
+                }
             }
 
             for (var i = 0; i < BodyShape.VALUES.Count; i++)
