@@ -189,7 +189,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             clipboard.Set(GetPlaceCopyLink(place));
 
-            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken)
+            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken, false)
                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES)
                                           .Forget();
         }

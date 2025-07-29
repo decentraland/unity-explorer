@@ -42,7 +42,7 @@ namespace DCL.Communities.CommunitiesCard
         private const string DELETE_COMMUNITY_ERROR_TEXT = "There was an error deleting the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
         private const string TOGGLE_COMMUNITY_NOTIFICATIONS_ERROR_TEXT = "There was an error updating the community notification setting. Please try again.";
-        private const string TOGGLE_COMMUNITY_NOTIFICATIONS_SUCCESS_TEXT = "Notifications updated successfully.";
+        private const string TOGGLE_COMMUNITY_NOTIFICATIONS_SUCCESS_TEXT = "Notification settings updated.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -235,7 +235,7 @@ namespace DCL.Communities.CommunitiesCard
                 communityData.notifications = toggle;
                 viewInstance!.SetNotificationsEnabled(toggle);
 
-                await viewInstance.successNotificationView.AnimatedShowAsync(TOGGLE_COMMUNITY_NOTIFICATIONS_SUCCESS_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                await viewInstance.successNotificationView.AnimatedShowAsync(TOGGLE_COMMUNITY_NOTIFICATIONS_SUCCESS_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct, false)
                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
             }
         }

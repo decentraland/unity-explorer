@@ -101,7 +101,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event));
 
-            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken)
+            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken, false)
                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES)
                                           .Forget();
         }

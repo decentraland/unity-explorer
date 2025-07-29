@@ -25,8 +25,9 @@ namespace DCL.UI
         public void SetText(string text) =>
             Text.text = text;
 
-        public void Show(CancellationToken ct = default)
+        public void Show(CancellationToken ct = default, bool showCloseButton = true)
         {
+            CloseButton.gameObject.SetActive(showCloseButton);
             CanvasGroup.DOFade(1, 0.3f).ToUniTask(cancellationToken: ct);
             CanvasGroup.interactable = true;
             CanvasGroup.blocksRaycasts = true;
@@ -43,10 +44,10 @@ namespace DCL.UI
             CanvasGroup.blocksRaycasts = false;
         }
 
-        public async UniTask AnimatedShowAsync(string text, int showDurationMs, CancellationToken ct = default)
+        public async UniTask AnimatedShowAsync(string text, int showDurationMs, CancellationToken ct = default, bool showCloseButton = true)
         {
             SetText(text);
-            Show(ct);
+            Show(ct, showCloseButton);
             await UniTask.Delay(showDurationMs, cancellationToken: ct);
             Hide(ct: ct);
         }
