@@ -97,7 +97,7 @@ namespace DCL.Chat.ChatUseCases
             Result<GetUserCommunitiesResponse> result =
                 await communitiesDataProvider
                     .GetUserCommunitiesAsync(string.Empty,
-                        false,
+                        true,
                         0,
                         ALL_COMMUNITIES_OF_USER, ct)
                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);

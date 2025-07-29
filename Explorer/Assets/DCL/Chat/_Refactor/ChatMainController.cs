@@ -114,7 +114,7 @@ namespace DCL.Chat
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.LeaveChannel,
-                commandRegistry.OpenPrivateConversation,
+                commandRegistry.OpenConversation,
                 commandRegistry.CreateChannelViewModel);
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(viewInstance.MessageFeedView,
