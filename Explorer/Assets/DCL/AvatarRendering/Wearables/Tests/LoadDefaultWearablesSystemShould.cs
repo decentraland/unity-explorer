@@ -1,19 +1,13 @@
-﻿using AssetManagement;
-using DCL.AvatarRendering.Loading.Assets;
+﻿using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.AvatarRendering.Wearables.Systems;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.TestSuite;
 using Newtonsoft.Json;
-using NUnit.Framework;
-using System.Collections.Generic;
-using System.IO;
-using DCL.Optimization.PerformanceBudgeting;
 using NSubstitute;
+using NUnit.Framework;
+using System.IO;
 using UnityEngine;
 using LoadDefaultWearablesSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadDefaultWearablesSystem;
 
@@ -37,49 +31,11 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableStorage = new WearableStorage();
             emptyDefaultWearable = new GameObject();
 
-            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(repoolableList),
+            system = new LoadDefaultWearablesSystem(world,
                 emptyDefaultWearable,
                 wearableStorage);
 
             system.Initialize();
-        }
-
-        [Test]
-        public void CreatePromisesForDefaultWearables()
-        {
-            AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[] promises = world.CacheDefaultWearablesState().GetDefaultWearablesState(world).PromisePerBodyShape;
-            Assert.That(promises.Length, Is.EqualTo(BodyShape.COUNT));
-
-            for (var i = 0; i < promises.Length; i++)
-            {
-                Assert.That(promises[i].LoadingIntention.Pointers.Count, Is.GreaterThan(0));
-                Assert.That(promises[i].LoadingIntention.PermittedSources, Is.EqualTo(AssetSource.EMBEDDED));
-                Assert.That(promises[i].LoadingIntention.FallbackToDefaultWearables, Is.EqualTo(false));
-            }
-        }
-
-        [Test]
-        public void ConsumePromises()
-        {
-            ref readonly DefaultWearablesComponent state = ref world.CacheDefaultWearablesState().GetDefaultWearablesState(world);
-
-            // resolve
-
-            for (var i = 0; i < state.PromisePerBodyShape.Length; i++)
-            {
-                AssetPromise<WearablesResolution, GetWearablesByPointersIntention> promise = state.PromisePerBodyShape[i];
-                world.Add(promise.Entity, new StreamableLoadingResult<WearablesResolution>(WearablesResolution.EMPTY));
-            }
-
-            system.Update(0);
-
-            for (var i = 0; i < state.PromisePerBodyShape.Length; i++)
-            {
-                AssetPromise<WearablesResolution, GetWearablesByPointersIntention> promise = state.PromisePerBodyShape[i];
-                Assert.That(promise.IsConsumed, Is.True);
-            }
-
-            Assert.That(state.ResolvedState, Is.EqualTo(DefaultWearablesComponent.State.Success));
         }
 
         [Test]

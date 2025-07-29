@@ -13,5 +13,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         public Texture this[string category, int originalTextureId] => Value[category][originalTextureId];
+
+        public FacialFeaturesTextures Clone()
+        {
+            var texturesByCategory = new Dictionary<string, Dictionary<int, Texture>>();
+
+            foreach (var kvp in Value)
+            {
+                var textures = new Dictionary<int, Texture>(kvp.Value);
+                texturesByCategory[kvp.Key] = textures;
+            }
+
+            return new FacialFeaturesTextures(texturesByCategory);
+        }
     }
 }
