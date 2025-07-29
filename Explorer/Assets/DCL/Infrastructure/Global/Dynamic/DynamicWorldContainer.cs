@@ -112,6 +112,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.InWorldCamera;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -305,6 +306,8 @@ namespace Global.Dynamic
             var profileRepository = new LogProfileRepository(
                 new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
             );
+            
+            GalleryEventBus galleryEventBus = new GalleryEventBus();
 
             static IMultiPool MultiPoolFactory() =>
                 new DCLMultiPool();
@@ -584,8 +587,12 @@ namespace Global.Dynamic
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
-            DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatTeleporter, ct);
-            deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
+            // Local scene development scenes are excluded from deeplink runtime handling logic
+            if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
+            {
+                DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatTeleporter, ct);
+                deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
+            }
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<FriendsConnectivityStatusTracker>();
@@ -785,7 +792,8 @@ namespace Global.Dynamic
                     upscaleController,
                     communitiesDataProvider,
                     realmNftNamesProvider,
-                    includeVoiceChat
+                    includeVoiceChat,
+                    galleryEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -866,7 +874,8 @@ namespace Global.Dynamic
                     chatEventBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper,
-                    voiceChatCallStatusService
+                    voiceChatCallStatusService,
+                    galleryEventBus
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -969,7 +978,8 @@ namespace Global.Dynamic
                     nametagsData,
                     profileRepositoryWrapper,
                     sharedSpaceManager,
-                    identityCache));
+                    identityCache,
+                    galleryEventBus));
 
             if (includeMarketplaceCredits)
             {
@@ -1008,6 +1018,7 @@ namespace Global.Dynamic
                     eventsApiService,
                     sharedSpaceManager,
                     chatEventBus,
+                    galleryEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
                     notificationsBusController,
