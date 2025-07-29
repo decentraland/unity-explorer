@@ -68,7 +68,7 @@ namespace DCL.MarketplaceCredits.Fields
             imageController?.SetImage(DefaultGoalSprite);
 
             if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+                imageController?.RequestImage(imageUrl, Color.white, hideImageWhileLoading: true);
         }
 
         public void SetTitle(string goalTitle) =>

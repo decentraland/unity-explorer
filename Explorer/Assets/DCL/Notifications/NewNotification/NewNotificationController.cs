@@ -136,7 +136,7 @@ namespace DCL.Notifications.NewNotification
             ProcessCustomMetadata(notification);
 
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), Color.white, true);
 
             viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -151,7 +151,7 @@ namespace DCL.Notifications.NewNotification
             ProcessCustomMetadata(notification);
 
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), Color.white, true);
 
             viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -170,7 +170,8 @@ namespace DCL.Notifications.NewNotification
             viewInstance.BadgeNotificationView.Notification = notification;
 
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), Color.white,
+                    true, true);
 
             await AnimateBadgeNotificationAsync();
         }
@@ -182,7 +183,8 @@ namespace DCL.Notifications.NewNotification
             viewInstance.MarketplaceCreditsNotificationView.SetNotification(notification.Type, notification);
 
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), Color.white,
+                    true, true);
 
             await AnimateMarketplaceCreditsNotificationAsync();
         }

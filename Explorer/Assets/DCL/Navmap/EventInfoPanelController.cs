@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
@@ -115,7 +116,7 @@ namespace DCL.Navmap
             view.HostAndPlaceLabel.text = $"hosted by <b>{@event.user_name}</b> - at <b>{place.title} ({@event.x}, {@event.y})</b>";
             view.DescriptionLabel.text = @event.description;
             view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
-            thumbnailController.RequestImage(@event.image);
+            thumbnailController.RequestImage(@event.image, Color.white);
 
             updateLayoutCancellationToken = updateLayoutCancellationToken.SafeRestart();
             view.LayoutRoot.ForceUpdateLayoutAsync(updateLayoutCancellationToken.Token).Forget();

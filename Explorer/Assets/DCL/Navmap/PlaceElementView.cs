@@ -47,7 +47,7 @@ namespace DCL.Navmap
             imageController = new ImageController(placeImage, webRequestController);
 
         public void SetPlaceImage(string imageUrl) =>
-            imageController.RequestImage(imageUrl, true);
+            imageController.RequestImage(imageUrl, Color.white, true);
 
         public void OnPointerEnter(PointerEventData eventData)
         {

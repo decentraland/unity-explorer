@@ -182,7 +182,7 @@ namespace DCL.NftPrompt
                 marketUrl = info.assetLink;
 
             placeImageController.SetImage(null);
-            placeImageController.RequestImage(info.imageUrl, useKtx: true);
+            placeImageController.RequestImage(info.imageUrl, Color.white, useKtx: true);
 
             lastNftInfo = info;
         }
