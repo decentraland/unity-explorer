@@ -43,6 +43,16 @@ namespace DCL.VoiceChat
             this.voiceChatRoom = voiceChatRoom;
         }
 
+        public void Dispose()
+        {
+            if (isDisposed) return;
+            isDisposed = true;
+
+            CleanupReconnectionState();
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
+        }
+
         public void StartOrderedDisconnectionGracePeriod()
         {
             if (isDisposed) return;
@@ -67,22 +77,16 @@ namespace DCL.VoiceChat
             try
             {
                 await UniTask.Delay(WAIT_BEFORE_DISCONNECT_DELAY, cancellationToken: orderedDisconnectionCts.Token)
-                    .SuppressCancellationThrow();
+                             .SuppressCancellationThrow();
 
                 if (!isOrderedDisconnection)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} No ordered disconnection received after grace period - starting reconnection attempts");
                     HandleUnexpectedDisconnection();
                 }
-                else
-                {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Ordered disconnection received during grace period - no reconnection needed");
-                }
+                else { ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Ordered disconnection received during grace period - no reconnection needed"); }
             }
-            catch (Exception ex)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Exception during grace period: {ex.Message}");
-            }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Exception during grace period: {ex.Message}"); }
         }
 
         private void HandleUnexpectedDisconnection()
@@ -124,10 +128,7 @@ namespace DCL.VoiceChat
                     reconnectionAttempts++;
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection attempt {reconnectionAttempts}/{configuration.MaxReconnectionAttempts}");
 
-                    try
-                    {
-                        await UniTask.Delay(configuration.ReconnectionDelayMs, cancellationToken: ct);
-                    }
+                    try { await UniTask.Delay(configuration.ReconnectionDelayMs, cancellationToken: ct); }
                     catch (OperationCanceledException)
                     {
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection cancelled");
@@ -135,8 +136,8 @@ namespace DCL.VoiceChat
                     }
 
                     Result<bool> result = await roomHub.VoiceChatRoom()
-                        .TrySetConnectionStringAndActivateAsync(voiceChatOrchestrator.CurrentConnectiveString)
-                        .SuppressToResultAsync();
+                                                       .TrySetConnectionStringAndActivateAsync(voiceChatOrchestrator.CurrentConnectionUrl)
+                                                       .SuppressToResultAsync();
 
                     if (result.Success)
                     {
@@ -164,16 +165,6 @@ namespace DCL.VoiceChat
             reconnectionAttempts = 0;
             orderedDisconnectionCts.SafeCancelAndDispose();
             orderedDisconnectionCts = null;
-        }
-
-        public void Dispose()
-        {
-            if (isDisposed) return;
-            isDisposed = true;
-
-            CleanupReconnectionState();
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
     }
 }

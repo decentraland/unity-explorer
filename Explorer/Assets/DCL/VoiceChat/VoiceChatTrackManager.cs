@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using LiveKit;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -8,6 +7,7 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
+using RichTypes;
 using System;
 using System.Threading;
 using Utility;
@@ -68,7 +68,7 @@ namespace DCL.VoiceChat
 
             try
             {
-                var result = MicrophoneRtcAudioSource2.New(microphoneHandler.AudioFilter, combinedStreamsAudioSource.AudioFilter);
+                Result<MicrophoneRtcAudioSource2> result = MicrophoneRtcAudioSource2.New(microphoneHandler.AudioFilter, combinedStreamsAudioSource.AudioFilter);
                 if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
 
                 //monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneHandler.AudioFilter);

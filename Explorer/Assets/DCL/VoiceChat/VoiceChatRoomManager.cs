@@ -131,13 +131,13 @@ namespace DCL.VoiceChat
 
                 Result<bool> result = await roomHub.VoiceChatRoom()
                                                    .TrySetConnectionStringAndActivateAsync(
-                                                        (voiceChatOrchestrator.CurrentConnectiveString))
+                                                        voiceChatOrchestrator.CurrentConnectionUrl)
                                                    .SuppressToResultAsync();
 
                 if (!result.Success)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectiveString}: {result.ErrorMessage}");
+                        $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectionUrl}: {result.ErrorMessage}");
 
                     voiceChatOrchestrator.HandleConnectionError();
                 }
@@ -271,7 +271,5 @@ namespace DCL.VoiceChat
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }
         }
-
-
     }
 }

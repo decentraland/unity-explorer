@@ -18,7 +18,7 @@ namespace DCL.VoiceChat
         private readonly IVoiceChatOrchestrator orchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
 
-        private CommunityStreamJoinButtonController joinButtonController;
+        private readonly CommunityStreamJoinButtonController joinButtonController;
         private CancellationTokenSource communityCts = new ();
         private bool isVoiceChatActive;
         private bool isCurrentCall;
@@ -44,6 +44,14 @@ namespace DCL.VoiceChat
             statusSubscription = orchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
         }
 
+        public void Dispose()
+        {
+            statusSubscription?.Dispose();
+            currentChannelSubscription?.Dispose();
+            joinButtonController?.Dispose();
+            communityCts?.Dispose();
+        }
+
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
             if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
@@ -54,10 +62,7 @@ namespace DCL.VoiceChat
                 isCurrentCall = true;
                 HandleCurrentCommunityCall();
             }
-            else
-            {
-                view.gameObject.SetActive(false);
-            }
+            else { view.gameObject.SetActive(false); }
         }
 
         private void OnCurrentChannelChanged(ChatChannel newChannel)
@@ -79,7 +84,8 @@ namespace DCL.VoiceChat
 
         private void HandleChangeToCommunityChannel(string communityId)
         {
-            isVoiceChatActive = orchestrator.CommunityStatusService.HasActiveVoiceChatCall(communityId, out _);
+            isVoiceChatActive = orchestrator.CommunityStatusService.HasActiveVoiceChatCall(communityId);
+
             //If there is no voice chat active, we just don't show this.
             if (!isVoiceChatActive) return;
 
@@ -118,16 +124,9 @@ namespace DCL.VoiceChat
 
             view.InStreamSign.SetActive(true);
             view.JoinStreamButton.gameObject.SetActive(true);
+
             // it will show tooltip saying we are already in a call.
             // Otherwise, we will join the call.
-        }
-
-        public void Dispose()
-        {
-            statusSubscription?.Dispose();
-            currentChannelSubscription?.Dispose();
-            joinButtonController?.Dispose();
-            communityCts?.Dispose();
         }
     }
 }

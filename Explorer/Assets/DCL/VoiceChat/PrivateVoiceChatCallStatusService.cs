@@ -10,8 +10,8 @@ using Utility;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    /// Implementation of voice chat call status service for private calls.
-    /// Handles all private voice chat operations and state management.
+    ///     Implementation of voice chat call status service for private calls.
+    ///     Handles all private voice chat operations and state management.
     /// </summary>
     public class PrivateVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, IPrivateVoiceChatCallStatusService
     {
@@ -47,7 +47,7 @@ namespace DCL.VoiceChat
             switch (update.Status)
             {
                 case PrivateVoiceChatStatus.VoiceChatAccepted:
-                    RoomUrl = update.Credentials.ConnectionUrl;
+                    ConnectionUrl = update.Credentials.ConnectionUrl;
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRejected:
@@ -81,10 +81,7 @@ namespace DCL.VoiceChat
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
                 }
             }
-            catch (Exception e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
-            }
+            catch (Exception e) { HandleVoiceChatServiceDisabled(e, resetData: false); }
         }
 
         private void OnRCPDisconnected()
@@ -137,10 +134,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (Exception e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: true);
-            }
+            catch (Exception e) { HandleVoiceChatServiceDisabled(e, resetData: true); }
         }
 
         public void AcceptCall()
@@ -164,7 +158,7 @@ namespace DCL.VoiceChat
                 {
                     //When the call has been ended
                     case AcceptPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                        RoomUrl = response.Ok.Credentials.ConnectionUrl;
+                        ConnectionUrl = response.Ok.Credentials.ConnectionUrl;
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
                     default:
@@ -172,10 +166,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (Exception e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
-            }
+            catch (Exception e) { HandleVoiceChatServiceDisabled(e, resetData: false); }
         }
 
         public override void HangUp()
@@ -207,10 +198,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (Exception e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: true);
-            }
+            catch (Exception e) { HandleVoiceChatServiceDisabled(e, resetData: true); }
         }
 
         public void RejectCall()
@@ -241,26 +229,22 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (Exception e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
-            }
+            catch (Exception e) { HandleVoiceChatServiceDisabled(e, resetData: false); }
         }
 
         private void ResetVoiceChatData()
         {
             CallId = string.Empty;
-            RoomUrl = string.Empty;
-            CurrentTargetWallet = default;
+            ConnectionUrl = string.Empty;
+            CurrentTargetWallet = default(string);
         }
 
         private void HandleVoiceChatServiceDisabled(Exception e, bool resetData = false)
         {
             ReportHub.LogWarning($"Voice chat service is disabled: {e.Message}", new ReportData(ReportCategory.VOICE_CHAT));
-            if (resetData)
-            {
-                ResetVoiceChatData();
-            }
+
+            if (resetData) { ResetVoiceChatData(); }
+
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
         }
 
