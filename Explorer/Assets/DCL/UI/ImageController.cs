@@ -17,6 +17,7 @@ namespace DCL.UI
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
         private readonly IWebRequestController? webRequestController;
+        private readonly Color defaultColor = Color.white;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
 
@@ -29,6 +30,12 @@ namespace DCL.UI
         {
             this.view = view;
             this.webRequestController = webRequestController;
+        }
+
+        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
+            bool useKtx = false, bool fitAndCenterImage = false)
+        {
+            RequestImage(uri, defaultColor, removePrevious, hideImageWhileLoading, useKtx, fitAndCenterImage);
         }
 
         public void RequestImage(string uri, Color targetColor, bool removePrevious = false, bool hideImageWhileLoading = false, 

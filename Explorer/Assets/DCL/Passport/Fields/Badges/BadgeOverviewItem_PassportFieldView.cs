@@ -56,7 +56,7 @@ namespace DCL.Passport.Fields.Badges
         {
             imageController?.SetImage(DefaultBadgeSprite);
             if (!string.IsNullOrEmpty(badgeData.image))
-                imageController?.RequestImage(badgeData.image, Color.white, hideImageWhileLoading: true);
+                imageController?.RequestImage(badgeData.image, hideImageWhileLoading: true);
         }
 
         private void SetBadgeNameToastActive(bool isActive) =>

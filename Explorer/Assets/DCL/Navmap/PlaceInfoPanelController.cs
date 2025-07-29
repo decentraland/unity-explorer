@@ -155,7 +155,7 @@ namespace DCL.Navmap
             else
                 currentBaseParcel = null;
 
-            thumbnailImage.RequestImage(place.image, Color.white);
+            thumbnailImage.RequestImage(place.image);
             view.PlaceNameLabel.text = place.title;
             view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
             view.LikeRateLabel.text = $"{(place.like_rate_as_float ?? 0) * 100:F0}%";
@@ -361,7 +361,7 @@ namespace DCL.Navmap
                     };
                     element.ShowDetailsButton.onClick.AddListener(() => OpenEventDetails(@event));
                     element.ShareButton.onClick.AddListener(() => Share(@event, element));
-                    element.Thumbnail?.RequestImage(@event.image, Color.white, true);
+                    element.Thumbnail?.RequestImage(@event.image, true);
                     element.LiveContainer.SetActive(@event.live);
                     element.EventNameLabel.text = @event.name;
                     element.InterestedUserCountLabel.text = @event.total_attendees.ToString();

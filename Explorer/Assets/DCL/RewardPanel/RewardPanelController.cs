@@ -40,7 +40,7 @@ namespace DCL.RewardPanel
         {
             base.OnBeforeViewShow();
 
-            imageController.RequestImage(inputData.ImageUrl, Color.white);
+            imageController.RequestImage(inputData.ImageUrl);
             viewInstance.ItemName.text = inputData.WearableName;
             viewInstance.RaysImage.color = nftRarityColors.GetColor(inputData.Rarity);
             viewInstance.RarityMark.color = nftRarityColors.GetColor(inputData.Rarity);
