@@ -15,6 +15,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -61,6 +62,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly LambdasProfilesProvider lambdasProfilesProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -92,7 +94,8 @@ namespace DCL.Communities.CommunitiesCard
             IEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            LambdasProfilesProvider lambdasProfilesProvider)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -110,6 +113,7 @@ namespace DCL.Communities.CommunitiesCard
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
+            this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
@@ -289,7 +293,8 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 mvcManager,
                 clipboard,
-                webBrowser);
+                webBrowser,
+                lambdasProfilesProvider);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,

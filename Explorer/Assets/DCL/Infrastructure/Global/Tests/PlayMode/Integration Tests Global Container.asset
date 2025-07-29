@@ -73,6 +73,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <LightSourceSettings>k__BackingField:
+          m_AssetGUID: 52c856180dc5d6447b902f06d38f4161
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5734404089553354752
       type: {class: PointerInputAudioPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
