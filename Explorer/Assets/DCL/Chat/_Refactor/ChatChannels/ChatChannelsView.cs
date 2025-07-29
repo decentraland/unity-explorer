@@ -322,6 +322,12 @@ namespace DCL.Chat
             }
         }
 
+        public void MoveChannelToTop(ChatChannel.ChannelId channel)
+        {
+            if (items.ContainsKey(channel))
+                items[channel].transform.SetSiblingIndex(1);
+        }
+
         public void Clear()
         {
             items.Clear();

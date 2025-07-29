@@ -16,7 +16,7 @@ using Utility;
 
 public class ChatChannelsPresenter : IDisposable
 {
-    private readonly IChatChannelsView view;
+    private readonly ChatChannelsView view;
     private readonly IEventBus eventBus;
     private readonly IChatEventBus chatEventBus;
     private readonly IChatMessagesBus chatMessageBus;
@@ -34,7 +34,7 @@ public class ChatChannelsPresenter : IDisposable
     private CancellationTokenSource lifeCts;
     private EventSubscriptionScope scope = new();
 
-    public ChatChannelsPresenter(IChatChannelsView view,
+    public ChatChannelsPresenter(ChatChannelsView view,
         IEventBus eventBus,
         IChatMessagesBus chatMessageBus,
         IChatEventBus chatEventBus,
@@ -68,8 +68,9 @@ public class ChatChannelsPresenter : IDisposable
 
         this.chatHistory.ChannelAdded += OnRuntimeChannelAdded;
         this.chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
+        this.chatHistory.MessageAdded += OnMessageAdded;
         this.chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
-        this.chatMessageBus.MessageAdded += OnMessageAdded;
+        // this.chatMessageBus.MessageAdded += OnMessageAdded;
         this.chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
 
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
@@ -170,15 +171,19 @@ public class ChatChannelsPresenter : IDisposable
         view.AddConversation(viewModel);
     }
 
-    private void OnMessageAdded(ChatChannel.ChannelId channelId,
-        ChatChannel.ChatChannelType channelType, ChatMessage message)
+    private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
     {
-        if (channelId.Equals(currentChannelService.CurrentChannelId))
+        if (destinationChannel.Id.Equals(currentChannelService.CurrentChannelId))
             return;
 
-        if (chatHistory.Channels.TryGetValue(channelId, out var channel))
+        if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
         {
             UpdateUnreadCount(channel);
+        }
+
+        if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
+        {
+            view.MoveChannelToTop(destinationChannel.Id);
         }
     }
 
@@ -218,7 +223,7 @@ public class ChatChannelsPresenter : IDisposable
         view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
 
         chatHistory.ChannelAdded -= OnRuntimeChannelAdded;
-        chatMessageBus.MessageAdded -= OnMessageAdded;
+        chatHistory.MessageAdded -= OnMessageAdded;
         chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
         
         chatEventBus.OpenPrivateConversationRequested -= OnOpenConversationUsingUserId;
