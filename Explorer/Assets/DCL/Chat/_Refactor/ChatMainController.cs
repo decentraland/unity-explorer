@@ -214,8 +214,14 @@ namespace DCL.Chat
             }
 
             base.Dispose();
-            initCts?.Cancel();
-            initCts?.Dispose();
+
+            if (initCts != null)
+            {
+                initCts.Cancel();
+                initCts.Dispose();
+                initCts = null;
+            }
+            
             uiScope?.Dispose();
 
             chatMemberListService.Dispose();

@@ -136,7 +136,10 @@ namespace DCL.Chat
 
         public void Hide()
         {
-            if (gameObject != null) gameObject.SetActive(false);
+            if (this == null) return;
+
+            if (gameObject != null)
+                gameObject.SetActive(false);
         }
 
         public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
