@@ -217,6 +217,8 @@ namespace DCL.Chat
             initCts?.Cancel();
             initCts?.Dispose();
             uiScope?.Dispose();
+
+            chatMemberListService.Dispose();
         }
     }
 }

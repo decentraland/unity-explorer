@@ -155,6 +155,7 @@ namespace DCL.PluginSystem.Global
         {
             chatStorage?.Dispose();
             chatBusListenerService?.Dispose();
+            pluginScope.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
