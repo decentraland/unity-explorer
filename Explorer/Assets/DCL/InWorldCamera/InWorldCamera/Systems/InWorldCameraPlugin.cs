@@ -8,7 +8,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
-using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Chat;
 using DCL.Clipboard;
@@ -75,6 +74,7 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IThumbnailProvider thumbnailProvider;
 
@@ -101,7 +101,8 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            GalleryEventBus galleryEventBus)
         {
             this.selfProfile = selfProfile;
             this.realmData = realmData;
@@ -129,6 +130,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
+            this.galleryEventBus = galleryEventBus;
 
             factory = new InWorldCameraFactory();
             web3IdentityCache.OnIdentityChanged += FetchCameraReelStorage;
@@ -169,16 +171,20 @@ namespace DCL.PluginSystem.Global
                     decentralandUrlsSource,
                     this.thumbnailProvider,
                     new PassportBridgeOpener(),
+                    web3IdentityCache,
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
                     profileRepositoryWrapper
                     ),
                 cameraReelScreenshotsStorage,
+                cameraReelStorageService,
                 systemClipboard,
                 decentralandUrlsSource,
                 webBrowser,
-                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
+                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage,
+                    settings.PhotoSuccessfullySetAsPublicMessage, settings.LinkCopiedMessage),
+                galleryEventBus));
 
 
             inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService, sharedSpaceManager);
@@ -218,6 +224,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
             [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
             [field: SerializeField] internal string PhotoSuccessfullyDownloadedMessage { get; private set; }
+            [field: SerializeField] internal string PhotoSuccessfullySetAsPublicMessage { get; private set; }
             [field: SerializeField] internal string LinkCopiedMessage { get; private set; }
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
 

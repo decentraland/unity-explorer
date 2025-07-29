@@ -98,6 +98,7 @@ namespace Global.Tests.PlayMode
                 scenesUI,
                 new ObjectProxy<IProfileRepository>(),
                 ct,
+                hasDebugFlag: false,
                 enableGPUInstancing: false
             );
 

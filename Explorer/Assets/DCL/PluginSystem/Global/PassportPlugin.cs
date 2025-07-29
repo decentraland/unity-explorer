@@ -30,6 +30,7 @@ using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
+using DCL.InWorldCamera;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -73,6 +74,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly GalleryEventBus galleryEventBus;
 
         private PassportController? passportController;
 
@@ -112,6 +114,7 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
+            GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -150,6 +153,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.thumbnailProvider = thumbnailProvider;
+            this.galleryEventBus = galleryEventBus;
         }
 
         public void Dispose()
@@ -211,7 +215,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 profileRepositoryWrapper,
                 voiceChatCallStatusService,
-                passport3DPreviewCamera
+                passport3DPreviewCamera,
+                galleryEventBus
             );
 
             mvcManager.RegisterController(passportController);
