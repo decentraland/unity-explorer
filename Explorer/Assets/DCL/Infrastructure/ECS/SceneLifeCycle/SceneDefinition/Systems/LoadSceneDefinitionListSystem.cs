@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
@@ -11,6 +12,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
+using SceneRunner.Scene;
 using System;
 using System.IO;
 using System.Runtime.Serialization;
@@ -19,6 +21,7 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
+using Utility;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -36,13 +39,18 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
 
         private readonly ProfilerMarker deserializationSampler;
+        private readonly URLBuilder urlBuilder = new ();
+        private readonly URLDomain assetBundleURL;
+
+
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
-            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
+            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, URLDomain assetBundleURL)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.assetBundleURL = assetBundleURL;
 
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
@@ -99,8 +107,44 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 }
             }
 
+            foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
+            {
+                try
+                {
+                    SceneAssetBundleManifest sceneAssetBundleManifest =
+                        await LoadAssetBundleManifestAsync(
+                            sceneEntityDefinition.id,
+                            GetReportData(),
+                            ct
+                        );
+
+                    sceneEntityDefinition.assetBundleManifestVersion = sceneAssetBundleManifest.GetVersion();
+                    sceneEntityDefinition.hasSceneInPath = sceneAssetBundleManifest.HasHashInPathID();
+                }
+                catch (Exception e)
+                {
+                    sceneEntityDefinition.assetBundleManifestRequestFailed = true;
+                }
+            }
+
             return new StreamableLoadingResult<SceneDefinitions>(
                 new SceneDefinitions(intention.TargetCollection));
+        }
+
+        private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string hash, ReportData reportCategory, CancellationToken ct)
+        {
+            urlBuilder!.Clear();
+
+            urlBuilder.AppendDomain(assetBundleURL)
+                      .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
+                      .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
+
+            SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
+                                                              .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
+
+            AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
+
+            return new SceneAssetBundleManifest(sceneAbDto.Version);
         }
 
         private sealed class SceneMetadataConverter : JsonConverter
