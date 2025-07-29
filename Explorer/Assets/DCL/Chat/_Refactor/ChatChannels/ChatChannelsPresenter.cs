@@ -25,7 +25,7 @@ public class ChatChannelsPresenter : IDisposable
     private readonly ICurrentChannelService currentChannelService;
     private readonly SelectChannelCommand selectChannelCommand;
     private readonly LeaveChannelCommand leaveChannelCommand;
-    private readonly OpenPrivateConversationCommand openPrivateConversationCommand;
+    private readonly OpenConversationCommand openConversationCommand;
     private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
     private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new();
 
@@ -44,7 +44,7 @@ public class ChatChannelsPresenter : IDisposable
         ProfileRepositoryWrapper profileRepositoryWrapper,
         SelectChannelCommand selectChannelCommand,
         LeaveChannelCommand leaveChannelCommand,
-        OpenPrivateConversationCommand openPrivateConversationCommand,
+        OpenConversationCommand openConversationCommand,
         CreateChannelViewModelCommand createChannelViewModelCommand)
     {
         this.view = view;
@@ -58,7 +58,7 @@ public class ChatChannelsPresenter : IDisposable
         this.currentChannelService = currentChannelService;
         this.selectChannelCommand = selectChannelCommand;
         this.leaveChannelCommand = leaveChannelCommand;
-        this.openPrivateConversationCommand = openPrivateConversationCommand;
+        this.openConversationCommand = openConversationCommand;
         this.createChannelViewModelCommand = createChannelViewModelCommand;
 
         lifeCts = new CancellationTokenSource();
@@ -70,7 +70,8 @@ public class ChatChannelsPresenter : IDisposable
         this.chatHistory.ChannelRemoved += OnChannelRemoved;
         this.chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
         this.chatHistory.MessageAdded += OnMessageAdded;
-        this.chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
+        this.chatEventBus.OpenPrivateConversationRequested += OnOpenUserConversation;
+        this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
         this.chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
 
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
@@ -97,9 +98,14 @@ public class ChatChannelsPresenter : IDisposable
         }
     }
 
-    private void OnOpenConversationUsingUserId(string userId)
+    private void OnOpenUserConversation(string userId)
     {
-        openPrivateConversationCommand.Execute(userId);
+        openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.USER);
+    }
+
+    private void OnOpenCommunityConversation(string userId)
+    {
+        openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.COMMUNITY);
     }
 
 
@@ -238,10 +244,11 @@ public class ChatChannelsPresenter : IDisposable
         chatHistory.ChannelRemoved -= OnChannelRemoved;
         chatHistory.MessageAdded -= OnMessageAdded;
         chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
-        
-        chatEventBus.OpenPrivateConversationRequested -= OnOpenConversationUsingUserId;
-        chatUserStateEventBus.UserConnectionStateChanged -= OnLiveUserConnectionStateChange;
 
+        chatEventBus.OpenPrivateConversationRequested -= OnOpenUserConversation;
+        chatEventBus.OpenCommunityConversationRequested -= OnOpenCommunityConversation;
+        chatUserStateEventBus.UserConnectionStateChanged -= OnLiveUserConnectionStateChange;
+        
         scope.Dispose();
     }
 }

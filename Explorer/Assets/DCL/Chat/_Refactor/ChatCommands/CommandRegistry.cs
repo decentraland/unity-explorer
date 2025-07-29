@@ -30,7 +30,7 @@ namespace DCL.Chat.ChatUseCases
         public SendMessageCommand SendMessage { get; }
         public LeaveChannelCommand LeaveChannel { get; }
         public CreateChannelViewModelCommand CreateChannelViewModel { get; }
-        public OpenPrivateConversationCommand OpenPrivateConversation { get; }
+        public OpenConversationCommand OpenConversation { get; }
         public DeleteChatHistoryCommand DeleteChatHistory { get; }
         public GetChannelMembersCommand GetChannelMembersCommand { get; }
         public GetParticipantProfilesCommand GetParticipantProfilesCommand { get; }
@@ -92,7 +92,7 @@ namespace DCL.Chat.ChatUseCases
             GetUserChatStatusCommand = new GetUserChatStatusCommand(chatUserStateUpdater,
                 eventBus);
 
-            OpenPrivateConversation = new OpenPrivateConversationCommand(eventBus,
+            OpenConversation = new OpenConversationCommand(eventBus,
                 chatHistory,
                 SelectChannel);
 
@@ -108,9 +108,7 @@ namespace DCL.Chat.ChatUseCases
                 sendMessageSound,
                 chatSettings);
 
-            LeaveChannel = new LeaveChannelCommand(eventBus,
-                chatHistory,
-                currentChannelService,
+            LeaveChannel = new LeaveChannelCommand(chatHistory,
                 SelectChannel);
 
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
