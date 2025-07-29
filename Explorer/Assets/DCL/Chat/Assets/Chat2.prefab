@@ -317,7 +317,6 @@ GameObject:
   - component: {fileID: 8837004167864387708}
   - component: {fileID: 8243715949018923499}
   - component: {fileID: 4691136467746870999}
-  - component: {fileID: 4418677951884833455}
   m_Layer: 5
   m_Name: '[Views] Messages and Input'
   m_TagString: Untagged
@@ -395,45 +394,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &4418677951884833455
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 581056649289964467}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7750367aec7848feb11fdee6aed880f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <inputField>k__BackingField: {fileID: 4475809639458555157}
-  <pastePopupPosition>k__BackingField: {fileID: 4038004094864413365}
-  inputFieldContainer: {fileID: 6555613450064892944}
-  layoutElement: {fileID: 1025703152088325457}
-  <maskButton>k__BackingField: {fileID: 1165119267609351116}
-  maskContainer: {fileID: 83718467110456171}
-  maskText: {fileID: 550450798728010012}
-  <suggestionPanel>k__BackingField: {fileID: 3111979384719019556}
-  outlineObject: {fileID: 3879034518569078182}
-  characterCounterObject: {fileID: 7902678097308919251}
-  characterCounter: {fileID: 6554740894032467766}
-  emojiButtonObject: {fileID: 672841032480400079}
-  backgroundImage: {fileID: 4097775063419158369}
-  focusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.8784314}
-  unfocusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.57254905}
-  <emojiContainer>k__BackingField:
-    <emojiPanelConfiguration>k__BackingField: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
-    <emojiButtonPrefab>k__BackingField: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
-    <emojiMappingJson>k__BackingField: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
-    <emojiSectionViewPrefab>k__BackingField: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
-    <emojiPanelButton>k__BackingField: {fileID: 4878727913059724457}
-    <emojiPanel>k__BackingField: {fileID: 7220652965459227127}
-    <addEmojiAudio>k__BackingField: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
-    <openEmojiPanelAudio>k__BackingField: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
-  <chatInputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
-  <enterInputAudio>k__BackingField: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
-  <inputEventBus>k__BackingField: {fileID: 1790333821517342982}
 --- !u!1 &623302051505694835
 GameObject:
   m_ObjectHideFlags: 0
@@ -3931,7 +3891,7 @@ MonoBehaviour:
   sharedBackgroundCanvasGroup: {fileID: 754136446368913457}
   <ConversationToolbarView2>k__BackingField: {fileID: 6432947855054662703}
   <MessageFeedView>k__BackingField: {fileID: 5223059815053518565}
-  <InputView>k__BackingField: {fileID: 4418677951884833455}
+  <InputView>k__BackingField: {fileID: 4604863247866272039}
   <TitlebarView>k__BackingField: {fileID: 217021846241032117}
   <MemberListView>k__BackingField: {fileID: 1760950000874434669}
 --- !u!1 &8115444436668068444
@@ -6069,10 +6029,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -16.5
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4572849772150411585, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3490405566641370256, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+      insertIndex: 2
+      addedObject: {fileID: 4604863247866272039}
   m_SourcePrefab: {fileID: 100100000, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
 --- !u!1 &672841032480400079 stripped
 GameObject:
@@ -6165,6 +6129,45 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3490405566641370256, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
   m_PrefabInstance: {fileID: 7677052889731195008}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4604863247866272039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6555613450064892944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7750367aec7848feb11fdee6aed880f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <inputField>k__BackingField: {fileID: 4475809639458555157}
+  <pastePopupPosition>k__BackingField: {fileID: 4038004094864413365}
+  inputFieldContainer: {fileID: 6555613450064892944}
+  layoutElement: {fileID: 1025703152088325457}
+  <maskButton>k__BackingField: {fileID: 1165119267609351116}
+  maskContainer: {fileID: 83718467110456171}
+  maskText: {fileID: 550450798728010012}
+  <suggestionPanel>k__BackingField: {fileID: 3111979384719019556}
+  outlineObject: {fileID: 3879034518569078182}
+  characterCounterObject: {fileID: 7902678097308919251}
+  characterCounter: {fileID: 6554740894032467766}
+  emojiButtonObject: {fileID: 672841032480400079}
+  backgroundImage: {fileID: 4097775063419158369}
+  focusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.8784314}
+  unfocusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.57254905}
+  <emojiContainer>k__BackingField:
+    <emojiPanelConfiguration>k__BackingField: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
+    <emojiButtonPrefab>k__BackingField: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
+    <emojiMappingJson>k__BackingField: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
+    <emojiSectionViewPrefab>k__BackingField: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+    <emojiPanelButton>k__BackingField: {fileID: 4878727913059724457}
+    <emojiPanel>k__BackingField: {fileID: 7220652965459227127}
+    <addEmojiAudio>k__BackingField: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
+    <openEmojiPanelAudio>k__BackingField: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
+  <chatInputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
+  <enterInputAudio>k__BackingField: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
+  <inputEventBus>k__BackingField: {fileID: 1790333821517342982}
 --- !u!114 &7220652965459227127 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1062488254353314167, guid: b1552137c9452f848822dd5cfec09acc, type: 3}

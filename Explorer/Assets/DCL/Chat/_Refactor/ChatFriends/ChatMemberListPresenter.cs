@@ -42,6 +42,7 @@ namespace DCL.Chat.ChatFriends
         private void ShowAndLoad()
         {
             view.Show();
+
             lifeCts = new CancellationTokenSource();
             memberListService.StartLiveMemberUpdates();
             memberListService.OnMemberListUpdated += HandleLiveUpdate;
@@ -66,14 +67,14 @@ namespace DCL.Chat.ChatFriends
 
         public void Hide()
         {
+            currentMembers.Clear();
+            view.SetData(currentMembers);
+
             view.Hide();
             memberListService.StopLiveMemberUpdates();
             memberListService.OnMemberListUpdated -= HandleLiveUpdate;
 
-            currentMembers.Clear();
-            view.SetData(currentMembers);
-
-            lifeCts.Cancel();
+            lifeCts.SafeCancelAndDispose();
         }
 
         private void OnMemberContextMenuRequested(UserProfileMenuRequest data)

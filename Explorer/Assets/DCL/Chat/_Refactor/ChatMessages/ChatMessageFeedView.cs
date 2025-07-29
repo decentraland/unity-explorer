@@ -72,23 +72,19 @@ namespace DCL.Chat
         /// <param name="resetPosition"></param>
         public void ReconstructScrollView(bool resetPosition)
         {
-            // TODO Restart fadeout?
-            // TODO animation - entries pending to animate
-
             int newEntries = viewModels.Count - loopList.ItemTotalCount;
 
             if (newEntries < 0)
                 newEntries = 0;
 
             loopList.SetListItemCount(viewModels.Count, resetPosition);
+            loopList.RefreshAllShownItem();
 
             // Scroll view adjustment
             if (IsAtBottom())
                 loopList.MovePanelToItemIndex(0, 0);
             else
             {
-                loopList.RefreshAllShownItem();
-
                 if (loopList.ItemList.Count >= newEntries + 1)
                 {
                     // When the scroll view is not at the bottom, chat messages should not move if a new message is added

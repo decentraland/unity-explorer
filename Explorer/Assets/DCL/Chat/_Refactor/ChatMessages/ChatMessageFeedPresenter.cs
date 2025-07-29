@@ -215,7 +215,7 @@ namespace DCL.Chat.ChatMessages
                 {
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
                     AddNewMessagesSeparatorAfterPendingMessages();
-                    view.ReconstructScrollView(false);
+                    view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
                 }
                 catch (OperationCanceledException) { }

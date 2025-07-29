@@ -58,6 +58,7 @@ namespace DCL.Chat
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageContentElement.SetMessageContent(data.Message);
 
+            // Warning: the size can't be properly calculated if the element is inactive
             backgroundSize = backgroundRectTransform.sizeDelta;
             backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
             backgroundSize.x = CalculatePreferredWidth(data);
@@ -65,23 +66,8 @@ namespace DCL.Chat
             mentionedOutline.SetActive(data.IsMention);
 
             backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
-            messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
+            messageOptionsButton.onClick.AddListener(OnMessageOptionsClicked);
         }
-
-        // public void SetMessageData(ChatMessageViewModel data)
-        // {
-        //     usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
-        //     messageContentElement.SetMessageContent(data.Message);
-        //
-        //     backgroundSize = backgroundRectTransform.sizeDelta;
-        //     backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
-        //     backgroundSize.x = CalculatePreferredWidth(data);
-        //     backgroundRectTransform.sizeDelta = backgroundSize;
-        //     mentionedOutline.SetActive(data.IsMention);
-        //
-        //     backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
-        //     messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
-        // }
 
         private void OnMessageOptionsClicked()
         {
