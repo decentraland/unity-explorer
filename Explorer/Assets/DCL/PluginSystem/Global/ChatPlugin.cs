@@ -30,6 +30,7 @@ using DCL.VoiceChat;
 using MVC;
 using System.Threading;
 using DCL.Audio;
+using DCL.Chat.ChatServices;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.Services;
 using DCL.Chat.Services.DCL.Chat;
@@ -183,9 +184,9 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 chatHistory,
                 communityDataService);
-                
+
             var chatUserStateEventBus = new ChatUserStateEventBus();
-            
+
             var chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
                 roomHub.ChatRoom().Participants,
@@ -275,7 +276,7 @@ namespace DCL.PluginSystem.Global
 
             pluginScope.Add(chatMainController);
             pluginScope.Add(chatWorldBubbleService);
-            
+
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
             mvcManager.RegisterController(chatMainController);
 

@@ -6,44 +6,43 @@ using ECS.Abstract;
 using Utility.Arch;
 using World = Arch.Core.World;
 
-public class ChatInputBlockingService
+namespace DCL.Chat.ChatServices
 {
-    private readonly IInputBlock inputBlock;
-    private readonly World world;
-    private SingleInstanceEntity cameraEntity;
-
-    public ChatInputBlockingService(IInputBlock inputBlock, World world)
+    public class ChatInputBlockingService
     {
-        this.inputBlock = inputBlock;
-        this.world = world;
-    }
+        private readonly IInputBlock inputBlock;
+        private readonly World world;
+        private SingleInstanceEntity cameraEntity;
 
-    public void Initialize()
-    {
-        cameraEntity = world.CacheCamera();
-    }
-
-    /// <summary>
-    /// Blocks player movement and camera controls.
-    /// </summary>
-    public void Block()
-    {
-        if (world.IsAlive(cameraEntity))
+        public ChatInputBlockingService(IInputBlock inputBlock, World world)
         {
-            world.AddOrGet(cameraEntity, new CameraBlockerComponent());
+            this.inputBlock = inputBlock;
+            this.world = world;
         }
-        inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
-    }
 
-    /// <summary>
-    /// Re-enables player movement and camera controls.
-    /// </summary>
-    public void Unblock()
-    {
-        if (world.IsAlive(cameraEntity))
+        public void Initialize()
         {
-            world.TryRemove<CameraBlockerComponent>(cameraEntity);
+            cameraEntity = world.CacheCamera();
         }
-        inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+
+        /// <summary>
+        ///     Blocks player movement and camera controls.
+        /// </summary>
+        public void Block()
+        {
+            if (world.IsAlive(cameraEntity)) { world.AddOrGet(cameraEntity, new CameraBlockerComponent()); }
+
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+
+        /// <summary>
+        ///     Re-enables player movement and camera controls.
+        /// </summary>
+        public void Unblock()
+        {
+            if (world.IsAlive(cameraEntity)) { world.TryRemove<CameraBlockerComponent>(cameraEntity); }
+
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+        }
     }
 }

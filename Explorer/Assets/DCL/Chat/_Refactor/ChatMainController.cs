@@ -8,6 +8,7 @@ using System.Threading;
 using DCL.Chat._Refactor.ChatStates;
 using DCL.Chat.ChatMediator;
 using DCL.Chat.ChatMessages;
+using DCL.Chat.ChatServices;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
@@ -221,7 +222,7 @@ namespace DCL.Chat
                 initCts.Dispose();
                 initCts = null;
             }
-            
+
             uiScope?.Dispose();
 
             chatMemberListService.Dispose();

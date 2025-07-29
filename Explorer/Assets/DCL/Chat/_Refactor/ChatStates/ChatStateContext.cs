@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatMediator;
+using DCL.Chat.ChatServices;
 
 namespace DCL.Chat._Refactor.ChatStates
 {

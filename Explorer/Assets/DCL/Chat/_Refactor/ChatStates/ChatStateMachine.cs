@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatMediator;
+using DCL.Chat.ChatServices;
 using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
 using MVC;
@@ -9,8 +10,6 @@ namespace DCL.Chat._Refactor.ChatStates
 {
     public class ChatStateMachine : IDisposable
     {
-        internal readonly IEventBus eventBus;
-        private readonly ChatUIMediator mediator;
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionService chatClickDetectionService;
         private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
@@ -28,8 +27,6 @@ namespace DCL.Chat._Refactor.ChatStates
             ChatClickDetectionService chatClickDetectionService,
             ChatMainController mainController)
         {
-            this.eventBus = eventBus;
-            this.mediator = mediator;
             this.inputBlocker = inputBlocker;
             this.chatClickDetectionService = chatClickDetectionService;
 
@@ -68,6 +65,8 @@ namespace DCL.Chat._Refactor.ChatStates
 
         public void OnViewShow()
         {
+            inputBlocker.Initialize();
+
             fsm.ChangeState<DefaultChatState>();
         }
 
