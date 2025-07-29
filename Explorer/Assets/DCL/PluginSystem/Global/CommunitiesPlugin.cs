@@ -138,7 +138,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 chatEventBus,
                 decentralandUrlsSource,
-                web3IdentityCache);
+                web3IdentityCache,
+                lambdasProfilesProvider);
 
             mvcManager.RegisterController(communityCardController);
 

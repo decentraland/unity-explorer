@@ -1866,7 +1866,7 @@ MonoBehaviour:
   - {fileID: 4418461772446874494}
   - {fileID: 4379479570568262795}
   - {fileID: 1931124675555126151}
-  tweenDuration: 7
+  tweenDuration: 1
   fadeDuration: 0.3
 --- !u!1 &4824639616395220465
 GameObject:
