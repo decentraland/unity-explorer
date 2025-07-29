@@ -207,7 +207,8 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
+                bool hasDebugFlag = applicationParametersParser.HasDebugFlag();
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, hasDebugFlag, ct);
 
                 if (!isLoaded)
                 {

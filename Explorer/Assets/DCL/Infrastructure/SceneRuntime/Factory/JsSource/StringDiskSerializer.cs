@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Utility.Types;
 
 namespace SceneRuntime.Factory.JsSource
 {
@@ -40,6 +41,7 @@ namespace SceneRuntime.Factory.JsSource
             var charSpan = MemoryMarshal.Cast<byte, char>(data.Memory.Span);
             var output = new string(charSpan);
             data.Dispose();
+            
             return UniTask.FromResult(output);
         }
     }

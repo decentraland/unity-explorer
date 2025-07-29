@@ -1149,5 +1149,19 @@ namespace DCL.Chat
         {
             conversationsToolbar.MoveConversationToPosition(channelToMove, 1);
         }
+
+        /// <summary>
+        /// Stores a list of users that are online (so if a user is not in it, it's offline). Visual elements (messages, profile pictures, etc.) of offline users
+        /// will be greyed out.
+        /// </summary>
+        /// <param name="onlineUserAddresses">A list of online user addresses.</param>
+        public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
+        {
+            if (currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER })
+                chatTitleBar.SetConnectionStatus(onlineUserAddresses.Contains(currentChannel.Id.Id) ? OnlineStatus.ONLINE
+                                                                                                    : OnlineStatus.OFFLINE);
+
+            chatMessageViewer.SetOnlineUserAddresses(onlineUserAddresses);
+        }
     }
 }
