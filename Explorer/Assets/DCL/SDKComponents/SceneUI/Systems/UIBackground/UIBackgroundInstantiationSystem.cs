@@ -28,7 +28,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     public partial class UIBackgroundInstantiationSystem : BaseUnityLoopSystem
     {
         private const int ATTEMPTS_COUNT = 6;
-        private const string UNDEFINED_SOURCE = "undefined";
 
         private readonly IComponentPool<DCLImage> imagesPool;
         private readonly ISceneData sceneData;
@@ -88,7 +87,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
             }
             else if (uiBackgroundComponent is { TexturePromise: not null, Status: LifeCycle.LoadingFinished })
-
                 // Ensure texture has latest data from model
                 uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, uiBackgroundComponent.Image.Texture);
 
@@ -129,7 +127,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
         private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)
         {
-            if (textureComponent == null || textureComponent.Value.Src == UNDEFINED_SOURCE)
+            if (textureComponent == null)
             {
                 // If component is being reuse forget the previous promise
                 TryAddAbortIntention(ref promise);
