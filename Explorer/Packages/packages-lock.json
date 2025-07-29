@@ -88,11 +88,11 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git#scene_shader_indirect_tiling",
+      "version": "https://github.com/decentraland/unity-shared-dependencies.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "049c301fb4b62fcb93ce3c2ce022f67680d44474"
+      "hash": "0577e5f90c309e0188db63ceb2790d78bd97c33b"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -462,7 +462,7 @@
       }
     },
     "decentraland.grassshader": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader#feat/grass_shader_indirect_tiling",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -470,7 +470,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "afd7a9b5a2d043fdeb8e6f862c64e65522449ff6"
+      "hash": "7aa85f76fe500491d47395e4198fa6f96532c073"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
