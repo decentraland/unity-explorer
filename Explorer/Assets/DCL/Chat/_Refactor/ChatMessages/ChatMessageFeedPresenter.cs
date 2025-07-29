@@ -41,6 +41,9 @@ namespace DCL.Chat.ChatMessages
 
         private int? messageCountWhenSeparatorViewed;
 
+        // Ideally it should be a state, especially if the state machine grows further
+        private bool isFocused;
+
         public ChatMessageFeedPresenter(ChatMessageFeedView view,
             IEventBus eventBus,
             IChatHistory chatHistory,
@@ -126,6 +129,7 @@ namespace DCL.Chat.ChatMessages
 
             RemoveNewMessagesSeparator(false);
 
+            newMessageViewModel.PendingToAnimate = true;
             viewModels.Insert(index, newMessageViewModel);
 
             if (isSentByOwnUser)
@@ -154,6 +158,9 @@ namespace DCL.Chat.ChatMessages
                 messageCountWhenSeparatorViewed = null;
                 view.ReconstructScrollView(false);
             }
+
+            if (!isFocused)
+                view.RestartChatEntriesFadeout();
         }
 
         private void ScrollToNewMessagesSeparator()
@@ -277,7 +284,16 @@ namespace DCL.Chat.ChatMessages
 
         public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
         {
-            view.SetFocusedState(isFocused, animate, duration, easing);
+            this.isFocused = isFocused;
+
+            view.StopChatEntriesFadeout();
+
+            // When the view becomes unfocused, start the timer to fade the chat entries out
+            if (!isFocused)
+                view.StartChatEntriesFadeout();
+
+            float scrollBarTargetAlpha = isFocused ? 1f : 0f;
+            view.StartScrollBarFade(scrollBarTargetAlpha, animate ? duration : 0f, easing);
         }
 
         public void Dispose()

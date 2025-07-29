@@ -4,7 +4,9 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.UI.Utilities;
+using DCL.Utilities.Extensions;
 using DG.Tweening;
 using SuperScrollView;
 using UnityEngine;
@@ -15,26 +17,24 @@ namespace DCL.Chat
 {
     public class ChatMessageFeedView : MonoBehaviour, IDisposable
     {
-        // NOTE: IChatListViewController is an interface that defines the
-        // NOTE: methods and properties needed for the chat list view controller.
-        // NOTE: can be implemented by any class that manages the chat list view
-        // NOTE: SuperScrollView or for example OptimizedScrollViewAdapter
-        //[SerializeField] private ChatListViewAdapterBase listAdapter;
-
         [SerializeField] private float chatEntriesFadeTime = 3f;
         [SerializeField] private int chatEntriesWaitBeforeFading = 10000;
         [SerializeField] private CanvasGroup scrollbarCanvasGroup;
         [SerializeField] private CanvasGroup chatEntriesCanvasGroup;
         [SerializeField] private LoopListView2 loopList;
         [SerializeField] private ScrollRect scrollRect;
-        private int entriesPendingToAnimate;
 
         private CancellationTokenSource? fadeoutCts;
 
-        public event Action? OnFakeMessageRequested;
-
         // View models are reused and set by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
+
+        public void Dispose()
+        {
+            fadeoutCts.SafeCancelAndDispose();
+        }
+
+        public event Action? OnFakeMessageRequested;
 
         public event Action<Vector2>? OnScrollPositionChanged;
 
@@ -51,11 +51,6 @@ namespace DCL.Chat
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
-        }
-
-        public void Dispose()
-        {
-            fadeoutCts.SafeCancelAndDispose();
         }
 
         internal bool IsItemVisible(int itemIndex)
@@ -142,19 +137,12 @@ namespace DCL.Chat
                 gameObject.SetActive(false);
         }
 
-        public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
+        internal void StartScrollBarFade(float targetValue, float duration, Ease easing)
         {
-            StopChatEntriesFadeout();
-
             scrollbarCanvasGroup.DOKill();
 
-            float scrollbarTargetAlpha = isFocused ? 1.0f : 0.0f;
-            scrollbarCanvasGroup.DOFade(scrollbarTargetAlpha, animate ? duration : 0f).SetEase(easing);
-
-            if (isFocused)
-                StopChatEntriesFadeout();
-            else
-                StartChatEntriesFadeout();
+            float scrollbarTargetAlpha = targetValue;
+            scrollbarCanvasGroup.DOFade(scrollbarTargetAlpha, duration).SetEase(easing);
         }
 
         internal bool IsAtBottom() =>
@@ -183,12 +171,11 @@ namespace DCL.Chat
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
                 itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
 
-                // TODO animation
-                // if (entriesPendingToAnimate > 0)
-                // {
-                //     itemScript.AnimateChatEntry();
-                //     entriesPendingToAnimate--;
-                // }
+                if (viewModel.PendingToAnimate)
+                {
+                    itemScript.AnimateChatEntry();
+                    viewModel.PendingToAnimate = false;
+                }
 
                 if (!chatMessage.IsSentByOwnUser)
                     itemScript.ChatEntryClicked = OnProfileClicked;
@@ -215,19 +202,28 @@ namespace DCL.Chat
                 OnScrolledToBottom?.Invoke();
         }
 
-        private void StartChatEntriesFadeout()
+        /// <summary>
+        ///     Chat Entries fadeout is restarted when the current state is unfocused and a new message to the current channel is added.
+        /// </summary>
+        internal void RestartChatEntriesFadeout()
         {
-            fadeoutCts = fadeoutCts.SafeRestart();
-            AwaitAndFadeChatEntriesAsync(fadeoutCts.Token).Forget();
+            StopChatEntriesFadeout();
+            StartChatEntriesFadeout();
         }
 
-        private void StopChatEntriesFadeout()
+        internal void StartChatEntriesFadeout()
+        {
+            fadeoutCts = fadeoutCts.SafeRestart();
+            AwaitAndFadeChatEntriesAsync(fadeoutCts.Token).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES).Forget();
+        }
+
+        internal void StopChatEntriesFadeout()
         {
             fadeoutCts.SafeCancelAndDispose();
             chatEntriesCanvasGroup.alpha = 1;
         }
 
-        private async UniTaskVoid AwaitAndFadeChatEntriesAsync(CancellationToken ct)
+        private async UniTask AwaitAndFadeChatEntriesAsync(CancellationToken ct)
         {
             chatEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(chatEntriesWaitBeforeFading, cancellationToken: ct);

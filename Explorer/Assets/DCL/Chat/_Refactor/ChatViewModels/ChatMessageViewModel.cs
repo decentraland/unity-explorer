@@ -21,6 +21,7 @@ namespace DCL.Chat.ChatViewModels
                 viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.WithColor.Default());
                 viewModel.IsSeparator = false;
                 viewModel.cancellationTokenSource.SafeCancelAndDispose();
+                viewModel.PendingToAnimate = false;
             });
 
         internal static readonly Action<ChatMessageViewModel> RELEASE = viewModel => POOL.Release(viewModel);
@@ -34,6 +35,8 @@ namespace DCL.Chat.ChatViewModels
             = ProfileThumbnailViewModel.WithColor.DefaultReactive();
 
         public bool IsSeparator { get; internal set; }
+
+        public bool PendingToAnimate { get; internal set; }
 
         /// <summary>
         ///     Will be fired when the object is released back to the pool.
