@@ -646,7 +646,7 @@ namespace DCL.Chat
 
         private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId destinationChannelId)
         {
-            if (!IsViewReady)
+            if (IsViewReady)
                 return;
 
             ChatAudioSettings notificationPingValue = ChatUserSettings.GetNotificationPingValuePerChannel(destinationChannelId);
