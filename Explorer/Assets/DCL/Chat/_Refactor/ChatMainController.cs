@@ -6,6 +6,7 @@ using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using DCL.Chat._Refactor.ChatStates;
+using DCL.Chat.ChatFriends;
 using DCL.Chat.ChatMediator;
 using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatServices;

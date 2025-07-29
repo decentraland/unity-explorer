@@ -16,6 +16,7 @@ using DCL.Web3.Identities;
 using LiveKit.Rooms.Participants;
 using UnityEngine;
 using Utility;
+using Utility.Multithreading;
 using Utility.Types;
 
 namespace DCL.Chat.Services
@@ -28,7 +29,7 @@ namespace DCL.Chat.Services
     public class ChatMemberListService : IDisposable
     {
         private const int UNIFIED_POLL_INTERVAL_MS = 500;
-        
+
         private readonly ICurrentChannelService currentChannelService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -43,7 +44,7 @@ namespace DCL.Chat.Services
         private CancellationTokenSource? liveListUpdateCts;
         private CancellationTokenSource? communityTaskCts;
         private readonly HashSet<string> lastKnownMemberIds = new ();
-        
+
         private int lastKnownParticipantCount = -1;
         private int lastKnownMemberCount = -1;
 
@@ -81,9 +82,7 @@ namespace DCL.Chat.Services
         {
             if (!friendsServiceProxy.Configured)
             {
-                ReportHub.LogError(ReportData.UNSPECIFIED,
-                    "[ChatMemberListService] FriendsService is not configured. Cannot start member list service.");
-
+                ReportHub.LogWarning(ReportCategory.UI, "[ChatMemberListService] FriendsService is not configured. Cannot start member list service.");
                 return;
             }
 
@@ -119,7 +118,7 @@ namespace DCL.Chat.Services
         /// </summary>
         public void StartLiveMemberUpdates()
         {
-            Debug.Log("[ChatMemberListService] Starting live member updates...");
+            ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Starting live member updates...");
             StopLiveMemberUpdates();
             liveListUpdateCts = CancellationTokenSource.CreateLinkedTokenSource(lifeCts.Token);
             LiveMemberUpdateLoopAsync(liveListUpdateCts.Token).Forget();
@@ -131,7 +130,7 @@ namespace DCL.Chat.Services
         /// </summary>
         public void StopLiveMemberUpdates()
         {
-            Debug.Log("[ChatMemberListService] Stopping live member updates...");
+            ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Stopping live member updates...");
             liveListUpdateCts?.Cancel();
             liveListUpdateCts?.Dispose();
             liveListUpdateCts = null;
@@ -193,7 +192,7 @@ namespace DCL.Chat.Services
                 var currentChannel = currentChannelService.CurrentChannel;
                 if (currentChannel == null)
                 {
-                    await UniTask.Delay(UNIFIED_POLL_INTERVAL_MS, cancellationToken: ct);
+                    await UnifiedDelay(ct);
                     continue;
                 }
 
@@ -202,12 +201,11 @@ namespace DCL.Chat.Services
                     switch (currentChannel.ChannelType)
                     {
                         case ChatChannel.ChatChannelType.NEARBY:
-                            await UniTask.Delay(UNIFIED_POLL_INTERVAL_MS, cancellationToken: ct);
+                            await UnifiedDelay(ct);
                             if (ct.IsCancellationRequested) break;
 
                             // For Nearby, we can get a lightweight list of IDs locally.
-                            var newNearbyIds =
-                                roomHub.AllLocalRoomsRemoteParticipantIdentities();
+                            IReadOnlyCollection<string> newNearbyIds = roomHub.AllLocalRoomsRemoteParticipantIdentities();
 
                             // NOTE:Only trigger a full refresh if the set of members has actually changed.
                             // NOTE: we need something like this for a communities as well (to avoid situations where
@@ -217,7 +215,7 @@ namespace DCL.Chat.Services
                             break;
 
                         case ChatChannel.ChatChannelType.COMMUNITY:
-                            await UniTask.Delay(UNIFIED_POLL_INTERVAL_MS, cancellationToken: ct);
+                            await UnifiedDelay(ct);
 
                             if (ct.IsCancellationRequested) break;
 
@@ -229,7 +227,7 @@ namespace DCL.Chat.Services
                 catch (OperationCanceledException) { break; }
                 catch (Exception ex)
                 {
-                    ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
+                    ReportHub.LogException(ex, ReportCategory.UI);
                 }
             }
         }
@@ -249,7 +247,7 @@ namespace DCL.Chat.Services
                 switch (currentChannel.ChannelType)
                 {
                     case ChatChannel.ChatChannelType.NEARBY:
-                        await FetchNearbyMembersAsync(ct);
+                        FetchNearbyMembers(ct);
                         break;
                     case ChatChannel.ChatChannelType.COMMUNITY:
                         await FetchCommunityMembersAsync(currentChannel.Id, ct);
@@ -266,7 +264,6 @@ namespace DCL.Chat.Services
                 membersBuffer.Sort((a, b) =>
                     string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
-                await UniTask.SwitchToMainThread(ct);
                 OnMemberListUpdated?.Invoke(membersBuffer);
             }
             catch (OperationCanceledException) { }
@@ -287,11 +284,8 @@ namespace DCL.Chat.Services
             channelCts = null;
 
             // Ensure we unsubscribe from events to prevent leaks
-            if (roomHub.IslandRoom().Participants != null)
-                roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnParticipantUpdated;
-
-            if (roomHub.SceneRoom().Room().Participants != null)
-                roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnParticipantUpdated;
+            roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnParticipantUpdated;
+            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnParticipantUpdated;
         }
 
 
@@ -315,8 +309,6 @@ namespace DCL.Chat.Services
 
         private async UniTaskVoid CommunityCountUpdateLoopAsync(string communityId, CancellationToken ct)
         {
-            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-
             while (!ct.IsCancellationRequested)
             {
                 try
@@ -327,8 +319,7 @@ namespace DCL.Chat.Services
 
                     if (ct.IsCancellationRequested || !result.Success)
                     {
-                        await UniTask.Delay(UNIFIED_POLL_INTERVAL_MS,
-                            cancellationToken: ct, ignoreTimeScale: true);
+                        await UnifiedDelay(ct);
                         continue;
                     }
 
@@ -337,14 +328,10 @@ namespace DCL.Chat.Services
                     {
                         lastKnownMemberCount = memberCount;
 
-                        PlayerLoopHelper.AddContinuation(PlayerLoopTiming.Update, () =>
-                        {
-                            OnMemberCountUpdated?.Invoke(lastKnownMemberCount);
-                        });
+                        OnMemberCountUpdated?.Invoke(lastKnownMemberCount);
                     }
 
-                    await UniTask.Delay(UNIFIED_POLL_INTERVAL_MS,
-                        cancellationToken: ct);
+                    await UnifiedDelay(ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -353,20 +340,23 @@ namespace DCL.Chat.Services
                 catch (Exception ex)
                 {
                     ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
-                    await UniTask.Delay(UNIFIED_POLL_INTERVAL_MS, cancellationToken: ct, ignoreTimeScale: true);
+                    await UnifiedDelay(ct);
                 }
             }
         }
 
-        private async void UpdateAndBroadcastCount(int newCount)
+        private static UniTask UnifiedDelay(CancellationToken ct) =>
+            UniTask.Delay(UNIFIED_POLL_INTERVAL_MS, DelayType.UnscaledDeltaTime, cancellationToken: ct);
+
+        private void UpdateAndBroadcastCount(int newCount)
         {
             if (newCount == lastKnownMemberCount) return;
             lastKnownMemberCount = newCount;
-            await UniTask.SwitchToMainThread();
-            OnMemberCountUpdated?.Invoke(lastKnownMemberCount);
+
+            MultithreadingUtility.InvokeOnMainThread(() => OnMemberCountUpdated?.Invoke(lastKnownMemberCount));
         }
 
-        private async UniTask FetchNearbyMembersAsync(CancellationToken ct)
+        private void FetchNearbyMembers(CancellationToken ct)
         {
             var profiles = new List<Profile>();
             GetProfilesFromParticipants(profiles);
@@ -383,7 +373,7 @@ namespace DCL.Chat.Services
             string communityId = ChatChannel.GetCommunityIdFromChannelId(channelId);
             Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(communityId, ct)
                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-            
+
             if (ct.IsCancellationRequested || !result.Success) return;
 
             string? localPlayerAddress = web3IdentityCache.Identity?.Address;
@@ -400,7 +390,7 @@ namespace DCL.Chat.Services
                 });
             }
         }
-        
+
         private void GetProfilesFromParticipants(List<Profile> outProfiles)
         {
             outProfiles.Clear();
@@ -411,14 +401,12 @@ namespace DCL.Chat.Services
             }
         }
 
-        private ChatMemberListView.MemberData CreateMemberDataFromProfile(Profile profile)
-        {
-            return new ChatMemberListView.MemberData
+        private ChatMemberListView.MemberData CreateMemberDataFromProfile(Profile profile) =>
+            new()
             {
                 Id = profile.UserId, Name = profile.ValidatedName, FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
                 WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, HasClaimedName = profile.HasClaimedName
             };
-        }
 
         public void Dispose() => Stop();
     }

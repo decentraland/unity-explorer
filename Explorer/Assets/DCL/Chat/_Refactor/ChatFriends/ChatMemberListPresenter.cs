@@ -1,91 +1,93 @@
+using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatViewModels;
+using DCL.Chat.Services;
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
-using DCL.Chat;
-using DCL.Chat.ChatUseCases;
-using DCL.Chat.ChatViewModels;
-using DCL.Chat.EventBus;
-using DCL.Chat.Services;
-using DCL.Optimization.Pools;
 using Utility;
 
-public class ChatMemberListPresenter : IDisposable
+namespace DCL.Chat.ChatFriends
 {
-    private readonly ChannelMemberFeedView view;
-    private readonly IEventBus eventBus;
-    private readonly GetChannelMembersCommand getChannelMembersCommand;
-    private readonly ChatMemberListService memberListService;
-    private readonly ChatContextMenuService chatContextMenuService;
-
-    private readonly EventSubscriptionScope scope = new ();
-    private CancellationTokenSource lifeCts = new ();
-
-    private readonly List<ChatMemberListViewModel> currentMembers = new (PoolConstants.AVATARS_COUNT);
-
-    public ChatMemberListPresenter(
-        ChannelMemberFeedView view,
-        IEventBus eventBus,
-        ChatMemberListService memberListService,
-        ChatContextMenuService chatContextMenuService,
-        GetChannelMembersCommand getChannelMembersCommand)
+    public class ChatMemberListPresenter : IDisposable
     {
-        this.view = view;
-        this.eventBus = eventBus;
-        this.memberListService = memberListService;
-        this.getChannelMembersCommand = getChannelMembersCommand;
-        this.chatContextMenuService = chatContextMenuService;
+        private readonly ChannelMemberFeedView view;
+        private readonly IEventBus eventBus;
+        private readonly GetChannelMembersCommand getChannelMembersCommand;
+        private readonly ChatMemberListService memberListService;
+        private readonly ChatContextMenuService chatContextMenuService;
 
-        this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
-    }
+        private readonly EventSubscriptionScope scope = new ();
+        private CancellationTokenSource lifeCts = new ();
 
-    public void ShowAndLoad()
-    {
-        view.Show();
-        lifeCts = new CancellationTokenSource();
-        memberListService.StartLiveMemberUpdates();
-        memberListService.OnMemberListUpdated += HandleLiveUpdate;
-        memberListService.RequestInitialMemberListAsync().Forget();
-        
-    }
+        private readonly List<ChatMemberListViewModel> currentMembers = new (PoolConstants.AVATARS_COUNT);
 
-    private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)
-    {
-        lifeCts = lifeCts.SafeRestart();
+        public ChatMemberListPresenter(
+            ChannelMemberFeedView view,
+            IEventBus eventBus,
+            ChatMemberListService memberListService,
+            ChatContextMenuService chatContextMenuService,
+            GetChannelMembersCommand getChannelMembersCommand)
+        {
+            this.view = view;
+            this.eventBus = eventBus;
+            this.memberListService = memberListService;
+            this.getChannelMembersCommand = getChannelMembersCommand;
+            this.chatContextMenuService = chatContextMenuService;
 
-        // Get the list of initial view models from the command.
-        // The command will handle starting the thumbnail downloads.
-        getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(freshMembers,
-            currentMembers, lifeCts.Token);
+            this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
+        }
 
-        // Immediately display this list. Names appear instantly, pictures are loading.
-        view.SetData(currentMembers);
-    }
+        private void ShowAndLoad()
+        {
+            view.Show();
+            lifeCts = new CancellationTokenSource();
+            memberListService.StartLiveMemberUpdates();
+            memberListService.OnMemberListUpdated += HandleLiveUpdate;
+            memberListService.RequestInitialMemberListAsync().Forget();
+        }
 
-    public void Show() => ShowAndLoad();
+        private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)
+        {
+            lifeCts = lifeCts.SafeRestart();
 
-    public void Hide()
-    {
-        view.Hide();
-        memberListService.StopLiveMemberUpdates();
-        memberListService.OnMemberListUpdated -= HandleLiveUpdate;
+            // Get the list of initial view models from the command.
+            // The command will handle starting the thumbnail downloads.
+            getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(freshMembers,
+                currentMembers, lifeCts.Token);
 
-        currentMembers.Clear();
-        view.SetData(currentMembers);
+            // Immediately display this list. Names appear instantly, pictures are loading.
+            view.SetData(currentMembers);
+        }
 
-        lifeCts.Cancel();
-    }
+        public void Show() =>
+            ShowAndLoad();
 
-    private void OnMemberContextMenuRequested(UserProfileMenuRequest data)
-    {
-        chatContextMenuService
-            .ShowUserProfileMenuAsync(data).Forget();
-    }
+        public void Hide()
+        {
+            view.Hide();
+            memberListService.StopLiveMemberUpdates();
+            memberListService.OnMemberListUpdated -= HandleLiveUpdate;
 
-    public void Dispose()
-    {
-        memberListService.OnMemberListUpdated -= HandleLiveUpdate;
-        lifeCts.SafeCancelAndDispose();
-        scope.Dispose();
+            currentMembers.Clear();
+            view.SetData(currentMembers);
+
+            lifeCts.Cancel();
+        }
+
+        private void OnMemberContextMenuRequested(UserProfileMenuRequest data)
+        {
+            chatContextMenuService
+               .ShowUserProfileMenuAsync(data)
+               .Forget();
+        }
+
+        public void Dispose()
+        {
+            memberListService.OnMemberListUpdated -= HandleLiveUpdate;
+            lifeCts.SafeCancelAndDispose();
+            scope.Dispose();
+        }
     }
 }

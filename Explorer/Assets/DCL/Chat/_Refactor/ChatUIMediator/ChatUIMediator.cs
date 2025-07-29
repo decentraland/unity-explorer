@@ -1,4 +1,5 @@
-﻿using DCL.Chat.ChatMessages;
+﻿using DCL.Chat.ChatFriends;
+using DCL.Chat.ChatMessages;
 
 namespace DCL.Chat.ChatMediator
 {
