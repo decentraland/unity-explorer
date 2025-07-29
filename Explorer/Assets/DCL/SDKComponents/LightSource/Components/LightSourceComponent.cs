@@ -1,6 +1,9 @@
+using Arch.Core;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Textures;
 using System;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.LightSource
 {
@@ -26,7 +29,7 @@ namespace DCL.SDKComponents.LightSource
 
         public CullingFlags Culling;
 
-        public Promise? TextureMaskPromise;
+        public CookieInfo Cookie;
 
         public bool IsCulled => Culling != CullingFlags.None;
 
@@ -43,6 +46,37 @@ namespace DCL.SDKComponents.LightSource
             TooManyLightSources = 1,
 
             CulledByLOD = 1 << 1
+        }
+
+        public struct CookieInfo
+        {
+            public GetTextureIntention LoadingIntention;
+
+            public AssetPromise<Texture2DData, GetTextureIntention>? LoadingPromise;
+
+            public Texture2DData SourceTextureData;
+
+            public Cubemap PointLightCubemap;
+
+            public void CleanUp(in World world)
+            {
+                LoadingIntention = default(GetTextureIntention);
+
+                if (LoadingPromise != null)
+                {
+                    LoadingPromise.Value.ForgetLoading(world);
+                    LoadingPromise = null;
+                }
+
+                SourceTextureData?.Dereference();
+                SourceTextureData = null;
+
+                if (PointLightCubemap)
+                {
+                    Object.Destroy(PointLightCubemap);
+                    PointLightCubemap = null;
+                }
+            }
         }
     }
 }

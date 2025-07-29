@@ -8,17 +8,13 @@ using DCL.SDKComponents.Utils;
 using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.ColorComponent;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
-using System;
 using UnityEngine;
-using Entity = Arch.Core.Entity;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.LightSource.Systems
@@ -114,30 +110,31 @@ namespace DCL.SDKComponents.LightSource.Systems
             light.type = LightType.Point;
         }
 
-        private void ApplyCookie(ref LightSourceComponent component, TextureUnion cookie)
+        private void ApplyCookie(ref LightSourceComponent component, TextureUnion cookieTexture)
         {
-            bool usesShadowMask = cookie is { Texture: { Src: var s } } && !string.IsNullOrWhiteSpace(s);
+            bool usesShadowMask = cookieTexture is { Texture: { Src: var s } } && !string.IsNullOrWhiteSpace(s);
 
             if (!usesShadowMask)
             {
+                // Maybe be we were using a cookie, we need to dispose of it
+                component.Cookie.CleanUp(World);
                 component.LightSourceInstance.cookie = null;
                 return;
             }
 
-            TextureComponent? shadowTexture = cookie.CreateTextureComponent(sceneData);
-            TryCreateGetTexturePromise(in shadowTexture, ref component.TextureMaskPromise);
+            TextureComponent? shadowTexture = cookieTexture.CreateTextureComponent(sceneData);
+            if (shadowTexture != null) PrepareCookie(in shadowTexture, ref component.Cookie);
         }
 
-        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref TexturePromise? promise)
+        private void PrepareCookie(in TextureComponent? textureComponent, ref LightSourceComponent.CookieInfo cookie)
         {
-            if (textureComponent == null)
-                return false;
+            TextureComponent textureComponentValue = textureComponent!.Value;
 
-            TextureComponent textureComponentValue = textureComponent.Value;
+            // Still loading the same texture OR the same cookie is already applied
+            if (TextureComponentUtils.Equals(textureComponentValue, cookie.LoadingIntention)) return;
 
-            if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise)) return false;
-
-            DereferenceTexture(ref promise);
+            // Dispose of the existing cookie we might have, since it has changed
+            cookie.CleanUp(World);
 
             var intention = new GetTextureIntention(
                 textureComponentValue.Src,
@@ -148,29 +145,23 @@ namespace DCL.SDKComponents.LightSource.Systems
                 nameof(LightSourceApplyPropertiesSystem),
                 attemptsCount: GET_TEXTURE_MAX_ATTEMPT_COUNT);
 
-            promise = TexturePromise.Create(World, intention, partitionComponent);
-
-            return true;
+            cookie.LoadingIntention = intention;
+            cookie.LoadingPromise = TexturePromise.Create(World, intention, partitionComponent);
         }
 
         [Query]
-        private void ResolveTexturePromise(in Entity entity, ref LightSourceComponent lightSourceComponent)
+        private void ResolveTexturePromise(ref LightSourceComponent lightSourceComponent)
         {
-            if (lightSourceComponent.TextureMaskPromise is null || lightSourceComponent.TextureMaskPromise.Value.IsConsumed) return;
+            var promise = lightSourceComponent.Cookie.LoadingPromise;
 
-            if (lightSourceComponent.TextureMaskPromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
-            {
-                lightSourceComponent.TextureMaskPromise = null;
-                lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
-            }
-        }
+            if (promise is null || promise.Value.IsConsumed || !promise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture)) return;
 
-        private void DereferenceTexture(ref TexturePromise? promise)
-        {
-            if (promise == null) return;
+            // Clear the promise but keep the intention so we can compare it later on when updating the light source properties
+            // Especially important when no-cache is used for textures (scene dev mode)
+            lightSourceComponent.Cookie.LoadingPromise = null;
+            lightSourceComponent.Cookie.SourceTextureData = texture.Asset;
 
-            TexturePromise promiseValue = promise.Value;
-            promiseValue.TryDereference(World);
+            lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
         }
     }
 }
