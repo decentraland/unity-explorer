@@ -248,7 +248,7 @@ namespace DCL.Chat
                     newItem.SetConversationName(user.DisplayName);
                     newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
                     newItem.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
-                    newItem.BindProfileThumbnail(user.ProfilePicture, user.ProfileColor);
+                    newItem.BindProfileThumbnail(user.ProfilePicture);
                     newItem.Configure(isClosable: true, hasOnlineStatus: true);
                     break;
 

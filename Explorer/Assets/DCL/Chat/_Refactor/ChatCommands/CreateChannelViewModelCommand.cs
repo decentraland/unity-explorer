@@ -107,9 +107,9 @@ public class CreateChannelViewModelCommand
         if (profile != null)
         {
             viewModel.DisplayName = profile.ValidatedName;
-            viewModel.ProfileColor = profile.UserNameColor;
             viewModel.HasClaimedName = profile.HasClaimedName;
-            viewModel.ImageUrl = profile.Avatar.FaceSnapshotUrl;
+
+            viewModel.ProfilePicture.UpdateValue(viewModel.ProfilePicture.Value.SetColor(profile.UserNameColor));
 
             await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
         }
@@ -117,10 +117,9 @@ public class CreateChannelViewModelCommand
         {
             string userId = viewModel.Id.Id;
             viewModel.DisplayName = $"{userId.Substring(0, 6)}...{userId.Substring(userId.Length - 4)}";
-            viewModel.ProfileColor = Color.gray;
             viewModel.HasClaimedName = false;
-            viewModel.ImageUrl = null;
-            viewModel.ProfilePicture.UpdateValue(new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true)));
+
+            viewModel.ProfilePicture.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true), ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
         }
 
         eventBus.Publish(new ChatEvents.ChannelUpdatedEvent

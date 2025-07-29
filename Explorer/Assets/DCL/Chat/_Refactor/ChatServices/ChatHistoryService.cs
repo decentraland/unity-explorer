@@ -48,6 +48,8 @@ namespace DCL.Chat.Services
                 chatHistory.AddMessage(channel, type, newChatMessage);
             }
             else
+
+                // The system message is formatted apriori
                 chatHistory.AddMessage(channel, type, message);
 
             HandleMessageAudioFeedback(message);

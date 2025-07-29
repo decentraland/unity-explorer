@@ -283,7 +283,6 @@ namespace DCL.Chat.ChatMessages
         public void Dispose()
         {
             loadChannelCts.SafeCancelAndDispose();
-            Deactivate();
         }
     }
 }

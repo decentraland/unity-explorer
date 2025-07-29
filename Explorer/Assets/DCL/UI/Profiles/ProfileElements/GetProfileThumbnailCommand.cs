@@ -19,13 +19,22 @@ namespace DCL.UI.ProfileElements
             this.profileRepository = profileRepository;
         }
 
-        public async UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, string userId, string faceSnapshotUrl, CancellationToken ct)
+        public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, string userId, string faceSnapshotUrl,
+            CancellationToken ct) =>
+            ExecuteAsync(property, static (p, vm) => p.UpdateValue(vm), fallback, userId, faceSnapshotUrl, ct);
+
+        public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel.WithColor> property, Sprite? fallback, string userId, string faceSnapshotUrl,
+            CancellationToken ct) =>
+            ExecuteAsync(property, static (p, vm) => p.UpdateValue(p.Value.SetProfile(vm)), fallback, userId, faceSnapshotUrl, ct);
+
+        private async UniTask ExecuteAsync<T>(IReactiveProperty<T> property, Action<IReactiveProperty<T>, ProfileThumbnailViewModel> setProfile, Sprite? fallback, string userId, string faceSnapshotUrl,
+            CancellationToken ct)
         {
             Sprite? cachedSprite = profileRepository.GetProfileThumbnail(userId);
 
             if (cachedSprite != null)
             {
-                property.UpdateValue(ProfileThumbnailViewModel.FromLoaded(cachedSprite, true));
+                setProfile(property, ProfileThumbnailViewModel.FromLoaded(cachedSprite, true));
                 return;
             }
 
@@ -34,7 +43,7 @@ namespace DCL.UI.ProfileElements
                 Sprite? downloadedSprite = await profileRepository.GetProfileThumbnailAsync(faceSnapshotUrl, ct);
 
                 if (downloadedSprite != null)
-                    property.UpdateValue(ProfileThumbnailViewModel.FromLoaded(downloadedSprite, false));
+                    setProfile(property, ProfileThumbnailViewModel.FromLoaded(downloadedSprite, false));
                 else
                     UpdateFromError();
             }
@@ -47,7 +56,7 @@ namespace DCL.UI.ProfileElements
 
             void UpdateFromError()
             {
-                property.UpdateValue(fallback == null ? ProfileThumbnailViewModel.Error() : ProfileThumbnailViewModel.FromFallback(fallback));
+                setProfile(property, fallback == null ? ProfileThumbnailViewModel.Error() : ProfileThumbnailViewModel.FromFallback(fallback));
             }
         }
     }

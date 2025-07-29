@@ -154,11 +154,11 @@ namespace DCL.Chat
                 openButton.OnDeselect(null);
         }
 
-        public void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel> viewModel, Color userColor)
+        public void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
         {
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);
-            profilePictureView.Bind(viewModel, userColor);
+            profilePictureView.Bind(viewModel);
         }
 
         public void SetPicture(Sprite? sprite)
