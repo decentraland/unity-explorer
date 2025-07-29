@@ -8,8 +8,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
-using System.Diagnostics;
-using Debug = UnityEngine.Debug;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -23,16 +22,16 @@ namespace DCL.AvatarRendering.Emotes
 
         public bool IsLoading { get; private set; }
 
-        public Emote() {}
-
         public Emote(StreamableLoadingResult<EmoteDTO> model, bool isLoading = true)
         {
             Model = model;
             IsLoading = isLoading;
         }
 
-        public void UpdateLoadingStatus(bool isLoading) =>
+        public void UpdateLoadingStatus(bool isLoading)
+        {
             IsLoading = isLoading;
+        }
 
         public bool IsOnChain() =>
             IsOnChain(id: ((IAvatarAttachment<EmoteDTO>)this).GetUrn().ToString());

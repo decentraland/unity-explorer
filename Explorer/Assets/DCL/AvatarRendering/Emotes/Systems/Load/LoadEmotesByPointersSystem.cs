@@ -194,8 +194,6 @@ namespace DCL.AvatarRendering.Emotes.Load
                         missingPointers.Add(shortenedPointer);
                         intention.RequestedPointers.Add(loadingIntentionPointer);
                     }
-                    emote = IEmote.NewEmpty();
-                    emoteStorage.Set(loadingIntentionPointer, emote);
                     continue;
                 }
 
