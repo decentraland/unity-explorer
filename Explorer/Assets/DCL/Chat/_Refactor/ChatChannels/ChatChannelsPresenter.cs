@@ -67,10 +67,10 @@ public class ChatChannelsPresenter : IDisposable
         view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
 
         this.chatHistory.ChannelAdded += OnRuntimeChannelAdded;
+        this.chatHistory.ChannelRemoved += OnChannelRemoved;
         this.chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
         this.chatHistory.MessageAdded += OnMessageAdded;
         this.chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
-        // this.chatMessageBus.MessageAdded += OnMessageAdded;
         this.chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
 
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
@@ -135,6 +135,18 @@ public class ChatChannelsPresenter : IDisposable
     {
         if (!isInitialized) return;
         AddChannelToView(channel);
+    }
+
+    private void OnChannelRemoved(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType)
+    {
+        if (!isInitialized) return;
+        viewModels.Remove(removedChannel);
+        view.RemoveConversation(removedChannel);
+    }
+
+    private void RemoveChannelFromView(ChatChannel.ChannelId removedChannel)
+    {
+        throw new NotImplementedException();
     }
 
     private void OnChannelAdded(ChatEvents.ChannelAddedEvent evt)
@@ -223,6 +235,7 @@ public class ChatChannelsPresenter : IDisposable
         view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
 
         chatHistory.ChannelAdded -= OnRuntimeChannelAdded;
+        chatHistory.ChannelRemoved -= OnChannelRemoved;
         chatHistory.MessageAdded -= OnMessageAdded;
         chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
         
