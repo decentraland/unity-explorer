@@ -234,7 +234,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                         HandleReelSetPrivate();
                 }
                 catch (OperationCanceledException) { }
-                catch (UnityWebRequestException e)
+                catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
                     viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
