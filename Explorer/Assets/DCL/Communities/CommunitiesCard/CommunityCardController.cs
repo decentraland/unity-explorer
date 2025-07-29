@@ -14,6 +14,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI;
@@ -61,6 +62,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
 
@@ -94,6 +96,7 @@ namespace DCL.Communities.CommunitiesCard
             IEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             LambdasProfilesProvider lambdasProfilesProvider)
             : base(viewFactory)
@@ -112,6 +115,7 @@ namespace DCL.Communities.CommunitiesCard
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.thumbnailLoader = new ThumbnailLoader(null);
@@ -305,7 +309,8 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.successNotificationView,
                 clipboard,
                 webBrowser,
-                realmNavigator);
+                realmNavigator,
+                decentralandUrlsSource);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
