@@ -194,7 +194,6 @@ namespace DCL.AvatarRendering.Emotes.Load
                     newEmote.UpdateLoadingStatus(true);
                     emoteStorage.Set(shortenedPointer, newEmote);
 
-                    Debug.Log($"JUANI ADDING MISSING POINTER {shortenedPointer}");
                     missingPointers.Add(shortenedPointer);
                     continue;
                 }

@@ -221,8 +221,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(emoteId))
-                        Debug.Log("JUANI WE SHOULD NOT BE REQUESTING AN EMPTY EMOTE");
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
                     World.Create(CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape));
                 }
