@@ -13,6 +13,7 @@ using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -51,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly GalleryEventBus galleryEventBus;
 
@@ -81,6 +83,7 @@ namespace DCL.PluginSystem.Global
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
             LambdasProfilesProvider lambdasProfilesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.mvcManager = mvcManager;
@@ -101,6 +104,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
@@ -138,7 +142,9 @@ namespace DCL.PluginSystem.Global
                 eventsApiService,
                 sharedSpaceManager,
                 chatEventBus,
+                decentralandUrlsSource,
                 web3IdentityCache,
+                lambdasProfilesProvider,
                 galleryEventBus);
 
             mvcManager.RegisterController(communityCardController);
