@@ -192,13 +192,26 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // emote failed to load? remove intent
                     if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the manifest");
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
+
+                    // emote failed to load? remove intent
+                    if (emote.Model is { IsInitialized: true, Succeeded: false })
+                    {
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the DTO");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
                     StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
+
+                    // the emote is still loading? don't remove the intent yet, wait for it
+                    //TODO (JUANI) : This will go away when the manifest request is out. 
+                    if (streamableAsset == null)
+                        return;
 
                     StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = streamableAsset.Value;
                     GameObject? mainAsset;
