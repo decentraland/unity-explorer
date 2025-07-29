@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using DCL.Profiling;
 using GLTFast;
+using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
 
@@ -8,12 +9,16 @@ namespace ECS.StreamableLoading.GLTF
 {
     public class GLTFData : StreamableRefCountData<GltfImport>
     {
-        public readonly GameObject containerGameObject;
+        public readonly GameObject Root;
+        public readonly IReadOnlyList<string>? HierarchyPaths;
 
-        public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject)
+        public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject, IReadOnlyList<string>? hierarchyPaths = null)
             : base(gltfImportedData, ReportCategory.GLTF_CONTAINER)
         {
-            this.containerGameObject = containerGameObject;
+            if (containerGameObject == null) return;
+
+            Root = containerGameObject;
+            HierarchyPaths = hierarchyPaths;
         }
 
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.GltfDataAmount;
@@ -26,8 +31,8 @@ namespace ECS.StreamableLoading.GLTF
             Asset?.Dispose();
 
             // Destroy the container GameObject
-            if (containerGameObject != null)
-                Object.Destroy(containerGameObject);
+            if (Root != null)
+                Object.Destroy(Root);
         }
     }
 }
