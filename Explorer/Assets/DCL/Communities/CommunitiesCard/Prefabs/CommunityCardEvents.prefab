@@ -1651,7 +1651,7 @@ MonoBehaviour:
   - {fileID: 4418461772446874494}
   - {fileID: 4379479570568262795}
   - {fileID: 1931124675555126151}
-  tweenDuration: 7
+  tweenDuration: 1
   fadeDuration: 0.3
 --- !u!1 &4824639616395220465
 GameObject:
@@ -3226,6 +3226,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4536725697558613486, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4641221226267985663, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4641221226267985663, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4641221226267985663, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
+      propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6042187927880008599, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
