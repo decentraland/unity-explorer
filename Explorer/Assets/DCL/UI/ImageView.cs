@@ -84,8 +84,11 @@ namespace DCL.UI
                 aspectRatioFitter.aspectRatio = fitAndCenterImage ? sprite.texture.width * 1f / sprite.texture.height : 1f;
         }
 
-        public void SetColor(Color color) =>
-            Image.color = color;
+        public Color ImageColor
+        {
+            get => Image.color;
+            set => Image.color = value;
+        }
 
         public async UniTask FadeInAsync(float duration, CancellationToken ct)
         {
