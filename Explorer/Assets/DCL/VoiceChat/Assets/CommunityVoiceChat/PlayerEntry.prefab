@@ -364,6 +364,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hoverElement: {fileID: 4501714834528175849}
   contextMenuButton: {fileID: 588555066609539575}
+  profileView: {fileID: 5184490706305973412}
 --- !u!1 &5736632221943490344
 GameObject:
   m_ObjectHideFlags: 0
@@ -862,3 +863,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4299435631351025135, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
   m_PrefabInstance: {fileID: 3384974489426492495}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5184490706305973412 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7569102405873697003, guid: 4075f958d984d4c4c9d805fb2423ea10, type: 3}
+  m_PrefabInstance: {fileID: 3384974489426492495}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93b4319a3e58425aae5ef8cd49a3ff19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

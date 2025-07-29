@@ -1,7 +1,10 @@
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.Web3;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using Vector3 = UnityEngine.Vector3;
@@ -157,19 +160,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             }
         }
 
-        private void OnVoiceChatStatusChanged(VoiceChatStatus status)
-        {
-            switch (status)
-            {
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    view.Show();
-                    break;
-                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
-                    view.Hide();
-                    break;
-            }
-        }
-
         private void Show()
         {
             view.gameObject.SetActive(true);
@@ -198,6 +188,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             PlayerEntryView entryView = GetAndConfigurePlayerEntry(participantState);
             entryView.transform.parent = view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
+            communityVoiceChatSearchController.AddListener();
         }
 
         private PlayerEntryView GetAndConfigurePlayerEntry(VoiceChatParticipantsStateService.ParticipantState participantState)
@@ -205,12 +196,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries.Add(participantState.WalletId, entryView);
 
-            //entryView.profileView.SetupAsync(new Web3Address(participantState.WalletId), profileRepositoryWrapper, CancellationToken.None).Forget();
+            entryView.profileView.SetupAsync(new Web3Address(participantState.WalletId), profileRepositoryWrapper, CancellationToken.None).Forget();
             view.ConfigureEntry(entryView, participantState);
 
             participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
+            participantState.IsSpeaker.OnUpdate += isSpeaker => SetUserEntryParent(isSpeaker, entryView);
 
             return entryView;
+        }
+
+        private void SetUserEntryParent(bool isSpeaker, PlayerEntryView entryView)
+        {
+            entryView.transform.parent = isSpeaker ? inCallController.SpeakersParent : view.CommunityVoiceChatSearchView.ListenersParent;
+            entryView.transform.localScale = Vector3.one;
         }
 
         private void PlayerEntryIsRequestingToSpeak(bool? isRequestingToSpeak, PlayerEntryView entryView)

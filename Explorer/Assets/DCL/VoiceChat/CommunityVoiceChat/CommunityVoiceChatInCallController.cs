@@ -7,6 +7,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly CommunityVoiceChatInCallView view;
         private readonly CommunityVoiceChatInCallFooterController footerController;
+        public Transform SpeakersParent => view.SpeakersParent;
+
+        private int speakersCount = 0;
 
         public CommunityVoiceChatInCallController(CommunityVoiceChatInCallView view, IVoiceChatOrchestrator orchestrator)
         {
@@ -21,8 +24,15 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void AddSpeaker(PlayerEntryView entryView)
         {
+            speakersCount++;
+            view.ParticipantCount.text = speakersCount.ToString();
             entryView.transform.parent = view.SpeakersParent;
             entryView.transform.localScale = Vector3.one;
+        }
+
+        public void RemoveSpeaker()
+        {
+            speakersCount--;
         }
     }
 }
