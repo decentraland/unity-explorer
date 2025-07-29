@@ -105,7 +105,7 @@ namespace DCL.EventsApi
             return responseData;
         }
 
-        public async UniTask<EventWithPlaceIdDTOListResponse> GetCommunityEvents(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<EventWithPlaceIdDTOListResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl)
