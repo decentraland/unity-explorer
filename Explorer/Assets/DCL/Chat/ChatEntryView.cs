@@ -63,15 +63,11 @@ namespace DCL.Chat
             this.onMessageContextMenuClicked = onMessageContextMenuClicked;
             ChatEntryClicked = onProfileContextMenuClicked;
 
-            viewModel.UserNameColor.ReactOnceWhenNotNull
-            ((this, viewModel), static (Color color, (ChatEntryView view, ChatMessageViewModel viewModel) data) =>
-            {
-                data.view.usernameElement.userName.color = color;
-
-                // Binding is done for non-system messages only
-                if (!data.viewModel.Message.IsSystemMessage)
-                    data.view.ProfilePictureView.Bind(data.viewModel.Thumbnail, color);
-            }, destroyCancellationToken);
+            // Binding is done for non-system messages only
+            if (!viewModel.Message.IsSystemMessage)
+                ProfilePictureView.Bind(viewModel.ProfileData);
+            else
+                usernameElement.userName.color = viewModel.ProfileData.Value.ProfileColor;
         }
 
         private void OnProfileButtonClicked()

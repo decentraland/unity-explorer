@@ -17,7 +17,7 @@ namespace DCL.UI.ProfileElements
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
 
-        private IReactiveProperty<ProfileThumbnailViewModel>? binding;
+        private IDisposable? binding;
         private CancellationTokenSource? cts;
         private string? currentUrl;
 
@@ -28,8 +28,7 @@ namespace DCL.UI.ProfileElements
         {
             cts.SafeCancelAndDispose();
 
-            if (binding != null)
-                binding.OnUpdate -= OnThumbnailUpdated;
+            binding?.Dispose();
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>
@@ -41,16 +40,29 @@ namespace DCL.UI.ProfileElements
         public event Action? PointerEnter;
         public event Action? PointerExit;
 
+        public void Bind(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModelProp)
+        {
+            binding?.Dispose();
+
+            OnThumbnailWithColorUpdated(viewModelProp.Value);
+            binding = viewModelProp.Subscribe(OnThumbnailWithColorUpdated);
+        }
+
         public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp, Color userNameColor)
         {
             // Unbind previous binding if exists
-            if (binding != null)
-                binding.OnUpdate -= OnThumbnailUpdated;
+            binding?.Dispose();
 
             thumbnailBackground.color = userNameColor;
 
             OnThumbnailUpdated(viewModelProp.Value);
-            viewModelProp.OnUpdate += OnThumbnailUpdated;
+            binding = viewModelProp.Subscribe(OnThumbnailUpdated);
+        }
+
+        private void OnThumbnailWithColorUpdated(ProfileThumbnailViewModel.WithColor model)
+        {
+            thumbnailBackground.color = model.ProfileColor;
+            OnThumbnailUpdated(model.Thumbnail);
         }
 
         private void OnThumbnailUpdated(ProfileThumbnailViewModel model)

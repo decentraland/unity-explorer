@@ -17,8 +17,8 @@ namespace DCL.Chat.ChatViewModels
             actionOnRelease: viewModel =>
             {
                 viewModel.Message = default(ChatMessage);
-                viewModel.Thumbnail.ClearSubscriptionsList();
-                viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.Default());
+                viewModel.ProfileData.ClearSubscriptionsList();
+                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.WithColor.Default());
                 viewModel.IsSeparator = false;
                 viewModel.cancellationTokenSource.SafeCancelAndDispose();
             });
@@ -30,11 +30,8 @@ namespace DCL.Chat.ChatViewModels
         public ChatMessage Message { get; internal set; }
 
         // In case we need more profile information in the future, create a separate ProfileViewModel and update it at once
-        public IReactiveProperty<Color?> UserNameColor { get; }
-            = new ReactiveProperty<Color?>(null);
-
-        public IReactiveProperty<ProfileThumbnailViewModel> Thumbnail { get; }
-            = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
+        public IReactiveProperty<ProfileThumbnailViewModel.WithColor> ProfileData { get; }
+            = ProfileThumbnailViewModel.WithColor.DefaultReactive();
 
         public bool IsSeparator { get; internal set; }
 

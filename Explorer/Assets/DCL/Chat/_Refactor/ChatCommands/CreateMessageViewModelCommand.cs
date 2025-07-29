@@ -5,6 +5,7 @@ using DCL.Profiles;
 using DCL.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using UnityEngine;
 
 namespace DCL.Chat.ChatUseCases
 {
@@ -32,7 +33,7 @@ namespace DCL.Chat.ChatUseCases
             viewModel.Message = message;
 
             if (message.IsSystemMessage)
-                viewModel.UserNameColor.UpdateValue(ProfileNameColorHelper.GetNameColor(message.SenderValidatedName));
+                viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(ProfileNameColorHelper.GetNameColor(message.SenderValidatedName)));
             else
                 FetchProfileAsync(message.SenderWalletAddress, viewModel).Forget();
 
@@ -45,10 +46,13 @@ namespace DCL.Chat.ChatUseCases
 
             if (profile != null)
             {
-                viewModel.UserNameColor.UpdateValue(profile.UserNameColor);
-
-                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail,
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileData, chatConfig.DefaultProfileThumbnail,
                     walletId, profile.Avatar.FaceSnapshotUrl, viewModel.cancellationToken);
+            }
+            else
+            {
+                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail),
+                    ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
             }
         }
     }
