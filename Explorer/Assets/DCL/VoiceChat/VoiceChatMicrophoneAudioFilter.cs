@@ -11,19 +11,17 @@ using Utility;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    ///     Custom AudioFilter that applies real-time noise reduction and audio processing
-    ///     to the microphone input using Unity's OnAudioFilterRead callback.
-    ///     Compatible with LiveKit's AudioFilter interface.
-    ///     Processing and resampling are done in a separate thread to avoid audio dropouts.
+    ///     Custom AudioFilter that applies mono conversion and resampling to microphone input
+    ///     using Unity's OnAudioFilterRead callback. Compatible with LiveKit's AudioFilter interface.
+    ///     Resampling is done in a separate thread to avoid audio dropouts.
     /// </summary>
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
         private const int DEFAULT_LIVEKIT_CHANNELS = 1;
         private const int DEFAULT_BUFFER_SIZE = 8192;
-        private const int LIVEKIT_FRAME_SIZE = 480; // 10ms at 48kHz
+        private const int LIVEKIT_FRAME_SIZE = 0;//480; // 10ms at 48kHz
         private const int PROCESSING_QUEUE_SIZE = 10; // Buffer for processing thread
 
-        private IVoiceChatAudioProcessor audioProcessor;
         private bool isFilterActive = true;
 
         private readonly List<float> liveKitBuffer = new (LIVEKIT_FRAME_SIZE * 2);
@@ -32,7 +30,6 @@ namespace DCL.VoiceChat
 
         private float[] tempBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
-        private bool isProcessingEnabled => voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
 
         private Thread processingThread;
         private readonly ConcurrentQueue<AudioProcessingJob> processingQueue = new();
@@ -82,7 +79,6 @@ namespace DCL.VoiceChat
         {
             AudioRead = null!;
             StopProcessingThread();
-            audioProcessor = null;
             tempBuffer = null;
             resampleBuffer = null;
         }
@@ -99,7 +95,7 @@ namespace DCL.VoiceChat
             int samplesPerChannel = data.Length / channels;
             Span<float> sendBuffer = data;
 
-            if (audioProcessor != null && data.Length > 0)
+            if (data.Length > 0)
             {
                 SubmitAudioForProcessing(data, channels, outputSampleRate, samplesPerChannel);
 
@@ -140,7 +136,7 @@ namespace DCL.VoiceChat
         // ReSharper disable once NotNullOrRequiredMemberIsNotInitialized
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
-        public bool IsValid => audioProcessor != null && voiceChatConfiguration != null;
+        public bool IsValid => voiceChatConfiguration != null;
 
         private void SubmitAudioForProcessing(float[] audioData, int channels, int sampleRate, int samplesPerChannel)
         {
@@ -255,11 +251,6 @@ namespace DCL.VoiceChat
 
             VoiceChatMicrophoneAudioHelpers.ConvertToMono(data, monoSpan, job.Channels, samplesPerChannel);
 
-            if (isProcessingEnabled)
-            {
-                audioProcessor.ProcessAudio(monoSpan, job.SampleRate);
-            }
-
             if (outputSampleRate != VoiceChatConstants.LIVEKIT_SAMPLE_RATE)
             {
                 var targetSamplesPerChannel = (int)((float)samplesPerChannel * VoiceChatConstants.LIVEKIT_SAMPLE_RATE / outputSampleRate);
@@ -299,13 +290,11 @@ namespace DCL.VoiceChat
         public void Initialize(VoiceChatConfiguration configuration)
         {
             voiceChatConfiguration = configuration;
-            audioProcessor = new OptimizedVoiceChatAudioProcessor(configuration);
         }
 
         public void SetFilterActive(bool active)
         {
             isFilterActive = active;
-            audioProcessor?.Reset();
 
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
@@ -330,8 +319,6 @@ namespace DCL.VoiceChat
 
             while (processingQueue.TryDequeue(out _)) { }
             while (processedQueue.TryDequeue(out _)) { }
-
-            audioProcessor?.Reset();
         }
     }
 }

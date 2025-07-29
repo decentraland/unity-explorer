@@ -79,7 +79,7 @@ namespace DCL.VoiceChat
         {
             //We hide it by default until we resolve if the user should see it.
             view.gameObject.SetActive(false);
-            currentCommunityCallStatusSubscription.Dispose();
+            currentCommunityCallStatusSubscription?.Dispose();
 
             switch (newChannel.ChannelType)
             {

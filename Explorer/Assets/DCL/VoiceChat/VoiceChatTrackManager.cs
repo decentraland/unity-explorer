@@ -71,7 +71,6 @@ namespace DCL.VoiceChat
                 Result<MicrophoneRtcAudioSource2> result = MicrophoneRtcAudioSource2.New(microphoneHandler.AudioFilter, combinedStreamsAudioSource.AudioFilter);
                 if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
 
-                //monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneHandler.AudioFilter);
                 rtcAudioSource = result.Value;
                 rtcAudioSource.Start();
 

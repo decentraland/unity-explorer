@@ -4,7 +4,6 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
-using LiveKit.Audio;
 using System.Threading;
 using Utility;
 using Object = UnityEngine.Object;
@@ -20,7 +19,6 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration voiceChatConfiguration;
         private readonly VoiceChatMicrophoneAudioFilter audioFilter;
         private readonly AudioSource audioSource;
-        private readonly MicrophoneRtcAudioSource microphoneRtcAudioSource;
 
         private AudioClip microphoneAudioClip;
         private bool isMicrophoneInitialized;
