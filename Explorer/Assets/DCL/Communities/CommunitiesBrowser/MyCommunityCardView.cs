@@ -14,7 +14,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject userRoleContainer = null!;
         [SerializeField] private TMP_Text userRole = null!;
         [field: SerializeField] public ImageView communityThumbnail = null!;
-        [SerializeField] private GameObject communityLiveMark = null!;
         [SerializeField] private Button mainButton = null!;
 
         private string currentCommunityId;
@@ -41,8 +40,5 @@ namespace DCL.Communities.CommunitiesBrowser
             var roleString = role.ToString();
             userRole.text = $"{char.ToUpperInvariant(roleString[0])}{roleString[1..]}";
         }
-
-        public void SetLiveMarkAsActive(bool isLiveMark) =>
-            communityLiveMark.SetActive(isLiveMark);
     }
 }
