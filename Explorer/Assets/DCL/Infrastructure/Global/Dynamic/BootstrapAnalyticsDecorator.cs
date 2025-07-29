@@ -54,11 +54,12 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
+            bool hasDebugFlag,
             CancellationToken ct
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
-                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
+                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, hasDebugFlag, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
