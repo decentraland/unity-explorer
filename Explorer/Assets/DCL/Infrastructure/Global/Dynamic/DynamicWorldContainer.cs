@@ -1012,6 +1012,7 @@ namespace Global.Dynamic
                     socialServiceContainer.socialServicesRPC,
                     notificationsBusController,
                     lambdasProfilesProvider,
+                    bootstrapContainer.DecentralandUrlsSource,
                     identityCache));
 
             if (dynamicWorldParams.EnableAnalytics)

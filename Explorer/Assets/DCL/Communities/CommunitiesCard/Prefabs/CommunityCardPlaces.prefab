@@ -182,7 +182,6 @@ MonoBehaviour:
   <emptyState>k__BackingField: {fileID: 1720708892090664944}
   <loadingObject>k__BackingField: {fileID: 2063066630832939637}
   <contextMenuConfiguration>k__BackingField: {fileID: 11400000, guid: ca02eb1ec7d6947c1b6683ad3e847437, type: 2}
-  <confirmationDialogView>k__BackingField: {fileID: 0}
   <deleteSprite>k__BackingField: {fileID: 21300000, guid: 767d48f13763447a3b8bdc48c0a2efee, type: 3}
 --- !u!114 &2063066630832939637
 MonoBehaviour:
@@ -208,7 +207,7 @@ MonoBehaviour:
   - {fileID: 5514977292644474435}
   - {fileID: 8740097530220918798}
   - {fileID: 4314993956740610484}
-  tweenDuration: 7
+  tweenDuration: 1
   fadeDuration: 0.3
 --- !u!1 &1122154419499980750
 GameObject:
@@ -3027,11 +3026,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5870015658720737092, guid: 37d30f2f05a6f4606839b9f3045b0155, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 18.03
+      value: 18.11
       objectReference: {fileID: 0}
     - target: {fileID: 5870015658720737092, guid: 37d30f2f05a6f4606839b9f3045b0155, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 51.015
+      value: 51.055
       objectReference: {fileID: 0}
     - target: {fileID: 5870015658720737092, guid: 37d30f2f05a6f4606839b9f3045b0155, type: 3}
       propertyPath: m_AnchoredPosition.y

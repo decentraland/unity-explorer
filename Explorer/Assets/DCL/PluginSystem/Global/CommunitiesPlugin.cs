@@ -12,6 +12,7 @@ using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -53,6 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CommunityCardController? communityCardController;
@@ -81,6 +83,7 @@ namespace DCL.PluginSystem.Global
             IRPCSocialServices rpcSocialServices,
             INotificationsBusController notificationsBusController,
             LambdasProfilesProvider lambdasProfilesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.mvcManager = mvcManager;
@@ -101,6 +104,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
             notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
@@ -138,7 +142,9 @@ namespace DCL.PluginSystem.Global
                 eventsApiService,
                 sharedSpaceManager,
                 chatEventBus,
-                web3IdentityCache);
+                decentralandUrlsSource,
+                web3IdentityCache,
+                lambdasProfilesProvider);
 
             mvcManager.RegisterController(communityCardController);
 
