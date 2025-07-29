@@ -156,7 +156,7 @@ namespace DCL.ResourcesUnloading
 #endif
         }
 
-        private void TryAppendToDebug<TA, TI>(ISizedStreamableCache<TA, TI> cache, string title)
+        private void TryAppendToDebug<TA, TI>(ISizedStreamableCache<TA, TI> cache, string title) where TI: IEquatable<TI>
         {
             if (widgetBuilder == null)
                 return;
