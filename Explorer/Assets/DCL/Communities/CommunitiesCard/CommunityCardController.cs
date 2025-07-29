@@ -10,6 +10,7 @@ using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Friends;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
@@ -65,6 +66,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly GalleryEventBus galleryEventBus;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -98,7 +100,8 @@ namespace DCL.Communities.CommunitiesCard
             IChatEventBus chatEventBus,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
-            LambdasProfilesProvider lambdasProfilesProvider)
+            LambdasProfilesProvider lambdasProfilesProvider,
+            GalleryEventBus galleryEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -118,6 +121,7 @@ namespace DCL.Communities.CommunitiesCard
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.galleryEventBus = galleryEventBus;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
@@ -374,8 +378,11 @@ namespace DCL.Communities.CommunitiesCard
             eventListController?.Reset();
         }
 
-        private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
-            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, false, reelDeleteIntention)));
+        private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
+            Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
+                true, PhotoDetailParameter.CallerContext.CommunityCard, reelDeleteIntention,
+                reelListRefreshIntention, galleryEventBus)));
 
         private void OnSectionChanged(CommunityCardView.Sections section)
         {
