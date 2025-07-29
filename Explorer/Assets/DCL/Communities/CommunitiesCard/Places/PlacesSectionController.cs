@@ -158,7 +158,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 }
 
                 placesFetchData.Items.RemoveAll(elem => elem.PlaceInfo.id.Equals(placeInfo.id));
-                RefreshGrid(false);
+                RefreshGrid(true);
             }
         }
 
@@ -174,6 +174,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private void OnElementInfoButtonClicked(PlaceInfo place)
         {
+            // The button for this callback is disabled, a user cannot reach this point.
             throw new NotImplementedException();
         }
 
