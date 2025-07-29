@@ -1,12 +1,12 @@
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Optimization.Pools;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using NUnit.Framework;
+using DCL.Optimization.Pools;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -146,6 +146,17 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 int currentVertexCount = meshData.Mesh.sharedMesh.vertexCount;
                 list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture));
                 auxVertCounter += currentVertexCount;
+
+                if (avatarShapeComponent.ShowOnlyWearables)
+                {
+                    string name = meshData.OriginalMaterial.name;
+
+                    if (name.Contains(ComputeShaderConstants.SKIN_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase)
+                        || name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase))
+                        meshData.Renderer.enabled = false;
+                }
+                else
+                    meshData.Renderer.enabled = true;
             }
 
             return list;
