@@ -28,9 +28,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarLoaderSystem : BaseUnityLoopSystem
     {
-        internal AvatarLoaderSystem(World world) : base(world)
-        {
-        }
+        internal AvatarLoaderSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -53,7 +51,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise,
                 pbAvatarShape.GetSkinColor().ToUnityColor(),
                 pbAvatarShape.GetHairColor().ToUnityColor(),
-                pbAvatarShape.GetEyeColor().ToUnityColor()));
+                pbAvatarShape.GetEyeColor().ToUnityColor(),
+                pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true }));
         }
 
         [Query]
@@ -72,6 +71,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
 
             var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
+
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
             LoadAllEmotes(profile, partition);
 
@@ -97,6 +97,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
             avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
+            avatarShapeComponent.ShowOnlyWearables = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
             pbAvatarShape.IsDirty = false;
         }
 
@@ -140,6 +141,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 partition);
 
         private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
+
             // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
             // there is not need to convert
             WearablePromise.Create(World,
