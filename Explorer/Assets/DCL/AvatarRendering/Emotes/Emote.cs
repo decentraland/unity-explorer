@@ -24,7 +24,6 @@ namespace DCL.AvatarRendering.Emotes
 
         public Emote() { }
 
-
         public Emote(StreamableLoadingResult<EmoteDTO> model, bool isLoading = true)
         {
             Model = model;
