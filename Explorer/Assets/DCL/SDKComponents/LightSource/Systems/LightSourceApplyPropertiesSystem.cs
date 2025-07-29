@@ -14,6 +14,7 @@ using ECS.Unity.ColorComponent;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -161,7 +162,29 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceComponent.Cookie.LoadingPromise = null;
             lightSourceComponent.Cookie.SourceTextureData = texture.Asset;
 
-            lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
+            switch (lightSourceComponent.LightSourceInstance.type)
+            {
+                case LightType.Spot:
+                    lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
+                    break;
+
+                case LightType.Point:
+                    Cubemap cubemap = MakeCookieCubemap(texture.Asset);
+                    lightSourceComponent.LightSourceInstance.cookie = cubemap;
+                    lightSourceComponent.Cookie.PointLightCubemap = cubemap;
+                    break;
+
+                default:
+                    lightSourceComponent.LightSourceInstance.cookie = null;
+                    break;
+            }
+        }
+
+        private Cubemap MakeCookieCubemap(Texture2DData source)
+        {
+            // TODO
+
+            return null;
         }
     }
 }
