@@ -17,6 +17,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -77,23 +78,29 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
+            TerrainLog.LogHandler = ReportHub.Instance;
+
             // Do this first and await it last because it takes the longest because it talks to the
             // Internet.
-            var fetchParcelTask = enableLandscape ? parcelService.LoadManifestAsync(ct) : default;
+            var loadManifest = enableLandscape ? parcelService.LoadManifestAsync(ct) : default;
 
-            landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
-            //landscapeData.Value.terrainData.detailDistance = landscapeData.Value.EnvironmentDistance;
+            this.landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+            LandscapeData landscapeData = this.landscapeData.Value;
+            //landscapeData.terrainData.detailDistance = landscapeData.Value.EnvironmentDistance;
 
-            floor = new SatelliteFloor(realmData, landscapeData.Value);
+            Task loadTreeInstances = enableLandscape
+                ? landscapeData.terrainData.LoadTreeInstancesAsync() : Task.CompletedTask;
 
-            if (!enableLandscape) return;
+            floor = new SatelliteFloor(realmData, landscapeData);
 
-            realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
+            if (!enableLandscape)
+                return;
 
-            worldTerrainGenerator.Initialize(landscapeData.Value.worldData,
-                landscapeData.Value.terrainData);
+            realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(
+                settings.realmPartitionSettings, ct);
 
-            FetchParcelResult fetchParcelResult = await fetchParcelTask;
+            worldTerrainGenerator.Initialize(landscapeData.worldData, landscapeData.terrainData);
+            FetchParcelResult fetchParcelResult = await loadManifest;
 
             int2[] roads;
             int2[] occupied;
@@ -115,10 +122,10 @@ namespace DCL.PluginSystem.Global
                 empty = fetchParcelResult.Manifest.empty;
             }
 
-            terrainGenerator.Initialize(landscapeData.Value.genesisCityData,
-                landscapeData.Value.terrainData, roads, occupied, empty);
+            terrainGenerator.Initialize(landscapeData.genesisCityData, landscapeData.terrainData, roads,
+                occupied, empty);
 
-            TerrainLog.LogHandler = ReportHub.Instance;
+            await loadTreeInstances;
 
             if (disposed)
                 throw new ObjectDisposedException(nameof(LandscapePlugin));

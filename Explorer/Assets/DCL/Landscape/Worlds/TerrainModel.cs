@@ -174,7 +174,6 @@ namespace DCL.Landscape
         {
             terrainData.Bounds = new RectInt(ToVector2Int(MinParcel), ToVector2Int(SizeInParcels));
             terrainData.OccupancyMap = occupancyMap;
-            terrainData.GenerateTreePositions();
 
             // TODO: Remove before merging to dev.
             /*terrainData.GroundMaterial.mainTexture = occupancyMap;
