@@ -47,7 +47,7 @@ namespace DCL.VoiceChat
 
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            audioFilter.ProcessAudioForLiveKit(data, channels, sampleRate);
+            audioFilter.ProcessAudioForLiveKit(data, sampleRate);
         }
 
         public void AddStream(WeakReference<IAudioStream> weakStream)

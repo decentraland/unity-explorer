@@ -8,12 +8,12 @@ namespace DCL.VoiceChat
 {
     /// <summary>
     ///     Handles audio mixing and processing for multiple voice chat streams.
-    ///     Combines mono audio streams into stereo output with proper normalization.
     ///     Implements IAudioFilter for integration with LiveKit's audio processing pipeline.
+    ///     Always processes stereo audio output.
     /// </summary>
     public class VoiceChatCombinedStreamsAudioFilter : MonoBehaviour, IAudioFilter, IDisposable
     {
-        private const int DEFAULT_LIVEKIT_CHANNELS = 2;
+        private const int STEREO_CHANNELS = 2;
 
         private readonly HashSet<WeakReference<IAudioStream>> streams;
         private int sampleRate = 48000;
@@ -44,12 +44,11 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
-        ///     Processes audio data by mixing all active streams into the output buffer.
+        ///     Processes audio data by mixing all active streams into stereo output buffer.
         /// </summary>
-        /// <param name="data">Output audio buffer to fill</param>
-        /// <param name="channels">Number of output channels (1=mono, 2=stereo)</param>
+        /// <param name="data">Output stereo audio buffer to fill</param>
         /// <param name="isPlaying">Whether audio should be processed</param>
-        private void ProcessAudio(float[] data, int channels, bool isPlaying)
+        private void ProcessAudio(float[] data, bool isPlaying)
         {
             if (!isPlaying || streams.Count == 0)
             {
@@ -57,7 +56,7 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            EnsureTempBufferSize(channels, data.Length);
+            EnsureTempBufferSize(data.Length);
 
             Span<float> dataSpan = data.AsSpan();
             dataSpan.Clear();
@@ -70,16 +69,11 @@ namespace DCL.VoiceChat
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
 
                     // Read data from stream
-                    stream.ReadAudio(tempBuffer, DEFAULT_LIVEKIT_CHANNELS, sampleRate);
+                    stream.ReadAudio(tempBuffer, STEREO_CHANNELS, sampleRate);
 
-                    // Mix into output buffer
-                    if (channels != DEFAULT_LIVEKIT_CHANNELS)
-                        MixMonoStreamIntoOutput(data, tempBuffer, channels, data.Length);
-                    else
-                    {
-                        for (var i = 0; i < data.Length; i++)
-                            data[i] += tempBuffer[i];
-                    }
+                    // Mix into stereo output buffer
+                    for (var i = 0; i < data.Length; i++)
+                        data[i] += tempBuffer[i];
 
                     activeStreams++;
                 }
@@ -91,11 +85,11 @@ namespace DCL.VoiceChat
 
         /// <summary>
         ///     Processes audio data and raises the AudioRead event for LiveKit integration.
+        ///     Always processes stereo audio.
         /// </summary>
-        /// <param name="data">Audio buffer to process</param>
-        /// <param name="channels">Number of audio channels</param>
+        /// <param name="data">Stereo audio buffer to process</param>
         /// <param name="sampleRate">Sample rate of the audio</param>
-        public void ProcessAudioForLiveKit(Span<float> data, int channels, int sampleRate)
+        public void ProcessAudioForLiveKit(Span<float> data, int sampleRate)
         {
             if (!IsValid || streams.Count == 0)
             {
@@ -105,38 +99,20 @@ namespace DCL.VoiceChat
 
             // Convert Span to array for processing
             float[] dataArray = data.ToArray();
-            ProcessAudio(dataArray, channels, true);
+            ProcessAudio(dataArray, true);
 
             // Copy processed data back to span
             dataArray.AsSpan().CopyTo(data);
 
-            // Raise event for LiveKit integration
-            AudioRead?.Invoke(data, channels, sampleRate);
+            // Raise event for LiveKit integration with stereo channels
+            AudioRead?.Invoke(data, STEREO_CHANNELS, sampleRate);
         }
 
-        private void EnsureTempBufferSize(int channels, int dataLength)
+        private void EnsureTempBufferSize(int dataLength)
         {
-            int requiredSize = dataLength;
-
-            if (tempBuffer == null || tempBuffer.Length != requiredSize) { tempBuffer = new float[requiredSize]; }
-        }
-
-        private void MixMonoStreamIntoOutput(float[] output, float[] monoInput, int channels, int outputLength)
-        {
-            if (channels == 2)
-            {
-                // Upmix mono to stereo
-                for (int i = 0, j = 0; i < outputLength; i += 2, j++)
-                {
-                    output[i] += monoInput[j]; // Left
-                    output[i + 1] += monoInput[j]; // Right
-                }
-            }
-            else
-            {
-                // Mono output
-                for (var i = 0; i < outputLength; i++)
-                    output[i] += monoInput[i];
+            if (tempBuffer == null || tempBuffer.Length != dataLength) 
+            { 
+                tempBuffer = new float[dataLength]; 
             }
         }
 
