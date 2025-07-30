@@ -7,7 +7,7 @@ namespace DCL.Landscape.Config.Editor
 {
     public static class ParcelParser
     {
-        [MenuItem("Decentraland/ParseParcelFiles")]
+        [MenuItem("Decentraland/Landscape/Parse Parcel Files")]
         private static void ParseParcelFiles()
         {
             ParseAndSave();
