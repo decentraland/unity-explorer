@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.VoiceChat.Sources;
+using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -69,7 +69,7 @@ namespace DCL.VoiceChat
 
             try
             {
-                Result<MultiMicrophoneRtcAudioSource> result = MultiMicrophoneRtcAudioSource.New(microphoneHandler.CurrentMicrophoneName);
+                Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(microphoneHandler.CurrentMicrophoneName);
                 if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
 
                 var rtcAudioSource = result.Value;
@@ -80,7 +80,7 @@ namespace DCL.VoiceChat
                     rtcAudioSource
                 );
 
-                microphoneTrack = new MicrophoneTrack(livekitMicrophoneTrack, new Owned<MultiMicrophoneRtcAudioSource>(rtcAudioSource));
+                microphoneTrack = new MicrophoneTrack(livekitMicrophoneTrack, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
                 microphoneHandler.Assign(microphoneTrack.Value.Source);
 
                 var options = new TrackPublishOptions
@@ -258,13 +258,13 @@ namespace DCL.VoiceChat
 
         private readonly struct MicrophoneTrack : IDisposable
         {
-            private readonly Owned<MultiMicrophoneRtcAudioSource> source;
+            private readonly Owned<MicrophoneRtcAudioSource> source;
 
             public ITrack Track { get; }
 
-            public Weak<MultiMicrophoneRtcAudioSource> Source => source.Downgrade();
+            public Weak<MicrophoneRtcAudioSource> Source => source.Downgrade();
 
-            public MicrophoneTrack(ITrack track, Owned<MultiMicrophoneRtcAudioSource> source)
+            public MicrophoneTrack(ITrack track, Owned<MicrophoneRtcAudioSource> source)
             {
                 this.Track = track;
                 this.source = source;

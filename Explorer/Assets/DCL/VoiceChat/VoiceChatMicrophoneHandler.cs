@@ -3,22 +3,23 @@ using DCL.Settings.Settings;
 using System;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
-using DCL.VoiceChat.Sources;
 using RichTypes;
 using Utility.Ownership;
+using LiveKit.Audio;
+using LiveKit.Runtime.Scripts.Audio;
 
 namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         private readonly VoiceChatSettingsAsset voiceChatSettings;
-        private Weak<MultiMicrophoneRtcAudioSource> source = Weak<MultiMicrophoneRtcAudioSource>.Null;
+        private Weak<MicrophoneRtcAudioSource> source = Weak<MicrophoneRtcAudioSource>.Null;
         private bool isInCall;
 
         public event Action? EnabledMicrophone;
         public event Action? DisabledMicrophone;
 
-        public string CurrentMicrophoneName => voiceChatSettings.SelectedMicrophoneName ?? throw new Exception("Microphone name is not selected");
+        public MicrophoneSelection? CurrentMicrophoneName => voiceChatSettings.SelectedMicrophone;
 
         public VoiceChatMicrophoneHandler(
             VoiceChatSettingsAsset voiceChatSettings)
@@ -62,7 +63,7 @@ namespace DCL.VoiceChat
             if (option.Has) option.Value.Toggle();
         }
 
-        public void Assign(Weak<MultiMicrophoneRtcAudioSource> newSource)
+        public void Assign(Weak<MicrophoneRtcAudioSource> newSource)
         {
             source = newSource;
         }
@@ -113,7 +114,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
 
-        private void OnMicrophoneChanged(string microphoneName)
+        private void OnMicrophoneChanged(MicrophoneSelection microphoneName)
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
@@ -126,14 +127,14 @@ namespace DCL.VoiceChat
             HandleMicrophoneChange(microphoneName);
         }
 
-        private async UniTaskVoid OnMicrophoneChangedAsync(string microphoneName)
+        private async UniTaskVoid OnMicrophoneChangedAsync(MicrophoneSelection microphoneName)
         {
             await UniTask.SwitchToMainThread();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
             HandleMicrophoneChange(microphoneName);
         }
 
-        private void HandleMicrophoneChange(string microphoneName)
+        private void HandleMicrophoneChange(MicrophoneSelection microphoneName)
         {
             var option = source.Resource;
 
@@ -143,10 +144,7 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            Result result = option.Value.SwitchMicrophone(microphoneName);
-
-            if (result.Success == false)
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot change microphone to: {microphoneName}");
+            option.Value.SwitchMicrophone(microphoneName);
         }
 
         public void EnableMicrophoneForCall()
