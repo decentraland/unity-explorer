@@ -78,6 +78,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
+        private readonly IRealmNavigator realmNavigator;
         private ChatController chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
@@ -117,7 +118,8 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool includeVoiceChat)
+            bool isCallEnabled,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -148,8 +150,9 @@ namespace DCL.PluginSystem.Global
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
+            this.realmNavigator = realmNavigator;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
-            isCallEnabled = includeVoiceChat;
+            isCallEnabled = isCallEnabled;
         }
 
         public void Dispose()

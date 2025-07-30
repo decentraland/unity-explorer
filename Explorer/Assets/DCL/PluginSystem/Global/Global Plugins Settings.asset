@@ -611,6 +611,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <FallbackTipsConfiguration>k__BackingField:
+          m_AssetGUID: dc412497f06504faeb6e30b848c0842d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <FallbackTipsTable>k__BackingField: SceneLoadingDefaultTips
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
@@ -934,13 +940,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <ChatConfig>k__BackingField:
-          m_AssetGUID: 4359e32789e7f914c8e7e12d16286b76
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
     - rid: 7621844642437005315
       type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

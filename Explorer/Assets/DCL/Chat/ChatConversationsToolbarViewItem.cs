@@ -1,6 +1,5 @@
 using System.Threading;
 using DCL.Chat.History;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
@@ -64,6 +63,13 @@ namespace DCL.Chat
 
         [SerializeField]
         private RectTransform tooltipPosition;
+
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float offlineThumbnailGreyOutOpacity = 0.6f;
+
+        // This is necessary because the data is set while the script has not awakened yet
+        private OnlineStatus storedConnectionStatus = OnlineStatus.OFFLINE;
 
         /// <summary>
         /// Gets or sets the identifier of the conversation.
@@ -136,8 +142,13 @@ namespace DCL.Chat
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
-            connectionStatusIndicator.color =
-                onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
+
+            if(thumbnailView != null && thumbnailView.TryGetComponent(out ProfilePictureView profilePictureView))
+                profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
+
+            storedConnectionStatus = connectionStatus;
         }
 
         /// <summary>
@@ -249,11 +260,11 @@ namespace DCL.Chat
 
         protected virtual void Start()
         {
+            tooltip.gameObject.SetActive(false);
+            removeButton.gameObject.SetActive(false);
+            connectionStatusIndicatorContainer.gameObject.SetActive(false);
 
-        }
-
-        public void SetCommunityThumbnailData(ISpriteCache spriteCache, string communityImageUrl, CancellationToken none)
-        {
+            SetConnectionStatus(storedConnectionStatus);
         }
     }
 }

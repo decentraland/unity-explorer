@@ -110,6 +110,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33891647b85dc47319f39490bb24594d
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithCheck.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 35aa85d68d15435418848a03a2db81ec
     m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-Regular SDF.asset
     m_ReadOnly: 0
@@ -137,11 +142,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3efe8a48fc3905f47a0648abd6859394
     m_Address: MapCameraObject
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4359e32789e7f914c8e7e12d16286b76
-    m_Address: Assets/DCL/Chat/_Refactor/ChatConfig/Resources_moved/ChatConfig.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

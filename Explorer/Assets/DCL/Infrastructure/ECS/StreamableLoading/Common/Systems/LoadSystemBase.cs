@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.Common.Systems
     /// </summary>
     /// <typeparam name="TAsset"></typeparam>
     /// <typeparam name="TIntention"></typeparam>
-    public abstract class LoadSystemBase<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
+    public abstract class LoadSystemBase<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
         private static readonly QueryDescription CREATE_WEB_REQUEST = new QueryDescription()
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
@@ -96,6 +96,8 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             AssetSource currentSource = intention.CommonArguments.CurrentSource;
 
+            var intentionId = new IntentionsComparer<TIntention>.SourcedIntentionId(intention, currentSource);
+                
             //If a chunk is already loading, don't start another one, if it is a partial request it will resume from the point it was stopped
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
@@ -113,7 +115,7 @@ namespace ECS.StreamableLoading.Common.Systems
             // Indicate that loading has started
             state.StartProgress();
 
-            FlowAsync(entity, currentSource, intention, state, partitionComponent, cancellationTokenSource.Token).Forget();
+            FlowAsync(entity, currentSource, intention, state, partitionComponent, intentionId, cancellationTokenSource.Token).Forget();
         }
 
         private async UniTask FlowAsync(
@@ -122,6 +124,7 @@ namespace ECS.StreamableLoading.Common.Systems
             TIntention intention,
             StreamableLoadingState state,
             IPartitionComponent partition,
+            IntentionsComparer<TIntention>.SourcedIntentionId intentionId,
             CancellationToken disposalCt
         )
         {
@@ -133,7 +136,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(intentionId, out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     state.AcquiredBudget?.Release();
@@ -150,13 +153,13 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     if (requestIsNotFulfilled)
                     {
-                        await FlowAsync(entity, source, intention, state, partition, disposalCt);
+                        await FlowAsync(entity, source, intention, state, partition, intentionId, disposalCt);
                         return;
                     }
                 }
 
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out StreamableLoadingResult<TAsset> failure))
+                if (cache.IrrecoverableFailures.TryGetValue(intentionId, out StreamableLoadingResult<TAsset>? failure))
                 {
                     result = failure;
                     return;
@@ -164,7 +167,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
-                    result = await CacheableFlowAsync(intention, state, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                    result = await CacheableFlowAsync(intention, state, partition, intentionId, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
                 if (!result.HasValue)
 
@@ -270,16 +273,19 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
-        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct);
+        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, 
+            StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct);
 
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
         /// </summary>
-        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, 
+            StreamableLoadingState state, IPartitionComponent partition, 
+            IntentionsComparer<TIntention>.SourcedIntentionId intentionId, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<OngoingRequestResult<TAsset>>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-
-            cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
+            
+            cache.OngoingRequests.SyncTryAdd(intentionId, source);
             var ongoingRequestRemoved = false;
 
             StreamableLoadingResult<TAsset>? result = null;
@@ -287,7 +293,7 @@ namespace ECS.StreamableLoading.Common.Systems
             try
             {
                 // Try load from cache first
-                result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, ct);
+                result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, intentionId, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -338,7 +344,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (!ongoingRequestRemoved)
                 {
                     // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.GetCacheableURL());
+                    cache.OngoingRequests.SyncRemove(intentionId);
                     ongoingRequestRemoved = true;
                 }
             }
@@ -359,15 +365,20 @@ namespace ECS.StreamableLoading.Common.Systems
             return null;
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, 
+            StreamableLoadingState state, IPartitionComponent partition, 
+            IntentionsComparer<TIntention>.SourcedIntentionId intentionId, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition, cachedInternalFlowDelegate, GetReportData(), ct);
-            return result is { Succeeded: false, IsInitialized: true } ? SetIrrecoverableFailure(intention, result.Value) : result;
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition, 
+                cachedInternalFlowDelegate, GetReportData(), ct);
+            return result is { Succeeded: false, IsInitialized: true } ? SetIrrecoverableFailure(intention, 
+                intentionId, result.Value) : result;
         }
 
-        private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
+        private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, 
+            IntentionsComparer<TIntention>.SourcedIntentionId intentionId, StreamableLoadingResult<TAsset> failure)
         {
-            bool result = cache.IrrecoverableFailures.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), failure);
+            bool result = cache.IrrecoverableFailures.SyncTryAdd(intentionId, failure);
             if (result == false) ReportHub.LogError(GetReportData(), $"Irrecoverable failure for {intention} is already added");
             return failure;
         }
