@@ -21,15 +21,22 @@ namespace DCL.UI.ProfileElements
 
         public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, string userId, string faceSnapshotUrl,
             CancellationToken ct) =>
-            ExecuteAsync(property, static (p, vm) => p.UpdateValue(vm), fallback, userId, faceSnapshotUrl, ct);
+            ExecuteAsync(property, static (p, vm) => p.UpdateValue(vm), static p => p.Value, fallback, userId, faceSnapshotUrl, ct);
 
         public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel.WithColor> property, Sprite? fallback, string userId, string faceSnapshotUrl,
             CancellationToken ct) =>
-            ExecuteAsync(property, static (p, vm) => p.UpdateValue(p.Value.SetProfile(vm)), fallback, userId, faceSnapshotUrl, ct);
+            ExecuteAsync(property, static (p, vm) => p.UpdateValue(p.Value.SetProfile(vm)), static p => p.Value.Thumbnail, fallback, userId, faceSnapshotUrl, ct);
 
-        private async UniTask ExecuteAsync<T>(IReactiveProperty<T> property, Action<IReactiveProperty<T>, ProfileThumbnailViewModel> setProfile, Sprite? fallback, string userId, string faceSnapshotUrl,
-            CancellationToken ct)
+        private async UniTask ExecuteAsync<T>(IReactiveProperty<T> property, Action<IReactiveProperty<T>, ProfileThumbnailViewModel> setProfile, Func<IReactiveProperty<T>, ProfileThumbnailViewModel> getProfile,
+            Sprite? fallback, string userId, string faceSnapshotUrl, CancellationToken ct)
         {
+            // Wait until the property is bound
+            while (getProfile(property).ThumbnailState == ProfileThumbnailViewModel.State.NOT_BOUND)
+                await UniTask.Yield();
+
+            if (ct.IsCancellationRequested)
+                return;
+
             Sprite? cachedSprite = profileRepository.GetProfileThumbnail(userId);
 
             if (cachedSprite != null)

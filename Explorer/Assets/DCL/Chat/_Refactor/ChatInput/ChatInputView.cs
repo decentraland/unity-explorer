@@ -85,9 +85,9 @@ namespace DCL.Chat
             layoutElement.preferredHeight = inputField.preferredHeight;
         }
 
-        public void SetText(string text)
+        public void ClearInput()
         {
-            inputField.text = text;
+            inputField.text = string.Empty;
             UpdateCharacterCount();
         }
 
@@ -104,6 +104,11 @@ namespace DCL.Chat
         {
             maskContainer.SetActive(false);
             inputFieldContainer.SetActive(true);
+            SelectInputField();
+        }
+
+        public void SelectInputField()
+        {
             inputField.Select();
             inputField.ActivateInputField();
         }

@@ -8,7 +8,7 @@ namespace DCL.Chat.ChatViewModels
     public class ChatTitlebarViewModel
     {
         public readonly IReactiveProperty<ProfileThumbnailViewModel> Thumbnail
-            = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
+            = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.ReadyToLoad());
 
         public TitlebarViewMode ViewMode;
         public string Username;

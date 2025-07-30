@@ -38,7 +38,7 @@ namespace DCL.Chat.ChatUseCases
             this.chatConfig = chatConfig;
         }
 
-        public async UniTask<ChatTitlebarViewModel> ExecuteAsync(ChatChannel channel, CancellationToken ct)
+        public async UniTask<ChatTitlebarViewModel?> ExecuteAsync(ChatChannel channel, CancellationToken ct)
         {
             return channel.ChannelType switch
             {
@@ -49,7 +49,7 @@ namespace DCL.Chat.ChatUseCases
             };
         }
 
-        private async UniTask<ChatTitlebarViewModel> CreateCommunityViewModelAsync(ChatChannel channel, CancellationToken ct)
+        private async UniTask<ChatTitlebarViewModel?> CreateCommunityViewModelAsync(ChatChannel channel, CancellationToken ct)
         {
             if (!communityDataService.TryGetCommunity(channel.Id, out var communityData))
             {
@@ -73,10 +73,10 @@ namespace DCL.Chat.ChatUseCases
             return viewModel;
         }
 
-        private async UniTask<ChatTitlebarViewModel> CreateUserViewModelAsync(ChatChannel channel, CancellationToken ct)
+        private async UniTask<ChatTitlebarViewModel?> CreateUserViewModelAsync(ChatChannel channel, CancellationToken ct)
         {
             var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
-            if (ct.IsCancellationRequested) return null;
+            if (ct.IsCancellationRequested) return null; // TODO can't be null
 
             if (profile == null)
             {

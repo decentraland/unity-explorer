@@ -65,6 +65,8 @@ namespace DCL.UI.ProfileElements
         {
             binding?.Dispose();
 
+            viewModelProp.UpdateValue(viewModelProp.Value.SetProfile(viewModelProp.Value.Thumbnail.TryBind()));
+
             OnThumbnailWithColorUpdated(viewModelProp.Value);
             binding = viewModelProp.Subscribe(OnThumbnailWithColorUpdated);
         }
@@ -73,6 +75,8 @@ namespace DCL.UI.ProfileElements
         {
             // Unbind previous binding if exists
             binding?.Dispose();
+
+            viewModelProp.UpdateValue(viewModelProp.Value.TryBind());
 
             thumbnailBackground.color = userNameColor;
             SetBaseBackgroundColor(userNameColor);

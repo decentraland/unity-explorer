@@ -46,6 +46,10 @@ namespace DCL.UI.ProfileElements
 
         public enum State : byte
         {
+            /// <summary>
+            ///     If the view model is not bound the loading won't be started
+            /// </summary>
+            NOT_BOUND,
             LOADING,
             LOADED_FROM_CACHE,
             LOADED_REMOTELY,
@@ -62,8 +66,14 @@ namespace DCL.UI.ProfileElements
             Sprite = sprite;
         }
 
-        public static ProfileThumbnailViewModel Default() =>
+        public ProfileThumbnailViewModel TryBind() =>
+            ThumbnailState == State.NOT_BOUND ? new ProfileThumbnailViewModel(State.LOADING, Sprite) : this;
+
+        public static ProfileThumbnailViewModel ReadyToLoad() =>
             new (State.LOADING, null);
+
+        public static ProfileThumbnailViewModel Default() =>
+            new (State.NOT_BOUND, null);
 
         public static ProfileThumbnailViewModel FromFallback(Sprite sprite) =>
             new (State.FALLBACK, sprite);
