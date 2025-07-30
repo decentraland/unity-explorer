@@ -189,7 +189,7 @@ public class ChatChannelsPresenter : IDisposable
         view.AddConversation(viewModel);
     }
 
-    private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
+    private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
     {
         if (destinationChannel.Id.Equals(currentChannelService.CurrentChannelId))
             return;

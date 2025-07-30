@@ -24,7 +24,13 @@ namespace DCL.Chat
         private CanvasGroup conversationsToolbarCanvasGroup;
 
         [SerializeField]
-        private ChatConversationsToolbarViewItem itemPrefab;
+        private ChatConversationsToolbarViewItem itemNearbyPrefab;
+
+        [SerializeField]
+        private ChatConversationsToolbarViewItem itemPrivatePrefab;
+
+        [SerializeField]
+        private ChatConversationsToolbarViewItem itemCommunityPrefab;
 
         [SerializeField]
         private CanvasGroup scrollButtons;
@@ -227,7 +233,22 @@ namespace DCL.Chat
 
         public void AddConversation(BaseChannelViewModel viewModel)
         {
-            var newItem = Instantiate(itemPrefab, itemsContainer);
+            ChatConversationsToolbarViewItem newItem;
+
+            switch (viewModel.ChannelType)
+            {
+                case ChatChannel.ChatChannelType.NEARBY:
+                    newItem = Instantiate(itemNearbyPrefab, itemsContainer);
+                    break;
+                case ChatChannel.ChatChannelType.COMMUNITY:
+                    newItem = Instantiate(itemCommunityPrefab, itemsContainer);
+                    break;
+                case ChatChannel.ChatChannelType.USER:
+                    newItem = Instantiate(itemPrivatePrefab, itemsContainer);
+                    break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+            
             newItem.Initialize();
             newItem.Id = viewModel.Id;
             newItem.SetUnreadMessages(viewModel.UnreadMessagesCount);
@@ -247,18 +268,15 @@ namespace DCL.Chat
                 case UserChannelViewModel user:
                     newItem.SetConversationName(user.DisplayName);
                     newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
-                    newItem.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
-                    newItem.BindProfileThumbnail(user.ProfilePicture);
                     newItem.Configure(isClosable: true, hasOnlineStatus: true);
+                    newItem.BindProfileThumbnail(user.ProfilePicture);
+                    newItem.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+                    
                     break;
 
                 case CommunityChannelViewModel community:
                     newItem.SetConversationName(community.DisplayName);
                     newItem.Configure(isClosable: true, hasOnlineStatus: false);
-
-                    if (!string.IsNullOrEmpty(community.ImageUrl))
-                        newItem.SetPicture(community.Thumbnail);
-
                     break;
             }
 
@@ -276,11 +294,6 @@ namespace DCL.Chat
             }
         }
 
-        public void SetUnreadMessages(string channelId, int count)
-        {
-
-        }
-
         public void UpdateConversation(BaseChannelViewModel viewModel)
         {
             if (!items.TryGetValue(viewModel.Id, out var itemToUpdate)) return;
@@ -295,7 +308,7 @@ namespace DCL.Chat
 
                 case CommunityChannelViewModel community:
                     itemToUpdate.SetConversationName(community.DisplayName);
-                    itemToUpdate.SetPicture(community.Thumbnail);
+                    itemToUpdate.SetPicture(community.Thumbnail, Color.white);
                     break;
             }
         }

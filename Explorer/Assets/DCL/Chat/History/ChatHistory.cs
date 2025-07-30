@@ -116,7 +116,7 @@ namespace DCL.Chat.History
         private void OnChannelMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
         {
             isTotalMessagesDirty = true;
-            MessageAdded?.Invoke(destinationChannel, addedMessage, index);
+            MessageAdded?.Invoke(destinationChannel, addedMessage);
         }
 
         private void OnChannelCleared(ChatChannel clearedChannel)

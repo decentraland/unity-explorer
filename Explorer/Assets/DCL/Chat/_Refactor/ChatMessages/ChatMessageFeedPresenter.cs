@@ -116,7 +116,7 @@ namespace DCL.Chat.ChatMessages
                 separatorFixedIndexFromBottom = -1;
         }
 
-        private void OnMessageAddedToChatHistory(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
+        private void OnMessageAddedToChatHistory(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             // Bubbles logic should be separated from the presenter
 
@@ -130,7 +130,9 @@ namespace DCL.Chat.ChatMessages
             RemoveNewMessagesSeparator(false);
 
             newMessageViewModel.PendingToAnimate = true;
-            viewModels.Insert(index, newMessageViewModel);
+            // viewModels.Insert(index, newMessageViewModel);
+            viewModels.Insert(viewModels.Count, newMessageViewModel);
+            
 
             if (isSentByOwnUser)
             {

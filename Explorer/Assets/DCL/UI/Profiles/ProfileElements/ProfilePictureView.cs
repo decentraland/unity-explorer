@@ -75,13 +75,15 @@ namespace DCL.UI.ProfileElements
             binding?.Dispose();
 
             thumbnailBackground.color = userNameColor;
-
+            SetBaseBackgroundColor(userNameColor);
+            
             OnThumbnailUpdated(viewModelProp.Value);
             binding = viewModelProp.Subscribe(OnThumbnailUpdated);
         }
 
         private void OnThumbnailWithColorUpdated(ProfileThumbnailViewModel.WithColor model)
         {
+            SetBaseBackgroundColor(model.ProfileColor);
             thumbnailBackground.color = model.ProfileColor;
             OnThumbnailUpdated(model.Thumbnail);
         }
@@ -201,12 +203,13 @@ namespace DCL.UI.ProfileElements
             }
         }
 
-        public void OnPointerEnter(PointerEventData eventData) =>
-            PointerEnter?.Invoke();
+        private void SetBaseBackgroundColor(Color newBaseColor)
+        {
+            originalThumbnailBackgroundColor = newBaseColor;
 
-        public void OnPointerExit(PointerEventData eventData) =>
-            PointerExit?.Invoke();
-
+            GreyOut(greyOutOpacity);
+        }
+        
         public void GreyOut(float opacity)
         {
             if (!initialized)

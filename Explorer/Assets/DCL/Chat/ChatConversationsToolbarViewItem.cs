@@ -165,28 +165,13 @@ namespace DCL.Chat
                 openButton.OnDeselect(null);
         }
 
-        public void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
+        public virtual void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
         {
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);
             profilePictureView.Bind(viewModel);
         }
-
-        public void SetPicture(Sprite? sprite)
-        {
-            profilePictureView.gameObject.SetActive(true);
-            customIcon.gameObject.SetActive(false);
-
-            bool isLoading = sprite == null;
-
-            profilePictureView.SetLoadingState(isLoading);
-
-            if (!isLoading)
-            {
-                profilePictureView.SetImage(sprite);
-            }
-        }
-
+        
         /// <summary>
         /// Replaces the profile picture with a custom icon.
         /// </summary>
@@ -265,6 +250,19 @@ namespace DCL.Chat
             connectionStatusIndicatorContainer.gameObject.SetActive(false);
 
             SetConnectionStatus(storedConnectionStatus);
+        }
+
+        public virtual void SetPicture(Sprite? sprite, Color color)
+        {
+            if (profilePictureView != null)
+            {
+                profilePictureView.gameObject.SetActive(true);
+                customIcon.gameObject.SetActive(false);
+
+                bool isLoading = sprite == null;
+
+                profilePictureView.SetLoadingState(isLoading);
+            }
         }
     }
 }

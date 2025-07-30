@@ -258,7 +258,7 @@ namespace DCL.UI.Sidebar
             }
         }
 
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
         }
