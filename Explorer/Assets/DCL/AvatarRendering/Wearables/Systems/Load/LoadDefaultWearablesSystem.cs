@@ -74,10 +74,14 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         {
             var state = new DefaultWearablesComponent(new AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[BodyShape.COUNT]);
 
+            // Important NOTE: the body shapes have been customized for this client.
+            // The face features (eyes, mouth, eyebrows) have been removed because they share the same ABs with other wearables, like urn:decentraland:off-chain:base-avatars:f_mouth_00,
+            // but we have problems by trying to solve them as dependencies
+            // ABs have been specifically built without these dependencies
             {
                 WearableDTO dto = new WearableDTO
                 {
-                    id = "bafkreia6mv65u2cq7poxmaxoxgm3cyuazlgrbhg5pkgi4kzsmrlgdxqcgq",
+                    id = "bafkreiavl7hrbq4hycv6q3jlzig632cvouw6ms2lbob4b2zy5qx4mbny64",
                     version = "v3",
                     type = "wearable",
                     pointers = new[] { "urn:decentraland:off-chain:base-avatars:basemale" },
@@ -86,9 +90,9 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     {
                         new AvatarAttachmentDTO.Content { file = "Avatar_MaleSkinBase.png", hash = "bafkreiaubk2exzcqiutttnjajktvu6uys3zeb4poxpzauv6yccghz5heta" },
                         new AvatarAttachmentDTO.Content { file = "BaseMale.glb", hash = "bafkreicxwj4mhufwziveusb733zs3ly2vz7evnpsbybto3izqtfrbr7umq" },
-                        new AvatarAttachmentDTO.Content { file = "M_EyeBrows_00.png", hash = "bafkreiax475w7ueo4idkzy4i2mizzmfqynipyzb2v4kp5bqncujlqnhxky" },
-                        new AvatarAttachmentDTO.Content { file = "M_Eyes_00.png", hash = "bafkreihse7i7mqabinjq4aydv3kngpxkoownwx2z3ul5ko3vz3zcn6qzii" },
-                        new AvatarAttachmentDTO.Content { file = "M_Mouth_00.png", hash = "bafkreih3id67pbqkfw2ikggwv6uz5dmroo4z2nkcdjbzbkpzjhd3rfbz6y" },
+                        // new AvatarAttachmentDTO.Content { file = "M_EyeBrows_00.png", hash = "bafkreiax475w7ueo4idkzy4i2mizzmfqynipyzb2v4kp5bqncujlqnhxky" },
+                        // new AvatarAttachmentDTO.Content { file = "M_Eyes_00.png", hash = "bafkreihse7i7mqabinjq4aydv3kngpxkoownwx2z3ul5ko3vz3zcn6qzii" },
+                        // new AvatarAttachmentDTO.Content { file = "M_Mouth_00.png", hash = "bafkreih3id67pbqkfw2ikggwv6uz5dmroo4z2nkcdjbzbkpzjhd3rfbz6y" },
                         new AvatarAttachmentDTO.Content { file = "thumbnail.png", hash = "bafkreihqzejw6hhse4tupftqaaxnnwvobslj4xdwwpaj2rbqj4n2o2ymyy" },
                     },
                     metadata = new WearableDTO.WearableMetadataDto
@@ -115,9 +119,9 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                                     {
                                         "Avatar_MaleSkinBase.png",
                                         "BaseMale.glb",
-                                        "M_EyeBrows_00.png",
-                                        "M_Eyes_00.png",
-                                        "M_Mouth_00.png",
+                                        // "M_EyeBrows_00.png",
+                                        // "M_Eyes_00.png",
+                                        // "M_Mouth_00.png",
                                     }
                                 }
                             },
@@ -149,7 +153,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             {
                 WearableDTO dto = new WearableDTO
                 {
-                    id = "bafkreiex32wmcz7t7owodykgvy57xj57upnzkx7pjmfksxd7ebsqyyzjla",
+                    id = "bafkreier7sbttkajs77gj7q4shlxvo7k3rcpojpukqo7xggghleurx6uki",
                     version = "v3",
                     type = "wearable",
                     pointers = new[] { "urn:decentraland:off-chain:base-avatars:basefemale" },
@@ -158,9 +162,9 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     {
                         new AvatarAttachmentDTO.Content { file = "Avatar_FemaleSkinBase.png", hash = "bafkreidgli7y7lyskioyjcgkub3ja2af7b2cj7hsjjjqvgifjk7eusixoe" },
                         new AvatarAttachmentDTO.Content { file = "BaseFemale.glb", hash = "bafkreicjhpml7xdib2knhbl2qn7sgqq7cudwys75xwgejdd47cxp3dkbc4" },
-                        new AvatarAttachmentDTO.Content { file = "F_Eyebrows_00.png", hash = "bafkreicljlsrh7upl5guvinmtjjqn7eagyu7e6wsef4a5nyerjuyw7t5fu" },
-                        new AvatarAttachmentDTO.Content { file = "F_Eyes_00.png", hash = "bafkreihm3s5xcauc6i256xnywwssnodcvtrs6z3454itsf2ph63e3tx7iq" },
-                        new AvatarAttachmentDTO.Content { file = "F_Mouth_00.png", hash = "bafkreiaryit63vshyvyddoo3dfjdapvlfcyf2jfbd6enktal3kbv2pcdru" },
+                        // new AvatarAttachmentDTO.Content { file = "F_Eyebrows_00.png", hash = "bafkreicljlsrh7upl5guvinmtjjqn7eagyu7e6wsef4a5nyerjuyw7t5fu" },
+                        // new AvatarAttachmentDTO.Content { file = "F_Eyes_00.png", hash = "bafkreihm3s5xcauc6i256xnywwssnodcvtrs6z3454itsf2ph63e3tx7iq" },
+                        // new AvatarAttachmentDTO.Content { file = "F_Mouth_00.png", hash = "bafkreiaryit63vshyvyddoo3dfjdapvlfcyf2jfbd6enktal3kbv2pcdru" },
                         new AvatarAttachmentDTO.Content { file = "thumbnail.png", hash = "bafkreigohcob7ium7ynqeya6ceavkkuvdndx6kjprgqah4lgpvmze6jzji" },
                     },
                     metadata = new WearableDTO.WearableMetadataDto
@@ -187,9 +191,9 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                                     {
                                         "Avatar_FemaleSkinBase.png",
                                         "BaseFemale.glb",
-                                        "F_Eyebrows_00.png",
-                                        "F_Eyes_00.png",
-                                        "F_Mouth_00.png",
+                                        // "F_Eyebrows_00.png",
+                                        // "F_Eyes_00.png",
+                                        // "F_Mouth_00.png",
                                     }
                                 }
                             },

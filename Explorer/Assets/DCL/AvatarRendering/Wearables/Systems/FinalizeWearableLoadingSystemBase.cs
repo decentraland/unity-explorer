@@ -41,9 +41,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             this.realmData = realmData;
         }
 
-        public override void Initialize()
-        {
-        }
+        public override void Initialize() { }
 
         protected override void Update(float t)
         {
@@ -98,7 +96,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             StreamableLoadingResult<AttachmentAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(
                 GetReportData(),
-                new Exception($"Default wearable {wearable.DTO.GetHash()} failed to load")
+                new Exception($"Wearable {wearable.DTO.GetHash()} failed to load")
             ).ToWearableAsset(wearable);
 
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
@@ -190,7 +188,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             in BodyShape bodyShape,
             int index,
             Func<StreamableLoadingResult<TAsset>, StreamableLoadingResult<AttachmentAssetBase>> toWearableAsset
-        ) where TLoadingIntention : IAssetIntention, IEquatable<TLoadingIntention>
+        ) where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
