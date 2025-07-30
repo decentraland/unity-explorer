@@ -46,6 +46,8 @@ namespace DCL.Chat.ChatUseCases
 
             if (profile != null)
             {
+                viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(profile.UserNameColor));
+
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileData, chatConfig.DefaultProfileThumbnail,
                     walletId, profile.Avatar.FaceSnapshotUrl, viewModel.cancellationToken);
             }

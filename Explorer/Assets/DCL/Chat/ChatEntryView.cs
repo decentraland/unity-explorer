@@ -66,8 +66,8 @@ namespace DCL.Chat
             // Binding is done for non-system messages only
             if (!viewModel.Message.IsSystemMessage)
                 ProfilePictureView.Bind(viewModel.ProfileData);
-            else
-                usernameElement.userName.color = viewModel.ProfileData.Value.ProfileColor;
+
+            viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
         }
 
         private void OnProfileButtonClicked()

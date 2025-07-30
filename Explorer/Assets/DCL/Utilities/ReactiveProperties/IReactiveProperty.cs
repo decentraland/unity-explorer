@@ -19,6 +19,17 @@ namespace DCL.Utilities
 
     public static class ReactivePropertyExtensions
     {
+        public static void UseCurrentValueAndSubscribeToUpdate<T, TContext>(this IReadonlyReactiveProperty<T> property, TContext context, Action<T, TContext> onValueChanged, CancellationToken ct)
+        {
+            onValueChanged(property.Value, context);
+
+            property.Subscribe(value =>
+            {
+                if (!ct.IsCancellationRequested)
+                    onValueChanged(value, context);
+            });
+        }
+
         /// <summary>
         ///     Reacts immediately when the property is not null or waits until it is not null.
         /// </summary>
