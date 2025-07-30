@@ -17,6 +17,7 @@ namespace DCL.Chat.History
         private const int ENTRY_MESSAGE = 1;
         private const int ENTRY_USERNAME = 2;
         private const int ENTRY_TIMESTAMP = 3;
+        private const int ENTRY_FIELD_COUNT = 4;
 
         private const string LOCAL_USER_TRUE_VALUE = "T";
         private const string LOCAL_USER_FALSE_VALUE = "F";
@@ -25,7 +26,7 @@ namespace DCL.Chat.History
         private readonly StringBuilder builder = new StringBuilder(256); // Enough not to be resized
         private readonly JsonSerializer jsonSerializer = new JsonSerializer();
 
-        private readonly string[] entryValues = new string[4];
+        private readonly string[] entryValues = new string[ENTRY_FIELD_COUNT];
         private readonly ChatMessageFactory messageFactory;
 
         public ChatHistorySerializer(ChatMessageFactory messageFactory)

@@ -1,7 +1,6 @@
 using DCL.Chat.History;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
-using SuperScrollView;
 using System;
 using System.Globalization;
 using TMPro;
@@ -14,6 +13,8 @@ namespace DCL.Chat
     {
         private const float PROFILE_BUTTON_Y_OFFSET = -18;
         private const float USERNAME_Y_OFFSET = -13f;
+        private const string DATE_DIVIDER_TODAY = "Today";
+        private const string DATE_DIVIDER_YESTERDAY = "Today";
 
         public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
 
@@ -60,9 +61,9 @@ namespace DCL.Chat
         private string GetDateRepresentation(DateTime date)
         {
             if(date == DateTime.Today)
-                return "Today";
+                return DATE_DIVIDER_TODAY;
             else if (date == DateTime.Today.AddDays(-1.0))
-                return "Yesterday";
+                return DATE_DIVIDER_YESTERDAY;
             else if(date.Year == DateTime.Today.Year)
                 return date.ToString("ddd, d MMM", CultureInfo.InvariantCulture);
             else
