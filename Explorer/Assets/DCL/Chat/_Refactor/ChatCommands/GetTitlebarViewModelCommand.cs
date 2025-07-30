@@ -76,7 +76,7 @@ namespace DCL.Chat.ChatUseCases
         private async UniTask<ChatTitlebarViewModel> CreateUserViewModelAsync(ChatChannel channel, CancellationToken ct)
         {
             var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
-            if (ct.IsCancellationRequested) return null;
+            if (ct.IsCancellationRequested) return null; // TODO can't be null
 
             if (profile == null)
             {

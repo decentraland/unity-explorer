@@ -44,7 +44,7 @@ public class ChatDefaultTitlebarView : MonoBehaviour
 
         buttonOpenMembers.gameObject.SetActive(shouldShowMembersButton);
 
-        if (model.Thumbnail.Value.ThumbnailState == ProfileThumbnailViewModel.State.LOADING)
+        if (model.Thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.LOADING or ProfileThumbnailViewModel.State.NOT_BOUND)
         {
             chatProfileView.gameObject.SetActive(false);
             nearbyElementsContainer.SetActive(false);
@@ -60,9 +60,7 @@ public class ChatDefaultTitlebarView : MonoBehaviour
         nearbyElementsContainer.SetActive(model.ViewMode == TitlebarViewMode.Nearby);
 
         if (showProfile)
-        {
             chatProfileView.Setup(model);
-        }
 
         buttonOpenProfileContextMenu.interactable
             = model.ViewMode == TitlebarViewMode.DirectMessage;
