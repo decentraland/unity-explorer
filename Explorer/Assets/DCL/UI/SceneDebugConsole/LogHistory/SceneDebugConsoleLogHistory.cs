@@ -31,6 +31,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
             FilteredLogMessages.Clear();
         }
 
+        // TODO: Optimize this, can we avoid relaying on the garbage collector so much?
         public List<SceneDebugConsoleLogEntry> ApplyFilter(string targetText, bool filterOutErrors, bool filterOutLogs)
         {
             filterOutErrorEntries = filterOutErrors;
