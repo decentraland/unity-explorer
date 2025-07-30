@@ -22,6 +22,7 @@ namespace DCL.UI.SceneDebugConsole
         private ListView consoleListView;
         private ScrollView scrollView;
         private Button clearButton;
+        private Button copyAllButton;
         private bool isInputSelected;
 
         public SceneDebugConsoleController(SceneDebugConsoleLogEntryBus logEntriesBus, IInputBlock inputBlock)
@@ -45,6 +46,7 @@ namespace DCL.UI.SceneDebugConsole
 
             var textField = uiDocumentRoot.Q<TextField>(name: "FilterTextField");
             clearButton = uiDocumentRoot.Q<Button>(name: "ClearButton");
+            copyAllButton = uiDocumentRoot.Q<Button>(name: "CopyAllButton");
             var errorEntriesTypeToggle = uiDocumentRoot.Q<Toggle>(name: "ErrorsToggle");
             var logEntriesTypeToggle = uiDocumentRoot.Q<Toggle>(name: "LogsToggle");
 
@@ -77,6 +79,11 @@ namespace DCL.UI.SceneDebugConsole
 
             // Clear button
             clearButton.clicked += ClearLogEntries;
+
+            // CopyAll button
+            // TODO: Remove check when button is in place
+            if (copyAllButton != null)
+                copyAllButton.clicked += CopyAllEntriesToClipboard;
 
             // Filter text field
             textField.RegisterCallback<ChangeEvent<string>>((evt) =>
@@ -115,7 +122,10 @@ namespace DCL.UI.SceneDebugConsole
             logEntriesBus.MessageAdded -= OnEntryAdded;
             clearButton.clicked -= ClearLogEntries;
 
-            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
+            // TODO: Remove check when button is in place
+            if (copyAllButton != null)
+                copyAllButton.clicked -= CopyAllEntriesToClipboard;
+
             // DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
         }
 
@@ -123,6 +133,22 @@ namespace DCL.UI.SceneDebugConsole
         {
             logsHistory.ClearLogMessages();
             RefreshListViewAsync(IsScrollAtBottom()).Forget();
+        }
+
+        private void CopyAllEntriesToClipboard()
+        {
+            if (logsHistory.FilteredLogMessages.Count == 0)
+                return;
+
+            var allMessages = new System.Text.StringBuilder();
+
+            foreach (var logEntry in logsHistory.FilteredLogMessages)
+            {
+                string prefix = logEntry.Type == LogMessageType.Error ? "[ERROR] " : "[LOG] ";
+                allMessages.AppendLine($"{prefix}{logEntry.Message}");
+            }
+
+            GUIUtility.systemCopyBuffer = allMessages.ToString();
         }
 
         private void OnToggleConsoleShortcutPerformed(InputAction.CallbackContext obj)
