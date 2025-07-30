@@ -16,10 +16,11 @@ using UnityEngine.UI;
 using Utility.Types;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
+using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
-    public class PlacesSectionView : MonoBehaviour, ICommunityFetchingView<PlaceInfo>
+    public class PlacesSectionView : MonoBehaviour, ICommunityFetchingView<PlaceData>
     {
         private const int ELEMENT_MISSING_THRESHOLD = 5;
         private const int ADD_PLACE_PREFAB_INDEX = 0;
@@ -49,7 +50,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo>? ElementJumpInButtonClicked;
         public event Action<PlaceInfo>? ElementDeleteButtonClicked;
 
-        private SectionFetchData<PlaceInfo> placesInfo = null!;
+        private SectionFetchData<PlaceData> placesInfo = null!;
         private bool canModify;
         private CommunityData communityData;
         private ThumbnailLoader? thumbnailLoader;
@@ -112,11 +113,11 @@ namespace DCL.Communities.CommunitiesCard.Places
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[PLACE_PREFAB_INDEX].mItemPrefab.name);
             PlaceCardView elementView = listItem.GetComponent<PlaceCardView>();
 
-            SectionFetchData<PlaceInfo> membersData = placesInfo;
+            SectionFetchData<PlaceData> membersData = placesInfo;
 
             int realIndex = canModify ? index - 1 : index;
-            PlaceInfo placeInfo = membersData.Items[realIndex];
-            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, thumbnailLoader!, cancellationToken);
+            PlaceData placeInfo = membersData.Items[realIndex];
+            elementView.Configure(placeInfo, placeInfo.PlaceInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, thumbnailLoader!, cancellationToken);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),
@@ -163,7 +164,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             }
         }
 
-        public void RefreshGrid(SectionFetchData<PlaceInfo> placesInfo, bool redraw)
+        public void RefreshGrid(SectionFetchData<PlaceData> placesInfo, bool redraw)
         {
             this.placesInfo = placesInfo;
             int count = placesInfo.Items.Count;

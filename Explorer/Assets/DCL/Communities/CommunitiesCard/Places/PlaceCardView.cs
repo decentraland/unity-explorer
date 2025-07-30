@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
+using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -85,16 +86,16 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        public void Configure(PlaceInfo placeInfo, bool userOwnsPlace, ThumbnailLoader thumbnailLoader, CancellationToken ct)
+        public void Configure(PlaceData placeInfo, bool userOwnsPlace, ThumbnailLoader thumbnailLoader, CancellationToken ct)
         {
-            currentPlaceInfo = placeInfo;
+            currentPlaceInfo = placeInfo.PlaceInfo;
 
-            thumbnailLoader.LoadCommunityThumbnailAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct).Forget();
+            thumbnailLoader.LoadCommunityThumbnailAsync(placeInfo.PlaceInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct).Forget();
 
-            placeNameText.text = placeInfo.title;
-            placeDescriptionText.text = placeInfo.description;
-            onlineMembersText.text = $"{placeInfo.user_count}";
-            placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
+            placeNameText.text = placeInfo.PlaceInfo.title;
+            placeDescriptionText.text = placeInfo.OwnerName;
+            onlineMembersText.text = $"{placeInfo.PlaceInfo.user_count}";
+            placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.PlaceInfo.world_name) ? placeInfo.PlaceInfo.base_position : placeInfo.PlaceInfo.world_name;
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 
@@ -103,9 +104,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             DislikeToggleChanged = null;
             FavoriteToggleChanged = null;
 
-            likeToggle.Toggle.isOn = placeInfo.user_like;
-            dislikeToggle.Toggle.isOn = placeInfo.user_dislike;
-            favoriteToggle.Toggle.isOn = placeInfo.user_favorite;
+            likeToggle.Toggle.isOn = placeInfo.PlaceInfo.user_like;
+            dislikeToggle.Toggle.isOn = placeInfo.PlaceInfo.user_dislike;
+            favoriteToggle.Toggle.isOn = placeInfo.PlaceInfo.user_favorite;
         }
 
         public void SubscribeToInteractions(Action<PlaceInfo, bool, PlaceCardView> likeToggleChanged,

@@ -19,6 +19,9 @@ namespace DCL.EventsApi
         private const string POSITION_PARAMETER = "position";
         private const string POSITIONS_PARAMETER = "positions[]";
         private const string PLACE_ID_PARAMETER = "places_ids[]";
+        private const string COMMUNITY_ID_PARAMETER = "community_id";
+        private const string PAGINATION_LIMIT_PARAMETER = "limit";
+        private const string PAGINATION_OFFSET_PARAMETER = "offset";
         private readonly IWebRequestController webRequestController;
         private readonly URLDomain baseUrl;
         private readonly URLBuilder urlBuilder = new ();
@@ -71,24 +74,27 @@ namespace DCL.EventsApi
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
 
-        public async UniTask<EventWithPlaceIdDTOListResponse> GetEventsByPlaceIdsAsync(string[] placeIds, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<EventWithPlaceIdDTOListResponse> GetCommunityEventsByPlaceIdsAsync(string communityId, string[] placeIds, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl)
-                      .AppendSubDirectory(URLSubdirectory.FromString("by-places"))
-                      .AppendParameter(new URLParameter("limit", elementsPerPage.ToString()))
-                      .AppendParameter(new URLParameter("offset", ((pageNumber - 1) * elementsPerPage).ToString()));
+                      .AppendSubDirectory(URLSubdirectory.FromString("search"))
+                      .AppendParameter(new URLParameter(PAGINATION_LIMIT_PARAMETER, elementsPerPage.ToString()))
+                      .AppendParameter(new URLParameter(PAGINATION_OFFSET_PARAMETER, ((pageNumber - 1) * elementsPerPage).ToString()));
 
             placeIdsBuilder.Clear();
 
-            placeIdsBuilder.Append("[");
+            placeIdsBuilder.Append("{ \"communityId\": \"")
+                            .Append(communityId)
+                            .Append("\", \"placeIds\": [");
+
             for (int i = 0; i < placeIds.Length; i++)
             {
                 placeIdsBuilder.Append($"\"{placeIds[i]}\"");
                 if (i < placeIds.Length - 1)
                     placeIdsBuilder.Append(",");
             }
-            placeIdsBuilder.Append("]");
+            placeIdsBuilder.Append("]}");
 
             URLAddress url = urlBuilder.Build();
 
@@ -99,6 +105,18 @@ namespace DCL.EventsApi
             return responseData;
         }
 
+        public async UniTask<EventWithPlaceIdDTOListResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(baseUrl)
+                      .AppendParameter(new URLParameter(COMMUNITY_ID_PARAMETER, communityId))
+                      .AppendParameter(new URLParameter(PAGINATION_LIMIT_PARAMETER, elementsPerPage.ToString()))
+                      .AppendParameter(new URLParameter(PAGINATION_OFFSET_PARAMETER, ((pageNumber - 1) * elementsPerPage).ToString()));;
+
+            return await webRequestController
+                        .SignedFetchGetAsync(urlBuilder.Build(), string.Empty, ct)
+                        .CreateFromJson<EventWithPlaceIdDTOListResponse>(WRJsonParser.Unity);
+        }
 
         public async UniTask MarkAsInterestedAsync(string eventId, CancellationToken ct)
         {
