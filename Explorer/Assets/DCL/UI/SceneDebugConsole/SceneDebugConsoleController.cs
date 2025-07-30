@@ -59,6 +59,11 @@ namespace DCL.UI.SceneDebugConsole
                 bool isError = logEntry.Type == LogMessageType.Error;
                 item.EnableInClassList("console__log-entry--error", isError);
                 item.EnableInClassList("console__log-entry--log", !isError);
+                item.RegisterCallback<ClickEvent>((evt) =>
+                {
+                    // Copy to clipboard
+                    GUIUtility.systemCopyBuffer = logEntry.Message;
+                });
 
                 item.Q<Label>().text = logEntry.Message;
             };
