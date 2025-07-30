@@ -121,7 +121,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             if (!usesShadowMask)
             {
-                // Maybe be we were using a cookie, we need to dispose of it
+                // Maybe we were using a cookie, we need to dispose of it
                 component.Cookie.CleanUp(World);
                 component.LightSourceInstance.cookie = null;
                 return;
