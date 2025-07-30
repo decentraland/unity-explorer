@@ -6,9 +6,9 @@
             <ui:Button text="CLEAR" name="ClearButton" class="header__item header__button" />
             <ui:Button text="| |" name="PauseButton" class="header__item header__button" />
             <ui:TextField label="Filter" placeholder-text="filler text" name="FilterTextField" class="header__item header__text-field" />
-            <ui:Toggle label="LOGS" name="LogsToggle" class="header__item header__toggle" />
+            <ui:Toggle label="LOGS" name="LogsToggle" value="true" class="header__item header__toggle" />
             <ui:Toggle label="WARNINGS" name="WarningsToggle" class="header__item header__toggle" />
-            <ui:Toggle label="ERRORS" name="ErrorsToggle" class="header__item header__toggle" />
+            <ui:Toggle label="ERRORS" name="ErrorsToggle" value="true" class="header__item header__toggle" />
             <ui:Button text="X" name="CloseButton" class="header__item header__button" />
         </ui:VisualElement>
         <ui:ListView name="console" virtualization-method="DynamicHeight" fixed-item-height="1" show-alternating-row-backgrounds="All" class="console" />

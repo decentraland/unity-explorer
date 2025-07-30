@@ -43,6 +43,11 @@ namespace DCL.UI.SceneDebugConsole
             uiDocumentRoot = uiDocument.rootVisualElement;
             uiDocumentRoot.visible = false;
 
+            var textField = uiDocumentRoot.Q<TextField>(name: "FilterTextField");
+            clearButton = uiDocumentRoot.Q<Button>(name: "ClearButton");
+            var errorEntriesTypeToggle = uiDocumentRoot.Q<Toggle>(name: "ErrorsToggle");
+            var logEntriesTypeToggle = uiDocumentRoot.Q<Toggle>(name: "LogsToggle");
+
             // ListView
             var logEntryUXML = Resources.Load<VisualTreeAsset>("SceneDebugConsoleLogEntry");
             consoleListView = uiDocumentRoot.Q<ListView>();
@@ -66,20 +71,12 @@ namespace DCL.UI.SceneDebugConsole
             scrollView = consoleListView.Q<ScrollView>();
 
             // Clear button
-            clearButton = uiDocumentRoot.Q<Button>(name: "ClearButton");
             clearButton.clicked += ClearLogEntries;
 
             // Filter text field
-            var textField = uiDocumentRoot.Q<TextField>(name: "FilterTextField");
-
-            // React to text changes while typing
             textField.RegisterCallback<ChangeEvent<string>>((evt) =>
             {
-                // Debug.Log($"Text changed from '{evt.previousValue}' to '{evt.newValue}'");
-                if (string.IsNullOrEmpty(evt.newValue))
-                    RemoveFilter();
-                else
-                    ApplyFilter(evt.newValue);
+                ApplyFilter(evt.newValue, !errorEntriesTypeToggle.value, !logEntriesTypeToggle.value);
             });
 
             textField.RegisterCallback<FocusInEvent>((evt) => inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER));
@@ -95,6 +92,16 @@ namespace DCL.UI.SceneDebugConsole
             //     // Stop event propagation to prevent other handlers
             //     evt.StopPropagation();
             // }, TrickleDown.TrickleDown);
+
+            // LOGS / ERRORS Toggle
+            errorEntriesTypeToggle.RegisterCallback<ChangeEvent<bool>>((evt) =>
+            {
+                ApplyFilter(textField.text, !evt.newValue, !logEntriesTypeToggle.value);
+            });
+            logEntriesTypeToggle.RegisterCallback<ChangeEvent<bool>>((evt) =>
+            {
+                ApplyFilter(textField.text, !errorEntriesTypeToggle.value, !evt.newValue);
+            });
         }
 
         public void Dispose()
@@ -127,15 +134,9 @@ namespace DCL.UI.SceneDebugConsole
             RefreshListViewAsync(IsScrollAtBottom()).Forget();
         }
 
-        private void ApplyFilter(string targetText)
+        private void ApplyFilter(string targetText, bool filterOutErrorEntries, bool filterOutLogEntries)
         {
-            consoleListView.itemsSource = logsHistory.ApplyFilter(targetText);
-            RefreshListViewAsync(true).Forget();
-        }
-
-        private void RemoveFilter()
-        {
-            consoleListView.itemsSource = logsHistory.RemoveFilters();
+            consoleListView.itemsSource = logsHistory.ApplyFilter(targetText, filterOutErrorEntries, filterOutLogEntries);
             RefreshListViewAsync(true).Forget();
         }
 
