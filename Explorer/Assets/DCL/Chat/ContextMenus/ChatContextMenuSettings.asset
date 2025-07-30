@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <ContextMenuWidth>k__BackingField: 218
   <ElementsSpacing>k__BackingField: 5
-  <OffsetFromTarget>k__BackingField: {x: -210, y: 105}
+  <OffsetFromTarget>k__BackingField: {x: -205, y: 127}
   <VerticalPadding>k__BackingField:
     m_Left: 10
     m_Right: 10
     m_Top: 8
-    m_Bottom: 8
-  <NotificationPingSubMenuOffsetFromTarget>k__BackingField: {x: -18, y: -32}
+    m_Bottom: 16
+  <NotificationPingSubMenuOffsetFromTarget>k__BackingField: {x: -10, y: -24}
   <DeleteChatHistorySprite>k__BackingField: {fileID: 21300000, guid: 1fd5346f8c379443886cb2219a95d139, type: 3}
   <DeleteChatHistoryText>k__BackingField: Delete Chat History
   <NotificationPingSprite>k__BackingField: {fileID: 21300000, guid: b68a1845513e146bbbbb9b209ce4120d, type: 3}
