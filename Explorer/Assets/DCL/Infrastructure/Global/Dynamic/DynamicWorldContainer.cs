@@ -614,6 +614,7 @@ namespace Global.Dynamic
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
             var communitiesDataService = new CommunityDataService(chatHistory,
+                mvcManager,
                 communitiesEventBus,
                 communitiesDataProvider,
                 identityCache);

@@ -12,7 +12,7 @@ namespace DCL.Chat.History
         public delegate void ChannelRemovedDelegate(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType);
         public delegate void ChannelClearedDelegate(ChatChannel claredChannel);
 
-        public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
+        public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage, int index);
         public delegate void ReadMessagesChangedDelegate(ChatChannel changedChannel);
 
         /// <summary>

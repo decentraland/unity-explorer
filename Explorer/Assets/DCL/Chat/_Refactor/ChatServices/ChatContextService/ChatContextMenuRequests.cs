@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.Web3;
 using MVC;
 using UnityEngine;
@@ -20,6 +21,23 @@ namespace DCL.Chat.Services
 
         public CancellationTokenSource CancellationTokenSource;
         public UniTaskCompletionSource CloseCompletionSource;
+    }
+
+    // A simple data packet to request a pre-configured context menu.
+    public struct ShowContextMenuRequest
+    {
+        public GenericContextMenu MenuConfiguration;
+        public Vector2 Position;
+        public Vector2 Offset;
+        public MenuAnchorPoint AnchorPoint;
+    }
+
+    public struct CommunityMenuRequest
+    {
+        public string CommunityId;
+        public Vector3 Position;
+        public string ViewCommunityText;
+        public Sprite ViewCommunityIcon;
     }
 
 

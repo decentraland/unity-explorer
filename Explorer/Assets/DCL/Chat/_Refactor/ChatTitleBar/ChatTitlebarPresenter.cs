@@ -12,6 +12,11 @@ using DCL.Web3;
 using DG.Tweening;
 using MVC;
 using System.Collections.Generic;
+using DCL.Communities;
+using DCL.UI.Communities;
+using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
+using UnityEngine;
 using Utility;
 
 public class ChatTitlebarPresenter : IDisposable
@@ -19,6 +24,7 @@ public class ChatTitlebarPresenter : IDisposable
     private readonly ChatTitlebarView2 view;
     private readonly ChatConfig chatConfig;
     private readonly IEventBus eventBus;
+    private readonly CommunityDataService communityDataService;
     private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
     private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
     private readonly ICurrentChannelService currentChannelService;
@@ -32,10 +38,12 @@ public class ChatTitlebarPresenter : IDisposable
 
     private ChatTitlebarViewModel currentViewModel { get; set; }
 
+    private readonly GenericContextMenu contextMenuConfiguration;
     public ChatTitlebarPresenter(
         ChatTitlebarView2 view,
         ChatConfig chatConfig,
         IEventBus eventBus,
+        CommunityDataService communityDataService,
         ICurrentChannelService currentChannelService,
         ChatMemberListService chatMemberListService,
         ChatContextMenuService chatContextMenuService,
@@ -46,6 +54,7 @@ public class ChatTitlebarPresenter : IDisposable
         this.view = view;
         this.chatConfig = chatConfig;
         this.eventBus = eventBus;
+        this.communityDataService = communityDataService;
         this.chatMemberListService = chatMemberListService;
         this.currentChannelService = currentChannelService;
         this.chatContextMenuService = chatContextMenuService;
@@ -57,16 +66,35 @@ public class ChatTitlebarPresenter : IDisposable
         view.OnMembersToggleRequested += OnMembersToggleRequested;
         view.OnContextMenuRequested += OnChatContextMenuRequested;
         view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
+        view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
 
         chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+
+        var contextMenuSettings = chatConfig.communityChatConversationContextMenuSettings;
+        contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
+                contextMenuSettings.Offset,
+                contextMenuSettings.VerticalLayoutPadding,
+                contextMenuSettings.ElementsSpacing,
+                ContextMenuOpenDirection.TOP_LEFT)
+            .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText,
+                contextMenuSettings.ViewCommunitySprite,
+                OpenCommunityCard));
+    }
+
+    private void OpenCommunityCard()
+    {
+        communityDataService
+            .OpenCommunityCard(currentChannelService.CurrentChannel);
     }
 
     public void Dispose()
     {
         view.OnCloseRequested -= OnCloseRequested;
         view.OnMembersToggleRequested -= OnMembersToggleRequested;
+        view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
+        view.OnCommunityContextMenuRequested -= OnCommunityContextMenuRequested;
         chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
 
         lifeCts.SafeCancelAndDispose();
@@ -81,6 +109,17 @@ public class ChatTitlebarPresenter : IDisposable
         chatContextMenuService
            .ShowUserProfileMenuAsync(request)
            .Forget();
+    }
+
+    private void OnCommunityContextMenuRequested(ShowContextMenuRequest request)
+    {
+        Debug.Log("OnCommunityContextMenuRequested");
+        if (currentViewModel.ViewMode != TitlebarViewMode.Community) return;
+
+        request.MenuConfiguration = contextMenuConfiguration;
+        chatContextMenuService
+            .ShowCommunityContextMenuAsync(request)
+            .Forget();
     }
 
     private void OnChatContextMenuRequested(ChatContextMenuRequest data)

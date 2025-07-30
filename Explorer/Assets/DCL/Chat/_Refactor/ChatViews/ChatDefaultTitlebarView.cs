@@ -11,7 +11,7 @@ public class ChatDefaultTitlebarView : MonoBehaviour
     public event Action? OnCloseRequested;
     public event Action? OnMembersRequested;
     public event Action? OnContextMenuRequested;
-    public event Action? OnProfileContextMenuRequested;
+    public event Action<TitlebarViewMode>? OnProfileContextMenuRequested;
 
     public Button ButtonClose => buttonClose;
     public Button ButtonOpenMembers => buttonOpenMembers;
@@ -27,16 +27,19 @@ public class ChatDefaultTitlebarView : MonoBehaviour
     [SerializeField] private ChatProfileView chatProfileView;
     [SerializeField] private GameObject nearbyElementsContainer;
 
+    private TitlebarViewMode currentViewMode;
+    
     private void Awake()
     {
         buttonOpenContextMenu.onClick.AddListener(() => OnContextMenuRequested?.Invoke());
-        buttonOpenProfileContextMenu.onClick.AddListener(() => OnProfileContextMenuRequested?.Invoke());
+        buttonOpenProfileContextMenu.onClick.AddListener(() => OnProfileContextMenuRequested?.Invoke(currentViewMode));
         buttonClose.onClick.AddListener(() => OnCloseRequested?.Invoke());
         buttonOpenMembers.onClick.AddListener(() => OnMembersRequested?.Invoke());
     }
 
     public void Setup(ChatTitlebarViewModel model)
     {
+        currentViewMode = model.ViewMode;
         textChannelName.text = model.Username;
 
         bool shouldShowMembersButton = model.ViewMode == TitlebarViewMode.Nearby ||
@@ -64,8 +67,16 @@ public class ChatDefaultTitlebarView : MonoBehaviour
             chatProfileView.Setup(model);
         }
 
-        buttonOpenProfileContextMenu.interactable
-            = model.ViewMode == TitlebarViewMode.DirectMessage;
+
+        if (model.ViewMode == TitlebarViewMode.Community ||
+            model.ViewMode == TitlebarViewMode.DirectMessage)
+        {
+            buttonOpenProfileContextMenu.interactable = true;
+        }
+        else
+        {
+            buttonOpenProfileContextMenu.interactable = false;
+        }
     }
 
     public void SetMemberCount(string count) => textMembersCount.text = count;
