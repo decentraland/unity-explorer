@@ -71,7 +71,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             CollapseButton.onClick.AddListener(() => CollapseButtonClicked?.Invoke());
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing)
                          //.AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus)))
-                         .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
+                         //.AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
                          .AddControl(demoteSpeakerButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DemoteSpeakerText, contextMenuSettings.DemoteSpeakerSprite, () => DemoteSpeaker?.Invoke(lastClickedProfile!))))
                          .AddControl(promoteToSpeakerButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.PromoteToSpeakerText, contextMenuSettings.PromoteToSpeakerSprite, () => PromoteToSpeaker?.Invoke(lastClickedProfile!))))
                          .AddControl(kickFromStreamButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.KickFromStreamText, contextMenuSettings.KickFromStreamSprite, () => Kick?.Invoke(lastClickedProfile!))))
@@ -83,10 +83,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             cts = cts.SafeRestart();
             lastClickedProfile = voiceChatMember;
 
-            promoteToSpeakerButton!.Enabled = !voiceChatMember.IsSpeaker;
-            demoteSpeakerButton!.Enabled = voiceChatMember.IsSpeaker;
-            kickFromStreamButton!.Enabled = localParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
-            banFromCommunityButton!.Enabled = localParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
+            bool isModeratorOrAdmin = localParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
+
+            promoteToSpeakerButton!.Enabled = !voiceChatMember.IsSpeaker && isModeratorOrAdmin;
+            demoteSpeakerButton!.Enabled = voiceChatMember.IsSpeaker && isModeratorOrAdmin;
+            kickFromStreamButton!.Enabled = isModeratorOrAdmin;
+            banFromCommunityButton!.Enabled = isModeratorOrAdmin;
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition), cts.Token);
         }
