@@ -19,7 +19,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         {
             unfilteredLogMessages.Add(logEntry);
 
-            if (string.IsNullOrEmpty(textFilter) || KeepAfterFilter(logEntry))
+            if (KeepAfterFilter(logEntry))
                 FilteredLogMessages.Add(logEntry);
 
             LogMessageAdded?.Invoke(logEntry);
@@ -33,8 +33,8 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
 
         public List<SceneDebugConsoleLogEntry> ApplyFilter(string targetText, bool filterOutErrors, bool filterOutLogs)
         {
-            this.filterOutErrorEntries = filterOutErrors;
-            this.filterOutLogEntries = filterOutLogs;
+            filterOutErrorEntries = filterOutErrors;
+            filterOutLogEntries = filterOutLogs;
             textFilter = targetText;
             FilteredLogMessages.Clear();
 
