@@ -46,39 +46,42 @@ namespace DCL.WebRequests
             if (webRequestException.ResponseCode is 429 or 503)
             {
                 // "Retry-After" header is not present or not parsable, don't repeat
-                if (webRequestException.ResponseHeaders.TryGetValue("Retry-After", out string? retryAfterHeader) || retryAfterHeader is null)
-                    return (true, TimeSpan.Zero);
+                if (!webRequestException.ResponseHeaders.TryGetValue("Retry-After", out string? retryAfterHeader) || retryAfterHeader is null)
+                    return (false, TimeSpan.Zero);
+
+                TimeSpan retryDelay;
 
                 // Can be a date or seconds
                 if (int.TryParse(retryAfterHeader, out int retryAfter))
-                    return (true, TimeSpan.FromSeconds(retryAfter));
+                    retryDelay = TimeSpan.FromSeconds(retryAfter);
 
                 // For .NET/Unity, use the built‑in RFC1123 pattern ("r" or "R"):
 
-                if (DateTime.TryParseExact(
-                        retryAfterHeader,
-                        "r", // RFC1123 aka IMF-fixdate
-                        CultureInfo.InvariantCulture,
-                        DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
-                        out DateTime retryDateUtc))
+                else if (DateTime.TryParseExact(
+                             retryAfterHeader,
+                             "r", // RFC1123 aka IMF-fixdate
+                             CultureInfo.InvariantCulture,
+                             DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
+                             out DateTime retryDateUtc))
                 {
-                    TimeSpan timeToWait = retryDateUtc - DateTime.UtcNow;
+                    retryDelay = retryDateUtc - DateTime.UtcNow;
 
                     // Time already passed, no need to wait
-                    if (timeToWait <= TimeSpan.Zero)
+                    if (retryDelay <= TimeSpan.Zero)
                         return (true, TimeSpan.Zero);
-
-                    // Should not exceed the maximum delay
-                    if (timeToWait.TotalMilliseconds > RetryPolicy.MAX_DELAY_BETWEEN_ATTEMPTS_MS)
-
-                        // Can't retry straight-away automatically
-                        return (false, TimeSpan.Zero);
-
-                    return (true, timeToWait);
                 }
+                else
 
-                // Invalid "Retry-After" header format, don't repeat
-                return (false, TimeSpan.Zero);
+                    // Invalid "Retry-After" header format, don't repeat
+                    return (false, TimeSpan.Zero);
+
+                // Should not exceed the maximum delay
+                if (retryDelay.TotalMilliseconds > RetryPolicy.MAX_DELAY_BETWEEN_ATTEMPTS_MS)
+
+                    // Can't retry straight-away automatically
+                    return (false, TimeSpan.Zero);
+
+                return (true, retryDelay);
             }
 
             if (retryPolicy.strictness == RetryPolicy.Strictness.RETRY_AFTER_REQUIRED)
