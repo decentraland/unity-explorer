@@ -26,20 +26,16 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
     public partial class LoadDefaultWearablesSystem : BaseUnityLoopSystem
     {
         private readonly IWearableStorage wearableStorage;
-        private readonly GameObject emptyDefaultWearable;
 
         internal LoadDefaultWearablesSystem(World world,
-            GameObject emptyDefaultWearable,
             IWearableStorage wearableStorage) : base(world)
         {
             this.wearableStorage = wearableStorage;
-            this.emptyDefaultWearable = emptyDefaultWearable;
         }
 
         public override void Initialize()
         {
             // Update this data if by any reason is changed in the server
-            AddEmptyWearable();
             AddBodyShapes();
         }
 
@@ -223,48 +219,6 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             }
 
             World.Create(state);
-        }
-
-        private void AddEmptyWearable()
-        {
-            var wearableDTO = new WearableDTO
-            {
-                metadata = new WearableDTO.WearableMetadataDto
-                {
-                    id = WearablesConstants.EMPTY_DEFAULT_WEARABLE,
-                    data = new WearableDTO.WearableMetadataDto.DataDto
-                    {
-                        category = WearablesConstants.Categories.HELMET
-                    }
-                },
-            };
-
-            var mesh = new Mesh();
-
-            mesh.vertices = new[]
-            {
-                Vector3.zero
-            };
-
-            var boneWeights = new BoneWeight[1];
-            boneWeights[0].weight0 = 1; // 100% influence from the first (and only) bone
-            mesh.boneWeights = boneWeights;
-
-            var rendererInfos = new List<AttachmentRegularAsset.RendererInfo>();
-
-            foreach (var skinnedMeshRenderer in emptyDefaultWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
-            {
-                skinnedMeshRenderer.sharedMesh = mesh;
-                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
-            }
-
-            IWearable emptyWearable = wearableStorage.GetOrAddByDTO(wearableDTO, false);
-            var wearableAsset = new AttachmentRegularAsset(emptyDefaultWearable, rendererInfos, null);
-            wearableAsset.AddReference();
-
-            // only game-objects here
-            emptyWearable.AssignWearableAsset(wearableAsset, BodyShape.MALE);
-            emptyWearable.AssignWearableAsset(wearableAsset, BodyShape.FEMALE);
         }
     }
 }

@@ -25,11 +25,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2d002c6a594460f4cb42100b50e7e53a
-    m_Address: EMPTY_DEFAULT_WEARABLE
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 41b6cad6750bc4b35ba63ebbeb956830
     m_Address: M_EyeBrows_00
     m_ReadOnly: 0

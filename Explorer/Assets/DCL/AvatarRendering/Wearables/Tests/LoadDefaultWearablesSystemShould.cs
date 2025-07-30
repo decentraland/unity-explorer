@@ -1,5 +1,4 @@
-﻿using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Loading.Components;
+﻿using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
@@ -18,7 +17,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private readonly string definitionsPath = $"{Application.dataPath}/../TestResources/Wearables/DefaultWearableDefinition.txt";
 
         private WearableStorage wearableStorage;
-        private GameObject emptyDefaultWearable;
 
         [SetUp]
         public void Setup()
@@ -29,35 +27,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             JsonConvert.PopulateObject(File.ReadAllText(definitionsPath), partialTargetList);
             wearableStorage = new WearableStorage();
-            emptyDefaultWearable = new GameObject();
-
-            system = new LoadDefaultWearablesSystem(world,
-                emptyDefaultWearable,
-                wearableStorage);
+            system = new LoadDefaultWearablesSystem(world, wearableStorage);
 
             system.Initialize();
-        }
-
-        [Test]
-        public void LoadEmptyDefaultWearable()
-        {
-            //Look for an empty and a non-empty default wearable
-            IWearable tiaraDefaultWearable =
-                wearableStorage.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA);
-
-            IWearable upperBodyDefaultWearable =
-                wearableStorage.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY);
-
-            Assert.AreEqual(((AttachmentRegularAsset)tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Results[0].Value.Asset).MainAsset,
-                emptyDefaultWearable);
-
-            Assert.AreEqual(tiaraDefaultWearable.GetUrn().ToString(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
-
-            // In this test suite we are not loading the default wearables through the LoadAssetBundleSystem.
-            // So, to confirm that the default wearable is not loaded, we check that the asset is null and that the urn is not from the empty default wearable
-            // Results are not created as it's not run through the system
-            Assert.AreEqual(upperBodyDefaultWearable.WearableAssetResults[BodyShape.MALE].Results, null);
-            Assert.AreNotEqual(upperBodyDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
         }
 
         [Test]

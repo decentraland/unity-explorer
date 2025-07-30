@@ -18,8 +18,6 @@ using ECS.StreamableLoading.Cache;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -36,8 +34,6 @@ namespace DCL.AvatarRendering.Wearables
         private readonly bool builderCollectionsPreview;
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
-
-        private GameObject defaultEmptyWearableAsset;
 
         public WearablePlugin(IAssetsProvisioner assetsProvisioner,
             IWebRequestController webRequestController,
@@ -63,9 +59,6 @@ namespace DCL.AvatarRendering.Wearables
 
         public async UniTask InitializeAsync(WearableSettings settings, CancellationToken ct)
         {
-            var defaultEmptyWearable =
-                await assetsProvisioner.ProvideMainAssetAsync(settings.defaultEmptyWearable, ct: ct);
-            defaultEmptyWearableAsset = defaultEmptyWearable.Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
@@ -73,7 +66,7 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
-            LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultEmptyWearableAsset, wearableStorage);
+            LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
             if (builderCollectionsPreview)
@@ -86,7 +79,6 @@ namespace DCL.AvatarRendering.Wearables
         [Serializable]
         public class WearableSettings : IDCLPluginSettings
         {
-            [field: SerializeField] public AssetReferenceGameObject defaultEmptyWearable;
         }
     }
 }
