@@ -56,27 +56,6 @@ jobs:
           path: Explorer/Library
           key: Library-Explorer-Windows
 
-      - name: Clone Packages To Use Locally
-        env:
-          REPOS_READ_ONLY_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
-        run: |
-            git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com/decentraland/unity-explorer-packages.git
-            $jsonFilePath = "Explorer/Packages/manifest.json"
-            (Get-Content $jsonFilePath) `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/FileBrowserPro', 'file:../../unity-explorer-packages/FileBrowserPro' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/RenderGraphs/RenderFeatures', 'file:../../unity-explorer-packages/RenderGraphs/RenderFeatures' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' |
-                Set-Content $jsonFilePath
-
-            Get-ChildItem
-            Get-Content $jsonFilePath
-
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
@@ -84,6 +63,7 @@ jobs:
         continue-on-error: true
         with:
           projectPath: Explorer
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
           testMode: all      
 
       - name: Convert NUnit to JUnit
