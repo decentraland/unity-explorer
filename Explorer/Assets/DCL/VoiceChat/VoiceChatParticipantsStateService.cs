@@ -329,7 +329,7 @@ namespace DCL.VoiceChat
             participantState.ProfilePictureUrl.Value = metadata.profilePictureUrl;
             participantState.IsRequestingToSpeak.Value = metadata.isRequestingToSpeak;
             participantState.IsSpeaker.Value = metadata.isSpeaker;
-            participantState.Role.Value = metadata.role;
+            participantState.Role.Value = metadata.Role;
         }
 
         private bool ShouldClearDataOnDisconnect(DisconnectReason? disconnectReason)
@@ -408,7 +408,7 @@ namespace DCL.VoiceChat
                 new ReactiveProperty<string?>(metadata?.profilePictureUrl),
                 new ReactiveProperty<bool>(metadata?.isRequestingToSpeak ?? false),
                 new ReactiveProperty<bool>(metadata?.isSpeaker ?? false),
-                new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.role ?? UserCommunityRoleMetadata.none)
+                new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.Role ?? UserCommunityRoleMetadata.none)
             );
 
             participantStates[participant.Identity] = state;
@@ -504,7 +504,7 @@ namespace DCL.VoiceChat
             existingState.ProfilePictureUrl.Value = metadata?.profilePictureUrl;
             existingState.IsRequestingToSpeak.Value = metadata?.isRequestingToSpeak ?? false;
             existingState.IsSpeaker.Value = metadata?.isSpeaker ?? false;
-            existingState.Role.Value = metadata?.role ?? UserCommunityRoleMetadata.none;
+            existingState.Role.Value = metadata?.Role ?? UserCommunityRoleMetadata.none;
         }
 
         private void UpdateParticipantSpeaking(string participantId, bool isSpeaking)
@@ -584,10 +584,26 @@ namespace DCL.VoiceChat
             public bool hasClaimedName;
             public bool isRequestingToSpeak;
             public bool isSpeaker;
-            public UserCommunityRoleMetadata role;
+            public string role;
+            
+            public UserCommunityRoleMetadata Role => ParseRole(role);
+            
+            private static UserCommunityRoleMetadata ParseRole(string? roleString)
+            {
+                if (string.IsNullOrEmpty(roleString))
+                    return UserCommunityRoleMetadata.none;
+                
+                return roleString.ToLowerInvariant() switch
+                {
+                    "user" => UserCommunityRoleMetadata.user,
+                    "moderator" => UserCommunityRoleMetadata.moderator,
+                    "owner" => UserCommunityRoleMetadata.owner,
+                    _ => UserCommunityRoleMetadata.none
+                };
+            }
 
             public override string ToString() =>
-                $"(Name: {name}, HasClaimedName: {hasClaimedName}, ProfilePictureUrl: {profilePictureUrl}, IsRequestingToSpeak: {isRequestingToSpeak}, IsSpeaker: {isSpeaker}, Role: {role})";
+                $"(Name: {name}, HasClaimedName: {hasClaimedName}, ProfilePictureUrl: {profilePictureUrl}, IsRequestingToSpeak: {isRequestingToSpeak}, IsSpeaker: {isSpeaker}, Role: {Role})";
         }
     }
 }
