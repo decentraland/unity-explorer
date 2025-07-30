@@ -204,6 +204,97 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
+        /// Resamples stereo audio (interleaved) using the same algorithm as mono resampling
+        /// </summary>
+        /// <param name="input">Input stereo audio data span (interleaved: L,R,L,R,...)</param>
+        /// <param name="inputRate">Input sample rate</param>
+        /// <param name="output">Output stereo audio data span (interleaved: L,R,L,R,...)</param>
+        /// <param name="outputRate">Output sample rate</param>
+        /// <param name="useHighQuality">Force high quality resampling even for simple ratios</param>
+        [BurstCompile]
+        public static void ResampleStereo(Span<float> input, int inputRate, Span<float> output, int outputRate, bool useHighQuality = false)
+        {
+            if (inputRate == outputRate)
+            {
+                input.CopyTo(output);
+                return;
+            }
+
+            float ratio = (float)inputRate / outputRate;
+            int lastIdx = input.Length - 1;
+
+            if (!useHighQuality && IsSimpleRatio(ratio))
+            {
+                ResampleStereoLinear(input, output, ratio);
+            }
+            else
+            {
+                ResampleStereoCubic(input, inputRate, output, outputRate);
+            }
+        }
+
+        /// <summary>
+        /// Fast stereo resampling for common ratios using linear interpolation
+        /// </summary>
+        /// <param name="input">Input stereo audio data span (interleaved)</param>
+        /// <param name="output">Output stereo audio data span (interleaved)</param>
+        /// <param name="ratio">Resampling ratio (input/output)</param>
+        [BurstCompile]
+        private static void ResampleStereoLinear(Span<float> input, Span<float> output, float ratio)
+        {
+            int lastIdx = input.Length - 1;
+
+            for (int i = 0; i < output.Length; i++)
+            {
+                float sourceIndex = i * ratio;
+                int idx = (int)sourceIndex;
+                float mu = sourceIndex - idx;
+                
+                int idx1 = math.max(0, math.min(idx, lastIdx));
+                int idx2 = math.max(0, math.min(idx + 1, lastIdx));
+                
+                float y1 = input[idx1];
+                float y2 = input[idx2];
+                
+                output[i] = math.lerp(y1, y2, mu);
+            }
+        }
+
+        /// <summary>
+        /// High-quality stereo resampling using cubic interpolation
+        /// </summary>
+        /// <param name="input">Input stereo audio data span (interleaved)</param>
+        /// <param name="inputRate">Input sample rate</param>
+        /// <param name="output">Output stereo audio data span (interleaved)</param>
+        /// <param name="outputRate">Output sample rate</param>
+        [BurstCompile]
+        private static void ResampleStereoCubic(Span<float> input, int inputRate, Span<float> output, int outputRate)
+        {
+            float ratio = (float)inputRate / outputRate;
+            int lastIdx = input.Length - 1;
+
+            for (int i = 0; i < output.Length; i++)
+            {
+                float sourceIndex = i * ratio;
+                int idx = (int)sourceIndex;
+                float mu = sourceIndex - idx;
+                
+                // Optimized bounds checking
+                int idx1 = math.max(0, math.min(idx, lastIdx));
+                int idx2 = math.max(0, math.min(idx + 1, lastIdx));
+                int idx3 = math.max(0, math.min(idx + 2, lastIdx));
+                int idx4 = math.max(0, math.min(idx + 3, lastIdx));
+                
+                float y0 = input[idx1];
+                float y1 = input[idx2];
+                float y2 = input[idx3];
+                float y3 = input[idx4];
+                
+                output[i] = CubicInterpolate(y0, y1, y2, y3, mu);
+            }
+        }
+
+        /// <summary>
         /// Optimized cubic interpolation using Horner's method
         /// </summary>
         [BurstCompile]

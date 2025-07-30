@@ -11,10 +11,20 @@ namespace DCL.VoiceChat
     {
         [field: SerializeField] private AudioSource audioSource;
         [field: SerializeField] private VoiceChatCombinedStreamsAudioFilter audioFilter;
-        private readonly Dictionary<IAudioStream, LivekitAudioSource> sourcesMap = new();
+        private readonly Dictionary<IAudioStream, LivekitAudioSource> sourcesMap = new ();
 
         private bool isPlaying;
         private int sampleRate = 48000;
+
+        public void Reset()
+        {
+            audioFilter.Reset();
+
+            foreach (LivekitAudioSource audioSource in sourcesMap.Values) { audioSource.SelfDestroy(); }
+
+            sourcesMap.Clear();
+            isPlaying = false;
+        }
 
         private void OnEnable()
         {
@@ -57,9 +67,9 @@ namespace DCL.VoiceChat
 
         public void RemoveStream(WeakReference<IAudioStream> stream)
         {
-            if (stream.TryGetTarget(out var audioStream))
+            if (stream.TryGetTarget(out IAudioStream audioStream))
             {
-                if (sourcesMap.TryGetValue(audioStream, out var audioSource))
+                if (sourcesMap.TryGetValue(audioStream, out LivekitAudioSource audioSource))
                 {
                     audioSource.Stop();
                     audioSource.SelfDestroy();
@@ -68,19 +78,6 @@ namespace DCL.VoiceChat
             }
 
             audioFilter.RemoveStream(stream);
-        }
-
-        public void Reset()
-        {
-            audioFilter.Reset();
-
-            foreach (var audioSource in sourcesMap.Values)
-            {
-                audioSource.SelfDestroy();
-            }
-
-            sourcesMap.Clear();
-            isPlaying = false;
         }
 
         public void Play()
@@ -98,10 +95,7 @@ namespace DCL.VoiceChat
 
             void PlayInternal()
             {
-                foreach (var livekitAudioSource in sourcesMap.Values)
-                {
-                    livekitAudioSource.Play();
-                }
+                foreach (LivekitAudioSource livekitAudioSource in sourcesMap.Values) { livekitAudioSource.Play(); }
 
                 audioSource.Play();
             }
@@ -111,9 +105,7 @@ namespace DCL.VoiceChat
                 await UniTask.SwitchToMainThread();
                 PlayInternal();
             }
-
         }
-
 
         public void Stop()
         {
@@ -130,10 +122,7 @@ namespace DCL.VoiceChat
 
             void StopInternal()
             {
-                foreach (var livekitAudioSource in sourcesMap.Values)
-                {
-                    livekitAudioSource.Stop();
-                }
+                foreach (LivekitAudioSource livekitAudioSource in sourcesMap.Values) { livekitAudioSource.Stop(); }
 
                 audioSource.Stop();
             }
@@ -143,9 +132,7 @@ namespace DCL.VoiceChat
                 await UniTask.SwitchToMainThread();
                 StopInternal();
             }
-
         }
-
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {

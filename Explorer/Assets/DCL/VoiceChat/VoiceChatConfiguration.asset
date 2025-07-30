@@ -14,23 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnableLocalTrackPlayback: 0
   HoldThresholdInSeconds: 0.5
-  EnableAudioProcessing: 0
-  EnableNoiseGate: 1
-  NoiseGateThreshold: 0.0001
-  NoiseGateHoldTime: 2
-  NoiseGateAttackTime: 0.5
-  NoiseGateReleaseTime: 0.2
-  EnableLowPassFilter: 1
-  LowPassCutoffFreq: 3000
-  EnableGateFadeIn: 1
-  FadeInBufferSize: 64
-  PreGateAttenuation: 0.1
-  TargetPeakLevel: 0.7
-  GainAdjustSpeed: 4
-  MinGain: 1
-  MaxGain: 15
-  MinPeakThreshold: 0.0001
-  PeakTrackingWindow: 0.5
+  MicrophoneVolume: 40
   MicrophoneReinitDelayMs: 500
   MaxFreshDataWaitTimeMs: 1000
   FreshDataCheckDelayMs: 50

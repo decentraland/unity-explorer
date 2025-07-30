@@ -19,21 +19,20 @@ namespace DCL.VoiceChat
 
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly VoiceChatConfiguration voiceChatConfiguration;
-        private readonly VoiceChatMicrophoneAudioFilter audioFilter;
         private readonly AudioSource audioSource;
 
         private AudioClip microphoneAudioClip;
         private bool isMicrophoneInitialized;
         private bool isInCall;
-        private bool isTalking { get; set; }
         private CancellationTokenSource microphoneChangeCts;
         private int microphoneSampleRate;
         private string microphoneName;
         private float buttonPressStartTime;
         private MicrophoneRtcAudioSource2 rtcAudioSource;
 
-        public VoiceChatMicrophoneAudioFilter AudioFilter => audioFilter;
-        public AudioSource AudioSource => audioSource;
+        public VoiceChatMicrophoneAudioFilter AudioFilter { get; }
+
+        private bool isTalking { get; set; }
 
         public event Action EnabledMicrophone;
         public event Action DisabledMicrophone;
@@ -47,7 +46,7 @@ namespace DCL.VoiceChat
             this.voiceChatSettings = voiceChatSettings;
             this.voiceChatConfiguration = voiceChatConfiguration;
             this.audioSource = audioSource;
-            this.audioFilter = audioFilter;
+            this.AudioFilter = audioFilter;
 
             DCLInput.Instance.VoiceChat.Talk.performed += OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnReleased;
@@ -74,8 +73,8 @@ namespace DCL.VoiceChat
 
                 Microphone.End(microphoneName);
 
-                if (audioFilter != null)
-                    audioFilter.enabled = false;
+                if (AudioFilter != null)
+                    AudioFilter.enabled = false;
             }
         }
 
@@ -127,10 +126,10 @@ namespace DCL.VoiceChat
 
         public void Reset()
         {
-            if (audioFilter != null)
+            if (AudioFilter != null)
             {
-                audioFilter.Reset();
-                audioFilter.SetFilterActive(true);
+                AudioFilter.Reset();
+                AudioFilter.SetFilterActive(true);
             }
 
             isTalking = false;
@@ -161,21 +160,18 @@ namespace DCL.VoiceChat
 
             microphoneSampleRate = VoiceChatMicrophoneHelper.GetOptimalMicrophoneSampleRate(microphoneName);
 
-            microphoneAudioClip = Microphone.Start(microphoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, 48000); //microphoneSampleRate); REMOVED TO COMPLY WITH EXAMPLE
+            //RESTORED USING MICROPHONE SAMPLE RATE - VERIFY EFFECT
+            microphoneAudioClip = Microphone.Start(microphoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, microphoneSampleRate);
 
             audioSource.clip = microphoneAudioClip;
 
-
-            AudioSource.volume = 0f;
+            audioSource.volume = 0f;
 
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone initialized with sample rate: {microphoneSampleRate}Hz");
 
             // If we're in a call, wait for fresh audio data before proceeding
-            if (isInCall)
-            {
-                WaitAndReinitializeMicrophoneAsync(false, voiceChatSettings.SelectedMicrophoneIndex, microphoneChangeCts.Token).Forget();
-            }
+            if (isInCall) { WaitAndReinitializeMicrophoneAsync(false, voiceChatSettings.SelectedMicrophoneIndex, microphoneChangeCts.Token).Forget(); }
         }
 
         private void EnableMicrophone()
@@ -186,8 +182,8 @@ namespace DCL.VoiceChat
             audioSource.loop = true;
             audioSource.Play();
             audioSource.volume = 1f;
-            audioFilter.enabled = true;
-            audioFilter.SetFilterActive(true);
+            AudioFilter.enabled = true;
+            AudioFilter.SetFilterActive(true);
             EnabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
@@ -217,11 +213,13 @@ namespace DCL.VoiceChat
                 audioSource.Stop();
                 audioSource.volume = 0f;
             }
-            if (audioFilter != null)
+
+            if (AudioFilter != null)
             {
-                audioFilter.enabled = false;
-                audioFilter.SetFilterActive(false);
+                AudioFilter.enabled = false;
+                AudioFilter.SetFilterActive(false);
             }
+
             DisabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
@@ -295,10 +293,7 @@ namespace DCL.VoiceChat
                 if (wasTalking && !ct.IsCancellationRequested)
                     EnableMicrophone();
             }
-            catch (OperationCanceledException)
-            {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change operation was cancelled");
-            }
+            catch (OperationCanceledException) { ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change operation was cancelled"); }
         }
 
         private async UniTask WaitForFreshMicrophoneDataAsync(CancellationToken ct)
@@ -334,6 +329,7 @@ namespace DCL.VoiceChat
                     break;
                 }
             }
+
             if (audioSource != null && !ct.IsCancellationRequested)
             {
                 audioSource.time = 0f;

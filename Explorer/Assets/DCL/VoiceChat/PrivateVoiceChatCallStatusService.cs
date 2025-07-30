@@ -232,11 +232,11 @@ namespace DCL.VoiceChat
             catch (Exception e) { HandleVoiceChatServiceDisabled(e, resetData: false); }
         }
 
-        private void ResetVoiceChatData()
+        private new void ResetVoiceChatData()
         {
             CallId = string.Empty;
             ConnectionUrl = string.Empty;
-            CurrentTargetWallet = default(string);
+            CurrentTargetWallet = string.Empty;
         }
 
         private void HandleVoiceChatServiceDisabled(Exception e, bool resetData = false)
