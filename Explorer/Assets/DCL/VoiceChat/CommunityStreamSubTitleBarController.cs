@@ -120,7 +120,7 @@ namespace DCL.VoiceChat
             //We show the button if the current community has an active call
             view.gameObject.SetActive(hasActiveCall);
 
-            if (orchestrator.CurrentCallId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
+            if (hasActiveCall && orchestrator.CurrentCallId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
                 HandleCurrentCommunityCall();
         }
 
