@@ -89,8 +89,9 @@ namespace DCL.Notifications.Serialization
                     STREAMING_PLACE_UPDATED => new StreamingFeatureNotification(),
                     REFERRAL_INVITED_USERS_ACCEPTED => new ReferralNotification(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED),
                     REFERRAL_NEW_TIER_REACHED => new ReferralNotification(NotificationType.REFERRAL_NEW_TIER_REACHED),
-                    COMMUNITY_EVENT_CREATED_TYPE => new CommunityEventCreatedNotification(),
-                    COMMUNITY_EVENT_ABOUT_TO_START_TYPE => new CommunityEventSoonNotification(),
+                    // TODO: Uncomment when the community events are implemented
+                    // COMMUNITY_EVENT_CREATED_TYPE => new CommunityEventCreatedNotification(),
+                    // COMMUNITY_EVENT_ABOUT_TO_START_TYPE => new CommunityEventSoonNotification(),
                     COMMUNITY_MEMBER_REMOVED_TYPE => new CommunityUserRemovedNotification(),
                     COMMUNITY_MEMBER_BANNED_TYPE => new CommunityUserBannedNotification(),
                     COMMUNITY_RENAMED_TYPE => new CommunityRenamedNotification(),
