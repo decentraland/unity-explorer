@@ -52,7 +52,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            ChatMessage newMessage = messageFactory.CreateChatMessage(identity.Address, true, chatMessage, null, topic);
+            ChatMessage newMessage = messageFactory.CreateChatMessage(identity.Address, true, chatMessage, null, DateTime.UtcNow.ToOADate());
 
             MessageAdded?.Invoke(channel.Id, channel.ChannelType, newMessage);
         }

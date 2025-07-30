@@ -216,7 +216,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - SubMeshId: 0
-    CombinedMesh: {fileID: 7925780473493494557}
+    CombinedMesh: {fileID: -4950468723494521971}
     SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 7699624850596126483}
@@ -228,7 +228,7 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
---- !u!43 &7925780473493494557
+--- !u!43 &-4950468723494521971
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -93,12 +93,12 @@ namespace DCL.Navmap
             if (view.CameraReelGalleryView != null)
             {
                 this.cameraReelGalleryController = new CameraReelGalleryController(
-                    view.CameraReelGalleryView, 
-                    cameraReelStorageService!, 
-                    cameraReelScreenshotsStorage!, 
-                    reelGalleryConfigParams!.Value, 
-                    reelUseSignedRequest!.Value, 
-                    galleryEventBus: galleryEventBus);
+                    view.CameraReelGalleryView,
+                    cameraReelStorageService!,
+                    cameraReelScreenshotsStorage!,
+                    reelGalleryConfigParams!.Value,
+                    reelUseSignedRequest!.Value,
+                    galleryEventBus);
                 this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
                 this.cameraReelGalleryController.MaxThumbnailsUpdated += UpdatePhotosTabText;
             }
@@ -140,10 +140,10 @@ namespace DCL.Navmap
             view.EventsTabContainer.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
             Action<CameraReelResponseCompact> reelDeleteIntention,  Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
-                true, PhotoDetailParameter.CallerContext.PlaceInfoPanel, reelDeleteIntention, 
+                true, PhotoDetailParameter.CallerContext.PlaceInfoPanel, reelDeleteIntention,
                 reelListRefreshIntention, galleryEventBus)));
 
         private void UpdatePhotosTabText(int count) =>

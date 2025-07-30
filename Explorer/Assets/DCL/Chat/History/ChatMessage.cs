@@ -15,12 +15,18 @@ namespace DCL.Chat.History
         public readonly bool IsSystemMessage;
         public readonly bool IsMention;
 
+        /// <summary>
+        /// The instant when the message was sent (UTC), in OLE Automation Date format. Zero means null or unassigned.
+        /// </summary>
+        public readonly double SentTimestamp;
+
         public ChatMessage(
             string message,
             string senderValidatedName,
             string senderWalletAddress,
             bool isSentByOwnUser,
             string senderWalletId,
+            double sentTimestamp,
             bool isMention = false,
             bool isSystemMessage = false,
             bool isPaddingElement = false)
@@ -33,6 +39,7 @@ namespace DCL.Chat.History
             SenderWalletId = senderWalletId;
             IsMention = isMention;
             IsSystemMessage = isSystemMessage;
+            SentTimestamp = sentTimestamp;
         }
 
         public static ChatMessage NewPaddingElement() =>
@@ -41,6 +48,7 @@ namespace DCL.Chat.History
                 string.Empty,
                 false,
                 string.Empty,
+                DateTime.UtcNow.ToOADate(),
                 false,
                 false,
                 true);
@@ -51,13 +59,14 @@ namespace DCL.Chat.History
                 chatMessage.SenderWalletAddress,
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,
+                DateTime.UtcNow.ToOADate(),
                 chatMessage.IsMention,
                 chatMessage.IsSystemMessage,
                 chatMessage.IsPaddingElement);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                null, false, true, false);
+                null, DateTime.UtcNow.ToOADate(), false, true, false);
 
         public bool Equals(ChatMessage other)
         {
