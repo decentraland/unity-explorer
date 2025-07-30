@@ -228,9 +228,11 @@ namespace DCL.Chat
                         SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
                         return;
                     }
-
-                    chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
-                    UpdateChatUserStateAsync(chatUserStateUpdater.CurrentConversation, true, chatUsersUpdateCts.Token).Forget();
+                    else if (chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER)
+                    {
+                        chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                        UpdateChatUserStateAsync(chatUserStateUpdater.CurrentConversation, true, chatUsersUpdateCts.Token).Forget();
+                    }
 
                     viewInstance.ShowNewMessages();
                 }
