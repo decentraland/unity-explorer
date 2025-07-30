@@ -213,7 +213,6 @@ namespace DCL.SDKComponents.LightSource.Systems
                 cubemap.SetPixelData(destinationColors, 0, (CubemapFace)face, face * facePixelCount);
             cubemap.Apply();
 
-            sourceColors.Dispose();
             destinationColors.Dispose();
 
             return cubemap;
