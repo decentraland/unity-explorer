@@ -48,25 +48,23 @@ namespace DCL.VoiceChat
         /// </summary>
         /// <param name="data">Output stereo audio buffer to fill</param>
         /// <param name="isPlaying">Whether audio should be processed</param>
-        private void ProcessAudio(float[] data, bool isPlaying)
+        private void ProcessAudio(Span<float> data, bool isPlaying)
         {
             if (!isPlaying || streams.Count == 0)
             {
-                data.AsSpan().Clear();
+                data.Clear();
                 return;
             }
 
             EnsureTempBufferSize(data.Length);
-
-            Span<float> dataSpan = data.AsSpan();
-            dataSpan.Clear();
+            data.Clear();
             var activeStreams = 0;
 
             foreach (WeakReference<IAudioStream> weakStream in streams)
             {
                 if (weakStream.TryGetTarget(out IAudioStream stream))
                 {
-                    Array.Clear(tempBuffer, 0, tempBuffer.Length);
+                    tempBuffer.AsSpan().Clear();
 
                     // Read data from stream
                     stream.ReadAudio(tempBuffer, STEREO_CHANNELS, sampleRate);
@@ -80,7 +78,12 @@ namespace DCL.VoiceChat
             }
 
             // Normalize only if multiple streams
-            if (activeStreams > 1) { NormalizeOutput(data, activeStreams); }
+            if (activeStreams > 1) 
+            { 
+                float norm = 1f / activeStreams;
+                for (var i = 0; i < data.Length; i++)
+                    data[i] *= norm;
+            }
         }
 
         /// <summary>
@@ -97,14 +100,8 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            // Convert Span to array for processing
-            float[] dataArray = data.ToArray();
-            ProcessAudio(dataArray, true);
+            ProcessAudio(data, true);
 
-            // Copy processed data back to span
-            dataArray.AsSpan().CopyTo(data);
-
-            // Raise event for LiveKit integration with stereo channels
             AudioRead?.Invoke(data, STEREO_CHANNELS, sampleRate);
         }
 
@@ -114,14 +111,6 @@ namespace DCL.VoiceChat
             { 
                 tempBuffer = new float[dataLength]; 
             }
-        }
-
-        private void NormalizeOutput(float[] data, int activeStreams)
-        {
-            float norm = 1f / activeStreams;
-
-            for (var i = 0; i < data.Length; i++)
-                data[i] *= norm;
         }
 
         public void AddStream(WeakReference<IAudioStream> weakStream)
