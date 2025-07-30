@@ -5,8 +5,8 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
 {
     public class SceneDebugConsoleLogHistory
     {
-        public readonly List<SceneDebugConsoleLogEntry> UnfilteredLogMessages = new();
         public List<SceneDebugConsoleLogEntry> FilteredLogMessages { get; private set; } = new ();
+        private readonly List<SceneDebugConsoleLogEntry> unfilteredLogMessages = new();
 
         public event Action<SceneDebugConsoleLogEntry> LogMessageAdded;
         private string textFilter;
@@ -15,9 +15,9 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
 
         public void AddLogMessage(SceneDebugConsoleLogEntry logEntry)
         {
-            UnfilteredLogMessages.Add(logEntry);
+            unfilteredLogMessages.Add(logEntry);
 
-            if (string.IsNullOrEmpty(textFilter) || logEntry.Message.Contains(textFilter))
+            if (string.IsNullOrEmpty(textFilter) || KeepAfterFilter(logEntry))
                 FilteredLogMessages.Add(logEntry);
 
             LogMessageAdded?.Invoke(logEntry);
@@ -25,7 +25,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
 
         public void ClearLogMessages()
         {
-            UnfilteredLogMessages.Clear();
+            unfilteredLogMessages.Clear();
             FilteredLogMessages.Clear();
         }
 
@@ -38,10 +38,14 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
             }
 
             textFilter = targetText;
-            FilteredLogMessages = UnfilteredLogMessages.FindAll(entry => entry.Message.Contains(textFilter, StringComparison.OrdinalIgnoreCase));
+            FilteredLogMessages.Clear();
+            FilteredLogMessages = unfilteredLogMessages.FindAll(KeepAfterFilter);
 
             return FilteredLogMessages;
         }
+
+        private bool KeepAfterFilter(SceneDebugConsoleLogEntry entry) =>
+            string.IsNullOrEmpty(textFilter) || entry.Message.Contains(textFilter, StringComparison.OrdinalIgnoreCase);
 
         public List<SceneDebugConsoleLogEntry> RemoveFilters()
         {
@@ -49,7 +53,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
 
             textFilter = string.Empty;
             FilteredLogMessages.Clear();
-            FilteredLogMessages = new List<SceneDebugConsoleLogEntry>(UnfilteredLogMessages);
+            FilteredLogMessages = new List<SceneDebugConsoleLogEntry>(unfilteredLogMessages);
 
             return FilteredLogMessages;
         }
