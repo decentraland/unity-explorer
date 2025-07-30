@@ -1,8 +1,9 @@
-﻿using DCL.Diagnostics;
+﻿﻿using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Profiling;
@@ -139,7 +140,7 @@ namespace ECS.StreamableLoading.Cache.Tests
             CollectionAssert.AreEqual(new[] { (intent1, data1) }, cache.listedCache);
         }
 
-        public class TestLoadingIntent : ILoadingIntention
+        public class TestLoadingIntent : ILoadingIntention, IEquatable<TestLoadingIntent>
         {
             public readonly int Value;
 
@@ -151,6 +152,30 @@ namespace ECS.StreamableLoading.Cache.Tests
             {
                 Value = value;
             }
+
+            public bool Equals(TestLoadingIntent? other)
+            {
+                if (other is null) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return Value == other.Value;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (obj is null) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != GetType()) return false;
+                return Equals((TestLoadingIntent)obj);
+            }
+
+            public override int GetHashCode() =>
+                Value;
+
+            public static bool operator ==(TestLoadingIntent? left, TestLoadingIntent? right) =>
+                Equals(left, right);
+
+            public static bool operator !=(TestLoadingIntent? left, TestLoadingIntent? right) =>
+                !Equals(left, right);
         }
 
         public class TestAsset
@@ -182,12 +207,6 @@ namespace ECS.StreamableLoading.Cache.Tests
             public ProfilerCounterValue<int> InCacheCount = new (ProfilerCategory.Memory, "TEST IN CACHE COUNT", ProfilerMarkerDataUnit.Count);
 
             protected override ref ProfilerCounterValue<int> inCacheCount => ref InCacheCount;
-
-            public override bool Equals(TestLoadingIntent x, TestLoadingIntent y) =>
-                x.Value == y.Value;
-
-            public override int GetHashCode(TestLoadingIntent obj) =>
-                obj.Value.GetHashCode();
         }
     }
 }

@@ -534,7 +534,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b81d843ec79411183cdbe3bccae96de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <userName>k__BackingField: {fileID: 0}
+  <userName>k__BackingField: {fileID: 5683301761491016518}
   <walletIdText>k__BackingField: {fileID: 3383997896918931373}
   <verifiedIcon>k__BackingField: {fileID: 7042121278611764849}
   <usernameClickDetection>k__BackingField: {fileID: 0}

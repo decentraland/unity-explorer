@@ -193,7 +193,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
-            INftNamesProvider nftNamesProvider, 
+            INftNamesProvider nftNamesProvider,
             bool isVoiceChatEnabled,
             GalleryEventBus galleryEventBus)
         {
@@ -341,12 +341,12 @@ namespace DCL.PluginSystem.Global
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
-                    settings.PlaceGridLayoutFixedColumnCount, 
-                    settings.PlaceThumbnailHeight, 
-                    settings.PlaceThumbnailWidth, 
-                    false, 
-                    false), 
-                false, 
+                    settings.PlaceGridLayoutFixedColumnCount,
+                    settings.PlaceThumbnailHeight,
+                    settings.PlaceThumbnailWidth,
+                    false,
+                    false),
+                false,
                 galleryEventBus: galleryEventBus);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
@@ -407,15 +407,15 @@ namespace DCL.PluginSystem.Global
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(
-                    cameraReelView.CameraReelGalleryView, 
+                    cameraReelView.CameraReelGalleryView,
                     this.cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
+                    galleryEventBus,
                     cameraReelView.CameraReelOptionsButton,
                     webBrowser, decentralandUrlsSource, systemClipboard,
                     new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
-                    mvcManager, 
-                    galleryEventBus: galleryEventBus),
+                    mvcManager),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,

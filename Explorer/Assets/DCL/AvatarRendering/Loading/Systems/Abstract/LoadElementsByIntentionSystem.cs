@@ -18,7 +18,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
     public abstract class LoadElementsByIntentionSystem<TAsset, TIntention, TAvatarElement, TAvatarElementDTO> :
         LoadSystemBase<TAsset, TIntention>
-        where TIntention: struct, IAttachmentsLoadingIntention<TAvatarElement>
+        where TIntention: struct, IAttachmentsLoadingIntention<TAvatarElement>, IEquatable<TIntention>
         where TAvatarElementDTO: AvatarAttachmentDTO where TAvatarElement : IAvatarAttachment<TAvatarElementDTO>
     {
         private readonly IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage;
@@ -57,13 +57,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 var lambdaResponse =
                     await ParseBuilderResponseAsync(
                         webRequestController.SignedFetchGetAsync(
-                            new CommonArguments(
-                                url,
-                                attemptsCount: intention.CommonArguments.Attempts
-                            ),
-                            string.Empty,
-                            ct
-                        )
+                            new CommonArguments(url), string.Empty, ct)
                     );
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
@@ -74,10 +68,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 var lambdaResponse =
                     await ParseResponseAsync(
                         webRequestController.GetAsync(
-                            new CommonArguments(
-                                url,
-                                attemptsCount: intention.CommonArguments.Attempts
-                            ),
+                            new CommonArguments(url),
                             ct,
                             GetReportCategory()
                         )

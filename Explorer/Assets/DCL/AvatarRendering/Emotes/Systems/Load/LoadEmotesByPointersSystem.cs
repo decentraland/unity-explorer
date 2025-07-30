@@ -124,8 +124,11 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
-                if (emote.ManifestResult is { Exception: not null })
+                if (emote.ManifestResult is { Exception: not null } || emote.Model is { Exception: not null })
+                {
                     emotesWithResponse++;
+                    continue;
+                }
 
                 if (emote.IsLoading) continue;
                 if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
@@ -188,19 +191,19 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                 URN shortenedPointer = loadingIntentionPointer.Shorten();
 
-                if (!emoteStorage.TryGetElement(shortenedPointer, out IEmote emote))
+                if (!emoteStorage.TryGetElement(shortenedPointer, out var emote))
                 {
-                    if (!intention.RequestedPointers.Contains(loadingIntentionPointer))
-                    {
-                        missingPointers.Add(shortenedPointer);
-                        intention.RequestedPointers.Add(loadingIntentionPointer);
-                    }
-
-                    continue;
+                    emote = IEmote.NewEmpty();
+                    emoteStorage.Set(shortenedPointer, emote);
                 }
 
-                if (emote.Model.Succeeded)
+                if (emote.Model.IsInitialized)
                     resolvedEmotes.List.Add(emote);
+                else if (!emote.IsLoading)
+                {
+                    emote.UpdateLoadingStatus(true);
+                    missingPointers.Add(shortenedPointer);
+                }
             }
         }
 
