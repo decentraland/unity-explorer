@@ -13,7 +13,7 @@ namespace DCL.VoiceChat
     /// </summary>
     public class VoiceChatCombinedStreamsAudioFilter : MonoBehaviour, IAudioFilter, IDisposable
     {
-        private const int DEFAULT_LIVEKIT_CHANNELS = 1;
+        private const int DEFAULT_LIVEKIT_CHANNELS = 2;
 
         private readonly HashSet<WeakReference<IAudioStream>> streams;
         private float[] tempBuffer;
@@ -55,11 +55,18 @@ namespace DCL.VoiceChat
                 {
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
 
-                    // Read mono data from stream
+                    // Read data from stream
                     stream.ReadAudio(tempBuffer, DEFAULT_LIVEKIT_CHANNELS, sampleRate);
 
                     // Mix into output buffer
-                    MixStreamIntoOutput(data, tempBuffer, channels, data.Length);
+                    if (channels != DEFAULT_LIVEKIT_CHANNELS)
+                        MixMonoStreamIntoOutput(data, tempBuffer, channels, data.Length);
+                    else
+                    {
+                        for (var i = 0; i < data.Length; i++)
+                            data[i] += tempBuffer[i];
+                    }
+
                     activeStreams++;
                 }
             }
@@ -98,7 +105,7 @@ namespace DCL.VoiceChat
 
         private void EnsureTempBufferSize(int channels, int dataLength)
         {
-            int requiredSize = channels == 2 ? dataLength / 2 : dataLength;
+            int requiredSize = dataLength;
 
             if (tempBuffer == null || tempBuffer.Length != requiredSize)
             {
@@ -106,7 +113,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void MixStreamIntoOutput(float[] output, float[] monoInput, int channels, int outputLength)
+        private void MixMonoStreamIntoOutput(float[] output, float[] monoInput, int channels, int outputLength)
         {
             if (channels == 2)
             {

@@ -83,11 +83,17 @@ namespace DCL.VoiceChat
             resampleBuffer = null;
         }
 
+        private void OnAudioFilterRead(float[] data, int channels)
+        {
+            AudioRead?.Invoke(data.AsSpan(), channels, 48000);
+        }
+
+
         /// <summary>
         ///     Unity's audio filter callback
         ///     Handles buffering and sending to LiveKit, processing is done in separate thread
         /// </summary>
-        private void OnAudioFilterRead(float[] data, int channels)
+        private void OnAudioFilterRead1(float[] data, int channels)
         {
             if (!isFilterActive || data == null)
                 return;

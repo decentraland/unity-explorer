@@ -167,52 +167,88 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection update: {connectionUpdate}");
+            OnConnectionUpdatedInternal().Forget();
+            return;
 
-            if (connectionState == connectionUpdate) return;
-
-            connectionState = connectionUpdate;
-
-            switch (connectionUpdate)
+            async UniTaskVoid OnConnectionUpdatedInternal()
             {
-                case ConnectionUpdate.Connected:
-                    OnConnectionEstablished();
-                    break;
+                await UniTask.SwitchToMainThread();
 
-                case ConnectionUpdate.Disconnected:
-                    OnConnectionLost(disconnectReason);
-                    break;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection update: {connectionUpdate}");
 
-                case ConnectionUpdate.Reconnecting:
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnecting...");
-                    voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
-                    break;
+                if (connectionState == connectionUpdate) return;
 
-                case ConnectionUpdate.Reconnected:
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnected successfully");
-                    voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
-                    break;
+                connectionState = connectionUpdate;
+
+                switch (connectionUpdate)
+                {
+                    case ConnectionUpdate.Connected:
+                        OnConnectionEstablished();
+                        break;
+
+                    case ConnectionUpdate.Disconnected:
+                        OnConnectionLost(disconnectReason);
+                        break;
+
+                    case ConnectionUpdate.Reconnecting:
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnecting...");
+                        voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
+                        break;
+
+                    case ConnectionUpdate.Reconnected:
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnected successfully");
+                        voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
+                        break;
+                }
             }
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            trackManager.HandleTrackSubscribed(track, publication, participant);
+            OnTrackSubscribedInternal().Forget();
+            return;
+
+            async UniTaskVoid OnTrackSubscribedInternal()
+            {
+                await UniTask.SwitchToMainThread();
+                trackManager.HandleTrackSubscribed(track, publication, participant);
+            }
         }
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            trackManager.HandleTrackUnsubscribed(track, publication, participant);
+            OnTrackUnsubscribedInternal().Forget();
+            return;
+
+            async UniTaskVoid OnTrackUnsubscribedInternal()
+            {
+                await UniTask.SwitchToMainThread();
+                trackManager.HandleTrackUnsubscribed(track, publication, participant);
+            }
         }
 
         private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
         {
-            trackManager.HandleLocalTrackPublished(publication, participant);
+            OnLocalTrackPublishedInternal().Forget();
+            return;
+
+            async UniTaskVoid OnLocalTrackPublishedInternal()
+            {
+                await UniTask.SwitchToMainThread();
+                trackManager.HandleLocalTrackPublished(publication, participant);
+            }
         }
 
         private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
         {
-            trackManager.HandleLocalTrackUnpublished(publication, participant);
+            OnLocalTrackUnpublishedInternal().Forget();
+            return;
+
+            async UniTaskVoid OnLocalTrackUnpublishedInternal()
+            {
+                await UniTask.SwitchToMainThread();
+                trackManager.HandleLocalTrackUnpublished(publication, participant);
+            }
         }
 
         private void OnReconnectionStarted()
@@ -236,10 +272,9 @@ namespace DCL.VoiceChat
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
+                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                 trackManager.StartListeningToRemoteTracks();
                 trackManager.PublishLocalTrack(CancellationToken.None);
-
-                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
 
                 ConnectionEstablished?.Invoke();
                 MediaActivated?.Invoke();
@@ -251,8 +286,6 @@ namespace DCL.VoiceChat
 
         private void OnConnectionLost(DisconnectReason? disconnectReason)
         {
-            //TODO: Add proper logic to handle disconnection reason.
-
             try
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Cleaning up tracks and media");
@@ -267,7 +300,7 @@ namespace DCL.VoiceChat
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection cleanup completed");
 
-                reconnectionManager.StartOrderedDisconnectionGracePeriod();
+                reconnectionManager.StartOrderedDisconnectionGracePeriod(disconnectReason);
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }
         }

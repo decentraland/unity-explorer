@@ -4,6 +4,8 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
+using LiveKit.Audio;
+using RichTypes;
 using System.Threading;
 using Utility;
 using Object = UnityEngine.Object;
@@ -28,9 +30,11 @@ namespace DCL.VoiceChat
         private int microphoneSampleRate;
         private string microphoneName;
         private float buttonPressStartTime;
-
+        private MicrophoneRtcAudioSource2 rtcAudioSource;
 
         public VoiceChatMicrophoneAudioFilter AudioFilter => audioFilter;
+        public AudioSource AudioSource => audioSource;
+
         public event Action EnabledMicrophone;
         public event Action DisabledMicrophone;
 
@@ -157,16 +161,21 @@ namespace DCL.VoiceChat
 
             microphoneSampleRate = VoiceChatMicrophoneHelper.GetOptimalMicrophoneSampleRate(microphoneName);
 
-            microphoneAudioClip = Microphone.Start(microphoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, microphoneSampleRate);
+            microphoneAudioClip = Microphone.Start(microphoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, 48000); //microphoneSampleRate); REMOVED TO COMPLY WITH EXAMPLE
 
             audioSource.clip = microphoneAudioClip;
-            audioSource.volume = 0f;
+
+
+            AudioSource.volume = 0f;
 
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone initialized with sample rate: {microphoneSampleRate}Hz");
 
             // If we're in a call, wait for fresh audio data before proceeding
-            if (isInCall) { WaitAndReinitializeMicrophoneAsync(false, voiceChatSettings.SelectedMicrophoneIndex, microphoneChangeCts.Token).Forget(); }
+            if (isInCall)
+            {
+                WaitAndReinitializeMicrophoneAsync(false, voiceChatSettings.SelectedMicrophoneIndex, microphoneChangeCts.Token).Forget();
+            }
         }
 
         private void EnableMicrophone()
@@ -202,8 +211,7 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophoneInternal()
         {
-            //Disabled for now until we test new RtcAudioSource
-            /*if (audioSource != null)
+            if (audioSource != null)
             {
                 audioSource.loop = false;
                 audioSource.Stop();
@@ -213,7 +221,7 @@ namespace DCL.VoiceChat
             {
                 audioFilter.enabled = false;
                 audioFilter.SetFilterActive(false);
-            }*/
+            }
             DisabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
@@ -269,8 +277,8 @@ namespace DCL.VoiceChat
         {
             try
             {
-                // Wait to ensure all audio system cleanup is complete and buffers are flushed
-                await UniTask.Delay(voiceChatConfiguration.MicrophoneReinitDelayMs, cancellationToken: ct);
+                // Wait to ensure all audio system cleanup is complete and buffers are flushed //COMMENTED TO MATCH EXAMPLE
+                //await UniTask.Delay(voiceChatConfiguration.MicrophoneReinitDelayMs, cancellationToken: ct); //COMMENTED TO MATCH EXAMPLE
 
                 if (ct.IsCancellationRequested || !isInCall)
                 {
@@ -280,7 +288,7 @@ namespace DCL.VoiceChat
 
                 InitializeMicrophone();
 
-                await WaitForFreshMicrophoneDataAsync(ct);
+                //await WaitForFreshMicrophoneDataAsync(ct); //COMMENTED TO MATCH EXAMPLE
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone Initialized with new device after delay: {Microphone.devices[newMicrophoneIndex]}");
 
@@ -335,9 +343,6 @@ namespace DCL.VoiceChat
 
         public void EnableMicrophoneForCall()
         {
-            if (!isMicrophoneInitialized)
-                InitializeMicrophone();
-
             isInCall = true;
             isTalking = true;
             EnableMicrophone();

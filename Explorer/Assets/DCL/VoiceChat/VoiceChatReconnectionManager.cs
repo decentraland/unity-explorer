@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities.Extensions;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
 using System.Threading;
@@ -53,11 +54,26 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
 
-        public void StartOrderedDisconnectionGracePeriod()
+        public void StartOrderedDisconnectionGracePeriod(DisconnectReason? disconnectReason)
         {
             if (isDisposed) return;
 
-            isOrderedDisconnection = false;
+            //TODO FRAN: Extract this checking into a static helper method to simplify this, we use this at least in 2 places.
+            if (disconnectReason is
+                DisconnectReason.ClientInitiated or
+                DisconnectReason.DuplicateIdentity or
+                DisconnectReason.JoinFailure or
+                DisconnectReason.ParticipantRemoved or
+                DisconnectReason.RoomClosed or
+                DisconnectReason.RoomDeleted or
+                DisconnectReason.ServerShutdown or
+                DisconnectReason.UserRejected)
+                isOrderedDisconnection = true;
+            else
+            {
+                isOrderedDisconnection = false;
+            }
+
             orderedDisconnectionCts = orderedDisconnectionCts.SafeRestart();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Starting ordered disconnection grace period");
