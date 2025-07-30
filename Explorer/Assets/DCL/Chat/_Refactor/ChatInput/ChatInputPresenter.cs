@@ -13,6 +13,7 @@ using Utility.Types;
 
 public class ChatInputPresenter : IDisposable
 {
+    private readonly ChatInputView view;
     private readonly ICurrentChannelService currentChannelService;
     private readonly EventSubscriptionScope scope = new();
 
@@ -30,6 +31,7 @@ public class ChatInputPresenter : IDisposable
         ProfileRepositoryWrapper profileRepositoryWrapper,
         SendMessageCommand sendMessageCommand)
     {
+        this.view = view;
         this.currentChannelService = currentChannelService;
 
         var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
@@ -68,6 +70,8 @@ public class ChatInputPresenter : IDisposable
 
     private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
     {
+        view.ClearInput();
+
         UpdateStateForChannel().Forget();
     }
 

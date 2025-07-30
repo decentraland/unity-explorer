@@ -82,7 +82,7 @@ namespace DCL.Chat
             inputField.ReplaceTextAtPosition(replaceAt, replaceAmount, suggestion);
 
             // TODO It's here because the input field needs to be focused again after losing focus
-            context.ChatInputView.SetActiveTyping();
+            context.ChatInputView.SelectInputField();
         }
 
         protected override void Activate(ControllerNoData input)

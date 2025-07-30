@@ -131,7 +131,7 @@ namespace DCL.Chat
                 pasteToastState!.ReActivate();
 
                 // TODO Input Field get deactivate when the focus is lost, we should find a better way to handle this
-                context.ChatInputView.SetActiveTyping();
+                context.ChatInputView.SelectInputField();
             }
         }
 
@@ -159,6 +159,12 @@ namespace DCL.Chat
         protected override void OnInputBlocked()
         {
             ChangeState<BlockedChatInputState>();
+        }
+
+        protected override void OnInputUnblocked()
+        {
+            // Regain the focus on the input field
+            context.ChatInputView.SelectInputField();
         }
     }
 }
