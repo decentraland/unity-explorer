@@ -25,8 +25,9 @@ namespace DCL.Settings.ModuleControllers
 
         private void ApplySettings(int pickedMicrophoneIndex)
         {
-            DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME, Microphone.devices[pickedMicrophoneIndex]);
-            voiceChatSettings.OnMicrophoneChanged(pickedMicrophoneIndex);
+            string name = Microphone.devices[pickedMicrophoneIndex]!;
+            DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME, name);
+            voiceChatSettings.OnMicrophoneChanged(name);
         }
 
         private void AudioConfigChanged(bool deviceWasChanged)
@@ -58,7 +59,7 @@ namespace DCL.Settings.ModuleControllers
         private void UpdateDropdownSelection(int index)
         {
             view.DropdownView.Dropdown.value = index;
-            voiceChatSettings.OnMicrophoneChanged(index);
+            voiceChatSettings.OnMicrophoneChanged(Microphone.devices[index]);
             view.DropdownView.Dropdown.RefreshShownValue();
         }
 

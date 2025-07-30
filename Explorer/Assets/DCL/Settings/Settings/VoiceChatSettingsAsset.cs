@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Settings.Settings
 {
@@ -6,16 +7,15 @@ namespace DCL.Settings.Settings
     //    [CreateAssetMenu(fileName = "VoiceChatSettings", menuName = "DCL/Settings/Voice Chat Settings")]
     public class VoiceChatSettingsAsset : ScriptableObject
     {
-        public delegate void MicrophoneChangedDelegate(int newMicrophoneIndex);
+        public delegate void MicrophoneChangedDelegate(string newMicrophoneName);
         public event MicrophoneChangedDelegate MicrophoneChanged;
 
-        public int SelectedMicrophoneIndex;
+        public string SelectedMicrophoneName;
 
-
-        public void OnMicrophoneChanged(int newMicrophoneIndex)
+        public void OnMicrophoneChanged(string newMicrophoneName)
         {
-            SelectedMicrophoneIndex = newMicrophoneIndex;
-            MicrophoneChanged?.Invoke(newMicrophoneIndex);
+            SelectedMicrophoneName = newMicrophoneName;
+            MicrophoneChanged?.Invoke(newMicrophoneName);
         }
     }
 }

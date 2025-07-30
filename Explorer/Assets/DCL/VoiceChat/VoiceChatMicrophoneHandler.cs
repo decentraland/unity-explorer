@@ -1,54 +1,31 @@
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using System;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
-using LiveKit.Audio;
+using DCL.VoiceChat.Sources;
 using RichTypes;
-using System.Threading;
-using Utility;
-using Object = UnityEngine.Object;
+using Utility.Ownership;
 
 namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
-        private const bool MICROPHONE_LOOP = true;
-        private const int MICROPHONE_LENGTH_SECONDS = 1;
-
         private readonly VoiceChatSettingsAsset voiceChatSettings;
-        private readonly VoiceChatConfiguration voiceChatConfiguration;
-        private readonly AudioSource audioSource;
-
-        private AudioClip microphoneAudioClip;
-        private bool isMicrophoneInitialized;
+        private Weak<MultiMicrophoneRtcAudioSource> source = Weak<MultiMicrophoneRtcAudioSource>.Null;
         private bool isInCall;
-        private CancellationTokenSource microphoneChangeCts;
-        private int microphoneSampleRate;
-        private string microphoneName;
-        private float buttonPressStartTime;
-        private MicrophoneRtcAudioSource2 rtcAudioSource;
 
-        public VoiceChatMicrophoneAudioFilter AudioFilter { get; }
+        public event Action? EnabledMicrophone;
+        public event Action? DisabledMicrophone;
 
-        private bool isTalking { get; set; }
-
-        public event Action EnabledMicrophone;
-        public event Action DisabledMicrophone;
+        public string CurrentMicrophoneName => voiceChatSettings.SelectedMicrophoneName ?? throw new Exception("Microphone name is not selected");
 
         public VoiceChatMicrophoneHandler(
-            VoiceChatSettingsAsset voiceChatSettings,
-            VoiceChatConfiguration voiceChatConfiguration,
-            AudioSource audioSource,
-            VoiceChatMicrophoneAudioFilter audioFilter)
+            VoiceChatSettingsAsset voiceChatSettings)
         {
             this.voiceChatSettings = voiceChatSettings;
-            this.voiceChatConfiguration = voiceChatConfiguration;
-            this.audioSource = audioSource;
-            this.AudioFilter = audioFilter;
 
-            DCLInput.Instance.VoiceChat.Talk.performed += OnPressed;
+            DCLInput.Instance.VoiceChat.Talk!.performed += OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
             isInCall = false;
@@ -56,134 +33,56 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            DCLInput.Instance.VoiceChat.Talk.performed -= OnPressed;
+            DCLInput.Instance.VoiceChat.Talk!.performed -= OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled -= OnReleased;
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
-
-            microphoneChangeCts?.SafeCancelAndDispose();
-
-            if (isMicrophoneInitialized)
-            {
-                if (audioSource != null)
-                {
-                    audioSource.volume = 0f;
-                    audioSource.Stop();
-                    audioSource.clip = null;
-                }
-
-                Microphone.End(microphoneName);
-
-                if (AudioFilter != null)
-                    AudioFilter.enabled = false;
-            }
         }
 
         private void OnPressed(InputAction.CallbackContext obj)
         {
             if (!isInCall) return;
 
-            buttonPressStartTime = Time.time;
-
             // Start the microphone immediately when button is pressed
             // If it's a quick press, we'll handle it in OnReleased
-            if (!isTalking)
-                EnableMicrophone();
+            var option = source.Resource;
+            if (option.Has) option.Value.Start();
         }
 
         private void OnReleased(InputAction.CallbackContext obj)
         {
             if (!isInCall) return;
-
-            float pressDuration = Time.time - buttonPressStartTime;
-
-            // If the button was held for longer than the threshold, treat it as push-to-talk and stop communication on release
-            if (pressDuration >= voiceChatConfiguration.HoldThresholdInSeconds)
-            {
-                isTalking = false;
-                DisableMicrophone();
-            }
-            else
-            {
-                if (isTalking)
-                    DisableMicrophone();
-
-                isTalking = !isTalking;
-            }
+            DisableMicrophone();
         }
 
         public void ToggleMicrophone()
         {
-            if (!isInCall)
-                return;
+            if (!isInCall) return;
 
-            if (!isTalking)
-                EnableMicrophone();
-            else
-                DisableMicrophone();
-
-            isTalking = !isTalking;
+            var option = source.Resource;
+            if (option.Has) option.Value.Toggle();
         }
 
-        public void Reset()
+        public void Assign(Weak<MultiMicrophoneRtcAudioSource> newSource)
         {
-            if (AudioFilter != null)
-            {
-                AudioFilter.Reset();
-                AudioFilter.SetFilterActive(true);
-            }
-
-            isTalking = false;
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone handler reset for new call");
+            source = newSource;
         }
 
-        private void InitializeMicrophone()
-        {
-            if (isMicrophoneInitialized)
-                return;
-
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            // On macOS, check if we have microphone permission
-            if (Microphone.devices.Length == 0)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "No microphone devices found on macOS. This may indicate missing microphone permissions.");
-                return;
-            }
-#endif
-            if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range. Using default microphone.");
-                microphoneName = Microphone.devices[0];
-            }
-            else
-                microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-
-            microphoneSampleRate = VoiceChatMicrophoneHelper.GetOptimalMicrophoneSampleRate(microphoneName);
-
-            //RESTORED USING MICROPHONE SAMPLE RATE - VERIFY EFFECT
-            microphoneAudioClip = Microphone.Start(microphoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, microphoneSampleRate);
-
-            audioSource.clip = microphoneAudioClip;
-
-            audioSource.volume = 0f;
-
-            isMicrophoneInitialized = true;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone initialized with sample rate: {microphoneSampleRate}Hz");
-
-            // If we're in a call, wait for fresh audio data before proceeding
-            if (isInCall) { WaitAndReinitializeMicrophoneAsync(false, voiceChatSettings.SelectedMicrophoneIndex, microphoneChangeCts.Token).Forget(); }
-        }
+        // TODO
+        // #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+        //
+        //         // On macOS, check if we have microphone permission
+        //         if (Microphone.devices.Length == 0)
+        //         {
+        //             ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "No microphone devices found on macOS. This may indicate missing microphone permissions.");
+        //             return;
+        //         }
+        // #endif
 
         private void EnableMicrophone()
         {
-            if (!isMicrophoneInitialized)
-                InitializeMicrophone();
+            var option = source.Resource;
+            if (option.Has) option.Value.Start();
 
-            audioSource.loop = true;
-            audioSource.Play();
-            audioSource.volume = 1f;
-            AudioFilter.enabled = true;
-            AudioFilter.SetFilterActive(true);
             EnabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
@@ -207,151 +106,61 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophoneInternal()
         {
-            if (audioSource != null)
-            {
-                audioSource.loop = false;
-                audioSource.Stop();
-                audioSource.volume = 0f;
-            }
-
-            if (AudioFilter != null)
-            {
-                AudioFilter.enabled = false;
-                AudioFilter.SetFilterActive(false);
-            }
+            var option = source.Resource;
+            if (option.Has) option.Value.Stop();
 
             DisabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
 
-        private void OnMicrophoneChanged(int newMicrophoneIndex)
+        private void OnMicrophoneChanged(string microphoneName)
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change dispatching to main thread (async)");
-                OnMicrophoneChangedAsync(newMicrophoneIndex).Forget();
+                OnMicrophoneChangedAsync(microphoneName).Forget();
                 return;
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing on main thread (sync)");
-            HandleMicrophoneChange(newMicrophoneIndex);
+            HandleMicrophoneChange(microphoneName);
         }
 
-        private async UniTaskVoid OnMicrophoneChangedAsync(int newMicrophoneIndex)
+        private async UniTaskVoid OnMicrophoneChangedAsync(string microphoneName)
         {
             await UniTask.SwitchToMainThread();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
-            HandleMicrophoneChange(newMicrophoneIndex);
+            HandleMicrophoneChange(microphoneName);
         }
 
-        private void HandleMicrophoneChange(int newMicrophoneIndex)
+        private void HandleMicrophoneChange(string microphoneName)
         {
-            microphoneChangeCts = microphoneChangeCts.SafeRestart();
+            var option = source.Resource;
 
-            bool wasTalking = isTalking;
-
-            if (isMicrophoneInitialized)
+            if (option.Has == false)
             {
-                DisableMicrophone();
-                Microphone.End(microphoneName);
-
-                if (microphoneAudioClip != null)
-                {
-                    Object.Destroy(microphoneAudioClip);
-                    microphoneAudioClip = null;
-                }
-
-                audioSource.clip = null;
-                isMicrophoneInitialized = false;
-            }
-
-            if (isInCall)
-                WaitAndReinitializeMicrophoneAsync(wasTalking, newMicrophoneIndex, microphoneChangeCts.Token).Forget();
-            else
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone change noted but not in call: {Microphone.devices[newMicrophoneIndex]}");
-        }
-
-        private async UniTaskVoid WaitAndReinitializeMicrophoneAsync(bool wasTalking, int newMicrophoneIndex, CancellationToken ct)
-        {
-            try
-            {
-                // Wait to ensure all audio system cleanup is complete and buffers are flushed //COMMENTED TO MATCH EXAMPLE
-                //await UniTask.Delay(voiceChatConfiguration.MicrophoneReinitDelayMs, cancellationToken: ct); //COMMENTED TO MATCH EXAMPLE
-
-                if (ct.IsCancellationRequested || !isInCall)
-                {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change operation cancelled or no longer in call");
-                    return;
-                }
-
-                InitializeMicrophone();
-
-                //await WaitForFreshMicrophoneDataAsync(ct); //COMMENTED TO MATCH EXAMPLE
-
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone Initialized with new device after delay: {Microphone.devices[newMicrophoneIndex]}");
-
-                if (wasTalking && !ct.IsCancellationRequested)
-                    EnableMicrophone();
-            }
-            catch (OperationCanceledException) { ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change operation was cancelled"); }
-        }
-
-        private async UniTask WaitForFreshMicrophoneDataAsync(CancellationToken ct)
-        {
-            if (microphoneAudioClip == null || !Microphone.IsRecording(microphoneName))
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName}");
                 return;
-
-            if (audioSource != null)
-            {
-                audioSource.time = 0f;
-                audioSource.timeSamples = 0;
             }
 
-            // Wait for microphone to complete at least one full recording cycle
-            // This ensures we have fresh audio data, not stale data from the previous device
-            int initialPosition = Microphone.GetPosition(microphoneName);
-            int targetSamples = microphoneSampleRate / 2;
+            Result result = option.Value.SwitchMicrophone(microphoneName);
 
-            var waitTime = 0;
-            int maxWaitTime = voiceChatConfiguration.MaxFreshDataWaitTimeMs;
-
-            while (waitTime < maxWaitTime && !ct.IsCancellationRequested)
-            {
-                await UniTask.Delay(voiceChatConfiguration.FreshDataCheckDelayMs, cancellationToken: ct);
-                waitTime += voiceChatConfiguration.FreshDataCheckDelayMs;
-
-                int currentPosition = Microphone.GetPosition(microphoneName);
-
-                // Check if we've recorded enough fresh samples or if the recording has looped
-                if (currentPosition > targetSamples || currentPosition < initialPosition)
-                {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Fresh microphone data detected after {waitTime}ms");
-                    break;
-                }
-            }
-
-            if (audioSource != null && !ct.IsCancellationRequested)
-            {
-                audioSource.time = 0f;
-                audioSource.timeSamples = 0;
-            }
+            if (result.Success == false)
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot change microphone to: {microphoneName}");
         }
 
         public void EnableMicrophoneForCall()
         {
             isInCall = true;
-            isTalking = true;
             EnableMicrophone();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone enabled for call (room connected)");
         }
 
         public void DisableMicrophoneForCall()
         {
-            if (!isInCall) return;
             isInCall = false;
-            isTalking = false;
             DisableMicrophone();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone disabled for call (room disconnected)");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone disabled for call");
         }
     }
 }
