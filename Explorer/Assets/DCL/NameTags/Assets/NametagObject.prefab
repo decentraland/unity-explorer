@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4749931970429816948
 RectTransform:
   m_ObjectHideFlags: 0
@@ -210,7 +210,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.925, y: 0.008}
+  m_AnchoredPosition: {x: 0.85, y: 0}
   m_SizeDelta: {x: 2.25, y: 0.3}
   m_Pivot: {x: 0, y: 0}
 --- !u!23 &6884707822197571098
@@ -305,8 +305,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 1.4
-  m_fontSizeBase: 1.4
+  m_fontSize: 1.3
+  m_fontSizeBase: 1.3
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -556,8 +556,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.523, y: -0.004}
-  m_SizeDelta: {x: 0.39, y: 0.3}
+  m_AnchoredPosition: {x: 0.509, y: 0}
+  m_SizeDelta: {x: 0.34, y: 0.3}
   m_Pivot: {x: 0, y: 0}
 --- !u!1 &3871134044252155348
 GameObject:
@@ -684,7 +684,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1.639, y: -0.004}
+  m_AnchoredPosition: {x: 1.52, y: 0}
   m_SizeDelta: {x: 0.12, y: 0.3}
   m_Pivot: {x: 0, y: 0}
 --- !u!1 &4540754272894297556
@@ -989,7 +989,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.3961, y: 0}
+  m_AnchoredPosition: {x: 0.439, y: 0}
   m_SizeDelta: {x: 0.1541, y: 0.3}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!1 &6424952767005950802
@@ -1335,7 +1335,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0.31, y: 0.21}
+  m_SizeDelta: {x: 0.28, y: 0.19}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!212 &5844589265473337727
 SpriteRenderer:
@@ -1386,7 +1386,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
-  m_Size: {x: 0.31, y: 0.21}
+  m_Size: {x: 0.28, y: 0.19}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1612,8 +1612,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 1.5
-  m_fontSizeBase: 1.5
+  m_fontSize: 1.4
+  m_fontSizeBase: 1.4
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
