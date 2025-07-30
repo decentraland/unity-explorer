@@ -47,6 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShape;
+        private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShapeCopy;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
@@ -69,6 +70,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.wearableStorage = wearableStorage;
             this.avatarTransformMatrixBatchJob = avatarTransformMatrixBatchJob;
             this.facialFeaturesTexturesByBodyShape = facialFeaturesTexturesByBodyShape;
+
+            facialFeaturesTexturesByBodyShapeCopy = new FacialFeaturesTextures[facialFeaturesTexturesByBodyShape.Length];
+
+            for (var i = 0; i < facialFeaturesTexturesByBodyShapeCopy.Length; i++)
+                facialFeaturesTexturesByBodyShapeCopy[i] = new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>());
         }
 
         protected override void OnDispose()
@@ -182,7 +188,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 visibleWearables = fallbackBodyShape!;
             }
 
-            FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape].CreateCopy();
+            // Restore the original facial feature textures
+            facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape]
+               .CopyInto(ref facialFeaturesTexturesByBodyShapeCopy[avatarShapeComponent.BodyShape]);
+            // Use a copy of the textures so it can be modified during the skinned mesh setup
+            FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShapeCopy[avatarShapeComponent.BodyShape];
+
             var attachPoint = avatarBase.transform;
 
             for (var i = 0; i < visibleWearables.Count; i++)
@@ -216,8 +227,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 wearablesResult.Asset.Dispose();
 
             avatarShapeComponent.IsDirty = false;
-
-            facialFeatureTextures.Dispose();
 
             return skinningComponent;
         }

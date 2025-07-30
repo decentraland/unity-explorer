@@ -1,44 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public readonly struct FacialFeaturesTextures : IDisposable
+    public readonly struct FacialFeaturesTextures
     {
-        public readonly IReadOnlyDictionary<string, Dictionary<int, Texture>> Value;
+        private readonly Dictionary<string, Dictionary<int, Texture>> texturesByCategory;
+        public IReadOnlyDictionary<string, Dictionary<int, Texture>> Value => texturesByCategory;
 
-        public FacialFeaturesTextures(IReadOnlyDictionary<string, Dictionary<int, Texture>> value)
+        public FacialFeaturesTextures(Dictionary<string, Dictionary<int, Texture>> value)
         {
-            Value = value;
+            texturesByCategory = value;
         }
 
         public Texture this[string category, int originalTextureId] => Value[category][originalTextureId];
 
-        public FacialFeaturesTextures CreateCopy()
+        public void CopyInto(ref FacialFeaturesTextures other)
         {
-            var texturesByCategory = DictionaryPool<string, Dictionary<int, Texture>>.Get();
+            var texturesByCategory = other.texturesByCategory;
 
             foreach ((string? category, Dictionary<int, Texture>? existingTextures) in Value)
             {
-                var newTextures = DictionaryPool<int, Texture>.Get();
+                if (!texturesByCategory.ContainsKey(category))
+                    texturesByCategory[category] = new Dictionary<int, Texture>();
+
+                var newTextures = texturesByCategory[category];
+                newTextures.Clear();
 
                 foreach ((int textureId, Texture? texture) in existingTextures)
                     newTextures[textureId] = texture;
-
-                texturesByCategory[category] = newTextures;
             }
-
-            return new FacialFeaturesTextures(texturesByCategory);
-        }
-
-        public void Dispose()
-        {
-            foreach (var textures in Value.Values)
-                DictionaryPool<int, Texture>.Release(textures);
-
-            DictionaryPool<string, Dictionary<int, Texture>>.Release((Dictionary<string, Dictionary<int, Texture>>)Value);
         }
     }
 }
