@@ -6168,7 +6168,7 @@ MonoBehaviour:
   - {fileID: 130928485671573892}
   - {fileID: 5229879686127759125}
   - {fileID: 2088843554703796664}
-  tweenDuration: 5
+  tweenDuration: 1
   fadeDuration: 0.3
 --- !u!1 &8188520677342984740
 GameObject:

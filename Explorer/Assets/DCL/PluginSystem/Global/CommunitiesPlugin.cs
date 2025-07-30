@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Chat.EventBus;
+using DCL.InWorldCamera;
 using DCL.Input;
 using DCL.Clipboard;
 using DCL.Communities;
@@ -12,6 +13,7 @@ using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -50,7 +52,9 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly GalleryEventBus galleryEventBus;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -75,9 +79,11 @@ namespace DCL.PluginSystem.Global
             IEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
+            GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
             LambdasProfilesProvider lambdasProfilesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.mvcManager = mvcManager;
@@ -98,7 +104,9 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
+            this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
         }
 
@@ -118,7 +126,8 @@ namespace DCL.PluginSystem.Global
             CommunityCardView communityCardViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCardPrefab, ct: ct)).GetComponent<CommunityCardView>();
             ControllerBase<CommunityCardView, CommunityCardParameter>.ViewFactoryMethod viewFactoryMethod = CommunityCardController.Preallocate(communityCardViewAsset, null, out CommunityCardView communityCardView);
 
-            communityCardController = new CommunityCardController(viewFactoryMethod,
+            communityCardController = new CommunityCardController(
+                viewFactoryMethod,
                 mvcManager,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
@@ -133,7 +142,10 @@ namespace DCL.PluginSystem.Global
                 eventsApiService,
                 sharedSpaceManager,
                 chatEventBus,
-                web3IdentityCache);
+                decentralandUrlsSource,
+                web3IdentityCache,
+                lambdasProfilesProvider,
+                galleryEventBus);
 
             mvcManager.RegisterController(communityCardController);
 

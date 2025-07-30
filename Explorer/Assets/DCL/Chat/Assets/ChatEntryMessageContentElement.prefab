@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 2681651048344826938}
   - component: {fileID: 7487901908219479282}
   - component: {fileID: 4356320699868230769}
+  - component: {fileID: 3791543365945331275}
   m_Layer: 5
   m_Name: ChatEntryMessageContentElement
   m_TagString: Untagged
@@ -169,6 +170,7 @@ MonoBehaviour:
   <messageContentSizeFitter>k__BackingField: {fileID: 5118336956721699336}
   <messageContentText>k__BackingField: {fileID: 2681651048344826938}
   <textHyperlinkHandler>k__BackingField: {fileID: 4356320699868230769}
+  messageContentCanvas: {fileID: 3791543365945331275}
 --- !u!114 &4356320699868230769
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,3 +184,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   textComponent: {fileID: 2681651048344826938}
+--- !u!225 &3791543365945331275
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5238833002639546345}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
