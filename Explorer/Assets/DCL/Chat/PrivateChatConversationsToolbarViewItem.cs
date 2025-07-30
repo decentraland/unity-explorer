@@ -25,7 +25,6 @@ namespace DCL.Chat
         {
             base.Start();
             removeButton.gameObject.SetActive(true);
-            connectionStatusIndicatorContainer.SetActive(true);
         }
 
         public override void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)

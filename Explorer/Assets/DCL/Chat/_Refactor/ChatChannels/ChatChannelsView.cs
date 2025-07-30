@@ -268,14 +268,15 @@ namespace DCL.Chat
                 case UserChannelViewModel user:
                     newItem.SetConversationName(user.DisplayName);
                     newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
-                    newItem.Configure(isClosable: true, hasOnlineStatus: true);
+                    newItem.Configure(isClosable: true, hasOnlineStatus: false);
                     newItem.BindProfileThumbnail(user.ProfilePicture);
-                    newItem.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+                    newItem.SetConnectionStatus(OnlineStatus.OFFLINE);
                     
                     break;
 
                 case CommunityChannelViewModel community:
                     newItem.SetConversationName(community.DisplayName);
+                    newItem.SetPicture(community.Thumbnail, Color.white);
                     newItem.Configure(isClosable: true, hasOnlineStatus: false);
                     break;
             }

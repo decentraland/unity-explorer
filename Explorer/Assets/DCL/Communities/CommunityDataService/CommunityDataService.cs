@@ -46,9 +46,11 @@ namespace DCL.Communities
 
             communitiesDataProvider.CommunityCreated += OnCommunityCreated;
             communitiesDataProvider.CommunityDeleted += OnCommunityDeleted;
+            communitiesDataProvider.CommunityLeft += OnCommunityLeft;
 
             SubscribeToCommunitiesBusEventsAsync().Forget();
         }
+
 
         private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
         {
@@ -76,6 +78,17 @@ namespace DCL.Communities
                 chatHistory.RemoveChannel(channelId);
                 communities.Remove(channelId);
             }
+        }
+
+        private void OnCommunityLeft(string communityId, bool success)
+        {
+            if (!success) return;
+
+            var channelId = ChatChannel.NewCommunityChannelId(communityId);
+
+            communities.Remove(channelId);
+
+            chatHistory.RemoveChannel(channelId);
         }
 
         private async UniTask AddCommunityConversationAsync(string communityId, bool setAsCurrentChannel = false)
@@ -145,7 +158,8 @@ namespace DCL.Communities
         {
             communitiesDataProvider.CommunityCreated -= OnCommunityCreated;
             communitiesDataProvider.CommunityDeleted -= OnCommunityDeleted;
-
+            communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
+            
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
 

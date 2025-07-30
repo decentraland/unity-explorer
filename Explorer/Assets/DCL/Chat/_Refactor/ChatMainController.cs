@@ -120,7 +120,7 @@ namespace DCL.Chat
                 currentChannelService,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
-                commandRegistry.LeaveChannel,
+                commandRegistry.CloseChannel,
                 commandRegistry.OpenConversation,
                 commandRegistry.CreateChannelViewModel);
 

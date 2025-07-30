@@ -143,7 +143,7 @@ namespace DCL.Chat
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
-            connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
+            connectionStatusIndicatorContainer.SetActive(connectionStatus == OnlineStatus.ONLINE);
 
             if(thumbnailView != null && thumbnailView.TryGetComponent(out ProfilePictureView profilePictureView))
                 profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
@@ -247,7 +247,7 @@ namespace DCL.Chat
         {
             tooltip.gameObject.SetActive(false);
             removeButton.gameObject.SetActive(false);
-            connectionStatusIndicatorContainer.gameObject.SetActive(false);
+            connectionStatusIndicatorContainer.SetActive(false);
 
             SetConnectionStatus(storedConnectionStatus);
         }
