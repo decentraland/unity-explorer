@@ -69,7 +69,7 @@ namespace DCL.VoiceChat
 
             try
             {
-                Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(microphoneHandler.CurrentMicrophoneName);
+                Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(microphoneHandler.CurrentMicrophoneName, configuration.AudioMixerGroup);
                 if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
 
                 var rtcAudioSource = result.Value;
