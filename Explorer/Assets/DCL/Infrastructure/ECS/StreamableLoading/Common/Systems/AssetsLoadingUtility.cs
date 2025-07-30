@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     // Decide if we can repeat or not
                     --attemptCount;
 
-                    if (unityWebRequestException.IsIrrecoverableError(attemptCount))
+                    if (attemptCount <= 0 || unityWebRequestException.IsIrrecoverableError())
                     {
                         // no more sources left
                         ReportHub.Log(

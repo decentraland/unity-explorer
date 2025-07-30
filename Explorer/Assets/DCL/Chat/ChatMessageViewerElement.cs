@@ -68,6 +68,10 @@ namespace DCL.Chat
         [SerializeField]
         private ScrollRect scrollRect;
 
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float entryGreyOutOpacity = 0.6f;
+
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
 
@@ -81,6 +85,8 @@ namespace DCL.Chat
         private CancellationTokenSource popupCts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
+        private HashSet<string>? onlineUserAddresses;
+        private CancellationTokenSource greyOutCts;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -223,6 +229,9 @@ namespace DCL.Chat
                 }
             }
 
+            greyOutCts = greyOutCts.SafeRestart();
+            ApplyGreyOutAsync(greyOutCts.Token).Forget();
+
             entriesPendingToAnimate = 0;
         }
 
@@ -293,6 +302,47 @@ namespace DCL.Chat
             return false;
         }
 
+        /// <summary>
+        /// Checks all the chat entry instances (only those that are visible in the list) and greys them out if the user who sent them is not in the list of online users.
+        /// </summary>
+        /// <param name="ct">The cancellation token.</param>
+        private async UniTaskVoid ApplyGreyOutAsync(CancellationToken ct)
+        {
+            try
+            {
+                await UniTask.SwitchToMainThread(ct);
+
+                for (int i = 0; i < loopList.ShownItemCount; ++i)
+                {
+                    LoopListViewItem2 item = loopList.GetShownItemByIndex(i);
+
+                    if (!item.gameObject.activeInHierarchy)
+                    {
+                        continue;
+                    }
+
+                    bool isSeparatorIndex = IsSeparatorVisible && item.ItemIndex == CurrentSeparatorIndex;
+
+                    if(isSeparatorIndex)
+                        continue;
+
+                    int messageIndex = item.UserIntData1; // Message index taking the separator into account
+                    ChatEntryView entry = item.GetComponent<ChatEntryView>();
+
+                    if (entry != null)
+                    {
+                        bool isGreyedOut = !chatMessages[messageIndex].IsSystemMessage && !chatMessages[messageIndex].IsSentByOwnUser && onlineUserAddresses != null && !onlineUserAddresses!.Contains(chatMessages[messageIndex].SenderWalletAddress);
+                        entry.GreyOut(isGreyedOut ? entryGreyOutOpacity : 0.0f);
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
+            }
+        }
+
         public void Dispose()
         {
             contextMenuTask.TrySetResult();
@@ -317,10 +367,12 @@ namespace DCL.Chat
             bool isSeparatorIndex = IsSeparatorVisible && index == CurrentSeparatorIndex;
 
             if (isSeparatorIndex)
-
+            {
                 // Note: The separator is not part of the data, it is a view thing, so it is not a type of chat message, it is inserted by adding an extra item to the count and
                 //       faking it in this method, when it tries to create a new item
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Separator].mItemPrefab.name);
+                item.UserIntData1 = -1;
+            }
             else
             {
                 bool isIndexAfterSeparator = IsSeparatorVisible && index > CurrentSeparatorIndex;
@@ -341,14 +393,15 @@ namespace DCL.Chat
                   //  item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
-                    item = listView.NewListViewItem(itemData.IsSystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                        itemData.IsSentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
+                    ItemPrefabConfData prefabConf = itemData.IsSystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry] :
+                        itemData.IsSentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn] : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry];
+                    item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
 
                     ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                     messageOptionsButton?.onClick.RemoveAllListeners();
 
-                    SetItemDataAsync(index, itemData, itemScript).Forget();
+                    SetItemDataAsync(index, itemData, itemScript, prefabConf.mPadding).Forget();
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
                     if (itemData is { IsSentByOwnUser: false, IsSystemMessage: false })
@@ -357,6 +410,9 @@ namespace DCL.Chat
                     messageOptionsButton?.onClick.AddListener(() =>
                         OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
                 }
+
+                // Stores the message index, which takes into account the slot of the separator
+                item.UserIntData1 = messageIndex;
             }
 
             return item;
@@ -375,22 +431,31 @@ namespace DCL.Chat
             ChatMessageOptionsButtonClicked?.Invoke(itemDataMessage, itemScript);
         }
 
-        private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView)
+        private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView, float defaultItemPadding)
         {
             if (itemData.IsSystemMessage)
-                itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
+                itemView.SetUsernameColor(ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName));
             else
             {
                 Profile? profile = await profileRepositoryWrapper.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
 
                 if (profile != null)
                 {
-                    itemView.usernameElement.userName.color = profile.UserNameColor;
+                    itemView.SetUsernameColor(profile.UserNameColor);
                     itemView.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 }
             }
 
-            itemView.SetItemData(itemData);
+            // Whether the timestamp is not null (old messages, backward compatibility) and either the message is the first in the feed or the day it was sent is different from the previous messages
+            bool wasSentInDifferentDate = itemData.SentTimestamp != 0.0f && (index == chatMessages.Count - 2 || DateTime.FromOADate(itemData.SentTimestamp).Date != DateTime.FromOADate(chatMessages[index + 1].SentTimestamp).Date);
+            // There is a date divider inside each instance which is shown or not. The divider is always at the top of the message and its height is not taken into account
+            // when calculating the space a message occupies in the feed, so an extra space has to be added between this message and the previous one, when the divider is present.
+            itemView.GetComponent<LoopListViewItem2>().Padding = wasSentInDifferentDate ? itemView.dateDividerElement.sizeDelta.y
+                                                                                        : defaultItemPadding;
+            itemView.SetItemData(itemData, wasSentInDifferentDate);
+
+            bool isGreyedOut = !itemData.IsSystemMessage && !itemData.IsSentByOwnUser && onlineUserAddresses != null && !onlineUserAddresses!.Contains(itemData.SenderWalletAddress);
+            itemView.GreyOut(isGreyedOut ? entryGreyOutOpacity : 0.0f);
 
             // Views that correspond to new added items have to be animated
             if (index - 1 < entriesPendingToAnimate) // Note: -1 because the first real message starts at 1, which is the latest messaged added
@@ -419,11 +484,25 @@ namespace DCL.Chat
         private void OnEnable()
         {
             loopList.RefreshAllShownItem(); // This avoids artifacts when new items are added while the object is disabled
+            greyOutCts = greyOutCts.SafeRestart();
+            ApplyGreyOutAsync(greyOutCts.Token).Forget();
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.profileRepositoryWrapper = profileRepositoryWrapper;
+        }
+
+        /// <summary>
+        /// Stores a list of users that are online (so if a user is not in it, it's offline). Visual elements (messages, profile pictures, etc.) of offline users
+        /// will be greyed out.
+        /// </summary>
+        /// <param name="onlineUserAddresses">A list of online user addresses.</param>
+        public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
+        {
+            this.onlineUserAddresses = onlineUserAddresses;
+            greyOutCts = greyOutCts.SafeRestart();
+            ApplyGreyOutAsync(greyOutCts.Token).Forget();
         }
     }
 }

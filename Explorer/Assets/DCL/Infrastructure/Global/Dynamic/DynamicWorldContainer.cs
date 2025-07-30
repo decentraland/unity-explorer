@@ -736,7 +736,8 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     communitiesEventBus,
                     voiceChatCallStatusService,
-                    includeVoiceChat),
+                    includeVoiceChat,
+                    realmNavigator),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
