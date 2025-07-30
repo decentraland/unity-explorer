@@ -6,6 +6,7 @@ namespace DCL.ApplicationGuards
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
+            UnityEngine.Debug.Log("JUST FOR COMPILATION");
 #else
             UnityEngine.Application.Quit();
 #endif
