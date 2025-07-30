@@ -166,8 +166,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 return;
 
             Promise texturePromiseValue = promise.Value;
-            texturePromiseValue.ForgetLoading(World);
             texturePromiseValue.TryDereference(World);
+            texturePromiseValue.ForgetLoading(World);
             // Nullify the entity reference
             promise = null;
         }
