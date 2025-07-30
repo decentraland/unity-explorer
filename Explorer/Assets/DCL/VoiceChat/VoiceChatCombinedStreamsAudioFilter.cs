@@ -66,7 +66,6 @@ namespace DCL.VoiceChat
                 {
                     tempBuffer.AsSpan().Clear();
 
-                    // Read data from stream
                     stream.ReadAudio(tempBuffer, STEREO_CHANNELS, sampleRate);
 
                     // Mix into stereo output buffer

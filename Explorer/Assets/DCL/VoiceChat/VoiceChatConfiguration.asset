@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnableLocalTrackPlayback: 0
   HoldThresholdInSeconds: 0.5
-  MicrophoneVolume: 40
+  MicrophoneVolume: 15
   MicrophoneReinitDelayMs: 500
   MaxFreshDataWaitTimeMs: 1000
   FreshDataCheckDelayMs: 50
