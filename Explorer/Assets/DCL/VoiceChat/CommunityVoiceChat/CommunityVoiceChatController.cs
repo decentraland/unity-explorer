@@ -110,6 +110,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 AddListener(participantState);
 
             inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count);
+
+            inCallController.RefreshCounter();
+            communityVoiceChatSearchController.RefreshCounters();
         }
 
         private void OnParticipantStateRefreshed(List<(string participantId, VoiceChatParticipantsStateService.ParticipantState state)> joinedParticipants, List<string> leftParticipantIds)
@@ -202,7 +205,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             PlayerEntryView entryView = GetAndConfigurePlayerEntry(participantState);
             entryView.transform.parent = view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
-            communityVoiceChatSearchController.IncreaseListenerCounter();
         }
 
         private PlayerEntryView GetAndConfigurePlayerEntry(VoiceChatParticipantsStateService.ParticipantState participantState)
@@ -227,30 +229,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             {
                 entryView.transform.parent = view.CommunityVoiceChatSearchView.RequestToSpeakParent;
                 entryView.transform.localScale = Vector3.one;
-                communityVoiceChatSearchController.DecreaseListenerCounter();
-                communityVoiceChatSearchController.IncreaseRequestToSpeakCounter();
             }
-            else
-            {
-                communityVoiceChatSearchController.DecreaseRequestToSpeakCounter();
-            }
+
+            inCallController.RefreshCounter();
+            communityVoiceChatSearchController.RefreshCounters();
         }
 
         private void SetUserEntryParent(bool isSpeaker, PlayerEntryView entryView)
         {
-            if (isSpeaker)
-            {
-                communityVoiceChatSearchController.DecreaseListenerCounter();
-                inCallController.IncreaseSpeakerCounter();
-            }
-            else
-            {
-                communityVoiceChatSearchController.IncreaseListenerCounter();
-                inCallController.DecreaseSpeakerCounter();
-            }
-
             entryView.transform.parent = isSpeaker ? inCallController.SpeakersParent : view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
+
+            communityVoiceChatSearchController.RefreshCounters();
+            inCallController.RefreshCounter();
         }
 
         private void PlayerEntryIsRequestingToSpeak(bool? isRequestingToSpeak, PlayerEntryView entryView)
