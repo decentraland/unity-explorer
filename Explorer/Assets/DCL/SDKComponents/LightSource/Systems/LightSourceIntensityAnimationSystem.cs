@@ -37,19 +37,16 @@ namespace DCL.SDKComponents.LightSource.Systems
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
             bool isLightOn = sceneStateProvider.IsCurrent && !lightSourceComponent.IsCulled;
-            lightSourceComponent.TargetIntensity = isLightOn ? lightSourceComponent.MaxIntensity : 0;
-
-            float delta = dt * lightSourceComponent.MaxIntensity;
-            lightSourceComponent.CurrentIntensity = Mathf.MoveTowards(lightSourceComponent.CurrentIntensity, lightSourceComponent.TargetIntensity, delta);
+            lightSourceComponent.CurrentIntensityNormalized = Mathf.MoveTowards(lightSourceComponent.CurrentIntensityNormalized, isLightOn ? 1 : 0, dt);
 
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            lightSourceInstance.intensity = lightSourceComponent.CurrentIntensity;
+            lightSourceInstance.intensity = lightSourceComponent.MaxIntensity * lightSourceComponent.CurrentIntensityNormalized;
 
             bool shouldOverrideRange = pbLightSource.HasRange && pbLightSource.Range > 0;
-            lightSourceInstance.range = shouldOverrideRange ? pbLightSource.Range : Mathf.Pow(lightSourceComponent.CurrentIntensity, settings.RangeFormulaExponent);
+            lightSourceInstance.range = shouldOverrideRange ? pbLightSource.Range : Mathf.Pow(lightSourceInstance.intensity, settings.RangeFormulaExponent);
 
-            lightSourceInstance.enabled = lightSourceComponent.CurrentIntensity > 0;
+            lightSourceInstance.enabled = lightSourceComponent.CurrentIntensityNormalized > 0;
         }
     }
 }

@@ -13,9 +13,7 @@ namespace DCL.SDKComponents.LightSource
 
         public float MaxIntensity;
 
-        public float CurrentIntensity;
-
-        public float TargetIntensity;
+        public float CurrentIntensityNormalized;
 
         public float DistanceToPlayerSq;
 
