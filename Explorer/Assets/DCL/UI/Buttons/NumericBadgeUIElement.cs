@@ -12,6 +12,9 @@ namespace DCL.UI.Buttons
         private TMP_Text numberText;
 
         [SerializeField]
+        private TMP_Text mentionSign;
+
+        [SerializeField]
         private GameObject numberPanel;
 
         [Tooltip("If the number is greater than the maximum, a + sign will be displayed next to the maximum value.")]
@@ -47,8 +50,14 @@ namespace DCL.UI.Buttons
 
             if (isMentionsVisible)
             {
-                numberText.text = "@";
+                numberText.gameObject.SetActive(false);
+                mentionSign.gameObject.SetActive(true);
                 numberPanel.SetActive(true);
+            }
+            else
+            {
+                numberText.gameObject.SetActive(true);
+                mentionSign.gameObject.SetActive(false);
             }
         }
     }
