@@ -14,7 +14,10 @@ using ECS.Unity.ColorComponent;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
-using System;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -86,13 +89,14 @@ namespace DCL.SDKComponents.LightSource.Systems
             {
                 case PBLightSource.TypeOneofCase.Spot:
                     ApplySpotLight(pbLightSource, lightSourceInstance);
-                    ApplyCookie(ref lightSourceComponent, pbLightSource.ShadowMaskTexture);
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
                     ApplyPointLight(pbLightSource, lightSourceInstance);
                     break;
             }
+
+            ApplyCookie(ref lightSourceComponent, pbLightSource.ShadowMaskTexture);
         }
 
         private void ApplySpotLight(PBLightSource pbLightSource, Light light)
@@ -182,9 +186,75 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         private Cubemap MakeCookieCubemap(Texture2DData source)
         {
-            // TODO
+            var texture2d = source.Asset;
 
-            return null;
+            int faceSize = texture2d.width / 4;
+            if (texture2d.height != faceSize * 3)
+            {
+                ReportHub.LogError(GetReportCategory(), "Point Light cookie texture must be laid out in a 4x3 grid");
+                return null;
+            }
+            int facePixelCount = faceSize * faceSize;
+
+            NativeArray<Color32> sourceColors = texture2d.GetPixelData<Color32>(0);
+            var destinationColors = new NativeArray<Color32>(facePixelCount * 6, Allocator.TempJob);
+
+            new CubemapGenerationJob
+            {
+                SourceColors = sourceColors,
+                DestinationColors = destinationColors,
+                FaceSize = faceSize,
+                FacePixelCount = faceSize * faceSize,
+                SourceTextureWidth = texture2d.width,
+            }.Schedule(destinationColors.Length, 64).Complete();
+
+            Cubemap cubemap = new Cubemap(faceSize, texture2d.format, false);
+            for (var face = 0; face < 6; face++)
+                cubemap.SetPixelData(destinationColors, 0, (CubemapFace)face, face * facePixelCount);
+            cubemap.Apply();
+
+            sourceColors.Dispose();
+            destinationColors.Dispose();
+
+            return cubemap;
+        }
+
+        [BurstCompile]
+        private struct CubemapGenerationJob : IJobParallelFor
+        {
+            private static readonly int2[] TILES =
+            {
+                new (2, 1),
+                new (0, 1),
+                new (1, 2),
+                new (1, 0),
+                new (1, 1),
+                new (3, 1)
+            };
+
+            [ReadOnly] public NativeArray<Color32> SourceColors;
+
+            [WriteOnly] public NativeArray<Color32> DestinationColors;
+
+            public int FaceSize;
+
+            public int FacePixelCount;
+
+            public int SourceTextureWidth;
+
+            [BurstCompile]
+            public void Execute(int index)
+            {
+                int2 tile = TILES[index / FacePixelCount];
+                int facePixel = index % FacePixelCount;
+
+                int sourceX = (tile.x * FaceSize) + (facePixel % FaceSize);
+                int sourceY = (tile.y * FaceSize) + (FaceSize - 1 - (facePixel / FaceSize));
+
+                int sourceIndex = math.mad(sourceY, SourceTextureWidth, sourceX);
+
+                DestinationColors[index] = SourceColors[sourceIndex];
+            }
         }
     }
 }
