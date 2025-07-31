@@ -45,13 +45,15 @@ namespace DCL.AvatarRendering.Emotes
                         continue;
                     }
 
-                    ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                     ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
                     ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
 
                     // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
                     if (interpolationExists && EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
+                    {
+                        ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
+                    }
                     else
                         savedIntentions.Add(remoteEmoteIntention);
                 }

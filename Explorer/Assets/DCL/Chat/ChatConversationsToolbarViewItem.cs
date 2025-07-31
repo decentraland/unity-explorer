@@ -1,7 +1,7 @@
 using DCL.Chat.History;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -58,6 +58,13 @@ namespace DCL.Chat
 
         [SerializeField]
         private RectTransform tooltipPosition;
+
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float offlineThumbnailGreyOutOpacity = 0.6f;
+
+        // This is necessary because the data is set while the script has not awakened yet
+        private OnlineStatus storedConnectionStatus = OnlineStatus.OFFLINE;
 
         /// <summary>
         /// Gets or sets the identifier of the conversation.
@@ -119,12 +126,27 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// It replaces the number in the conversation icon with an '@' that indicates that one or more unread messages are mentions.
+        /// </summary>
+        /// <param name="show">When True, it replaces the number. Otherwise it does nothing.</param>
+        public void ShowMentionSign(bool show)
+        {
+            unreadMessagesBadge.ShowMentionsSign(show);
+        }
+
+        /// <summary>
         /// Changes the visual aspect of the connection status indicator.
         /// </summary>
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
+
+            if(thumbnailView != null && thumbnailView.TryGetComponent(out ProfilePictureView profilePictureView))
+                profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
+
+            storedConnectionStatus = connectionStatus;
         }
 
         /// <summary>
@@ -213,6 +235,8 @@ namespace DCL.Chat
             tooltip.gameObject.SetActive(false);
             removeButton.gameObject.SetActive(false);
             connectionStatusIndicatorContainer.gameObject.SetActive(false);
+
+            SetConnectionStatus(storedConnectionStatus);
         }
     }
 }

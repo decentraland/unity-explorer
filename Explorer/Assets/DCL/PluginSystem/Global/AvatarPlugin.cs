@@ -27,6 +27,7 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -72,15 +73,14 @@ namespace DCL.PluginSystem.Global
         private AvatarRandomizerAsset avatarRandomizerAsset;
         private ChatBubbleConfigurationSO chatBubbleConfiguration;
 
-        private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
         private readonly IWearableStorage wearableStorage;
-
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
 
         private float startFadeDistanceDithering;
         private float endFadeDistanceDithering;
 
+        private FacialFeaturesTextures[] facialFeaturesTextures;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -92,7 +92,6 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
@@ -105,7 +104,6 @@ namespace DCL.PluginSystem.Global
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
-            this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
             this.memoryBudget = memoryBudget;
             this.rendererFeaturesCache = rendererFeaturesCache;
             this.nametagsData = nametagsData;
@@ -136,6 +134,7 @@ namespace DCL.PluginSystem.Global
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
+            facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
@@ -157,19 +156,19 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
-
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
-                computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
-                wearableStorage,  avatarTransformMatrixJobWrapper);
+                computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy,
+                wearableStorage, avatarTransformMatrixJobWrapper, facialFeaturesTextures);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
-
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
+
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy,
                 avatarTransformMatrixJobWrapper);
 
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering);
+
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler,
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);
@@ -252,6 +251,32 @@ namespace DCL.PluginSystem.Global
             }
         }
 
+        private async UniTask<FacialFeaturesTextures[]> CreateDefaultFaceTexturesByBodyShapeAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            var maleMouthTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMaleMouthTexture, ct: ct)).Value;
+            var maleEyebrowsTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMaleEyebrowsTexture, ct: ct)).Value;
+            var maleEyesTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMaleEyesTexture, ct: ct)).Value;
+            var femaleMouthTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultFemaleMouthTexture, ct: ct)).Value;
+            var femaleEyebrowsTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultFemaleEyebrowsTexture, ct: ct)).Value;
+            var femaleEyesTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultFemaleEyesTexture, ct: ct)).Value;
+
+            return new FacialFeaturesTextures[]
+            {
+                new (new Dictionary<string, Dictionary<int, Texture>>
+                {
+                    [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyesTexture },
+                    [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleMouthTexture },
+                    [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyebrowsTexture },
+                }),
+                new (new Dictionary<string, Dictionary<int, Texture>>
+                {
+                    [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyesTexture },
+                    [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleMouthTexture },
+                    [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyebrowsTexture },
+                }),
+            };
+        }
+
         [Serializable]
         public class AvatarShapeSettings : IDCLPluginSettings
         {
@@ -297,6 +322,13 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
 
             public AssetReferenceMaterial FaceFeatureMaterial => faceFeatureMaterial.EnsureNotNull();
+
+            public AssetReferenceT<Texture> DefaultMaleMouthTexture;
+            public AssetReferenceT<Texture> DefaultMaleEyesTexture;
+            public AssetReferenceT<Texture> DefaultMaleEyebrowsTexture;
+            public AssetReferenceT<Texture> DefaultFemaleMouthTexture;
+            public AssetReferenceT<Texture> DefaultFemaleEyesTexture;
+            public AssetReferenceT<Texture> DefaultFemaleEyebrowsTexture;
 
             [Serializable]
             public class NametagsDataRef : AssetReferenceT<NametagsData>

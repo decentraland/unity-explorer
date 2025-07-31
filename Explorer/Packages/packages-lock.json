@@ -74,8 +74,11 @@
       "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
       "source": "git",
-      "dependencies": {},
-      "hash": "ff71e4556e471da577ec934cf75182d2b1c71339"
+      "dependencies": {
+        "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+        "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
+      },
+      "hash": "3a54f9c5f656f25beca250f14d0b573b9974fff4"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -89,7 +92,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "cb7468413582b05ed5c676df4d2bdb2891795617"
+      "hash": "0577e5f90c309e0188db63ceb2790d78bd97c33b"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -117,6 +120,13 @@
       "source": "registry",
       "dependencies": {},
       "url": "https://package.openupm.com"
+    },
+    "com.nickkhalow.richtypes": {
+      "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "ae15a0351cbc1f15d955024802c2eb8f9c70cb9e"
     },
     "com.olegknyazev.softmask": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask",
@@ -455,8 +465,12 @@
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
       "depth": 0,
       "source": "git",
-      "dependencies": {},
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+      "dependencies": {
+        "com.unity.modules.imageconversion": "1.0.0",
+        "com.unity.modules.particlesystem": "1.0.0",
+        "com.unity.modules.wind": "1.0.0"
+      },
+      "hash": "7aa85f76fe500491d47395e4198fa6f96532c073"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",

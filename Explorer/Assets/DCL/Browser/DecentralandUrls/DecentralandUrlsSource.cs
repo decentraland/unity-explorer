@@ -90,6 +90,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.LocalGateKeeperSceneAdapter => "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
                 DecentralandUrl.ChatAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
+                DecentralandUrl.EventsWebpage => $"https://decentraland.{ENV}/events",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
