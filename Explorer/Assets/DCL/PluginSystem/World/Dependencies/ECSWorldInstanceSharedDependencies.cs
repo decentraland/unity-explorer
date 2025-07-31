@@ -6,6 +6,7 @@ using DCL.Interaction.Utility;
 using DCL.Time;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly MultiThreadSync MultiThreadSync;
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
+        public readonly StaticSceneAssetBundle StaticSceneAssetBundle;
 
         public readonly IWorldTimeProvider WorldTimeProvider;
 
@@ -38,7 +40,8 @@ namespace DCL.PluginSystem.World.Dependencies
             IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
             MultiThreadSync multiThreadSync, IWorldTimeProvider worldTimeProvider,
-            ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate)
+            ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate,
+            StaticSceneAssetBundle staticSceneAssetBundle)
         {
             SceneData = sceneData;
             EcsToCRDTWriter = ecsToCRDTWriter;
@@ -52,6 +55,7 @@ namespace DCL.PluginSystem.World.Dependencies
             WorldTimeProvider = worldTimeProvider;
             EcsGroupThrottler = ecsGroupThrottler;
             EcsSystemsGate = ecsSystemsGate;
+            StaticSceneAssetBundle = staticSceneAssetBundle;
             EntityEventsBuilder = entityEventsBuilder;
         }
     }

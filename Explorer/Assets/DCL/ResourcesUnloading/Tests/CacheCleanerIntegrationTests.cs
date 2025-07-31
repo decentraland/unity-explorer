@@ -209,7 +209,7 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache.AddReference(in audioClipIntention, audioClip);
             audioClip.Dereference();
 
-            var assetBundleData = new AssetBundleData(null, null, new GameObject(), typeof(GameObject), Array.Empty<AssetBundleData>());
+            var assetBundleData = new AssetBundleData(null, null, new []{new GameObject()}, typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
 
             var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);

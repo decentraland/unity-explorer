@@ -24,6 +24,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
@@ -126,7 +127,8 @@ namespace SceneRunner
             IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory,
             ISceneEntityFactory entityFactory,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            StaticSceneAssetBundle staticSceneAssetBundle)
         {
             this.sceneData = sceneData;
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
@@ -147,7 +149,7 @@ namespace SceneRunner
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
                 ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
-                worldTimeProvider, systemGroupThrottler, systemsUpdateGate);
+                worldTimeProvider, systemGroupThrottler, systemsUpdateGate, staticSceneAssetBundle);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);

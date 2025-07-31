@@ -13,7 +13,10 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner;
 using SceneRunner.Scene;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
+using System.Collections.Generic;
+using UnityEngine;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -47,6 +50,19 @@ namespace ECS.SceneLifeCycle.Systems
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
+            StaticSceneAssetBundle staticSceneAssetBundle = default(StaticSceneAssetBundle);
+            Dictionary<string, GameObject> staticAssetBundles = new Dictionary<string, GameObject>();
+            //Lets hack the download of the single asset bundle just for Genesis Plaza
+            if (intention.DefinitionComponent.Definition.id.Equals("bafkreifqcraqxctg4krbklm6jsbq2x5tueevhmvxx354obl4ogu5owkbqu"))
+            {
+                StreamableLoadingResult<AssetBundleData>? staticAssetBundleData = (await AssetBundlePromise.Create(world,
+                    GetAssetBundleIntention.CreateSingleAssetBundleHack($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA"),
+                    partition).ToUniTaskAsync(world, cancellationToken: ct)).Result;
+
+                staticSceneAssetBundle.assets = staticAssetBundleData.Value.Asset.GetStaticAssetsDictionary();
+                staticSceneAssetBundle.assetBundleData = staticAssetBundleData.Value.Asset;
+            }
+
             (_, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt);
 
             // Create scene data
@@ -57,7 +73,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
 
-            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, staticSceneAssetBundle, partition, ct);
 
             await UniTask.SwitchToMainThread();
 

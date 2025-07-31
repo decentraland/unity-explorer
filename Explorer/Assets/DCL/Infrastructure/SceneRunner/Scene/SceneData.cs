@@ -20,6 +20,7 @@ namespace SceneRunner.Scene
             false;
 #endif
 
+
         public ISceneContent SceneContent { get; }
 
         public SceneEntityDefinition SceneEntityDefinition { get; }
@@ -28,7 +29,6 @@ namespace SceneRunner.Scene
         public bool SceneLoadingConcluded { get; set; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
-        public SceneAssetBundleManifest AssetBundleManifest { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
 
         public SceneData(

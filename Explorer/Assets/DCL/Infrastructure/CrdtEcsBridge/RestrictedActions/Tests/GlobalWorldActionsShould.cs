@@ -15,6 +15,7 @@ using System.Threading;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using DCL.Multiplayer.Profiles.Bunches;
+using ECS.StreamableLoading.AssetBundles;
 using Utility;
 
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
@@ -241,6 +242,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
         private class MockSceneData : ISceneData
         {
+            public Dictionary<string, GameObject> StaticSceneAssetBundle { get; } = new Dictionary<string, GameObject>();
             public bool SceneLoadingConcluded { get; set; } = true;
             public SceneShortInfo SceneShortInfo { get; set; } = new (Vector2Int.zero, "mockScene");
             public IReadOnlyList<Vector2Int> Parcels { get; set; } = new List<Vector2Int>();

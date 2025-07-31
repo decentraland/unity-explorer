@@ -49,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (string.IsNullOrEmpty(assetBundleIntention.AssetBundleVersion))
+                if (string.IsNullOrEmpty(assetBundleIntention.AssetBundleVersion) && !assetBundleIntention.SingleAssetBundleHack)
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
@@ -70,6 +70,19 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
                 }
                 */
+
+                if (assetBundleIntention.SingleAssetBundleHack)
+                {
+                    CommonLoadingArguments caHack = assetBundleIntention.CommonArguments;
+                    caHack.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
+                    caHack.Timeout = StreamableLoadingDefaults.TIMEOUT;
+                    caHack.CurrentSource = AssetSource.WEB;
+                    caHack.URL = URLAddress.FromString(assetBundleIntention.Hash);
+                    caHack.CacheableURL = URLAddress.FromString(assetBundleIntention.Hash);
+                    assetBundleIntention.CommonArguments = caHack;
+                    assetBundleIntention.cacheHash = Hash128.Compute(assetBundleIntention.Hash);
+                    return;
+                }
 
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;

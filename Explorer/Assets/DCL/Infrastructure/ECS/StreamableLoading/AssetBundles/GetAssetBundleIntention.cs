@@ -46,6 +46,9 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         public bool LookForShaderAssets;
 
+        public bool SingleAssetBundleHack;
+        public bool HasMultipleAssetBundles;
+
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default,
@@ -53,6 +56,8 @@ namespace ECS.StreamableLoading.AssetBundles
             string assetBundleVersion = "",
             bool hasParentEntityIDPathInURL = false,
             string parentEntityID = "",
+            bool singleAssetBundleHack = false,
+            bool hasMultipleAssetBundles = false,
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -68,6 +73,9 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleVersion = assetBundleVersion;
             HasParentEntityIDPathInURL = hasParentEntityIDPathInURL;
             ParentEntityID = parentEntityID;
+
+            SingleAssetBundleHack = singleAssetBundleHack;
+            HasMultipleAssetBundles = hasMultipleAssetBundles;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -90,6 +98,9 @@ namespace ECS.StreamableLoading.AssetBundles
             URLSubdirectory customEmbeddedSubDirectory = default, bool lookForShaderAsset = false , CancellationTokenSource cancellationTokenSource = null,
             string assetBundleVersion = "", bool hasParentEntityIDPathInURL = false, string parentEntityID = "") =>
             new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleVersion, hasParentEntityIDPathInURL: hasParentEntityIDPathInURL, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, cancellationTokenSource: cancellationTokenSource);
+
+        public static GetAssetBundleIntention CreateSingleAssetBundleHack(string url) =>
+            new (typeof(GameObject), hash: url, singleAssetBundleHack: true, hasMultipleAssetBundles: true, permittedSources: AssetSource.WEB);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);

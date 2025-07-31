@@ -61,16 +61,23 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            AssetBundleData assetBundleData = assetBundleResult.Asset!;
 
-            // Create a new container root. It will be cached and pooled
-            GltfContainerAsset result = CreateGltfObject(assetBundleData);
+            AssetBundleData assetBundleData = assetBundleResult.Asset!;
+            GltfContainerAsset result;
+
+            if (assetBundleData.HasMultipleAssets())
+                // Create a new container root. It will be cached and pooled
+                result = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash));
+            else
+                // Create a new container root. It will be cached and pooled
+                result = CreateGltfObject(assetBundleData, assetBundleData.GetMainAsset<GameObject>());
+
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }
 
-        private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData)
+        private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, GameObject asset)
         {
-            var container = new GameObject(assetBundleData.GetInstanceName());
+            var container = new GameObject(asset.name);
 
             // Let the upper layer decide what to do with the root
             container.SetActive(false);
@@ -78,7 +85,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             var result = GltfContainerAsset.Create(container, assetBundleData);
 
-            GameObject? instance = Object.Instantiate(assetBundleData.GetMainAsset<GameObject>(), containerTransform);
+            GameObject? instance = Object.Instantiate(asset, containerTransform);
 
             // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())

@@ -18,6 +18,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using Microsoft.ClearScript;
 using MVC;
 using PortableExperiences.Controller;
@@ -120,7 +121,7 @@ namespace SceneRunner
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
                 ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
-            return await CreateSceneAsync(sceneData, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, default(StaticSceneAssetBundle), partitionProvider, ct);
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectoryAsync(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -141,20 +142,20 @@ namespace SceneRunner
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition,
                 Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
-            return await CreateSceneAsync(sceneData, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, default(StaticSceneAssetBundle), partitionProvider, ct);
         }
 
-        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
-            CreateSceneAsync(sceneData, partitionProvider, ct);
+        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, StaticSceneAssetBundle staticSceneAssetBundle, IPartitionComponent partitionProvider, CancellationToken ct) =>
+            CreateSceneAsync(sceneData, staticSceneAssetBundle, partitionProvider, ct);
 
         public void SetGlobalWorldActions(IGlobalWorldActions actions)
         {
             globalWorldActions = actions;
         }
 
-        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
+        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, StaticSceneAssetBundle staticSceneAssetBundle, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory, webRequestController);
+            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory, webRequestController, staticSceneAssetBundle);
 
             // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;
