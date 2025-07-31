@@ -22,7 +22,7 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
-        private const int FRAMES_COUNT = 90;
+        private int FRAMES_COUNT = 90;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
@@ -43,11 +43,14 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
 
+        private bool hasStaticSceneRepresentation;
+
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
             ILoadingStatus loadingStatus,
-            Entity sceneContainerEntity) : base(world)
+            Entity sceneContainerEntity,
+            bool hasStaticSceneRepresentation) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
@@ -56,6 +59,9 @@ namespace ECS.SceneLifeCycle.Systems
             this.memoryBudget = memoryBudget;
             this.loadingStatus = loadingStatus;
             this.sceneContainerEntity = sceneContainerEntity;
+
+            if (hasStaticSceneRepresentation)
+                FRAMES_COUNT = 1;
 
             forEachEvent = GatherEntities;
         }

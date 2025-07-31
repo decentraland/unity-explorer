@@ -1,4 +1,5 @@
 ﻿using DCL.Diagnostics;
+using ECS.StreamableLoading.AssetBundles;
 using System;
 using Unity.Profiling;
 using Utility.Multithreading;

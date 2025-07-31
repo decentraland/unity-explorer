@@ -60,8 +60,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
                 }
                 else
+                {
                     // If not in cache, try load from asset bundle
                     World.Add(entity, GetAssetBundleIntention.CreateSingleAssetBundleHack($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA"));
+                }
             }
 
         }
