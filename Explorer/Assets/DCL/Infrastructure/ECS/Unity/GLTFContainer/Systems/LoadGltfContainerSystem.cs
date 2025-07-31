@@ -43,44 +43,10 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         protected override void Update(float t)
         {
-            ResolveStaticSceneQuery(World);
             StartLoadingQuery(World);
             ReconfigureGltfContainerQuery(World);
         }
 
-        [Query]
-        [None(typeof(GltfContainerComponent))]
-        private void ResolveStaticScene(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
-        {
-            GltfContainerComponent component;
-            sdkComponent.IsDirty = false; // IsDirty is only relevant for ReConfiguration of the GLTFContainer
-
-            if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
-            {
-                component = GltfContainerComponent.CreateFaulty(
-                    GetReportData(),
-                    new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
-                );
-                World.Add(entity, component);
-            }
-            else
-            {
-                if (staticSceneAssetBundle.assets.ContainsKey(hash))
-                {
-                    // Resolve directly if possible
-                    var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
-                    World.Add(promise.Entity, new StreamableLoadingResult<AssetBundleData>(staticSceneAssetBundle.assetBundleData));
-                    component = new GltfContainerComponent(
-                        sdkComponent.GetVisibleMeshesCollisionMask(),
-                        sdkComponent.GetInvisibleMeshesCollisionMask(),
-                        promise);
-                    component.State = LoadingState.Loading;
-                    World.Add(entity, component);
-                    eventsBuffer.Add(entity, component);
-                }
-            }
-
-        }
 
         [Query]
         [None(typeof(GltfContainerComponent))]
@@ -101,7 +67,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             else
             {
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource(), staticSceneAssetBundle.assets.ContainsKey(hash)), partitionComponent);
                 component = new GltfContainerComponent(
                     sdkComponent.GetVisibleMeshesCollisionMask(),
                     sdkComponent.GetInvisibleMeshesCollisionMask(),

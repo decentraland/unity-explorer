@@ -61,7 +61,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-
             AssetBundleData assetBundleData = assetBundleResult.Asset!;
             GltfContainerAsset result;
 

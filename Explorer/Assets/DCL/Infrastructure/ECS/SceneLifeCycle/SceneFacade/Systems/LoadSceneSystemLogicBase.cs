@@ -51,7 +51,6 @@ namespace ECS.SceneLifeCycle.Systems
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
             StaticSceneAssetBundle staticSceneAssetBundle = default(StaticSceneAssetBundle);
-            Dictionary<string, GameObject> staticAssetBundles = new Dictionary<string, GameObject>();
             //Lets hack the download of the single asset bundle just for Genesis Plaza
             if (intention.DefinitionComponent.Definition.id.Equals("bafkreifqcraqxctg4krbklm6jsbq2x5tueevhmvxx354obl4ogu5owkbqu"))
             {
