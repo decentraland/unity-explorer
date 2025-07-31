@@ -10,13 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3f88d85d4a404487b6d1d67e6a3b6a09, type: 3}
-  m_Name: LightSourceDefaults
+  m_Name: LightSourceSettings
   m_EditorClassIdentifier: 
-  active: 1
-  color: {r: 1, g: 1, b: 1, a: 1}
-  brightness: 250
-  range: 10
-  pointShadowType: 0
-  spotShadowType: 0
-  innerAngle: 21.8
-  outerAngle: 30
+  RangeFormulaExponent: 0.25
+  FadeDuration: 0.25
+  SpotLightIntensityScale: 0.1
+  PointLightIntensityScale: 0.1
+  DefaultValues:
+    Active: 1
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    Intensity: 250
+    Range: 0
+    Shadows: 0
+    InnerAngle: 21.8
+    OuterAngle: 30

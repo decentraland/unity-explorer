@@ -1,4 +1,5 @@
 using System;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.Services;
 using DCL.Web3;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace DCL.Chat
         public event Action OnMembersToggleRequested;
         public event Action<ChatContextMenuRequest> OnContextMenuRequested;
         public event Action<UserProfileMenuRequest> OnProfileContextMenuRequested;
+        public event Action<ShowContextMenuRequest> OnCommunityContextMenuRequested;
 
         public Button CloseChatButton => defaultTitlebarView.ButtonClose;
         public Button OpenMemberListButton => defaultTitlebarView.ButtonOpenMembers;
@@ -47,13 +49,24 @@ namespace DCL.Chat
             OnContextMenuRequested?.Invoke(data);
         }
 
-        private void OnProfileContextMenuClicked()
+        private void OnProfileContextMenuClicked(TitlebarViewMode mode)
         {
-            var data = new UserProfileMenuRequest
+            if (mode == TitlebarViewMode.DirectMessage)
             {
-                WalletAddress = new Web3Address(""), Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
-            };
-            OnProfileContextMenuRequested?.Invoke(data);
+                var data = new UserProfileMenuRequest
+                {
+                    WalletAddress = new Web3Address(""), Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
+                };
+                OnProfileContextMenuRequested?.Invoke(data);
+            }
+            else if (mode == TitlebarViewMode.Community)
+            {
+                var data = new ShowContextMenuRequest
+                {
+                    Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
+                };
+                OnCommunityContextMenuRequested?.Invoke(data);
+            }
         }
 
         public void SetMemberListMode(bool isMemberListVisible)

@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.UI.Communities;
 using DG.Tweening;
 using UnityEngine;
 
@@ -9,6 +10,9 @@ namespace DCL.Chat
     {
         [SerializeField] private string DCL_SYSTEM_SENDER = "DCL System";
 
+        [SerializeField]
+        public CommunityChatConversationContextMenuSettings communityChatConversationContextMenuSettings;
+        
         [field: Header("General")]
         [field: SerializeField]
         public Sprite DefaultProfileThumbnail { get; private set; }

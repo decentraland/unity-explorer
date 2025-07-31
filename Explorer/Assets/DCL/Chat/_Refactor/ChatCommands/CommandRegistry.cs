@@ -28,7 +28,7 @@ namespace DCL.Chat.ChatUseCases
         public GetTitlebarViewModelCommand GetTitlebarViewModel { get; }
         public GetCommunityThumbnailCommand GetCommunityThumbnail { get; }
         public SendMessageCommand SendMessage { get; }
-        public LeaveChannelCommand LeaveChannel { get; }
+        public CloseChannelCommand CloseChannel { get; }
         public CreateChannelViewModelCommand CreateChannelViewModel { get; }
         public OpenConversationCommand OpenConversation { get; }
         public DeleteChatHistoryCommand DeleteChatHistory { get; }
@@ -108,8 +108,7 @@ namespace DCL.Chat.ChatUseCases
                 sendMessageSound,
                 chatSettings);
 
-            LeaveChannel = new LeaveChannelCommand(chatHistory,
-                SelectChannel);
+            CloseChannel = new CloseChannelCommand(chatHistory);
 
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
                 communityDataService,

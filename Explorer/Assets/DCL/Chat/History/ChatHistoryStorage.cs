@@ -354,7 +354,7 @@ namespace DCL.Chat.History
             }
         }
 
-        private async void OnChatHistoryMessageAddedAsync(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
+        private async void OnChatHistoryMessageAddedAsync(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             if (destinationChannel.ChannelType == ChatChannel.ChatChannelType.USER)
             {

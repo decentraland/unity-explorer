@@ -22,12 +22,14 @@ namespace DCL.Chat
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
 
         [field: Header("Elements")]
-        [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
+        [field: SerializeField] private ChatEntryUsernameElement usernameElement { get; set; }
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
 
         [field: Header("Avatar Profile")]
         [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
         [field: SerializeField] internal Button profileButton { get; private set; }
+
+        [field: SerializeField] private CanvasGroup usernameElementCanvas;
 
         private ChatMessage chatMessage;
         private ChatMessageViewModel chatMessageViewModel;
@@ -94,6 +96,19 @@ namespace DCL.Chat
         private void OpenProfileContextMenu(float posX, float posY)
         {
             ChatEntryClicked?.Invoke(chatMessage.SenderWalletAddress, new Vector2(posX, posY));
+        }
+
+        public void GreyOut(float opacity)
+        {
+            ProfilePictureView.GreyOut(opacity);
+            messageBubbleElement.GreyOut(opacity);
+
+            usernameElementCanvas.alpha = 1.0f - opacity;
+        }
+
+        public void SetUsernameColor(Color newUserNameColor)
+        {
+            usernameElement.userName.color = newUserNameColor;
         }
     }
 }

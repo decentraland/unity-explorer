@@ -36,6 +36,8 @@ namespace DCL.Quality
             [SerializeField] internal LensFlareComponentSRP lensFlareComponent;
 
             [SerializeField] public EnvironmentSettings environmentSettings;
+
+            [SerializeField] public DynamicLightsSettings  dynamicLights;
         }
     }
 }

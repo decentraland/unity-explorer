@@ -3,10 +3,12 @@ using DCL.Chat.History;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
+using MVC;
 using Utility;
 using Utility.Types;
 
@@ -21,6 +23,7 @@ namespace DCL.Communities
     public class CommunityDataService : ICommunityDataService, IDisposable
     {
         private readonly IChatHistory chatHistory;
+        private readonly IMVCManager mvcManager;
         private readonly CommunitiesEventBus communitiesEventBus;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -30,20 +33,24 @@ namespace DCL.Communities
         private CancellationTokenSource communitiesServiceCts = new();
 
         public CommunityDataService(IChatHistory chatHistory,
+            IMVCManager mvcManager,
             CommunitiesEventBus communitiesEventBus,
             CommunitiesDataProvider communitiesDataProvider,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.chatHistory = chatHistory;
+            this.mvcManager = mvcManager;
             this.communitiesEventBus = communitiesEventBus;
             this.communitiesDataProvider = communitiesDataProvider;
             this.web3IdentityCache = web3IdentityCache;
 
             communitiesDataProvider.CommunityCreated += OnCommunityCreated;
             communitiesDataProvider.CommunityDeleted += OnCommunityDeleted;
+            communitiesDataProvider.CommunityLeft += OnCommunityLeft;
 
             SubscribeToCommunitiesBusEventsAsync().Forget();
         }
+
 
         private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
         {
@@ -71,6 +78,17 @@ namespace DCL.Communities
                 chatHistory.RemoveChannel(channelId);
                 communities.Remove(channelId);
             }
+        }
+
+        private void OnCommunityLeft(string communityId, bool success)
+        {
+            if (!success) return;
+
+            var channelId = ChatChannel.NewCommunityChannelId(communityId);
+
+            communities.Remove(channelId);
+
+            chatHistory.RemoveChannel(channelId);
         }
 
         private async UniTask AddCommunityConversationAsync(string communityId, bool setAsCurrentChannel = false)
@@ -140,11 +158,22 @@ namespace DCL.Communities
         {
             communitiesDataProvider.CommunityCreated -= OnCommunityCreated;
             communitiesDataProvider.CommunityDeleted -= OnCommunityDeleted;
-
+            communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
+            
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
 
             userAllowedToUseCommunityBusCts.SafeCancelAndDispose();
+        }
+
+        public void OpenCommunityCard(ChatChannel? currentChannel)
+        {
+            if (TryGetCommunity(currentChannel.Id, out var community))
+            {
+                mvcManager
+                    .ShowAsync(CommunityCardController
+                        .IssueCommand(new CommunityCardParameter(community.id)));
+            }
         }
     }
 }

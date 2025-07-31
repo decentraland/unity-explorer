@@ -46,7 +46,7 @@ namespace DCL.Chat.Services
             chatHistory.MessageAdded += OnChatMessageAdded;
         }
 
-        private void OnChatMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
+        private void OnChatMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
             string? communityName = null;

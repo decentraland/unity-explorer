@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: ChatConfig
   m_EditorClassIdentifier: 
   DCL_SYSTEM_SENDER: DCL System
+  communityChatConversationContextMenuSettings: {fileID: 11400000, guid: f0417a22b41fa694aa86da5a95090393, type: 2}
   <DefaultProfileThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
   <DefaultCommunityThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
   <ClearChatHistoryContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 1fd5346f8c379443886cb2219a95d139, type: 3}

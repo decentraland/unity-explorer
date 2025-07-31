@@ -2,12 +2,16 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.UI;
+using DCL.UI.Communities;
+using DCL.UI.GenericContextMenuParameter;
 using MVC;
+using UnityEngine;
 
 namespace DCL.Chat.Services
 {
     public class ChatContextMenuService : IDisposable
     {
+        
         private readonly IMVCManagerMenusAccessFacade mvcFacade;
         private readonly ChatClickDetectionService chatClickDetectionService;
 
@@ -21,6 +25,31 @@ namespace DCL.Chat.Services
             this.chatClickDetectionService = chatClickDetectionService;
         }
 
+        private CommunityChatConversationContextMenuSettings contextMenuSettings;
+
+        public async UniTask ShowCommunityContextMenuAsync(ShowContextMenuRequest request)
+        {
+            RestartLifecycleControls();
+            chatClickDetectionService.Pause();
+
+            try
+            {
+                var parameter = new GenericContextMenuParameter(
+                    request.MenuConfiguration,
+                    request.Position, // Cast the Vector3 to Vector2
+                    actionOnHide: () => activeMenuTcs.TrySetResult(),
+                    closeTask: activeMenuTcs.Task
+                );
+
+                await mvcFacade.ShowGenericContextMenuAsync(parameter);
+                await activeMenuTcs.Task;
+            }
+            finally
+            {
+                chatClickDetectionService.Resume();
+            }
+        }
+        
         /// <summary>
         ///     Show user profile context menu.
         ///     Pause and Resume click detection service to prevent
@@ -32,7 +61,6 @@ namespace DCL.Chat.Services
             RestartLifecycleControls();
 
             chatClickDetectionService.Pause();
-
             try
             {
                 await mvcFacade.ShowUserProfileContextMenuFromWalletIdAsync(

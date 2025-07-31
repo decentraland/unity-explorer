@@ -18,6 +18,7 @@ using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
+using DCL.Chat.Services;
 using UnityEngine;
 
 namespace MVC
@@ -44,6 +45,7 @@ namespace MVC
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
         private ChatOptionsContextMenuController chatOptionsContextMenuController;
+        private CommunityContextMenuController communityContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
@@ -119,6 +121,11 @@ namespace MVC
         {
             genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeVoiceChat);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
+        }
+
+        public async UniTask ShowGenericContextMenuAsync(GenericContextMenuParameter parameter)
+        {
+            await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(parameter));
         }
 
         private ContextMenuOpenDirection ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)

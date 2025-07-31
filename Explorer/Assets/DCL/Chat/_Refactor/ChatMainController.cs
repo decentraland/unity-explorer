@@ -16,6 +16,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.Services;
 using DCL.Chat.Services.DCL.Chat;
+using DCL.Communities;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 
@@ -31,6 +32,7 @@ namespace DCL.Chat
         private readonly CommandRegistry commandRegistry;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ChatMemberListService chatMemberListService;
+        private readonly CommunityDataService communityDataService;
         private readonly ICurrentChannelService currentChannelService;
         private readonly ChatUserStateBridge chatUserStateBridge;
         private readonly IChatUserStateEventBus userStateEventBus;
@@ -64,6 +66,7 @@ namespace DCL.Chat
             ProfileRepositoryWrapper profileRepositoryWrapper,
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
+            CommunityDataService communityDataService,
             ChatClickDetectionService chatClickDetectionService) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
@@ -79,6 +82,7 @@ namespace DCL.Chat
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
             this.chatContextMenuService = chatContextMenuService;
+            this.communityDataService = communityDataService;
             this.chatClickDetectionService = chatClickDetectionService;
         }
 
@@ -99,6 +103,7 @@ namespace DCL.Chat
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,
+                communityDataService,
                 currentChannelService,
                 chatMemberListService,
                 chatContextMenuService,
@@ -115,7 +120,7 @@ namespace DCL.Chat
                 currentChannelService,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
-                commandRegistry.LeaveChannel,
+                commandRegistry.CloseChannel,
                 commandRegistry.OpenConversation,
                 commandRegistry.CreateChannelViewModel);
 

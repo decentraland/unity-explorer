@@ -1,6 +1,5 @@
 using System.Threading;
 using DCL.Chat.History;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
@@ -64,6 +63,13 @@ namespace DCL.Chat
 
         [SerializeField]
         private RectTransform tooltipPosition;
+
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float offlineThumbnailGreyOutOpacity = 0.6f;
+
+        // This is necessary because the data is set while the script has not awakened yet
+        private OnlineStatus storedConnectionStatus = OnlineStatus.OFFLINE;
 
         /// <summary>
         /// Gets or sets the identifier of the conversation.
@@ -136,8 +142,13 @@ namespace DCL.Chat
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
-            connectionStatusIndicator.color =
-                onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicatorContainer.SetActive(connectionStatus == OnlineStatus.ONLINE);
+
+            if(thumbnailView != null && thumbnailView.TryGetComponent(out ProfilePictureView profilePictureView))
+                profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
+
+            storedConnectionStatus = connectionStatus;
         }
 
         /// <summary>
@@ -154,28 +165,13 @@ namespace DCL.Chat
                 openButton.OnDeselect(null);
         }
 
-        public void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
+        public virtual void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
         {
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);
             profilePictureView.Bind(viewModel);
         }
-
-        public void SetPicture(Sprite? sprite)
-        {
-            profilePictureView.gameObject.SetActive(true);
-            customIcon.gameObject.SetActive(false);
-
-            bool isLoading = sprite == null;
-
-            profilePictureView.SetLoadingState(isLoading);
-
-            if (!isLoading)
-            {
-                profilePictureView.SetImage(sprite);
-            }
-        }
-
+        
         /// <summary>
         /// Replaces the profile picture with a custom icon.
         /// </summary>
@@ -249,11 +245,24 @@ namespace DCL.Chat
 
         protected virtual void Start()
         {
+            tooltip.gameObject.SetActive(false);
+            removeButton.gameObject.SetActive(false);
+            connectionStatusIndicatorContainer.SetActive(false);
 
+            SetConnectionStatus(storedConnectionStatus);
         }
 
-        public void SetCommunityThumbnailData(ISpriteCache spriteCache, string communityImageUrl, CancellationToken none)
+        public virtual void SetPicture(Sprite? sprite, Color color)
         {
+            if (profilePictureView != null)
+            {
+                profilePictureView.gameObject.SetActive(true);
+                customIcon.gameObject.SetActive(false);
+
+                bool isLoading = sprite == null;
+
+                profilePictureView.SetLoadingState(isLoading);
+            }
         }
     }
 }

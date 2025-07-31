@@ -134,7 +134,7 @@ namespace DCL.Chat.ChatMessages
 
             newMessageViewModel.PendingToAnimate = true;
             viewModels.Insert(index, newMessageViewModel);
-
+            
             if (isSentByOwnUser)
             {
                 MarkCurrentChannelAsRead();

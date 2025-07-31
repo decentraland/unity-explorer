@@ -212,7 +212,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemsContainer: {fileID: 7875868355308157262}
   conversationsToolbarCanvasGroup: {fileID: 4025732971463603902}
-  itemPrefab: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+  itemNearbyPrefab: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+  itemPrivatePrefab: {fileID: 4111530681574439981, guid: 9aa01414a8609a74d9e7a38295a6ba1f, type: 3}
+  itemCommunityPrefab: {fileID: 6633483077033816363, guid: 954dae08a8ee75d449d12698e42bf923, type: 3}
   scrollButtons: {fileID: 2068074894267333311}
   scrollView: {fileID: 1871078318757654258}
   scrollUpButton: {fileID: 2938000852872658946}

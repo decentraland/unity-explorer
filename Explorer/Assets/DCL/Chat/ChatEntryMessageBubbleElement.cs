@@ -1,6 +1,4 @@
-using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
-using MVC;
 using System;
 using DCL.Chat.ChatViewModels;
 using TMPro;
@@ -127,6 +125,11 @@ namespace DCL.Chat
                 }
             }
             return count;
+        }
+
+        public void GreyOut(float opacity)
+        {
+            messageContentElement.GreyOut(opacity);
         }
     }
 }
