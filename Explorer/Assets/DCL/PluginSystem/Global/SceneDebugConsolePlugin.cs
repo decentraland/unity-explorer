@@ -23,6 +23,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            // TODO: move this reference to PluginSettings ?
             sceneDebugConsoleController = Object.Instantiate(Resources.Load<SceneDebugConsoleController>("SceneDebugConsoleRootCanvas"));
             sceneDebugConsoleController.SetInputBlock(inputBlock);
 

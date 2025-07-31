@@ -27,6 +27,7 @@ namespace DCL.UI.SceneDebugConsole
         private VisualElement consoleWindow;
         private Button pauseButton;
         private ListView consoleListView;
+        private ScrollView scrollView;
         private TextField searchField;
         private Toggle showLogsToggle;
         private Toggle showErrorsToggle;
@@ -36,6 +37,7 @@ namespace DCL.UI.SceneDebugConsole
         private bool isHidden = true;
         private bool shownOnce;
         private bool shouldRefresh;
+        private bool shouldBottomOnRefresh;
 
         public void SetInputBlock(IInputBlock block)
         {
@@ -65,6 +67,7 @@ namespace DCL.UI.SceneDebugConsole
             var copyAllButton = root.Q<Button>("CopyAllButton");
             pauseButton = root.Q<Button>("PauseButton");
             consoleListView = root.Q<ListView>("ConsoleList");
+            scrollView = consoleListView.Q<ScrollView>();
             searchField = root.Q<TextField>("FilterTextField");
             showLogsToggle = root.Q<Toggle>("LogsToggle");
             showErrorsToggle = root.Q<Toggle>("ErrorsToggle");
@@ -111,6 +114,11 @@ namespace DCL.UI.SceneDebugConsole
             shouldRefresh = false;
 
             consoleListView.RefreshItems();
+
+            if (shouldBottomOnRefresh)
+                consoleListView.ScrollToItem(consoleListView.itemsSource.Count-1);
+            shouldBottomOnRefresh = false;
+
             showLogsToggle.text = $"LOGS ({logsHistory.LogEntryCount})";
             showErrorsToggle.text = $"ERRORS ({logsHistory.ErrorEntryCount})";
         }
@@ -186,12 +194,19 @@ namespace DCL.UI.SceneDebugConsole
             if (isHidden) return;
 
             shouldRefresh = true;
+            shouldBottomOnRefresh = true;
         }
 
         private void OnLogsUpdated()
         {
             if (isHidden) return;
             shouldRefresh = true;
+            shouldBottomOnRefresh = IsScrollAtBottom();
         }
+
+        // Cannot compare against 'highValue' directly due to floating point precision error
+        private bool IsScrollAtBottom() =>
+            scrollView != null
+            && scrollView.verticalScroller.value >= (scrollView.verticalScroller.highValue * 0.999f);
     }
 }
