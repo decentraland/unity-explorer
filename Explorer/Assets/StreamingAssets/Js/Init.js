@@ -37,12 +37,12 @@ function require(moduleName) {
 }
 
 const console = {
-    log: function (...args) { UnityOpsApi.Log("SceneLog: " + args.join(' ')) },
-    info: function (...args) { UnityOpsApi.Log("SceneInfo: " + args.join(' ')) },
-    debug: function (...args) { UnityOpsApi.Log("SceneDebug: " + args.join(' ')) },
-    trace: function (...args) { UnityOpsApi.Log("SceneTrace: " + args.join(' ')) },
-    warning: function (...args) { UnityOpsApi.Warning("SceneWarning: " + args.join(' ')) },
-    error: function (...args) { UnityOpsApi.Error("SceneError: " + args.join(' ')) },
+    log: function (...args) { UnityOpsApi.Log("SceneLog: " + args.map($ => JSON.stringify($)).join(' ')) },
+    info: function (...args) { UnityOpsApi.Log("SceneInfo: " + args.map($ => JSON.stringify($)).join(' ')) },
+    debug: function (...args) { UnityOpsApi.Log("SceneDebug: " + args.map($ => JSON.stringify($)).join(' ')) },
+    trace: function (...args) { UnityOpsApi.Log("SceneTrace: " + args.map($ => JSON.stringify($)).join(' ')) },
+    warning: function (...args) { UnityOpsApi.Warning("SceneWarning: " + args.map($ => JSON.stringify($)).join(' ')) },
+    error: function (...args) { UnityOpsApi.Error("SceneError: " + args.map($ => JSON.stringify($)).join(' ')) },
 }
 
 // NOTE: MetadyneLabs.dcl.eth introduced a dependency on Cannon.js, this library
