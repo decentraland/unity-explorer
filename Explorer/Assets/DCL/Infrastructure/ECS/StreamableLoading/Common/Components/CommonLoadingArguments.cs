@@ -60,7 +60,7 @@ namespace ECS.StreamableLoading.Common.Components
 
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>
-            new (commonLoadingArguments.URL, attemptsCount: 1, timeout: commonLoadingArguments.Timeout);
+            new (commonLoadingArguments.URL, RetryPolicy.WithRetries(1), timeout: commonLoadingArguments.Timeout);
 
         public string GetCacheableURL()
         {
