@@ -9307,18 +9307,21 @@ MonoBehaviour:
   <scrollViewRect>k__BackingField: {fileID: 1933858771915660424}
   <memberListSectionsElements>k__BackingField:
   - <Section>k__BackingField: 0
+    <ForPrivateCommunitiesOnly>k__BackingField: 0
     <Button>k__BackingField: {fileID: 1694283236187587186}
     <SelectedBackground>k__BackingField: {fileID: 8545687878889349317}
     <SelectedText>k__BackingField: {fileID: 7290352594923834968}
     <UnselectedBackground>k__BackingField: {fileID: 236854648004996475}
     <UnselectedText>k__BackingField: {fileID: 5406496724393045926}
   - <Section>k__BackingField: 1
+    <ForPrivateCommunitiesOnly>k__BackingField: 0
     <Button>k__BackingField: {fileID: 1196924290479005283}
     <SelectedBackground>k__BackingField: {fileID: 1307324193677869611}
     <SelectedText>k__BackingField: {fileID: 2961424354771174431}
     <UnselectedBackground>k__BackingField: {fileID: 6416773400672022123}
     <UnselectedText>k__BackingField: {fileID: 8060992581175765104}
   - <Section>k__BackingField: 2
+    <ForPrivateCommunitiesOnly>k__BackingField: 1
     <Button>k__BackingField: {fileID: 4584329022015846338}
     <SelectedBackground>k__BackingField: {fileID: 3576858987173962822}
     <SelectedText>k__BackingField: {fileID: 4228422237000275381}

@@ -222,6 +222,15 @@ namespace DCL.Communities.CommunitiesCard.Members
             communityData = community;
             cancellationToken = ct;
             this.panelTask = panelTask;
+
+            foreach (var sectionMapping in memberListSectionsElements)
+            {
+                sectionMapping.Button.gameObject.SetActive(true);
+
+                if (!community.isPrivate && sectionMapping.ForPrivateCommunitiesOnly)
+                    sectionMapping.Button.gameObject.SetActive(false);
+            }
+
         }
 
         private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
@@ -269,6 +278,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             [field: SerializeField]
             public MemberListSections Section { get; private set; }
+
+            [field: SerializeField]
+            public bool ForPrivateCommunitiesOnly { get; private set; }
 
             [field: SerializeField]
             public Button Button { get; private set; }
