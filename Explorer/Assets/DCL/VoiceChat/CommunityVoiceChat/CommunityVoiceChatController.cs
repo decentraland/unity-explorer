@@ -218,17 +218,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
             participantState.IsSpeaker.OnUpdate += isSpeaker => SetUserEntryParent(isSpeaker, entryView);
-            participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView);
+            participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name);
 
             return entryView;
         }
 
-        private void SetUserRequestingToSpeak(bool isRequestingToSpeak, PlayerEntryView entryView)
+        private void SetUserRequestingToSpeak(bool isRequestingToSpeak, PlayerEntryView entryView, string playerName)
         {
             if (isRequestingToSpeak)
             {
                 entryView.transform.parent = view.CommunityVoiceChatSearchView.RequestToSpeakParent;
                 entryView.transform.localScale = Vector3.one;
+                inCallController.ShowRaiseHandTooltip(playerName);
             }
 
             inCallController.RefreshCounter();
