@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.UI.SharedSpaceManager;
@@ -11,13 +10,11 @@ using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Chat.ChatServices.DCL.Chat;
 using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
-using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 
 using Utility;
@@ -33,9 +30,7 @@ namespace DCL.Chat
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ChatMemberListService chatMemberListService;
         private readonly CommunityDataService communityDataService;
-        private readonly ICurrentChannelService currentChannelService;
-        private readonly ChatUserStateBridge chatUserStateBridge;
-        private readonly IChatUserStateEventBus userStateEventBus;
+        private readonly CurrentChannelService currentChannelService;
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
@@ -56,11 +51,8 @@ namespace DCL.Chat
             IEventBus eventBus,
             IChatMessagesBus chatMessagesBus,
             IChatEventBus chatEventBus,
-            IChatUserStateEventBus userStateEventBus,
-            ChatUserStateBridge chatUserStateBridge,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             ChatInputBlockingService chatInputBlockingService,
-            ChatSettingsAsset chatSettingsAsset,
             CommandRegistry commandRegistry,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -72,9 +64,7 @@ namespace DCL.Chat
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
             this.chatMessagesBus = chatMessagesBus;
-            this.userStateEventBus = userStateEventBus;
             this.chatEventBus = chatEventBus;
-            this.chatUserStateBridge = chatUserStateBridge;
             this.currentChannelService = currentChannelService;
             this.chatInputBlockingService = chatInputBlockingService;
             this.commandRegistry = commandRegistry;
@@ -113,9 +103,7 @@ namespace DCL.Chat
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
-                chatMessagesBus,
                 chatEventBus,
-                userStateEventBus,
                 chatHistory,
                 currentChannelService,
                 profileRepositoryWrapper,
@@ -139,6 +127,7 @@ namespace DCL.Chat
                 eventBus,
                 chatEventBus,
                 currentChannelService,
+                commandRegistry.ResolveInputStateCommand,
                 commandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
                 commandRegistry.SendMessage);

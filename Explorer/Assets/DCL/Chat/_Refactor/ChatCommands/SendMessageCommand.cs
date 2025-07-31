@@ -14,14 +14,14 @@ namespace DCL.Chat.ChatCommands
     {
         private const string ORIGIN = "chat";
 
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
         private readonly IChatMessagesBus chatMessageBus;
         private readonly AudioClipConfig sound;
         private readonly ChatSettingsAsset chatSettings;
 
         public SendMessageCommand(
             IChatMessagesBus chatMessageBus,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             AudioClipConfig sound,
             ChatSettingsAsset chatSettings)
         {

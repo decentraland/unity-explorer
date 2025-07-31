@@ -18,6 +18,7 @@ using Utility.Types;
 
 namespace DCL.Chat
 {
+    [Obsolete("Super-seeded by ChatUserStateService, will be removed")]
     public class ChatUserStateUpdater : IDisposable
     {
         private const string PRIVACY_SETTING_ALL = "all";
@@ -355,7 +356,6 @@ namespace DCL.Chat
 
                 if (CurrentConversation == userId)
                     chatUserStateEventBus.OnUserBlocked(userId);
-
             }
         }
 

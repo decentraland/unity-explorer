@@ -15,7 +15,7 @@ namespace DCL.Chat.ChatInput
     public class ChatInputPresenter : IDisposable
     {
         private readonly ChatInputView view;
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly ResolveInputStateCommand resolveInputStateCommand;
         private readonly EventSubscriptionScope scope = new ();
 
         private CancellationTokenSource cts = new ();
@@ -27,13 +27,14 @@ namespace DCL.Chat.ChatInput
             ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
             IChatEventBus chatEventBus,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
+            ResolveInputStateCommand resolveInputStateCommand,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             SendMessageCommand sendMessageCommand)
         {
             this.view = view;
-            this.currentChannelService = currentChannelService;
+            this.resolveInputStateCommand = resolveInputStateCommand;
 
             var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
                 new EmojiMapping(view.emojiContainer.emojiMappingJson, view.emojiContainer.emojiPanelConfiguration));
@@ -65,7 +66,7 @@ namespace DCL.Chat.ChatInput
 
             fsm.ChangeState<InitializingChatInputState>();
 
-            Result<ChatUserStateUpdater.ChatUserState> result = await currentChannelService.ResolveInputStateAsync(cts.Token);
+            Result<ChatUserStateService.ChatUserState> result = await resolveInputStateCommand.ExecuteAsync(cts.Token);
             OnBlockedUpdated(result);
         }
 
@@ -97,13 +98,13 @@ namespace DCL.Chat.ChatInput
         {
             cts = cts.SafeRestart();
 
-            Result<ChatUserStateUpdater.ChatUserState> result = await currentChannelService.ResolveInputStateAsync(cts.Token);
+            Result<ChatUserStateService.ChatUserState> result = await resolveInputStateCommand.ExecuteAsync(cts.Token);
             OnBlockedUpdated(result);
         }
 
-        private void OnBlockedUpdated(Result<ChatUserStateUpdater.ChatUserState> result)
+        private void OnBlockedUpdated(Result<ChatUserStateService.ChatUserState> result)
         {
-            fsm.CurrentState.OnBlockedUpdated(result is { Success: true, Value: ChatUserStateUpdater.ChatUserState.CONNECTED });
+            fsm.CurrentState.OnBlockedUpdated(result is { Success: true, Value: ChatUserStateService.ChatUserState.CONNECTED });
         }
 
         public void Dispose()

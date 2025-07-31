@@ -27,7 +27,7 @@ namespace DCL.Chat
         private readonly CommunityDataService communityDataService;
         private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
         private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatMemberListService chatMemberListService;
         private readonly CancellationTokenSource lifeCts = new ();
@@ -45,7 +45,7 @@ namespace DCL.Chat
             ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
             CommunityDataService communityDataService,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
             ChatClickDetectionService chatClickDetectionService,

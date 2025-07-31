@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatServices;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
@@ -128,11 +129,11 @@ namespace DCL.Chat.ChatCommands
 
         private async UniTaskVoid FetchInitialStatusAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
         {
-            ChatUserStateUpdater.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
+            ChatUserStateService.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
 
             if (ct.IsCancellationRequested) return;
 
-            viewModel.IsOnline = status == ChatUserStateUpdater.ChatUserState.CONNECTED;
+            viewModel.IsOnline = status == ChatUserStateService.ChatUserState.CONNECTED;
 
             eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
             {

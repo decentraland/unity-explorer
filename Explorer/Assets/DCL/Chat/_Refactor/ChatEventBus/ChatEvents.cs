@@ -79,7 +79,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Event:          UserStatusUpdatedEvent (NOT-USED)
+        /// Event:          UserStatusUpdatedEvent
         /// Triggered By:   ChatUserStateUpdater
         /// When:           A user's online status changes (e.g., a friend logs in or out).
         /// Subscribers:    ChatChannelsPresenter: Updates the online status indicator (green/grey dot) on the corresponding DM item.

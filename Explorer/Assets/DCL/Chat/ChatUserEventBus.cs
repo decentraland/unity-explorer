@@ -3,6 +3,7 @@ using System;
 
 namespace DCL.Chat
 {
+    [Obsolete]
     public interface IChatUserStateEventBus
     {
         public delegate void UserStateChangedDelegate(string userId);
@@ -25,6 +26,7 @@ namespace DCL.Chat
         void OnCurrentConversationUserUnavailable();
     }
 
+    [Obsolete]
     public class ChatUserStateEventBus : IChatUserStateEventBus
     {
         public event IChatUserStateEventBus.UserStateChangedDelegate? FriendConnected;

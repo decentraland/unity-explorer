@@ -24,7 +24,7 @@ namespace DCL.Chat.ChatMessages
         private readonly ChatMessageFeedView view;
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
         private readonly ChatContextMenuService contextMenuService;
         private readonly GetMessageHistoryCommand getMessageHistoryCommand;
         private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
@@ -48,7 +48,7 @@ namespace DCL.Chat.ChatMessages
         public ChatMessageFeedPresenter(ChatMessageFeedView view,
             IEventBus eventBus,
             IChatHistory chatHistory,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             ChatContextMenuService contextMenuService,
             GetMessageHistoryCommand getMessageHistoryCommand,
             CreateMessageViewModelCommand createMessageViewModelCommand,
@@ -135,7 +135,7 @@ namespace DCL.Chat.ChatMessages
 
             newMessageViewModel.PendingToAnimate = true;
             viewModels.Insert(index, newMessageViewModel);
-            
+
             if (isSentByOwnUser)
             {
                 MarkCurrentChannelAsRead();
@@ -198,7 +198,7 @@ namespace DCL.Chat.ChatMessages
         {
             ChatChannel.ChannelId currentChannelId = currentChannelService.CurrentChannelId;
 
-            chatHistory.AddMessage(currentChannelId, currentChannelService.CurrentChannelType, new ChatMessage("some message", "validated name",
+            chatHistory.AddMessage(currentChannelId, currentChannelService.CurrentChannel!.ChannelType, new ChatMessage("some message", "validated name",
                 currentChannelId.Id,
                 true, "sds"));
         }

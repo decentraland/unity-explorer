@@ -28,7 +28,7 @@ namespace DCL.Chat.ChatServices
     {
         private const int UNIFIED_POLL_INTERVAL_MS = 500;
 
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRoomHub roomHub;
@@ -61,7 +61,7 @@ namespace DCL.Chat.ChatServices
         public ChatMemberListService(IRoomHub roomHub,
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             CommunitiesDataProvider communitiesDataProvider,
             IWeb3IdentityCache web3IdentityCache)
         {

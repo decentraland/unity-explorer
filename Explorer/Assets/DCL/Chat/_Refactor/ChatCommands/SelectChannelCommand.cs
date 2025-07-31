@@ -8,12 +8,12 @@ namespace DCL.Chat.ChatCommands
     {
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
 
         public SelectChannelCommand(
             IEventBus eventBus,
             IChatHistory chatHistory,
-            ICurrentChannelService currentChannelService)
+            CurrentChannelService currentChannelService)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;

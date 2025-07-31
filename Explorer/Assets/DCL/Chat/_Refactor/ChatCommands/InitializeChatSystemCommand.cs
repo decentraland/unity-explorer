@@ -18,28 +18,25 @@ namespace DCL.Chat.ChatCommands
     {
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
-        private readonly CommunitiesEventBus communitiesEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ChatHistoryStorage? chatHistoryStorage;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ICommunityDataService communityDataService;
-        private readonly ChatUserStateUpdater chatUserStateUpdater;
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly ChatUserStateService chatUserStateUpdater;
+        private readonly CurrentChannelService currentChannelService;
 
         public InitializeChatSystemCommand(
             IEventBus eventBus,
             IChatHistory chatHistory,
-            CommunitiesEventBus communitiesEventBus,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             ChatHistoryStorage? chatHistoryStorage,
             CommunitiesDataProvider communitiesDataProvider,
             ICommunityDataService communityDataService,
-            ChatUserStateUpdater chatUserStateUpdater,
-            ICurrentChannelService currentChannelService)
+            ChatUserStateService chatUserStateUpdater,
+            CurrentChannelService currentChannelService)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
-            this.communitiesEventBus = communitiesEventBus;
             this.friendsServiceProxy = friendsServiceProxy;
             this.chatHistoryStorage = chatHistoryStorage;
             this.communitiesDataProvider = communitiesDataProvider;

@@ -9,7 +9,7 @@ namespace MVC
     /// </summary>
     public class ViewEventBus : MonoBehaviour, IEventBus
     {
-        private readonly EventBus eventBusImplementation = new ();
+        private readonly EventBus eventBusImplementation = new (true);
 
         public void Publish<T>(T evt)
         {

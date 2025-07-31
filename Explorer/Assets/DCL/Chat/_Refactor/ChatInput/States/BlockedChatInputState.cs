@@ -10,9 +10,9 @@ namespace DCL.Chat.ChatInput
     public class BlockedChatInputState : ChatInputState
     {
         private readonly ChatConfig.ChatConfig config;
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
 
-        public BlockedChatInputState(ChatConfig.ChatConfig config, ICurrentChannelService currentChannelService)
+        public BlockedChatInputState(ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
         {
             this.config = config;
             this.currentChannelService = currentChannelService;
@@ -32,14 +32,14 @@ namespace DCL.Chat.ChatInput
 
             if (currentChannelService.InputState.Success)
             {
-                Assert.IsTrue(currentChannelService.InputState.Value != ChatUserStateUpdater.ChatUserState.CONNECTED);
+                Assert.IsTrue(currentChannelService.InputState.Value != ChatUserStateService.ChatUserState.CONNECTED);
 
                 blockedReason = currentChannelService.InputState.Value switch
                 {
-                    ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER => config.BlockedByOwnUserMessage,
-                    ChatUserStateUpdater.ChatUserState.DISCONNECTED => config.UserOfflineMessage,
-                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => config.OnlyFriendsOwnUserMessage,
-                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED => config.OnlyFriendsMessage,
+                    ChatUserStateService.ChatUserState.BLOCKED_BY_OWN_USER => config.BlockedByOwnUserMessage,
+                    ChatUserStateService.ChatUserState.DISCONNECTED => config.UserOfflineMessage,
+                    ChatUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => config.OnlyFriendsOwnUserMessage,
+                    ChatUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED => config.OnlyFriendsMessage,
                     _ => string.Empty
                 };
             }

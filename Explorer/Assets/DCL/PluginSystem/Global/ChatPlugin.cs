@@ -34,10 +34,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Chat.ChatServices.DCL.Chat;
-using DCL.Chat.Services;
 using DCL.Communities;
-using ECS;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -84,9 +81,9 @@ namespace DCL.PluginSystem.Global
         private ChatController chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
-        private ChatUserStateUpdater chatUserStateUpdater;
+        private ChatUserStateService? chatUserStateService;
         private ChatHistoryService? chatBusListenerService;
-        private readonly IEventBus eventBus = new EventBus();
+        private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
 
         public ChatPlugin(
@@ -154,13 +151,14 @@ namespace DCL.PluginSystem.Global
             this.communitiesEventBus = communitiesEventBus;
             this.realmNavigator = realmNavigator;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
-            isCallEnabled = isCallEnabled;
+            this.isCallEnabled = isCallEnabled;
         }
 
         public void Dispose()
         {
             chatStorage?.Dispose();
             chatBusListenerService?.Dispose();
+            chatUserStateService?.Dispose();
             pluginScope.Dispose();
         }
 
@@ -190,17 +188,17 @@ namespace DCL.PluginSystem.Global
                 chatHistory,
                 communityDataService);
 
-            var chatUserStateEventBus = new ChatUserStateEventBus();
+            var currentChannelService = new CurrentChannelService();
 
-            var chatUserStateUpdater = new ChatUserStateUpdater(
+            chatUserStateService = new ChatUserStateService(
+                currentChannelService,
+                eventBus,
                 userBlockingCacheProxy,
-                roomHub.ChatRoom().Participants,
+                friendsServiceProxy,
                 chatSettingsAsset.Value,
                 privacySettings,
-                chatUserStateEventBus,
                 friendsEventBus,
-                roomHub.ChatRoom(),
-                friendsServiceProxy);
+                roomHub.ChatRoom());
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
 
@@ -215,19 +213,12 @@ namespace DCL.PluginSystem.Global
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
 
-            var getUserChatStatus = new GetUserChatStatusCommand(chatUserStateUpdater, eventBus);
-
-            var currentChannelService = new CurrentChannelService(getUserChatStatus);
-
             var chatMemberService = new ChatMemberListService(roomHub,
                 profileCache,
                 friendsServiceProxy,
                 currentChannelService,
                 communityDataProvider,
                 web3IdentityCache);
-
-            var chatUserStateBridge =
-                new ChatUserStateBridge(chatUserStateEventBus, eventBus, currentChannelService);
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
 
@@ -236,15 +227,12 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 eventBus,
                 chatMessagesBus,
-                communitiesEventBus,
                 chatHistory,
                 chatStorage,
-                chatUserStateUpdater,
+                chatUserStateService,
                 currentChannelService,
-                chatMemberService,
                 communityDataProvider,
                 communityDataService,
-                hyperlinkTextFormatter,
                 profileRepositoryWrapper,
                 thumbnailCache,
                 friendsServiceProxy,
@@ -264,11 +252,8 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 chatMessagesBus,
                 chatEventBus,
-                chatUserStateEventBus,
-                chatUserStateBridge,
                 currentChannelService,
                 chatInputBlockingService,
-                chatSettingsAsset.Value,
                 useCaseFactory,
                 chatHistory,
                 profileRepositoryWrapper,

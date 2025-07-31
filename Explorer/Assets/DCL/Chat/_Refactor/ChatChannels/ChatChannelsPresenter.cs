@@ -4,7 +4,6 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
-using DCL.Chat.MessageBus;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System;
@@ -19,10 +18,8 @@ namespace DCL.Chat
         private readonly ChatChannelsView view;
         private readonly IEventBus eventBus;
         private readonly IChatEventBus chatEventBus;
-        private readonly IChatMessagesBus chatMessageBus;
-        private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly IChatHistory chatHistory;
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
         private readonly SelectChannelCommand selectChannelCommand;
         private readonly CloseChannelCommand closeChannelCommand;
         private readonly OpenConversationCommand openConversationCommand;
@@ -36,11 +33,9 @@ namespace DCL.Chat
 
         public ChatChannelsPresenter(ChatChannelsView view,
             IEventBus eventBus,
-            IChatMessagesBus chatMessageBus,
             IChatEventBus chatEventBus,
-            IChatUserStateEventBus chatUserStateEventBus,
             IChatHistory chatHistory,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             SelectChannelCommand selectChannelCommand,
             CloseChannelCommand closeChannelCommand,
@@ -51,10 +46,8 @@ namespace DCL.Chat
             this.view.Initialize(profileRepositoryWrapper);
 
             this.eventBus = eventBus;
-            this.chatMessageBus = chatMessageBus;
             this.chatEventBus = chatEventBus;
             this.chatHistory = chatHistory;
-            this.chatUserStateEventBus = chatUserStateEventBus;
             this.currentChannelService = currentChannelService;
             this.selectChannelCommand = selectChannelCommand;
             this.closeChannelCommand = closeChannelCommand;
@@ -72,8 +65,8 @@ namespace DCL.Chat
             this.chatHistory.MessageAdded += OnMessageAdded;
             this.chatEventBus.OpenPrivateConversationRequested += OnOpenUserConversation;
             this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
-            this.chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
 
+            scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
             scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
@@ -81,18 +74,16 @@ namespace DCL.Chat
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
         }
 
-        private async void OnLiveUserConnectionStateChange(string userId, bool isConnected)
+        private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
         {
-            await UniTask.SwitchToMainThread();
-
-            var channelId = new ChatChannel.ChannelId(userId);
+            var channelId = new ChatChannel.ChannelId(userStatusUpdatedEvent.UserId);
 
             if (viewModels.TryGetValue(channelId, out BaseChannelViewModel? baseVm) &&
                 baseVm is UserChannelViewModel userVm)
             {
-                if (userVm.IsOnline != isConnected)
+                if (userVm.IsOnline != userStatusUpdatedEvent.IsOnline)
                 {
-                    userVm.IsOnline = isConnected;
+                    userVm.IsOnline = userStatusUpdatedEvent.IsOnline;
                     view.UpdateConversation(userVm);
                 }
             }
@@ -243,7 +234,6 @@ namespace DCL.Chat
 
             chatEventBus.OpenPrivateConversationRequested -= OnOpenUserConversation;
             chatEventBus.OpenCommunityConversationRequested -= OnOpenCommunityConversation;
-            chatUserStateEventBus.UserConnectionStateChanged -= OnLiveUserConnectionStateChange;
 
             scope.Dispose();
         }
