@@ -121,11 +121,10 @@ namespace DCL.Chat.ChatMessages
 
         private void OnMessageAddedToChatHistory(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
         {
-            // Bubbles logic should be separated from the presenter
-
             if (currentChannelService.CurrentChannel != destinationChannel)
                 return;
 
+            bool wasAtBottom = view.IsAtBottom();
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
             ChatMessageViewModel newMessageViewModel = createMessageViewModelCommand.Execute(addedMessage);
@@ -139,7 +138,7 @@ namespace DCL.Chat.ChatMessages
             if (isSentByOwnUser)
             {
                 MarkCurrentChannelAsRead();
-
+                view.SetScrollToBottomButtonVisibility(false, 0, false); 
                 IncrementSeparatorIndex();
 
                 view.ReconstructScrollView(false);
@@ -149,8 +148,10 @@ namespace DCL.Chat.ChatMessages
             {
                 var separatorAdded = false;
 
-                if (view.IsAtBottom())
+                if (wasAtBottom)
+                {
                     MarkCurrentChannelAsRead();
+                }
                 else
                 {
                     if (messageCountWhenSeparatorViewed.HasValue)
@@ -164,6 +165,20 @@ namespace DCL.Chat.ChatMessages
 
                 messageCountWhenSeparatorViewed = null;
                 view.ReconstructScrollView(false);
+
+                if (!wasAtBottom)
+                {
+                    int unreadCount = destinationChannel.Messages.Count - destinationChannel.ReadMessages;
+                    if (isFocused)
+                    {
+                        view.SetScrollToBottomButtonVisibility(true, unreadCount, false);
+                    }
+                }
+                else
+                {
+                    // If we were at the bottom, ensure we scroll to the new message
+                    view.ShowLastMessage();
+                }
             }
 
             if (!isFocused)
@@ -205,6 +220,7 @@ namespace DCL.Chat.ChatMessages
 
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
+            view.SetScrollToBottomButtonVisibility(false, 0, false);
             UpdateChannelMessages();
         }
 
@@ -225,6 +241,14 @@ namespace DCL.Chat.ChatMessages
                     TryAddNewMessagesSeparatorAfterPendingMessages(-1);
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
+
+                    var currentChannel = currentChannelService.CurrentChannel!;
+                    int unreadCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
+
+                    if (unreadCount > 0 && !view.IsAtBottom())
+                    {
+                        view.SetScrollToBottomButtonVisibility(true, unreadCount, false);
+                    }
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_HISTORY); }
@@ -234,12 +258,14 @@ namespace DCL.Chat.ChatMessages
         private void MarkCurrentChannelAsRead()
         {
             markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
+            view.SetScrollToBottomButtonVisibility(false, 0, true);
         }
 
         private void OnChatHistoryCleared(ChatEvents.ChatHistoryClearedEvent evt)
         {
             if (currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
             {
+                view.SetScrollToBottomButtonVisibility(false, 0, false);
                 RemoveNewMessagesSeparator();
                 viewModels.ForEach(ChatMessageViewModel.RELEASE);
                 viewModels.Clear();
@@ -254,6 +280,7 @@ namespace DCL.Chat.ChatMessages
             view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
             view.OnScrolledToBottom += MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged += OnScrollPositionChanged;
+            view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
@@ -268,9 +295,16 @@ namespace DCL.Chat.ChatMessages
             view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
-
+            view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
+            
             scope.Dispose();
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
+        }
+
+        private void OnScrollToBottomButtonClicked()
+        {
+            view.ShowLastMessage(useSmoothScroll: true);
+            //view.SetScrollToBottomButtonVisibility(false, 0, true);
         }
 
         protected override void Activate(ControllerNoData input)
@@ -300,8 +334,23 @@ namespace DCL.Chat.ChatMessages
             if (!isFocused)
                 view.StartChatEntriesFadeout();
 
-            float scrollBarTargetAlpha = isFocused ? 1f : 0f;
-            view.StartScrollBarFade(scrollBarTargetAlpha, animate ? duration : 0f, easing);
+            float targetAlpha = isFocused ? 1f : 0f;
+            view.StartScrollBarFade(targetAlpha, animate ? duration : 0f, easing);
+            view.StartButtonFocusFade(targetAlpha, animate ? duration : 0f, easing);
+
+            if (isFocused)
+            {
+                var currentChannel = currentChannelService.CurrentChannel;
+                if (currentChannel != null)
+                {
+                    int unreadCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
+
+                    if (unreadCount > 0 && !view.IsAtBottom())
+                    {
+                        view.SetScrollToBottomButtonVisibility(true, unreadCount, false);
+                    }
+                }
+            }
         }
 
         public void Dispose()

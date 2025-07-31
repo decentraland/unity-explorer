@@ -17,6 +17,7 @@ namespace DCL.Chat.ChatMessages
 {
     public class ChatMessageFeedView : MonoBehaviour, IDisposable
     {
+        [SerializeField] private ChatMessageFeedScrollButtonView chatScrollToBottomView;
         [SerializeField] private float chatEntriesFadeTime = 3f;
         [SerializeField] private int chatEntriesWaitBeforeFading = 10000;
         [SerializeField] private CanvasGroup scrollbarCanvasGroup;
@@ -32,6 +33,8 @@ namespace DCL.Chat.ChatMessages
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
+            if (chatScrollToBottomView != null)
+                chatScrollToBottomView.OnClicked -= ScrollToBottomButtonClicked;
         }
 
         public event Action? OnFakeMessageRequested;
@@ -43,14 +46,23 @@ namespace DCL.Chat.ChatMessages
         public event Action<string, Vector2>? OnProfileContextMenuRequested;
 
         public event Action? OnScrolledToBottom;
+        public event Action? OnScrollToBottomButtonClicked;
 
         public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels)
         {
             this.viewModels = viewModels;
 
+            if (chatScrollToBottomView != null)
+                chatScrollToBottomView.OnClicked += ScrollToBottomButtonClicked;
+
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        private void ScrollToBottomButtonClicked()
+        {
+            OnScrollToBottomButtonClicked?.Invoke();
         }
 
         internal bool IsItemVisible(int modelIndex)
@@ -249,6 +261,16 @@ namespace DCL.Chat.ChatMessages
             chatEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(chatEntriesWaitBeforeFading, cancellationToken: ct);
             await chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime).ToUniTask(cancellationToken: ct);
+        }
+
+        public void SetScrollToBottomButtonVisibility(bool isVisible, int unreadCount, bool useAnimation)
+        {
+            chatScrollToBottomView.SetVisibility(isVisible, unreadCount, useAnimation);
+        }
+
+        public void StartButtonFocusFade(float targetAlpha, float duration, Ease easing)
+        {
+            chatScrollToBottomView.StartFocusFade(targetAlpha, duration, easing);
         }
 
         private string GetPrefabName(ChatItemPrefabIndex index) =>
