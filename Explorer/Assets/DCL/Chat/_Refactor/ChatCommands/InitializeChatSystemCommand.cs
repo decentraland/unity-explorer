@@ -113,7 +113,7 @@ namespace DCL.Chat.ChatCommands
                 }
 
                 // Store the data in our new service
-                communityDataService.SetCommunities(openCommunities);
+                communityDataService.SetCommunities(response.data.results);
 
                 // Now create the channels in the history
                 foreach (var community in openCommunities)

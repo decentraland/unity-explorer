@@ -42,18 +42,18 @@ namespace DCL.Chat.ChatCommands
         public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
         {
             BaseChannelViewModel viewModel = channel.ChannelType switch
-                                             {
-                                                 ChatChannel.ChatChannelType.NEARBY =>
-                                                     new NearbyChannelViewModel(channel.Id, chatConfig.NearbyConversationName, chatConfig.NearbyConversationIcon),
+            {
+                ChatChannel.ChatChannelType.NEARBY =>
+                    new NearbyChannelViewModel(channel.Id, chatConfig.NearbyConversationName, chatConfig.NearbyConversationIcon),
 
-                                                 ChatChannel.ChatChannelType.USER =>
-                                                     CreateUserChannelViewModel(channel, ct),
+                ChatChannel.ChatChannelType.USER =>
+                    CreateUserChannelViewModel(channel, ct),
 
-                                                 ChatChannel.ChatChannelType.COMMUNITY =>
-                                                     CreateCommunityChannelViewModel(channel, ct),
+                ChatChannel.ChatChannelType.COMMUNITY =>
+                    CreateCommunityChannelViewModel(channel, ct),
 
-                                                 _ => throw new ArgumentOutOfRangeException(nameof(channel.ChannelType), "Unsupported channel type"),
-                                             };
+                _ => throw new ArgumentOutOfRangeException(nameof(channel.ChannelType), "Unsupported channel type")
+            };
 
             viewModel.UnreadMessagesCount = channel.Messages.Count - channel.ReadMessages;
             return viewModel;
