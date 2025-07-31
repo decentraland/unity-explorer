@@ -92,7 +92,6 @@ namespace DCL.VoiceChat
             GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
             bool isVoiceChatActive = communityData.data.voiceChatStatus.isActive;
 
-
             currentCommunityCallStatusSubscription = orchestrator.CommunityStatusService.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
             //If there is no voice chat active, we just don't show this.

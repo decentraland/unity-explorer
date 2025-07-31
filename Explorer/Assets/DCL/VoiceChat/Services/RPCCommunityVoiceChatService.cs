@@ -224,7 +224,7 @@ namespace DCL.VoiceChat.Services
                             socialServiceRPC.Module()!.CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
 
                         streamOpened = true;
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, "Successfully opened community voice chat updates stream");
+                        ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Successfully opened community voice chat updates stream");
 
                         await foreach (CommunityVoiceChatUpdate? response in stream)
                         {
