@@ -50,6 +50,18 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly SectionFetchData<MemberData> requestingMembersFetchData = new (PAGE_SIZE);
 
         private GetCommunityResponse.CommunityData? communityData = null;
+
+        private int requestAmount;
+        private int RequestsAmount
+        {
+            get => requestAmount;
+
+            set
+            {
+                requestAmount = value;
+                view.UpdateRequestsCounter(value);
+            }
+        }
         protected override SectionFetchData<MemberData> currentSectionFetchData
         {
             get
@@ -363,6 +375,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             panelLifecycleTask?.TrySetResult();
 
+            RequestsAmount = 0;
+
             base.Reset();
         }
 
@@ -482,6 +496,21 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.SetCommunityData(community, panelLifecycleTask!.Task, ct);
 
             FetchNewDataAsync(ct).Forget();
+            FetchRequestsToJoinAsync(ct).Forget();
+        }
+
+        private async UniTaskVoid FetchRequestsToJoinAsync(CancellationToken ct)
+        {
+            Result<GetCommunityMembersResponse> response = await communitiesDataProvider.GetCommunityRequestsToJoin(communityData?.id, 1, 0, ct)
+                                                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!response.Success)
+                return;
+
+            RequestsAmount = response.Value.data.total;
         }
 
         private void OnMainButtonClicked(MemberData profile) =>

@@ -130,6 +130,7 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityMembersResponse> GetCommunityRequestsToJoin(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
+            await UniTask.Delay(Random.Range(500, 2000), cancellationToken: ct);
             const int TOTAL = 5;
 
             GetCommunityMembersResponse.MemberData[] members = new GetCommunityMembersResponse.MemberData[TOTAL];
