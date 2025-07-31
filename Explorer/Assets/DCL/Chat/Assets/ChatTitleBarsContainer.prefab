@@ -68,7 +68,6 @@ MonoBehaviour:
   openContextMenuButton: {fileID: 3140900631477848246}
   <CallButton>k__BackingField: {fileID: 8603347100071366088}
   <CommunitiesCallButton>k__BackingField: {fileID: 2207390300655808956}
-  <CommunityStreamSubTitleBar>k__BackingField: {fileID: 0}
   chatTitleMemberListNumberText: {fileID: 2895227464705487980}
   memberListTitleMemberListNumberText: {fileID: 5377769190290950630}
   communityMemberListTitleMemberListNumberText: {fileID: 3603435867378355716}
