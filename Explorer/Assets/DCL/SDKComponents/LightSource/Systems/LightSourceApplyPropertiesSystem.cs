@@ -83,7 +83,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                                        _ => 1
                                    };
             intensity *= intensityScale;
-            lightSourceComponent.MaxIntensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(intensity);
+            lightSourceComponent.MaxIntensity = intensity;
 
             switch (pbLightSource.TypeCase)
             {

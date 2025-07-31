@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RangeFormulaExponent: 0.25
   FadeDuration: 0.25
-  SpotLightIntensityScale: 0.1
-  PointLightIntensityScale: 0.1
+  SpotLightIntensityScale: 1
+  PointLightIntensityScale: 1
   DefaultValues:
     Active: 1
     Color: {r: 1, g: 1, b: 1, a: 1}
