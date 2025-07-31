@@ -155,9 +155,9 @@ namespace DCL.Chat.ChatServices
             switch (update)
             {
                 case UpdateFromParticipant.Connected:
-                    //If the user is not blocked, we add it as a connected user, then check if its a friend, otherwise, we add it as a blocked user
-                    // NotifyUserStateUpdated(userId, userBlockingCacheProxy.StrictObject.UserIsBlocked(userId));
-                    NotifyUserStateUpdated(userId, true);
+                    //If the user is not blocked, we add it as a connected user, then
+                    //check if its a friend, otherwise, we add it as a blocked user
+                    NotifyUserStateUpdated(userId, !userBlockingCacheProxy.StrictObject.UserIsBlocked(userId));
                     break;
                 case UpdateFromParticipant.MetadataChanged:
                     ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Metadata Changed {participant.Metadata}");
