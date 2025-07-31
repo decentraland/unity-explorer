@@ -34,6 +34,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string ADD_MODERATOR_ERROR_TEXT = "There was an error adding moderator to user. Please try again.";
         private const string KICK_USER_ERROR_TEXT = "There was an error kicking the user. Please try again.";
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
+        private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         private readonly MembersListView view;
@@ -85,6 +86,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
+        private CancellationTokenSource communityOperationCts = new ();
         private UniTaskCompletionSource? panelLifecycleTask;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.MEMBERS;
 
@@ -131,6 +133,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             contextMenuOperationCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
+            communityOperationCts.SafeCancelAndDispose();
             view.ActiveSectionChanged -= OnMemberListSectionChanged;
             view.ElementMainButtonClicked -= OnMainButtonClicked;
             view.ContextMenuUserProfileButtonClicked -= HandleContextMenuUserProfileButtonAsync;
@@ -152,7 +155,34 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void OnManageRequestClicked(MemberData profile, bool accept)
         {
-            Debug.Log($"Clicked: <{profile.name}, {accept}>");
+            communityOperationCts = communityOperationCts.SafeRestart();
+            ManageRequestAsync(communityOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ManageRequestAsync(CancellationToken ct)
+            {
+                Result<bool> result = await communitiesDataProvider.ManageCommunityRequestAsync(communityData!.Value.id, profile.memberAddress, accept, ct)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                if (!result.Success || !result.Value)
+                {
+                    await inWorldWarningNotificationView.AnimatedShowAsync(MANAGE_REQUEST_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    return;
+                }
+
+                RequestsAmount--;
+                requestingMembersFetchData.Items.Remove(profile);
+
+                if (accept)
+                {
+                    profile.role = CommunityMemberRole.member;
+                    allMembersFetchData.Items.Add(profile);
+                    MembersSorter.SortMembersList(allMembersFetchData.Items);
+                }
+
+                RefreshGrid(true);
+            }
+
         }
 
         private void OnMemberListSectionChanged(MembersListView.MemberListSections section)
@@ -372,6 +402,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             allMembersFetchData.Reset();
             bannedMembersFetchData.Reset();
+            requestingMembersFetchData.Reset();
 
             panelLifecycleTask?.TrySetResult();
 

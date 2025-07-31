@@ -144,7 +144,7 @@ namespace DCL.Communities
                     profilePictureUrl = string.Empty,
                     hasClaimedName = Random.Range(0, 101) > 50,
                     name = $"User {i + 1}",
-                    mutualFriends = Random.Range(0, 30)
+                    mutualFriends = 0
                 };
             }
 
@@ -160,6 +160,9 @@ namespace DCL.Communities
                 }
             };
         }
+
+        public async UniTask<bool> ManageCommunityRequestAsync(string communityId, string userId, bool accept, CancellationToken ct) =>
+            true;
 
         public async UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct)
         {
