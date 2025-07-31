@@ -23,6 +23,7 @@ namespace DCL.UI.SceneDebugConsole
         private ScrollView scrollView;
         private Button clearButton;
         private Button copyAllButton;
+        private Button pauseButton;
         private bool isInputSelected;
 
         public SceneDebugConsoleController(SceneDebugConsoleLogEntryBus logEntriesBus, IInputBlock inputBlock)
@@ -47,6 +48,7 @@ namespace DCL.UI.SceneDebugConsole
             var textField = uiDocumentRoot.Q<TextField>(name: "FilterTextField");
             clearButton = uiDocumentRoot.Q<Button>(name: "ClearButton");
             copyAllButton = uiDocumentRoot.Q<Button>(name: "CopyAllButton");
+            pauseButton = uiDocumentRoot.Q<Button>(name: "PauseButton");
             var errorEntriesTypeToggle = uiDocumentRoot.Q<Toggle>(name: "ErrorsToggle");
             var logEntriesTypeToggle = uiDocumentRoot.Q<Toggle>(name: "LogsToggle");
 
@@ -85,6 +87,9 @@ namespace DCL.UI.SceneDebugConsole
             if (copyAllButton != null)
                 copyAllButton.clicked += CopyAllEntriesToClipboard;
 
+            // Pause button
+            pauseButton.clicked += ToggleConsolePause;
+
             // Filter text field
             textField.RegisterCallback<ChangeEvent<string>>((evt) =>
             {
@@ -120,6 +125,7 @@ namespace DCL.UI.SceneDebugConsole
         {
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
             logEntriesBus.MessageAdded -= OnEntryAdded;
+            pauseButton.clicked -= ToggleConsolePause;
             clearButton.clicked -= ClearLogEntries;
 
             // TODO: Remove check when button is in place
@@ -133,6 +139,11 @@ namespace DCL.UI.SceneDebugConsole
         {
             logsHistory.ClearLogMessages();
             RefreshListViewAsync(IsScrollAtBottom()).Forget();
+        }
+
+        private void ToggleConsolePause()
+        {
+            logsHistory.Paused = !logsHistory.Paused;
         }
 
         private void CopyAllEntriesToClipboard()

@@ -9,6 +9,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         private readonly List<SceneDebugConsoleLogEntry> unfilteredLogMessages = new();
 
         public event Action<SceneDebugConsoleLogEntry> LogMessageAdded;
+        public bool Paused = false;
         private string textFilter;
         private bool filterOutErrorEntries = false;
         private bool filterOutLogEntries = false;
@@ -17,6 +18,8 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
 
         public void AddLogMessage(SceneDebugConsoleLogEntry logEntry)
         {
+            if (Paused) return;
+
             unfilteredLogMessages.Add(logEntry);
 
             if (KeepAfterFilter(logEntry))
