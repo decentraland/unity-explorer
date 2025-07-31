@@ -134,7 +134,7 @@ namespace DCL.PluginSystem.Global
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
-            facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShape(settings, ct);
+            facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
@@ -251,7 +251,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private async UniTask<FacialFeaturesTextures[]> CreateDefaultFaceTexturesByBodyShape(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask<FacialFeaturesTextures[]> CreateDefaultFaceTexturesByBodyShapeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             var maleMouthTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMaleMouthTexture, ct: ct)).Value;
             var maleEyebrowsTexture = (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMaleEyebrowsTexture, ct: ct)).Value;
