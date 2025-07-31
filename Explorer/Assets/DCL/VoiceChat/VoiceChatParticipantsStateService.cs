@@ -124,9 +124,6 @@ namespace DCL.VoiceChat
             return status;
         }
 
-        /// <summary>
-        ///     Sets the online status for a participant. Creates a new reactive property if it doesn't exist.
-        /// </summary>
         private void SetOnlineStatus(string participantId, bool isOnline)
         {
             if (!onlineStatus.TryGetValue(participantId, out ReactiveProperty<bool> status))
@@ -196,7 +193,6 @@ namespace DCL.VoiceChat
                         if (connectedParticipants.Remove(participant.Identity))
                         {
                             SetOnlineStatus(participant.Identity, false);
-                            RemoveParticipantState(participant.Identity);
                             ParticipantLeft?.Invoke(participant.Identity);
                             activeSpeakers.Remove(participant.Identity);
                             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant left: {participant.Identity}");
@@ -585,14 +581,14 @@ namespace DCL.VoiceChat
             public bool isRequestingToSpeak;
             public bool isSpeaker;
             public string role;
-            
+
             public UserCommunityRoleMetadata Role => ParseRole(role);
-            
+
             private static UserCommunityRoleMetadata ParseRole(string? roleString)
             {
                 if (string.IsNullOrEmpty(roleString))
                     return UserCommunityRoleMetadata.none;
-                
+
                 return roleString.ToLowerInvariant() switch
                 {
                     "user" => UserCommunityRoleMetadata.user,

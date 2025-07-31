@@ -174,7 +174,7 @@ namespace DCL.VoiceChat
             DemoteFromSpeaker(CallId, walletId);
         }
 
-        public void DemoteFromSpeaker(string communityId, string walletId)
+        private void DemoteFromSpeaker(string communityId, string walletId)
         {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
@@ -257,11 +257,8 @@ namespace DCL.VoiceChat
 
         public override void Dispose()
         {
-            if (voiceChatService != null)
-            {
-                voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
-                voiceChatService.Dispose();
-            }
+            voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
+            voiceChatService.Dispose();
 
             foreach (ReactiveProperty<bool>? callData in communityVoiceChatCalls.Values) { callData.Dispose(); }
 
