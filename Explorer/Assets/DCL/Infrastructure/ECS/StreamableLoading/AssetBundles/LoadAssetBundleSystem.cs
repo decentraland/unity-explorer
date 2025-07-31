@@ -114,7 +114,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, intention.HasMultipleAssetBundles, loadingMutex, dependencies, GetReportData(), intention.AssetBundleVersion, source, intention.LookForShaderAssets, ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, intention.HasMultipleAssets, loadingMutex, dependencies, GetReportData(), intention.AssetBundleVersion, source, intention.LookForShaderAssets, ct);
             }
             catch (Exception e)
             {

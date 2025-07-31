@@ -12,14 +12,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
     {
         public readonly string Name;
         public readonly string Hash;
-        public readonly bool IsInStaticScene;
 
-
-        public GetGltfContainerAssetIntention(string name, string hash, CancellationTokenSource cancellationTokenSource, bool isInStaticScene = false)
+        public GetGltfContainerAssetIntention(string name, string hash, CancellationTokenSource cancellationTokenSource)
         {
             Name = name;
             Hash = hash;
-            IsInStaticScene = isInStaticScene;
             CancellationTokenSource = cancellationTokenSource;
         }
 

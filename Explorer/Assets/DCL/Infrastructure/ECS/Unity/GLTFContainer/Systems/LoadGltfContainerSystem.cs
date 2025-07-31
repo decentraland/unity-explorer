@@ -30,15 +30,13 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly ISceneData sceneData;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-        private readonly StaticSceneAssetBundle staticSceneAssetBundle;
 
         internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData,
-            IEntityCollidersSceneCache entityCollidersSceneCache, StaticSceneAssetBundle staticSceneAssetBundle) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
             this.sceneData = sceneData;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
-            this.staticSceneAssetBundle = staticSceneAssetBundle;
         }
 
         protected override void Update(float t)
@@ -67,7 +65,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             else
             {
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource(), staticSceneAssetBundle.assets.ContainsKey(hash)), partitionComponent);
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
                 component = new GltfContainerComponent(
                     sdkComponent.GetVisibleMeshesCollisionMask(),
                     sdkComponent.GetInvisibleMeshesCollisionMask(),

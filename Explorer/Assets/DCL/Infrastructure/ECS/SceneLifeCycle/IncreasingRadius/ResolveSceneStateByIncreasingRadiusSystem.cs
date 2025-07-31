@@ -14,6 +14,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -107,6 +108,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         [Query]
         [None(typeof(SceneLoadingState), typeof(DeleteEntityIntention), typeof(RoadInfo))]
+        [All(typeof(StaticSceneAssetBundle))]
         private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent,
             in SceneDefinitionComponent sceneDefinitionComponent)
         {

@@ -71,7 +71,7 @@ namespace DCL.PluginSystem.World
                 new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
 
             // Asset loading
-            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);
+            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles, sharedDependencies.StaticSceneAssetBundle);
 
             if (localSceneDevelopment && !useRemoteAssetBundles)
                 CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(CleanupGltfNodeModifierSystem.InjectToWorld(ref builder, buffer));
 
             // GLTF Container
-            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.StaticSceneAssetBundle);
+            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData, sharedDependencies.EntityCollidersSceneCache);
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 
@@ -95,7 +95,7 @@ namespace DCL.PluginSystem.World
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
-                persistentEntities.SceneContainer, sharedDependencies.StaticSceneAssetBundle.assets.Count > 0);
+                persistentEntities.SceneContainer, true);
         }
     }
 }

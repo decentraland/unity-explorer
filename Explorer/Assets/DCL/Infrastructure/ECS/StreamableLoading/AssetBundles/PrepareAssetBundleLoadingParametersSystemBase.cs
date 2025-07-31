@@ -5,6 +5,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using Utility;
 
@@ -21,6 +22,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly URLDomain streamingAssetURL;
         private readonly URLDomain assetBundlesURL;
+
 
         protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world)
         {

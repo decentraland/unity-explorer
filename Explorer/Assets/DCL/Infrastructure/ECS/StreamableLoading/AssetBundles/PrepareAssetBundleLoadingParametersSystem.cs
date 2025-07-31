@@ -17,10 +17,12 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class PrepareAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
         private readonly ISceneData sceneData;
+        private readonly StaticSceneAssetBundle staticSceneAssetBundle;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL, StaticSceneAssetBundle staticSceneAssetBundle) : base(world, streamingAssetURL, assetBundlesURL)
         {
             this.sceneData = sceneData;
+            this.staticSceneAssetBundle = staticSceneAssetBundle;
         }
 
         protected override void Update(float t)
@@ -37,6 +39,16 @@ namespace ECS.StreamableLoading.AssetBundles
             assetBundleIntention.AssetBundleVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
             assetBundleIntention.HasParentEntityIDPathInURL = sceneData.SceneEntityDefinition.hasSceneInPath;
+
+            if (staticSceneAssetBundle.Supported && staticSceneAssetBundle.Assets.ContainsKey(assetBundleIntention.Hash))
+            {
+                //TODO (JUANI): Should we look for the immediate resoution here?
+                // If not in cache, try load from asset bundle
+                assetBundleIntention.Hash = $"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA";
+                assetBundleIntention.HasMultipleAssets = true;
+                assetBundleIntention.SingleAssetBundleHack = true;
+            }
+
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

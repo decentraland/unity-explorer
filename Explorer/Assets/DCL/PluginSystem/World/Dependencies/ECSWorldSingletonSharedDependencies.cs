@@ -5,7 +5,9 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Mapping;
+using System.Collections.Generic;
 
 namespace DCL.PluginSystem.World.Dependencies
 {

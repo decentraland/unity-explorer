@@ -9,6 +9,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 
@@ -25,12 +26,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private readonly IGltfContainerAssetsCache cache;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
+        private readonly StaticSceneAssetBundle staticSceneAssetBundle;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, bool localSceneDevelopment, bool useRemoteAssetBundles) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, bool localSceneDevelopment, bool useRemoteAssetBundles, StaticSceneAssetBundle staticSceneAssetBundle) : base(world)
         {
             this.cache = cache;
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
+            this.staticSceneAssetBundle = staticSceneAssetBundle;
         }
 
         protected override void Update(float t)
@@ -54,16 +57,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
             {
-                if (!intention.IsInStaticScene)
-                {
-                    // If not in cache, try load from asset bundle
-                    World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
-                }
-                else
-                {
-                    // If not in cache, try load from asset bundle
-                    World.Add(entity, GetAssetBundleIntention.CreateSingleAssetBundleHack($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA"));
-                }
+                // If not in cache, try load from asset bundle
+                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
             }
 
         }

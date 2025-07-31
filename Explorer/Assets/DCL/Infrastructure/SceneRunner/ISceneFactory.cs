@@ -49,7 +49,7 @@ namespace SceneRunner
         /// <param name="partitionProvider"></param>
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
-        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, StaticSceneAssetBundle staticSceneAssetBundle, IPartitionComponent partitionProvider, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct);
 
         /// <summary>
         /// Used for passing actions from the global world to the scene world

@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
-        private readonly Object?[] assets;
+        public readonly Object?[] assets;
         private readonly Type? assetType;
 
         internal AssetBundle AssetBundle => Asset;
@@ -94,6 +94,7 @@ namespace ECS.StreamableLoading.AssetBundles
             return (T)assets[0]!;
         }
 
+        //TODO (JUANI) : OPTIMIZE
         public T GetAsset<T>(string name) where T : Object
         {
             Assert.IsNotNull(assetType, "GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified");
@@ -109,18 +110,6 @@ namespace ECS.StreamableLoading.AssetBundles
                     return (T)asset;
             }
             return objectToReturn;
-        }
-
-        public Dictionary<string, GameObject> GetStaticAssetsDictionary()
-        {
-            Dictionary<string, GameObject> dictionary = new Dictionary<string, GameObject>();
-
-            for (var i = 0; i < assets.Length; i++)
-            {
-                if(assets[i] is GameObject)
-                    dictionary.Add(assets[i].name, (GameObject)assets[i]!);
-            }
-            return dictionary;
         }
 
         public string GetInstanceName() => description;

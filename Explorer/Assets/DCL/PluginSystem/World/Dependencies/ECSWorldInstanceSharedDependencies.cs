@@ -27,6 +27,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly MultiThreadSync MultiThreadSync;
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
+        //TODO (JUANI): I dont love this injection over here
         public readonly StaticSceneAssetBundle StaticSceneAssetBundle;
 
         public readonly IWorldTimeProvider WorldTimeProvider;

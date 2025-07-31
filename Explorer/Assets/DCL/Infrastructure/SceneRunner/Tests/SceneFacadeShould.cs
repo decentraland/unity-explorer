@@ -30,6 +30,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.TestSuite;
 using MVC;
 using NSubstitute;
@@ -108,7 +109,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>(),
-                Substitute.For<IRemoteMetadata>());
+                Substitute.For<IRemoteMetadata>(),
+                new Dictionary<string, StaticSceneAssetBundle>());
         }
 
         [OneTimeTearDown]

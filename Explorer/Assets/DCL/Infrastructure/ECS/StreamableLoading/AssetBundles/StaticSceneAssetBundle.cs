@@ -1,12 +1,28 @@
 using System.Collections.Generic;
 using UnityEngine;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
-    public struct StaticSceneAssetBundle
+    public class StaticSceneAssetBundle
     {
-        public AssetBundleData assetBundleData;
-        public Dictionary<string, GameObject> assets;
+        public bool Supported;
+        public bool ReadyToUse;
+        public bool Request;
+        public bool PromiseInitiated;
+
+
+
+        public AssetBundleData AssetBundleData;
+        public AssetBundlePromise AssetBundlePromise;
+        public Dictionary<string, GameObject> Assets;
+        public bool Consumed { get; set; }
+
+        public void RequestAssetBundle()
+        {
+            Request = true;
+        }
+
 
     }
 }

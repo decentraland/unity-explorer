@@ -17,7 +17,6 @@ namespace ECS.StreamableLoading.AssetBundles
         public bool HasParentEntityIDPathInURL;
         public string ParentEntityID;
 
-
         /// <summary>
         ///     If the expected object type is null we don't know which asset will be loaded.
         ///     It's valid for dependencies for which we need to load the asset bundle itself only
@@ -47,7 +46,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public bool LookForShaderAssets;
 
         public bool SingleAssetBundleHack;
-        public bool HasMultipleAssetBundles;
+        public bool HasMultipleAssets;
 
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
@@ -57,7 +56,7 @@ namespace ECS.StreamableLoading.AssetBundles
             bool hasParentEntityIDPathInURL = false,
             string parentEntityID = "",
             bool singleAssetBundleHack = false,
-            bool hasMultipleAssetBundles = false,
+            bool hasMultipleAssets = false,
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -75,7 +74,7 @@ namespace ECS.StreamableLoading.AssetBundles
             ParentEntityID = parentEntityID;
 
             SingleAssetBundleHack = singleAssetBundleHack;
-            HasMultipleAssetBundles = hasMultipleAssetBundles;
+            HasMultipleAssets = hasMultipleAssets;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -100,7 +99,7 @@ namespace ECS.StreamableLoading.AssetBundles
             new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleVersion, hasParentEntityIDPathInURL: hasParentEntityIDPathInURL, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, cancellationTokenSource: cancellationTokenSource);
 
         public static GetAssetBundleIntention CreateSingleAssetBundleHack(string url) =>
-            new (typeof(GameObject), hash: url, singleAssetBundleHack: true, hasMultipleAssetBundles: true, permittedSources: AssetSource.WEB);
+            new (typeof(GameObject), hash: url, singleAssetBundleHack: true, hasMultipleAssets: true, permittedSources: AssetSource.WEB);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);

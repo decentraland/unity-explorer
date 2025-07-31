@@ -29,6 +29,7 @@ using SceneRuntime;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Factory;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -62,6 +63,7 @@ namespace SceneRunner
         private readonly IRemoteMetadata remoteMetadata;
 
         private IGlobalWorldActions globalWorldActions = null!;
+        private readonly Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -81,7 +83,8 @@ namespace SceneRunner
             IRealmData? realmData,
             IPortableExperiencesController portableExperiencesController,
             ISceneCommunicationPipe messagePipesHub,
-            IRemoteMetadata remoteMetadata)
+            IRemoteMetadata remoteMetadata,
+            Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundleDictionary)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -101,6 +104,7 @@ namespace SceneRunner
             this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
             this.portableExperiencesController = portableExperiencesController;
+            this.staticSceneAssetBundlesDictionary = staticSceneAssetBundleDictionary;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -121,7 +125,7 @@ namespace SceneRunner
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
                 ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
-            return await CreateSceneAsync(sceneData, default(StaticSceneAssetBundle), partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectoryAsync(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -142,20 +146,20 @@ namespace SceneRunner
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition,
                 Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
-            return await CreateSceneAsync(sceneData, default(StaticSceneAssetBundle), partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
-        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, StaticSceneAssetBundle staticSceneAssetBundle, IPartitionComponent partitionProvider, CancellationToken ct) =>
-            CreateSceneAsync(sceneData, staticSceneAssetBundle, partitionProvider, ct);
+        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
+            CreateSceneAsync(sceneData, partitionProvider, ct);
 
         public void SetGlobalWorldActions(IGlobalWorldActions actions)
         {
             globalWorldActions = actions;
         }
 
-        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, StaticSceneAssetBundle staticSceneAssetBundle, IPartitionComponent partitionProvider, CancellationToken ct)
+        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory, webRequestController, staticSceneAssetBundle);
+            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory, webRequestController, staticSceneAssetBundlesDictionary[sceneData.SceneEntityDefinition.id]);
 
             // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;

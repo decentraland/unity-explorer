@@ -10,6 +10,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
@@ -51,7 +52,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
         private void HandleNotCreatedScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
-            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
+            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent, ref StaticSceneAssetBundle staticSceneAssetBundle)
         {
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
             if (promise.IsConsumed)
@@ -60,6 +61,12 @@ namespace ECS.SceneLifeCycle.Systems
                 if (promise.TryGetResult(World, out var consumedResult) && !consumedResult.Succeeded)
                     SceneUtils.ReportException(consumedResult.Exception!, promise.LoadingIntention.DefinitionComponent.Parcels, sceneReadinessReportQueue);
 
+                return;
+            }
+
+            if (staticSceneAssetBundle is { Supported: true, ReadyToUse: false })
+            {
+                staticSceneAssetBundle.RequestAssetBundle();
                 return;
             }
 

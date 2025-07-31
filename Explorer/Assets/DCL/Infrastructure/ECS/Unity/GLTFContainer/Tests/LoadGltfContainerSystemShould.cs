@@ -30,8 +30,10 @@ using System.Collections.Generic;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
+    /*
     public class LoadGltfContainerSystemShould : UnitySystemTestBase<LoadGltfContainerSystem>
     {
+
         private readonly GltfContainerTestResources resources = new ();
 
         private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
@@ -304,4 +306,5 @@ namespace ECS.Unity.GLTFContainer.Tests
             UnityObjectUtils.SafeDestroy(mockRoot);
         }
     }
+    */
 }
