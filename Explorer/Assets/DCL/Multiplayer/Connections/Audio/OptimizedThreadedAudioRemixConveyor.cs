@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using LiveKit.Audio;
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
 using Livekit.Utils;
@@ -42,28 +43,28 @@ namespace DCL.Multiplayer.Connections.Audio
         {
             try
             {
-                if (ownedAudioFrame.sampleRate != lastInputSampleRate ||
-                    ownedAudioFrame.numChannels != lastInputChannels)
+                if (ownedAudioFrame.SampleRate != lastInputSampleRate ||
+                    ownedAudioFrame.NumChannels != lastInputChannels)
                 {
                     resampler.Dispose();
                     resampler = new AudioResampler.ThreadSafe();
 
-                    lastInputSampleRate = ownedAudioFrame.sampleRate;
-                    lastInputChannels = ownedAudioFrame.numChannels;
+                    lastInputSampleRate = ownedAudioFrame.SampleRate;
+                    lastInputChannels = ownedAudioFrame.NumChannels;
                 }
 
                 bool isEmptyFrame = IsFrameSilentOrEmpty(ownedAudioFrame.AsSpan());
 
                 if (isEmptyFrame)
                 {
-                    var targetSamples = (int)(ownedAudioFrame.Length / sizeof(short) / ownedAudioFrame.numChannels * numChannels);
+                    var targetSamples = (int)(ownedAudioFrame.Length() / sizeof(short) / ownedAudioFrame.NumChannels * numChannels);
                     int silenceDataSize = targetSamples * sizeof(short);
 
                     WriteSilenceToBuffer(outputBuffer, silenceDataSize);
                     return;
                 }
 
-                if (ownedAudioFrame.numChannels == numChannels && ownedAudioFrame.sampleRate == sampleRate) { WriteToBuffer(outputBuffer, ownedAudioFrame.AsSpan()); }
+                if (ownedAudioFrame.NumChannels == numChannels && ownedAudioFrame.SampleRate == sampleRate) { WriteToBuffer(outputBuffer, ownedAudioFrame.AsSpan()); }
                 else
                 {
                     using OwnedAudioFrame uFrame = resampler.RemixAndResample(ownedAudioFrame, numChannels, sampleRate);
