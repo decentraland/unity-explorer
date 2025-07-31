@@ -8,8 +8,6 @@ namespace DCL.Chat.History
     /// </summary>
     public class ChatChannel
     {
-        private static readonly ChatMessage PADDING_MESSAGE = ChatMessage.NewPaddingElement();
-
         /// <summary>
         /// The ID of the "near-by" channel, which is always the same.
         /// </summary>
@@ -135,16 +133,11 @@ namespace DCL.Chat.History
         {
             messages.Clear();
 
-            messages.Capacity = messagesToStore.Count + 2;
-
-            // Adding two elements to count as top and bottom padding
-            messages.Add(PADDING_MESSAGE);
+            messages.Capacity = messagesToStore.Count;
 
             // Messages are added in inverse order
             for (int i = messagesToStore.Count - 1; i >= 0; --i)
                 messages.Add(messagesToStore[i]);
-
-            messages.Add(PADDING_MESSAGE);
 
             isInitialized = true;
         }
@@ -158,9 +151,9 @@ namespace DCL.Chat.History
             TryInitializeChannel();
 
             // Insert new message after first padding element (index 1)
-            messages.Insert(1, message);
+            messages.Insert(0, message);
 
-            MessageAdded?.Invoke(this, message, 1);
+            MessageAdded?.Invoke(this, message, 0);
         }
 
         public void TryInitializeChannel()
@@ -168,10 +161,6 @@ namespace DCL.Chat.History
             if (isInitialized)
                 return;
 
-            // Adding two elements to count as top and bottom padding
-            messages.Add(PADDING_MESSAGE);
-            messages.Add(PADDING_MESSAGE);
-            readMessages = 2; // both paddings
             isInitialized = true;
         }
 

@@ -80,7 +80,7 @@ namespace DCL.Chat.ChatMessages
             messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel!.Messages.Count;
         }
 
-        private void AddNewMessagesSeparatorAfterPendingMessages()
+        private bool TryAddNewMessagesSeparatorAfterPendingMessages()
         {
             // If the separator is already fixed, it remains in the same position
             // Otherwise, calculate the reversed index based on the pending messages count
@@ -89,7 +89,10 @@ namespace DCL.Chat.ChatMessages
                 ChatChannel currentChannel = currentChannelService.CurrentChannel!;
                 int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
                 separatorFixedIndexFromBottom = unreadMessagesCount > 0 ? unreadMessagesCount : -1; // After the read message from the bottom
+                return true;
             }
+
+            return false;
         }
 
         private void IncrementSeparatorIndex()
@@ -143,6 +146,8 @@ namespace DCL.Chat.ChatMessages
             }
             else
             {
+                var separatorAdded = false;
+
                 if (view.IsAtBottom())
                     MarkCurrentChannelAsRead();
                 else
@@ -150,10 +155,11 @@ namespace DCL.Chat.ChatMessages
                     if (messageCountWhenSeparatorViewed.HasValue)
                         markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!, messageCountWhenSeparatorViewed.Value);
 
-                    AddNewMessagesSeparatorAfterPendingMessages();
+                    separatorAdded = TryAddNewMessagesSeparatorAfterPendingMessages();
                 }
 
-                IncrementSeparatorIndex();
+                if (!separatorAdded)
+                    IncrementSeparatorIndex();
 
                 messageCountWhenSeparatorViewed = null;
                 view.ReconstructScrollView(false);
@@ -166,7 +172,7 @@ namespace DCL.Chat.ChatMessages
         private void ScrollToNewMessagesSeparator()
         {
             if (separatorIsVisible)
-                view.ShowItem(separatorFixedIndexFromBottom - 1);
+                view.ShowItem(separatorFixedIndexFromBottom);
         }
 
         private void OnProfileContextMenuRequested(string userId, Vector2 position)
@@ -214,7 +220,7 @@ namespace DCL.Chat.ChatMessages
                 try
                 {
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
-                    AddNewMessagesSeparatorAfterPendingMessages();
+                    TryAddNewMessagesSeparatorAfterPendingMessages();
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
                 }
