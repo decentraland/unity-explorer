@@ -5,6 +5,8 @@ namespace DCL.UI
 {
     public class SkeletonLoadingView : MonoBehaviour
     {
+        private const float PULSE_BUFFER_SCALAR = 1.3f;
+
         [SerializeField] private CanvasGroup loadedCanvasGroup = null!;
         [SerializeField] private CanvasGroup loadingCanvasGroup = null!;
 
@@ -29,8 +31,9 @@ namespace DCL.UI
             foreach (var bone in bones)
             {
                 bone.DOKill();
-                bone.localPosition = new Vector3(0f, bone.localPosition.y, bone.localPosition.z);
-                bone.DOLocalMoveX(bone.position.x + (bone.sizeDelta.x / 2f), tweenDuration)
+                bone.anchoredPosition = new Vector2(0f, bone.anchoredPosition.y);
+                bone.DOAnchorPosX(bone.sizeDelta.x * PULSE_BUFFER_SCALAR, tweenDuration)
+                    .SetEase(Ease.Linear)
                     .SetLoops(-1, LoopType.Restart);
             }
         }
