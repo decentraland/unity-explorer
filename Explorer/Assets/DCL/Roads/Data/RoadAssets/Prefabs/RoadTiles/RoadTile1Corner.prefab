@@ -136,6 +136,51 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       insertIndex: -1
       addedObject: {fileID: -8347821554904503702}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -5122664340399829533}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -3664920666741617418}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -4111033816235209641}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 519446299099400143}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8688164169976552843}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7202210149132110833}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -4198428249509093000}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -6641174242190129217}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5518471994016140734}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -1333368857953679329}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9062584522476195503}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -629564959871723200}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8384562489238797430}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3844158732157980958}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8378065365236618568}
   m_SourcePrefab: {fileID: 100100000, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
 --- !u!4 &5010023361516469758 stripped
 Transform:
@@ -195,6 +240,963 @@ MonoBehaviour:
     SharedMaterial: {fileID: 2100000, guid: 9ada01858a3601d4c94c92f1e5e2e0bc, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 6182317966194312849}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-5122664340399829533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeBall_HedgeLeafGreen_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 1768018707244549419, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  Transform: {fileID: 6832906269519524442, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  RefRenderers:
+  - {fileID: 3547188095869492110, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 8527731539198146527, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 2956850444037092699, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 6870108195197376666, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 4114118276235946029, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 8818852630192718989, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 8, y: 0, z: 8}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 5688953775939631037, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 3547188095869492110, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-3664920666741617418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_FountainBottom_RoadAssets_DCL/Scene
+  Reference: {fileID: 1768018707244549419, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  Transform: {fileID: 6832906269519524442, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  RefRenderers:
+  - {fileID: 3547188095869492110, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 8527731539198146527, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 2956850444037092699, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 6870108195197376666, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 4114118276235946029, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 8818852630192718989, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: -0.0324018, y: 1.4763582, z: 0.08085942}
+    m_Extent: {x: 2.0498593, y: 1.9794049, z: 2.1447666}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 2072087763530563331, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 8527731539198146527, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 1
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-4111033816235209641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_PotMiddleLarge_PotMiddleLarge_DCL/Scene
+  Reference: {fileID: 7575491717531359306, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  Transform: {fileID: 3421489136057478971, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  RefRenderers:
+  - {fileID: 8280912597572288046, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 3664976048421844631, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 6404396028377907610, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 3589331646000794535, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 2494489913749406506, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 6404396028377907610, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 9003700223631693300, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 2838132334643614527, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 1291636285149021834, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 8280912597572288046, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 1
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &519446299099400143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeMiddleLarge_HedgeLeafGreen_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 7575491717531359306, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  Transform: {fileID: 3421489136057478971, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  RefRenderers:
+  - {fileID: 8280912597572288046, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 3664976048421844631, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 6404396028377907610, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 3589331646000794535, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 2494489913749406506, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 6404396028377907610, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 9003700223631693300, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 2838132334643614527, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 637880822027782905, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 3664976048421844631, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-8688164169976552843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeMiddleLarge_HedgeFlowers_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 7575491717531359306, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  Transform: {fileID: 3421489136057478971, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  RefRenderers:
+  - {fileID: 8280912597572288046, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 3664976048421844631, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 6404396028377907610, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 3589331646000794535, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 2494489913749406506, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 6404396028377907610, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 9003700223631693300, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  - {fileID: 2838132334643614527, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 8183248269916619589, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 6404396028377907610, guid: 398da217c8ff1794bbf8d04e948defea, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &7202210149132110833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeBall_HedgeLeafGreen_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 1964590874924616311, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  Transform: {fileID: 6708603490514877702, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  RefRenderers:
+  - {fileID: 3670653186057573586, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 8471963588600887427, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 3081082855533378055, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 6673600558301501382, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 4238638895067686769, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 8766319236654926801, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: -0.0324018, y: 1.4763582, z: 0.08085942}
+    m_Extent: {x: 2.0498593, y: 1.9794049, z: 2.1447666}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 5688953775939631037, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 3670653186057573586, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-4198428249509093000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_FountainBottom_RoadAssets_DCL/Scene
+  Reference: {fileID: 1964590874924616311, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  Transform: {fileID: 6708603490514877702, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  RefRenderers:
+  - {fileID: 3670653186057573586, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 8471963588600887427, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 3081082855533378055, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 6673600558301501382, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 4238638895067686769, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 8766319236654926801, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: -0.0324018, y: 1.4763582, z: 0.08085942}
+    m_Extent: {x: 2.0498593, y: 1.9794049, z: 2.1447666}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 2072087763530563331, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 8471963588600887427, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 1
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-6641174242190129217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_PotMiddleLarge_PotMiddleLarge_DCL/Scene
+  Reference: {fileID: 5593338831066431333, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  Transform: {fileID: 848250824417232916, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  RefRenderers:
+  - {fileID: 6221076091090000129, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 1613020739281981880, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 8961875036636014261, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 1545257497696152712, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 441406367167030277, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 8961875036636014261, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 6362904829499421403, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 278404928177288208, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 1291636285149021834, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 6221076091090000129, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 1
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &5518471994016140734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeMiddleLarge_HedgeLeafGreen_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 5593338831066431333, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  Transform: {fileID: 848250824417232916, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  RefRenderers:
+  - {fileID: 6221076091090000129, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 1613020739281981880, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 8961875036636014261, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 1545257497696152712, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 441406367167030277, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 8961875036636014261, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 6362904829499421403, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 278404928177288208, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 637880822027782905, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 1613020739281981880, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-1333368857953679329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeMiddleLarge_HedgeFlowers_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 5593338831066431333, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  Transform: {fileID: 848250824417232916, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  RefRenderers:
+  - {fileID: 6221076091090000129, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 1613020739281981880, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 8961875036636014261, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 1545257497696152712, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 441406367167030277, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 8961875036636014261, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 6362904829499421403, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  - {fileID: 278404928177288208, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 8183248269916619589, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 8961875036636014261, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &9062584522476195503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeBall_HedgeLeafGreen_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 6654494635395807993, guid: c592ea722133eda4e888b85108194228, type: 3}
+  Transform: {fileID: 1874513619170676104, guid: c592ea722133eda4e888b85108194228, type: 3}
+  RefRenderers:
+  - {fileID: 8496855431841801308, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 3641255542090893325, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 7915102633218902665, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 1983632473974744904, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 9063644878578161663, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 4517703640997493599, guid: c592ea722133eda4e888b85108194228, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: -0.0324018, y: 1.4763582, z: 0.08085942}
+    m_Extent: {x: 2.0498593, y: 1.9794049, z: 2.1447666}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 5688953775939631037, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 8496855431841801308, guid: c592ea722133eda4e888b85108194228, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-629564959871723200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_FountainBottom_RoadAssets_DCL/Scene
+  Reference: {fileID: 6654494635395807993, guid: c592ea722133eda4e888b85108194228, type: 3}
+  Transform: {fileID: 1874513619170676104, guid: c592ea722133eda4e888b85108194228, type: 3}
+  RefRenderers:
+  - {fileID: 8496855431841801308, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 3641255542090893325, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 7915102633218902665, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 1983632473974744904, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 9063644878578161663, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 4517703640997493599, guid: c592ea722133eda4e888b85108194228, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: -0.0324018, y: 1.4763582, z: 0.08085942}
+    m_Extent: {x: 2.0498593, y: 1.9794049, z: 2.1447666}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 2072087763530563331, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 3641255542090893325, guid: c592ea722133eda4e888b85108194228, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 1
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-8384562489238797430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_PotMiddleLarge_PotMiddleLarge_DCL/Scene
+  Reference: {fileID: 5064824023244567862, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  Transform: {fileID: 5560453783994951, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  RefRenderers:
+  - {fileID: 6738481444204565330, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 2140563620608220139, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 8613327012282952934, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 2208889262138959579, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 1006104086079188566, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 8613327012282952934, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 6024622985840277640, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 579628840356036163, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 1291636285149021834, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 6738481444204565330, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 1
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &3844158732157980958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeMiddleLarge_HedgeLeafGreen_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 5064824023244567862, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  Transform: {fileID: 5560453783994951, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  RefRenderers:
+  - {fileID: 6738481444204565330, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 2140563620608220139, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 8613327012282952934, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 2208889262138959579, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 1006104086079188566, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 8613327012282952934, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 6024622985840277640, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 579628840356036163, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 637880822027782905, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 2140563620608220139, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+      layer: 0
+      renderingLayerMask: 1
+      rendererPriority: 0
+      receiveShadows: 1
+      shadowCastingMode: 0
+      reflectionProbeUsage: 1
+      lightProbeUsage: 1
+      motionVectorMode: 1
+--- !u!114 &-8378065365236618568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  whitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  Name: Extracted_HedgeMiddleLarge_HedgeFlowers_Universal Render Pipeline/Nature/Stylized
+    Grass
+  Reference: {fileID: 5064824023244567862, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  Transform: {fileID: 5560453783994951, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  RefRenderers:
+  - {fileID: 6738481444204565330, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 2140563620608220139, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 8613327012282952934, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 2208889262138959579, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 1006104086079188566, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 8613327012282952934, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 6024622985840277640, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  - {fileID: 579628840356036163, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
+  ObjectSize: 16
+  Bounds:
+    m_Center: {x: 0.026667953, y: -0.09723735, z: 0}
+    m_Extent: {x: 0.99976003, y: 1.288361, z: 4.7691846}
+  LodsScreenSpaceSizes:
+  - 0
+  LODSizesMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 0
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 0
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 0
+  CombinedLodsRenderers:
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 8183248269916619589, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+    SharedMaterial: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    RenderParamsSerialized:
+      RefRenderer: {fileID: 8613327012282952934, guid: dd1552dbc977a604c83b76f9bc804ef6, type: 3}
       layer: 0
       renderingLayerMask: 1
       rendererPriority: 0

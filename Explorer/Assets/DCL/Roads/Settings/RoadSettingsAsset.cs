@@ -16,6 +16,7 @@ namespace DCL.Roads.Settings
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
         public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups;
+        public List<GPUInstancingLODGroupWithBuffer> ExtractedLODGroups;
         public List<GPUInstancingLODGroup> PropsAndTiles;
 
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
@@ -46,6 +47,7 @@ namespace DCL.Roads.Settings
 
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
+
             Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();
 
             var tempIndirectCandidates = new Dictionary<GPUInstancingLODGroupWithBuffer, HashSet<PerInstanceBuffer>>();
@@ -81,6 +83,9 @@ namespace DCL.Roads.Settings
                                .Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.LODGroup, kvp.Value.ToList()))
                                .OrderBy(group => group.LODGroup.Name)
                                .ToList();
+
+            ExtractDuplicateCombinedLodsRenderers();
+            IndirectLODGroups.AddRange(ExtractedLODGroups);
 
             UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
@@ -154,6 +159,144 @@ namespace DCL.Roads.Settings
         }
 
         private GPUInstancingLODGroupWithBuffer roadTileCandidate = new ();
+
+        private void ExtractDuplicateCombinedLodsRenderers()
+        {
+            if (ExtractedLODGroups == null)
+                ExtractedLODGroups = new List<GPUInstancingLODGroupWithBuffer>();
+            else
+                ExtractedLODGroups.Clear();
+
+            List<List<(GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index)>> duplicateGroups = FindDuplicateCombinedLodsRenderers();
+
+            foreach (List<(GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index)> duplicateGroup in duplicateGroups) { ExtractDuplicateToNewLODGroup(duplicateGroup); }
+
+            RemoveEmptyIndirectLODGroups();
+        }
+
+        private List<List<(GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index)>> FindDuplicateCombinedLodsRenderers()
+        {
+            var rendererMap = new Dictionary<string, List<(GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index)>>();
+
+            for (var i = 0; i < IndirectLODGroups.Count; i++)
+            {
+                GPUInstancingLODGroupWithBuffer lodGroup = IndirectLODGroups[i];
+
+                for (var j = 0; j < lodGroup.LODGroup.CombinedLodsRenderers.Count; j++)
+                {
+                    CombinedLodsRenderer renderer = lodGroup.LODGroup.CombinedLodsRenderers[j];
+                    string key = GetCombinedLodsRendererKey(renderer);
+
+                    if (!rendererMap.TryGetValue(key, out List<(GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index)> list))
+                    {
+                        list = new List<(GPUInstancingLODGroupWithBuffer, CombinedLodsRenderer, int)>();
+                        rendererMap[key] = list;
+                    }
+
+                    list.Add((lodGroup, renderer, j));
+                }
+            }
+
+            return rendererMap.Values.Where(list => list.Count > 1).ToList();
+        }
+
+        private string GetCombinedLodsRendererKey(CombinedLodsRenderer renderer) =>
+            $"{renderer.CombinedMesh.name}_{renderer.SharedMaterial.shader.name}";
+
+        private void ExtractDuplicateToNewLODGroup(List<(GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index)> duplicates)
+        {
+            (GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index) firstEntry = duplicates[0];
+            var extractedName = $"Extracted_{firstEntry.renderer.CombinedMesh.name}_{firstEntry.renderer.SharedMaterial.shader.name}";
+
+            GPUInstancingLODGroup newLODGroup = CreateNewGPUInstancingLODGroup(extractedName, firstEntry.lodGroup.LODGroup);
+
+            newLODGroup.CombinedLodsRenderers = new List<CombinedLodsRenderer> { CloneCombinedLodsRenderer(firstEntry.renderer) };
+
+            var combinedInstancesBuffer = new List<PerInstanceBuffer>();
+
+            foreach ((GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index) in duplicates)
+            {
+                foreach (PerInstanceBuffer instanceBuffer in lodGroup.InstancesBuffer)
+                {
+                    Vector4 colorTint = ExtractColorFromMaterial(renderer.SharedMaterial);
+
+                    var modifiedBuffer = new PerInstanceBuffer(instanceBuffer.instMatrix, instanceBuffer.tiling, instanceBuffer.offset)
+                    {
+                        instColourTint = colorTint,
+                    };
+
+                    combinedInstancesBuffer.Add(modifiedBuffer);
+                }
+            }
+
+            var renderersToRemove = new HashSet<CombinedLodsRenderer>();
+
+            foreach ((GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index) in duplicates) { renderersToRemove.Add(renderer); }
+
+            foreach ((GPUInstancingLODGroupWithBuffer lodGroup, CombinedLodsRenderer renderer, int index) in duplicates) { lodGroup.LODGroup.CombinedLodsRenderers.RemoveAll(r => renderersToRemove.Contains(r)); }
+
+            var extractedLODGroupWithBuffer = new GPUInstancingLODGroupWithBuffer(newLODGroup, combinedInstancesBuffer)
+            {
+                Name = extractedName,
+            };
+
+            newLODGroup.ObjectSize = float.MaxValue;
+            ExtractedLODGroups.Add(extractedLODGroupWithBuffer);
+        }
+
+        private GPUInstancingLODGroup CreateNewGPUInstancingLODGroup(string name, GPUInstancingLODGroup templateLODGroup)
+        {
+            if (PropsAndTiles == null || PropsAndTiles.Count == 0)
+            {
+                ReportHub.LogError(ReportCategory.GPU_INSTANCING, "No PropsAndTiles found to attach new GPUInstancingLODGroup");
+                return null;
+            }
+
+            GameObject hostGameObject = PropsAndTiles[0].gameObject;
+            GPUInstancingLODGroup newLODGroup = hostGameObject.AddComponent<GPUInstancingLODGroup>();
+
+            newLODGroup.Name = name;
+            newLODGroup.ObjectSize = templateLODGroup.ObjectSize;
+            newLODGroup.Bounds = templateLODGroup.Bounds;
+            newLODGroup.LodsScreenSpaceSizes = (float[])templateLODGroup.LodsScreenSpaceSizes.Clone();
+            newLODGroup.LODSizesMatrix = templateLODGroup.LODSizesMatrix;
+            newLODGroup.whitelistedShaders = templateLODGroup.whitelistedShaders;
+            newLODGroup.Reference = templateLODGroup.Reference;
+            newLODGroup.Transform = templateLODGroup.Transform;
+            newLODGroup.RefRenderers = new List<Renderer>(templateLODGroup.RefRenderers);
+
+            return newLODGroup;
+        }
+
+        private CombinedLodsRenderer CloneCombinedLodsRenderer(CombinedLodsRenderer original) =>
+            new (
+                original.SharedMaterial,
+                original.CombinedMesh,
+                original.SubMeshId,
+                original.RenderParamsSerialized
+            );
+
+        private Vector4 ExtractColorFromMaterial(Material material)
+        {
+            if (material.HasProperty("_Color"))
+                return material.GetColor("_Color");
+
+            if (material.HasProperty("_BaseColor"))
+                return material.GetColor("_BaseColor");
+
+            if (material.HasProperty("_MainColor"))
+                return material.GetColor("_MainColor");
+
+            return Vector4.one;
+        }
+
+        private void RemoveEmptyIndirectLODGroups()
+        {
+            for (int i = IndirectLODGroups.Count - 1; i >= 0; i--)
+            {
+                if (IndirectLODGroups[i].LODGroup.CombinedLodsRenderers.Count == 0) { IndirectLODGroups.RemoveAt(i); }
+            }
+        }
 #endif
     }
 }
