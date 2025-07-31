@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
+using Random = UnityEngine.Random;
 
 namespace DCL.Communities
 {
@@ -125,6 +126,38 @@ namespace DCL.Communities
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                              .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
             return response;
+        }
+
+        public async UniTask<GetCommunityMembersResponse> GetCommunityRequestsToJoin(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            const int TOTAL = 5;
+
+            GetCommunityMembersResponse.MemberData[] members = new GetCommunityMembersResponse.MemberData[TOTAL];
+            for (int i = 0; i < TOTAL; i++)
+            {
+                members[i] = new GetCommunityMembersResponse.MemberData
+                {
+                    communityId = communityId,
+                    memberAddress = Guid.NewGuid().ToString(),
+                    role = CommunityMemberRole.none,
+                    profilePictureUrl = string.Empty,
+                    hasClaimedName = Random.Range(0, 101) > 50,
+                    name = $"User {i + 1}",
+                    mutualFriends = Random.Range(0, 30)
+                };
+            }
+
+            return new ()
+            {
+                data = new GetCommunityMembersResponse.GetCommunityMembersResponseData
+                {
+                    results = members,
+                    total = TOTAL,
+                    page = pageNumber,
+                    pages = 1,
+                    limit = elementsPerPage
+                }
+            };
         }
 
         public async UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct)
