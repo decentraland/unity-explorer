@@ -1,6 +1,7 @@
 using System;
 using DCL.Chat;
 using DCL.Chat.ChatViewModels;
+using DCL.UI;
 using DCL.UI.ProfileElements;
 using TMPro;
 using UnityEngine;
@@ -28,6 +29,13 @@ public class ChatDefaultTitlebarView : MonoBehaviour
     [SerializeField] private GameObject nearbyElementsContainer;
 
     private TitlebarViewMode currentViewMode;
+    private ChatTitlebarViewModel currentTitlebarViewModel;
+
+    [SerializeField]
+    private Image connectionStatusIndicator;
+
+    [Range(0.0f, 1.0f)]
+    [SerializeField] private float offlineThumbnailGreyOutOpacity = 0.6f;
     
     private void Awake()
     {
@@ -39,6 +47,7 @@ public class ChatDefaultTitlebarView : MonoBehaviour
 
     public void Setup(ChatTitlebarViewModel model)
     {
+        currentTitlebarViewModel = model;
         currentViewMode = model.ViewMode;
         textChannelName.text = model.Username;
 
@@ -51,6 +60,7 @@ public class ChatDefaultTitlebarView : MonoBehaviour
         {
             chatProfileView.gameObject.SetActive(false);
             nearbyElementsContainer.SetActive(false);
+            connectionStatusIndicator.gameObject.SetActive(false);
             if (model.ViewMode == TitlebarViewMode.DirectMessage)
                 buttonOpenMembers.gameObject.SetActive(false);
             return;
@@ -65,16 +75,24 @@ public class ChatDefaultTitlebarView : MonoBehaviour
         if (showProfile)
             chatProfileView.Setup(model);
 
+        buttonOpenProfileContextMenu.interactable = model.ViewMode is TitlebarViewMode.Community or TitlebarViewMode.DirectMessage;
 
-        if (model.ViewMode == TitlebarViewMode.Community ||
-            model.ViewMode == TitlebarViewMode.DirectMessage)
+        if (model.ViewMode == TitlebarViewMode.DirectMessage)
         {
-            buttonOpenProfileContextMenu.interactable = true;
+            SetConnectionStatus(model.IsOnline);
         }
         else
         {
-            buttonOpenProfileContextMenu.interactable = false;
+            SetConnectionStatus(true);
+            connectionStatusIndicator.gameObject.SetActive(false);
         }
+    }
+
+    public void SetConnectionStatus(bool isOnline)
+    {
+        connectionStatusIndicator.gameObject.SetActive(isOnline);
+        if (chatProfileView != null)
+            chatProfileView.SetConnectionStatus(isOnline, offlineThumbnailGreyOutOpacity);
     }
 
     public void SetMemberCount(string count) => textMembersCount.text = count;

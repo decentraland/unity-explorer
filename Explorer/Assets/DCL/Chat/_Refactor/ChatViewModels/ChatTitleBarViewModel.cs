@@ -4,28 +4,25 @@ using UnityEngine;
 
 namespace DCL.Chat.ChatViewModels
 {
-    // TODO should be reused
     public class ChatTitlebarViewModel
     {
         public readonly IReactiveProperty<ProfileThumbnailViewModel> Thumbnail
             = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.ReadyToLoad());
 
-        public TitlebarViewMode ViewMode;
-        public string Username;
-        public string Id;
-        public string WalletId;
-        public bool HasClaimedName;
+        public TitlebarViewMode ViewMode { get; set; }
+        public string Username { get; set; }
+        public string Id { get; set; }
+        public bool IsOnline { get; set; }
+        public string WalletId { get; set; }
+        public bool HasClaimedName { get; set; }
         public Color ProfileColor { get; set; }
 
         public static ChatTitlebarViewModel CreateLoading(TitlebarViewMode viewMode)
         {
             return new ChatTitlebarViewModel
             {
-                Username = "Loading...",
-                ViewMode = viewMode,
-                WalletId = string.Empty,
-                HasClaimedName = false,
-                ProfileColor = Color.gray,
+                Username = "Loading...", ViewMode = viewMode, WalletId = string.Empty, HasClaimedName = false,
+                IsOnline = false, ProfileColor = Color.gray
             };
         }
     }

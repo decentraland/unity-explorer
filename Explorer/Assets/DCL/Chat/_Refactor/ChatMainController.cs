@@ -103,6 +103,7 @@ namespace DCL.Chat
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,
+                userStateEventBus,
                 communityDataService,
                 currentChannelService,
                 chatMemberListService,

@@ -22,6 +22,7 @@ namespace DCL.Chat.ChatUseCases
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ICommunityDataService communityDataService;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+        private readonly GetUserChatStatusCommand getUserChatStatusCommand;
         private readonly ChatConfig chatConfig;
 
         public GetTitlebarViewModelCommand(
@@ -29,11 +30,13 @@ namespace DCL.Chat.ChatUseCases
             ICommunityDataService communityDataService,
             ProfileRepositoryWrapper profileRepository,
             ChatConfig chatConfig,
+            GetUserChatStatusCommand getUserChatStatusCommand,
             GetCommunityThumbnailCommand getCommunityThumbnailCommand)
         {
             this.eventBus = eventBus;
             this.communityDataService = communityDataService;
             this.profileRepository = profileRepository;
+            this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
             this.chatConfig = chatConfig;
         }
@@ -86,10 +89,13 @@ namespace DCL.Chat.ChatUseCases
                 };
             }
 
+            var userStatus = await getUserChatStatusCommand.ExecuteAsync(profile.UserId, ct);
+            if (ct.IsCancellationRequested) return null;
+            
             var viewModel = new ChatTitlebarViewModel
             {
                 ViewMode = TitlebarViewMode.DirectMessage, Id = profile.UserId, Username = profile.Name, HasClaimedName = profile.HasClaimedName,
-                WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor,
+                WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor, IsOnline = userStatus == ChatUserStateUpdater.ChatUserState.CONNECTED
             };
 
             await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);

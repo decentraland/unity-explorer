@@ -100,6 +100,7 @@ namespace DCL.Chat.ChatUseCases
                 communityDataService,
                 profileRepositoryWrapper,
                 chatConfig,
+                GetUserChatStatusCommand,
                 GetCommunityThumbnail);
 
             SendMessage = new SendMessageCommand(

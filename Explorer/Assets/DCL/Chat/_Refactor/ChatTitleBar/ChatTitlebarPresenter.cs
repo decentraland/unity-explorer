@@ -24,6 +24,7 @@ public class ChatTitlebarPresenter : IDisposable
     private readonly ChatTitlebarView2 view;
     private readonly ChatConfig chatConfig;
     private readonly IEventBus eventBus;
+    private readonly IChatUserStateEventBus chatUserStateEventBus;
     private readonly CommunityDataService communityDataService;
     private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
     private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
@@ -35,14 +36,14 @@ public class ChatTitlebarPresenter : IDisposable
     private CancellationTokenSource profileLoadCts = new ();
     private CancellationTokenSource? activeMenuCts;
     private UniTaskCompletionSource? activeMenuTcs;
-
-    private ChatTitlebarViewModel currentViewModel { get; set; }
+    private ChatTitlebarViewModel? currentViewModel { get; set; }
 
     private readonly GenericContextMenu contextMenuConfiguration;
     public ChatTitlebarPresenter(
         ChatTitlebarView2 view,
         ChatConfig chatConfig,
         IEventBus eventBus,
+        IChatUserStateEventBus chatUserStateEventBus,
         CommunityDataService communityDataService,
         ICurrentChannelService currentChannelService,
         ChatMemberListService chatMemberListService,
@@ -54,6 +55,7 @@ public class ChatTitlebarPresenter : IDisposable
         this.view = view;
         this.chatConfig = chatConfig;
         this.eventBus = eventBus;
+        this.chatUserStateEventBus = chatUserStateEventBus;
         this.communityDataService = communityDataService;
         this.chatMemberListService = chatMemberListService;
         this.currentChannelService = currentChannelService;
@@ -68,6 +70,8 @@ public class ChatTitlebarPresenter : IDisposable
         view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
         view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
 
+        chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
+        
         chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
@@ -96,10 +100,24 @@ public class ChatTitlebarPresenter : IDisposable
         view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
         view.OnCommunityContextMenuRequested -= OnCommunityContextMenuRequested;
         chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
+        chatUserStateEventBus.UserConnectionStateChanged -= OnLiveUserConnectionStateChange;
 
         lifeCts.SafeCancelAndDispose();
         profileLoadCts.SafeCancelAndDispose();
         scope.Dispose();
+    }
+
+    private async void OnLiveUserConnectionStateChange(string channelId, bool isConnected)
+    {
+        if (currentViewModel == null ||
+            currentViewModel.ViewMode != TitlebarViewMode.DirectMessage) return;
+
+        if (currentViewModel.Id.Equals(channelId, StringComparison.OrdinalIgnoreCase))
+        {
+            await UniTask.SwitchToMainThread();
+            currentViewModel.IsOnline = isConnected;
+            view.defaultTitlebarView.Setup(currentViewModel);
+        }
     }
 
     private void OnProfileContextMenuRequested(UserProfileMenuRequest request)
