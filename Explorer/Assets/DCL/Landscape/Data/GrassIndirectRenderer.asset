@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <QuadTreeCullingShader>k__BackingField: {fileID: 7200000, guid: 9c03ee396c1950e408943ce9a66f2f59, type: 3}
   <ScatterGrassShader>k__BackingField: {fileID: 7200000, guid: 87c5ed5821c4114488fc271a39aad450, type: 3}
+  <ScatterFlowersShader>k__BackingField: {fileID: 7200000, guid: b96406e944e0454b82c9f02edce1b842, type: 3}
+  <ScatterCatTailsShader>k__BackingField: {fileID: 7200000, guid: 7fd8f4e6d7d84f33b0a8b982597a28a6, type: 3}
   <HeightMapTexture>k__BackingField: {fileID: 2800000, guid: b15e509b80445d94b92a2d38a4c493a6, type: 3}
   <TerrainBlendTexture>k__BackingField: {fileID: 2800000, guid: 04369a9b5ba8138478cd9df43fdd86f8, type: 3}
   <GroundDetailTexture>k__BackingField: {fileID: 2800000, guid: a58597a338584a9449f09c78590c197d, type: 3}
