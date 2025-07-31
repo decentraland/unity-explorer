@@ -1,20 +1,19 @@
-﻿using DCL.Chat.EventBus;
+﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
-using DCL.Chat.Services;
 using Utility;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class DeleteChatHistoryCommand
     {
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
 
         public DeleteChatHistoryCommand(
             IEventBus eventBus,
             IChatHistory chatHistory,
-            ICurrentChannelService currentChannelService)
+            CurrentChannelService currentChannelService)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;

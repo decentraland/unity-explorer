@@ -1,9 +1,9 @@
 ﻿using DCL.Audio;
+using DCL.Chat.ChatServices;
 using DCL.Chat.MessageBus;
-using DCL.Chat.Services;
 using DCL.Settings.Settings;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public struct SendMessageCommandPayload
     {
@@ -14,14 +14,14 @@ namespace DCL.Chat.ChatUseCases
     {
         private const string ORIGIN = "chat";
 
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
         private readonly IChatMessagesBus chatMessageBus;
         private readonly AudioClipConfig sound;
         private readonly ChatSettingsAsset chatSettings;
 
         public SendMessageCommand(
             IChatMessagesBus chatMessageBus,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             AudioClipConfig sound,
             ChatSettingsAsset chatSettings)
         {

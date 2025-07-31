@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using DCL.Chat.ChatViewModels.ChannelViewModels;
+﻿using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -248,7 +248,7 @@ namespace DCL.Chat
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
-            
+
             newItem.Initialize();
             newItem.Id = viewModel.Id;
             newItem.SetUnreadMessages(viewModel.UnreadMessagesCount);
@@ -271,7 +271,7 @@ namespace DCL.Chat
                     newItem.Configure(isClosable: true, hasOnlineStatus: false);
                     newItem.BindProfileThumbnail(user.ProfilePicture);
                     newItem.SetConnectionStatus(OnlineStatus.OFFLINE);
-                    
+
                     break;
 
                 case CommunityChannelViewModel community:

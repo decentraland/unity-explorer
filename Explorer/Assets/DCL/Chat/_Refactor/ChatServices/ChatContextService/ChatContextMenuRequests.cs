@@ -1,12 +1,12 @@
-﻿using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.Web3;
 using MVC;
+using System;
+using System.Threading;
 using UnityEngine;
 
-namespace DCL.Chat.Services
+namespace DCL.Chat.ChatServices.ChatContextService
 {
     /// <summary>
     /// Used to request showing the context menu for a specific user.

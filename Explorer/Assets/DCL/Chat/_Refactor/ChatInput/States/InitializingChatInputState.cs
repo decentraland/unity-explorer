@@ -1,4 +1,4 @@
-﻿namespace DCL.Chat
+﻿namespace DCL.Chat.ChatInput
 {
     /// <summary>
     ///     Denotes the state when the capability to send messages is being resolved

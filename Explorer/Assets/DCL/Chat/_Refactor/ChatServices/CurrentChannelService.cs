@@ -1,38 +1,15 @@
-﻿using System;
-using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatUseCases;
+﻿using DCL.Chat.ChatCommands;
 using DCL.Chat.History;
-using System.Threading;
+using System;
 using Utility.Types;
 
-namespace DCL.Chat.Services
+namespace DCL.Chat.ChatServices
 {
-    public interface ICurrentChannelService
-    {
-        ChatChannel? CurrentChannel { get; }
-        ChatChannel.ChatChannelType? CurrentChannelType => CurrentChannel?.ChannelType;
-        ChatChannel.ChannelId CurrentChannelId { get; }
-
-        Result<ChatUserStateUpdater.ChatUserState> InputState { get; }
-
-        event Action<ChatChannel?>? OnChannelChanged;
-        
-        void SetCurrentChannel(ChatChannel newChannel);
-
-        UniTask<Result<ChatUserStateUpdater.ChatUserState>> ResolveInputStateAsync(CancellationToken ct);
-    }
-
-    public class CurrentChannelService : ICurrentChannelService
+    public class CurrentChannelService : IDisposable
     {
         public event Action<ChatChannel?>? OnChannelChanged;
-        private readonly GetUserChatStatusCommand getUserChatStatusCommand;
 
-        public CurrentChannelService(GetUserChatStatusCommand getUserChatStatusCommand)
-        {
-            this.getUserChatStatusCommand = getUserChatStatusCommand;
-        }
-
-        public Result<ChatUserStateUpdater.ChatUserState> InputState { get; private set; }
+        public Result<ChatUserStateService.ChatUserState> InputState { get; internal set; }
 
         public ChatChannel? CurrentChannel { get; private set; }
         public ChatChannel.ChannelId CurrentChannelId => CurrentChannel?.Id ?? default;
@@ -47,32 +24,9 @@ namespace DCL.Chat.Services
             OnChannelChanged?.Invoke(CurrentChannel);
         }
 
-        public async UniTask<Result<ChatUserStateUpdater.ChatUserState>> ResolveInputStateAsync(CancellationToken ct)
+        public void Dispose()
         {
-            if (CurrentChannel == null)
-                return InputState = Result<ChatUserStateUpdater.ChatUserState>.ErrorResult("No channel selected");
-
-            switch (CurrentChannel.ChannelType)
-            {
-                case ChatChannel.ChatChannelType.NEARBY:
-                case ChatChannel.ChatChannelType.COMMUNITY:
-                    return InputState = Result<ChatUserStateUpdater.ChatUserState>.SuccessResult(ChatUserStateUpdater.ChatUserState.CONNECTED);
-                case ChatChannel.ChatChannelType.USER:
-                {
-                    ChatUserStateUpdater.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(CurrentChannel.Id.Id, ct);
-
-                    return InputState = ct.IsCancellationRequested
-                        ? Result<ChatUserStateUpdater.ChatUserState>.CancelledResult()
-                        : Result<ChatUserStateUpdater.ChatUserState>.SuccessResult(status);
-                }
-                default:
-                    return InputState = Result<ChatUserStateUpdater.ChatUserState>.ErrorResult($"{CurrentChannel.ChannelType} is not supported for input state resolution");
-            }
-        }
-
-        public void Clear()
-        {
-            SetCurrentChannel(null);
+            CurrentChannel = null;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace DCL.Chat
+﻿namespace DCL.Chat.ChatInput
 {
     public class HiddenChatInputState : ChatInputState
     {

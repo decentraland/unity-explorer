@@ -386,12 +386,12 @@ namespace DCL.Chat
 
                 ChatMessage itemData = chatMessages[messageIndex]; // Ignores the index used for the separator
 
-                if (itemData.IsPaddingElement)
-                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
+                // if (itemData.IsPaddingElement)
+                //     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
                 //For now, we show blocked users messages that are stored in the cache normally, as messages received after blocking are not stored
                 //else if (IsUserBlocked(itemData.SenderWalletAddress))
                   //  item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
-                else
+                  // else
                 {
                     item = listView.NewListViewItem(itemData.IsSystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
                         itemData.IsSentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);

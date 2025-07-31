@@ -4,7 +4,7 @@ using MVC;
 using System.Threading;
 using Utility;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatInput
 {
     public class PasteToastState : IndependentMVCState<ChatInputStateContext>
     {

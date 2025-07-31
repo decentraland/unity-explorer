@@ -1,7 +1,7 @@
-﻿using System;
-using DCL.UI.Profiles.Helpers;
+﻿using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DG.Tweening;
+using System;
 
 namespace DCL.Chat
 {

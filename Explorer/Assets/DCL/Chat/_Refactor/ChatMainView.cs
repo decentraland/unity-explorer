@@ -1,3 +1,6 @@
+using DCL.Chat.ChatInput;
+using DCL.Chat.ChatMessages;
+using DCL.Chat.ChatViews;
 using System;
 using DG.Tweening;
 using MVC;

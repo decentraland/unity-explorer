@@ -1,16 +1,16 @@
 ﻿using Arch.Core;
-using UnityEngine;
-using DCL.Nametags;
 using DCL.Chat.History;
-using DCL.Profiles;
-using DCL.Multiplayer.Profiles.Tables;
-using DCL.Settings.Settings;
-using Utility.Arch;
-using DCL.Profiles.Helpers;
-using System;
 using DCL.Communities;
+using DCL.Multiplayer.Profiles.Tables;
+using DCL.Nametags;
+using DCL.Profiles;
+using DCL.Profiles.Helpers;
+using DCL.Settings.Settings;
+using System;
+using UnityEngine;
+using Utility.Arch;
 
-namespace DCL.Chat.Services
+namespace DCL.Chat.ChatServices
 {
     public class ChatWorldBubbleService : IDisposable
     {

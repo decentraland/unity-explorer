@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
+using System.Collections.Generic;
+using System.Threading;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class GetMessageHistoryCommand
     {

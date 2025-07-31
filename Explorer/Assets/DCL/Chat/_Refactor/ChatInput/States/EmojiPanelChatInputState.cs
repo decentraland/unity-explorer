@@ -1,9 +1,10 @@
 ﻿using DCL.Audio;
+using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using DCL.UI.CustomInputField;
 using MVC;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatInput
 {
     public class EmojiPanelChatInputState : IndependentMVCState<ChatInputStateContext>
     {

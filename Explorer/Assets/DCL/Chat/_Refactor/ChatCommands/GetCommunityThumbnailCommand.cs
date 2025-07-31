@@ -1,19 +1,19 @@
-﻿using DCL.Diagnostics;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     namespace DCL.Chat.ChatUseCases
     {
         public class GetCommunityThumbnailCommand
         {
             private readonly ISpriteCache spriteCache;
-            private readonly ChatConfig chatConfig;
+            private readonly ChatConfig.ChatConfig chatConfig;
 
-            public GetCommunityThumbnailCommand(ISpriteCache spriteCache, ChatConfig chatConfig)
+            public GetCommunityThumbnailCommand(ISpriteCache spriteCache, ChatConfig.ChatConfig chatConfig)
             {
                 this.spriteCache = spriteCache;
                 this.chatConfig = chatConfig;

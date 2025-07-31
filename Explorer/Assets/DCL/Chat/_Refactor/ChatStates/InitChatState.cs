@@ -1,14 +1,9 @@
-using DCL.Chat;
-
-public class InitChatState : ChatState
+namespace DCL.Chat.ChatStates
 {
-    public override void Begin()
+    public class InitChatState : ChatState
     {
+        public override void Begin() { }
 
-    }
-
-    public override void End()
-    {
-        
+        public override void End() { }
     }
 }

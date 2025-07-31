@@ -1,40 +1,38 @@
-﻿using DCL.Chat.EventBus;
+﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
-using DCL.Chat.Services;
-
 using Utility;
 
-public class SelectChannelCommand
+namespace DCL.Chat.ChatCommands
 {
-    private readonly IEventBus eventBus;
-    private readonly IChatHistory chatHistory;
-    private readonly ICurrentChannelService currentChannelService;
-
-    public SelectChannelCommand(
-        IEventBus eventBus,
-        IChatHistory chatHistory,
-        ICurrentChannelService currentChannelService)
+    public class SelectChannelCommand
     {
-        this.eventBus = eventBus;
-        this.chatHistory = chatHistory;
-        this.currentChannelService = currentChannelService;
-    }
+        private readonly IEventBus eventBus;
+        private readonly IChatHistory chatHistory;
+        private readonly CurrentChannelService currentChannelService;
 
-    public void Execute(ChatChannel.ChannelId channelId)
-    {
-        if (currentChannelService.CurrentChannelId.Equals(channelId))
+        public SelectChannelCommand(
+            IEventBus eventBus,
+            IChatHistory chatHistory,
+            CurrentChannelService currentChannelService)
         {
-            return;
+            this.eventBus = eventBus;
+            this.chatHistory = chatHistory;
+            this.currentChannelService = currentChannelService;
         }
 
-        if (chatHistory.Channels.TryGetValue(channelId, out var channel))
+        public void Execute(ChatChannel.ChannelId channelId)
         {
-            currentChannelService.SetCurrentChannel(channel);
+            if (currentChannelService.CurrentChannelId.Equals(channelId)) { return; }
 
-            eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = channel });
+            if (chatHistory.Channels.TryGetValue(channelId, out ChatChannel? channel))
+            {
+                currentChannelService.SetCurrentChannel(channel);
+
+                eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = channel });
+            }
+
+            // If the channel doesn't exist, we simply do nothing.
+            // We could also log an error here if this case is unexpected.
         }
-
-        // If the channel doesn't exist, we simply do nothing.
-        // We could also log an error here if this case is unexpected.
     }
 }

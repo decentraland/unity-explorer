@@ -5,16 +5,15 @@ using DCL.Profiles;
 using DCL.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using UnityEngine;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class CreateMessageViewModelCommand
     {
         private readonly ProfileRepositoryWrapper profileRepository;
-        private readonly ChatConfig chatConfig;
+        private readonly ChatConfig.ChatConfig chatConfig;
 
-        public CreateMessageViewModelCommand(ProfileRepositoryWrapper profileRepository, ChatConfig chatConfig)
+        public CreateMessageViewModelCommand(ProfileRepositoryWrapper profileRepository, ChatConfig.ChatConfig chatConfig)
         {
             this.profileRepository = profileRepository;
             this.chatConfig = chatConfig;

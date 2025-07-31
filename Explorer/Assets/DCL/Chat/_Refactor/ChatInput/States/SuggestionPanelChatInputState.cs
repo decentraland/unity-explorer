@@ -1,4 +1,5 @@
 ﻿using DCL.Audio;
+using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using DCL.Profiles;
 using DCL.UI.CustomInputField;
@@ -10,7 +11,7 @@ using System.Text.RegularExpressions;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatInput
 {
     public class SuggestionPanelChatInputState : IndependentMVCState<ChatInputStateContext>, IDisposable
     {

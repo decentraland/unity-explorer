@@ -1,36 +1,38 @@
-using System;
 using DCL.Chat.ChatViewModels;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ChatMemberTitlebarView : MonoBehaviour
+namespace DCL.Chat.ChatViews
 {
-    public event Action OnCloseRequested;
-    public event Action OnBackRequested;
-    public Button ButtonClose => closeButton;
-    public Button ButtonBack => backButton;
-    
-    [SerializeField] private Button closeButton;
-    [SerializeField] private Button backButton;
-    [SerializeField] private TMP_Text membersCountText;
-    [SerializeField] private TMP_Text channelNameText;
-
-    private void Awake()
+    public class ChatMemberTitlebarView : MonoBehaviour
     {
-        closeButton.onClick.AddListener(() => OnCloseRequested?.Invoke());
-        backButton.onClick.AddListener(() => OnBackRequested?.Invoke());
-    }
-    
-    public void SetMemberCount(string count) => membersCountText.text = count;
+        public event Action OnCloseRequested;
+        public event Action OnBackRequested;
+        public Button ButtonClose => closeButton;
+        public Button ButtonBack => backButton;
 
-    public void Activate(bool activate) => gameObject.SetActive(activate);
+        [SerializeField] private Button closeButton;
+        [SerializeField] private Button backButton;
+        [SerializeField] private TMP_Text membersCountText;
+        [SerializeField] private TMP_Text channelNameText;
 
-    public void SetChannelName(ChatTitlebarViewModel model)
-    {
-        if (channelNameText != null)
+        private void Awake()
         {
-            channelNameText.SetText(model.ViewMode == TitlebarViewMode.Nearby ? "Nearby  -" : $"{model.Username}  -");
+            closeButton.onClick.AddListener(() => OnCloseRequested?.Invoke());
+            backButton.onClick.AddListener(() => OnBackRequested?.Invoke());
+        }
+
+        public void SetMemberCount(string count) =>
+            membersCountText.text = count;
+
+        public void Activate(bool activate) =>
+            gameObject.SetActive(activate);
+
+        public void SetChannelName(ChatTitlebarViewModel model)
+        {
+            if (channelNameText != null) { channelNameText.SetText(model.ViewMode == TitlebarViewMode.Nearby ? "Nearby  -" : $"{model.Username}  -"); }
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatViews
 {
     public class ChatUsernameView : MonoBehaviour
     {

@@ -1,12 +1,9 @@
-﻿using DCL.Chat.ChatMediator;
-using DCL.Chat.ChatServices;
-using DCL.Chat.ChatStates;
-using DCL.Chat.EventBus;
+﻿using DCL.Chat.ChatServices;
 using MVC;
 using System;
 using Utility;
 
-namespace DCL.Chat._Refactor.ChatStates
+namespace DCL.Chat.ChatStates
 {
     public class ChatStateMachine : IDisposable
     {

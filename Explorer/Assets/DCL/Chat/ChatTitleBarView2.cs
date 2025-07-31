@@ -1,6 +1,7 @@
+using DCL.Chat.ChatServices.ChatContextService;
 using System;
 using DCL.Chat.ChatViewModels;
-using DCL.Chat.Services;
+using DCL.Chat.ChatViews;
 using DCL.Web3;
 using UnityEngine;
 using UnityEngine.UI;

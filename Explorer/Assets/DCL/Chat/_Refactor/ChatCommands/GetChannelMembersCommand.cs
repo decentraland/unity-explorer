@@ -1,19 +1,17 @@
-﻿using System;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
+using DCL.UI.ProfileElements;
+using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Chat.EventBus;
-using DCL.UI.ProfileElements;
-using UnityEngine;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class GetChannelMembersCommand
     {
-        private readonly ChatConfig chatConfig;
+        private readonly ChatConfig.ChatConfig chatConfig;
 
-        public GetChannelMembersCommand(ChatConfig chatConfig)
+        public GetChannelMembersCommand(ChatConfig.ChatConfig chatConfig)
         {
             this.chatConfig = chatConfig;
         }

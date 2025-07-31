@@ -1,6 +1,4 @@
-﻿using DCL.Chat.EventBus;
-
-namespace DCL.Chat
+﻿namespace DCL.Chat.ChatInput
 {
     public class UnfocusedChatInputState : ChatInputState
     {

@@ -1,6 +1,6 @@
 ﻿using DCL.Chat.History;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class MarkMessagesAsReadCommand
     {

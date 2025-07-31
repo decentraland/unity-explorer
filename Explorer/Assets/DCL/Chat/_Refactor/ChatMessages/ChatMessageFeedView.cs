@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
@@ -9,11 +6,14 @@ using DCL.UI.Utilities;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
 using SuperScrollView;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatMessages
 {
     public class ChatMessageFeedView : MonoBehaviour, IDisposable
     {
@@ -53,9 +53,11 @@ namespace DCL.Chat
             scrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
-        internal bool IsItemVisible(int itemIndex)
+        internal bool IsItemVisible(int modelIndex)
         {
-            LoopListViewItem2 item = loopList.GetShownItemByItemIndex(itemIndex);
+            modelIndex = ModelToViewIndex(modelIndex);
+
+            LoopListViewItem2 item = loopList.GetShownItemByItemIndex(modelIndex);
 
             if (item != null)
             {
@@ -72,27 +74,37 @@ namespace DCL.Chat
         /// <param name="resetPosition"></param>
         public void ReconstructScrollView(bool resetPosition)
         {
-            int newEntries = viewModels.Count - loopList.ItemTotalCount;
+            int entriesCountWithPaddings = viewModels.Count + 2; // +2 for the padding at the top and bottom
 
+            int newEntries = entriesCountWithPaddings - loopList.ItemTotalCount;
+
+            //
             if (newEntries < 0)
                 newEntries = 0;
 
-            loopList.SetListItemCount(viewModels.Count, resetPosition);
+            loopList.SetListItemCount(entriesCountWithPaddings, resetPosition);
             loopList.RefreshAllShownItem();
 
             // Scroll view adjustment
             if (IsAtBottom())
+            {
                 loopList.MovePanelToItemIndex(0, 0);
+            }
             else
             {
+                // TODO this solution doesn't account for the sliding separator element
+                // Requires a further fix
+
                 if (loopList.ItemList.Count >= newEntries + 1)
                 {
                     // When the scroll view is not at the bottom, chat messages should not move if a new message is added
                     // An offset has to be applied to the scroll view in order to prevent messages from moving
                     var offsetToPreventScrollViewMovement = 0.0f;
 
+                    // TODO: it's incorrect: elements in the list is not the model elements that were added
+                    // Elements added to the bottom of the list might not been created visually at all (depending on the scroll position)
                     for (var i = 1; i < newEntries + 1; ++i) // Note: newEntries + 1 because the first item is always a padding
-                        offsetToPreventScrollViewMovement -= loopList.ItemList[i].ItemSize + loopList.ItemList[i].Padding;
+                        offsetToPreventScrollViewMovement -= loopList.ItemList[i].ItemSizeWithPadding;
 
                     loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
 
@@ -118,7 +130,7 @@ namespace DCL.Chat
         }
 
         public void ShowItem(int index) =>
-            loopList.MovePanelToItemIndex(index, loopList.ViewPortHeight - 170f); // Who knows what magic number is this
+            loopList.MovePanelToItemIndex(ModelToViewIndex(index), loopList.ViewPortHeight - 170f); // Who knows what magic number is this
 
         public void Show()
         {
@@ -144,8 +156,23 @@ namespace DCL.Chat
         internal bool IsAtBottom() =>
             viewModels.Count == 0 || loopList.ScrollRect.normalizedPosition.y <= 0.001f;
 
+        /// <summary>
+        ///     Accounts for the padding
+        /// </summary>
+        private static int ModelToViewIndex(int index) =>
+            ++index;
+
+        private static int ViewToModelIndex(int index) =>
+            --index;
+
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
+            // Resolve paddings - they are not part of the viewModels list
+            if (index == 0 || index == viewModels.Count + 1)
+                return listView.NewListViewItem(GetPrefabName(ChatItemPrefabIndex.Padding));
+
+            index = ViewToModelIndex(index);
+
             if (index < 0 || index >= viewModels.Count)
                 return null;
 
@@ -154,9 +181,7 @@ namespace DCL.Chat
 
             LoopListViewItem2 item;
 
-            if (chatMessage.IsPaddingElement)
-                item = listView.NewListViewItem(GetPrefabName(ChatItemPrefabIndex.Padding));
-            else if (viewModel.IsSeparator)
+            if (viewModel.IsSeparator)
                 item = listView.NewListViewItem(GetPrefabName(ChatItemPrefabIndex.Separator));
             else
             {

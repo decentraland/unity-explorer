@@ -9,15 +9,23 @@ using DCL.Friends;
 using DCL.Utilities;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Diagnostics;
+using DCL.Friends;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Profiles;
 using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using LiveKit.Rooms.Participants;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using Utility;
 using Utility.Multithreading;
 using Utility.Types;
 
-namespace DCL.Chat.Services
+namespace DCL.Chat.ChatServices
 {
     /// <summary>
     /// Manages and provides data about members in the current chat channel. This service has two primary functions:
@@ -28,7 +36,7 @@ namespace DCL.Chat.Services
     {
         private const int UNIFIED_POLL_INTERVAL_MS = 500;
 
-        private readonly ICurrentChannelService currentChannelService;
+        private readonly CurrentChannelService currentChannelService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRoomHub roomHub;
@@ -61,7 +69,7 @@ namespace DCL.Chat.Services
         public ChatMemberListService(IRoomHub roomHub,
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             CommunitiesDataProvider communitiesDataProvider,
             IWeb3IdentityCache web3IdentityCache)
         {

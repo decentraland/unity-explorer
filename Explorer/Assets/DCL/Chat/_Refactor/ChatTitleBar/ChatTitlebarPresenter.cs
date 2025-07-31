@@ -2,16 +2,17 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
-using DCL.Chat.Services;
 using DCL.Diagnostics;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
 using System.Collections.Generic;
+using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatServices;
+using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.UI.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -19,205 +20,214 @@ using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 using Utility;
 
-public class ChatTitlebarPresenter : IDisposable
+namespace DCL.Chat
 {
-    private readonly ChatTitlebarView2 view;
-    private readonly ChatConfig chatConfig;
-    private readonly IEventBus eventBus;
-    private readonly IChatUserStateEventBus chatUserStateEventBus;
-    private readonly CommunityDataService communityDataService;
-    private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
-    private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
-    private readonly ICurrentChannelService currentChannelService;
-    private readonly ChatContextMenuService chatContextMenuService;
-    private readonly ChatMemberListService chatMemberListService;
-    private readonly CancellationTokenSource lifeCts = new ();
-    private readonly EventSubscriptionScope scope = new ();
-    private CancellationTokenSource profileLoadCts = new ();
-    private CancellationTokenSource? activeMenuCts;
-    private UniTaskCompletionSource? activeMenuTcs;
-    private ChatTitlebarViewModel? currentViewModel { get; set; }
-
-    private readonly GenericContextMenu contextMenuConfiguration;
-    public ChatTitlebarPresenter(
-        ChatTitlebarView2 view,
-        ChatConfig chatConfig,
-        IEventBus eventBus,
-        IChatUserStateEventBus chatUserStateEventBus,
-        CommunityDataService communityDataService,
-        ICurrentChannelService currentChannelService,
-        ChatMemberListService chatMemberListService,
-        ChatContextMenuService chatContextMenuService,
-        ChatClickDetectionService chatClickDetectionService,
-        GetTitlebarViewModelCommand getTitlebarViewModel,
-        DeleteChatHistoryCommand deleteChatHistoryCommand)
+    public class ChatTitlebarPresenter : IDisposable
     {
-        this.view = view;
-        this.chatConfig = chatConfig;
-        this.eventBus = eventBus;
-        this.chatUserStateEventBus = chatUserStateEventBus;
-        this.communityDataService = communityDataService;
-        this.chatMemberListService = chatMemberListService;
-        this.currentChannelService = currentChannelService;
-        this.chatContextMenuService = chatContextMenuService;
-        this.getTitlebarViewModel = getTitlebarViewModel;
-        this.deleteChatHistoryCommand = deleteChatHistoryCommand;
+        private readonly ChatTitlebarView2 view;
+        private readonly ChatConfig.ChatConfig chatConfig;
+        private readonly IEventBus eventBus;
+        private readonly IChatUserStateEventBus chatUserStateEventBus;
+        private readonly CommunityDataService communityDataService;
+        private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
+        private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
+        private readonly CurrentChannelService currentChannelService;
+        private readonly ChatContextMenuService chatContextMenuService;
+        private readonly ChatMemberListService chatMemberListService;
+        private readonly CancellationTokenSource lifeCts = new ();
+        private readonly EventSubscriptionScope scope = new ();
+        private CancellationTokenSource profileLoadCts = new ();
+        private CancellationTokenSource? activeMenuCts;
+        private UniTaskCompletionSource? activeMenuTcs;
+        private ChatTitlebarViewModel? currentViewModel { get; set; }
 
-        view.Initialize();
-        view.OnCloseRequested += OnCloseRequested;
-        view.OnMembersToggleRequested += OnMembersToggleRequested;
-        view.OnContextMenuRequested += OnChatContextMenuRequested;
-        view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
-        view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
+        private readonly GenericContextMenu contextMenuConfiguration;
 
-        chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
-        
-        chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
-
-        scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
-
-        var contextMenuSettings = chatConfig.communityChatConversationContextMenuSettings;
-        contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
-                contextMenuSettings.Offset,
-                contextMenuSettings.VerticalLayoutPadding,
-                contextMenuSettings.ElementsSpacing,
-                ContextMenuOpenDirection.TOP_LEFT)
-            .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText,
-                contextMenuSettings.ViewCommunitySprite,
-                OpenCommunityCard));
-    }
-
-    private void OpenCommunityCard()
-    {
-        communityDataService
-            .OpenCommunityCard(currentChannelService.CurrentChannel);
-    }
-
-    public void Dispose()
-    {
-        view.OnCloseRequested -= OnCloseRequested;
-        view.OnMembersToggleRequested -= OnMembersToggleRequested;
-        view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
-        view.OnCommunityContextMenuRequested -= OnCommunityContextMenuRequested;
-        chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
-        chatUserStateEventBus.UserConnectionStateChanged -= OnLiveUserConnectionStateChange;
-
-        lifeCts.SafeCancelAndDispose();
-        profileLoadCts.SafeCancelAndDispose();
-        scope.Dispose();
-    }
-
-    private async void OnLiveUserConnectionStateChange(string channelId, bool isConnected)
-    {
-        if (currentViewModel == null ||
-            currentViewModel.ViewMode != TitlebarViewMode.DirectMessage) return;
-
-        if (currentViewModel.Id.Equals(channelId, StringComparison.OrdinalIgnoreCase))
+        public ChatTitlebarPresenter(
+            ChatTitlebarView2 view,
+            ChatConfig.ChatConfig chatConfig,
+            IEventBus eventBus,
+            CommunityDataService communityDataService,
+            CurrentChannelService currentChannelService,
+            ChatMemberListService chatMemberListService,
+            ChatContextMenuService chatContextMenuService,
+            GetTitlebarViewModelCommand getTitlebarViewModel,
+            DeleteChatHistoryCommand deleteChatHistoryCommand)
         {
-            await UniTask.SwitchToMainThread();
-            currentViewModel.IsOnline = isConnected;
-            view.defaultTitlebarView.Setup(currentViewModel);
+            this.view = view;
+            this.chatConfig = chatConfig;
+            this.eventBus = eventBus;
+            this.communityDataService = communityDataService;
+            this.chatMemberListService = chatMemberListService;
+            this.currentChannelService = currentChannelService;
+            this.chatContextMenuService = chatContextMenuService;
+            this.getTitlebarViewModel = getTitlebarViewModel;
+            this.deleteChatHistoryCommand = deleteChatHistoryCommand;
+
+            view.Initialize();
+            view.OnCloseRequested += OnCloseRequested;
+            view.OnMembersToggleRequested += OnMembersToggleRequested;
+            view.OnContextMenuRequested += OnChatContextMenuRequested;
+            view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
+            view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
+
+            chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
+
+            scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+
+            var contextMenuSettings = chatConfig.communityChatConversationContextMenuSettings;
+            contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
+                    contextMenuSettings.Offset,
+                    contextMenuSettings.VerticalLayoutPadding,
+                    contextMenuSettings.ElementsSpacing,
+                    ContextMenuOpenDirection.TOP_LEFT)
+                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText,
+                    contextMenuSettings.ViewCommunitySprite,
+                    OpenCommunityCard));
         }
-    }
 
-    private void OnProfileContextMenuRequested(UserProfileMenuRequest request)
-    {
-        request.WalletAddress = new Web3Address(currentViewModel.Id);
-
-        chatContextMenuService
-           .ShowUserProfileMenuAsync(request)
-           .Forget();
-    }
-
-    private void OnCommunityContextMenuRequested(ShowContextMenuRequest request)
-    {
-        Debug.Log("OnCommunityContextMenuRequested");
-        if (currentViewModel.ViewMode != TitlebarViewMode.Community) return;
-
-        request.MenuConfiguration = contextMenuConfiguration;
-        chatContextMenuService
-            .ShowCommunityContextMenuAsync(request)
-            .Forget();
-    }
-
-    private void OnChatContextMenuRequested(ChatContextMenuRequest data)
-    {
-        var options = new ChatOptionsContextMenuData
+        private void OpenCommunityCard()
         {
-            DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon
-        };
+            communityDataService
+                .OpenCommunityCard(currentChannelService.CurrentChannel);
+        }
 
-        data.contextMenuData = options;
-        data.OnDeleteHistory = deleteChatHistoryCommand.Execute;
-        chatContextMenuService.ShowChannelOptionsAsync(data).Forget();
-    }
-
-    private void OnMemberCountUpdated(int memberCount)
-    {
-        string memberCountText = memberCount.ToString();
-
-        view.defaultTitlebarView.SetMemberCount(memberCountText);
-        view.membersTitlebarView.SetMemberCount(memberCountText);
-    }
-
-    private void OnCloseRequested() =>
-        eventBus.Publish(new ChatEvents.CloseChatEvent());
-
-    private void OnMembersToggleRequested() =>
-        eventBus.Publish(new ChatEvents.ToggleMembersEvent());
-
-    private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt) =>
-        LoadTitlebarDataAsync(evt.Channel).Forget();
-
-    private async UniTaskVoid LoadTitlebarDataAsync(ChatChannel channel)
-    {
-        profileLoadCts = profileLoadCts.SafeRestart();
-        CancellationToken ct = profileLoadCts.Token;
-
-        try
+        public void Dispose()
         {
-            var loadingViewModel = ChatTitlebarViewModel.CreateLoading(channel.ChannelType switch
+            view.OnCloseRequested -= OnCloseRequested;
+            view.OnMembersToggleRequested -= OnMembersToggleRequested;
+            view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
+            view.OnCommunityContextMenuRequested -= OnCommunityContextMenuRequested;
+            chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
+
+            lifeCts.SafeCancelAndDispose();
+            profileLoadCts.SafeCancelAndDispose();
+            scope.Dispose();
+        }
+
+        private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
+        {
+            if (currentViewModel == null ||
+                currentViewModel.ViewMode != TitlebarViewMode.DirectMessage) return;
+
+            if (currentViewModel.Id.Equals(userStatusUpdatedEvent.UserId, StringComparison.OrdinalIgnoreCase))
             {
-                ChatChannel.ChatChannelType.NEARBY => TitlebarViewMode.Nearby,
-                ChatChannel.ChatChannelType.USER => TitlebarViewMode.DirectMessage,
-                ChatChannel.ChatChannelType.COMMUNITY => TitlebarViewMode.Community,
-                _ => TitlebarViewMode.Nearby
-            });
-
-            view.defaultTitlebarView.Setup(loadingViewModel);
-
-            ChatTitlebarViewModel? finalViewModel = await getTitlebarViewModel.ExecuteAsync(channel, ct);
-            
-            if (ct.IsCancellationRequested) return;
-
-            currentViewModel = finalViewModel;
-            view.defaultTitlebarView.Setup(finalViewModel);
-            view.membersTitlebarView.SetChannelName(finalViewModel);
-            
+                currentViewModel.IsOnline = userStatusUpdatedEvent.IsOnline;
+                view.defaultTitlebarView.Setup(currentViewModel);
+            }
         }
-        catch (OperationCanceledException) { }
-        catch (Exception e)
+
+        private void OnProfileContextMenuRequested(UserProfileMenuRequest request)
         {
-            view.defaultTitlebarView.Setup(new ChatTitlebarViewModel
-            {
-                Username = "Error",
-            });
+            request.WalletAddress = new Web3Address(currentViewModel.Id);
 
-            ReportHub.LogError(ReportCategory.UI, $"Titlebar load failed for channel {channel.Id}: {e}");
+            chatContextMenuService
+                .ShowUserProfileMenuAsync(request)
+                .Forget();
+        }
+
+        private void OnCommunityContextMenuRequested(ShowContextMenuRequest request)
+        {
+            Debug.Log("OnCommunityContextMenuRequested");
+            if (currentViewModel.ViewMode != TitlebarViewMode.Community) return;
+
+            request.MenuConfiguration = contextMenuConfiguration;
+            chatContextMenuService
+                .ShowCommunityContextMenuAsync(request)
+                .Forget();
+        }
+
+        private void OnChatContextMenuRequested(ChatContextMenuRequest data)
+        {
+            var options = new ChatOptionsContextMenuData
+            {
+                DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon
+            };
+
+            data.contextMenuData = options;
+            data.OnDeleteHistory = deleteChatHistoryCommand.Execute;
+            chatContextMenuService.ShowChannelOptionsAsync(data).Forget();
+        }
+
+        private void OnMemberCountUpdated(int memberCount)
+        {
+            string memberCountText = memberCount.ToString();
+
+            view.defaultTitlebarView.SetMemberCount(memberCountText);
+            view.membersTitlebarView.SetMemberCount(memberCountText);
+        }
+
+        private void OnCloseRequested()
+        {
+            eventBus.Publish(new ChatEvents.CloseChatEvent());
+        }
+
+        private void OnMembersToggleRequested()
+        {
+            eventBus.Publish(new ChatEvents.ToggleMembersEvent());
+        }
+
+        private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
+        {
+            LoadTitlebarDataAsync(evt.Channel).Forget();
+        }
+
+        private async UniTaskVoid LoadTitlebarDataAsync(ChatChannel channel)
+        {
+            profileLoadCts = profileLoadCts.SafeRestart();
+            var ct = profileLoadCts.Token;
+
+            try
+            {
+                var loadingViewModel = ChatTitlebarViewModel.CreateLoading(channel.ChannelType switch
+                {
+                    ChatChannel.ChatChannelType.NEARBY => TitlebarViewMode.Nearby,
+                    ChatChannel.ChatChannelType.USER => TitlebarViewMode.DirectMessage,
+                    ChatChannel.ChatChannelType.COMMUNITY => TitlebarViewMode.Community,
+                    _ => TitlebarViewMode.Nearby
+                });
+
+                view.defaultTitlebarView.Setup(loadingViewModel);
+
+                var finalViewModel = await getTitlebarViewModel.ExecuteAsync(channel, ct);
+
+                if (ct.IsCancellationRequested) return;
+
+                currentViewModel = finalViewModel;
+                view.defaultTitlebarView.Setup(finalViewModel);
+                view.membersTitlebarView.SetChannelName(finalViewModel);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                view.defaultTitlebarView.Setup(new ChatTitlebarViewModel
+                {
+                    Username = "Error"
+                });
+
+                ReportHub.LogError(ReportCategory.UI, $"Titlebar load failed for channel {channel.Id}: {e}");
+            }
+        }
+
+        public void ShowMembersView(bool isMemberListVisible)
+        {
+            view.SetMemberListMode(isMemberListVisible);
+        }
+
+        public void Show()
+        {
+            view.Show();
+        }
+
+        public void Hide()
+        {
+            view.Hide();
+        }
+
+        public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
+        {
+            view.SetFocusedState(isFocused, animate, duration, easing);
         }
     }
-
-    public void ShowMembersView(bool isMemberListVisible)
-    {
-        view.SetMemberListMode(isMemberListVisible);
-    }
-
-    public void Show() =>
-        view.Show();
-
-    public void Hide() =>
-        view.Hide();
-
-    public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing) =>
-        view.SetFocusedState(isFocused, animate, duration, easing);
 }

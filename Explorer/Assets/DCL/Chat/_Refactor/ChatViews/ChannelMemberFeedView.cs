@@ -1,15 +1,15 @@
-﻿using System;
+﻿using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.UI.Utilities;
-using SuperScrollView;
-using System.Collections.Generic;
-using DCL.Chat.Services;
 using DCL.Web3;
 using MVC;
+using SuperScrollView;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatViews
 {
     public class ChannelMemberFeedView : MonoBehaviour
     {

@@ -1,8 +1,7 @@
-﻿using DCL.Chat.ChatViewModels.ChannelViewModels;
-using DCL.Chat.History;
+﻿using DCL.Chat.History;
 using UnityEngine;
 
-namespace DCL.Chat.ChatViewModels.ChannelViewModels
+namespace DCL.Chat.ChatViewModels
 {
     public class CommunityChannelViewModel : BaseChannelViewModel
     {

@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatServices;
+using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
-using DCL.Chat.Services;
+using DCL.Chat.ChatViews;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;

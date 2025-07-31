@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 
@@ -11,12 +12,28 @@ namespace Utility
 
     public class EventBus : IEventBus
     {
+        private readonly bool invokeSubscribersOnMainThread;
+
+        public EventBus(bool invokeSubscribersOnMainThread)
+        {
+            this.invokeSubscribersOnMainThread = invokeSubscribersOnMainThread;
+        }
+
         private readonly Dictionary<Type, Delegate> handlers = new();
 
         public void Publish<T>(T evt)
         {
             if (handlers.TryGetValue(typeof(T), out var del))
-                ((Action<T>)del)?.Invoke(evt);
+            {
+                var typedDelegate = (Action<T>)del;
+
+                if (invokeSubscribersOnMainThread && !PlayerLoopHelper.IsMainThread)
+
+                    // TODO find a way to prevent an allocation from capture
+                    PlayerLoopHelper.AddContinuation(PlayerLoopTiming.Update, () => typedDelegate?.Invoke(evt));
+                else
+                    typedDelegate?.Invoke(evt);
+            }
         }
 
         public IDisposable Subscribe<T>(Action<T> handler)

@@ -1,23 +1,20 @@
 using System;
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
-using DCL.Chat._Refactor.ChatStates;
+using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatFriends;
-using DCL.Chat.ChatMediator;
+using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatServices;
-using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.Services;
-using DCL.Chat.Services.DCL.Chat;
 using DCL.Communities;
-using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 
 using Utility;
@@ -33,10 +30,8 @@ namespace DCL.Chat
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ChatMemberListService chatMemberListService;
         private readonly CommunityDataService communityDataService;
-        private readonly ICurrentChannelService currentChannelService;
-        private readonly ChatUserStateBridge chatUserStateBridge;
-        private readonly IChatUserStateEventBus userStateEventBus;
-        private readonly ChatConfig chatConfig;
+        private readonly CurrentChannelService currentChannelService;
+        private readonly ChatConfig.ChatConfig chatConfig;
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -52,15 +47,12 @@ namespace DCL.Chat
         public bool IsVisibleInSharedSpace => chatStateMachine != null && chatStateMachine!.IsFocused;
 
         public ChatMainController(ViewFactoryMethod viewFactory,
-            ChatConfig chatConfig,
+            ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
             IChatMessagesBus chatMessagesBus,
             IChatEventBus chatEventBus,
-            IChatUserStateEventBus userStateEventBus,
-            ChatUserStateBridge chatUserStateBridge,
-            ICurrentChannelService currentChannelService,
+            CurrentChannelService currentChannelService,
             ChatInputBlockingService chatInputBlockingService,
-            ChatSettingsAsset chatSettingsAsset,
             CommandRegistry commandRegistry,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -72,9 +64,7 @@ namespace DCL.Chat
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
             this.chatMessagesBus = chatMessagesBus;
-            this.userStateEventBus = userStateEventBus;
             this.chatEventBus = chatEventBus;
-            this.chatUserStateBridge = chatUserStateBridge;
             this.currentChannelService = currentChannelService;
             this.chatInputBlockingService = chatInputBlockingService;
             this.commandRegistry = commandRegistry;
@@ -103,20 +93,16 @@ namespace DCL.Chat
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,
-                userStateEventBus,
                 communityDataService,
                 currentChannelService,
                 chatMemberListService,
                 chatContextMenuService,
-                chatClickDetectionService,
                 commandRegistry.GetTitlebarViewModel,
                 commandRegistry.DeleteChatHistory);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
-                chatMessagesBus,
                 chatEventBus,
-                userStateEventBus,
                 chatHistory,
                 currentChannelService,
                 profileRepositoryWrapper,
@@ -140,6 +126,7 @@ namespace DCL.Chat
                 eventBus,
                 chatEventBus,
                 currentChannelService,
+                commandRegistry.ResolveInputStateCommand,
                 commandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
                 commandRegistry.SendMessage);

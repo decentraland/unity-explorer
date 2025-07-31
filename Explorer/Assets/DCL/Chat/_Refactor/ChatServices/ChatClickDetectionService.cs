@@ -3,83 +3,88 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.Pool; // Make sure this is included
+using UnityEngine.Pool;
 
-public class ChatClickDetectionService : IDisposable
+// Make sure this is included
+
+namespace DCL.Chat.ChatServices
 {
-    public event Action? OnClickInside;
-    public event Action? OnClickOutside;
-
-    private readonly Transform targetArea;
-    private readonly HashSet<Transform> ignoredElementsSet;
-
-    private bool isPaused;
-
-    public ChatClickDetectionService(Transform targetArea, params Transform[] ignoredElements)
+    public class ChatClickDetectionService : IDisposable
     {
-        this.targetArea = targetArea;
-        ignoredElementsSet = new HashSet<Transform>(ignoredElements);
+        public event Action? OnClickInside;
+        public event Action? OnClickOutside;
 
-        DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
-    }
+        private readonly Transform targetArea;
+        private readonly HashSet<Transform> ignoredElementsSet;
 
-    public void Dispose()
-    {
-        DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
-    }
+        private bool isPaused;
 
-    public void Pause() =>
-        isPaused = true;
-
-    public void Resume() =>
-        isPaused = false;
-
-    private void HandleGlobalClick(InputAction.CallbackContext context)
-    {
-        if (EventSystem.current == null) return;
-        if (isPaused) return;
-
-        var eventData = new PointerEventData(EventSystem.current) { position = Mouse.current.position.ReadValue() };
-
-        using PooledObject<List<RaycastResult>> _ = ListPool<RaycastResult>.Get(out List<RaycastResult>? results);
-
-        EventSystem.current.RaycastAll(eventData, results);
-
-        if (results.Count > 0 && IsIgnored(results[0].gameObject))
-            return;
-
-        var clickedInside = false;
-
-        foreach (RaycastResult result in results)
+        public ChatClickDetectionService(Transform targetArea, params Transform[] ignoredElements)
         {
-            if (result.gameObject.transform.IsChildOf(targetArea))
+            this.targetArea = targetArea;
+            ignoredElementsSet = new HashSet<Transform>(ignoredElements);
+
+            DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
+        }
+
+        public void Dispose()
+        {
+            DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
+        }
+
+        public void Pause() =>
+            isPaused = true;
+
+        public void Resume() =>
+            isPaused = false;
+
+        private void HandleGlobalClick(InputAction.CallbackContext context)
+        {
+            if (EventSystem.current == null) return;
+            if (isPaused) return;
+
+            var eventData = new PointerEventData(EventSystem.current) { position = Mouse.current.position.ReadValue() };
+
+            using PooledObject<List<RaycastResult>> _ = ListPool<RaycastResult>.Get(out List<RaycastResult>? results);
+
+            EventSystem.current.RaycastAll(eventData, results);
+
+            if (results.Count > 0 && IsIgnored(results[0].gameObject))
+                return;
+
+            var clickedInside = false;
+
+            foreach (RaycastResult result in results)
             {
-                clickedInside = true;
-                break;
+                if (result.gameObject.transform.IsChildOf(targetArea))
+                {
+                    clickedInside = true;
+                    break;
+                }
             }
+
+            if (clickedInside) OnClickInside?.Invoke();
+            else OnClickOutside?.Invoke();
         }
 
-        if (clickedInside) OnClickInside?.Invoke();
-        else OnClickOutside?.Invoke();
-    }
-
-    private bool IsIgnored(GameObject clickedObject)
-    {
-        if (clickedObject == null) return false;
-
-        Transform current = clickedObject.transform;
-
-        while (current != null)
+        private bool IsIgnored(GameObject clickedObject)
         {
-            if (ignoredElementsSet.Contains(current))
-                return true;
+            if (clickedObject == null) return false;
 
-            if (current == targetArea)
-                return false;
+            Transform current = clickedObject.transform;
 
-            current = current.parent;
+            while (current != null)
+            {
+                if (ignoredElementsSet.Contains(current))
+                    return true;
+
+                if (current == targetArea)
+                    return false;
+
+                current = current.parent;
+            }
+
+            return false;
         }
-
-        return false;
     }
 }
