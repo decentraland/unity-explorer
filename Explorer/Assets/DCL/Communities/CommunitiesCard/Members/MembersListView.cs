@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Friends.UI.FriendPanel;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -43,6 +44,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private RectTransform scrollViewRect { get; set; } = null!;
         [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
+        [field: SerializeField] private NotificationIndicatorView requestsNotificationIndicator { get; set; } = null!;
 
         [field: Header("Assets")]
         [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
@@ -114,6 +116,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             ToggleSection(MemberListSections.MEMBERS);
             confirmationDialogCts.SafeCancelAndDispose();
         }
+
+        public void UpdateRequestsCounter(int amount) =>
+            requestsNotificationIndicator.SetNotificationCount(amount);
 
         private void OnContextMenuButtonClicked(MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
         {
