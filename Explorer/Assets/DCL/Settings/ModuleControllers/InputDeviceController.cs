@@ -1,6 +1,9 @@
+using DCL.Diagnostics;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using LiveKit.Runtime.Scripts.Audio;
+using RichTypes;
 using TMPro;
 using UnityEngine;
 
@@ -25,8 +28,18 @@ namespace DCL.Settings.ModuleControllers
 
         private void ApplySettings(int pickedMicrophoneIndex)
         {
-            DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME, Microphone.devices[pickedMicrophoneIndex]);
-            voiceChatSettings.OnMicrophoneChanged(pickedMicrophoneIndex);
+            Result<MicrophoneSelection> result = MicrophoneSelection.FromIndex(pickedMicrophoneIndex);
+
+            if (result.Success == false)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Picked invalid selection from ui: {result.ErrorMessage}");
+                return;
+            }
+
+            MicrophoneSelection microphoneSelection = result.Value;
+
+            DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME, microphoneSelection.name);
+            voiceChatSettings.OnMicrophoneChanged(microphoneSelection);
         }
 
         private void AudioConfigChanged(bool deviceWasChanged)
@@ -57,14 +70,25 @@ namespace DCL.Settings.ModuleControllers
 
         private void UpdateDropdownSelection(int index)
         {
+            Result<MicrophoneSelection> result = MicrophoneSelection.FromIndex(index);
+
+            if (result.Success == false)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Picked invalid selection from ui: {result.ErrorMessage}");
+                return;
+            }
+
+            MicrophoneSelection microphoneSelection = result.Value;
+
             view.DropdownView.Dropdown.value = index;
-            voiceChatSettings.OnMicrophoneChanged(index);
+            voiceChatSettings.OnMicrophoneChanged(microphoneSelection);
             view.DropdownView.Dropdown.RefreshShownValue();
         }
 
         private void LoadInputDeviceOptions()
         {
             view.DropdownView.Dropdown.options.Clear();
+
             foreach (string option in Microphone.devices)
                 view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
         }

@@ -12,7 +12,6 @@ namespace DCL.PluginSystem.Global
     {
         [Header("Asset References")]
         [field: SerializeField] public StaticSettings.VoiceChatSettingsRef VoiceChatSettings { get; private set; }
-        [field: SerializeField] public MicrophoneAudioFilterReference MicrophoneAudioFilter { get; private set; }
         [field: SerializeField] public CombinedAudioSourceReference CombinedAudioSource { get; private set; }
         [field: SerializeField] public VoiceChatConfigurationReference VoiceChatConfiguration { get; private set; }
 
@@ -20,12 +19,6 @@ namespace DCL.PluginSystem.Global
         public class CombinedAudioSourceReference : ComponentReference<VoiceChatCombinedStreamsAudioSource>
         {
             public CombinedAudioSourceReference(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class MicrophoneAudioFilterReference : ComponentReference<VoiceChatMicrophoneAudioFilter>
-        {
-            public MicrophoneAudioFilterReference(string guid) : base(guid) { }
         }
 
         [Serializable]

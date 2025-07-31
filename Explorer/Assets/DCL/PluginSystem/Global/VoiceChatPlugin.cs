@@ -30,7 +30,6 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
-        private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
         private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
         private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
         private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> combinedAudioSource;
@@ -81,7 +80,6 @@ namespace DCL.PluginSystem.Global
             combinedAudioSource.Dispose();
             voiceChatConfigurationAsset.Dispose();
             voiceChatSettingsAsset.Dispose();
-            microphoneAudioFilter.Dispose();
             voiceChatConfigurations.Dispose();
             privateVoiceChatController?.Dispose();
             communitiesVoiceChatController?.Dispose();
@@ -100,19 +98,15 @@ namespace DCL.PluginSystem.Global
             voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
             VoiceChatPluginSettings configurations = voiceChatConfigurations.Value;
 
-            microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(configurations.MicrophoneAudioFilter, ct: ct);
-            AudioSource? microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
-
             voiceChatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatSettings, ct: ct);
             VoiceChatSettingsAsset voiceChatSettings = voiceChatSettingsAsset.Value;
 
             voiceChatConfigurationAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatConfiguration, ct: ct);
             VoiceChatConfiguration voiceChatConfiguration = voiceChatConfigurationAsset.Value;
 
-            microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
             combinedAudioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
 
-            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value);
+            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
 
             trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, combinedAudioSource.Value, voiceChatHandler);

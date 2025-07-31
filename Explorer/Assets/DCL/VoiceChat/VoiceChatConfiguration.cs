@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace DCL.VoiceChat
 {
@@ -38,5 +39,8 @@ namespace DCL.VoiceChat
         [Tooltip("Delay in milliseconds between reconnection attempts")]
         [Range(1000, 10000)]
         public int ReconnectionDelayMs = 2000;
+
+        [Tooltip("Specify group where microphone should put its output")]
+        public AudioMixerGroup AudioMixerGroup;
     }
 }
