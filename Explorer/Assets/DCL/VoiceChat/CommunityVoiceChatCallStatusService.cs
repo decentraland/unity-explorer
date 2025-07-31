@@ -243,24 +243,15 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            if (string.IsNullOrEmpty(communityUpdate.VoiceChatId))
+            if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
             {
-                // Remove community from dictionary if call_id is empty
-                if (communityVoiceChatCalls.Remove(communityUpdate.CommunityId)) { ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Removed community {communityUpdate.CommunityId} from voice chat calls"); }
+                existingData.Value = communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted;
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Updated community {communityUpdate.CommunityId}");
             }
             else
             {
-                // Add or update community with new call_id
-                if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
-                {
-                    existingData.Value = !string.IsNullOrEmpty(communityUpdate.VoiceChatId);
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Updated community {communityUpdate.CommunityId} with Voice Chat ID {communityUpdate.VoiceChatId}");
-                }
-                else
-                {
-                    communityVoiceChatCalls[communityUpdate.CommunityId] = new ReactiveProperty<bool>(!string.IsNullOrEmpty(communityUpdate.VoiceChatId));
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Added community {communityUpdate.CommunityId} with Voice Chat ID {communityUpdate.VoiceChatId}");
-                }
+                communityVoiceChatCalls[communityUpdate.CommunityId] = new ReactiveProperty<bool>(communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted);
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Added community {communityUpdate.CommunityId}");
             }
         }
 

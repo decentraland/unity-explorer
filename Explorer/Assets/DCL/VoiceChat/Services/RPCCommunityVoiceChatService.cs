@@ -213,68 +213,42 @@ namespace DCL.VoiceChat.Services
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
-                int retryAttempt = 0;
-                bool streamOpened = false;
+                IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream =
+                    socialServiceRPC.Module()!.CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
 
-                while (retryAttempt < MAX_STREAM_RETRY_ATTEMPTS && !ct.IsCancellationRequested)
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Attempting to open community voice chat updates stream");
+
+                try
                 {
-                    try
+                    await foreach (CommunityVoiceChatUpdate? response in stream)
                     {
-                        IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream =
-                            socialServiceRPC.Module()!.CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
-
-                        streamOpened = true;
-                        ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Successfully opened community voice chat updates stream");
-
-                        await foreach (CommunityVoiceChatUpdate? response in stream)
-                        {
-                            try
-                            {
-                                CommunityVoiceChatUpdateReceived?.Invoke(response);
-                            }
-                            // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT)); }
-                        }
-
-                        // If we reach here, the stream has ended normally
-                        break;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // Cancellation requested, exit the retry loop
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        retryAttempt++;
-                        ReportHub.LogError($"Failed to open community voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS} exception {e}", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
-
-                        if (retryAttempt >= MAX_STREAM_RETRY_ATTEMPTS)
-                        {
-                            ReportHub.LogError($"Failed to open community voice chat updates stream after {MAX_STREAM_RETRY_ATTEMPTS} attempts. Disabling voice chat service.", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
-                            isServiceDisabled = true;
-                            break;
-                        }
-
-                        // Calculate exponential backoff delay
-                        int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
-                        ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Retrying community voice chat updates stream connection in {delaySeconds} seconds...");
-
                         try
                         {
-                            await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
+                            // Validate the response before processing
+                            if (response == null)
+                            {
+                                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Received null community voice chat update");
+                                continue;
+                            }
+
+                            CommunityVoiceChatUpdateReceived?.Invoke(response);
                         }
-                        catch (OperationCanceledException)
-                        {
-                            // Cancellation requested during delay, exit the retry loop
-                            break;
+                        // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
+                        catch (Exception e) when (e is not OperationCanceledException) 
+                        { 
+                            ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT)); 
                         }
                     }
                 }
-
-                if (!streamOpened && !ct.IsCancellationRequested)
+                catch (InvalidOperationException e) when (e.Message.Contains("undefined"))
                 {
-                    ReportHub.LogError("Failed to establish community voice chat updates stream after all retry attempts", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                    ReportHub.LogError($"Server sent undefined data in community voice chat stream: {e.Message}", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                    throw; // Re-throw to let KeepServerStreamOpenAsync handle the retry
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogError($"Unexpected error in community voice chat stream: {e.Message}", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                    throw; // Re-throw to let KeepServerStreamOpenAsync handle the retry
                 }
             }
         }
