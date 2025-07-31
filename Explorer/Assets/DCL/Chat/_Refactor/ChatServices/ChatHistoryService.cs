@@ -5,7 +5,7 @@ using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using System;
 
-namespace DCL.Chat.Services
+namespace DCL.Chat.ChatServices
 {
     /// <summary>
     ///     Listens to the bus and adds a formatted message to the chat history
@@ -15,10 +15,10 @@ namespace DCL.Chat.Services
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IChatHistory chatHistory;
         private readonly ITextFormatter hyperlinkTextFormatter;
-        private readonly ChatConfig chatConfig;
+        private readonly ChatConfig.ChatConfig chatConfig;
         private readonly ChatSettingsAsset chatSettings;
 
-        public ChatHistoryService(IChatMessagesBus chatMessagesBus, IChatHistory chatHistory, ITextFormatter hyperlinkTextFormatter, ChatConfig chatConfig, ChatSettingsAsset chatSettings)
+        public ChatHistoryService(IChatMessagesBus chatMessagesBus, IChatHistory chatHistory, ITextFormatter hyperlinkTextFormatter, ChatConfig.ChatConfig chatConfig, ChatSettingsAsset chatSettings)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;

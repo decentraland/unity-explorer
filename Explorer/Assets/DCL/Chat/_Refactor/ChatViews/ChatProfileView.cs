@@ -3,7 +3,7 @@ using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatViews
 {
     public class ChatProfileView : MonoBehaviour
     {

@@ -1,43 +1,41 @@
-using NUnit.Framework;
-using NSubstitute;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using DCL.Chat.ChatUseCases;
-using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI.InputFieldFormatting;
+using NSubstitute;
+using NUnit.Framework;
+using System.Threading.Tasks;
 
-public class GetMessageHistoryUseCaseShould
+namespace DCL.Chat.ChatCommands.Tests
 {
-    private GetMessageHistoryCommand _command;
-    private IChatHistory mockChatHistory;
-    private ChatHistoryStorage mockChatHistoryStorage;
-    private CreateMessageViewModelCommand _mockCreateViewModelCommand;
-
-    [SetUp]
-    public void SetUp()
+    public class GetMessageHistoryUseCaseShould
     {
-        mockChatHistory = Substitute.For<IChatHistory>();
+        private GetMessageHistoryCommand _command;
+        private IChatHistory mockChatHistory;
+        private ChatHistoryStorage mockChatHistoryStorage;
+        private CreateMessageViewModelCommand _mockCreateViewModelCommand;
 
-        mockChatHistoryStorage = Substitute.For<ChatHistoryStorage>(null, null, null);
+        [SetUp]
+        public void SetUp()
+        {
+            mockChatHistory = Substitute.For<IChatHistory>();
 
-        var mockFormatter = Substitute.For<ITextFormatter>();
-        _mockCreateViewModelCommand = Substitute.For<CreateMessageViewModelCommand>(mockFormatter);
+            mockChatHistoryStorage = Substitute.For<ChatHistoryStorage>(null, null, null);
 
-        _command = new GetMessageHistoryCommand(
-            mockChatHistory,
-            mockChatHistoryStorage,
-            _mockCreateViewModelCommand
-        );
-    }
+            ITextFormatter mockFormatter = Substitute.For<ITextFormatter>();
+            _mockCreateViewModelCommand = Substitute.For<CreateMessageViewModelCommand>(mockFormatter);
 
-    [Test]
-    public async Task InsertSeparatorAtCorrectPosition_WhenUnreadMessagesExist()
-    {
-        // TODO the test should be re-implemented
+            _command = new GetMessageHistoryCommand(
+                mockChatHistory,
+                mockChatHistoryStorage,
+                _mockCreateViewModelCommand
+            );
+        }
 
-        /*var messages = new List<ChatMessage>();
+        [Test]
+        public async Task InsertSeparatorAtCorrectPosition_WhenUnreadMessagesExist()
+        {
+            // TODO the test should be re-implemented
+
+            /*var messages = new List<ChatMessage>();
         for (int i = 0; i < 10; i++)
         {
             messages.Add(new ChatMessage($"Message {i}",
@@ -69,5 +67,6 @@ public class GetMessageHistoryUseCaseShould
         Assert.IsTrue(result.ViewModelMessages[5].IsSeparator, "The separator was not at the expected index 5.");
         Assert.IsFalse(result.ViewModelMessages[4].IsSeparator);
         Assert.IsFalse(result.ViewModelMessages[6].IsSeparator);*/
+        }
     }
 }

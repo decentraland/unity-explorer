@@ -1,14 +1,14 @@
 ﻿using DCL.Chat.ChatFriends;
+using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
+using DG.Tweening;
 
-namespace DCL.Chat.ChatMediator
+namespace DCL.Chat
 {
-    using DG.Tweening;
-
     public class ChatUIMediator
     {
         private readonly ChatMainView mainView;
-        private readonly ChatConfig config;
+        private readonly ChatConfig.ChatConfig config;
         internal readonly ChatTitlebarPresenter titleBarPresenter;
         internal readonly ChatChannelsPresenter channelListPresenter;
         internal readonly ChatMessageFeedPresenter messageFeedPresenter;
@@ -17,7 +17,7 @@ namespace DCL.Chat.ChatMediator
 
         public ChatUIMediator(
             ChatMainView mainView,
-            ChatConfig config,
+            ChatConfig.ChatConfig config,
             ChatTitlebarPresenter titleBarPresenter,
             ChatChannelsPresenter channelListPresenter,
             ChatMessageFeedPresenter messageFeedPresenter,

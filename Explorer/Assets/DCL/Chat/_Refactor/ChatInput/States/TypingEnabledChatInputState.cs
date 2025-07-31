@@ -1,5 +1,5 @@
 ﻿using DCL.Audio;
-using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatCommands;
 using DCL.Chat.EventBus;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
@@ -8,7 +8,7 @@ using System;
 using UnityEngine.EventSystems;
 using Utility;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatInput
 {
     /// <summary>
     ///     Can type in the chat

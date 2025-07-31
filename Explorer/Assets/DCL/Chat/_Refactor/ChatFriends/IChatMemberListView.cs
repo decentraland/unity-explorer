@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatFriends
 {
     public interface IChatMemberListView
     {

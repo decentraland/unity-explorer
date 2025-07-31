@@ -1,13 +1,12 @@
-﻿using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.UI;
 using DCL.UI.Communities;
 using DCL.UI.GenericContextMenuParameter;
 using MVC;
-using UnityEngine;
+using System;
+using System.Threading;
 
-namespace DCL.Chat.Services
+namespace DCL.Chat.ChatServices.ChatContextService
 {
     public class ChatContextMenuService : IDisposable
     {

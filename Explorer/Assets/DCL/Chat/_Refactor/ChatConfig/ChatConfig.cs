@@ -3,7 +3,7 @@ using DCL.UI.Communities;
 using DG.Tweening;
 using UnityEngine;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatConfig
 {
     //[CreateAssetMenu(fileName = "ChatConfig", menuName = "DCL/Chat/ChatConfig")]
     public class ChatConfig : ScriptableObject

@@ -1,10 +1,9 @@
-﻿using DCL.Chat.ChatUseCases;
+﻿using DCL.Chat.ChatCommands;
 using DCL.Emoji;
 using DCL.UI.Profiles.Helpers;
-using System.Collections.Generic;
 using Utility;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatInput
 {
     public readonly struct ChatInputStateContext
     {

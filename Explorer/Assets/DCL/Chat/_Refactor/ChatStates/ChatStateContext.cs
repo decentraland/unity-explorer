@@ -1,7 +1,6 @@
-﻿using DCL.Chat.ChatMediator;
-using DCL.Chat.ChatServices;
+﻿using DCL.Chat.ChatServices;
 
-namespace DCL.Chat._Refactor.ChatStates
+namespace DCL.Chat.ChatStates
 {
     public readonly struct ChatStateContext
     {

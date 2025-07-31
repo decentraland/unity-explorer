@@ -1,12 +1,10 @@
-﻿using System.Threading;
-using Cysharp.Threading.Tasks;
-using DCL.Chat.EventBus;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-
+using System.Threading;
 using Utility;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class GetUserChatStatusCommand
     {

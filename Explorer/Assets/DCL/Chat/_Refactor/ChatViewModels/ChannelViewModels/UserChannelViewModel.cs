@@ -1,9 +1,8 @@
 ﻿using DCL.Chat.History;
 using DCL.UI.ProfileElements;
 using DCL.Utilities;
-using UnityEngine;
 
-namespace DCL.Chat.ChatViewModels.ChannelViewModels
+namespace DCL.Chat.ChatViewModels
 {
     public class UserChannelViewModel : BaseChannelViewModel
     {

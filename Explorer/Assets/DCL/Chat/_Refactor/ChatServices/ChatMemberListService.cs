@@ -1,25 +1,23 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Profiles;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using DCL.Diagnostics;
-using DCL.Friends;
-using DCL.Utilities;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Diagnostics;
+using DCL.Friends;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Profiles;
 using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using LiveKit.Rooms.Participants;
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using Utility;
 using Utility.Multithreading;
 using Utility.Types;
 
-namespace DCL.Chat.Services
+namespace DCL.Chat.ChatServices
 {
     /// <summary>
     /// Manages and provides data about members in the current chat channel. This service has two primary functions:

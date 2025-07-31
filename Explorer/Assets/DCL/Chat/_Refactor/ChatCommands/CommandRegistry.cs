@@ -1,9 +1,8 @@
-﻿using System;
-using DCL.Audio;
-using DCL.Chat.ChatUseCases.DCL.Chat.ChatUseCases;
+﻿using DCL.Audio;
+using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.Services;
 using DCL.Communities;
 using DCL.Friends;
 using DCL.Settings.Settings;
@@ -11,10 +10,10 @@ using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
-
+using System;
 using Utility;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class CommandRegistry : IDisposable
     {
@@ -37,7 +36,7 @@ namespace DCL.Chat.ChatUseCases
         public GetUserChatStatusCommand GetUserChatStatusCommand { get; }
 
         public CommandRegistry(
-            ChatConfig chatConfig,
+            ChatConfig.ChatConfig chatConfig,
             ChatSettingsAsset chatSettings,
             IEventBus eventBus,
             IChatMessagesBus chatMessageBus,

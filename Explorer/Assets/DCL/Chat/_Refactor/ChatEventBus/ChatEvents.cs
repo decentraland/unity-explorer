@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using DCL.Chat.ChatViewModels;
-using DCL.Chat.ChatViewModels.ChannelViewModels;
+﻿using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
+using System.Collections.Generic;
 
-namespace DCL.Chat.EventBus
+namespace DCL.Chat
 {
     public class ChatEvents
     {

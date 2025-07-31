@@ -1,263 +1,251 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
-using DCL.Chat.ChatUseCases;
-using DCL.Chat.ChatViewModels.ChannelViewModels;
+using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatServices;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.Services;
-using DCL.Communities;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
-
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using Utility;
 
-public class ChatChannelsPresenter : IDisposable
+namespace DCL.Chat
 {
-    private readonly ChatChannelsView view;
-    private readonly IEventBus eventBus;
-    private readonly IChatEventBus chatEventBus;
-    private readonly IChatMessagesBus chatMessageBus;
-    private readonly IChatUserStateEventBus chatUserStateEventBus;
-    private readonly IChatHistory chatHistory;
-    private readonly ICurrentChannelService currentChannelService;
-    private readonly SelectChannelCommand selectChannelCommand;
-    private readonly CloseChannelCommand closeChannelCommand;
-    private readonly OpenConversationCommand openConversationCommand;
-    private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
-    private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new();
-
-    private bool isInitialized;
-
-    private CancellationTokenSource lifeCts;
-    private EventSubscriptionScope scope = new();
-
-    public ChatChannelsPresenter(ChatChannelsView view,
-        IEventBus eventBus,
-        IChatMessagesBus chatMessageBus,
-        IChatEventBus chatEventBus,
-        IChatUserStateEventBus chatUserStateEventBus,
-        IChatHistory chatHistory,
-        ICurrentChannelService currentChannelService,
-        ProfileRepositoryWrapper profileRepositoryWrapper,
-        SelectChannelCommand selectChannelCommand,
-        CloseChannelCommand closeChannelCommand,
-        OpenConversationCommand openConversationCommand,
-        CreateChannelViewModelCommand createChannelViewModelCommand)
+    public class ChatChannelsPresenter : IDisposable
     {
-        this.view = view;
-        this.view.Initialize(profileRepositoryWrapper);
+        private readonly ChatChannelsView view;
+        private readonly IEventBus eventBus;
+        private readonly IChatEventBus chatEventBus;
+        private readonly IChatMessagesBus chatMessageBus;
+        private readonly IChatUserStateEventBus chatUserStateEventBus;
+        private readonly IChatHistory chatHistory;
+        private readonly ICurrentChannelService currentChannelService;
+        private readonly SelectChannelCommand selectChannelCommand;
+        private readonly CloseChannelCommand closeChannelCommand;
+        private readonly OpenConversationCommand openConversationCommand;
+        private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
+        private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new ();
 
-        this.eventBus = eventBus;
-        this.chatMessageBus = chatMessageBus;
-        this.chatEventBus = chatEventBus;
-        this.chatHistory = chatHistory;
-        this.chatUserStateEventBus = chatUserStateEventBus;
-        this.currentChannelService = currentChannelService;
-        this.selectChannelCommand = selectChannelCommand;
-        this.closeChannelCommand = closeChannelCommand;
-        this.openConversationCommand = openConversationCommand;
-        this.createChannelViewModelCommand = createChannelViewModelCommand;
+        private bool isInitialized;
 
-        lifeCts = new CancellationTokenSource();
+        private CancellationTokenSource lifeCts;
+        private readonly EventSubscriptionScope scope = new ();
 
-        view.ConversationSelected += OnViewConversationSelected;
-        view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
-
-        this.chatHistory.ChannelAdded += OnRuntimeChannelAdded;
-        this.chatHistory.ChannelRemoved += OnChannelRemoved;
-        this.chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
-        this.chatHistory.MessageAdded += OnMessageAdded;
-        this.chatEventBus.OpenPrivateConversationRequested += OnOpenUserConversation;
-        this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
-        this.chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
-        
-        scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
-        scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
-        scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
-        scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
-        scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
-    }
-
-    private async void OnLiveUserConnectionStateChange(string userId, bool isConnected)
-    {
-        await UniTask.SwitchToMainThread();
-
-        var channelId = new ChatChannel.ChannelId(userId);
-
-        if (viewModels.TryGetValue(channelId, out var baseVm) &&
-            baseVm is UserChannelViewModel userVm)
+        public ChatChannelsPresenter(ChatChannelsView view,
+            IEventBus eventBus,
+            IChatMessagesBus chatMessageBus,
+            IChatEventBus chatEventBus,
+            IChatUserStateEventBus chatUserStateEventBus,
+            IChatHistory chatHistory,
+            ICurrentChannelService currentChannelService,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            SelectChannelCommand selectChannelCommand,
+            CloseChannelCommand closeChannelCommand,
+            OpenConversationCommand openConversationCommand,
+            CreateChannelViewModelCommand createChannelViewModelCommand)
         {
-            if (userVm.IsOnline != isConnected)
+            this.view = view;
+            this.view.Initialize(profileRepositoryWrapper);
+
+            this.eventBus = eventBus;
+            this.chatMessageBus = chatMessageBus;
+            this.chatEventBus = chatEventBus;
+            this.chatHistory = chatHistory;
+            this.chatUserStateEventBus = chatUserStateEventBus;
+            this.currentChannelService = currentChannelService;
+            this.selectChannelCommand = selectChannelCommand;
+            this.closeChannelCommand = closeChannelCommand;
+            this.openConversationCommand = openConversationCommand;
+            this.createChannelViewModelCommand = createChannelViewModelCommand;
+
+            lifeCts = new CancellationTokenSource();
+
+            view.ConversationSelected += OnViewConversationSelected;
+            view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
+
+            this.chatHistory.ChannelAdded += OnRuntimeChannelAdded;
+            this.chatHistory.ChannelRemoved += OnChannelRemoved;
+            this.chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
+            this.chatHistory.MessageAdded += OnMessageAdded;
+            this.chatEventBus.OpenPrivateConversationRequested += OnOpenUserConversation;
+            this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
+            this.chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
+
+            scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
+        }
+
+        private async void OnLiveUserConnectionStateChange(string userId, bool isConnected)
+        {
+            await UniTask.SwitchToMainThread();
+
+            var channelId = new ChatChannel.ChannelId(userId);
+
+            if (viewModels.TryGetValue(channelId, out BaseChannelViewModel? baseVm) &&
+                baseVm is UserChannelViewModel userVm)
             {
-                userVm.IsOnline = isConnected;
-                view.UpdateConversation(userVm);
+                if (userVm.IsOnline != isConnected)
+                {
+                    userVm.IsOnline = isConnected;
+                    view.UpdateConversation(userVm);
+                }
             }
         }
-    }
 
-    private void OnOpenUserConversation(string userId)
-    {
-        openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.USER);
-    }
-
-    private void OnOpenCommunityConversation(string userId)
-    {
-        openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.COMMUNITY);
-    }
-
-
-    private void OnChannelUpdated(ChatEvents.ChannelUpdatedEvent evt)
-    {
-        if (viewModels.TryGetValue(evt.ViewModel.Id, out _))
+        private void OnOpenUserConversation(string userId)
         {
-            viewModels[evt.ViewModel.Id] = evt.ViewModel;
-            view.UpdateConversation(evt.ViewModel);
+            openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.USER);
         }
-    }
 
-    private void OnInitialChannelsLoaded(ChatEvents.InitialChannelsLoadedEvent evt)
-    {
-        if (isInitialized) return;
-
-        lifeCts.Cancel();
-        lifeCts.Dispose();
-        lifeCts = new CancellationTokenSource();
-
-        view.Clear();
-        viewModels.Clear();
-
-        foreach (var channel in evt.Channels)
+        private void OnOpenCommunityConversation(string userId)
         {
+            openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.COMMUNITY);
+        }
+
+        private void OnChannelUpdated(ChatEvents.ChannelUpdatedEvent evt)
+        {
+            if (viewModels.TryGetValue(evt.ViewModel.Id, out _))
+            {
+                viewModels[evt.ViewModel.Id] = evt.ViewModel;
+                view.UpdateConversation(evt.ViewModel);
+            }
+        }
+
+        private void OnInitialChannelsLoaded(ChatEvents.InitialChannelsLoadedEvent evt)
+        {
+            if (isInitialized) return;
+
+            lifeCts.Cancel();
+            lifeCts.Dispose();
+            lifeCts = new CancellationTokenSource();
+
+            view.Clear();
+            viewModels.Clear();
+
+            foreach (ChatChannel? channel in evt.Channels) { AddChannelToView(channel); }
+
+            isInitialized = true;
+        }
+
+        private void OnRuntimeChannelAdded(ChatChannel channel)
+        {
+            if (!isInitialized) return;
             AddChannelToView(channel);
         }
 
-        isInitialized = true;
-    }
-
-    private void OnRuntimeChannelAdded(ChatChannel channel)
-    {
-        if (!isInitialized) return;
-        AddChannelToView(channel);
-    }
-
-    private void OnChannelRemoved(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType)
-    {
-        if (!isInitialized) return;
-        viewModels.Remove(removedChannel);
-        view.RemoveConversation(removedChannel);
-
-        if (currentChannelService.CurrentChannelId.Equals(removedChannel))
+        private void OnChannelRemoved(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType)
         {
-            selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID);
-        }
-    }
+            if (!isInitialized) return;
+            viewModels.Remove(removedChannel);
+            view.RemoveConversation(removedChannel);
 
-    private void RemoveChannelFromView(ChatChannel.ChannelId removedChannel)
-    {
-        throw new NotImplementedException();
-    }
-
-    private void OnChannelAdded(ChatEvents.ChannelAddedEvent evt)
-    {
-        AddChannelToView(evt.Channel);
-    }
-
-    private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
-    {
-        view.SelectConversation(evt.Channel.Id);
-    }
-
-    private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
-    {
-        selectChannelCommand.Execute(channelId);
-    }
-
-    private void OnViewConversationRemovalRequested(ChatChannel.ChannelId channelId)
-    {
-        closeChannelCommand.Execute(channelId);
-    }
-
-    private void OnChannelLeft(ChatEvents.ChannelLeftEvent evt)
-    {
-        viewModels.Remove(evt.Channel.Id);
-        view.RemoveConversation(evt.Channel);
-    }
-
-    private void AddChannelToView(ChatChannel channel)
-    {
-        var viewModel = createChannelViewModelCommand
-            .CreateViewModelAndFetch(channel, lifeCts.Token);
-        viewModels[viewModel.Id] = viewModel;
-        view.AddConversation(viewModel);
-
-        if (isInitialized)
-            view.MoveChannelToTop(channel.Id);
-    }
-
-    private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
-    {
-        if (destinationChannel.Id.Equals(currentChannelService.CurrentChannelId))
-            return;
-
-        if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
-        {
-            UpdateUnreadCount(channel);
+            if (currentChannelService.CurrentChannelId.Equals(removedChannel)) { selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID); }
         }
 
-        if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
+        private void RemoveChannelFromView(ChatChannel.ChannelId removedChannel)
         {
-            view.MoveChannelToTop(destinationChannel.Id);
+            throw new NotImplementedException();
         }
-    }
 
-    private void OnReadMessagesChanged(ChatChannel changedChannel)
-    {
-        // TODO: check if we are at the bottom of the channel
-        // TODO: check if the channel is the current one?
-        UpdateUnreadCount(changedChannel);
-    }
+        private void OnChannelAdded(ChatEvents.ChannelAddedEvent evt)
+        {
+            AddChannelToView(evt.Channel);
+        }
 
-    private void UpdateUnreadCount(ChatChannel channel)
-    {
-        int unreadCount = channel.Messages.Count - channel.ReadMessages;
-        view.SetUnreadMessages(channel.Id, unreadCount);
-    }
+        private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
+        {
+            view.SelectConversation(evt.Channel.Id);
+        }
 
-    public void Show()
-    {
-        view.Show();
-    }
+        private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
+        {
+            selectChannelCommand.Execute(channelId);
+        }
 
-    public void Hide()
-    {
-        view.Hide();
-    }
+        private void OnViewConversationRemovalRequested(ChatChannel.ChannelId channelId)
+        {
+            closeChannelCommand.Execute(channelId);
+        }
 
-    public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
-    {
-        view.SetFocusedState(isFocused, animate, duration, easing);
-    }
+        private void OnChannelLeft(ChatEvents.ChannelLeftEvent evt)
+        {
+            viewModels.Remove(evt.Channel.Id);
+            view.RemoveConversation(evt.Channel);
+        }
 
-    public void Dispose()
-    {
-        lifeCts.SafeCancelAndDispose();
+        private void AddChannelToView(ChatChannel channel)
+        {
+            BaseChannelViewModel viewModel = createChannelViewModelCommand
+               .CreateViewModelAndFetch(channel, lifeCts.Token);
 
-        view.ConversationSelected -= OnViewConversationSelected;
-        view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
+            viewModels[viewModel.Id] = viewModel;
+            view.AddConversation(viewModel);
 
-        chatHistory.ChannelAdded -= OnRuntimeChannelAdded;
-        chatHistory.ChannelRemoved -= OnChannelRemoved;
-        chatHistory.MessageAdded -= OnMessageAdded;
-        chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
+            if (isInitialized)
+                view.MoveChannelToTop(channel.Id);
+        }
 
-        chatEventBus.OpenPrivateConversationRequested -= OnOpenUserConversation;
-        chatEventBus.OpenCommunityConversationRequested -= OnOpenCommunityConversation;
-        chatUserStateEventBus.UserConnectionStateChanged -= OnLiveUserConnectionStateChange;
-        
-        scope.Dispose();
+        private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
+        {
+            if (destinationChannel.Id.Equals(currentChannelService.CurrentChannelId))
+                return;
+
+            if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out ChatChannel? channel)) { UpdateUnreadCount(channel); }
+
+            if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY) { view.MoveChannelToTop(destinationChannel.Id); }
+        }
+
+        private void OnReadMessagesChanged(ChatChannel changedChannel)
+        {
+            // TODO: check if we are at the bottom of the channel
+            // TODO: check if the channel is the current one?
+            UpdateUnreadCount(changedChannel);
+        }
+
+        private void UpdateUnreadCount(ChatChannel channel)
+        {
+            int unreadCount = channel.Messages.Count - channel.ReadMessages;
+            view.SetUnreadMessages(channel.Id, unreadCount);
+        }
+
+        public void Show()
+        {
+            view.Show();
+        }
+
+        public void Hide()
+        {
+            view.Hide();
+        }
+
+        public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
+        {
+            view.SetFocusedState(isFocused, animate, duration, easing);
+        }
+
+        public void Dispose()
+        {
+            lifeCts.SafeCancelAndDispose();
+
+            view.ConversationSelected -= OnViewConversationSelected;
+            view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
+
+            chatHistory.ChannelAdded -= OnRuntimeChannelAdded;
+            chatHistory.ChannelRemoved -= OnChannelRemoved;
+            chatHistory.MessageAdded -= OnMessageAdded;
+            chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
+
+            chatEventBus.OpenPrivateConversationRequested -= OnOpenUserConversation;
+            chatEventBus.OpenCommunityConversationRequested -= OnOpenCommunityConversation;
+            chatUserStateEventBus.UserConnectionStateChanged -= OnLiveUserConnectionStateChange;
+
+            scope.Dispose();
+        }
     }
 }

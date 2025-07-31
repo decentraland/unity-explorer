@@ -8,7 +8,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatInput
 {
     public class ChatInputView : MonoBehaviour
     {

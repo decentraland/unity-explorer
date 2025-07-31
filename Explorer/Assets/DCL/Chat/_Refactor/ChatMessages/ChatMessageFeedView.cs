@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
@@ -9,11 +6,14 @@ using DCL.UI.Utilities;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
 using SuperScrollView;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatMessages
 {
     public class ChatMessageFeedView : MonoBehaviour, IDisposable
     {

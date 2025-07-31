@@ -1,11 +1,11 @@
-﻿using System;
-using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatUseCases;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatCommands;
 using DCL.Chat.History;
+using System;
 using System.Threading;
 using Utility.Types;
 
-namespace DCL.Chat.Services
+namespace DCL.Chat.ChatServices
 {
     public interface ICurrentChannelService
     {

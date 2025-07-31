@@ -1,19 +1,18 @@
-﻿using System.Collections.Generic;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using DCL.Chat.EventBus;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatServices;
 using DCL.Chat.History;
-using DCL.Chat.Services;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Prefs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using System.Collections.Generic;
+using System.Threading;
 using Utility;
 using Utility.Types;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class InitializeChatSystemCommand
     {

@@ -14,7 +14,6 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
-using DCL.Chat.ChatUseCases;
 using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;

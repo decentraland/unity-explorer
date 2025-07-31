@@ -1,8 +1,7 @@
 ﻿using DCL.Chat.History;
-using DCL.Communities;
 using DCL.Prefs;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     /// <summary>
     ///     Handles the logic for leaving or closing a chat channel.

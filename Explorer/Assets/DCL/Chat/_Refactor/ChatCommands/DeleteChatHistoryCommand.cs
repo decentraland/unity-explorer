@@ -1,9 +1,8 @@
-﻿using DCL.Chat.EventBus;
+﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
-using DCL.Chat.Services;
 using Utility;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class DeleteChatHistoryCommand
     {

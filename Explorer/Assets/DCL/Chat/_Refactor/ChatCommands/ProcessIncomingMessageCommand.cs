@@ -1,4 +1,4 @@
-﻿namespace DCL.Chat.ChatUseCases
+﻿namespace DCL.Chat.ChatCommands
 {
     public class ProcessIncomingMessageCommand
     {

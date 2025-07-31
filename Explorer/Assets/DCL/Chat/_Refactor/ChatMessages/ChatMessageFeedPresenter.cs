@@ -1,10 +1,11 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatServices;
+using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.Services;
 using DCL.Diagnostics;
 using DCL.UI;
 using DCL.Web3;

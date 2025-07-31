@@ -1,8 +1,7 @@
-﻿using DCL.Chat.EventBus;
-using DCL.Chat.Services;
+﻿using DCL.Chat.ChatServices;
 using UnityEngine.Assertions;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatInput
 {
     /// <summary>
     ///     Due to a reason writing to a user (private conversations) is not allowed.
@@ -10,10 +9,10 @@ namespace DCL.Chat
     /// </summary>
     public class BlockedChatInputState : ChatInputState
     {
-        private readonly ChatConfig config;
+        private readonly ChatConfig.ChatConfig config;
         private readonly ICurrentChannelService currentChannelService;
 
-        public BlockedChatInputState(ChatConfig config, ICurrentChannelService currentChannelService)
+        public BlockedChatInputState(ChatConfig.ChatConfig config, ICurrentChannelService currentChannelService)
         {
             this.config = config;
             this.currentChannelService = currentChannelService;

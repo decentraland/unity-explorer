@@ -2,7 +2,7 @@
 using DCL.Profiles;
 using System.Collections.Generic;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class GetParticipantProfilesCommand
     {

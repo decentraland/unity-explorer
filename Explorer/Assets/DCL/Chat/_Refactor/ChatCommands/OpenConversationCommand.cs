@@ -1,9 +1,8 @@
-﻿using DCL.Chat.EventBus;
-using DCL.Chat.History;
-using Utility;
+﻿using DCL.Chat.History;
 using DCL.Prefs;
+using Utility;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     /// <summary>
     ///     Ensures a private conversation exists for a given user ID and then

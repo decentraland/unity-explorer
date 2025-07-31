@@ -1,9 +1,9 @@
 ﻿using DCL.Audio;
+using DCL.Chat.ChatServices;
 using DCL.Chat.MessageBus;
-using DCL.Chat.Services;
 using DCL.Settings.Settings;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public struct SendMessageCommandPayload
     {

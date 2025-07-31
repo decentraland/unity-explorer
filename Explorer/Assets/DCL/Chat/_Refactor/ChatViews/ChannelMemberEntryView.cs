@@ -1,12 +1,12 @@
-﻿using System;
-using DCL.Chat.ChatViewModels;
+﻿using DCL.Chat.ChatViewModels;
 using DCL.UI.ProfileElements;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatViews
 {
     public struct MemberEntryContextMenuRequest
     {

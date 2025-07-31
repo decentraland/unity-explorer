@@ -1,144 +1,143 @@
-﻿using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using DCL.Chat;
-using DCL.Chat.ChatUseCases;
-using DCL.Chat.ChatUseCases.DCL.Chat.ChatUseCases;
-using DCL.Chat.ChatViewModels.ChannelViewModels;
-using DCL.Chat.EventBus;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
-using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
+using System;
+using System.Threading;
 using UnityEngine;
 using Utility;
 
-public class CreateChannelViewModelCommand
+namespace DCL.Chat.ChatCommands
 {
-    private readonly IEventBus eventBus;
-    private readonly ICommunityDataService communityDataService;
-    private readonly ChatConfig chatConfig;
-    private readonly ProfileRepositoryWrapper profileRepository;
-    private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
-    private readonly GetUserChatStatusCommand getUserChatStatusCommand;
-
-    public CreateChannelViewModelCommand(
-        IEventBus eventBus,
-        ICommunityDataService communityDataService,
-        ChatConfig chatConfig,
-        ProfileRepositoryWrapper profileRepository,
-        GetUserChatStatusCommand getUserChatStatusCommand,
-        GetCommunityThumbnailCommand getCommunityThumbnailCommand)
+    public class CreateChannelViewModelCommand
     {
-        this.eventBus = eventBus;
-        this.communityDataService = communityDataService;
-        this.chatConfig = chatConfig;
-        this.profileRepository = profileRepository;
-        this.getUserChatStatusCommand = getUserChatStatusCommand;
-        this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
-    }
+        private readonly IEventBus eventBus;
+        private readonly ICommunityDataService communityDataService;
+        private readonly ChatConfig.ChatConfig chatConfig;
+        private readonly ProfileRepositoryWrapper profileRepository;
+        private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+        private readonly GetUserChatStatusCommand getUserChatStatusCommand;
 
-    public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
-    {
-        BaseChannelViewModel viewModel = channel.ChannelType switch
+        public CreateChannelViewModelCommand(
+            IEventBus eventBus,
+            ICommunityDataService communityDataService,
+            ChatConfig.ChatConfig chatConfig,
+            ProfileRepositoryWrapper profileRepository,
+            GetUserChatStatusCommand getUserChatStatusCommand,
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
         {
-            ChatChannel.ChatChannelType.NEARBY =>
-                new NearbyChannelViewModel(channel.Id, chatConfig.NearbyConversationName, chatConfig.NearbyConversationIcon),
-
-            ChatChannel.ChatChannelType.USER =>
-                CreateUserChannelViewModel(channel, ct),
-
-            ChatChannel.ChatChannelType.COMMUNITY =>
-                CreateCommunityChannelViewModel(channel, ct),
-
-            _ => throw new ArgumentOutOfRangeException(nameof(channel.ChannelType), "Unsupported channel type")
-        };
-
-        viewModel.UnreadMessagesCount = channel.Messages.Count - channel.ReadMessages;
-        return viewModel;
-    }
-
-    private UserChannelViewModel CreateUserChannelViewModel(ChatChannel channel, CancellationToken ct)
-    {
-        var viewModel = new UserChannelViewModel(channel.Id);
-        FetchProfileAndUpdateAsync(viewModel, ct).Forget();
-        FetchInitialStatusAndUpdateAsync(viewModel, ct).Forget();
-        return viewModel;
-    }
-
-    private CommunityChannelViewModel CreateCommunityChannelViewModel(ChatChannel channel, CancellationToken ct)
-    {
-        var viewModel = new CommunityChannelViewModel(channel.Id);
-        if (communityDataService.TryGetCommunity(channel.Id, out var communityData))
-        {
-            viewModel.DisplayName = communityData.name;
-            viewModel.ImageUrl = communityData.thumbnails?.raw;
-
-            FetchCommunityThumbnailAndUpdateAsync(viewModel, ct).Forget();
+            this.eventBus = eventBus;
+            this.communityDataService = communityDataService;
+            this.chatConfig = chatConfig;
+            this.profileRepository = profileRepository;
+            this.getUserChatStatusCommand = getUserChatStatusCommand;
+            this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
         }
 
-        return viewModel;
-    }
-
-    private async UniTaskVoid FetchCommunityThumbnailAndUpdateAsync(CommunityChannelViewModel viewModel, CancellationToken ct)
-    {
-        var thumbnail = await getCommunityThumbnailCommand
-            .ExecuteAsync(viewModel.ImageUrl, ct);
-
-        if (ct.IsCancellationRequested) return;
-
-        viewModel.Thumbnail = thumbnail;
-
-        eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+        public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
         {
-            ViewModel = viewModel
-        });
-    }
+            BaseChannelViewModel viewModel = channel.ChannelType switch
+                                             {
+                                                 ChatChannel.ChatChannelType.NEARBY =>
+                                                     new NearbyChannelViewModel(channel.Id, chatConfig.NearbyConversationName, chatConfig.NearbyConversationIcon),
 
-    private async UniTaskVoid FetchProfileAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
-    {
-        var profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct);
+                                                 ChatChannel.ChatChannelType.USER =>
+                                                     CreateUserChannelViewModel(channel, ct),
 
-        if (ct.IsCancellationRequested) return;
+                                                 ChatChannel.ChatChannelType.COMMUNITY =>
+                                                     CreateCommunityChannelViewModel(channel, ct),
 
-        if (profile != null)
-        {
-            viewModel.DisplayName = profile.ValidatedName;
-            viewModel.HasClaimedName = profile.HasClaimedName;
+                                                 _ => throw new ArgumentOutOfRangeException(nameof(channel.ChannelType), "Unsupported channel type"),
+                                             };
 
-            viewModel.ProfilePicture.UpdateValue(viewModel.ProfilePicture.Value.SetColor(profile.UserNameColor));
-
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
-        }
-        else
-        {
-            string userId = viewModel.Id.Id;
-            viewModel.DisplayName = $"{userId.Substring(0, 6)}...{userId.Substring(userId.Length - 4)}";
-            viewModel.HasClaimedName = false;
-
-            viewModel.ProfilePicture.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true), ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
+            viewModel.UnreadMessagesCount = channel.Messages.Count - channel.ReadMessages;
+            return viewModel;
         }
 
-        eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+        private UserChannelViewModel CreateUserChannelViewModel(ChatChannel channel, CancellationToken ct)
         {
-            ViewModel = viewModel
-        });
-    }
+            var viewModel = new UserChannelViewModel(channel.Id);
+            FetchProfileAndUpdateAsync(viewModel, ct).Forget();
+            FetchInitialStatusAndUpdateAsync(viewModel, ct).Forget();
+            return viewModel;
+        }
 
-    private async UniTaskVoid FetchInitialStatusAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
-    {
-        var status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
-
-        if (ct.IsCancellationRequested) return;
-
-        viewModel.IsOnline = status == ChatUserStateUpdater.ChatUserState.CONNECTED;
-
-        eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+        private CommunityChannelViewModel CreateCommunityChannelViewModel(ChatChannel channel, CancellationToken ct)
         {
-            ViewModel = viewModel
-        });
+            var viewModel = new CommunityChannelViewModel(channel.Id);
+
+            if (communityDataService.TryGetCommunity(channel.Id, out GetUserCommunitiesData.CommunityData communityData))
+            {
+                viewModel.DisplayName = communityData.name;
+                viewModel.ImageUrl = communityData.thumbnails?.raw;
+
+                FetchCommunityThumbnailAndUpdateAsync(viewModel, ct).Forget();
+            }
+
+            return viewModel;
+        }
+
+        private async UniTaskVoid FetchCommunityThumbnailAndUpdateAsync(CommunityChannelViewModel viewModel, CancellationToken ct)
+        {
+            Sprite? thumbnail = await getCommunityThumbnailCommand
+               .ExecuteAsync(viewModel.ImageUrl, ct);
+
+            if (ct.IsCancellationRequested) return;
+
+            viewModel.Thumbnail = thumbnail;
+
+            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+            {
+                ViewModel = viewModel,
+            });
+        }
+
+        private async UniTaskVoid FetchProfileAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
+        {
+            Profile? profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct);
+
+            if (ct.IsCancellationRequested) return;
+
+            if (profile != null)
+            {
+                viewModel.DisplayName = profile.ValidatedName;
+                viewModel.HasClaimedName = profile.HasClaimedName;
+
+                viewModel.ProfilePicture.UpdateValue(viewModel.ProfilePicture.Value.SetColor(profile.UserNameColor));
+
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+            }
+            else
+            {
+                string userId = viewModel.Id.Id;
+                viewModel.DisplayName = $"{userId.Substring(0, 6)}...{userId.Substring(userId.Length - 4)}";
+                viewModel.HasClaimedName = false;
+
+                viewModel.ProfilePicture.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true), ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
+            }
+
+            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+            {
+                ViewModel = viewModel,
+            });
+        }
+
+        private async UniTaskVoid FetchInitialStatusAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
+        {
+            ChatUserStateUpdater.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
+
+            if (ct.IsCancellationRequested) return;
+
+            viewModel.IsOnline = status == ChatUserStateUpdater.ChatUserState.CONNECTED;
+
+            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+            {
+                ViewModel = viewModel,
+            });
+        }
     }
 }

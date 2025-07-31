@@ -1,7 +1,6 @@
-using DCL.Chat._Refactor.ChatStates;
 using MVC;
 
-namespace DCL.Chat
+namespace DCL.Chat.ChatStates
 {
     public class ChatState : MVCState<ChatState, ChatStateContext>
     {

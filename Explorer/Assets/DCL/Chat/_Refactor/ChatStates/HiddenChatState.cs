@@ -1,4 +1,4 @@
-﻿namespace DCL.Chat._Refactor.ChatStates
+﻿namespace DCL.Chat.ChatStates
 {
     public class HiddenChatState : ChatState
     {

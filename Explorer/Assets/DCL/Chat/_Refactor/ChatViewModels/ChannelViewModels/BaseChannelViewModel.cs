@@ -1,6 +1,6 @@
 ﻿using DCL.Chat.History;
 
-namespace DCL.Chat.ChatViewModels.ChannelViewModels
+namespace DCL.Chat.ChatViewModels
 {
     public abstract class BaseChannelViewModel
     {

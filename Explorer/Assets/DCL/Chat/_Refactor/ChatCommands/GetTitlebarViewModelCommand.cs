@@ -1,20 +1,17 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatUseCases.DCL.Chat.ChatUseCases;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
-using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using DCL.Web3;
+using System;
+using System.Threading;
 using UnityEngine;
 using Utility;
 using Color = UnityEngine.Color;
 
-namespace DCL.Chat.ChatUseCases
+namespace DCL.Chat.ChatCommands
 {
     public class GetTitlebarViewModelCommand
     {
@@ -22,13 +19,13 @@ namespace DCL.Chat.ChatUseCases
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ICommunityDataService communityDataService;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
-        private readonly ChatConfig chatConfig;
+        private readonly ChatConfig.ChatConfig chatConfig;
 
         public GetTitlebarViewModelCommand(
             IEventBus eventBus,
             ICommunityDataService communityDataService,
             ProfileRepositoryWrapper profileRepository,
-            ChatConfig chatConfig,
+            ChatConfig.ChatConfig chatConfig,
             GetCommunityThumbnailCommand getCommunityThumbnailCommand)
         {
             this.eventBus = eventBus;
