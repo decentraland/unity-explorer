@@ -69,7 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
-
+        private readonly IRealmNavigator realmNavigator;
         private ChatController chatController;
 
         public ChatPlugin(
@@ -101,8 +101,8 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            bool isCallEnabled
-            )
+            bool isCallEnabled,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -134,6 +134,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
+            this.realmNavigator = realmNavigator;
         }
 
         public void Dispose()
@@ -187,7 +188,8 @@ namespace DCL.PluginSystem.Global
                 warningNotificationView,
                 communitiesEventBus,
                 voiceChatOrchestrator,
-                isCallEnabled
+                isCallEnabled,
+                realmNavigator
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

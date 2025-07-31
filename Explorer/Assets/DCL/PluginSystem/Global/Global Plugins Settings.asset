@@ -394,6 +394,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <LightSourceSettings>k__BackingField:
+          m_AssetGUID: 52c856180dc5d6447b902f06d38f4161
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
@@ -514,12 +520,6 @@ MonoBehaviour:
       data:
         <VoiceChatConfigurations>k__BackingField:
           m_AssetGUID: dc4b9a0eb614c2c45a09fa14de92fcd8
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <PlayerEntryView>k__BackingField:
-          m_AssetGUID: 1f35770447348416ab31f59bfd77ac2b
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -897,6 +897,8 @@ MonoBehaviour:
         <ShareToXMessage>k__BackingField: Check out what I'm doing in @decentraland
           right now and join me!
         <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
+        <PhotoSuccessfullySetAsPublicMessage>k__BackingField: Photo successfully
+          updated
         <LinkCopiedMessage>k__BackingField: Link copied!
         <CategoryIconsMapping>k__BackingField:
           m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
