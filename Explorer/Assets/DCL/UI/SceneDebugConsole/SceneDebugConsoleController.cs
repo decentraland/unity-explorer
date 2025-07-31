@@ -1,152 +1,144 @@
-using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.UI.SceneDebugConsole.LogHistory;
-using DCL.UI.SceneDebugConsole.MessageBus;
-using System;
+using DCL.UI.SceneDebugConsole.UI.Elements;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 namespace DCL.UI.SceneDebugConsole
 {
-    public class SceneDebugConsoleController : IDisposable
+    [RequireComponent(typeof(UIDocument))]
+    public class SceneDebugConsoleController : MonoBehaviour
     {
-        private readonly SceneDebugConsoleLogEntryBus logEntriesBus;
-        private readonly SceneDebugConsoleLogHistory logsHistory;
-        private readonly IInputBlock inputBlock;
+        private const string USS_COPY_TOAST_SHOW = "copy-success-toast--show";
+        private const string USS_CONSOLE_HIDDEN = "scene-debug-console--hidden";
+        private const long TOAST_DURATION = 1500L;
 
-        private UIDocument uiDocument;
-        private VisualElement uiDocumentRoot;
-        private ListView consoleListView;
-        private ScrollView scrollView;
-        private Button clearButton;
-        private Button copyAllButton;
+        [SerializeField] private int maxLogMessages = 1500; // TODO
+        [SerializeField] private bool showTimestamps = true; // TODO
+
+        private readonly SceneDebugConsoleLogHistory logsHistory = new ();
+
+        private IInputBlock inputBlock;
+
+        private VisualElement consoleWindow;
         private Button pauseButton;
-        private bool isInputSelected;
+        private ListView consoleListView;
+        private TextField searchField;
+        private Toggle showLogsToggle;
+        private Toggle showErrorsToggle;
+        private VisualElement copyToast;
+        private IVisualElementScheduledItem toastScheduledItem;
 
-        public SceneDebugConsoleController(SceneDebugConsoleLogEntryBus logEntriesBus, IInputBlock inputBlock)
+        private bool isHidden = true;
+        private bool shownOnce;
+        private bool shouldRefresh;
+
+        public void SetInputBlock(IInputBlock block)
         {
-            this.inputBlock = inputBlock;
-            this.logEntriesBus = logEntriesBus;
-            this.logsHistory = new SceneDebugConsoleLogHistory();
-
-            InstantiateRootGO();
+            // InputBlock should really be a singleton :(
+            this.inputBlock = block;
         }
 
-        // Instantiate root UI Document GameObject
-        private void InstantiateRootGO()
+        private void Start()
         {
-            logEntriesBus.MessageAdded += OnEntryAdded;
+            logsHistory.LogsUpdated += OnLogsUpdated;
+        }
+
+        private void OnEnable()
+        {
+            var root = GetComponent<UIDocument>().rootVisualElement;
+
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
 
-            uiDocument = Object.Instantiate(Resources.Load<GameObject>("SceneDebugConsoleRootCanvas")).GetComponent<UIDocument>();
-            uiDocumentRoot = uiDocument.rootVisualElement;
-            uiDocumentRoot.visible = false;
+            // Log callbacks
+            logsHistory.LogsUpdated += OnLogsUpdated;
 
-            var textField = uiDocumentRoot.Q<TextField>(name: "FilterTextField");
-            clearButton = uiDocumentRoot.Q<Button>(name: "ClearButton");
-            copyAllButton = uiDocumentRoot.Q<Button>(name: "CopyAllButton");
-            pauseButton = uiDocumentRoot.Q<Button>(name: "PauseButton");
-            var errorEntriesTypeToggle = uiDocumentRoot.Q<Toggle>(name: "ErrorsToggle");
-            var logEntriesTypeToggle = uiDocumentRoot.Q<Toggle>(name: "LogsToggle");
+            consoleWindow = root.Q("ConsoleWindow");
+            consoleWindow.EnableInClassList(USS_CONSOLE_HIDDEN, isHidden);
+            consoleWindow.style.display = isHidden ? DisplayStyle.None : DisplayStyle.Flex;
 
-            // ListView
-            var logEntryUXML = Resources.Load<VisualTreeAsset>("SceneDebugConsoleLogEntry");
-            consoleListView = uiDocumentRoot.Q<ListView>();
-            consoleListView.makeItem = () => logEntryUXML.Instantiate();
+            var clearButton = root.Q<Button>("ClearButton");
+            var copyAllButton = root.Q<Button>("CopyAllButton");
+            pauseButton = root.Q<Button>("PauseButton");
+            consoleListView = root.Q<ListView>("ConsoleList");
+            searchField = root.Q<TextField>("FilterTextField");
+            showLogsToggle = root.Q<Toggle>("LogsToggle");
+            showErrorsToggle = root.Q<Toggle>("ErrorsToggle");
+            copyToast = root.Q("CopyToast");
+            toastScheduledItem = copyToast.schedule.Execute(() => copyToast.RemoveFromClassList(USS_COPY_TOAST_SHOW));
+
+            // Setup ListView
+            consoleListView.itemsSource = logsHistory.FilteredLogMessages;
+            consoleListView.makeItem = () => new ConsoleEntryElement();
+
             consoleListView.bindItem = (item, index) =>
             {
+                var ve = (ConsoleEntryElement)item;
                 var logEntry = logsHistory.FilteredLogMessages[index];
 
-                bool isError = logEntry.Type == LogMessageType.Error;
-                item.EnableInClassList("console__log-entry--error", isError);
-                item.EnableInClassList("console__log-entry--log", !isError);
-                item.RegisterCallback<ClickEvent>((evt) =>
-                {
-                    // Copy to clipboard
-                    GUIUtility.systemCopyBuffer = logEntry.Message;
-                });
-
-                item.Q<Label>().text = logEntry.Message;
+                ve.SetData(logEntry.Type, logEntry.Message);
             };
 
-            // Set the actual item's source list/array
-            consoleListView.itemsSource = logsHistory.FilteredLogMessages;
+            consoleListView.selectedIndicesChanged += OnConsoleSelectionChanged;
 
-            consoleListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
+            // Buttons / Toggles
+            clearButton.clicked += OnClearClicked;
+            pauseButton.clicked += OnPauseClicked;
+            copyAllButton.clicked += OnCopyAllClicked;
+            searchField.RegisterValueChangedCallback(_ => RefreshFilters());
+            showLogsToggle.RegisterValueChangedCallback(_ => RefreshFilters());
+            showErrorsToggle.RegisterValueChangedCallback(_ => RefreshFilters());
 
-            scrollView = consoleListView.Q<ScrollView>();
+            // Input blocking
+            searchField.RegisterCallback<FocusInEvent, SceneDebugConsoleController>(static (_, c) => c.inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER), this);
+            searchField.RegisterCallback<FocusOutEvent, SceneDebugConsoleController>(static (_, c) => c.inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER), this);
 
-            // Clear button
-            clearButton.clicked += ClearLogEntries;
-
-            // CopyAll button
-            // TODO: Remove check when button is in place
-            if (copyAllButton != null)
-                copyAllButton.clicked += CopyAllEntriesToClipboard;
-
-            // Pause button
-            pauseButton.clicked += ToggleConsolePause;
-
-            // Filter text field
-            textField.RegisterCallback<ChangeEvent<string>>((evt) =>
-            {
-                ApplyFilter(evt.newValue, !errorEntriesTypeToggle.value, !logEntriesTypeToggle.value);
-            });
-
-            textField.RegisterCallback<FocusInEvent>((evt) => inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER));
-            textField.RegisterCallback<FocusOutEvent>((evt) => inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER));
-
-            // React to submission (Enter key press)
-            // textField.RegisterCallback<NavigationSubmitEvent>((evt) =>
-            // {
-            //     Debug.Log($"PRAVS - Text submitted: {textField.value}");
-            //     // ProcessUserInput(textField.value);
-            //     ApplyFilter(textField.value);
-            //
-            //     // Stop event propagation to prevent other handlers
-            //     evt.StopPropagation();
-            // }, TrickleDown.TrickleDown);
-
-            // LOGS / ERRORS Toggle
-            errorEntriesTypeToggle.RegisterCallback<ChangeEvent<bool>>((evt) =>
-            {
-                ApplyFilter(textField.text, !evt.newValue, !logEntriesTypeToggle.value);
-            });
-            logEntriesTypeToggle.RegisterCallback<ChangeEvent<bool>>((evt) =>
-            {
-                ApplyFilter(textField.text, !errorEntriesTypeToggle.value, !evt.newValue);
-            });
+            if (!isHidden) shouldRefresh = true;
         }
 
-        public void Dispose()
+        public void OnDisable()
         {
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
-            logEntriesBus.MessageAdded -= OnEntryAdded;
-            pauseButton.clicked -= ToggleConsolePause;
-            clearButton.clicked -= ClearLogEntries;
-
-            // TODO: Remove check when button is in place
-            if (copyAllButton != null)
-                copyAllButton.clicked -= CopyAllEntriesToClipboard;
-
-            // DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
         }
 
-        private void ClearLogEntries()
+        public void Update()
+        {
+            if (!shouldRefresh) return;
+            shouldRefresh = false;
+
+            consoleListView.RefreshItems();
+            showLogsToggle.text = $"LOGS ({logsHistory.LogEntryCount})";
+            showErrorsToggle.text = $"ERRORS ({logsHistory.ErrorEntryCount})";
+        }
+
+        public void PushLog(SceneDebugConsoleLogEntry logEntry)
+        {
+            logsHistory.AddLogMessage(logEntry);
+        }
+
+        private void RefreshFilters()
+        {
+            logsHistory.ApplyFilter(searchField.value, showErrorsToggle.value, showLogsToggle.value);
+        }
+
+        private void OnClearClicked()
         {
             logsHistory.ClearLogMessages();
-            RefreshListViewAsync(IsScrollAtBottom()).Forget();
         }
 
-        private void ToggleConsolePause()
+        private void OnPauseClicked()
         {
             logsHistory.Paused = !logsHistory.Paused;
+
+            // TODO: Set icon to pause / play
+            // pauseButton.iconImage = ?
         }
 
-        private void CopyAllEntriesToClipboard()
+        private void OnCopyAllClicked()
         {
             if (logsHistory.FilteredLogMessages.Count == 0)
                 return;
@@ -154,49 +146,52 @@ namespace DCL.UI.SceneDebugConsole
             var allMessages = new System.Text.StringBuilder();
 
             foreach (var logEntry in logsHistory.FilteredLogMessages)
-            {
-                string prefix = logEntry.Type == LogMessageType.Error ? "[ERROR] " : "[LOG] ";
-                allMessages.AppendLine($"{prefix}{logEntry.Message}");
-            }
+                allMessages.AppendLine(logEntry.ToString());
 
-            GUIUtility.systemCopyBuffer = allMessages.ToString();
+            CopyString(allMessages.ToString());
+        }
+
+        private void OnConsoleSelectionChanged(IEnumerable<int> selection)
+        {
+            if (consoleListView.selectedIndex == -1) return;
+
+            var selectedEntry = logsHistory.FilteredLogMessages[consoleListView.selectedIndex];
+            CopyString(selectedEntry.ToString());
+
+            consoleListView.SetSelectionWithoutNotify(Enumerable.Empty<int>());
+        }
+
+        private void CopyString(string text)
+        {
+            GUIUtility.systemCopyBuffer = text;
+
+            copyToast.AddToClassList(USS_COPY_TOAST_SHOW);
+            toastScheduledItem.ExecuteLater(TOAST_DURATION);
         }
 
         private void OnToggleConsoleShortcutPerformed(InputAction.CallbackContext obj)
         {
-            uiDocumentRoot.visible = !uiDocumentRoot.visible;
+            if (!shownOnce)
+            {
+                // We use this (plus setting display to None in OnEnable) to force UI Toolkit
+                // to redraw all the items on the first open. Without it some styles are not applied.
+                consoleWindow.style.display = DisplayStyle.Flex;
+                shownOnce = true;
+            }
 
-            if (uiDocumentRoot.visible)
-                RefreshListViewAsync(true).Forget();
+            isHidden = !isHidden;
+
+            consoleWindow.EnableInClassList(USS_CONSOLE_HIDDEN, isHidden);
+
+            if (isHidden) return;
+
+            shouldRefresh = true;
         }
 
-        private void OnEntryAdded(SceneDebugConsoleLogEntry entry)
+        private void OnLogsUpdated()
         {
-            logsHistory.AddLogMessage(entry);
-            RefreshListViewAsync(IsScrollAtBottom()).Forget();
+            if (isHidden) return;
+            shouldRefresh = true;
         }
-
-        private void ApplyFilter(string targetText, bool filterOutErrorEntries, bool filterOutLogEntries)
-        {
-            consoleListView.itemsSource = logsHistory.ApplyFilter(targetText, filterOutErrorEntries, filterOutLogEntries);
-            RefreshListViewAsync(true).Forget();
-        }
-
-        // It can only be refreshed on the MAIN THREAD, otherwise it doesn't work and fails silently...
-        // TODO: Find out if we can instantiate the 'SceneDebugConsoleController' on the main thread instead of this...
-        private async UniTask RefreshListViewAsync(bool scrollToBottom)
-        {
-            await UniTask.SwitchToMainThread();
-
-            consoleListView.RefreshItems();
-
-            if (scrollToBottom)
-                consoleListView.ScrollToItem(consoleListView.itemsSource.Count-1);
-        }
-
-        // Cannot compare against 'highValue' directly due to floating point precision error
-        private bool IsScrollAtBottom() =>
-            scrollView != null
-            && scrollView.verticalScroller.value >= (scrollView.verticalScroller.highValue * 0.999f);
     }
 }

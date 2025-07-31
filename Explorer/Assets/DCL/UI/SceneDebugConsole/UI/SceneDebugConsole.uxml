@@ -1,16 +1,24 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/UI/SceneDebugConsole/UI/SceneDebugConsole.uss?fileID=7433441132597879392&amp;guid=a5a1f1d60c81f4e8682ffccca6ea7ac9&amp;type=3#SceneDebugConsole" />
-    <ui:VisualElement name="scene-debug-console" class="scene-debug-console">
-        <ui:VisualElement name="header" class="header">
-            <ui:Label text="CONSOLE" name="TitleLabel" class="header__item" />
-            <ui:Button text="CLEAR" name="ClearButton" class="header__item header__button" />
-            <ui:Button text="| |" name="PauseButton" class="header__item header__button" />
-            <ui:TextField label="Filter" placeholder-text="filler text" name="FilterTextField" class="header__item header__text-field" />
-            <ui:Toggle label="LOGS" name="LogsToggle" value="true" class="header__item header__toggle" />
-            <ui:Toggle label="WARNINGS" name="WarningsToggle" class="header__item header__toggle" />
-            <ui:Toggle label="ERRORS" name="ErrorsToggle" value="true" class="header__item header__toggle" />
-            <ui:Button text="X" name="CloseButton" class="header__item header__button" />
+    <ui:VisualElement name="ConsoleWindow" usage-hints="DynamicTransform" class="scene-debug-console">
+        <ui:VisualElement name="CopyToast" class="copy-success-toast">
+            <ui:VisualElement class="copy-success-toast__icon" />
+            <ui:Label text="Log successfully copied!" style="font-size: 14px;" />
         </ui:VisualElement>
-        <ui:ListView name="console" virtualization-method="DynamicHeight" fixed-item-height="1" show-alternating-row-backgrounds="All" class="console" />
+        <ui:VisualElement name="Header" class="scene-debug-console__header">
+            <ui:Label text="CONSOLE" name="TitleLabel" class="scene-debug-console__header-title" />
+            <ui:Button text="CLEAR" name="ClearButton" class="scene-debug-console__outlined-item scene-debug-console__clear-button dcl-clickable" />
+            <ui:Button text="COPY ALL" name="CopyAllButton" class="scene-debug-console__outlined-item scene-debug-console__clear-button dcl-clickable" />
+            <ui:Button name="PauseButton" icon-image="project://database/Assets/DCL/UI/SceneDebugConsole/UI/Sprites/PauseIcon.png?fileID=2800000&amp;guid=635330ff6b40d483baa849d30e686838&amp;type=3#PauseIcon" class="scene-debug-console__outlined-item scene-debug-console__pause-button dcl-clickable" />
+            <ui:VisualElement name="Spacer" style="flex-grow: 1;" />
+            <ui:TextField placeholder-text="Search" name="FilterTextField" class="scene-debug-console__search-field">
+                <ui:VisualElement class="scene-debug-console__search-field-icon" />
+            </ui:TextField>
+            <ui:Toggle name="LogsToggle" value="true" text="LOGS (0)" class="scene-debug-console__filter-toggle dcl-clickable" />
+            <ui:Toggle label="WARNINGS (0)" name="WarningsToggle" value="true" class="scene-debug-console__filter-toggle" style="display: none;" />
+            <ui:Toggle name="ErrorsToggle" value="true" text="ERRORS (0)" class="scene-debug-console__filter-toggle dcl-clickable" />
+            <ui:Button name="CloseButton" icon-image="project://database/Assets/DCL/UI/SceneDebugConsole/UI/Sprites/CloseIcon.png?fileID=2800000&amp;guid=b2ccadc1b137d49a4963cf294b8c8a9c&amp;type=3#CloseIcon" class="scene-debug-console__close-button dcl-clickable" />
+        </ui:VisualElement>
+        <ui:ListView name="ConsoleList" virtualization-method="DynamicHeight" show-alternating-row-backgrounds="ContentOnly" allow-add="false" allow-remove="false" show-bound-collection-size="false" class="scene-debug-console__list" />
     </ui:VisualElement>
 </ui:UXML>

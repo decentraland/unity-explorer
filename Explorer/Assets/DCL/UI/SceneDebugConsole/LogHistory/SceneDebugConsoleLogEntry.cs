@@ -12,7 +12,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         CommandResponse
     }
 
-    public struct SceneDebugConsoleLogEntry
+    public readonly struct SceneDebugConsoleLogEntry
     {
         /// <summary>
         /// The type of message (log, warning, error, etc.)
@@ -90,6 +90,12 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
             }
 
             return new SceneDebugConsoleLogEntry(type, message, stackTrace);
+        }
+
+        public override string ToString()
+        {
+            string prefix = Type == LogMessageType.Error ? "[ERROR] " : "[LOG] ";
+            return $"{prefix}{Message}";
         }
     }
 }

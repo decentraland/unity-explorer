@@ -1,58 +1,56 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DCL.UI.SceneDebugConsole.LogHistory
 {
     public class SceneDebugConsoleLogHistory
     {
-        public List<SceneDebugConsoleLogEntry> FilteredLogMessages { get; private set; } = new ();
-        private readonly List<SceneDebugConsoleLogEntry> unfilteredLogMessages = new();
+        public readonly List<SceneDebugConsoleLogEntry> FilteredLogMessages = new ();
+        public event Action LogsUpdated;
+        public bool Paused { get; set; }
+        public int LogEntryCount => allLogMessages.Count(le => le.Type == LogMessageType.Log);
+        public int ErrorEntryCount => allLogMessages.Count(le => le.Type == LogMessageType.Error);
 
-        public event Action<SceneDebugConsoleLogEntry> LogMessageAdded;
-        public bool Paused = false;
+        private readonly List<SceneDebugConsoleLogEntry> allLogMessages = new ();
         private string textFilter;
-        private bool filterOutErrorEntries = false;
-        private bool filterOutLogEntries = false;
-
-        public SceneDebugConsoleLogHistory() { }
+        private bool showErrorEntries = true;
+        private bool showLogEntries = true;
 
         public void AddLogMessage(SceneDebugConsoleLogEntry logEntry)
         {
             if (Paused) return;
 
-            unfilteredLogMessages.Add(logEntry);
+            allLogMessages.Add(logEntry);
 
-            if (KeepAfterFilter(logEntry))
-                FilteredLogMessages.Add(logEntry);
+            if (!KeepAfterFilter(logEntry)) return;
 
-            LogMessageAdded?.Invoke(logEntry);
+            FilteredLogMessages.Add(logEntry);
+            LogsUpdated?.Invoke();
         }
 
         public void ClearLogMessages()
         {
-            unfilteredLogMessages.Clear();
+            allLogMessages.Clear();
             FilteredLogMessages.Clear();
+            LogsUpdated?.Invoke();
         }
 
-        // TODO: Optimize this, can we avoid relaying on the garbage collector so much?
-        public List<SceneDebugConsoleLogEntry> ApplyFilter(string targetText, bool filterOutErrors, bool filterOutLogs)
+        public void ApplyFilter(string targetText, bool showErrors, bool showLogs)
         {
-            filterOutErrorEntries = filterOutErrors;
-            filterOutLogEntries = filterOutLogs;
+            showErrorEntries = showErrors;
+            showLogEntries = showLogs;
             textFilter = targetText;
             FilteredLogMessages.Clear();
 
-            if (string.IsNullOrEmpty(targetText) && !filterOutErrorEntries && !filterOutLogEntries)
-                FilteredLogMessages = new List<SceneDebugConsoleLogEntry>(unfilteredLogMessages);
-            else
-                FilteredLogMessages = unfilteredLogMessages.FindAll(KeepAfterFilter);
+            FilteredLogMessages.AddRange(allLogMessages.Where(KeepAfterFilter));
 
-            return FilteredLogMessages;
+            LogsUpdated?.Invoke();
         }
 
         private bool KeepAfterFilter(SceneDebugConsoleLogEntry entry) =>
             (string.IsNullOrEmpty(textFilter) || entry.Message.Contains(textFilter, StringComparison.OrdinalIgnoreCase))
-            && (!filterOutErrorEntries || entry.Type != LogMessageType.Error)
-            && (!filterOutLogEntries || entry.Type != LogMessageType.Log);
+            && (showErrorEntries || entry.Type != LogMessageType.Error)
+            && (showLogEntries || entry.Type != LogMessageType.Log);
     }
 }

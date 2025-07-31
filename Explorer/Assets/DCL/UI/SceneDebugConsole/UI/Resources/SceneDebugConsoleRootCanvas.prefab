@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6542928812223790300}
   - component: {fileID: 1346887887952651417}
+  - component: {fileID: 7606783510644212626}
   m_Layer: 5
   m_Name: SceneDebugConsoleRootCanvas
   m_TagString: Untagged
@@ -51,3 +52,15 @@ MonoBehaviour:
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
+--- !u!114 &7606783510644212626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6052631729758305908}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcee1c4be0a4f48cdac02d5ff1dad105, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
