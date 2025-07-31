@@ -6,19 +6,15 @@ using UnityEngine.UI;
 
 namespace DCL.Chat.ChatMessages
 {
-    public class ChatMessageFeedScrollButtonView : MonoBehaviour
+    public class ChatScrollToBottomView : MonoBehaviour
     {
         [Header("UI References")]
         [SerializeField] private Button scrollToBottomButton;
-
         [SerializeField] private TMP_Text unreadCountText;
         [SerializeField] private CanvasGroup canvasGroup;
 
-        [Header("Animation Settings")]
         [SerializeField] private float timeBeforeHiding = 2.0f;
-
         [SerializeField] private float fadeOutDuration = 0.5f;
-
         public event Action OnClicked;
 
         private void Awake()
@@ -32,6 +28,13 @@ namespace DCL.Chat.ChatMessages
             canvasGroup.DOKill();
         }
 
+        public void SetState(bool isVisible, int unreadCount)
+        {
+            unreadCountText.text = unreadCount > 9 ? "+9" : unreadCount.ToString();
+            canvasGroup.alpha = isVisible ? 1.0f : 0.0f;
+            gameObject.SetActive(isVisible);
+        }
+
         public void SetVisibility(bool isVisible, int unreadCount, bool useAnimation)
         {
             canvasGroup.DOKill();
@@ -39,8 +42,8 @@ namespace DCL.Chat.ChatMessages
             if (isVisible)
             {
                 unreadCountText.text = unreadCount > 9 ? "+9" : unreadCount.ToString();
-                canvasGroup.alpha = 1.0f;
                 gameObject.SetActive(true);
+                canvasGroup.alpha = 1.0f;
             }
             else
             {

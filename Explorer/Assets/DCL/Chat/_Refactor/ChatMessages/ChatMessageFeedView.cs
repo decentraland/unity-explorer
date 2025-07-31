@@ -17,7 +17,9 @@ namespace DCL.Chat.ChatMessages
 {
     public class ChatMessageFeedView : MonoBehaviour, IDisposable
     {
-        [SerializeField] private ChatMessageFeedScrollButtonView chatScrollToBottomView;
+        [SerializeField] private ChatScrollToBottomView chatScrollToBottomView;
+        public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
+        
         [SerializeField] private float chatEntriesFadeTime = 3f;
         [SerializeField] private int chatEntriesWaitBeforeFading = 10000;
         [SerializeField] private CanvasGroup scrollbarCanvasGroup;
@@ -27,14 +29,15 @@ namespace DCL.Chat.ChatMessages
 
         private CancellationTokenSource? fadeoutCts;
 
-        // View models are reused and set by reference from the presenter
+        // View models are reused and set
+        // by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
 
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
             if (chatScrollToBottomView != null)
-                chatScrollToBottomView.OnClicked -= ScrollToBottomButtonClicked;
+                chatScrollToBottomView.OnClicked -= ChatScrollToBottomToBottomClicked;
         }
 
         public event Action? OnFakeMessageRequested;
@@ -53,14 +56,14 @@ namespace DCL.Chat.ChatMessages
             this.viewModels = viewModels;
 
             if (chatScrollToBottomView != null)
-                chatScrollToBottomView.OnClicked += ScrollToBottomButtonClicked;
+                chatScrollToBottomView.OnClicked += ChatScrollToBottomToBottomClicked;
 
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
-        private void ScrollToBottomButtonClicked()
+        private void ChatScrollToBottomToBottomClicked()
         {
             OnScrollToBottomButtonClicked?.Invoke();
         }
