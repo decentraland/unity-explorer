@@ -140,7 +140,7 @@ Shader "DCL/SatelliteFloor"
             // -------------------------------------
             // Includes
             #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitForwardPass.hlsl"
+            #include "SatelliteFloorForwardPass.hlsl"
             ENDHLSL
         }
     }
