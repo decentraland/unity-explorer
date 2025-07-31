@@ -81,11 +81,11 @@ namespace DCL.Chat.ChatMessages
             messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel!.Messages.Count;
         }
 
-        private bool TryAddNewMessagesSeparatorAfterPendingMessages()
+        private bool TryAddNewMessagesSeparatorAfterPendingMessages(int previousSeparatorIndex)
         {
             // If the separator is already fixed, it remains in the same position
             // Otherwise, calculate the reversed index based on the pending messages count
-            if (!separatorIsVisible)
+            if (previousSeparatorIndex == -1)
             {
                 ChatChannel currentChannel = currentChannelService.CurrentChannel!;
                 int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
@@ -110,14 +110,13 @@ namespace DCL.Chat.ChatMessages
         ///     The channel has changed
         ///     The view has been minimized
         /// </summary>
-        private void RemoveNewMessagesSeparator(bool unfix)
+        private void RemoveNewMessagesSeparator()
         {
             // Remove separator from the current position
             if (separatorIsVisible)
                 viewModels.RemoveAt(separatorFixedIndexFromBottom);
 
-            if (unfix)
-                separatorFixedIndexFromBottom = -1;
+            separatorFixedIndexFromBottom = -1;
         }
 
         private void OnMessageAddedToChatHistory(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
@@ -131,7 +130,8 @@ namespace DCL.Chat.ChatMessages
 
             ChatMessageViewModel newMessageViewModel = createMessageViewModelCommand.Execute(addedMessage);
 
-            RemoveNewMessagesSeparator(false);
+            int previousNewMessagesSeparatorIndex = separatorFixedIndexFromBottom;
+            RemoveNewMessagesSeparator();
 
             newMessageViewModel.PendingToAnimate = true;
             viewModels.Insert(index, newMessageViewModel);
@@ -156,7 +156,7 @@ namespace DCL.Chat.ChatMessages
                     if (messageCountWhenSeparatorViewed.HasValue)
                         markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!, messageCountWhenSeparatorViewed.Value);
 
-                    separatorAdded = TryAddNewMessagesSeparatorAfterPendingMessages();
+                    separatorAdded = TryAddNewMessagesSeparatorAfterPendingMessages(previousNewMessagesSeparatorIndex);
                 }
 
                 if (!separatorAdded)
@@ -212,8 +212,6 @@ namespace DCL.Chat.ChatMessages
         {
             loadChannelCts = loadChannelCts.SafeRestart();
 
-            RemoveNewMessagesSeparator(true);
-
             LoadChannelHistory(loadChannelCts.Token).Forget();
 
             async UniTaskVoid LoadChannelHistory(CancellationToken ct)
@@ -221,7 +219,10 @@ namespace DCL.Chat.ChatMessages
                 try
                 {
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
-                    TryAddNewMessagesSeparatorAfterPendingMessages();
+
+                    // When the channel is switched, there will be no separator from the previous channel
+                    RemoveNewMessagesSeparator();
+                    TryAddNewMessagesSeparatorAfterPendingMessages(-1);
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
                 }
@@ -239,7 +240,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
             {
-                RemoveNewMessagesSeparator(true);
+                RemoveNewMessagesSeparator();
                 viewModels.ForEach(ChatMessageViewModel.RELEASE);
                 viewModels.Clear();
                 view.Clear();
@@ -285,7 +286,7 @@ namespace DCL.Chat.ChatMessages
             Unsubscribe();
 
             // When the view is minimized the current channel is marked as read and the separator is removed
-            RemoveNewMessagesSeparator(true);
+            RemoveNewMessagesSeparator();
             MarkCurrentChannelAsRead();
         }
 
