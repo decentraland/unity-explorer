@@ -26,6 +26,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         /// <summary>
         ///     Left to have a reference of what went wrong in PrepareAssetBundleLoadingParametersSystemBase
+        ///     It doesn't participate in the loading process and should not be used for caching or comparison
         /// </summary>
         public readonly string? Name;
 
@@ -71,7 +72,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public bool Equals(GetAssetBundleIntention other) =>
-            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) || Name == other.Name;
+            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash);
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
@@ -93,7 +94,7 @@ namespace ECS.StreamableLoading.AssetBundles
             obj is GetAssetBundleIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? ""), Name);
+            StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? string.Empty);
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
