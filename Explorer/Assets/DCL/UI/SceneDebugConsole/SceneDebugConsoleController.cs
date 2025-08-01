@@ -22,12 +22,11 @@ namespace DCL.UI.SceneDebugConsole
         private IInputBlock inputBlock;
 
         private VisualElement consoleWindow;
-        private Button pauseButton;
+        private Toggle showLogsToggle;
+        private Toggle showErrorsToggle;
         private ListView consoleListView;
         private ScrollView scrollView;
         private TextField searchField;
-        private Toggle showLogsToggle;
-        private Toggle showErrorsToggle;
         private VisualElement copyToast;
         private IVisualElementScheduledItem toastScheduledItem;
 
@@ -61,12 +60,13 @@ namespace DCL.UI.SceneDebugConsole
 
             var clearButton = root.Q<Button>("ClearButton");
             var copyAllButton = root.Q<Button>("CopyAllButton");
-            pauseButton = root.Q<Button>("PauseButton");
+            var pauseButton = root.Q<Button>("PauseButton");
+            var closeButton = root.Q<Button>("CloseButton");
+            showLogsToggle = root.Q<Toggle>("LogsToggle");
+            showErrorsToggle = root.Q<Toggle>("ErrorsToggle");
             consoleListView = root.Q<ListView>("ConsoleList");
             scrollView = consoleListView.Q<ScrollView>();
             searchField = root.Q<TextField>("FilterTextField");
-            showLogsToggle = root.Q<Toggle>("LogsToggle");
-            showErrorsToggle = root.Q<Toggle>("ErrorsToggle");
             copyToast = root.Q("CopyToast");
             toastScheduledItem = copyToast.schedule.Execute(() => copyToast.RemoveFromClassList(USS_COPY_TOAST_SHOW));
 
@@ -88,6 +88,7 @@ namespace DCL.UI.SceneDebugConsole
             clearButton.clicked += OnClearClicked;
             pauseButton.clicked += OnPauseClicked;
             copyAllButton.clicked += OnCopyAllClicked;
+            closeButton.clicked += ToggleHide;
             searchField.RegisterValueChangedCallback(_ => RefreshFilters());
             showLogsToggle.RegisterValueChangedCallback(_ => RefreshFilters());
             showErrorsToggle.RegisterValueChangedCallback(_ => RefreshFilters());
@@ -186,8 +187,12 @@ namespace DCL.UI.SceneDebugConsole
                 shownOnce = true;
             }
 
-            isHidden = !isHidden;
+            ToggleHide();
+        }
 
+        private void ToggleHide()
+        {
+            isHidden = !isHidden;
             consoleWindow.EnableInClassList(USS_CONSOLE_HIDDEN, isHidden);
 
             if (isHidden) return;
