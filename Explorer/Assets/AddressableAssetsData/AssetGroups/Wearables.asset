@@ -15,13 +15,33 @@ MonoBehaviour:
   m_GroupName: Wearables
   m_GUID: 8180de1f5c609ab4eba3413c504ab316
   m_SerializeEntries:
-  - m_GUID: 2d002c6a594460f4cb42100b50e7e53a
-    m_Address: EMPTY_DEFAULT_WEARABLE
+  - m_GUID: 17775668c745d4edfae3bff500f95f32
+    m_Address: F_Eyes_00
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 81ea8febf47eb484986af220584361dc
-    m_Address: DefaultWearableDefinition
+  - m_GUID: 1d6ca002a7e7b4f9c881a203eb97996f
+    m_Address: M_Mouth_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 41b6cad6750bc4b35ba63ebbeb956830
+    m_Address: M_EyeBrows_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5de5609d1e6c441b5a7c56a77903cab7
+    m_Address: F_Mouth_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9372c7ef01a5a4a52a0e9b3467605717
+    m_Address: M_Eyes_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eae766b15f997414794bfd4f17de5949
+    m_Address: F_Eyebrows_00
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

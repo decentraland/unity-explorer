@@ -609,7 +609,7 @@ namespace DCL.Chat
             }
             else
             {
-                HandleMessageAudioFeedback(addedMessage);
+                HandleMessageAudioFeedback(addedMessage, destinationChannel.Id);
 
                 if (IsViewReady)
                 {
@@ -634,12 +634,14 @@ namespace DCL.Chat
                 viewInstance?.MoveChannelToTop(destinationChannel.Id);
         }
 
-        private void HandleMessageAudioFeedback(ChatMessage message)
+        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId destinationChannelId)
         {
-            if (IsViewReady)
+            if (!IsViewReady)
                 return;
 
-            switch (chatSettings.chatAudioSettings)
+            ChatAudioSettings notificationPingValue = ChatUserSettings.GetNotificationPingValuePerChannel(destinationChannelId);
+
+            switch (notificationPingValue)
             {
                 case ChatAudioSettings.NONE:
                     return;
@@ -846,11 +848,10 @@ namespace DCL.Chat
         /// <param name="userId"></param>
         private void OnUserDisconnected(string userId)
         {
-            // Update the state of the user
-            // in the current conversation
-            // NOTE: if it's in the unfolded state (prevent setting the state of the
-            // NOTE: chat input box if user is offline)
-            if (!viewInstance!.IsUnfolded) return;
+            // Update the state of the user in the current conversation
+            // NOTE: if it's in the unfolded state (prevent setting the state of the chat input box if user is offline)
+            if (!viewInstance!.IsUnfolded || chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType != ChatChannel.ChatChannelType.USER)
+                return;
 
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
             SetupViewWithUserStateOnMainThreadAsync(state).Forget();
