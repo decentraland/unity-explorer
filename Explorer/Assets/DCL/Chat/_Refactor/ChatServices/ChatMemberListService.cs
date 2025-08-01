@@ -44,7 +44,7 @@ namespace DCL.Chat.ChatServices
         private CancellationTokenSource? channelCts;
         private CancellationTokenSource? liveListUpdateCts;
         private CancellationTokenSource? communityTaskCts;
-        private readonly HashSet<string> lastKnownMemberIds = new ();
+        private readonly HashSet<string> lastKnownMemberIds = new (StringComparer.OrdinalIgnoreCase);
 
         private int lastRefreshedMemberListCount = -1;
         private int lastKnownTitleBarCount = -1;
