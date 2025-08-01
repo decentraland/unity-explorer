@@ -22,25 +22,13 @@ namespace DCL.UI.ProfileElements
         private CancellationTokenSource? cts;
         private string? currentUrl;
 
-        private Color originalThumbnailImageColor;
+        private float greyOutOpacity;
+
+        private bool originalColorsInitialized;
         private Color originalThumbnailBackgroundColor;
         private Color originalThumbnailFrameColor;
 
-        private bool initialized;
-        private float greyOutOpacity;
-
-        private void Awake()
-        {
-            if(thumbnailImageView != null)
-                originalThumbnailImageColor = thumbnailImageView.ImageColor;
-
-            if(thumbnailFrame != null)
-                originalThumbnailFrameColor = thumbnailFrame.color;
-
-            initialized = true;
-
-            GreyOut(greyOutOpacity);
-        }
+        private Color originalThumbnailImageColor;
 
         [Obsolete]
         private ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -80,7 +68,7 @@ namespace DCL.UI.ProfileElements
 
             thumbnailBackground.color = userNameColor;
             SetBaseBackgroundColor(userNameColor);
-            
+
             OnThumbnailUpdated(viewModelProp.Value);
             binding = viewModelProp.Subscribe(OnThumbnailUpdated);
         }
@@ -143,8 +131,7 @@ namespace DCL.UI.ProfileElements
         [Obsolete("Use" + nameof(Bind) + " instead.")]
         public void SetBackgroundColor(Color userColor)
         {
-            originalThumbnailBackgroundColor = userColor;
-            GreyOut(greyOutOpacity);
+            SetBaseBackgroundColor(userColor);
         }
 
         public void SetLoadingState(bool isLoading)
@@ -210,27 +197,37 @@ namespace DCL.UI.ProfileElements
         private void SetBaseBackgroundColor(Color newBaseColor)
         {
             originalThumbnailBackgroundColor = newBaseColor;
-
             GreyOut(greyOutOpacity);
         }
-        
+
         public void GreyOut(float opacity)
         {
-            if (!initialized)
-            {
-                // The method was called before Awake, it stores the value to be applied on Awake later
-                greyOutOpacity = opacity;
-                return;
-            }
+            greyOutOpacity = opacity;
 
-            if(thumbnailImageView != null)
+            InitializeOriginalColors();
+
+            if (thumbnailImageView != null)
                 thumbnailImageView.ImageColor = Color.Lerp(originalThumbnailImageColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailImageColor.a), opacity);
 
-            if(thumbnailBackground != null)
+            if (thumbnailBackground != null)
                 thumbnailBackground.color = Color.Lerp(originalThumbnailBackgroundColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailBackgroundColor.a), opacity);
 
-            if(thumbnailFrame != null)
+            if (thumbnailFrame != null)
                 thumbnailFrame.color = Color.Lerp(originalThumbnailFrameColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailFrameColor.a), opacity);
+        }
+
+        private void InitializeOriginalColors()
+        {
+            if (originalColorsInitialized)
+                return;
+
+            if (thumbnailImageView != null)
+                originalThumbnailImageColor = thumbnailImageView.ImageColor;
+
+            if (thumbnailFrame != null)
+                originalThumbnailFrameColor = thumbnailFrame.color;
+
+            originalColorsInitialized = true;
         }
     }
 }
