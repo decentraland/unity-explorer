@@ -84,6 +84,7 @@ using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -544,6 +545,11 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
+
+            // Scene Debug Console
+            /*var sceneDebugConsoleLogMessagesBus = new SceneDebugConsoleCommandsBus();
+            var sceneDebugConsoleLogsHistory = new SceneDebugConsoleLogHistory();
+            var sceneDebugConsoleCommandsBus = new SceneDebugConsoleCommandsBus();*/
 
             var coreBackpackEventBus = new BackpackEventBus();
 
@@ -1040,6 +1046,9 @@ namespace Global.Dynamic
                         entityParticipantTable
                     )
                 );
+
+            if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
+                globalPlugins.Add(new SceneDebugConsolePlugin(bootstrapContainer.SceneDebugConsoleMessageBus!, staticContainer.InputBlock));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
