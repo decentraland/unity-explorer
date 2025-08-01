@@ -111,7 +111,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   IndirectCandidates:
   - Name: RoadTileClosedOff
-    LODGroup: {fileID: 1353140677476836634}
+    combinedLODGroupData: {fileID: 1353140677476836634}
     InstancesBuffer:
     - instMatrix:
         e00: 1
@@ -133,8 +133,47 @@ MonoBehaviour:
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
       tiling: {x: 0.25, y: 0.25}
       offset: {x: 0.5, y: 0}
+    LODGroupData:
+      lodsScreenSpaceSizes:
+      - 0
+      objectSize: 16
+      LODSizesMatrix:
+        e00: 1
+        e01: 0
+        e02: 0
+        e03: 0
+        e10: 0
+        e11: 0
+        e12: 0
+        e13: 0
+        e20: 0
+        e21: 0
+        e22: 0
+        e23: 0
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 0
+      Bounds:
+        m_Center: {x: 0, y: 0, z: 0}
+        m_Extent: {x: 8, y: 0, z: 8}
+      LODCount: 1
+    CombinedLodsRenderers:
+    - SubMeshId: 0
+      CombinedMesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      SharedMaterial: {fileID: 2100000, guid: de70276c366348c41a8e6b856ffda547, type: 2}
+      RenderParamsSerialized:
+        RefRenderer: {fileID: 1107197069341716835}
+        layer: 0
+        renderingLayerMask: 1
+        rendererPriority: 0
+        receiveShadows: 1
+        shadowCastingMode: 0
+        reflectionProbeUsage: 1
+        lightProbeUsage: 1
+        motionVectorMode: 1
   - Name: RoadSideClosedOff
-    LODGroup: {fileID: 7399694176564931539}
+    combinedLODGroupData: {fileID: 7399694176564931539}
     InstancesBuffer:
     - instMatrix:
         e00: 1
@@ -156,8 +195,48 @@ MonoBehaviour:
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
       tiling: {x: 1, y: 1}
       offset: {x: 0, y: 0}
+    LODGroupData:
+      lodsScreenSpaceSizes:
+      - 0.13831817
+      - 0.048087455
+      objectSize: 16.000002
+      LODSizesMatrix:
+        e00: 1
+        e01: 0.1563643
+        e02: 0
+        e03: 0
+        e10: 0
+        e11: 0
+        e12: 0
+        e13: 0
+        e20: 0.13831817
+        e21: 0
+        e22: 0
+        e23: 0
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 0
+      Bounds:
+        m_Center: {x: 0, y: 0.049999997, z: -0.00000047683716}
+        m_Extent: {x: 8.000001, y: 0.049999997, z: 8}
+      LODCount: 2
+    CombinedLodsRenderers:
+    - SubMeshId: 0
+      CombinedMesh: {fileID: -8333532971529606221, guid: 0a6fb52804c860945a19512570c19ab9, type: 3}
+      SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
+      RenderParamsSerialized:
+        RefRenderer: {fileID: 4018585439406571156}
+        layer: 0
+        renderingLayerMask: 1
+        rendererPriority: 0
+        receiveShadows: 1
+        shadowCastingMode: 1
+        reflectionProbeUsage: 1
+        lightProbeUsage: 1
+        motionVectorMode: 1
   - Name: RoadSideDecor01
-    LODGroup: {fileID: 8315679767733611126}
+    combinedLODGroupData: {fileID: 8315679767733611126}
     InstancesBuffer:
     - instMatrix:
         e00: 1
@@ -239,6 +318,47 @@ MonoBehaviour:
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
       tiling: {x: 1, y: 1}
       offset: {x: 0, y: 0}
+    LODGroupData:
+      lodsScreenSpaceSizes:
+      - 0.037784006
+      - 0.018612256
+      - 0.013265422
+      objectSize: 4.366378
+      LODSizesMatrix:
+        e00: 1
+        e01: 0.041618355
+        e02: 0.019681623
+        e03: 0
+        e10: 0
+        e11: 0
+        e12: 0
+        e13: 0
+        e20: 0.037784006
+        e21: 0.018612256
+        e22: 0
+        e23: 0
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 0
+      Bounds:
+        m_Center: {x: -0.00000047683716, y: 0.1825516, z: 7.5}
+        m_Extent: {x: 2.183189, y: 0.18491152, z: 0.32854486}
+      LODCount: 3
+    CombinedLodsRenderers:
+    - SubMeshId: 0
+      CombinedMesh: {fileID: 6581568411995727921, guid: 7356bee182ee68e4aa0dfe84603a00d4, type: 3}
+      SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
+      RenderParamsSerialized:
+        RefRenderer: {fileID: 481280705572014532}
+        layer: 0
+        renderingLayerMask: 1
+        rendererPriority: 0
+        receiveShadows: 1
+        shadowCastingMode: 1
+        reflectionProbeUsage: 1
+        lightProbeUsage: 1
+        motionVectorMode: 1
 --- !u!1001 &3489392307764829007
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -344,6 +464,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+--- !u!23 &481280705572014532 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3945458459164742283, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+  m_PrefabInstance: {fileID: 3489392307764829007}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &1107197069341716835 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4553493329169017388, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+  m_PrefabInstance: {fileID: 3489392307764829007}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1353140677476836634 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2498263686388317781, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
@@ -358,6 +488,11 @@ MonoBehaviour:
 --- !u!4 &2240154898423908876 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3421168715568582979, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+  m_PrefabInstance: {fileID: 3489392307764829007}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4018585439406571156 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 551741508620854747, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
   m_PrefabInstance: {fileID: 3489392307764829007}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &7399694176564931539 stripped

@@ -135,11 +135,6 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 2101851462128310710, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
   m_PrefabInstance: {fileID: 8642925301787412133}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &8105194792326734158 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-  m_PrefabInstance: {fileID: 8642925301787412133}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &8876804962282863604 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
@@ -179,44 +174,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  whitelistedShaders:
-  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
-  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
-  Name: RoadSideDecor01
+  GPUInstancingSettings: {fileID: 11400000, guid: fb981fee23899ef4eacd98e0c788b4e0, type: 2}
   Reference: {fileID: 3900521971472242239}
-  Transform: {fileID: 8105194792326734158}
   RefRenderers:
   - {fileID: 7699624850596126483}
   - {fileID: 6999200431455932123}
   - {fileID: 7264011839685136740}
-  ObjectSize: 4.366378
-  Bounds:
-    m_Center: {x: -0.00000047683716, y: 0.1825516, z: 7.5}
-    m_Extent: {x: 2.183189, y: 0.18491152, z: 0.32854486}
-  LodsScreenSpaceSizes:
-  - 0.037784006
-  - 0.018612256
-  - 0.013265422
-  LODSizesMatrix:
-    e00: 1
-    e01: 0.041618355
-    e02: 0.019681623
-    e03: 0
-    e10: 0
-    e11: 0
-    e12: 0
-    e13: 0
-    e20: 0.037784006
-    e21: 0.018612256
-    e22: 0
-    e23: 0
-    e30: 0
-    e31: 0
-    e32: 0
-    e33: 0
-  CombinedLodsRenderers:
+  <LODGroupData>k__BackingField:
+    lodsScreenSpaceSizes:
+    - 0.037784006
+    - 0.018612256
+    - 0.013265422
+    objectSize: 4.366378
+    LODSizesMatrix:
+      e00: 1
+      e01: 0.041618355
+      e02: 0.019681623
+      e03: 0
+      e10: 0
+      e11: 0
+      e12: 0
+      e13: 0
+      e20: 0.037784006
+      e21: 0.018612256
+      e22: 0
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 0
+    Bounds:
+      m_Center: {x: -0.00000047683716, y: 0.1825516, z: 7.5}
+      m_Extent: {x: 2.183189, y: 0.18491152, z: 0.32854486}
+    LODCount: 3
+  <CombinedLodsRenderers>k__BackingField:
   - SubMeshId: 0
-    CombinedMesh: {fileID: -4950468723494521971}
+    CombinedMesh: {fileID: 6581568411995727921}
     SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 7699624850596126483}
@@ -228,7 +221,7 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
---- !u!43 &-4950468723494521971
+--- !u!43 &6581568411995727921
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
