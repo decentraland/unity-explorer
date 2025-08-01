@@ -32,7 +32,7 @@ Label {
     position: absolute;
     width: 1520px;
     height: 770px;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.93);
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     border-bottom-right-radius: 12px;
@@ -40,14 +40,14 @@ Label {
     overflow: hidden;
     transform-origin: right top;
     transition-property: scale;
-    transition-duration: 0.7s;
-    transition-timing-function: ease-out-elastic;
+    transition-duration: 0.1s;
+    transition-timing-function: ease-out-circ;
 }
 
 .scene-debug-console--hidden {
     scale: 0;
     transition-property: scale;
-    transition-duration: 0.2s;
+    transition-duration: 0.1s;
     transition-timing-function: ease-out;
 }
 

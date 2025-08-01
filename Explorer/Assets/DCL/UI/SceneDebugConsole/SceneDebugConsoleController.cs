@@ -18,7 +18,6 @@ namespace DCL.UI.SceneDebugConsole
         private const long TOAST_DURATION = 1500L;
 
         [SerializeField] private int maxLogMessages = 1500; // TODO
-        [SerializeField] private bool showTimestamps = true; // TODO
 
         private readonly SceneDebugConsoleLogHistory logsHistory = new ();
 
@@ -41,7 +40,6 @@ namespace DCL.UI.SceneDebugConsole
 
         public void SetInputBlock(IInputBlock block)
         {
-            // InputBlock should really be a singleton :(
             this.inputBlock = block;
         }
 
@@ -106,6 +104,7 @@ namespace DCL.UI.SceneDebugConsole
         public void OnDisable()
         {
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
+            shownOnce = !isHidden;
         }
 
         public void Update()
@@ -116,8 +115,10 @@ namespace DCL.UI.SceneDebugConsole
             consoleListView.RefreshItems();
 
             if (shouldBottomOnRefresh)
+            {
                 consoleListView.ScrollToItem(consoleListView.itemsSource.Count-1);
-            shouldBottomOnRefresh = false;
+                shouldBottomOnRefresh = false;
+            }
 
             showLogsToggle.text = $"LOGS ({logsHistory.LogEntryCount})";
             showErrorsToggle.text = $"ERRORS ({logsHistory.ErrorEntryCount})";
