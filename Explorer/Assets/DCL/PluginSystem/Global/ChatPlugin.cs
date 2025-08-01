@@ -64,7 +64,6 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly bool isCallEnabled;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
@@ -101,7 +100,6 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            bool isCallEnabled,
             IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
@@ -125,7 +123,6 @@ namespace DCL.PluginSystem.Global
             this.chatMessageFactory = chatMessageFactory;
             this.friendsServiceProxy = friendsServiceProxy;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            this.isCallEnabled = isCallEnabled;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
@@ -188,7 +185,6 @@ namespace DCL.PluginSystem.Global
                 warningNotificationView,
                 communitiesEventBus,
                 voiceChatOrchestrator,
-                isCallEnabled,
                 realmNavigator
             );
 

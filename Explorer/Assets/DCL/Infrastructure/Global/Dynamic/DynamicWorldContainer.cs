@@ -433,7 +433,7 @@ namespace Global.Dynamic
             bool includeCameraReel = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
-            bool includeVoiceChat = includeFriends && includeUserBlocking && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT)));
+
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
@@ -620,8 +620,7 @@ namespace Global.Dynamic
                 realmNavigator,
                 friendOnlineStatusCacheProxy,
                 profileRepository,
-                sharedSpaceManager,
-                includeVoiceChat);
+                sharedSpaceManager);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -734,7 +733,6 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
-                    includeVoiceChat,
                     realmNavigator
                     ),
                 new ExplorePanelPlugin(
@@ -791,7 +789,6 @@ namespace Global.Dynamic
                     upscaleController,
                     communitiesDataProvider,
                     realmNftNamesProvider,
-                    includeVoiceChat,
                     galleryEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -869,7 +866,6 @@ namespace Global.Dynamic
                     includeFriends,
                     includeUserBlocking,
                     isNameEditorEnabled,
-                    includeVoiceChat,
                     chatEventBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper,
@@ -883,7 +879,7 @@ namespace Global.Dynamic
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
             };
 
-            if (includeVoiceChat)
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
                 globalPlugins.Add(
                     new VoiceChatPlugin(
                         assetsProvisioner,
@@ -931,7 +927,6 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking,
-                    includeVoiceChat,
                     appArgs,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,

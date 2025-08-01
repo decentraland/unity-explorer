@@ -173,6 +173,11 @@ namespace Global.Dynamic
             //No analytics to track on this step
         }
 
+        public void InitializeFeaturesRegistry()
+        {
+            core.InitializeFeaturesRegistry();
+        }
+
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
         {
             await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, ct);

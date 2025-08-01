@@ -42,8 +42,7 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus = null,
-            bool isVoiceChatEnabled = false)
+            WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);

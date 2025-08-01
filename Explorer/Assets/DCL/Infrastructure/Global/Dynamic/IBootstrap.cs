@@ -66,5 +66,7 @@ namespace Global.Dynamic
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 
         void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache);
+
+        void InitializeFeaturesRegistry();
     }
 }

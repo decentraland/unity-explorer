@@ -34,7 +34,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IRealmNavigator realmNavigator,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
-            bool includeCall,
             IVoiceChatOrchestrator voiceChatOrchestrator) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;

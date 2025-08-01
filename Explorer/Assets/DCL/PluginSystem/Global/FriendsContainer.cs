@@ -48,7 +48,6 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
         private readonly bool includeUserBlocking;
-        private readonly bool includeCall;
         private readonly IAppArgs appArgs;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
@@ -83,7 +82,6 @@ namespace DCL.PluginSystem.Global
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
-            bool includeCall,
             IAppArgs appArgs,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
@@ -107,7 +105,6 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
             this.includeUserBlocking = includeUserBlocking;
-            this.includeCall = includeCall;
             this.appArgs = appArgs;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
@@ -144,7 +141,6 @@ namespace DCL.PluginSystem.Global
                 friendsConnectivityStatusTracker,
                 chatEventBus,
                 includeUserBlocking,
-                includeCall,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,
                 profileRepositoryWrapper,

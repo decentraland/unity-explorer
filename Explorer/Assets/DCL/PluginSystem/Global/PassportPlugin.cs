@@ -69,7 +69,6 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
-        private readonly bool isCallEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -110,7 +109,6 @@ namespace DCL.PluginSystem.Global
             bool enableFriends,
             bool includeUserBlocking,
             bool isNameEditorEnabled,
-            bool isCallEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
@@ -148,7 +146,6 @@ namespace DCL.PluginSystem.Global
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            this.isCallEnabled = isCallEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
@@ -213,7 +210,6 @@ namespace DCL.PluginSystem.Global
                 enableFriends,
                 includeUserBlocking,
                 isNameEditorEnabled,
-                isCallEnabled,
                 chatEventBus,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
