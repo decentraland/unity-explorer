@@ -48,8 +48,7 @@ namespace DCL.Chat.ChatFriends
             lifeCts = new CancellationTokenSource();
             memberListService.StartLiveMemberUpdates();
             memberListService.OnMemberListUpdated += HandleLiveUpdate;
-
-            // memberListService.RequestInitialMemberListAsync().Forget();
+            memberListService.RequestInitialMemberListAsync().Forget();
         }
 
         private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)
