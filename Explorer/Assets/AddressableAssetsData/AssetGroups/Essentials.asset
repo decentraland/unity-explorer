@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 03dabb815fc004f9581a9528b72c106f
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonList.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 04a7ffcd277754f7c91237894604f522
     m_Address: NftRarityBackgrounds
     m_ReadOnly: 0

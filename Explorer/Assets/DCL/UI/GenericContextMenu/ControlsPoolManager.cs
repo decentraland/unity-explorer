@@ -31,7 +31,8 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuTextView textPrefab,
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab,
             GenericContextMenuSubMenuButtonView subMenuButtonPrefab,
-            GenericContextMenuSimpleButtonView simpleButtonPrefab)
+            GenericContextMenuSimpleButtonView simpleButtonPrefab,
+            GenericContextMenuScrollableButtonListView buttonListPrefab)
         {
             this.controlsParent = controlsParent;
 
@@ -51,6 +52,7 @@ namespace DCL.UI.GenericContextMenu
             CreateObjectPool(toggleWithCheckPrefab);
             CreateObjectPool(subMenuButtonPrefab);
             CreateObjectPool(simpleButtonPrefab);
+            CreateObjectPool(buttonListPrefab);
         }
 
         private void CreateObjectPool<T>(T prefab) where T: MonoBehaviour =>
@@ -93,6 +95,7 @@ namespace DCL.UI.GenericContextMenu
                                                             ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
                                                             TextContextMenuControlSettings textSettings => GetText(textSettings),
                                                             SubMenuContextMenuButtonSettings subMenuButtonSettings => GetSubMenuButton(subMenuButtonSettings),
+                                                            ScrollableButtonListControlSettings scrollableButtonList => GetScrollableButtonList(scrollableButtonList),
                                                             _ => throw new ArgumentOutOfRangeException(),
                                                         };
 
@@ -101,6 +104,14 @@ namespace DCL.UI.GenericContextMenu
             currentControls.Add(component);
 
             return component;
+        }
+
+        private GenericContextMenuScrollableButtonListView GetScrollableButtonList(ScrollableButtonListControlSettings settings)
+        {
+            GenericContextMenuScrollableButtonListView buttonListView = GetPoolFromRegistry<GenericContextMenuScrollableButtonListView>().Get();
+            buttonListView.Configure(settings, this);
+
+            return buttonListView;
         }
 
         public ControlsContainerView GetControlsContainer(Transform parent)
