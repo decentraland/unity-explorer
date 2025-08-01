@@ -39,14 +39,6 @@ namespace ECS.StreamableLoading.AssetBundles
             assetBundleIntention.AssetBundleVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
             assetBundleIntention.HasParentEntityIDPathInURL = sceneData.SceneEntityDefinition.hasSceneInPath;
-
-            if (staticSceneAssetBundle.Supported && staticSceneAssetBundle.Assets.ContainsKey(assetBundleIntention.Hash))
-            {
-                //TODO (JUANI): Should we look for the immediate resoution here?
-                // If not in cache, try load from asset bundle
-                assetBundleIntention.SingleAssetBundleHack = true;
-            }
-
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

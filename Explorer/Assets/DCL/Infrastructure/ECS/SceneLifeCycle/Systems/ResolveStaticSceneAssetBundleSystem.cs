@@ -74,7 +74,7 @@ namespace ECS.SceneLifeCycle.Systems
                     foreach (Object asset in staticSceneAssetBundle.AssetBundleData.Asset.assets)
                     {
                         if(asset is GameObject go)
-                            staticSceneAssetBundle.Assets.Add(asset.name + PlatformUtils.GetCurrentPlatform(), go);
+                            staticSceneAssetBundle.Assets.Add(asset.name, go);
                     }
                 }
                 else
