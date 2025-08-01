@@ -11,6 +11,7 @@ namespace DCL.MarketplaceCreditsAPIService
 {
     public class MarketplaceCreditsAPIClient
     {
+        private const string MARKETPLACE_CREDITS_NO_DATA = "NO_DATA";
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
 
         private readonly IWebRequestController webRequestController;
@@ -18,6 +19,8 @@ namespace DCL.MarketplaceCreditsAPIService
 
         private string marketplaceCreditsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.MarketplaceCredits);
         private string emailSubscriptionsBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.EmailSubscriptions);
+
+        private SeasonsData? seasonsData = null;
 
         public MarketplaceCreditsAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -35,17 +38,60 @@ namespace DCL.MarketplaceCreditsAPIService
 
         public async UniTask<CreditsProgramProgressResponse> GetProgramProgressAsync(string walletId, CancellationToken ct)
         {
+            try
+            {
+
+            }
+            catch (OperationCanceledException e) { }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
 
-            CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                                      .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
+            CreditsProgramProgressResponse creditsProgramProgressResponse = 
+                await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                    .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
 
             EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
-            creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) ? emailSubscriptionResponse.unconfirmedEmail : emailSubscriptionResponse.email;
-            creditsProgramProgressResponse.user.isEmailConfirmed = string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
+            await UpdateProgramSeasonsAsync(ct);
+
+            creditsProgramProgressResponse.lastSeason = seasonsData!.Value.lastSeason;
+            creditsProgramProgressResponse.currentSeason = seasonsData!.Value.currentSeason.season;
+            // Setting this here, so we don't need to check for null everytime.
+            if (seasonsData!.Value.currentSeason.season.state == null)
+                creditsProgramProgressResponse.currentSeason.state = "NONE";
+            creditsProgramProgressResponse.currentWeek = seasonsData!.Value.currentSeason.week;
+            creditsProgramProgressResponse.nextSeason = seasonsData!.Value.nextSeason;
+            creditsProgramProgressResponse.user.email = 
+                !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) 
+                    ? emailSubscriptionResponse.unconfirmedEmail 
+                    : emailSubscriptionResponse.email;
+            creditsProgramProgressResponse.user.isEmailConfirmed = 
+                string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) 
+                && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
 
             OnProgramProgressUpdated?.Invoke(creditsProgramProgressResponse);
             return creditsProgramProgressResponse;
+        }
+
+        private async UniTask UpdateProgramSeasonsAsync(CancellationToken ct)
+        {
+            if (seasonsData != null)
+                return;
+            
+            var url = $"{marketplaceCreditsBaseUrl}/seasons";
+            
+            var result = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                    .CreateFromJson<SeasonsData>(WRJsonParser.Unity);
+
+            result.lastSeason.state ??= MARKETPLACE_CREDITS_NO_DATA;
+            result.currentSeason.season.state ??= MARKETPLACE_CREDITS_NO_DATA;
+            result.nextSeason.state ??= MARKETPLACE_CREDITS_NO_DATA;
+            
+            seasonsData = result;
         }
 
         public async UniTask<Sprite> GenerateCaptchaAsync(CancellationToken ct)

@@ -10,11 +10,32 @@ namespace DCL.MarketplaceCredits
     {
         public enum SeasonState
         {
+            NO_DATA,
+            NOT_STARTED,
             RUNNING,
             ENDED,
             ERR_SEASON_RUN_OUT_OF_FUNDS,
             ERR_WEEK_RUN_OUT_OF_FUNDS,
             ERR_PROGRAM_PAUSED,
+        }
+
+        /// <summary>
+        /// Parses string date to DateTime format
+        /// </summary>
+        public static DateTime ParseDate(this string dateString)
+        {
+            return DateTime.Parse(dateString, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+        }
+
+        /// <summary>
+        /// Get span from now to given date
+        /// </summary>
+        /// <param name="dateString">DateTime as string</param>
+        /// <returns>TimeSpan from now to given date</returns>
+        public static TimeSpan ToSpanFromNow(this string dateString)
+        {
+            var spanFromNow = dateString.ParseDate() - DateTime.Now;
+            return spanFromNow;
         }
 
         /// <summary>
@@ -83,9 +104,7 @@ namespace DCL.MarketplaceCredits
         /// <returns>>A string representing the season date range in a human-readable format.</returns>
         public static string FormatSeasonDateRange(string startDate, string endDate)
         {
-            DateTime startDateDT = DateTime.Parse(startDate, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
-            DateTime endDateDT = DateTime.Parse(endDate, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
-            return $"{startDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}";
+            return $"{startDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}";
         }
 
         /// <summary>
@@ -121,12 +140,12 @@ namespace DCL.MarketplaceCredits
         /// Checks if the program has ended.
         /// </summary>
         /// <returns>True if the program has ended, false otherwise.</returns>
-        public static bool IsProgramEnded(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
-            creditsProgramProgressResponse.season.timeLeft <= 0f ||
-            creditsProgramProgressResponse.season.seasonState == nameof(SeasonState.ENDED) ||
-            creditsProgramProgressResponse.season.seasonState == nameof(SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS) ||
-            creditsProgramProgressResponse.season.seasonState == nameof(SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS) ||
-            creditsProgramProgressResponse.season.seasonState == nameof(SeasonState.ERR_PROGRAM_PAUSED);
+        public static bool IsProgramEnded(this CreditsProgramProgressResponse seasonsData) =>
+            seasonsData.currentSeason.timeLeft <= 0f ||
+            seasonsData.currentSeason.state == nameof(SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS) ||
+            seasonsData.currentSeason.state == nameof(SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS) ||
+            seasonsData.currentSeason.state == nameof(SeasonState.ENDED) ||
+            seasonsData.currentSeason.state == nameof(SeasonState.ERR_PROGRAM_PAUSED);
 
         /// <summary>
         /// Checks if the user has completed all the weekly goals.

@@ -9,10 +9,10 @@ namespace DCL.MarketplaceCredits.Sections
     public class MarketplaceCreditsProgramEndedSubController : IDisposable
     {
         // TODO: For now we hardcoded "the first Season" text, use "Season {0]" when number supplied from backend.
-        private const string TITLE_CREDITS_VALID = "Time to go shopping—you've completed the first Season of Marketplace Credits!";
+        private const string TITLE_CREDITS_VALID = "Time to go shopping—you've completed {0} of Marketplace Credits!";
         private const string TITLE_CREDITS_VALID_PART2 = "Spend your Credits before they expire on {0}.";
-        private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_KNOWN = "Save the date—Marketplace Credits Return for Season {0}!";
-        private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_UNKNOWN = "The First Season of Marketplace Credits Has Closed";
+        private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_KNOWN = "Save the date—Marketplace Credits Return for {0}!";
+        private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_UNKNOWN = "{0} of Marketplace Credits Has Closed";
         private const string TITLE_NO_FOUNDS_SEASON = "All Available Credits Claimed: The current Marketplace Credits Season is now closed";
         private const string TITLE_NO_FOUNDS_WEEK = "All Available Credits Claimed: The beta run of the Weekly Rewards program is now closed";
         private const string TITLE_MARKET_OFFLINE = "Marketplace Credits are Temporarily Offline";
@@ -62,10 +62,7 @@ namespace DCL.MarketplaceCredits.Sections
         
         private string GetBoldedTitleText(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            // TODO: This variable will be provided from backend soon. Replace it when provided.
-            uint nextSeasonAvailableInSeconds = 0;
-            
-            switch (creditsProgramProgressResponse.season.seasonState)
+            switch (creditsProgramProgressResponse.currentSeason.state)
             {
                 case nameof(MarketplaceCreditsUtils.SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS):
                     return TITLE_NO_FOUNDS_SEASON;
@@ -75,26 +72,20 @@ namespace DCL.MarketplaceCredits.Sections
                     return TITLE_MARKET_OFFLINE;
             }
             
-            string seasonDate = MarketplaceCreditsUtils.FormatSeasonDateRange(creditsProgramProgressResponse.season.startDate, 
-                creditsProgramProgressResponse.season.endDate);
-
             if (creditsProgramProgressResponse.credits.expiresIn > 0)
-                return TITLE_CREDITS_VALID;
-
-            // TODO: This variable will be provided from backend soon. Replace it when provided.
-            string nextSeasonDate = seasonDate;
+                return string.Format(TITLE_CREDITS_VALID, creditsProgramProgressResponse.lastSeason.name);
             
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (nextSeasonAvailableInSeconds > 0)
-                return string.Format(TITLE_CREDITS_EXPIRED_NEXT_SEASON_KNOWN, nextSeasonDate);
+            if (creditsProgramProgressResponse.nextSeason.state == nameof(MarketplaceCreditsUtils.SeasonState.NOT_STARTED) 
+                && creditsProgramProgressResponse.nextSeason.startDate.ToSpanFromNow().Seconds > 0)
+                return string.Format(TITLE_CREDITS_EXPIRED_NEXT_SEASON_KNOWN, creditsProgramProgressResponse.nextSeason.name);
 
-            return TITLE_CREDITS_EXPIRED_NEXT_SEASON_UNKNOWN;
+            return string.Format(TITLE_CREDITS_EXPIRED_NEXT_SEASON_UNKNOWN, creditsProgramProgressResponse.lastSeason.name);
         }
 
         private string GetNormalTitle(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
             if (creditsProgramProgressResponse.credits.expiresIn <= 0 ||
-                creditsProgramProgressResponse.season.seasonState != nameof(MarketplaceCreditsUtils.SeasonState.ENDED))
+                creditsProgramProgressResponse.currentSeason.state != nameof(MarketplaceCreditsUtils.SeasonState.ENDED))
                 return string.Empty;
             
             string timeForCreditsToExpire = MarketplaceCreditsUtils.FormatSecondsToMonthDays(creditsProgramProgressResponse.credits.expiresIn);
@@ -104,10 +95,7 @@ namespace DCL.MarketplaceCredits.Sections
         
         private string GetSubtitleText(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            // TODO: This variable will be provided from backend soon. Replace it when provided.
-            uint nextSeasonAvailableInSeconds = 0;
-            
-            switch (creditsProgramProgressResponse.season.seasonState)
+            switch (creditsProgramProgressResponse.currentSeason.state)
             {
                 case nameof(MarketplaceCreditsUtils.SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS):
                     return subtitleSeasonCreditsRunOut;
@@ -120,8 +108,8 @@ namespace DCL.MarketplaceCredits.Sections
             if (creditsProgramProgressResponse.credits.expiresIn > 0)
                 return subtitleCreditsValid;
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (nextSeasonAvailableInSeconds > 0)
+            if (creditsProgramProgressResponse.nextSeason.state == nameof(MarketplaceCreditsUtils.SeasonState.NOT_STARTED) 
+                && creditsProgramProgressResponse.nextSeason.startDate.ToSpanFromNow().Seconds > 0)
                 return subtitleCreditsExpiredNextSeasonKnown;
 
             return subtitleCreditsExpiredNextSeasonUnknown;
