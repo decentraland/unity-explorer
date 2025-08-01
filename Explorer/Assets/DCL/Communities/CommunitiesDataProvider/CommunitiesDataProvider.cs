@@ -57,7 +57,7 @@ namespace DCL.Communities
             return response;
         }
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CancellationToken ct)
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CancellationToken ct)
         {
             CreateOrUpdateCommunityResponse response;
 
@@ -65,6 +65,7 @@ namespace DCL.Communities
             {
                 new MultipartFormDataSection("name", name),
                 new MultipartFormDataSection("description", description),
+                new MultipartFormDataSection("privacy", privacy.ToString()),
             };
 
             StringBuilder placeIdsJsonString = new StringBuilder("[");
