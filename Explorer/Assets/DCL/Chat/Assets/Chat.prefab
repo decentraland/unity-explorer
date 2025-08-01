@@ -99,8 +99,9 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1300557755116459844}
+  - {fileID: 659256669482349642}
   - {fileID: 8411302640272790022}
+  - {fileID: 1300557755116459844}
   m_Father: {fileID: 7707476616892281990}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -141,7 +142,7 @@ MonoBehaviour:
   m_ChildControlHeight: 1
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ReverseArrangement: 1
 --- !u!114 &908682551038888899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,6 +193,57 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!1 &454975972169901273
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 659256669482349642}
+  - component: {fileID: 3389811098531405587}
+  m_Layer: 5
+  m_Name: '[ChatPanel] IMPORTANT NOTE'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &659256669482349642
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 454975972169901273}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6252910912605816960}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &3389811098531405587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 454975972169901273}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cc28c979be44ea0b0b4d7d536fcf2fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Note: The Sorting Order of the ChatPanel Vertical Layout is inverted to be able
+    to display the TitleBar on top of the Chat without breaking the resizing logic,
+    etc.
 --- !u!1 &1363784995779932578
 GameObject:
   m_ObjectHideFlags: 0
@@ -3316,6 +3368,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6181441997776311066, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AspectRatio
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6236177927818501724, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AspectRatio
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6593197441684345561, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -3672,35 +3732,39 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3202691890200851871, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3202691890200851871, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3202691890200851871, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 100.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3202691890200851871, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -23
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3255674727992525050, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 41.85
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6594719467322409611, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6823447438506830467, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
       propertyPath: m_Name
       value: ChatSubTitleBar
       objectReference: {fileID: 0}
+    - target: {fileID: 7420654053014624324, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
+      propertyPath: m_IgnoreParentGroups
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7860321064373244096, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 8.76
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
