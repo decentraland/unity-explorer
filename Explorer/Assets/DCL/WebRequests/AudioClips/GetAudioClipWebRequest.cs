@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Profiling;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -15,6 +16,8 @@ namespace DCL.WebRequests
         private readonly string url;
 
         public UnityWebRequest UnityWebRequest { get; }
+
+        public bool Idempotent => true;
 
         private GetAudioClipWebRequest(UnityWebRequest unityWebRequest, string url)
         {

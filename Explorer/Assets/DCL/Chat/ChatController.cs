@@ -99,6 +99,8 @@ namespace DCL.Chat
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
 
+        private string closedCommunityChatsKey;
+
         private bool viewInstanceCreated;
         private CancellationTokenSource chatUsersUpdateCts = new ();
         private CancellationTokenSource communitiesServiceCts = new ();
@@ -235,9 +237,11 @@ namespace DCL.Chat
                         SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
                         return;
                     }
-
-                    chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
-                    UpdateChatUserStateAsync(chatUserStateUpdater.CurrentConversation, true, chatUsersUpdateCts.Token).Forget();
+                    else if (chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER)
+                    {
+                        chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                        UpdateChatUserStateAsync(chatUserStateUpdater.CurrentConversation, true, chatUsersUpdateCts.Token).Forget();
+                    }
 
                     viewInstance.ShowNewMessages();
                 }
@@ -365,6 +369,9 @@ namespace DCL.Chat
 
         private async UniTask InitializeCommunityConversationsAsync()
         {
+            if (string.IsNullOrEmpty(closedCommunityChatsKey))
+                closedCommunityChatsKey = string.Format(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, web3IdentityCache.Identity!.Address.ToString().ToLower());
+
             // Obtains all the communities of the user
             const int ALL_COMMUNITIES_OF_USER = 100;
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
@@ -853,11 +860,10 @@ namespace DCL.Chat
         /// <param name="userId"></param>
         private void OnUserDisconnected(string userId)
         {
-            // Update the state of the user
-            // in the current conversation
-            // NOTE: if it's in the unfolded state (prevent setting the state of the
-            // NOTE: chat input box if user is offline)
-            if (!viewInstance!.IsUnfolded) return;
+            // Update the state of the user in the current conversation
+            // NOTE: if it's in the unfolded state (prevent setting the state of the chat input box if user is offline)
+            if (!viewInstance!.IsUnfolded || chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType != ChatChannel.ChatChannelType.USER)
+                return;
 
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
             SetupViewWithUserStateOnMainThreadAsync(state).Forget();
@@ -1184,10 +1190,10 @@ namespace DCL.Chat
         private void CloseCommunityChat(string communityId)
         {
             // Store the chat as closed
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(closedCommunityChatsKey, string.Empty);
             if (!allClosedCommunityChats.Contains(communityId))
             {
-                DCLPlayerPrefs.SetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, $"{allClosedCommunityChats}{communityId},");
+                DCLPlayerPrefs.SetString(closedCommunityChatsKey, $"{allClosedCommunityChats}{communityId},");
                 DCLPlayerPrefs.Save();
             }
 
@@ -1199,8 +1205,8 @@ namespace DCL.Chat
         private void OpenCommunityChat(string communityId)
         {
             // Store the chat as opened
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
-            DCLPlayerPrefs.SetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, allClosedCommunityChats.Replace($"{communityId},", string.Empty));
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(closedCommunityChatsKey, string.Empty);
+            DCLPlayerPrefs.SetString(closedCommunityChatsKey, allClosedCommunityChats.Replace($"{communityId},", string.Empty));
             DCLPlayerPrefs.Save();
 
             // Open the conversation
@@ -1222,9 +1228,9 @@ namespace DCL.Chat
             viewInstance!.Focus();
         }
 
-        private static bool IsCommunityChatClosed(string communityId)
+        private bool IsCommunityChatClosed(string communityId)
         {
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(closedCommunityChatsKey, string.Empty);
             return allClosedCommunityChats.Contains(communityId);
         }
     }

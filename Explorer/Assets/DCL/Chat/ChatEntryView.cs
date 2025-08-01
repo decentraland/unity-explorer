@@ -1,6 +1,9 @@
 using DCL.Chat.History;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
+using System;
+using System.Globalization;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +13,8 @@ namespace DCL.Chat
     {
         private const float PROFILE_BUTTON_Y_OFFSET = -18;
         private const float USERNAME_Y_OFFSET = -13f;
+        private const string DATE_DIVIDER_TODAY = "Today";
+        private const string DATE_DIVIDER_YESTERDAY = "Today";
 
         public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
 
@@ -21,6 +26,8 @@ namespace DCL.Chat
         [field: Header("Elements")]
         [field: SerializeField] private ChatEntryUsernameElement usernameElement { get; set; }
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
+        [field: SerializeField] internal RectTransform dateDividerElement { get; private set; }
+        [field: SerializeField] internal TMP_Text dateDividerText { get; private set; }
 
         [field: Header("Avatar Profile")]
         [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
@@ -37,12 +44,30 @@ namespace DCL.Chat
             chatEntryCanvasGroup.DOFade(1, 0.5f);
         }
 
-        public void SetItemData(ChatMessage data)
+        public void SetItemData(ChatMessage data, bool showDateDivider)
         {
             chatMessage = data;
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageBubbleElement.SetMessageData(data);
+
+            dateDividerElement.gameObject.SetActive(showDateDivider);
+
+            if (showDateDivider)
+                dateDividerText.text = GetDateRepresentation(DateTime.FromOADate(data.SentTimestamp).Date);
+
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+        }
+
+        private string GetDateRepresentation(DateTime date)
+        {
+            if(date == DateTime.Today)
+                return DATE_DIVIDER_TODAY;
+            else if (date == DateTime.Today.AddDays(-1.0))
+                return DATE_DIVIDER_YESTERDAY;
+            else if(date.Year == DateTime.Today.Year)
+                return date.ToString("ddd, d MMM", CultureInfo.InvariantCulture);
+            else
+                return date.ToString("ddd, d MMM, yyyy", CultureInfo.InvariantCulture);
         }
 
         private void Awake()
