@@ -195,7 +195,7 @@ namespace DCL.MarketplaceCredits.Sections
                 marketplaceCreditsProgramEndedSubController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
                 totalCreditsWidgetView.gameObject.SetActive(
-                    currentCreditsProgramProgress.season.seasonState != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
+                    currentCreditsProgramProgress.currentSeason.state != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
                 return;
             }
 
