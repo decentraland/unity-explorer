@@ -8,32 +8,32 @@ namespace DCL.Roads.Settings
 {
     public class GPUInstancingMeshExtractor
     {
-        private struct MeshIdentifier : IEquatable<MeshIdentifier>
+        private readonly struct MeshIdentifier : IEquatable<MeshIdentifier>
         {
-            public readonly int VertexCount;
-            public readonly int TriangleCount;
-            public readonly int SubMeshCount;
-            public readonly string ShaderName;
+            private readonly int vertexCount;
+            private readonly int triangleCount;
+            private readonly int subMeshCount;
+            private readonly string shaderName;
 
             public MeshIdentifier(Mesh mesh, string shaderName)
             {
-                VertexCount = mesh.vertexCount;
-                TriangleCount = mesh.triangles.Length / 3;
-                SubMeshCount = mesh.subMeshCount;
-                ShaderName = shaderName;
+                vertexCount = mesh.vertexCount;
+                triangleCount = mesh.triangles.Length;
+                subMeshCount = mesh.subMeshCount;
+                this.shaderName = shaderName;
             }
 
             public bool Equals(MeshIdentifier other) =>
-                VertexCount == other.VertexCount &&
-                TriangleCount == other.TriangleCount &&
-                SubMeshCount == other.SubMeshCount &&
-                ShaderName == other.ShaderName;
+                vertexCount == other.vertexCount &&
+                triangleCount == other.triangleCount &&
+                subMeshCount == other.subMeshCount &&
+                shaderName == other.shaderName;
 
             public override bool Equals(object obj) =>
                 obj is MeshIdentifier other && Equals(other);
 
             public override int GetHashCode() =>
-                HashCode.Combine(VertexCount, TriangleCount, SubMeshCount, ShaderName);
+                HashCode.Combine(vertexCount, triangleCount, subMeshCount, shaderName);
         }
 
         private class RendererGroup
@@ -82,19 +82,17 @@ namespace DCL.Roads.Settings
             var groupedRenderers = new Dictionary<MeshIdentifier, RendererGroup>();
 
             foreach (GPUInstancingLODGroupWithBuffer group in groups)
+            foreach (CombinedLodsRenderer renderer in group.CombinedLodsRenderers)
             {
-                foreach (CombinedLodsRenderer renderer in group.CombinedLodsRenderers)
+                var meshId = new MeshIdentifier(renderer.CombinedMesh, renderer.SharedMaterial.shader.name);
+
+                if (!groupedRenderers.TryGetValue(meshId, out RendererGroup rendererGroup))
                 {
-                    var meshId = new MeshIdentifier(renderer.CombinedMesh, renderer.SharedMaterial.shader.name);
-
-                    if (!groupedRenderers.TryGetValue(meshId, out RendererGroup rendererGroup))
-                    {
-                        rendererGroup = new RendererGroup { MeshId = meshId };
-                        groupedRenderers[meshId] = rendererGroup;
-                    }
-
-                    rendererGroup.Renderers.Add(new RendererInfo(renderer, group));
+                    rendererGroup = new RendererGroup { MeshId = meshId };
+                    groupedRenderers[meshId] = rendererGroup;
                 }
+
+                rendererGroup.Renderers.Add(new RendererInfo(renderer, group));
             }
 
             return groupedRenderers.Values.ToList();
@@ -105,36 +103,28 @@ namespace DCL.Roads.Settings
             RendererInfo firstRenderer = rendererGroup.Renderers[0];
             var combinedInstances = new List<PerInstanceBuffer>();
 
-            // Объединяем InstancesBuffer из всех групп, добавляя цвет материала
             foreach (RendererInfo rendererInfo in rendererGroup.Renderers)
+            foreach (PerInstanceBuffer instance in rendererInfo.SourceGroup.InstancesBuffer)
             {
-                Color color = rendererInfo.MaterialColor;
-                var colorVector = new Vector4(color.r, color.g, color.b, color.a);
-
-                foreach (PerInstanceBuffer instance in rendererInfo.SourceGroup.InstancesBuffer)
+                var newInstance = new PerInstanceBuffer(instance.instMatrix, instance.tiling, instance.offset)
                 {
-                    var newInstance = new PerInstanceBuffer(instance.instMatrix, instance.tiling, instance.offset)
-                    {
-                        instColourTint = colorVector,
-                    };
+                    instColourTint = rendererInfo.MaterialColor,
+                };
 
-                    combinedInstances.Add(newInstance);
-                }
+                combinedInstances.Add(newInstance);
             }
 
-            // Создаем название для объединенной группы
-            var combinedName = $"Combined_{firstRenderer.Renderer.SharedMaterial.shader.name}_{rendererGroup.MeshId.VertexCount}v_{rendererGroup.MeshId.TriangleCount}t";
-
             return new GPUInstancingLODGroupWithBuffer(
-                combinedName,
+                firstRenderer.Renderer.CombinedMesh.name,
                 firstRenderer.SourceGroup.LODGroupData,
                 firstRenderer.Renderer,
                 combinedInstances);
         }
 
-        private void RemoveProcessedRenderers(List<RendererInfo> processedRenderers)
+        private static void RemoveProcessedRenderers(List<RendererInfo> processedRenderers)
         {
-            foreach (RendererInfo rendererInfo in processedRenderers) { rendererInfo.SourceGroup.CombinedLodsRenderers.Remove(rendererInfo.Renderer); }
+            foreach (RendererInfo rendererInfo in processedRenderers)
+                rendererInfo.SourceGroup.CombinedLodsRenderers.Remove(rendererInfo.Renderer);
         }
     }
 }
