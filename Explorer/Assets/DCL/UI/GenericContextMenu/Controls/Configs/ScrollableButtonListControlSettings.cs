@@ -1,5 +1,6 @@
 using DCL.UI.GenericContextMenuParameter;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
@@ -13,7 +14,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly RectOffset horizontalLayoutPadding;
         internal readonly int horizontalLayoutSpacing;
         internal readonly int maxHeight;
-        internal string[] dataLabels;
+        internal ICollection<string> dataLabels;
         internal readonly Action<int> callback;
 
         public ScrollableButtonListControlSettings(int elementsSpacing, int maxHeight, Action<int> callback,
@@ -27,7 +28,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             this.callback = callback;
         }
 
-        public void SetData(string[] data)
+        public void SetData(ICollection<string> data)
         {
             this.dataLabels = data;
         }

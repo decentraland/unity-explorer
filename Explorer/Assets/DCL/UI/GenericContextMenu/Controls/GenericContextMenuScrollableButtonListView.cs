@@ -28,23 +28,26 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, Math.Min(CalculateComponentHeight(settings), settings.maxHeight));
 
-            for(int i = 0; i < settings.dataLabels.Length; i++)
+            int i = 0;
+            foreach (string label in settings.dataLabels)
             {
                 int index = i; // Capture the current index for the lambda expression
                 buttonViews.Add((GenericContextMenuSimpleButtonView)controlsPoolManager.GetContextMenuComponent(
-                    new SimpleButtonContextMenuControlSettings(settings.dataLabels[i], () => settings.callback.Invoke(index), settings.horizontalLayoutPadding, settings.horizontalLayoutSpacing),
+                    new SimpleButtonContextMenuControlSettings(label, () => settings.callback.Invoke(index), settings.horizontalLayoutPadding, settings.horizontalLayoutSpacing),
                     i, ScrollContentParent));
+
+                i++;
             }
         }
 
         private float CalculateComponentHeight(ScrollableButtonListControlSettings settings)
         {
-            float totalHeight = (HorizontalLayoutComponent.padding.bottom * settings.dataLabels.Length)
-                                + (HorizontalLayoutComponent.padding.top * settings.dataLabels.Length)
+            float totalHeight = (HorizontalLayoutComponent.padding.bottom * settings.dataLabels.Count)
+                                + (HorizontalLayoutComponent.padding.top * settings.dataLabels.Count)
                                 + VerticalLayoutComponent.padding.bottom
                                 + VerticalLayoutComponent.padding.top
-                                + (VerticalLayoutComponent.spacing * settings.dataLabels.Length)
-                                + (BUTTON_HEIGHT * settings.dataLabels.Length);
+                                + (VerticalLayoutComponent.spacing * settings.dataLabels.Count)
+                                + (BUTTON_HEIGHT * settings.dataLabels.Count);
 
             return totalHeight;
         }
