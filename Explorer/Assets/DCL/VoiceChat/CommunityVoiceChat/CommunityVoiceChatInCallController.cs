@@ -12,10 +12,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct;
 
-        public CommunityVoiceChatInCallController(CommunityVoiceChatInCallView view, IVoiceChatOrchestrator orchestrator)
+        public CommunityVoiceChatInCallController(CommunityVoiceChatInCallView view, IVoiceChatOrchestrator orchestrator, VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.view = view;
-            footerController = new CommunityVoiceChatInCallFooterController(view.InCallFooterView, orchestrator);
+            footerController = new CommunityVoiceChatInCallFooterController(view.InCallFooterView, orchestrator, microphoneHandler);
             ct = new CancellationTokenSource();
         }
 

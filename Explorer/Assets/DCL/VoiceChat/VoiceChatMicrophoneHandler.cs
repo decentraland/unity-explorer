@@ -8,6 +8,7 @@ using LiveKit.Audio;
 using RichTypes;
 using System.Threading;
 using Utility;
+using DCL.Utilities;
 using Object = UnityEngine.Object;
 
 namespace DCL.VoiceChat
@@ -33,9 +34,8 @@ namespace DCL.VoiceChat
         public VoiceChatMicrophoneAudioFilter AudioFilter { get; }
 
         private bool isTalking { get; set; }
-
-        public event Action EnabledMicrophone;
-        public event Action DisabledMicrophone;
+        public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
+        private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty = new(false);
 
         public VoiceChatMicrophoneHandler(
             VoiceChatSettingsAsset voiceChatSettings,
@@ -61,6 +61,7 @@ namespace DCL.VoiceChat
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
 
             microphoneChangeCts?.SafeCancelAndDispose();
+            isMicrophoneEnabledProperty?.Dispose();
 
             if (isMicrophoneInitialized)
             {
@@ -184,7 +185,9 @@ namespace DCL.VoiceChat
             audioSource.volume = 1f;
             AudioFilter.enabled = true;
             AudioFilter.SetFilterActive(true);
-            EnabledMicrophone?.Invoke();
+            
+            isMicrophoneEnabledProperty.Value = true;
+            
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
 
@@ -220,7 +223,8 @@ namespace DCL.VoiceChat
                 AudioFilter.SetFilterActive(false);
             }
 
-            DisabledMicrophone?.Invoke();
+            isMicrophoneEnabledProperty.Value = false;
+            
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
 

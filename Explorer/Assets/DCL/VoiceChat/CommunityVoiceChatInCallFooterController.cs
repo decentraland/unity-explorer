@@ -12,45 +12,49 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly IDisposable isSpeakerSubscription;
         private readonly IDisposable isRequestingToSpeakSubscription;
         private readonly IDisposable callStateSubscription;
+        private readonly IDisposable microphoneStateSubscription;
 
         private readonly CommunityVoiceChatInCallFooterView view;
         private readonly IVoiceChatOrchestrator orchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
-        private readonly MicrophoneButtonController microphoneButtonController;
-        private readonly IDisposable? playerStateSubscription;
+        private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
-
-        private CancellationTokenSource communityCts = new ();
         private CancellationTokenSource cts = new ();
 
         public CommunityVoiceChatInCallFooterController(
             CommunityVoiceChatInCallFooterView view,
-            IVoiceChatOrchestrator orchestrator)
+            IVoiceChatOrchestrator orchestrator,
+            VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.view = view;
             this.orchestrator = orchestrator;
-
-            // We need to refactor microphoneController to either let us add new views to it dynamically and let it manage all buttons
-            // or use a shared reactive property for the microphone state that all views subscribe to
-            // Disabled for now.
-            // this.microphoneButtonController = new MicrophoneButtonController(view.MicrophoneButton, microphoneHandler);
+            this.microphoneHandler = microphoneHandler;
 
             this.view.EndCallButton.onClick.AddListener(OnEndCallButtonClicked);
             this.view.LeaveStageButton.onClick.AddListener(OnLeaveStageButtonClicked);
             this.view.RaiseHandButton.onClick.AddListener(OnRaiseHandButtonClicked);
-
-            // I think we should manage this here and send an event through a bus like the new chat thing is doing? so each controller listens to its own view.
-            // view.OpenListenersSectionButton
+            this.view.MicrophoneButton.MicButton.onClick.AddListener(OnMicrophoneButtonClicked);
 
             isRequestingToSpeakSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsRequestingToSpeak.Subscribe(OnRequestingToSpeakChanged);
             isSpeakerSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Subscribe(OnIsSpeakerChanged);
             callStateSubscription = orchestrator.CurrentCallStatus.Subscribe(OnCallStateChanged);
 
+            microphoneStateSubscription = microphoneHandler.IsMicrophoneEnabled.Subscribe(OnMicrophoneStateChanged);
+
+            view.MicrophoneButton.SetMicrophoneStatus(microphoneHandler.IsMicrophoneEnabled.Value);
             view.LeaveStageButton.gameObject.SetActive(false);
             view.MicrophoneButton.gameObject.SetActive(false);
             view.RaiseHandButton.gameObject.SetActive(false);
+        }
 
-            //We also need to initialize the UI properly when a call is active.
+        private void OnMicrophoneButtonClicked()
+        {
+            microphoneHandler.ToggleMicrophone();
+        }
+
+        private void OnMicrophoneStateChanged(bool isEnabled)
+        {
+            view.MicrophoneButton.SetMicrophoneStatus(isEnabled);
         }
 
         private void OnCallStateChanged(VoiceChatStatus callStatus)
@@ -65,39 +69,61 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnIsSpeakerChanged(bool isSpeaker)
         {
-            OnIsSpeakerChangedAsync(isSpeaker).Forget();
-        }
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                OnIsSpeakerChangedAsync().Forget();
+                return;
+            }
 
-        private async UniTaskVoid OnIsSpeakerChangedAsync(bool isSpeaker)
-        {
-            //We need async methods as these happen because of BE responses or Livekit events
-            await UniTask.SwitchToMainThread();
-            view.LeaveStageButton.gameObject.SetActive(isSpeaker);
-            view.MicrophoneButton.gameObject.SetActive(isSpeaker);
-            view.RaiseHandButton.gameObject.SetActive(!isSpeaker);
+            OnIsSpeakerChangedInternal();
+            return;
+
+            void OnIsSpeakerChangedInternal()
+            {
+                view.LeaveStageButton.gameObject.SetActive(isSpeaker);
+                view.MicrophoneButton.gameObject.SetActive(isSpeaker);
+                view.RaiseHandButton.gameObject.SetActive(!isSpeaker);
+                if (isSpeaker)
+                    view.MicrophoneButton.SetMicrophoneStatus(microphoneHandler.IsMicrophoneEnabled.Value);
+            }
+            async UniTaskVoid OnIsSpeakerChangedAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                OnIsSpeakerChangedInternal();
+            }
         }
 
         private void OnRequestingToSpeakChanged(bool isRequestingToSpeak)
         {
-            OnRequestingToSpeakChangedAsync(isRequestingToSpeak).Forget();
-            //For now hide button after user requests to speak just to see it in action
-            //Change button appearance? Disable Clicking again? should clicking again cancel our request to speak?
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                OnRequestingToSpeakChangedAsync().Forget();
+                return;
+            }
+
+            OnRequestingToSpeakChangedInternal();
+            return;
+
+            void OnRequestingToSpeakChangedInternal()
+            {
+                view.RaiseHandButton.gameObject.SetActive(!isRequestingToSpeak);
+            }
+
+            async UniTaskVoid OnRequestingToSpeakChangedAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                OnRequestingToSpeakChangedInternal();
+            }
         }
 
-        private async UniTaskVoid OnRequestingToSpeakChangedAsync(bool isRequestingToSpeak)
-        {
-            //We need async methods as these happen because of BE responses or Livekit events
-            await UniTask.SwitchToMainThread();
-            view.RaiseHandButton.gameObject.SetActive(!isRequestingToSpeak);
-        }
 
         public void Dispose()
         {
             isSpeakerSubscription?.Dispose();
             isRequestingToSpeakSubscription?.Dispose();
             callStateSubscription?.Dispose();
+            microphoneStateSubscription?.Dispose();
             cts?.Dispose();
-            communityCts?.Dispose();
         }
 
         private void OnRaiseHandButtonClicked()

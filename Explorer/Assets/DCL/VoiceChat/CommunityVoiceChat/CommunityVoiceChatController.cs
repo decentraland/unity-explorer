@@ -30,7 +30,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             CommunityVoiceChatTitlebarView view,
             PlayerEntryView playerEntry,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
@@ -39,7 +40,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
-            inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator);
+            inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler);
 
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;

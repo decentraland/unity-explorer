@@ -50,7 +50,7 @@ namespace DCL.VoiceChat
                 view.InCallView.MicrophoneButton,
             };
 
-            micController = new MicrophoneButtonController(list, microphoneHandler, view.MuteMicrophoneAudio, view.UnMuteMicrophoneAudio);
+            micController = new MicrophoneButtonController(list, microphoneHandler);
 
             statusSubscription = this.voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnVoiceChatStatusChanged);
             this.voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
