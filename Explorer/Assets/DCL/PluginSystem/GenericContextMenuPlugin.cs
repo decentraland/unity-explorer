@@ -57,7 +57,7 @@ namespace DCL.PluginSystem
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuToggleWithCheckPrefab, ct)).GetComponent<GenericContextMenuToggleWithCheckView>();
             GenericContextMenuSubMenuButtonView subMenuButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSubMenuButtonPrefab, ct)).GetComponent<GenericContextMenuSubMenuButtonView>();
             GenericContextMenuSimpleButtonView simpleButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSimpleButtonPrefab, ct)).GetComponent<GenericContextMenuSimpleButtonView>();
-            GenericContextMenuScrollableButtonListView buttonListPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSimpleButtonPrefab, ct)).GetComponent<GenericContextMenuScrollableButtonListView>();
+            GenericContextMenuScrollableButtonListView buttonListPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuButtonListPrefab, ct)).GetComponent<GenericContextMenuScrollableButtonListView>();
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
                 new ControlsPoolManager(profileRepositoryWrapper, panelView.ControlsContainer.transform,

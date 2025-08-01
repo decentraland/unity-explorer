@@ -14,13 +14,9 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public ScrollRect ScrollRect { get; private set; }
         [field: SerializeField] public Transform ScrollContentParent { get; private set; }
 
-        private void Awake()
-        {
-            ScrollRect.SetScrollSensitivityBasedOnPlatform();
-        }
-
         public void Configure(ScrollableButtonListControlSettings settings, ControlsPoolManager controlsPoolManager)
         {
+            ScrollRect.SetScrollSensitivityBasedOnPlatform();
             HorizontalLayoutComponent.padding = new RectOffset(0, 0, 0, 0);
             HorizontalLayoutComponent.spacing = 0;
             VerticalLayoutComponent.padding = settings.verticalLayoutPadding;
