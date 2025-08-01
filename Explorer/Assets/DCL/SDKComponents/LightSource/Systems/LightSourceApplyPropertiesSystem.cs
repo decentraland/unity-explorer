@@ -191,7 +191,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             int faceSize = texture2d.width / 4;
             if (texture2d.height != faceSize * 3)
             {
-                ReportHub.LogError(GetReportCategory(), "Point Light cookie texture must be laid out in a 4x3 grid");
+                ReportHub.LogWarning(GetReportCategory(), "Point Light cookie texture must be laid out in a 4x3 grid");
                 return null;
             }
             int facePixelCount = faceSize * faceSize;
