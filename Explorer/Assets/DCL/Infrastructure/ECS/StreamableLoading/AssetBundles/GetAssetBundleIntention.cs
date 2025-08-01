@@ -72,6 +72,8 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public bool Equals(GetAssetBundleIntention other) =>
+
+            // It doesn't take into consideration the asset bundle version, so whatever is retrieved and cached first will be served for all versions
             StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash);
 
         public CommonLoadingArguments CommonArguments { get; set; }
