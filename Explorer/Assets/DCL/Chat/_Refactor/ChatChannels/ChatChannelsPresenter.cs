@@ -181,6 +181,8 @@ namespace DCL.Chat
 
         private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
+            if (addedMessage.IsSentByOwnUser) return;
+            
             if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
             {
                 UpdateUnreadCount(channel);
