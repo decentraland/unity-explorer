@@ -219,27 +219,27 @@ MonoBehaviour:
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
         <EmbeddedEmotes>k__BackingField:
-        - wave
-        - fistpump
-        - dance
-        - raiseHand
-        - clap
-        - money
-        - kiss
-        - shrug
-        - headexplode
-        - cry
-        - dab
-        - disco
-        - dontsee
-        - hammer
-        - handsair
-        - hohoho
-        - robot
-        - snowfall
-        - tektonik
-        - tik
-        - confettipopper
+        - urn:decentraland:off-chain:base-emotes:wave
+        - urn:decentraland:off-chain:base-emotes:fistpump
+        - urn:decentraland:off-chain:base-emotes:dance
+        - urn:decentraland:off-chain:base-emotes:raiseHand
+        - urn:decentraland:off-chain:base-emotes:clap
+        - urn:decentraland:off-chain:base-emotes:money
+        - urn:decentraland:off-chain:base-emotes:kiss
+        - urn:decentraland:off-chain:base-emotes:shrug
+        - urn:decentraland:off-chain:base-emotes:headexplode
+        - urn:decentraland:off-chain:base-emotes:cry
+        - urn:decentraland:off-chain:base-emotes:dab
+        - urn:decentraland:off-chain:base-emotes:disco
+        - urn:decentraland:off-chain:base-emotes:dontsee
+        - urn:decentraland:off-chain:base-emotes:hammer
+        - urn:decentraland:off-chain:base-emotes:handsair
+        - urn:decentraland:off-chain:base-emotes:hohoho
+        - urn:decentraland:off-chain:base-emotes:robot
+        - urn:decentraland:off-chain:base-emotes:snowfall
+        - urn:decentraland:off-chain:base-emotes:tektonik
+        - urn:decentraland:off-chain:base-emotes:tik
+        - urn:decentraland:off-chain:base-emotes:confettipopper
         <SettingsMenuConfiguration>k__BackingField:
           m_AssetGUID: b47b66eab8da46b4cbcc30100e4194e0
           m_SubObjectName: 
@@ -808,19 +808,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 5215741520409264129
       type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
-      data:
-        defaultWearablesDefinition:
-          m_AssetGUID: 81ea8febf47eb484986af220584361dc
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        defaultEmptyWearable:
-          m_AssetGUID: 2d002c6a594460f4cb42100b50e7e53a
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+      data: 
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
