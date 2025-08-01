@@ -64,8 +64,9 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
             }
 
-            if (staticSceneAssetBundle is { Supported: true, ReadyToUse: false })
+            if (staticSceneAssetBundle is { Supported: true, AssetBundleData: { IsInitialized: false } })
             {
+                UnityEngine.Debug.Log("JUANI WAITING FOR THE STATIC ASSET BUNDLE");
                 staticSceneAssetBundle.RequestAssetBundle();
                 return;
             }

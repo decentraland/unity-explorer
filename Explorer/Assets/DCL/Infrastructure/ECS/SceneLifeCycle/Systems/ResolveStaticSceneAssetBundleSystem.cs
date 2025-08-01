@@ -49,34 +49,38 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        public void InitializeStaticSceneAssetBundlePromise(ref StaticSceneAssetBundle staticSceneAssetBundle, PartitionComponent partitionComponent)
+        public void InitializeStaticSceneAssetBundlePromise(ref StaticSceneAssetBundle staticSceneAssetBundle)
         {
-            if (staticSceneAssetBundle.Request && !staticSceneAssetBundle.PromiseInitiated)
+            if (staticSceneAssetBundle.Request && staticSceneAssetBundle.AssetBundlePromise == AssetBundlePromise.NULL)
             {
                 staticSceneAssetBundle.AssetBundlePromise = AssetBundlePromise.Create(World,
                     GetAssetBundleIntention.CreateSingleAssetBundleHack($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA"),
-                    partitionComponent);
-
-                staticSceneAssetBundle.PromiseInitiated = true;
+                    PartitionComponent.TOP_PRIORITY);
             }
         }
 
         [Query]
         public void ResolveStaticSceneAssetBundlePromise(ref StaticSceneAssetBundle staticSceneAssetBundle)
         {
-            if (!staticSceneAssetBundle.PromiseInitiated || staticSceneAssetBundle.Consumed) return;
+            // Skip if promise hasn't been created yet or is already consumed
+            if (staticSceneAssetBundle.AssetBundlePromise == AssetBundlePromise.NULL || staticSceneAssetBundle.AssetBundlePromise.IsConsumed) return;
 
             if (staticSceneAssetBundle.AssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
-                staticSceneAssetBundle.AssetBundleData = Result.Asset!;
-                staticSceneAssetBundle.Assets = new Dictionary<string, GameObject>();
-                foreach (Object asset in staticSceneAssetBundle.AssetBundleData.assets)
+                staticSceneAssetBundle.AssetBundleData = Result;
+                if (Result.Succeeded)
                 {
-                    if(asset is GameObject go)
-                        staticSceneAssetBundle.Assets.Add(asset.name + PlatformUtils.GetCurrentPlatform(), go);
+                    staticSceneAssetBundle.Assets = new Dictionary<string, GameObject>();
+                    foreach (Object asset in staticSceneAssetBundle.AssetBundleData.Asset.assets)
+                    {
+                        if(asset is GameObject go)
+                            staticSceneAssetBundle.Assets.Add(asset.name + PlatformUtils.GetCurrentPlatform(), go);
+                    }
                 }
-                staticSceneAssetBundle.ReadyToUse = true;
-                staticSceneAssetBundle.Consumed = true;
+                else
+                {
+                    staticSceneAssetBundle.Assets = new Dictionary<string, GameObject>();
+                }
 
             }
         }

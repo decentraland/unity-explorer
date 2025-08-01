@@ -95,7 +95,7 @@ namespace DCL.PluginSystem.World
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
-                persistentEntities.SceneContainer, true);
+                persistentEntities.SceneContainer, sharedDependencies.StaticSceneAssetBundle);
         }
     }
 }
