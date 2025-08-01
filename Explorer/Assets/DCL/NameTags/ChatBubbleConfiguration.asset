@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: ChatBubbleConfiguration
   m_EditorClassIdentifier: 
   nametagMarginOffsetWidth: 0.2
-  nametagMarginOffsetHeight: 0.15
-  bubbleMarginOffsetWidth: 0.4
-  bubbleMarginOffsetHeight: 0.6
+  nametagMarginOffsetHeight: 0.13
+  bubbleMarginOffsetWidth: 0.35
+  bubbleMarginOffsetHeight: 0.51
   animationInDuration: 0.5
   animationOutDuration: 0.35
   fullOpacityMaxDistance: 20
