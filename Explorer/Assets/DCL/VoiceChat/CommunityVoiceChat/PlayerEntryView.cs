@@ -14,7 +14,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [SerializeField] private Button contextMenuButton;
 
-        [SerializeField] public SimpleProfileView profileView;
+        [SerializeField] public ProfilePictureView ProfilePictureView;
+        [SerializeField] public SimpleUserNameElement nameElement;
 
         private VoiceChatParticipantsStateService.ParticipantState userProfile;
         private VoiceChatParticipantsStateService.ParticipantState localUserProfile;

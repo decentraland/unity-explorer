@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Web3;
@@ -212,7 +214,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries.Add(participantState.WalletId, entryView);
 
-            entryView.profileView.SetupAsync(new Web3Address(participantState.WalletId), profileRepositoryWrapper, CancellationToken.None).Forget();
+            entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, ProfileNameColorHelper.GetNameColor(participantState.Name.Value), participantState.ProfilePictureUrl, participantState.WalletId, new CancellationToken()).Forget();
+            entryView.nameElement.Setup(participantState.Name.Value, participantState.WalletId, participantState.HasClaimedName.Value ?? false, ProfileNameColorHelper.GetNameColor(participantState.Name.Value));
 
             view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
 

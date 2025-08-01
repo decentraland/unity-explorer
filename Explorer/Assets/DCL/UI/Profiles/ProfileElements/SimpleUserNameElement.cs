@@ -21,5 +21,17 @@ namespace DCL.UI.ProfileElements
 
             verifiedMark.SetActive(profile.HasClaimedName);
         }
+
+        public void Setup(string username, string walletId, bool hasClaimedName, Color userColor)
+        {
+            userNameText.text = username;
+            userNameText.color = userColor;
+            userNameHashtagText.gameObject.SetActive(!hasClaimedName);
+
+            if (!hasClaimedName)
+                userNameHashtagText.text = string.Format($"#{walletId.Substring(walletId.Length - 4)}");
+
+            verifiedMark.SetActive(hasClaimedName);
+        }
     }
 }
