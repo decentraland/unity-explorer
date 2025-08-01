@@ -76,13 +76,13 @@ namespace DCL.SDKComponents.LightSource.Systems
                 lightSourceInstance.color = pbLightSource.Color.ToUnityColor();
 
             float intensity = pbLightSource.HasIntensity ? pbLightSource.Intensity : settings.DefaultValues.Intensity;
-            float intensityScale = pbLightSource.TypeCase switch
-                                   {
-                                       PBLightSource.TypeOneofCase.Spot => settings.SpotLightIntensityScale,
-                                       PBLightSource.TypeOneofCase.Point => settings.PointLightIntensityScale,
-                                       _ => 1
-                                   };
-            intensity *= intensityScale;
+
+            lightSourceComponent.IntensityScale = pbLightSource.TypeCase switch
+                                                  {
+                                                      PBLightSource.TypeOneofCase.Spot => settings.SpotLightIntensityScale,
+                                                      PBLightSource.TypeOneofCase.Point => settings.PointLightIntensityScale,
+                                                      _ => 1
+                                                  };
             lightSourceComponent.MaxIntensity = intensity;
 
             switch (pbLightSource.TypeCase)

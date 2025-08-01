@@ -41,10 +41,10 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            lightSourceInstance.intensity = lightSourceComponent.MaxIntensity * lightSourceComponent.CurrentIntensityNormalized;
+            lightSourceInstance.intensity = lightSourceComponent.MaxIntensity * lightSourceComponent.IntensityScale * lightSourceComponent.CurrentIntensityNormalized;
 
             bool computeRange = !pbLightSource.HasRange || pbLightSource.Range < 0;
-            lightSourceInstance.range = computeRange ? Mathf.Pow(lightSourceInstance.intensity, settings.RangeFormulaExponent) : pbLightSource.Range;
+            lightSourceInstance.range = computeRange ? Mathf.Pow(lightSourceComponent.MaxIntensity, settings.RangeFormulaExponent) : pbLightSource.Range;
 
             lightSourceInstance.enabled = lightSourceComponent.CurrentIntensityNormalized > 0;
         }
