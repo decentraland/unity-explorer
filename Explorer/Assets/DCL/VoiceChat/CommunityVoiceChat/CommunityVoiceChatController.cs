@@ -2,11 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
-using DCL.Web3;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using Vector3 = UnityEngine.Vector3;
@@ -49,10 +47,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
-            this.view.PromoteToSpeaker += OnPromoteToSpeaker;
-            this.view.DemoteSpeaker += OnDemoteSpeaker;
-            this.view.Kick += OnKickUser;
-            this.view.Ban += OnBanUser;
 
             // Should we send this through an internal event bus to avoid having these sub-view subscriptions or bubbling up events?
             view.CommunityVoiceChatInCallView.InCallFooterView.OpenListenersSectionButton.onClick.AddListener(OpenListenersSection);
@@ -74,10 +68,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void Dispose()
         {
             view.CollapseButtonClicked -= OnCollapsedButtonClicked;
-            view.PromoteToSpeaker -= OnPromoteToSpeaker;
-            view.DemoteSpeaker -= OnDemoteSpeaker;
-            view.Kick -= OnKickUser;
-            view.Ban -= OnBanUser;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed -= OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined -= OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft -= OnParticipantLeft;
@@ -145,23 +135,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             playerEntriesPool.Release(usedPlayerEntries[leftParticipantId]);
             usedPlayerEntries.Remove(leftParticipantId);
         }
-
-        private void OnPromoteToSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
-        {
-            voiceChatOrchestrator.CommunityStatusService.PromoteToSpeakerInCurrentCall(member.WalletId);
-        }
-
-        private void OnDemoteSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
-        {
-            voiceChatOrchestrator.CommunityStatusService.DemoteFromSpeakerInCurrentCall(member.WalletId);
-        }
-
-        private void OnKickUser(VoiceChatParticipantsStateService.ParticipantState member)
-        {
-            voiceChatOrchestrator.CommunityStatusService.KickPlayerFromCurrentCall(member.WalletId);
-        }
-
-        private void OnBanUser(VoiceChatParticipantsStateService.ParticipantState member) { }
 
         private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
         {

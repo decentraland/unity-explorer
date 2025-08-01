@@ -20,6 +20,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
+using DCL.Communities.CommunitiesCard.Members;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
@@ -98,7 +99,6 @@ using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.LaunchModes;
-using Global.Versioning;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -111,6 +111,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
+using Global.Versioning;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -605,6 +606,7 @@ namespace Global.Dynamic
             var profileChangesBus = new ProfileChangesBus();
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
+            CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
@@ -620,7 +622,9 @@ namespace Global.Dynamic
                 realmNavigator,
                 friendOnlineStatusCacheProxy,
                 profileRepository,
-                sharedSpaceManager);
+                sharedSpaceManager,
+                communityVoiceChatContextMenuSettingsSo,
+                voiceChatContainer.VoiceChatOrchestrator);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,

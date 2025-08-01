@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
 using DCL.Chat.EventBus;
+using DCL.Communities.CommunitiesCard.Members;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
 using DCL.Multiplayer.Connectivity;
@@ -9,11 +10,11 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using System;
@@ -39,9 +40,12 @@ namespace MVC
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IProfileRepository profileRepository;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
+        private CommunityPlayerEntryContextMenu communityPlayerEntryContextMenu;
         private ChatOptionsContextMenuController chatOptionsContextMenuController;
 
         public MVCManagerMenusAccessFacade(
@@ -55,7 +59,9 @@ namespace MVC
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator, ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IProfileRepository profileRepository,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
@@ -69,6 +75,8 @@ namespace MVC
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.profileRepository = profileRepository;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -97,6 +105,16 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint);
         }
 
+        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, bool isModeratorOrAdmin, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+        {
+            Web3Address walletId = new Web3Address(participantWalletId);
+            Profile profile = await profileRepository.GetAsync(walletId, ct);
+
+            if (profile == null) return;
+
+            await ShowCommunityPlayerEntryContextMenu(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint, isSpeaker, isModeratorOrAdmin);
+        }
+
         public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
             Action onHide = null)
         {
@@ -117,6 +135,15 @@ namespace MVC
             genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
         }
+
+        private async UniTask ShowCommunityPlayerEntryContextMenu(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false, bool isModeratorOrAdmin = false)
+        {
+            communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, voiceChatContextMenuSettings, voiceChatOrchestrator);
+
+            await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker, isModeratorOrAdmin);
+        }
+
 
         private ContextMenuOpenDirection ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)
         {

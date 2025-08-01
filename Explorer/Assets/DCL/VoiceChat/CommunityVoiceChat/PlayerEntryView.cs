@@ -34,6 +34,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             userProfile.IsSpeaking.OnUpdate += OnChangeIsSpeaking;
         }
 
+        public bool CanUnHover;
+
         private void OnChangeIsSpeaking(bool isSpeaking)
         {
             //Handle is speaking logic and visuals
