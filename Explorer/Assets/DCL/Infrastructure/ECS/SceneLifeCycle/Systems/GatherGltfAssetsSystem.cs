@@ -24,7 +24,6 @@ namespace ECS.SceneLifeCycle.Systems
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
         private int FRAMES_COUNT = 90;
-        private int FRAMES_COUNT_FOR_STATIC_SCENE = 2;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
@@ -84,11 +83,21 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            if ((staticSceneAssetBundle is { Supported: true } && !staticSceneAssetBundle.AssetBundleData.IsInitialized && sceneStateProvider.TickNumber < FRAMES_COUNT_FOR_STATIC_SCENE) ||
-                (staticSceneAssetBundle is not { Supported: true } && sceneStateProvider.TickNumber < FRAMES_COUNT))
+            bool shouldWait;
+
+            if (staticSceneAssetBundle is { Supported: true })
             {
-                eventsBuffer.ForEach(forEachEvent);
+                // If supported but not initialized, and no entities under observation, wait
+                shouldWait = !staticSceneAssetBundle.AssetBundleData.IsInitialized || entitiesUnderObservation.Count == 0;
             }
+            else
+            {
+                // If not supported, run for frame count
+                shouldWait = sceneStateProvider.TickNumber < FRAMES_COUNT;
+            }
+
+            if (shouldWait)
+                eventsBuffer.ForEach(forEachEvent);
             else if (!concluded)
             {
                 if (totalAssetsToResolve == -1)
@@ -167,6 +176,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             void Conclude()
             {
+                UnityEngine.Debug.Log($"JUANI COMPLETED AT {sceneStateProvider.TickNumber}");
                 concluded = true;
                 sceneData.SceneLoadingConcluded = true;
 
