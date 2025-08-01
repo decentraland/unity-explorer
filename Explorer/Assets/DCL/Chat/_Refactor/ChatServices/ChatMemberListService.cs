@@ -9,18 +9,12 @@ using DCL.Friends;
 using DCL.Utilities;
 using DCL.Chat.History;
 using DCL.Communities;
-using DCL.Diagnostics;
-using DCL.Friends;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Profiles;
 using DCL.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using LiveKit.Rooms.Participants;
-using System;
-using System.Collections.Generic;
-using System.Threading;
+using System.Threading.Tasks;
+using DCL.UI.Profiles.Helpers;
 using Utility;
 using Utility.Multithreading;
 using Utility.Types;
@@ -41,6 +35,7 @@ namespace DCL.Chat.ChatServices
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRoomHub roomHub;
         private readonly IProfileCache profileCache;
+        private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new();
@@ -51,8 +46,8 @@ namespace DCL.Chat.ChatServices
         private CancellationTokenSource? communityTaskCts;
         private readonly HashSet<string> lastKnownMemberIds = new ();
 
-        private int lastKnownParticipantCount = -1;
-        private int lastKnownMemberCount = -1;
+        private int lastRefreshedMemberListCount = -1;
+        private int lastKnownTitleBarCount = -1;
 
         /// <summary>
         ///     Fires when the total number of members in the current channel changes.
@@ -68,6 +63,7 @@ namespace DCL.Chat.ChatServices
 
         public ChatMemberListService(IRoomHub roomHub,
             IProfileCache profileCache,
+            ProfileRepositoryWrapper profileRepository,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             CurrentChannelService currentChannelService,
             CommunitiesDataProvider communitiesDataProvider,
@@ -75,6 +71,7 @@ namespace DCL.Chat.ChatServices
         {
             this.roomHub = roomHub;
             this.profileCache = profileCache;
+            this.profileRepository = profileRepository;
             this.friendsServiceProxy = friendsServiceProxy;
             this.currentChannelService = currentChannelService;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -149,6 +146,8 @@ namespace DCL.Chat.ChatServices
         private void OnChannelChanged(ChatChannel? newChannel)
         {
             TearDownCurrentChannelListeners();
+            ResetAllMemberState();
+            
             channelCts = CancellationTokenSource.CreateLinkedTokenSource(lifeCts.Token);
 
             if (newChannel == null)
@@ -172,6 +171,14 @@ namespace DCL.Chat.ChatServices
                     UpdateAndBroadcastCount(0);
                     break;
             }
+        }
+
+        private void ResetAllMemberState()
+        {
+            membersBuffer.Clear();
+            lastKnownMemberIds.Clear();
+            lastRefreshedMemberListCount = -1;
+            lastKnownTitleBarCount = -1;
         }
 
         /// <summary>
@@ -225,8 +232,18 @@ namespace DCL.Chat.ChatServices
 
                             if (ct.IsCancellationRequested) break;
 
-                            if (lastKnownMemberCount != membersBuffer.Count)
+                            var result = await communitiesDataProvider
+                                .GetOnlineMemberCountAsync(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Id), ct)
+                                .SuppressToResultAsync();
+
+                            if (!result.Success) continue;
+
+                            int liveCount = result.Value > 0 ? result.Value - 1 : 0;
+
+                            if (liveCount != lastRefreshedMemberListCount)
+                            {
                                 await RefreshFullListAsync(ct);
+                            }
                             break;
                     }
                 }
@@ -253,7 +270,7 @@ namespace DCL.Chat.ChatServices
                 switch (currentChannel.ChannelType)
                 {
                     case ChatChannel.ChatChannelType.NEARBY:
-                        FetchNearbyMembers(ct);
+                        await FetchNearbyMembers(ct);
                         break;
                     case ChatChannel.ChatChannelType.COMMUNITY:
                         await FetchCommunityMembersAsync(currentChannel.Id, ct);
@@ -262,7 +279,7 @@ namespace DCL.Chat.ChatServices
 
                 if (ct.IsCancellationRequested) return;
 
-                lastKnownMemberCount = membersBuffer.Count;
+                lastRefreshedMemberListCount = membersBuffer.Count;
                 lastKnownMemberIds.Clear();
                 foreach (var member in membersBuffer)
                     lastKnownMemberIds.Add(member.Id);
@@ -330,13 +347,7 @@ namespace DCL.Chat.ChatServices
                     }
 
                     int memberCount = result.Value > 0 ? result.Value - 1 : 0;
-                    if (memberCount != lastKnownMemberCount)
-                    {
-                        lastKnownMemberCount = memberCount;
-
-                        OnMemberCountUpdated?.Invoke(lastKnownMemberCount);
-                    }
-
+                    UpdateAndBroadcastCount(memberCount);
                     await UnifiedDelay(ct);
                 }
                 catch (OperationCanceledException)
@@ -356,17 +367,24 @@ namespace DCL.Chat.ChatServices
 
         private void UpdateAndBroadcastCount(int newCount)
         {
-            if (newCount == lastKnownMemberCount) return;
-            lastKnownMemberCount = newCount;
+            if (newCount == lastKnownTitleBarCount) return;
+            lastKnownTitleBarCount = newCount;
 
-            MultithreadingUtility.InvokeOnMainThread(() => OnMemberCountUpdated?.Invoke(lastKnownMemberCount));
+            MultithreadingUtility.InvokeOnMainThread(() => OnMemberCountUpdated?.Invoke(lastKnownTitleBarCount));
         }
 
-        private void FetchNearbyMembers(CancellationToken ct)
+        private async UniTask FetchNearbyMembers(CancellationToken ct)
         {
             var profiles = new List<Profile>();
-            GetProfilesFromParticipants(profiles);
 
+            // 1. Await the new asynchronous method to get the fully populated list of profiles.
+            await GetProfilesFromParticipantsAsync(profiles, ct);
+
+            // If cancellation was requested during the fetch, stop processing.
+            if (ct.IsCancellationRequested) return;
+
+            // 2. The rest of your logic remains the same.
+            //    By the time we get here, 'profiles' contains all members that could be found.
             foreach (var profile in profiles)
             {
                 if (ct.IsCancellationRequested) return;
@@ -404,6 +422,39 @@ namespace DCL.Chat.ChatServices
             {
                 if (profileCache.TryGet(identity, out var profile))
                     outProfiles.Add(profile);
+            }
+        }
+
+        private async UniTask GetProfilesFromParticipantsAsync(List<Profile> outProfiles, CancellationToken ct)
+        {
+            outProfiles.Clear();
+            var participantIdentities = roomHub.AllLocalRoomsRemoteParticipantIdentities();
+
+            // 1. Create a list to hold all the asynchronous operations (Tasks).
+            var profileTasks = new List<UniTask<Profile?>>();
+
+            foreach (string? identity in participantIdentities)
+            {
+                if (ct.IsCancellationRequested) return;
+
+                // 2. Start the fetch operation for each identity and add the Task to our list.
+                //    We do NOT await here. This starts the download immediately.
+                profileTasks.Add(profileRepository.GetProfileAsync(identity, ct));
+            }
+
+            // 3. Now, wait for ALL the tasks in the list to complete.
+            //    The requests run concurrently, making this very efficient.
+            Profile?[] profiles = await UniTask.WhenAll(profileTasks);
+
+            // 4. Iterate through the results and add the valid, non-null profiles.
+            foreach (var profile in profiles)
+            {
+                if (ct.IsCancellationRequested) return;
+
+                if (profile != null)
+                {
+                    outProfiles.Add(profile);
+                }
             }
         }
 

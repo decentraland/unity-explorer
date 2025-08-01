@@ -215,6 +215,7 @@ namespace DCL.PluginSystem.Global
 
             var chatMemberService = new ChatMemberListService(roomHub,
                 profileCache,
+                profileRepositoryWrapper,
                 friendsServiceProxy,
                 currentChannelService,
                 communityDataProvider,
