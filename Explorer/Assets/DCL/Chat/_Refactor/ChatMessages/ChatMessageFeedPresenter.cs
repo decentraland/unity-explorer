@@ -65,7 +65,7 @@ namespace DCL.Chat.ChatMessages
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
-            
+
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
 
             view.Initialize(viewModels);
@@ -90,20 +90,19 @@ namespace DCL.Chat.ChatMessages
             {
                 ChatChannel currentChannel = currentChannelService.CurrentChannel!;
                 int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
-                separatorFixedIndexFromBottom = unreadMessagesCount > 0 ? unreadMessagesCount : -1; // After the read message from the bottom
+
+                if (unreadMessagesCount > 0)
+                {
+                    separatorFixedIndexFromBottom = unreadMessagesCount; // After the read message from the bottom
+                    viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
+                }
+
+                // Otherwise separatorFixedIndexFromBottom remains -1
+
                 return true;
             }
 
             return false;
-        }
-
-        private void IncrementSeparatorIndex()
-        {
-            if (separatorIsVisible)
-            {
-                separatorFixedIndexFromBottom++;
-                viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
-            }
         }
 
         private void RemoveNewMessagesSeparator()
@@ -123,8 +122,10 @@ namespace DCL.Chat.ChatMessages
             // 1. Capture the state BEFORE making any changes
             bool wasAtBottom = view.IsAtBottom();
 
+            bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
+
             // 2. Delegate the event to the specialized presenter. It will handle all the logic.
-            scrollToBottomPresenter.OnMessageReceived(addedMessage.IsSentByOwnUser, wasAtBottom);
+            scrollToBottomPresenter.OnMessageReceived(isSentByOwnUser, wasAtBottom);
 
             // 3. Perform the actions for the message feed itself (no button logic here)
             ChatMessageViewModel newMessageViewModel = createMessageViewModelCommand.Execute(addedMessage);
@@ -145,14 +146,23 @@ namespace DCL.Chat.ChatMessages
             }
 
             if (!separatorAdded)
-                IncrementSeparatorIndex();
+            {
+                // Increment the separator index and move it to the new position
+                if (previousNewMessagesSeparatorIndex > -1)
+                {
+                    separatorFixedIndexFromBottom = previousNewMessagesSeparatorIndex + 1;
+                    viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
+                }
+            }
 
             messageCountWhenSeparatorViewed = null;
 
             // 4. Update the view and auto-scroll if necessary
             view.ReconstructScrollView(false);
-            if (addedMessage.IsSentByOwnUser || wasAtBottom)
+
+            if (isSentByOwnUser || wasAtBottom)
             {
+                markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
                 view.ShowLastMessage();
             }
 
@@ -189,9 +199,11 @@ namespace DCL.Chat.ChatMessages
         {
             ChatChannel.ChannelId currentChannelId = currentChannelService.CurrentChannelId;
 
-            chatHistory.AddMessage(currentChannelId, currentChannelService.CurrentChannel!.ChannelType, new ChatMessage("some message", "validated name",
-                currentChannelId.Id,
-                true, "sds"));
+            string walletAddress = currentChannelService.CurrentChannel!.ChannelType == ChatChannel.ChatChannelType.USER ? currentChannelId.Id : "fake_wallet_id";
+
+            chatHistory.AddMessage(currentChannelId, currentChannelService.CurrentChannel!.ChannelType, new ChatMessage("some message", "FakeName",
+                walletAddress,
+                false, "#1234"));
         }
 
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
@@ -239,7 +251,7 @@ namespace DCL.Chat.ChatMessages
         private void OnChatHistoryCleared(ChatEvents.ChatHistoryClearedEvent evt)
         {
             scrollToBottomPresenter.OnChannelChanged();
-            
+
             if (currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
             {
                 view.SetScrollToBottomButtonVisibility(false, 0, false);
@@ -274,7 +286,7 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
-            
+
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
@@ -284,7 +296,7 @@ namespace DCL.Chat.ChatMessages
         {
             view.ShowLastMessage(useSmoothScroll: true);
         }
-        
+
         private void OnScrollToBottomButtonClicked()
         {
             view.ShowLastMessage(useSmoothScroll: true);
@@ -317,7 +329,7 @@ namespace DCL.Chat.ChatMessages
             view.StopChatEntriesFadeout();
             if (!isFocused)
                 view.StartChatEntriesFadeout();
-            
+
             float targetAlpha = isFocused ? 1f : 0f;
             view.StartScrollBarFade(targetAlpha, animate ? duration : 0f, easing);
         }
