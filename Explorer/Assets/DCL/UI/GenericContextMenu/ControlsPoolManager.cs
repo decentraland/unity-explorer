@@ -30,7 +30,8 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuButtonWithStringDelegateView buttonWithDelegatePrefab,
             GenericContextMenuTextView textPrefab,
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab,
-            GenericContextMenuSubMenuButtonView subMenuButtonPrefab)
+            GenericContextMenuSubMenuButtonView subMenuButtonPrefab,
+            GenericContextMenuSimpleButtonView simpleButtonPrefab)
         {
             this.controlsParent = controlsParent;
 
@@ -49,6 +50,7 @@ namespace DCL.UI.GenericContextMenu
             CreateObjectPool(textPrefab);
             CreateObjectPool(toggleWithCheckPrefab);
             CreateObjectPool(subMenuButtonPrefab);
+            CreateObjectPool(simpleButtonPrefab);
         }
 
         private void CreateObjectPool<T>(T prefab) where T: MonoBehaviour =>
@@ -83,6 +85,7 @@ namespace DCL.UI.GenericContextMenu
                                                         {
                                                             SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
                                                             ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
+                                                            SimpleButtonContextMenuControlSettings simpleButtonSettings => GetSimpleButton(simpleButtonSettings),
                                                             ToggleWithIconContextMenuControlSettings toggleWithIconSettings => GetToggleWithIcon(toggleWithIconSettings),
                                                             ToggleWithCheckContextMenuControlSettings toggleWithCheckSettings => GetToggleWithCheck(toggleWithCheckSettings),
                                                             ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
@@ -131,6 +134,14 @@ namespace DCL.UI.GenericContextMenu
             separatorView.Configure(settings);
 
             return separatorView;
+        }
+        
+        private GenericContextMenuComponentBase GetSimpleButton(SimpleButtonContextMenuControlSettings settings)
+        {
+            GenericContextMenuSimpleButtonView buttonView = GetPoolFromRegistry<GenericContextMenuSimpleButtonView>().Get();
+            buttonView.Configure(settings);
+
+            return buttonView;
         }
 
         private GenericContextMenuComponentBase GetSubMenuButton(SubMenuContextMenuButtonSettings settings)
