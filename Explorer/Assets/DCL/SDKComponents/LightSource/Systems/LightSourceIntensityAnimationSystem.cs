@@ -43,8 +43,8 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             lightSourceInstance.intensity = lightSourceComponent.MaxIntensity * lightSourceComponent.CurrentIntensityNormalized;
 
-            bool shouldOverrideRange = pbLightSource.HasRange && pbLightSource.Range > 0;
-            lightSourceInstance.range = shouldOverrideRange ? pbLightSource.Range : Mathf.Pow(lightSourceInstance.intensity, settings.RangeFormulaExponent);
+            bool computeRange = !pbLightSource.HasRange || pbLightSource.Range < 0;
+            lightSourceInstance.range = computeRange ? Mathf.Pow(lightSourceInstance.intensity, settings.RangeFormulaExponent) : pbLightSource.Range;
 
             lightSourceInstance.enabled = lightSourceComponent.CurrentIntensityNormalized > 0;
         }
