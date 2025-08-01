@@ -123,6 +123,8 @@ namespace DCL.Chat
         [field: Header("Voice Chat")]
         [field: SerializeField] public CommunityStreamSubTitleBarView CommunityStreamSubTitleBar { get; private set; }
 
+        [field: SerializeField] public CanvasGroup CommunitySubTitleBarCanvasGroup { get; private set; }
+
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.
         /// </summary>
@@ -1071,6 +1073,7 @@ namespace DCL.Chat
             messagesPanelBackgroundCanvasGroup.DOKill();
             conversationsToolbarCanvasGroup.DOKill();
             titlebarCanvasGroup.DOKill();
+            CommunitySubTitleBarCanvasGroup.DOKill();
 
             if (useAnimation)
             {
@@ -1082,12 +1085,14 @@ namespace DCL.Chat
                     messagesPanelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
                     conversationsToolbarCanvasGroup.DOFade(1, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(1, BackgroundFadeTime);
+                    CommunitySubTitleBarCanvasGroup.DOFade(1, BackgroundFadeTime);
                 }
                 else
                 {
                     messagesPanelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime).OnComplete(() => { SetBackgroundVisibility(false, false); });
                     conversationsToolbarCanvasGroup.DOFade(0, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(0, BackgroundFadeTime);
+                    CommunitySubTitleBarCanvasGroup.DOFade(0, BackgroundFadeTime);
                 }
             }
             else
@@ -1098,6 +1103,7 @@ namespace DCL.Chat
                 conversationsToolbarCanvasGroup.gameObject.SetActive(isVisible);
                 titlebarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
                 titlebarCanvasGroup.gameObject.SetActive(isVisible);
+                CommunitySubTitleBarCanvasGroup.alpha = isVisible? 1.0f : 0.0f;
             }
         }
 
@@ -1107,6 +1113,7 @@ namespace DCL.Chat
                 OnMemberListClosingButtonClicked();
 
             Blur();
+            ;
         }
 
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)

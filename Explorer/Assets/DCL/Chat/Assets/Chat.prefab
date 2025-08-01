@@ -1486,6 +1486,7 @@ MonoBehaviour:
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
   <CommunityStreamSubTitleBar>k__BackingField: {fileID: 811883546609630319}
+  <CommunitySubTitleBarCanvasGroup>k__BackingField: {fileID: 1961168508267631230}
   IsMaskActive: 0
 --- !u!1001 &565260970276897274
 PrefabInstance:
@@ -3782,6 +3783,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6d871e9357743228a10d15fcea3ea1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!225 &1961168508267631230 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 7420654053014624324, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
+  m_PrefabInstance: {fileID: 9064635360231180858}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &6811218640456991897 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2542918132137397923, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
