@@ -2,6 +2,8 @@
 using Castle.Core.Internal;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
@@ -19,16 +21,19 @@ namespace DCL.VoiceChat
     {
         private readonly ICommunityVoiceService voiceChatService;
         private readonly VoiceChatParticipantsStateService participantsStateService;
+        private readonly INotificationsBusController notificationBusController;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
 
         private CancellationTokenSource cts = new ();
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
-            VoiceChatParticipantsStateService participantsStateService)
+            VoiceChatParticipantsStateService participantsStateService,
+            INotificationsBusController notificationBusController)
         {
             this.voiceChatService = voiceChatService;
             this.participantsStateService = participantsStateService;
+            this.notificationBusController = notificationBusController;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
         }
 
@@ -253,6 +258,8 @@ namespace DCL.VoiceChat
                 communityVoiceChatCalls[communityUpdate.CommunityId] = new ReactiveProperty<bool>(communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted);
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Added community {communityUpdate.CommunityId}");
             }
+
+            notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
         }
 
         public override void Dispose()
