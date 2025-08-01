@@ -181,12 +181,15 @@ namespace DCL.Chat
 
         private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
-            if (destinationChannel.Id.Equals(currentChannelService.CurrentChannelId))
-                return;
+            if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
+            {
+                UpdateUnreadCount(channel);
+            }
 
-            if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out ChatChannel? channel)) { UpdateUnreadCount(channel); }
-
-            if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY) { view.MoveChannelToTop(destinationChannel.Id); }
+            if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
+            {
+                view.MoveChannelToTop(destinationChannel.Id);
+            }
         }
 
         private void OnReadMessagesChanged(ChatChannel changedChannel)
