@@ -88,9 +88,9 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(string? faceSnapshotUrl, CancellationToken ct = default)
         {
-            if (faceSnapshotUrl.Equals(currentUrl)) return;
+            if (faceSnapshotUrl != null && faceSnapshotUrl.Equals(currentUrl)) return;
 
             cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
             currentUrl = faceSnapshotUrl;

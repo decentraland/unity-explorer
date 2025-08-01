@@ -51,5 +51,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         // Referral
         REFERRAL_INVITED_USERS_ACCEPTED,
         REFERRAL_NEW_TIER_REACHED,
+
+        COMMUNITY_VOICE_CHAT_STARTED,
     }
 }

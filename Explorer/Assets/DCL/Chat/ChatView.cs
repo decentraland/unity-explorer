@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.Communities;
+using DCL.VoiceChat;
 using DCL.Web3;
 using MVC;
 using DG.Tweening;
@@ -118,6 +119,11 @@ namespace DCL.Chat
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio {get; private set;}
+
+        [field: Header("Voice Chat")]
+        [field: SerializeField] public CommunityStreamSubTitleBarView CommunityStreamSubTitleBar { get; private set; }
+
+        [field: SerializeField] public CanvasGroup CommunitySubTitleBarCanvasGroup { get; private set; }
 
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.
@@ -858,8 +864,7 @@ namespace DCL.Chat
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
 
-            //TODO: re-enable this
-            //chatTitleBar.SetCallButtonStatus(currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            chatTitleBar.SetCallButtonStatus(currentChannel.ChannelType is ChatChannel.ChatChannelType.COMMUNITY or ChatChannel.ChatChannelType.USER);
             chatInputBoxGameObject.SetActive(isOtherUserConnected);
             inputMaskGameObject.SetActive(!isOtherUserConnected);
 
@@ -1068,6 +1073,7 @@ namespace DCL.Chat
             messagesPanelBackgroundCanvasGroup.DOKill();
             conversationsToolbarCanvasGroup.DOKill();
             titlebarCanvasGroup.DOKill();
+            CommunitySubTitleBarCanvasGroup.DOKill();
 
             if (useAnimation)
             {
@@ -1079,12 +1085,14 @@ namespace DCL.Chat
                     messagesPanelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
                     conversationsToolbarCanvasGroup.DOFade(1, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(1, BackgroundFadeTime);
+                    CommunitySubTitleBarCanvasGroup.DOFade(1, BackgroundFadeTime);
                 }
                 else
                 {
                     messagesPanelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime).OnComplete(() => { SetBackgroundVisibility(false, false); });
                     conversationsToolbarCanvasGroup.DOFade(0, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(0, BackgroundFadeTime);
+                    CommunitySubTitleBarCanvasGroup.DOFade(0, BackgroundFadeTime);
                 }
             }
             else
@@ -1095,6 +1103,7 @@ namespace DCL.Chat
                 conversationsToolbarCanvasGroup.gameObject.SetActive(isVisible);
                 titlebarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
                 titlebarCanvasGroup.gameObject.SetActive(isVisible);
+                CommunitySubTitleBarCanvasGroup.alpha = isVisible? 1.0f : 0.0f;
             }
         }
 
@@ -1104,6 +1113,7 @@ namespace DCL.Chat
                 OnMemberListClosingButtonClicked();
 
             Blur();
+            ;
         }
 
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)

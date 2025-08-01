@@ -63,8 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
-        private readonly bool isCallEnabled;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
@@ -100,8 +99,7 @@ namespace DCL.PluginSystem.Global
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
@@ -124,8 +122,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
             this.friendsServiceProxy = friendsServiceProxy;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
-            this.isCallEnabled = isCallEnabled;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
@@ -187,8 +184,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 warningNotificationView,
                 communitiesEventBus,
-                voiceChatCallStatusService,
-                isCallEnabled,
+                voiceChatOrchestrator,
                 realmNavigator
             );
 

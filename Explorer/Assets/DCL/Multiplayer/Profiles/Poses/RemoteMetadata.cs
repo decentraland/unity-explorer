@@ -60,7 +60,7 @@ namespace DCL.Multiplayer.Profiles.Poses
             }
         }
 
-        // private void OnConnectedToSceneRoom(IRoom room, ConnectionUpdate connectionUpdate)
+        // private void OnConnectedToSceneRoom(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         // {
         //     if (connectionUpdate is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
         //     {

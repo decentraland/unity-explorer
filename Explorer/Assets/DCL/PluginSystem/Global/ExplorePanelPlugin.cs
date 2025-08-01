@@ -194,7 +194,6 @@ namespace DCL.PluginSystem.Global
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
-            bool isVoiceChatEnabled,
             GalleryEventBus galleryEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -250,7 +249,6 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
-            this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.galleryEventBus = galleryEventBus;
         }
 
@@ -383,8 +381,7 @@ namespace DCL.PluginSystem.Global
                 sceneLoadingLimit,
                 voiceChatSettings.Value,
                 worldVolumeMacBus,
-                upscalingController,
-                isVoiceChatEnabled);
+                upscalingController);
 
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),

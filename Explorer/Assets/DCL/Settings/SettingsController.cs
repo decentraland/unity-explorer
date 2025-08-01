@@ -48,7 +48,6 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
-        private readonly bool isVoiceChatEnabled;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
@@ -67,7 +66,7 @@ namespace DCL.Settings
             SceneLoadingLimit sceneLoadingLimit,
             VoiceChatSettingsAsset voiceChatSettings,
             WorldVolumeMacBus worldVolumeMacBus,
-            UpscalingController upscalingController, bool isVoiceChatEnabled)
+            UpscalingController upscalingController)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -84,7 +83,6 @@ namespace DCL.Settings
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
-            this.isVoiceChatEnabled = isVoiceChatEnabled;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -181,8 +179,7 @@ namespace DCL.Settings
                             this,
                             voiceChatSettings,
                             upscalingController,
-                            worldVolumeMacBus,
-                            isVoiceChatEnabled));
+                            worldVolumeMacBus));
             }
         }
 

@@ -7,6 +7,14 @@ namespace DCL.Communities
     public class GetCommunityResponse
     {
         [Serializable]
+        public struct VoiceChatStatus
+        {
+            public bool isActive;
+            public int participantCount;
+            public int moderatorCount;
+        }
+
+        [Serializable]
         public struct CommunityData
         {
             public string id;
@@ -17,6 +25,7 @@ namespace DCL.Communities
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public int membersCount;
+            public VoiceChatStatus voiceChatStatus;
 
             public void DecreaseMembersCount()
             {
