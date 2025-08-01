@@ -8,7 +8,9 @@ namespace DCL.UI.GenericContextMenu.Controls
 {
     public class GenericContextMenuScrollableButtonListView : GenericContextMenuComponentBase
     {
-        [field: SerializeField] public HorizontalLayoutGroup VerticalLayoutComponent { get; private set; }
+        private const int BUTTON_HEIGHT = 36;
+
+        [field: SerializeField] public VerticalLayoutGroup VerticalLayoutComponent { get; private set; }
         [field: SerializeField] public ScrollRect ScrollRect { get; private set; }
         [field: SerializeField] public Transform ScrollContentParent { get; private set; }
 
@@ -38,7 +40,8 @@ namespace DCL.UI.GenericContextMenu.Controls
                                 + (HorizontalLayoutComponent.padding.top * settings.dataLabels.Length)
                                 + VerticalLayoutComponent.padding.bottom
                                 + VerticalLayoutComponent.padding.top
-                                + (VerticalLayoutComponent.spacing * settings.dataLabels.Length);
+                                + (VerticalLayoutComponent.spacing * settings.dataLabels.Length)
+                                + (BUTTON_HEIGHT * settings.dataLabels.Length);
 
             return totalHeight;
         }
