@@ -135,7 +135,7 @@ namespace DCL.UI.GenericContextMenu
 
             return separatorView;
         }
-        
+
         private GenericContextMenuComponentBase GetSimpleButton(SimpleButtonContextMenuControlSettings settings)
         {
             GenericContextMenuSimpleButtonView buttonView = GetPoolFromRegistry<GenericContextMenuSimpleButtonView>().Get();
