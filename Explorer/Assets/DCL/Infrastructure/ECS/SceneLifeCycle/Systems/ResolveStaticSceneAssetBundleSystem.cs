@@ -9,6 +9,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -72,7 +73,7 @@ namespace ECS.SceneLifeCycle.Systems
                 foreach (Object asset in staticSceneAssetBundle.AssetBundleData.assets)
                 {
                     if(asset is GameObject go)
-                        staticSceneAssetBundle.Assets.Add(asset.name, go);
+                        staticSceneAssetBundle.Assets.Add(asset.name + PlatformUtils.GetCurrentPlatform(), go);
                 }
                 staticSceneAssetBundle.ReadyToUse = true;
                 staticSceneAssetBundle.Consumed = true;

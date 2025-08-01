@@ -79,10 +79,11 @@ namespace ECS.StreamableLoading.AssetBundles
                     caHack.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                     caHack.Timeout = StreamableLoadingDefaults.TIMEOUT;
                     caHack.CurrentSource = AssetSource.WEB;
-                    caHack.URL = URLAddress.FromString(assetBundleIntention.Hash);
-                    caHack.CacheableURL = URLAddress.FromString(assetBundleIntention.Hash);
+                    caHack.URL = URLAddress.FromString($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA");
+                    caHack.CacheableURL = URLAddress.FromString(caHack.URL);
+                    assetBundleIntention.Hash = "https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA";
                     assetBundleIntention.CommonArguments = caHack;
-                    assetBundleIntention.cacheHash = Hash128.Compute(assetBundleIntention.Hash);
+                    assetBundleIntention.cacheHash = Hash128.Compute(caHack.URL);
                     return;
                 }
 

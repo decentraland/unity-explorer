@@ -44,8 +44,6 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 //TODO (JUANI): Should we look for the immediate resoution here?
                 // If not in cache, try load from asset bundle
-                assetBundleIntention.Hash = $"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA";
-                assetBundleIntention.HasMultipleAssets = true;
                 assetBundleIntention.SingleAssetBundleHack = true;
             }
 

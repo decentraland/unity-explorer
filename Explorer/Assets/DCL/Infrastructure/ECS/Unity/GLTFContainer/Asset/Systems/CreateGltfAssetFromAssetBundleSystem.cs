@@ -66,7 +66,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             if (assetBundleData.HasMultipleAssets())
                 // Create a new container root. It will be cached and pooled
-                result = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash));
+                result = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash), "static");
             else
                 // Create a new container root. It will be cached and pooled
                 result = CreateGltfObject(assetBundleData, assetBundleData.GetMainAsset<GameObject>());
@@ -74,9 +74,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }
 
-        private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, GameObject asset)
+        private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData, GameObject asset, string name = "")
         {
-            var container = new GameObject(asset.name);
+            var container = new GameObject($"{name}_{asset.name}");
 
             // Let the upper layer decide what to do with the root
             container.SetActive(false);

@@ -1,5 +1,6 @@
 using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.Cache.InMemory
 {
@@ -17,8 +18,10 @@ namespace ECS.StreamableLoading.Cache.InMemory
             cache[key] = value;
         }
 
-        public bool TryGet(TKey key, out T valueOrDefault) =>
-            cache.TryGetValue(key, out valueOrDefault);
+        public bool TryGet(TKey key, out T valueOrDefault)
+        {
+           return cache.TryGetValue(key, out valueOrDefault);
+        }
 
         public void Unload(IPerformanceBudget budgetToUse) =>
             cache.Clear();
