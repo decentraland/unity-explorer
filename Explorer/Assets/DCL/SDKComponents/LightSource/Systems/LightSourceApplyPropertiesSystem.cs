@@ -8,17 +8,17 @@ using DCL.SDKComponents.Utils;
 using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.ColorComponent;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
-using System;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
-using Entity = Arch.Core.Entity;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.LightSource.Systems
@@ -76,26 +76,27 @@ namespace DCL.SDKComponents.LightSource.Systems
                 lightSourceInstance.color = pbLightSource.Color.ToUnityColor();
 
             float intensity = pbLightSource.HasIntensity ? pbLightSource.Intensity : settings.DefaultValues.Intensity;
-            float intensityScale = pbLightSource.TypeCase switch
-                                   {
-                                       PBLightSource.TypeOneofCase.Spot => settings.SpotLightIntensityScale,
-                                       PBLightSource.TypeOneofCase.Point => settings.PointLightIntensityScale,
-                                       _ => 1
-                                   };
-            intensity *= intensityScale;
-            lightSourceComponent.MaxIntensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(intensity);
+
+            lightSourceComponent.IntensityScale = pbLightSource.TypeCase switch
+                                                  {
+                                                      PBLightSource.TypeOneofCase.Spot => settings.SpotLightIntensityScale,
+                                                      PBLightSource.TypeOneofCase.Point => settings.PointLightIntensityScale,
+                                                      _ => 1
+                                                  };
+            lightSourceComponent.MaxIntensity = intensity;
 
             switch (pbLightSource.TypeCase)
             {
                 case PBLightSource.TypeOneofCase.Spot:
                     ApplySpotLight(pbLightSource, lightSourceInstance);
-                    ApplyCookie(ref lightSourceComponent, pbLightSource.ShadowMaskTexture);
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
                     ApplyPointLight(pbLightSource, lightSourceInstance);
                     break;
             }
+
+            ApplyCookie(ref lightSourceComponent, pbLightSource.ShadowMaskTexture);
         }
 
         private void ApplySpotLight(PBLightSource pbLightSource, Light light)
@@ -114,30 +115,31 @@ namespace DCL.SDKComponents.LightSource.Systems
             light.type = LightType.Point;
         }
 
-        private void ApplyCookie(ref LightSourceComponent component, TextureUnion cookie)
+        private void ApplyCookie(ref LightSourceComponent component, TextureUnion cookieTexture)
         {
-            bool usesShadowMask = cookie is { Texture: { Src: var s } } && !string.IsNullOrWhiteSpace(s);
+            bool usesShadowMask = cookieTexture is { Texture: { Src: var s } } && !string.IsNullOrWhiteSpace(s);
 
             if (!usesShadowMask)
             {
+                // Maybe we were using a cookie, we need to dispose of it
+                component.Cookie.CleanUp(World);
                 component.LightSourceInstance.cookie = null;
                 return;
             }
 
-            TextureComponent? shadowTexture = cookie.CreateTextureComponent(sceneData);
-            TryCreateGetTexturePromise(in shadowTexture, ref component.TextureMaskPromise);
+            TextureComponent? shadowTexture = cookieTexture.CreateTextureComponent(sceneData);
+            if (shadowTexture != null) PrepareCookie(in shadowTexture, ref component.Cookie);
         }
 
-        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref TexturePromise? promise)
+        private void PrepareCookie(in TextureComponent? textureComponent, ref LightSourceComponent.CookieInfo cookie)
         {
-            if (textureComponent == null)
-                return false;
+            TextureComponent textureComponentValue = textureComponent!.Value;
 
-            TextureComponent textureComponentValue = textureComponent.Value;
+            // Still loading the same texture OR the same cookie is already applied
+            if (TextureComponentUtils.Equals(textureComponentValue, cookie.LoadingIntention)) return;
 
-            if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise)) return false;
-
-            DereferenceTexture(ref promise);
+            // Dispose of the existing cookie we might have, since it has changed
+            cookie.CleanUp(World);
 
             var intention = new GetTextureIntention(
                 textureComponentValue.Src,
@@ -148,29 +150,110 @@ namespace DCL.SDKComponents.LightSource.Systems
                 nameof(LightSourceApplyPropertiesSystem),
                 attemptsCount: GET_TEXTURE_MAX_ATTEMPT_COUNT);
 
-            promise = TexturePromise.Create(World, intention, partitionComponent);
-
-            return true;
+            cookie.LoadingIntention = intention;
+            cookie.LoadingPromise = TexturePromise.Create(World, intention, partitionComponent);
         }
 
         [Query]
-        private void ResolveTexturePromise(in Entity entity, ref LightSourceComponent lightSourceComponent)
+        private void ResolveTexturePromise(ref LightSourceComponent lightSourceComponent)
         {
-            if (lightSourceComponent.TextureMaskPromise is null || lightSourceComponent.TextureMaskPromise.Value.IsConsumed) return;
+            var promise = lightSourceComponent.Cookie.LoadingPromise;
 
-            if (lightSourceComponent.TextureMaskPromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
+            if (promise is null || promise.Value.IsConsumed || !promise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture)) return;
+
+            // Clear the promise but keep the intention so we can compare it later on when updating the light source properties
+            // Especially important when no-cache is used for textures (scene dev mode)
+            lightSourceComponent.Cookie.LoadingPromise = null;
+            lightSourceComponent.Cookie.SourceTextureData = texture.Asset;
+
+            switch (lightSourceComponent.LightSourceInstance.type)
             {
-                lightSourceComponent.TextureMaskPromise = null;
-                lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
+                case LightType.Spot:
+                    lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
+                    break;
+
+                case LightType.Point:
+                    Cubemap cubemap = MakeCookieCubemap(texture.Asset);
+                    lightSourceComponent.LightSourceInstance.cookie = cubemap;
+                    lightSourceComponent.Cookie.PointLightCubemap = cubemap;
+                    break;
+
+                default:
+                    lightSourceComponent.LightSourceInstance.cookie = null;
+                    break;
             }
         }
 
-        private void DereferenceTexture(ref TexturePromise? promise)
+        private Cubemap MakeCookieCubemap(Texture2DData source)
         {
-            if (promise == null) return;
+            var texture2d = source.Asset;
 
-            TexturePromise promiseValue = promise.Value;
-            promiseValue.TryDereference(World);
+            int faceSize = texture2d.width / 4;
+            if (texture2d.height != faceSize * 3)
+            {
+                ReportHub.LogWarning(GetReportCategory(), "Point Light cookie texture must be laid out in a 4x3 grid");
+                return null;
+            }
+            int facePixelCount = faceSize * faceSize;
+
+            NativeArray<Color32> sourceColors = texture2d.GetPixelData<Color32>(0);
+            var destinationColors = new NativeArray<Color32>(facePixelCount * 6, Allocator.TempJob);
+
+            new CubemapGenerationJob
+            {
+                SourceColors = sourceColors,
+                DestinationColors = destinationColors,
+                FaceSize = faceSize,
+                FacePixelCount = faceSize * faceSize,
+                SourceTextureWidth = texture2d.width,
+            }.Schedule(destinationColors.Length, 64).Complete();
+
+            Cubemap cubemap = new Cubemap(faceSize, texture2d.format, false);
+            for (var face = 0; face < 6; face++)
+                cubemap.SetPixelData(destinationColors, 0, (CubemapFace)face, face * facePixelCount);
+            cubemap.Apply();
+
+            destinationColors.Dispose();
+
+            return cubemap;
+        }
+
+        [BurstCompile]
+        private struct CubemapGenerationJob : IJobParallelFor
+        {
+            private static readonly int2[] TILES =
+            {
+                new (2, 1),
+                new (0, 1),
+                new (1, 2),
+                new (1, 0),
+                new (1, 1),
+                new (3, 1)
+            };
+
+            [ReadOnly] public NativeArray<Color32> SourceColors;
+
+            [WriteOnly] public NativeArray<Color32> DestinationColors;
+
+            public int FaceSize;
+
+            public int FacePixelCount;
+
+            public int SourceTextureWidth;
+
+            [BurstCompile]
+            public void Execute(int index)
+            {
+                int2 tile = TILES[index / FacePixelCount];
+                int facePixel = index % FacePixelCount;
+
+                int sourceX = (tile.x * FaceSize) + (facePixel % FaceSize);
+                int sourceY = (tile.y * FaceSize) + (FaceSize - 1 - (facePixel / FaceSize));
+
+                int sourceIndex = math.mad(sourceY, SourceTextureWidth, sourceX);
+
+                DestinationColors[index] = SourceColors[sourceIndex];
+            }
         }
     }
 }
