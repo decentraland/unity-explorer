@@ -17,8 +17,6 @@ namespace DCL.UI.SceneDebugConsole
         private const string USS_CONSOLE_HIDDEN = "scene-debug-console--hidden";
         private const long TOAST_DURATION = 1500L;
 
-        [SerializeField] private int maxLogMessages = 1500; // TODO
-
         private readonly SceneDebugConsoleLogHistory logsHistory = new ();
 
         private IInputBlock inputBlock;

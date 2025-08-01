@@ -8,69 +8,28 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         Log,
         Warning,
         Error,
-        Command,
-        CommandResponse
     }
 
     public readonly struct SceneDebugConsoleLogEntry
     {
-        /// <summary>
-        /// The type of message (log, warning, error, etc.)
-        /// </summary>
+        private const string ERROR_ENTRY_PREFIX = "[ERROR] ";
+        private const string LOG_ENTRY_PREFIX = "[LOG] ";
+
         public LogMessageType Type { get; }
-
-        /// <summary>
-        /// The actual message content
-        /// </summary>
         public string Message { get; }
-
-        /// <summary>
-        /// Optional stack trace for error messages
-        /// </summary>
-        public string StackTrace { get; }
-
-        /// <summary>
-        /// Timestamp when the message was created
-        /// </summary>
         public DateTime Timestamp { get; }
 
-        /// <summary>
-        /// Color based on LogMessageType
-        /// </summary>
-        public Color Color { get; }
-
-        public SceneDebugConsoleLogEntry(LogMessageType type, string message, string stackTrace = "")
+        public SceneDebugConsoleLogEntry(LogMessageType type, string message)
         {
             Type = type;
-            StackTrace = stackTrace;
             Timestamp = DateTime.Now;
-
-            switch (type)
-            {
-                case LogMessageType.Warning:
-                    Color = Color.yellow;
-                    break;
-                case LogMessageType.Error:
-                    Color = Color.red;
-                    break;
-                case LogMessageType.Command:
-                    Color = Color.cyan;
-                    break;
-                case LogMessageType.CommandResponse:
-                    Color = Color.green;
-                    break;
-                default: // Log
-                    Color = Color.white;
-                    break;
-            }
-
             Message = $"[{Timestamp:HH:mm:ss}] [{type}] {message}";
         }
 
         /// <summary>
         /// Creates a new log message from a Unity LogType
         /// </summary>
-        public static SceneDebugConsoleLogEntry FromUnityLog(LogType logType, string message, string stackTrace = "")
+        public static SceneDebugConsoleLogEntry FromUnityLog(LogType logType, string message)
         {
             LogMessageType type = LogMessageType.Log;
 
@@ -89,12 +48,12 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
                     break;
             }
 
-            return new SceneDebugConsoleLogEntry(type, message, stackTrace);
+            return new SceneDebugConsoleLogEntry(type, message);
         }
 
         public override string ToString()
         {
-            string prefix = Type == LogMessageType.Error ? "[ERROR] " : "[LOG] ";
+            string prefix = Type == LogMessageType.Error ? ERROR_ENTRY_PREFIX : LOG_ENTRY_PREFIX;
             return $"{prefix}{Message}";
         }
     }

@@ -8,9 +8,9 @@ namespace DCL.UI.SceneDebugConsole.MessageBus
     {
         public event Action<SceneDebugConsoleLogEntry> MessageAdded;
 
-        public void Send(string message, LogType logType, string stackTrace = "")
+        public void Send(string message, LogType logType)
         {
-            SceneDebugConsoleLogEntry logEntry = SceneDebugConsoleLogEntry.FromUnityLog(logType, message, stackTrace);
+            SceneDebugConsoleLogEntry logEntry = SceneDebugConsoleLogEntry.FromUnityLog(logType, message);
             MessageAdded?.Invoke(logEntry);
         }
     }

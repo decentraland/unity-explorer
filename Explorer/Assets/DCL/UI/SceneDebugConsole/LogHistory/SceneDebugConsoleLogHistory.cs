@@ -9,8 +9,8 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         public readonly List<SceneDebugConsoleLogEntry> FilteredLogMessages = new ();
         public event Action LogsUpdated;
         public bool Paused { get; set; }
-        public int LogEntryCount => allLogMessages.Count(le => le.Type == LogMessageType.Log);
-        public int ErrorEntryCount => allLogMessages.Count(le => le.Type == LogMessageType.Error);
+        public int LogEntryCount => allLogMessages.Count(logEntry => logEntry.Type == LogMessageType.Log);
+        public int ErrorEntryCount => allLogMessages.Count(logEntry => logEntry.Type == LogMessageType.Error);
 
         private readonly List<SceneDebugConsoleLogEntry> allLogMessages = new ();
         private string textFilter;
