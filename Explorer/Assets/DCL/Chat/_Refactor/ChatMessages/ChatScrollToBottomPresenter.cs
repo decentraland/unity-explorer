@@ -12,14 +12,14 @@ namespace DCL.Chat.ChatMessages
         private bool isFocused;
         private bool shouldBeVisible;
 
-        public event Action RequestScrollAction;
+        public event Action? RequestScrollAction;
 
         public ChatScrollToBottomPresenter(ChatScrollToBottomView view,
             CurrentChannelService currentChannelService)
         {
             this.view = view;
             this.currentChannelService = currentChannelService;
-            view.OnClicked += () => RequestScrollAction?.Invoke();
+            view.OnClicked += RequestScrollAction;
         }
 
         public void OnFocusChanged(bool isFocused)
@@ -68,9 +68,14 @@ namespace DCL.Chat.ChatMessages
             }
         }
 
+        private void OnRequestScrollAction()
+        {
+            RequestScrollAction?.Invoke();
+        }
+
         public void Dispose()
         {
-            view.OnClicked -= () => RequestScrollAction?.Invoke();
+            view.OnClicked -= OnRequestScrollAction;
         }
     }
 }
