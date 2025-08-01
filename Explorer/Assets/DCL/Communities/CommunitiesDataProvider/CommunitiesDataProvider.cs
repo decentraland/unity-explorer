@@ -65,7 +65,7 @@ namespace DCL.Communities
             {
                 new MultipartFormDataSection("name", name),
                 new MultipartFormDataSection("description", description),
-                new MultipartFormDataSection("privacy", privacy.ToString()), // TODO (Santi): Pending to be agreed the name of this field with the backend team
+                new MultipartFormDataSection("privacy", privacy.ToString()),
             };
 
             StringBuilder placeIdsJsonString = new StringBuilder("[");
