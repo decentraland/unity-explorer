@@ -1,7 +1,9 @@
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Utilities;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu.Controls
@@ -14,6 +16,8 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public ScrollRect ScrollRect { get; private set; }
         [field: SerializeField] public Transform ScrollContentParent { get; private set; }
 
+        private readonly List<GenericContextMenuSimpleButtonView> buttonViews = new ();
+
         public void Configure(ScrollableButtonListControlSettings settings, ControlsPoolManager controlsPoolManager)
         {
             ScrollRect.SetScrollSensitivityBasedOnPlatform();
@@ -25,9 +29,12 @@ namespace DCL.UI.GenericContextMenu.Controls
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, Math.Min(CalculateComponentHeight(settings), settings.maxHeight));
 
             for(int i = 0; i < settings.dataLabels.Length; i++)
-                controlsPoolManager.GetContextMenuComponent(
-                    new SimpleButtonContextMenuControlSettings(settings.dataLabels[i], () => settings.callback.Invoke(i), settings.horizontalLayoutPadding, settings.horizontalLayoutSpacing),
-                    i, ScrollContentParent);
+            {
+                int index = i; // Capture the current index for the lambda expression
+                buttonViews.Add((GenericContextMenuSimpleButtonView)controlsPoolManager.GetContextMenuComponent(
+                    new SimpleButtonContextMenuControlSettings(settings.dataLabels[i], () => settings.callback.Invoke(index), settings.horizontalLayoutPadding, settings.horizontalLayoutSpacing),
+                    i, ScrollContentParent));
+            }
         }
 
         private float CalculateComponentHeight(ScrollableButtonListControlSettings settings)
@@ -44,10 +51,13 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         public override void UnregisterListeners()
         {
+            buttonViews.Clear();
         }
 
         public override void RegisterCloseListener(Action listener)
         {
+            foreach (GenericContextMenuSimpleButtonView button in buttonViews)
+                button.ButtonComponent.onClick.AddListener(new UnityAction(listener));
         }
     }
 }
