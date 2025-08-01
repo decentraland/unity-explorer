@@ -275,6 +275,15 @@ namespace Global.Editor
                     break;
             }
 
+            // Add height for IsolateSceneCommunication field when it's drawn
+            if (initialRealmValue is InitialRealm.World or InitialRealm.Goerli or InitialRealm.StreamingWorld or InitialRealm.TestScenes)
+            {
+                fieldsCount += 1;
+            }
+
+            // Add height for PredefinedScenes enabled checkbox (always drawn)
+            fieldsCount += 1;
+
             float height = fieldsCount * singleLineHeight;
 
             SerializedProperty predefinedList = property.FindPropertyRelative(nameof(RealmLaunchSettings.predefinedScenes));
