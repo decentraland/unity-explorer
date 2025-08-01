@@ -126,6 +126,15 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// It replaces the number in the conversation icon with an '@' that indicates that one or more unread messages are mentions.
+        /// </summary>
+        /// <param name="show">When True, it replaces the number. Otherwise it does nothing.</param>
+        public void ShowMentionSign(bool show)
+        {
+            unreadMessagesBadge.ShowMentionsSign(show);
+        }
+
+        /// <summary>
         /// Changes the visual aspect of the connection status indicator.
         /// </summary>
         /// <param name="connectionStatus">The current connection status.</param>
