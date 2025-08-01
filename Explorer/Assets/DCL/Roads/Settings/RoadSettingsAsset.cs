@@ -16,6 +16,7 @@ namespace DCL.Roads.Settings
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
         public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups;
+        public List<GPUInstancingLODGroupWithBuffer> ExtractedLODGroups;
         public List<CombinedLODGroupData> PropsAndTiles;
 
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
@@ -82,14 +83,23 @@ namespace DCL.Roads.Settings
                                .OrderBy(group => group.combinedLODGroupData.Name)
                                .ToList();
 
-            UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
-            UnityEditor.AssetDatabase.Refresh();
             return;
 
             bool IsOutOfRange(Vector2Int roadCoordinate) =>
                 roadCoordinate.x < min.x || roadCoordinate.x > max.x ||
                 roadCoordinate.y < min.y || roadCoordinate.y > max.y;
+        }
+
+        public void ExtractSameRenderers()
+        {
+            if (ExtractedLODGroups == null)
+                ExtractedLODGroups = new List<GPUInstancingLODGroupWithBuffer>();
+
+            var extractor = new GPUInstancingMeshExtractor();
+            List<GPUInstancingLODGroupWithBuffer> newExtractedGroups = extractor.ExtractSimilarMeshes(IndirectLODGroups);
+            ExtractedLODGroups.AddRange(newExtractedGroups);
+            IndirectLODGroups.AddRange(newExtractedGroups);
         }
 
         private Dictionary<string, GPUInstancingPrefabData> LoadAllPrefabs()
