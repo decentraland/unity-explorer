@@ -355,6 +355,7 @@ MonoBehaviour:
   removeButton: {fileID: 4646170891700180412}
   claimedNameIcon: {fileID: 1048432849985327357}
   tooltipPosition: {fileID: 8328223827935168582}
+  offlineThumbnailGreyOutOpacity: 0.6
 --- !u!114 &510709296985545676
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -412,6 +413,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   numberText: {fileID: 6044923329926375915}
+  mentionSign: {fileID: 2628242589337625698}
   numberPanel: {fileID: 2491505630268202723}
   maximum: 9
 --- !u!1 &5374147832808116546
@@ -690,6 +692,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4088849656338582539, guid: b579dc380cb89484f8fb69097abd9862, type: 3}
   m_PrefabInstance: {fileID: 1886190425623991016}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2628242589337625698 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4491351648111310474, guid: b579dc380cb89484f8fb69097abd9862, type: 3}
+  m_PrefabInstance: {fileID: 1886190425623991016}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &6044923329926375915 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5318462604236307203, guid: b579dc380cb89484f8fb69097abd9862, type: 3}

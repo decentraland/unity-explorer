@@ -11,8 +11,8 @@ namespace DCL.Chat.ChatViewModels
         public bool HasClaimedName { get; set; }
         public IReactiveProperty<ProfileThumbnailViewModel.WithColor> ProfilePicture { get; } = ProfileThumbnailViewModel.WithColor.DefaultReactive();
 
-        public UserChannelViewModel(ChatChannel.ChannelId id)
-            : base(id, ChatChannel.ChatChannelType.USER)
+        public UserChannelViewModel(ChatChannel.ChannelId id, int unreadMessagesCount, bool hasUnreadMentions)
+            : base(id, ChatChannel.ChatChannelType.USER, unreadMessagesCount, hasUnreadMentions)
         {
             DisplayName = "Loading..."; // Initial state
         }

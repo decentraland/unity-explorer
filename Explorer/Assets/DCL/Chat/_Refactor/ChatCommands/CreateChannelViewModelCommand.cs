@@ -41,16 +41,34 @@ namespace DCL.Chat.ChatCommands
 
         public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
         {
+            int unreadCount = channel.Messages.Count - channel.ReadMessages;
+            bool hasMentions = false;
+            if (unreadCount > 0)
+            {
+                for (int i = channel.ReadMessages; i < channel.Messages.Count; i++)
+                {
+                    if (channel.Messages[i].IsMention)
+                    {
+                        hasMentions = true;
+                        break;
+                    }
+                }
+            }
+            
             BaseChannelViewModel viewModel = channel.ChannelType switch
             {
                 ChatChannel.ChatChannelType.NEARBY =>
-                    new NearbyChannelViewModel(channel.Id, chatConfig.NearbyConversationName, chatConfig.NearbyConversationIcon),
+                    new NearbyChannelViewModel(channel.Id,
+                        chatConfig.NearbyConversationName,
+                        chatConfig.NearbyConversationIcon,
+                        unreadCount,
+                        hasMentions),
 
                 ChatChannel.ChatChannelType.USER =>
-                    CreateUserChannelViewModel(channel, ct),
+                    CreateUserChannelViewModel(channel, unreadCount, hasMentions, ct),
 
                 ChatChannel.ChatChannelType.COMMUNITY =>
-                    CreateCommunityChannelViewModel(channel, ct),
+                    CreateCommunityChannelViewModel(channel, unreadCount, hasMentions, ct),
 
                 _ => throw new ArgumentOutOfRangeException(nameof(channel.ChannelType), "Unsupported channel type")
             };
@@ -59,17 +77,17 @@ namespace DCL.Chat.ChatCommands
             return viewModel;
         }
 
-        private UserChannelViewModel CreateUserChannelViewModel(ChatChannel channel, CancellationToken ct)
+        private UserChannelViewModel CreateUserChannelViewModel(ChatChannel channel, int unreadCount, bool hasMentions, CancellationToken ct)
         {
-            var viewModel = new UserChannelViewModel(channel.Id);
+            var viewModel = new UserChannelViewModel(channel.Id, unreadCount, hasMentions);
             FetchProfileAndUpdateAsync(viewModel, ct).Forget();
             FetchInitialStatusAndUpdateAsync(viewModel, ct).Forget();
             return viewModel;
         }
 
-        private CommunityChannelViewModel CreateCommunityChannelViewModel(ChatChannel channel, CancellationToken ct)
+        private CommunityChannelViewModel CreateCommunityChannelViewModel(ChatChannel channel, int unreadCount, bool hasMentions, CancellationToken ct)
         {
-            var viewModel = new CommunityChannelViewModel(channel.Id);
+            var viewModel = new CommunityChannelViewModel(channel.Id, unreadCount, hasMentions);
 
             if (communityDataService.TryGetCommunity(channel.Id, out GetUserCommunitiesData.CommunityData communityData))
             {

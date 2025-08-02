@@ -95,7 +95,34 @@ namespace DCL.Chat
         {
             if (items.TryGetValue(destinationChannel, out var item))
             {
+                item.ShowMentionSign(false);
                 item.SetUnreadMessages(unreadMessages);
+            }
+        }
+
+        /// <summary>
+        ///     Replaces the value of unread messages to show next to the icon of an item, handling mentions.
+        /// </summary>
+        /// <param name="destinationChannel">The Id of the conversation to find the item.</param>
+        /// <param name="unreadMessages">The amount of unread messages in the conversation.</param>
+        /// <param name="hasMentions">Whether there are mentions among the unread messages or not.</param>
+        public void SetUnreadMessages(ChatChannel.ChannelId destinationChannel, int unreadMessages, bool hasMentions)
+        {
+            if (items.TryGetValue(destinationChannel, out var item))
+            {
+                item.SetUnreadMessages(unreadMessages);
+                item.ShowMentionSign(hasMentions);
+
+                if (hasMentions)
+                {
+                    // If there's a mention, the number is irrelevant, but we pass it anyway
+                    // The badge will just show the '@'
+                }
+                else
+                {
+                    // If no mentions, just show the number
+                    item.SetUnreadMessages(unreadMessages);
+                }
             }
         }
 
@@ -299,6 +326,9 @@ namespace DCL.Chat
         {
             if (!items.TryGetValue(viewModel.Id, out var itemToUpdate)) return;
 
+            itemToUpdate.SetUnreadMessages(viewModel.UnreadMessagesCount);
+            itemToUpdate.ShowMentionSign(viewModel.HasUnreadMentions);
+            
             switch (viewModel)
             {
                 case UserChannelViewModel user:
