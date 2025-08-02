@@ -36,9 +36,13 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private Button cancelFriendButton { get; set; } = null!;
         [field: SerializeField] private Button unblockFriendButton { get; set; } = null!;
 
+        [field: Header("Join request buttons")]
+        [field: SerializeField] private Button deleteRequestButton { get; set; } = null!;
+        [field: SerializeField] private Button acceptRequestButton { get; set; } = null!;
+
         private bool canUnHover = true;
         private bool isUserCard = false;
-        private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
+        private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.MEMBERS;
 
         public MemberData? UserProfile { get; protected set; }
 
@@ -46,6 +50,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<MemberData, Vector2, MemberListItemView>? ContextMenuButtonClicked;
         public event Action<MemberData>? FriendButtonClicked;
         public event Action<MemberData>? UnbanButtonClicked;
+        public event Action<MemberData, bool>? ManageRequestClicked;
 
         private void RemoveAllListeners()
         {
@@ -53,6 +58,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             ContextMenuButtonClicked = null;
             FriendButtonClicked = null;
             UnbanButtonClicked = null;
+            ManageRequestClicked = null;
         }
 
         internal bool CanUnHover
@@ -81,6 +87,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             cancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
             unblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
 
+            deleteRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, false));
+            acceptRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, true));
+
             background.color = normalColor;
         }
 
@@ -105,21 +114,22 @@ namespace DCL.Communities.CommunitiesCard.Members
             currentSection = section;
             isUserCard = isSelfCard;
 
-            addFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.ALL);
-            acceptFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.ALL);
+            addFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.MEMBERS);
+            acceptFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.MEMBERS);
 
             // Disable this button as part of the UI/UX decision to reduce the entry clutter, highlighting only non-friends. The old condition was:
             // !isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL
             removeFriendButton.gameObject.SetActive(false);
 
-            cancelFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.ALL);
-            unblockFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.ALL);
+            cancelFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.MEMBERS);
+            unblockFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.MEMBERS);
         }
 
         public void SubscribeToInteractions(Action<MemberData> mainButton,
             Action<MemberData, Vector2, MemberListItemView> contextMenuButton,
             Action<MemberData> friendButton,
-            Action<MemberData> unbanButton)
+            Action<MemberData> unbanButton,
+            Action<MemberData, bool> manageRequestClicked)
         {
             RemoveAllListeners();
 
@@ -127,19 +137,26 @@ namespace DCL.Communities.CommunitiesCard.Members
             ContextMenuButtonClicked += contextMenuButton;
             FriendButtonClicked += friendButton;
             UnbanButtonClicked += unbanButton;
+            ManageRequestClicked += manageRequestClicked;
         }
 
         private void UnHover()
         {
             contextMenuButton.gameObject.SetActive(false);
             unbanButton.gameObject.SetActive(false);
+            deleteRequestButton.gameObject.SetActive(false);
+            acceptRequestButton.gameObject.SetActive(false);
             background.color = normalColor;
         }
 
         private void Hover()
         {
             contextMenuButton.gameObject.SetActive(!isUserCard);
+
             unbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.BANNED);
+            deleteRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.REQUESTS);
+            acceptRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.REQUESTS);
+
             background.color = hoveredColor;
         }
 
