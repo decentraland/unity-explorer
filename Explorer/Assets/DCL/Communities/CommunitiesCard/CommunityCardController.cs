@@ -43,6 +43,8 @@ namespace DCL.Communities.CommunitiesCard
         private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
         private const string DELETE_COMMUNITY_ERROR_TEXT = "There was an error deleting the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
+        private const string TOGGLE_COMMUNITY_NOTIFICATIONS_ERROR_TEXT = "There was an error updating the community notification setting. Please try again.";
+        private const string TOGGLE_COMMUNITY_NOTIFICATIONS_SUCCESS_TEXT = "Notification settings updated.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -139,6 +141,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
+                viewInstance.ToggleNotificationsRequested -= OnToggleNotificationsRequested;
                 viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
             }
 
@@ -214,6 +217,37 @@ namespace DCL.Communities.CommunitiesCard
             }
         }
 
+        private void OnToggleNotificationsRequested(bool toggle)
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            ToggleCommunityNotificationsAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid ToggleCommunityNotificationsAsync(CancellationToken ct)
+            {
+                Result<bool> result = await communitiesDataProvider.UpdateCommunityNotificationsAsync(communityData.id, toggle, ct)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    viewInstance!.CloseContextMenu();
+                    await viewInstance.warningNotificationView.AnimatedShowAsync(TOGGLE_COMMUNITY_NOTIFICATIONS_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    return;
+                }
+
+                //Sets the toggle state in the community data to reflect the change in the UI.
+                communityData.notifications = toggle;
+                viewInstance!.SetNotificationsEnabled(toggle);
+
+                await viewInstance.successNotificationView.AnimatedShowAsync(TOGGLE_COMMUNITY_NOTIFICATIONS_SUCCESS_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct, false)
+                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            }
+        }
+
         private void CloseController() =>
             closeIntentCompletionSource.TrySetResult();
 
@@ -240,6 +274,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
+            viewInstance.ToggleNotificationsRequested += OnToggleNotificationsRequested;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
