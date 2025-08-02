@@ -1,3 +1,4 @@
+using DCL.Shaders;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
@@ -91,6 +92,16 @@ namespace ECS.Unity.Textures.Components
         public void RemoveConsumer(Renderer renderer)
         {
             renderers.Remove(renderer);
+        }
+
+        public void SetTextureScale(Vector2 texScale)
+        {
+            foreach (MeshRenderer meshRenderer in renderers)
+            {
+                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
+                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+            }
+
         }
     }
 }

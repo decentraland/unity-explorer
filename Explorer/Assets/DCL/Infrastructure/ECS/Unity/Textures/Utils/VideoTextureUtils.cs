@@ -18,33 +18,31 @@ namespace ECS.Unity.Textures.Utils
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IObjectPool<Texture2D> videoTexturesPool,
             World world,
-            out VideoRenderingInfo info)
+            out VideoTextureConsumer videoTextureConsumer)
         {
-            info = default(VideoRenderingInfo);
+            videoTextureConsumer = default(VideoTextureConsumer);
 
-            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out info.VideoPlayer) || !world.IsAlive(info.VideoPlayer))
+            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out Entity videoEntity) || !world.IsAlive(videoEntity))
                 return false;
 
-            ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(info.VideoPlayer, out bool hasConsumer);
+            ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(videoEntity, out bool hasConsumer);
 
             if (!hasConsumer)
-                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), info.VideoPlayer);
+                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), videoEntity);
 
-            info.VideoTexture = consumer.Texture;
-            info.VideoTexture.AddReference();
+            consumer.Texture.AddReference();
 
             if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
             {
-                info.VideoRenderer = primitiveMeshComponent.MeshRenderer;
                 consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
             }
             else if (world.TryGet(entity, out GltfNode gltfNode))
             {
-                info.VideoRenderer = gltfNode.Renderers.Count > 0 ? gltfNode.Renderers[0] : null;
                 foreach (var renderer in gltfNode.Renderers)
                     consumer.AddConsumer(renderer);
             }
 
+            videoTextureConsumer = consumer;
             return true;
         }
 
@@ -61,13 +59,5 @@ namespace ECS.Unity.Textures.Utils
             return ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
         }
 
-        public struct VideoRenderingInfo
-        {
-            public Entity VideoPlayer;
-
-            public Texture2DData? VideoTexture;
-
-            public Renderer? VideoRenderer;
-        }
     }
 }

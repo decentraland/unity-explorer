@@ -21,28 +21,18 @@ namespace DCL.SDKComponents.MediaStream
         protected override void Update(float t)
         {
             InitializeMaterialQuery(World);
-            InitializeNftMaterialQuery(World);
         }
 
         [Query]
-        public void InitializeMaterial(Entity entity, in InitializeVideoPlayerMaterialRequest request)
+        public void InitializeMaterial(Entity entity, ref InitializeVideoPlayerMaterialRequest request)
         {
-            if (!TryHandleRequest<InitializeVideoPlayerMaterialRequest>(entity, request.MediaPlayerComponentEntity, out Vector2 texScale)) return;
-
-            var material = request.Renderer.sharedMaterial;
-            material.SetTextureScale(ShaderUtils.BaseMap, texScale);
-            material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+            if (!TryHandleRequest(request.MediaPlayerComponentEntity, out Vector2 texScale)) return;
+            request.Consumer.SetTextureScale(texScale);
+            World.Destroy(entity);
         }
 
-        [Query]
-        public void InitializeNftMaterial(Entity entity, in InitializeNftVideoMaterialRequest request)
-        {
-            if (!TryHandleRequest<InitializeNftVideoMaterialRequest>(entity, request.MediaPlayerComponentEntity, out Vector2 texScale)) return;
 
-            request.Renderer.SetTextureScale(texScale);
-        }
-
-        private bool TryHandleRequest<T>(Entity entity, in Entity mediaPlayerComponentEntity, out Vector2 texScale)
+        private bool TryHandleRequest(in Entity mediaPlayerComponentEntity, out Vector2 texScale)
         {
             texScale = Vector2.zero;
 
@@ -61,8 +51,6 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             texScale = mediaPlayerComponent.MediaPlayer.GetTexureScale;
-
-            World.Destroy(entity);
 
             return true;
         }
