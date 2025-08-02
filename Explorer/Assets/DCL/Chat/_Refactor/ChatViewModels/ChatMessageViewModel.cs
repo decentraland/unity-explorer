@@ -29,6 +29,7 @@ namespace DCL.Chat.ChatViewModels
         private CancellationTokenSource cancellationTokenSource;
 
         public ChatMessage Message { get; internal set; }
+        public bool ShowDateDivider { get; set; }
 
         // In case we need more profile information in the future, create a separate ProfileViewModel and update it at once
         public IReactiveProperty<ProfileThumbnailViewModel.WithColor> ProfileData { get; }

@@ -57,7 +57,7 @@ namespace DCL.WebRequests.Analytics
 
                     // texture
                     await webRequestController.GetTextureAsync(
-                        new CommonArguments(FAIL, attemptsCount: retriesCount),
+                        new CommonArguments(FAIL, RetryPolicy.WithRetries(retriesCount)),
                         new GetTextureArguments(TextureType.Albedo),
                         new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                         CancellationToken.None,
@@ -67,7 +67,7 @@ namespace DCL.WebRequests.Analytics
 
                     // binary data
                     await webRequestController.GetAsync(
-                                                   new CommonArguments(SUCCESS, attemptsCount: retriesCount),
+                                                   new CommonArguments(SUCCESS, RetryPolicy.WithRetries(retriesCount)),
                                                    CancellationToken.None,
                                                    reportData: ReportCategory.DEBUG
                                                )

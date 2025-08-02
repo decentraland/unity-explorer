@@ -1,4 +1,3 @@
-using System.Threading;
 using DCL.Chat.History;
 using DCL.UI;
 using DCL.UI.Buttons;
@@ -20,7 +19,7 @@ namespace DCL.Chat
 
         [SerializeField]
         private ProfilePictureView profilePictureView;
-
+        
         [SerializeField]
         protected GameObject thumbnailView;
 
@@ -112,12 +111,6 @@ namespace DCL.Chat
             tooltipText.text = newName;
         }
 
-        public void Configure(bool isClosable, bool hasOnlineStatus)
-        {
-            removeButton.gameObject.SetActive(isClosable);
-            connectionStatusIndicatorContainer.SetActive(hasOnlineStatus);
-        }
-
         /// <summary>
         /// Changes the color of the background and the letters of the tooltip.
         /// </summary>
@@ -175,13 +168,6 @@ namespace DCL.Chat
                 openButton.OnDeselect(null);
         }
 
-        public virtual void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
-        {
-            customIcon.gameObject.SetActive(false);
-            profilePictureView.gameObject.SetActive(true);
-            profilePictureView.Bind(viewModel);
-        }
-        
         /// <summary>
         /// Replaces the profile picture with a custom icon.
         /// </summary>
@@ -192,6 +178,13 @@ namespace DCL.Chat
             customIcon.gameObject.SetActive(true);
             thumbnailView.gameObject.SetActive(false);
         }
+
+        public void Configure(bool isClosable, bool hasOnlineStatus)
+        {
+            removeButton.gameObject.SetActive(isClosable);
+            connectionStatusIndicatorContainer.SetActive(hasOnlineStatus);
+        }
+
 
         /// <summary>
         /// Shows or hides the "verified" icon.
@@ -240,10 +233,6 @@ namespace DCL.Chat
 
         public void Initialize()
         {
-            tooltip.gameObject.SetActive(false);
-            removeButton.gameObject.SetActive(false);
-            connectionStatusIndicatorContainer.SetActive(false);
-
             openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
             removeButton.onClick.AddListener(() =>
             {
@@ -257,7 +246,7 @@ namespace DCL.Chat
         {
             tooltip.gameObject.SetActive(false);
             removeButton.gameObject.SetActive(false);
-            connectionStatusIndicatorContainer.SetActive(false);
+            connectionStatusIndicatorContainer.gameObject.SetActive(false);
 
             SetConnectionStatus(storedConnectionStatus);
         }
@@ -273,6 +262,13 @@ namespace DCL.Chat
 
                 profilePictureView.SetLoadingState(isLoading);
             }
+        }
+
+        public virtual void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
+        {
+            customIcon.gameObject.SetActive(false);
+            profilePictureView.gameObject.SetActive(true);
+            profilePictureView.Bind(viewModel);
         }
     }
 }
