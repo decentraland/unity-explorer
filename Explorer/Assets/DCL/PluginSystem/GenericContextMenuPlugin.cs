@@ -56,12 +56,14 @@ namespace DCL.PluginSystem
             GenericContextMenuTextView textPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuTextPrefab, ct)).GetComponent<GenericContextMenuTextView>();
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuToggleWithCheckPrefab, ct)).GetComponent<GenericContextMenuToggleWithCheckView>();
             GenericContextMenuSubMenuButtonView subMenuButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSubMenuButtonPrefab, ct)).GetComponent<GenericContextMenuSubMenuButtonView>();
+            GenericContextMenuSimpleButtonView simpleButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSimpleButtonPrefab, ct)).GetComponent<GenericContextMenuSimpleButtonView>();
+            GenericContextMenuScrollableButtonListView buttonListPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuButtonListPrefab, ct)).GetComponent<GenericContextMenuScrollableButtonListView>();
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
                 new ControlsPoolManager(profileRepositoryWrapper, panelView.ControlsContainer.transform,
                     controlsContainerPrefab,
                     separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab, textPrefab, toggleWithCheckPrefab,
-                    subMenuButtonPrefab));
+                    subMenuButtonPrefab, simpleButtonPrefab, buttonListPrefab));
             mvcManager.RegisterController(genericContextMenuController);
         }
 
@@ -95,6 +97,10 @@ namespace DCL.PluginSystem
             public AssetReferenceGameObject GenericContextMenuToggleWithCheckPrefab;
             [field: SerializeField]
             public AssetReferenceGameObject GenericContextMenuSubMenuButtonPrefab;
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuSimpleButtonPrefab;
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuButtonListPrefab;
         }
     }
 }

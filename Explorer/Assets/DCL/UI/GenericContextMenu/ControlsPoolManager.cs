@@ -30,7 +30,9 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuButtonWithStringDelegateView buttonWithDelegatePrefab,
             GenericContextMenuTextView textPrefab,
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab,
-            GenericContextMenuSubMenuButtonView subMenuButtonPrefab)
+            GenericContextMenuSubMenuButtonView subMenuButtonPrefab,
+            GenericContextMenuSimpleButtonView simpleButtonPrefab,
+            GenericContextMenuScrollableButtonListView buttonListPrefab)
         {
             this.controlsParent = controlsParent;
 
@@ -49,6 +51,8 @@ namespace DCL.UI.GenericContextMenu
             CreateObjectPool(textPrefab);
             CreateObjectPool(toggleWithCheckPrefab);
             CreateObjectPool(subMenuButtonPrefab);
+            CreateObjectPool(simpleButtonPrefab);
+            CreateObjectPool(buttonListPrefab);
         }
 
         private void CreateObjectPool<T>(T prefab) where T: MonoBehaviour =>
@@ -83,6 +87,7 @@ namespace DCL.UI.GenericContextMenu
                                                         {
                                                             SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
                                                             ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
+                                                            SimpleButtonContextMenuControlSettings simpleButtonSettings => GetSimpleButton(simpleButtonSettings),
                                                             ToggleWithIconContextMenuControlSettings toggleWithIconSettings => GetToggleWithIcon(toggleWithIconSettings),
                                                             ToggleWithCheckContextMenuControlSettings toggleWithCheckSettings => GetToggleWithCheck(toggleWithCheckSettings),
                                                             ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
@@ -90,6 +95,7 @@ namespace DCL.UI.GenericContextMenu
                                                             ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
                                                             TextContextMenuControlSettings textSettings => GetText(textSettings),
                                                             SubMenuContextMenuButtonSettings subMenuButtonSettings => GetSubMenuButton(subMenuButtonSettings),
+                                                            ScrollableButtonListControlSettings scrollableButtonList => GetScrollableButtonList(scrollableButtonList),
                                                             _ => throw new ArgumentOutOfRangeException(),
                                                         };
 
@@ -98,6 +104,14 @@ namespace DCL.UI.GenericContextMenu
             currentControls.Add(component);
 
             return component;
+        }
+
+        private GenericContextMenuScrollableButtonListView GetScrollableButtonList(ScrollableButtonListControlSettings settings)
+        {
+            GenericContextMenuScrollableButtonListView buttonListView = GetPoolFromRegistry<GenericContextMenuScrollableButtonListView>().Get();
+            buttonListView.Configure(settings, this);
+
+            return buttonListView;
         }
 
         public ControlsContainerView GetControlsContainer(Transform parent)
@@ -131,6 +145,14 @@ namespace DCL.UI.GenericContextMenu
             separatorView.Configure(settings);
 
             return separatorView;
+        }
+
+        private GenericContextMenuComponentBase GetSimpleButton(SimpleButtonContextMenuControlSettings settings)
+        {
+            GenericContextMenuSimpleButtonView buttonView = GetPoolFromRegistry<GenericContextMenuSimpleButtonView>().Get();
+            buttonView.Configure(settings);
+
+            return buttonView;
         }
 
         private GenericContextMenuComponentBase GetSubMenuButton(SubMenuContextMenuButtonSettings settings)
