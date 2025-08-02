@@ -2,24 +2,24 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Landscape;
-using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.Landscape.Utils;
 using DCL.MapRenderer.ComponentsFactory;
-using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.WebRequests;
+using Decentraland.Terrain;
 using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
+using System;
 using System.Threading;
-using Unity.Collections;
+using System.Threading.Tasks;
 using Unity.Mathematics;
 using UnityEngine;
-using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -34,19 +34,12 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
-        private readonly bool isZone;
         private readonly LandscapeParcelService parcelService;
-        private readonly IScenesCache scenesCache;
 
+        private bool disposed;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
-        private ProvidedAsset<ParcelData> parcelData;
-        private NativeList<int2> emptyParcels;
-        private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
-
-        private IGPUIWrapper gpuiWrapper;
-        private readonly bool isGPUIEnabledFF;
 
         public LandscapePlugin(IRealmData realmData,
             ILoadingStatus loadingStatus,
@@ -59,91 +52,83 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             bool enableLandscape,
             bool isZone,
-            bool isGpuiEnabledFf)
+            bool isGPUIEnabledFF)
         {
             this.realmData = realmData;
             this.loadingStatus = loadingStatus;
-            this.scenesCache = sceneCache;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
             this.enableLandscape = enableLandscape;
-            isGPUIEnabledFF = isGpuiEnabledFf;
-            this.isZone = isZone;
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
 
             parcelService = new LandscapeParcelService(webRequestController, isZone);
 
+            PlayerPrefs.SetInt(FeatureFlagsStrings.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
         }
 
         public void Dispose()
         {
             if (enableLandscape)
-            {
                 terrainGenerator.Dispose();
-                worldTerrainGenerator.Dispose();
-            }
+
+            disposed = true;
         }
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
-            landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+            TerrainLog.LogHandler = ReportHub.Instance;
 
-            floor = new SatelliteFloor(realmData, landscapeData.Value);
+            // Do this first and await it last because it takes the longest because it talks to the
+            // Internet.
+            var loadManifest = enableLandscape ? parcelService.LoadManifestAsync(ct) : default;
 
-            if (!enableLandscape) return;
+            this.landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+            LandscapeData landscapeData = this.landscapeData.Value;
+            //landscapeData.terrainData.detailDistance = landscapeData.Value.EnvironmentDistance;
 
-            parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels, ct);
+            Task loadTreeInstances = enableLandscape
+                ? landscapeData.terrainData.LoadTreeInstancesAsync() : Task.CompletedTask;
 
-            realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
+            floor = new SatelliteFloor(realmData, landscapeData);
 
-            FetchParcelResult fetchParcelResult = await parcelService.LoadManifestAsync(ct);
-            string parcelChecksum = string.Empty;
+            if (!enableLandscape)
+                return;
+
+            realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(
+                settings.realmPartitionSettings, ct);
+
+            worldTerrainGenerator.Initialize(landscapeData.worldData, landscapeData.terrainData);
+            FetchParcelResult fetchParcelResult = await loadManifest;
+
+            int2[] roads;
+            int2[] occupied;
+            int2[] empty;
 
             if (!fetchParcelResult.Succeeded)
             {
-                emptyParcels = parcelData.Value.GetEmptyParcels();
-                ownedParcels = parcelData.Value.GetOwnedParcels();
+                var parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels,
+                    ct);
+
+                roads = Array.Empty<int2>();
+                occupied = parcelData.Value.ownedParcels;
+                empty = parcelData.Value.emptyParcels;
             }
             else
             {
-                emptyParcels = fetchParcelResult.Manifest.GetEmptyParcels();
-                ownedParcels = fetchParcelResult.Manifest.GetOwnedParcels();
-                parcelChecksum = fetchParcelResult.Checksum;
+                roads = fetchParcelResult.Manifest.roads;
+                occupied = fetchParcelResult.Manifest.occupied;
+                empty = fetchParcelResult.Manifest.empty;
             }
 
-            CheckGPUIFF();
-            gpuiWrapper.SetupLandscapeData(landscapeData.Value);
-            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
-                parcelChecksum, isZone, gpuiWrapper, gpuiWrapper.GetDetailSetter());
+            terrainGenerator.Initialize(landscapeData.genesisCityData, landscapeData.terrainData, roads,
+                occupied, empty);
 
-            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, new CPUTerrainDetailSetter());
-        }
+            await loadTreeInstances;
 
-        private void CheckGPUIFF()
-        {
-#if GPUI_PRO_PRESENT
-            //HACK to be removed
-            //This if should go when we decide to keep GPUI enabled or not.
-            //As of now, if we have to turn it off because of an emergency situation, we need to regenerate the cache.
-            //GPUI cache and regular terrain cache are not compatible
-            //Also, when decision is taken, make `forceCacheRegen` private again
-            int storedGPUIValue = DCLPlayerPrefs.GetInt(DCLPrefKeys.GPUI_ENABLED);
-            bool wasEnabled = storedGPUIValue == 1;
-
-            if (isGPUIEnabledFF != wasEnabled)
-                terrainGenerator.forceCacheRegen = true;
-
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
-
-            if (isGPUIEnabledFF)
-                gpuiWrapper = new GPUIWrapper();
-            else
-                gpuiWrapper = new MockGPUIWrapper();
-#else
-            gpuiWrapper = new MockGPUIWrapper();
-#endif
+            if (disposed)
+                throw new ObjectDisposedException(nameof(LandscapePlugin));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -152,12 +137,24 @@ namespace DCL.PluginSystem.Global
 
             if (!enableLandscape) return;
 
-            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings.Value, landscapeData.Value);
-            LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
+            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor,
+                realmPartitionSettings.Value, landscapeData.Value,
+                landscapeData.Value.terrainData);
 
-            gpuiWrapper.InjectDebugSystem(ref builder, debugContainerBuilder);
+            LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+
+            RenderTerrainSystem.InjectToWorld(ref builder, landscapeData.Value.terrainData,
+                landscapeData.Value.grassIndirectRenderer);
+
+            Transform terrainParent;
+#if UNITY_EDITOR
+            terrainParent = terrainGenerator.RootObject;
+#else
+            terrainParent = null;
+#endif
+
+            CollideTerrainSystem.InjectToWorld(ref builder, landscapeData.Value.terrainData,
+                terrainParent);
         }
     }
 }
