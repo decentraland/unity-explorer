@@ -57,11 +57,11 @@
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
     "com.dcl.gpui-assets": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets#fix/wind-in-tress",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "232e2c6e028e35f5ae55cd644e6ae2c5dcbf441b"
+      "hash": "69e16d5cd02cc7a2f290eecfca3a7b629fccdc0a"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
