@@ -108,6 +108,34 @@ namespace DCL.Chat.ChatServices.ChatContextService
             }
         }
 
+        /// <summary>
+        ///     Shows the generic context menu for channel options.
+        ///     This uses the standard lifecycle management for context menus.
+        /// </summary>
+        public async UniTask ShowChannelContextMenuAsync(ShowChannelContextMenuRequest request)
+        {
+            RestartLifecycleControls();
+            chatClickDetectionService.Pause();
+
+            try
+            {
+                var parameter = new GenericContextMenuParameter(
+                    request.MenuConfiguration,
+                    request.Position,
+                    actionOnHide: () => activeMenuTcs.TrySetResult(),
+                    closeTask: activeMenuTcs.Task
+                );
+
+                ViewDependencies.ContextMenuOpener.OpenContextMenu(parameter, activeMenuCts.Token);
+
+                await activeMenuTcs.Task;
+            }
+            finally
+            {
+                chatClickDetectionService.Resume();
+            }
+        }
+
         public async UniTask ShowChatOptionsAsync(ChatEntryMenuPopupData request)
         {
             RestartLifecycleControls();

@@ -14,11 +14,14 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
+using DCL.Settings.Settings;
 using DCL.UI.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.Chat
 {
@@ -40,8 +43,9 @@ namespace DCL.Chat
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
         private ChatTitlebarViewModel? currentViewModel { get; set; }
-
+        private GenericContextMenu? contextMenuInstance;
         private readonly GenericContextMenu contextMenuConfiguration;
+        private ToggleWithCheckContextMenuControlSettings[] notificationPingToggles;
 
         public ChatTitlebarPresenter(
             ChatTitlebarView2 view,
@@ -85,6 +89,13 @@ namespace DCL.Chat
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText,
                     contextMenuSettings.ViewCommunitySprite,
                     OpenCommunityCard));
+
+            InitializeChannelContextMenu();
+        }
+
+        private void OnDeleteChatHistoryButtonClicked()
+        {
+            deleteChatHistoryCommand.Execute();
         }
 
         private void OpenCommunityCard()
@@ -93,14 +104,19 @@ namespace DCL.Chat
                 .OpenCommunityCard(currentChannelService.CurrentChannel);
         }
 
+        private GameObject contextMenuToggleGroup;
         public void Dispose()
         {
             view.OnCloseRequested -= OnCloseRequested;
             view.OnMembersToggleRequested -= OnMembersToggleRequested;
             view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
             view.OnCommunityContextMenuRequested -= OnCommunityContextMenuRequested;
+            view.OnContextMenuRequested -= OnChatContextMenuRequested;
             chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
 
+            if (contextMenuToggleGroup != null)
+                Object.Destroy(contextMenuToggleGroup);
+            
             lifeCts.SafeCancelAndDispose();
             profileLoadCts.SafeCancelAndDispose();
             scope.Dispose();
@@ -129,7 +145,6 @@ namespace DCL.Chat
 
         private void OnCommunityContextMenuRequested(ShowContextMenuRequest request)
         {
-            Debug.Log("OnCommunityContextMenuRequested");
             if (currentViewModel.ViewMode != TitlebarViewMode.Community) return;
 
             request.MenuConfiguration = contextMenuConfiguration;
@@ -138,16 +153,19 @@ namespace DCL.Chat
                 .Forget();
         }
 
-        private void OnChatContextMenuRequested(ChatContextMenuRequest data)
+        private void OnChatContextMenuRequested(ShowChannelContextMenuRequest request)
         {
-            var options = new ChatOptionsContextMenuData
-            {
-                DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon
-            };
+            if (contextMenuInstance == null)
+                InitializeChannelContextMenu();
 
-            data.contextMenuData = options;
-            data.OnDeleteHistory = deleteChatHistoryCommand.Execute;
-            chatContextMenuService.ShowChannelOptionsAsync(data).Forget();
+            var currentSetting = ChatUserSettings
+                .GetNotificationPingValuePerChannel(currentChannelService.CurrentChannelId);
+
+            for (int i = 0; i < notificationPingToggles.Length; ++i)
+                notificationPingToggles[i].SetInitialValue(i == (int)currentSetting);
+
+            request.MenuConfiguration = contextMenuInstance;
+            chatContextMenuService.ShowChannelContextMenuAsync(request).Forget();
         }
 
         private void OnMemberCountUpdated(int memberCount)
@@ -228,6 +246,51 @@ namespace DCL.Chat
         public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
         {
             view.SetFocusedState(isFocused, animate, duration, easing);
+        }
+
+        private void OnNotificationPingOptionSelected(ChatAudioSettings selectedMode)
+        {
+            if (currentChannelService.CurrentChannel == null) return;
+
+            ChatUserSettings.SetNotificationPintValuePerChannel(selectedMode,
+                currentChannelService.CurrentChannel.Id);
+        }
+
+        private void InitializeChannelContextMenu()
+        {
+            var toggleGroup = view.gameObject.AddComponent<ToggleGroup>();
+            notificationPingToggles = new ToggleWithCheckContextMenuControlSettings[3];
+
+            var deleteChatHistoryButton =
+                new ButtonContextMenuControlSettings(chatConfig.chatContextMenuSettings.DeleteChatHistoryText,
+                    chatConfig.chatContextMenuSettings.DeleteChatHistorySprite,
+                    OnDeleteChatHistoryButtonClicked);
+
+            var subMenuSettings = new SubMenuContextMenuButtonSettings(
+                chatConfig.chatContextMenuSettings.NotificationPingText,
+                chatConfig.chatContextMenuSettings.NotificationPingSprite,
+                new GenericContextMenu(chatConfig.chatContextMenuSettings.ContextMenuWidth,
+                        verticalLayoutPadding: chatConfig.chatContextMenuSettings.VerticalPadding,
+                        elementsSpacing: chatConfig.chatContextMenuSettings.ElementsSpacing,
+                        offsetFromTarget: chatConfig.chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget)
+                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] =
+                        new ToggleWithCheckContextMenuControlSettings("All Messages",
+                            x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
+                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.MENTIONS_ONLY] =
+                        new ToggleWithCheckContextMenuControlSettings("Mentions Only",
+                            x => OnNotificationPingOptionSelected(ChatAudioSettings.MENTIONS_ONLY), toggleGroup))
+                    .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] =
+                        new ToggleWithCheckContextMenuControlSettings("None",
+                            x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
+
+            contextMenuInstance = new GenericContextMenu(
+                    chatConfig.chatContextMenuSettings.ContextMenuWidth,
+                    chatConfig.chatContextMenuSettings.OffsetFromTarget,
+                    chatConfig.chatContextMenuSettings.VerticalPadding,
+                    chatConfig.chatContextMenuSettings.ElementsSpacing,
+                    anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
+                .AddControl(subMenuSettings)
+                .AddControl(deleteChatHistoryButton);
         }
     }
 }

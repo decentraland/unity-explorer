@@ -70,7 +70,7 @@ namespace DCL.Chat
             mentionedOutline.SetActive(data.IsMention);
 
             backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
-            messageOptionsButton.onClick.AddListener(OnMessageOptionsClicked);
+            //messageOptionsButton.onClick.AddListener(OnMessageOptionsClicked);
         }
 
         private void OnMessageOptionsClicked()

@@ -12,6 +12,9 @@ namespace DCL.Chat.ChatConfig
 
         [SerializeField]
         public CommunityChatConversationContextMenuSettings communityChatConversationContextMenuSettings;
+
+        [SerializeField]
+        public ChatContextMenuConfiguration chatContextMenuSettings;
         
         [field: Header("General")]
         [field: SerializeField]

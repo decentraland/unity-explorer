@@ -32,20 +32,19 @@ namespace DCL.Chat.ChatServices.ChatContextService
         public MenuAnchorPoint AnchorPoint;
     }
 
-    public struct CommunityMenuRequest
-    {
-        public string CommunityId;
-        public Vector3 Position;
-        public string ViewCommunityText;
-        public Sprite ViewCommunityIcon;
-    }
-
 
     public struct ChatContextMenuRequest
     {
         public Vector2 Position;
         public ChatOptionsContextMenuData contextMenuData;
         public Action OnDeleteHistory;
+    }
+
+    public struct ShowChannelContextMenuRequest
+    {
+        public GenericContextMenu MenuConfiguration;
+        public Vector3 Position;
+        public MenuAnchorPoint AnchorPoint;
     }
     
     /// <summary>

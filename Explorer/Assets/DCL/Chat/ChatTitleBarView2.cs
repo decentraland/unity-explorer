@@ -14,7 +14,7 @@ namespace DCL.Chat
     {
         public event Action OnCloseRequested;
         public event Action OnMembersToggleRequested;
-        public event Action<ChatContextMenuRequest> OnContextMenuRequested;
+        public event Action<ShowChannelContextMenuRequest> OnContextMenuRequested;
         public event Action<UserProfileMenuRequest> OnProfileContextMenuRequested;
         public event Action<ShowContextMenuRequest> OnCommunityContextMenuRequested;
 
@@ -42,12 +42,12 @@ namespace DCL.Chat
 
         private void OnContextMenuButtonClicked()
         {
-            var data = new ChatContextMenuRequest
+            var request = new ShowChannelContextMenuRequest
             {
-                Position = defaultTitlebarView.ButtonOpenContextMenu.transform.position
+                Position = defaultTitlebarView.ButtonOpenContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_LEFT
             };
 
-            OnContextMenuRequested?.Invoke(data);
+            OnContextMenuRequested?.Invoke(request);
         }
 
         private void OnProfileContextMenuClicked(TitlebarViewMode mode)
