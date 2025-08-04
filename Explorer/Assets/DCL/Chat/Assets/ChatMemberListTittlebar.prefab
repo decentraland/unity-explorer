@@ -308,8 +308,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 14
-  m_fontSizeBase: 14
+  m_fontSize: 12
+  m_fontSizeBase: 12
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -427,8 +427,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294769916
-  m_fontColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    rgba: 2164260863
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0.5019608}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -445,8 +445,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 14
-  m_fontSizeBase: 14
+  m_fontSize: 12
+  m_fontSizeBase: 12
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -527,7 +527,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1458016567481740339, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_fontColor.a
-      value: 0.7019608
+      value: 0.5019608
       objectReference: {fileID: 0}
     - target: {fileID: 1458016567481740339, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_fontSizeBase
@@ -535,7 +535,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1458016567481740339, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_fontColor32.rgba
-      value: 3019898879
+      value: 2164260863
       objectReference: {fileID: 0}
     - target: {fileID: 1458016567481740339, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_HorizontalAlignment
@@ -543,7 +543,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1685835338970619622, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_Spacing
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1685835338970619622, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_ChildAlignment
@@ -551,7 +551,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1685835338970619622, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_Padding.m_Left
-      value: 0
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 1685835338970619622, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_Padding.m_Right
@@ -635,7 +635,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4700425521250417018, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_Color.a
-      value: 0.7019608
+      value: 0.5019608
       objectReference: {fileID: 0}
     - target: {fileID: 5157507127181796970, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_AnchorMax.y
@@ -655,7 +655,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5157507127181796970, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 16
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 5157507127181796970, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_AnchoredPosition.y
