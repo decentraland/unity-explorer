@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DCL.Roads.Settings
 {
-    public class GPUInstancingMeshExtractor
+    public static class GPUInstancingMeshExtractor
     {
         private readonly struct MeshIdentifier : IEquatable<MeshIdentifier>
         {
@@ -56,7 +56,7 @@ namespace DCL.Roads.Settings
             }
         }
 
-        public List<GPUInstancingLODGroupWithBuffer> ExtractSimilarMeshes(List<GPUInstancingLODGroupWithBuffer> originalGroups)
+        public static List<GPUInstancingLODGroupWithBuffer> ExtractSimilarMeshes(List<GPUInstancingLODGroupWithBuffer> originalGroups)
         {
             var extractedGroups = new List<GPUInstancingLODGroupWithBuffer>();
             List<RendererGroup> rendererGroups = GroupRenderersByMesh(originalGroups);
@@ -71,13 +71,12 @@ namespace DCL.Roads.Settings
                 }
             }
 
-            // Удаляем пустые группы
             originalGroups.RemoveAll(group => group.CombinedLodsRenderers.Count == 0);
 
             return extractedGroups;
         }
 
-        private List<RendererGroup> GroupRenderersByMesh(List<GPUInstancingLODGroupWithBuffer> groups)
+        private static List<RendererGroup> GroupRenderersByMesh(List<GPUInstancingLODGroupWithBuffer> groups)
         {
             var groupedRenderers = new Dictionary<MeshIdentifier, RendererGroup>();
 
@@ -98,7 +97,7 @@ namespace DCL.Roads.Settings
             return groupedRenderers.Values.ToList();
         }
 
-        private GPUInstancingLODGroupWithBuffer CreateCombinedGroup(RendererGroup rendererGroup)
+        private static GPUInstancingLODGroupWithBuffer CreateCombinedGroup(RendererGroup rendererGroup)
         {
             RendererInfo firstRenderer = rendererGroup.Renderers[0];
             var combinedInstances = new List<PerInstanceBuffer>();
