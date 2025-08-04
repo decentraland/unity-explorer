@@ -971,6 +971,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3706061838824371172, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
+      propertyPath: m_text
+      value: Exit Call
+      objectReference: {fileID: 0}
     - target: {fileID: 8423335560219777953, guid: c8a765b19b7744fb28e57478392e8d02, type: 3}
       propertyPath: m_Name
       value: HangUpButton

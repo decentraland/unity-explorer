@@ -22,6 +22,15 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public RectTransform SpeakersParent { get; private set; }
 
         [field: SerializeField]
+        public GameObject ConnectingPanel { get; private set; }
+
+        [field: SerializeField]
+        public GameObject ContentPanel { get; private set; }
+
+        [field: SerializeField]
+        public GameObject FooterPanel { get; private set; }
+
+        [field: SerializeField]
         public CommunityVoiceChatInCallFooterView InCallFooterView { get; private set; }
 
         [field: SerializeField]

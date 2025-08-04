@@ -119,6 +119,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 });
         }
 
+        public void SetConnectedPanel(bool isConnected)
+        {
+            CommunityVoiceChatInCallView.ConnectingPanel.SetActive(!isConnected);
+            CommunityVoiceChatInCallView.ContentPanel.SetActive(isConnected);
+            CommunityVoiceChatInCallView.FooterPanel.SetActive(isConnected);
+        }
+
         private void OnDestroy()
         {
             contextMenuTask?.TrySetResult();

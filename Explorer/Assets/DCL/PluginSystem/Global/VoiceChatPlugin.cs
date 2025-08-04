@@ -141,7 +141,7 @@ namespace DCL.PluginSystem.Global
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio.Value, unmuteMicrophoneAudio.Value);
 
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator, voiceChatHandler);
+            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager);
         }
 
         [Serializable]

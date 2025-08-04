@@ -15,6 +15,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly CommunityVoiceChatTitlebarView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly VoiceChatRoomManager roomManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
         private readonly Dictionary<string, PlayerEntryView> usedPlayerEntries = new ();
@@ -29,11 +30,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             PlayerEntryView playerEntry,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            VoiceChatMicrophoneHandler microphoneHandler)
+            VoiceChatMicrophoneHandler microphoneHandler,
+            VoiceChatRoomManager roomManager)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.roomManager = roomManager;
 
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
             inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler);
@@ -43,6 +46,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
+            this.roomManager.ConnectionEstablished += OnConnectionEnstablished;
 
             // Should we send this through an internal event bus to avoid having these sub-view subscriptions or bubbling up events?
             view.CommunityVoiceChatInCallView.InCallFooterView.OpenListenersSectionButton.onClick.AddListener(OpenListenersSection);
@@ -59,6 +63,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+        }
+
+        private void OnConnectionEnstablished()
+        {
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
+                view.SetConnectedPanel(true);
         }
 
         public void Dispose()
@@ -141,6 +151,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     break;
                 case VoiceChatType.COMMUNITY:
                     Show();
+                    view.SetConnectedPanel(false);
                     break;
                 case VoiceChatType.NONE:
                 default:
