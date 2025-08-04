@@ -285,8 +285,7 @@ namespace DCL.Communities.CommunitiesCard
             communityPrivacyImage.sprite = communityData.privacy == CommunityPrivacy.@public ? publicCommunityImage : privateCommunityImage;
 
             if (communityData.thumbnails != null)
-
-            thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
+                thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
