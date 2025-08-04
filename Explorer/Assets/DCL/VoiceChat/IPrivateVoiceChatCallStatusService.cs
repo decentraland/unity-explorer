@@ -1,4 +1,6 @@
 using DCL.Web3;
+using Decentraland.SocialService.V2;
+using System;
 
 namespace DCL.VoiceChat
 {
@@ -8,5 +10,7 @@ namespace DCL.VoiceChat
     public interface IPrivateVoiceChatCallStatusService
     {
         string CurrentTargetWallet { get; }
+        
+        event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
     }
 }

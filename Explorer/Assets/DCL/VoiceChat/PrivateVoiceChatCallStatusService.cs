@@ -20,12 +20,15 @@ namespace DCL.VoiceChat
 
         public string CurrentTargetWallet { get; private set; }
 
+        public event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
+
         public PrivateVoiceChatCallStatusService(IVoiceService voiceChatService)
         {
             this.voiceChatService = voiceChatService;
 
             this.voiceChatService.Reconnected += OnReconnected;
             this.voiceChatService.Disconnected += OnRCPDisconnected;
+            this.voiceChatService.PrivateVoiceChatUpdateReceived += OnRPCPrivateVoiceChatUpdateReceived;
             cts = new CancellationTokenSource();
         }
 
@@ -35,11 +38,17 @@ namespace DCL.VoiceChat
             {
                 voiceChatService.Reconnected -= OnReconnected;
                 voiceChatService.Disconnected -= OnRCPDisconnected;
+                voiceChatService.PrivateVoiceChatUpdateReceived -= OnRPCPrivateVoiceChatUpdateReceived;
                 voiceChatService.Dispose();
             }
 
             cts.SafeCancelAndDispose();
             base.Dispose();
+        }
+
+        private void OnRPCPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
+        {
+            PrivateVoiceChatUpdateReceived?.Invoke(update);
         }
 
         public void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)

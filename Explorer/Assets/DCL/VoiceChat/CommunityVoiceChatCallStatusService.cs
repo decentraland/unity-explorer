@@ -20,7 +20,6 @@ namespace DCL.VoiceChat
     public class CommunityVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, ICommunityVoiceChatCallStatusService
     {
         private readonly ICommunityVoiceService voiceChatService;
-        private readonly VoiceChatParticipantsStateService participantsStateService;
         private readonly INotificationsBusController notificationBusController;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
 
@@ -28,11 +27,9 @@ namespace DCL.VoiceChat
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
-            VoiceChatParticipantsStateService participantsStateService,
             INotificationsBusController notificationBusController)
         {
             this.voiceChatService = voiceChatService;
-            this.participantsStateService = participantsStateService;
             this.notificationBusController = notificationBusController;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
         }
@@ -134,8 +131,6 @@ namespace DCL.VoiceChat
                 switch (response.ResponseCase)
                 {
                     case RequestToSpeakInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        // participantsStateService.LocalParticipantState.IsRequestingToSpeak.Value = true;
-                        // We should not be able to do this so easily, we do it here to avoid waiting for metadata update, for now I disable it until we test how fast this comes.
                         break;
                 }
             }

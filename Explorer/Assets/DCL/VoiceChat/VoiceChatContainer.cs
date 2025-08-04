@@ -26,14 +26,12 @@ namespace DCL.VoiceChat
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus);
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
-            communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, participantsStateService, notificationsBusController);
+            communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, notificationsBusController);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
 
             VoiceChatOrchestrator = new VoiceChatOrchestrator(
                 privateVoiceChatCallStatusService,
                 communityVoiceChatCallStatusService,
-                rpcPrivateVoiceChatService,
-                rpcCommunityVoiceChatService,
                 participantsStateService);
         }
 
