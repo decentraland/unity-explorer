@@ -208,6 +208,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (sectionData.PageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
+                else
+                    view.SetEmptyStateActive(sectionData.Items.Count == 0);
 
                 RefreshGrid(true);
             }

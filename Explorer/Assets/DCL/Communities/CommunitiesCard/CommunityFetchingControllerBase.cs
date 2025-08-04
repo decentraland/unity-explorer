@@ -47,7 +47,6 @@ namespace DCL.Communities.CommunitiesCard
 
             try
             {
-
                 SectionFetchData<T> membersData = currentSectionFetchData;
 
                 view.SetEmptyStateActive(false);

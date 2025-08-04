@@ -46,6 +46,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private NotificationIndicatorView requestsNotificationIndicator { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyStateParent { get; set; } = null!;
 
         [field: Header("Assets")]
         [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
@@ -269,7 +270,17 @@ namespace DCL.Communities.CommunitiesCard.Members
                 loopGrid.RefreshAllShownItem();
         }
 
-        public void SetEmptyStateActive(bool active) { }
+        public void SetEmptyStateActive(bool active)
+        {
+            if (active)
+            {
+                emptyStateParent.SetActive(true);
+                foreach (var sectionMapping in memberListSectionsElements)
+                    sectionMapping.EmptyState.SetActive(sectionMapping.Section == currentSection);
+            }
+            else
+                emptyStateParent.SetActive(false);
+        }
 
         public void SetLoadingStateActive(bool active)
         {
@@ -302,6 +313,10 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             [field: SerializeField]
             public GameObject UnselectedText { get; private set; }
+
+            [field: Space(10)]
+            [field: SerializeField]
+            public GameObject EmptyState { get; private set; }
         }
     }
 }
