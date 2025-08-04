@@ -447,9 +447,9 @@ namespace DCL.Chat
             }
 
             // Whether the timestamp is not null (old messages, backward compatibility), it's not the last padding message, and either the message is the first in the feed or the day it was sent is different from the previous messages
-            bool wasSentInDifferentDate = itemData.SentTimestamp != 0.0f &&
+            bool wasSentInDifferentDate = itemData.SentTimestampRaw != 0.0f &&
                                           index < chatMessages.Count - 1 &&
-                                          (index == chatMessages.Count - 2 || DateTime.FromOADate(itemData.SentTimestamp).Date != DateTime.FromOADate(chatMessages[index + 1].SentTimestamp).Date);
+                                          (index == chatMessages.Count - 2 || DateTime.FromOADate(itemData.SentTimestampRaw).Date != DateTime.FromOADate(chatMessages[index + 1].SentTimestampRaw).Date);
             // There is a date divider inside each instance which is shown or not. The divider is always at the top of the message and its height is not taken into account
             // when calculating the space a message occupies in the feed, so an extra space has to be added between this message and the previous one, when the divider is present.
             itemView.GetComponent<LoopListViewItem2>().Padding = wasSentInDifferentDate ? itemView.dateDividerElement.sizeDelta.y

@@ -17,7 +17,9 @@ namespace DCL.Chat.History
         /// <summary>
         /// The instant when the message was sent (UTC), in OLE Automation Date format. Zero means null or unassigned.
         /// </summary>
-        public readonly double SentTimestamp;
+        public readonly double SentTimestampRaw;
+
+        public readonly DateTime? SentTimestamp;
 
         public ChatMessage(
             string message,
@@ -27,8 +29,7 @@ namespace DCL.Chat.History
             string senderWalletId,
             double sentTimestamp,
             bool isMention = false,
-            bool isSystemMessage = false,
-            bool isPaddingElement = false)
+            bool isSystemMessage = false)
         {
             Message = message;
             SenderValidatedName = senderValidatedName;
@@ -37,7 +38,8 @@ namespace DCL.Chat.History
             SenderWalletId = senderWalletId;
             IsMention = isMention;
             IsSystemMessage = isSystemMessage;
-            SentTimestamp = sentTimestamp;
+            SentTimestampRaw = sentTimestamp;
+            SentTimestamp = sentTimestamp != 0.0 ? DateTime.FromOADate(sentTimestamp) : null;
         }
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
@@ -48,12 +50,11 @@ namespace DCL.Chat.History
                 chatMessage.SenderWalletId,
                 DateTime.UtcNow.ToOADate(),
                 chatMessage.IsMention,
-                false,
-                chatMessage.IsSystemMessage);
+                false);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                null, DateTime.UtcNow.ToOADate(), false, true, false);
+                null, DateTime.UtcNow.ToOADate(), false, true);
 
         public bool Equals(ChatMessage other)
         {

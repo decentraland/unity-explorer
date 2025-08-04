@@ -128,7 +128,8 @@ namespace DCL.Chat.ChatMessages
             scrollToBottomPresenter.OnMessageReceived(isSentByOwnUser, wasAtBottom);
 
             // 3. Perform the actions for the message feed itself (no button logic here)
-            ChatMessageViewModel newMessageViewModel = createMessageViewModelCommand.Execute(addedMessage);
+            (bool isTopMostMessage, ChatMessage? previousMessage) = GetMessageHistoryCommand.GetTopMostAndPreviousMessage(destinationChannel.Messages, index);
+            ChatMessageViewModel newMessageViewModel = createMessageViewModelCommand.Execute(addedMessage, previousMessage, isTopMostMessage);
 
             int previousNewMessagesSeparatorIndex = separatorFixedIndexFromBottom;
             RemoveNewMessagesSeparator();

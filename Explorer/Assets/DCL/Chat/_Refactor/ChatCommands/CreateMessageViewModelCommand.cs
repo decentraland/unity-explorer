@@ -26,10 +26,15 @@ namespace DCL.Chat.ChatCommands
             return viewModel;
         }
 
-        public ChatMessageViewModel Execute(ChatMessage message)
+        public ChatMessageViewModel Execute(ChatMessage message, ChatMessage? previousMessage, bool isTopMostInTheFeed)
         {
             ChatMessageViewModel? viewModel = ChatMessageViewModel.POOL.Get();
             viewModel.Message = message;
+
+            // Whether the timestamp is not null (old messages, backward compatibility), it's not the last padding message, and either the message is the first in the feed or the day it was sent is different from the previous messages
+            viewModel.ShowDateDivider = message.SentTimestamp.HasValue &&
+                                        ((previousMessage != null && message.SentTimestamp.Value.Date != previousMessage.Value.SentTimestamp?.Date)
+                                         || isTopMostInTheFeed);
 
             if (message.IsSystemMessage)
                 viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(ProfileNameColorHelper.GetNameColor(message.SenderValidatedName)));

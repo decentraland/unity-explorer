@@ -63,7 +63,7 @@ namespace DCL.Chat
             dateDividerElement.gameObject.SetActive(showDateDivider);
 
             if (showDateDivider)
-                dateDividerText.text = GetDateRepresentation(DateTime.FromOADate(data.SentTimestamp).Date);
+                dateDividerText.text = GetDateRepresentation(data.SentTimestamp!.Value.Date);
 
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
         }

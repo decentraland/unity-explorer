@@ -45,7 +45,7 @@ namespace DCL.Chat.History
             entryValues[ENTRY_SENT_BY_LOCAL_USER] = messageToAppend.IsSentByOwnUser ? LOCAL_USER_TRUE_VALUE : LOCAL_USER_FALSE_VALUE;
             entryValues[ENTRY_MESSAGE] = messageToAppend.Message;
             entryValues[ENTRY_USERNAME] = messageToAppend.SenderValidatedName;
-            entryValues[ENTRY_TIMESTAMP] = messageToAppend.SentTimestamp.ToString(CultureInfo.InvariantCulture);
+            entryValues[ENTRY_TIMESTAMP] = messageToAppend.SentTimestampRaw.ToString(CultureInfo.InvariantCulture);
 
             destination.Write(CreateHistoryEntry(entryValues));
             destination.Flush();

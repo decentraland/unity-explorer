@@ -19,7 +19,6 @@ namespace DCL.Chat.ChatMessages
     public class ChatMessageFeedView : MonoBehaviour, IDisposable
     {
         [SerializeField] private ChatScrollToBottomView chatScrollToBottomView;
-        public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
 
         [SerializeField] private float chatEntriesFadeTime = 3f;
         [SerializeField] private int chatEntriesWaitBeforeFading = 10000;
@@ -31,15 +30,17 @@ namespace DCL.Chat.ChatMessages
 
         private CancellationTokenSource? fadeoutCts;
 
+        private ReadOnlyHashSet<string> onlineParticipants = new (new HashSet<string>());
+
         // View models are reused and set
         // by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
-
-        private ReadOnlyHashSet<string> onlineParticipants = new (new HashSet<string>());
+        public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
 
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
+
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked -= ChatScrollToBottomToBottomClicked;
         }
@@ -115,10 +116,7 @@ namespace DCL.Chat.ChatMessages
             loopList.RefreshAllShownItem();
 
             // Scroll view adjustment
-            if (IsAtBottom())
-            {
-                loopList.MovePanelToItemIndex(0, 0);
-            }
+            if (IsAtBottom()) { loopList.MovePanelToItemIndex(0, 0); }
             else
             {
                 // TODO this solution doesn't account for the sliding separator element
@@ -217,9 +215,14 @@ namespace DCL.Chat.ChatMessages
                 ChatItemPrefabIndex prefabIndex = chatMessage.IsSystemMessage ? ChatItemPrefabIndex.SystemChatEntry :
                     chatMessage.IsSentByOwnUser ? ChatItemPrefabIndex.ChatEntryOwn : ChatItemPrefabIndex.ChatEntry;
 
-                item = listView.NewListViewItem(GetPrefabName(prefabIndex));
+                ItemPrefabConfData? prefabConf = listView.ItemPrefabDataList[(int)prefabIndex];
+
+                item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
                 itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
+
+                float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
+                item.Padding = padding;
 
                 // Online connectivity could be integrated to the view model, but it's more efficient and simpler to do it here
                 // for shown elements only

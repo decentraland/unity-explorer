@@ -39,8 +39,20 @@ namespace DCL.Chat.ChatCommands
             if (!chatHistory.Channels.TryGetValue(channelId, out var channel))
                 return;
 
-            foreach (ChatMessage channelMessage in channel.Messages)
-                targetList.Add(createMessageViewModelCommand.Execute(channelMessage));
+            for (var index = 0; index < channel.Messages.Count; index++)
+            {
+                ChatMessage channelMessage = channel.Messages[index];
+                (bool isTopMostMessage, ChatMessage? previousMessage) = GetTopMostAndPreviousMessage(channel.Messages, index);
+                targetList.Add(createMessageViewModelCommand.Execute(channelMessage, previousMessage, isTopMostMessage));
+            }
+        }
+
+        internal static (bool isTopMost, ChatMessage? previousMessage) GetTopMostAndPreviousMessage(
+            IReadOnlyList<ChatMessage> messages, int index)
+        {
+            bool isTopMost = index == messages.Count - 1;
+            ChatMessage? previousMessage = isTopMost ? null : messages[index + 1];
+            return (isTopMost, previousMessage);
         }
     }
 }
