@@ -99,9 +99,10 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         [None(typeof(MediaPlayerComponent))]
         [All(typeof(VideoTextureConsumer))]
-        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent, [Data] float dt)
+        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent, ref VideoTextureConsumer videoTextureConsumer, [Data] float dt)
         {
             CreateMediaPlayer(dt, entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
+            videoTextureConsumer.IsDirty = true;
         }
 
         private void CreateMediaPlayer(float dt, Entity entity, string url, bool hasVolume, float volume)

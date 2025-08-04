@@ -1,6 +1,7 @@
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
+using DCL.Shaders;
 using UnityEngine;
 
 namespace ECS.Unity.Textures.Components
@@ -54,18 +55,22 @@ namespace ECS.Unity.Textures.Components
         /// </summary>
         public Texture2DData Texture { get; private set; }
 
+        public bool IsDirty;
+
         public int ConsumersCount => Texture.referenceCount;
 
         public VideoTextureConsumer(Texture2D texture)
         {
             Texture = new Texture2DData(texture);
             renderers = new List<Renderer>();
+            IsDirty = false;
         }
 
         public VideoTextureConsumer(Texture2DData t2dd)
         {
             Texture = t2dd;
             renderers = new List<Renderer>();
+            IsDirty = false;
         }
 
         public void Dispose()
@@ -91,6 +96,15 @@ namespace ECS.Unity.Textures.Components
         public void RemoveConsumer(Renderer renderer)
         {
             renderers.Remove(renderer);
+        }
+
+        public void SetTextureScale(Vector2 texScale)
+        {
+            foreach (var meshRenderer in renderers)
+            {
+                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
+                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+            }
         }
     }
 }
