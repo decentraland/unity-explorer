@@ -7,5 +7,6 @@ namespace DCL.UI.GenericContextMenu.Controls
     {
         [SerializeField] internal RectTransform controlsContainer;
         [SerializeField] internal VerticalLayoutGroup controlsLayoutGroup;
+        [SerializeField] internal GameObject containerRim;
     }
 }

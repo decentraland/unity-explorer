@@ -280,6 +280,7 @@ namespace DCL.Chat
                     conversationsToolbar.SelectConversation(value);
                     chatInputBox.InputBoxText = string.Empty;
                     memberListView.IsVisible = false;
+                    chatTitleBar.SetCurrentChannel(currentChannel.Id);
 
                     switch (currentChannel.ChannelType)
                     {
@@ -731,7 +732,22 @@ namespace DCL.Chat
         /// <param name="destinationChannel">The Id of the conversation.</param>
         public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
         {
-            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
+            int unreadMessages = channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages;
+            IReadOnlyList<ChatMessage> messages = channels[destinationChannel].Messages;
+
+            // Checks if there is any mention to the current user among the unread messages
+            bool hasMentions = false;
+
+            for (int i = 0; i < unreadMessages; ++i)
+            {
+                if (messages[i + 1].IsMention) // Note: +1 due to padding
+                {
+                    hasMentions = true;
+                    break;
+                }
+            }
+
+            conversationsToolbar.SetUnreadMessages(destinationChannel, unreadMessages, hasMentions);
         }
 #endregion
 
@@ -1133,6 +1149,20 @@ namespace DCL.Chat
         public void MoveChannelToTop(ChatChannel.ChannelId channelToMove)
         {
             conversationsToolbar.MoveConversationToPosition(channelToMove, 1);
+        }
+
+        /// <summary>
+        /// Stores a list of users that are online (so if a user is not in it, it's offline). Visual elements (messages, profile pictures, etc.) of offline users
+        /// will be greyed out.
+        /// </summary>
+        /// <param name="onlineUserAddresses">A list of online user addresses.</param>
+        public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
+        {
+            if (currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER })
+                chatTitleBar.SetConnectionStatus(onlineUserAddresses.Contains(currentChannel.Id.Id) ? OnlineStatus.ONLINE
+                                                                                                    : OnlineStatus.OFFLINE);
+
+            chatMessageViewer.SetOnlineUserAddresses(onlineUserAddresses);
         }
     }
 }

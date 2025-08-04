@@ -37,6 +37,7 @@ using DCL.VoiceChat;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using ECS.Abstract;
+using ECS.SceneLifeCycle.Realm;
 using LiveKit.Rooms;
 using MVC;
 using System;
@@ -44,6 +45,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
 using Utility.Types;
+using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.Chat
 {
@@ -88,7 +90,8 @@ namespace DCL.Chat
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
-        private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> userCommunities = new();
+        private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> userCommunities = new ();
+        private readonly UserConnectivityInfoProvider userConnectivityInfoProvider;
 
         private SingleInstanceEntity cameraEntity;
 
@@ -96,11 +99,13 @@ namespace DCL.Chat
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
 
+        private string closedCommunityChatsKey;
+
         private bool viewInstanceCreated;
-        private CancellationTokenSource chatUsersUpdateCts = new();
-        private CancellationTokenSource communitiesServiceCts = new();
-        private CancellationTokenSource errorNotificationCts = new();
-        private CancellationTokenSource memberListCts = new();
+        private CancellationTokenSource chatUsersUpdateCts = new ();
+        private CancellationTokenSource communitiesServiceCts = new ();
+        private CancellationTokenSource errorNotificationCts = new ();
+        private CancellationTokenSource memberListCts = new ();
         private CancellationTokenSource isUserAllowedInInitializationCts;
         private CancellationTokenSource isUserAllowedInCommunitiesBusSubscriptionCts;
 
@@ -143,7 +148,9 @@ namespace DCL.Chat
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled) : base(viewFactory)
+            bool isCallEnabled,
+            IRealmNavigator realmNavigator
+            ) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -171,6 +178,7 @@ namespace DCL.Chat
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
+
             chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
                 chatRoom.Participants,
@@ -198,10 +206,11 @@ namespace DCL.Chat
                 chatHistory,
                 userCommunities,
                 communitiesDataProvider);
+
+            userConnectivityInfoProvider = new UserConnectivityInfoProvider(roomHub.IslandRoom(), roomHub.ChatRoom(), communitiesEventBus, chatHistory, realmNavigator);
         }
 
 #region Panel Visibility
-
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
 
         /// <summary>
@@ -228,9 +237,11 @@ namespace DCL.Chat
                         SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
                         return;
                     }
-
-                    chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
-                    UpdateChatUserStateAsync(chatUserStateUpdater.CurrentConversation, true, chatUsersUpdateCts.Token).Forget();
+                    else if (chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER)
+                    {
+                        chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                        UpdateChatUserStateAsync(chatUserStateUpdater.CurrentConversation, true, chatUsersUpdateCts.Token).Forget();
+                    }
 
                     viewInstance.ShowNewMessages();
                 }
@@ -280,11 +291,9 @@ namespace DCL.Chat
         /// </summary>
         private bool GetViewVisibility() =>
             viewInstanceCreated && viewInstance != null && viewInstance.gameObject.activeInHierarchy;
-
 #endregion
 
 #region View Show and Close
-
         protected override void OnViewShow()
         {
             cameraEntity = world.CacheCamera();
@@ -339,8 +348,12 @@ namespace DCL.Chat
             }
 
             isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
-            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token))
+            bool isCommunityEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token);
+
+            if (isCommunityEnabled)
                 await InitializeCommunityConversationsAsync();
+
+            userConnectivityInfoProvider.Initialize(isCommunityEnabled, communitiesDataProvider);
         }
 
         protected override void OnViewClose()
@@ -350,13 +363,15 @@ namespace DCL.Chat
             Dispose();
             callButtonController.Reset();
         }
-
 #endregion
 
 #region Communities
 
         private async UniTask InitializeCommunityConversationsAsync()
         {
+            if (string.IsNullOrEmpty(closedCommunityChatsKey))
+                closedCommunityChatsKey = string.Format(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, web3IdentityCache.Identity!.Address.ToString().ToLower());
+
             // Obtains all the communities of the user
             const int ALL_COMMUNITIES_OF_USER = 100;
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
@@ -391,7 +406,7 @@ namespace DCL.Chat
             }
             else
             {
-                ReportHub.LogError(ReportCategory.COMMUNITIES, GET_USER_COMMUNITIES_FAILED_MESSAGE + result.ErrorMessage?? string.Empty);
+                ReportHub.LogError(ReportCategory.COMMUNITIES, GET_USER_COMMUNITIES_FAILED_MESSAGE + result.ErrorMessage ?? string.Empty);
                 ShowErrorNotificationAsync(GET_USER_COMMUNITIES_FAILED_MESSAGE, errorNotificationCts.Token).Forget();
             }
         }
@@ -430,7 +445,7 @@ namespace DCL.Chat
             }
             else
             {
-                ReportHub.LogError(ReportCategory.COMMUNITIES, GET_COMMUNITY_FAILED_MESSAGE + result.ErrorMessage?? string.Empty);
+                ReportHub.LogError(ReportCategory.COMMUNITIES, GET_COMMUNITY_FAILED_MESSAGE + result.ErrorMessage ?? string.Empty);
                 ShowErrorNotificationAsync(GET_COMMUNITY_FAILED_MESSAGE, errorNotificationCts.Token).Forget();
             }
         }
@@ -438,7 +453,6 @@ namespace DCL.Chat
 #endregion
 
 #region Other Controller-inherited Methods
-
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         protected override void OnViewInstantiated()
@@ -456,10 +470,12 @@ namespace DCL.Chat
 
         public override void Dispose()
         {
+            userConnectivityInfoProvider.Dispose();
+            viewInstance?.RemoveAllConversations();
+            viewInstance?.Dispose();
             chatStorage?.UnloadAllFiles();
             chatUserStateUpdater.Dispose();
             chatHistory.DeleteAllChannels();
-            viewInstance?.RemoveAllConversations();
             memberListHelper.Dispose();
             chatUsersUpdateCts.SafeCancelAndDispose();
             callButtonController?.Dispose();
@@ -469,11 +485,9 @@ namespace DCL.Chat
             isUserAllowedInInitializationCts.SafeCancelAndDispose();
             isUserAllowedInCommunitiesBusSubscriptionCts.SafeCancelAndDispose();
         }
-
 #endregion
 
 #region Conversation Events
-
         private void OnOpenPrivateConversationRequested(string userId)
         {
             ChatChannel.ChannelId channelId = new ChatChannel.ChannelId(userId);
@@ -494,23 +508,24 @@ namespace DCL.Chat
         private void OnStartCall(string userId)
         {
             voiceChatCallStatusService.StartCall(new Web3Address(userId));
-
         }
 
         private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
         {
             ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(newCommunity.id);
+
             userCommunities[channelId] = new GetUserCommunitiesData.CommunityData()
-                {
-                    id = newCommunity.id,
-                    thumbnails = newCommunity.thumbnails,
-                    description = newCommunity.description,
-                    ownerAddress = newCommunity.ownerAddress,
-                    name = newCommunity.name,
-                    privacy = newCommunity.privacy,
-                    role = CommunityMemberRole.owner,
-                    membersCount = 1
-                };
+            {
+                id = newCommunity.id,
+                thumbnails = newCommunity.thumbnails,
+                description = newCommunity.description,
+                ownerAddress = newCommunity.ownerAddress,
+                name = newCommunity.name,
+                privacy = newCommunity.privacy,
+                role = CommunityMemberRole.owner,
+                membersCount = 1
+            };
+
             chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
         }
 
@@ -522,29 +537,27 @@ namespace DCL.Chat
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
-            if(!IsViewReady)
+            if (!IsViewReady)
                 return;
 
-            if(chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
+            if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
                 chatUserStateUpdater.CurrentConversation = channelId.Id;
 
             viewInstance!.CurrentChannelId = channelId;
 
-            if(chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
+            if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
             {
                 chatUserStateUpdater.AddConversation(channelId.Id);
                 chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
                 UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
             }
             else
-            {
                 SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
-            }
         }
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
         {
-            if(!IsViewReady)
+            if (!IsViewReady)
                 return;
 
             Result<ChatUserStateUpdater.ChatUserState> result = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
@@ -591,12 +604,9 @@ namespace DCL.Chat
 
             callButtonController.SetCallStatusForUser(callStatus, userId);
         }
-
-
 #endregion
 
 #region Chat History Events
-
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
@@ -617,7 +627,7 @@ namespace DCL.Chat
             }
             else
             {
-                HandleMessageAudioFeedback(addedMessage);
+                HandleMessageAudioFeedback(addedMessage, destinationChannel.Id);
 
                 if (IsViewReady)
                 {
@@ -633,31 +643,29 @@ namespace DCL.Chat
                         viewInstance.RefreshMessages();
                     }
                     else
-                    {
                         viewInstance.RefreshUnreadMessages(destinationChannel.Id);
-                    }
                 }
             }
 
             // Moves the conversation icon to the top, beneath nearby
-            if(destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
+            if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
                 viewInstance?.MoveChannelToTop(destinationChannel.Id);
         }
 
-        private void HandleMessageAudioFeedback(ChatMessage message)
+        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId destinationChannelId)
         {
-            if (IsViewReady)
+            if (!IsViewReady)
                 return;
 
-            switch (chatSettings.chatAudioSettings)
+            ChatAudioSettings notificationPingValue = ChatUserSettings.GetNotificationPingValuePerChannel(destinationChannelId);
+
+            switch (notificationPingValue)
             {
                 case ChatAudioSettings.NONE:
                     return;
                 case ChatAudioSettings.MENTIONS_ONLY when message.IsMention:
                 case ChatAudioSettings.ALL:
-                    UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ?
-                        viewInstance!.ChatReceiveMentionMessageAudio :
-                        viewInstance!.ChatReceiveMessageAudio);
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ? viewInstance!.ChatReceiveMentionMessageAudio : viewInstance!.ChatReceiveMessageAudio);
                     break;
             }
         }
@@ -673,12 +681,11 @@ namespace DCL.Chat
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
         {
-            if(changedChannel.Id.Equals(viewInstance!.CurrentChannelId))
+            if (changedChannel.Id.Equals(viewInstance!.CurrentChannelId))
                 viewInstance!.RefreshMessages();
             else
                 viewInstance.RefreshUnreadMessages(changedChannel.Id);
         }
-
 #endregion
 
 #region Channel Events
@@ -696,6 +703,10 @@ namespace DCL.Chat
 
                 viewInstance.RefreshMessages();
             }
+
+            // Note: The check is necessary because when the chat loads the Nearby participant list is not ready yet
+            if(userConnectivityInfoProvider.HasConversation(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY))
+                viewInstance.SetOnlineUserAddresses(userConnectivityInfoProvider.GetOnlineUsersInConversation(viewInstance!.CurrentChannelId, chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType));
         }
 
         private void OnViewChannelRemovalRequested(ChatChannel.ChannelId channelId)
@@ -704,11 +715,9 @@ namespace DCL.Chat
 
             chatHistory.RemoveChannel(channelId);
         }
-
 #endregion
 
 #region View state changes event handling
-
         // This is called when the view is folded or unfolded
         // it will mark the current channel as read if it is folded
         private void OnViewFoldingChanged(bool isUnfolded)
@@ -739,6 +748,7 @@ namespace DCL.Chat
         private void OnViewFocusChanged(bool isFocused)
         {
             callButtonController.Reset();
+
             if (isFocused)
                 DisableUnwantedInputs();
             else
@@ -749,7 +759,6 @@ namespace DCL.Chat
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
         }
-
 
         private void OnViewPointerEnter()
         {
@@ -772,11 +781,9 @@ namespace DCL.Chat
             memberListCts = memberListCts.SafeRestart();
             memberListHelper.RefreshMemberListAsync(memberListCts.Token).Forget();
         }
-
 #endregion
 
 #region External components event handling
-
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
             // NOTE: it's wired in the ChatPlugin
@@ -812,18 +819,17 @@ namespace DCL.Chat
             else
                 chatHistory.AddMessage(channelId, channelType, chatMessage);
         }
-
 #endregion
 
 #region Chat History Channel Events
-
         private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType)
         {
-            if(channelType == ChatChannel.ChatChannelType.USER)
+            if (channelType == ChatChannel.ChatChannelType.USER)
                 chatUserStateUpdater.RemoveConversation(removedChannel.Id);
             else if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
                 CloseCommunityChat(userCommunities[removedChannel].id);
 
+            userConnectivityInfoProvider.RemoveConversation(removedChannel, channelType);
             viewInstance!.RemoveConversation(removedChannel);
         }
 
@@ -843,11 +849,12 @@ namespace DCL.Chat
                     viewInstance!.AddPrivateConversation(addedChannel);
                     break;
             }
+
+            userConnectivityInfoProvider.AddConversation(addedChannel.Id, addedChannel.ChannelType);
         }
 #endregion
 
 #region User State Update Events
-
         /// <summary>
         /// NOTE: this event is raised when a user disconnects but belongs to the list
         /// NOTE: of opened conversations
@@ -855,11 +862,10 @@ namespace DCL.Chat
         /// <param name="userId"></param>
         private void OnUserDisconnected(string userId)
         {
-            // Update the state of the user
-            // in the current conversation
-            // NOTE: if it's in the unfolded state (prevent setting the state of the
-            // NOTE: chat input box if user is offline)
-            if(!viewInstance!.IsUnfolded) return;
+            // Update the state of the user in the current conversation
+            // NOTE: if it's in the unfolded state (prevent setting the state of the chat input box if user is offline)
+            if (!viewInstance!.IsUnfolded || chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType != ChatChannel.ChatChannelType.USER)
+                return;
 
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
             SetupViewWithUserStateOnMainThreadAsync(state).Forget();
@@ -909,10 +915,9 @@ namespace DCL.Chat
 
         private void OnUserConnectionStateChanged(string userId, bool isConnected)
         {
-            viewInstance!.UpdateConversationStatusIconForUser(userId, isConnected? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+            viewInstance!.UpdateConversationStatusIconForUser(userId, isConnected ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
         }
-
-        #endregion
+#endregion
 
         private async UniTaskVoid SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState userState)
         {
@@ -940,13 +945,15 @@ namespace DCL.Chat
 
         private async UniTask GetChannelMembersAsync(List<ChatUserData> outMembers, CancellationToken ct)
         {
+            ChatChannel.ChannelId channelId = viewInstance!.CurrentChannelId;
+
             outMembers.Clear();
 
-            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.NEARBY)
+            if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.NEARBY)
             {
                 foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
                 {
-                    if(ct.IsCancellationRequested)
+                    if (ct.IsCancellationRequested)
                         break;
 
                     // TODO: Use new endpoint to get a bunch of profile info
@@ -962,9 +969,9 @@ namespace DCL.Chat
                         });
                 }
             }
-            else if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+            else if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
             {
-                Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(userCommunities[viewInstance!.CurrentChannelId].id, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(userCommunities[channelId].id, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
                     return;
@@ -973,21 +980,21 @@ namespace DCL.Chat
                 {
                     GetCommunityMembersResponse response = result.Value;
 
-                    foreach(GetCommunityMembersResponse.MemberData memberData in response.data.results)
+                    foreach (GetCommunityMembersResponse.MemberData memberData in response.data.results)
                     {
                         // Skips the user of the player
-                        if(memberData.memberAddress == web3IdentityCache.Identity.Address)
+                        if (memberData.memberAddress == web3IdentityCache.Identity.Address)
                             continue;
 
                         outMembers.Add(new ChatUserData()
-                            {
-                                WalletAddress = memberData.memberAddress,
-                                FaceSnapshotUrl = memberData.profilePictureUrl,
-                                Name = memberData.name,
-                                ConnectionStatus = ChatMemberConnectionStatus.Online,
-                                ProfileColor = ProfileNameColorHelper.GetNameColor(memberData.name),
-                                WalletId = memberData.memberAddress = $"#{memberData.memberAddress[^4..]}"
-                            });
+                        {
+                            WalletAddress = memberData.memberAddress,
+                            FaceSnapshotUrl = memberData.profilePictureUrl,
+                            Name = memberData.name,
+                            ConnectionStatus = ChatMemberConnectionStatus.Online,
+                            ProfileColor = ProfileNameColorHelper.GetNameColor(memberData.name),
+                            WalletId = memberData.memberAddress = $"#{memberData.memberAddress[^4..]}"
+                        });
                     }
                 }
                 else
@@ -1066,7 +1073,18 @@ namespace DCL.Chat
             communitiesDataProvider.CommunityCreated += OnCommunitiesDataProviderCommunityCreated;
             communitiesDataProvider.CommunityDeleted += OnCommunitiesDataProviderCommunityDeleted;
 
+            userConnectivityInfoProvider.UserConnected += OnUserConnectivityInfoProviderUserConnected;
+            userConnectivityInfoProvider.UserDisconnected += OnUserConnectivityInfoProviderUserDisconnected;
+            userConnectivityInfoProvider.ConversationInitialized += OnUserConnectivityInfoProviderConversationInitialized;
+
             SubscribeToCommunitiesBusEventsAsync().Forget();
+        }
+
+        private void OnUserConnectivityInfoProviderConversationInitialized(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType)
+        {
+            if(channelType is ChatChannel.ChatChannelType.NEARBY or ChatChannel.ChatChannelType.COMMUNITY &&
+               viewInstance!.CurrentChannelId.Equals(channelId))
+                viewInstance!.SetOnlineUserAddresses(userConnectivityInfoProvider.GetOnlineUsersInConversation(channelId, channelType));
         }
 
         private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
@@ -1074,22 +1092,13 @@ namespace DCL.Chat
             isUserAllowedInCommunitiesBusSubscriptionCts = isUserAllowedInCommunitiesBusSubscriptionCts.SafeRestart();
 
             if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInCommunitiesBusSubscriptionCts.Token))
-            {
-                communitiesEventBus.UserConnectedToCommunity += OnCommunitiesEventBusUserConnectedToCommunity;
                 communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedToCommunity;
-            }
         }
 
         private void OnCommunitiesEventBusUserDisconnectedToCommunity(CommunityMemberConnectivityUpdate userConnectivity)
         {
             if (userConnectivity.Member.Address == web3IdentityCache.Identity!.Address)
                 chatHistory.RemoveChannel(ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId));
-        }
-
-        private void OnCommunitiesEventBusUserConnectedToCommunity(CommunityMemberConnectivityUpdate userConnectivity)
-        {
-            if(userConnectivity.Member.Address == web3IdentityCache.Identity!.Address)
-                AddCommunityConversationAsync(userConnectivity.CommunityId).Forget();
         }
 
         private void OnViewViewCommunityRequested(string communityId)
@@ -1131,8 +1140,6 @@ namespace DCL.Chat
                 viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
                 viewInstance.ConversationSelected -= OnSelectConversation;
                 viewInstance.DeleteChatHistoryRequested -= OnViewDeleteChatHistoryRequested;
-                viewInstance.RemoveAllConversations();
-                viewInstance.Dispose();
             }
 
             chatHistory.ChannelAdded -= OnChatHistoryChannelAdded;
@@ -1150,11 +1157,25 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
 
-            communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
 
             communitiesDataProvider.CommunityCreated -= OnCommunitiesDataProviderCommunityCreated;
             communitiesDataProvider.CommunityDeleted -= OnCommunitiesDataProviderCommunityDeleted;
+
+            userConnectivityInfoProvider.UserConnected -= OnUserConnectivityInfoProviderUserConnected;
+            userConnectivityInfoProvider.UserDisconnected -= OnUserConnectivityInfoProviderUserDisconnected;
+        }
+
+        private void OnUserConnectivityInfoProviderUserConnected(string userAddress, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType)
+        {
+            if(viewInstance!.CurrentChannelId.Equals(channelId))
+                viewInstance!.SetOnlineUserAddresses(userConnectivityInfoProvider.GetOnlineUsersInConversation(channelId, channelType));
+        }
+
+        private void OnUserConnectivityInfoProviderUserDisconnected(string userAddress, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType)
+        {
+            if(viewInstance!.CurrentChannelId.Equals(channelId))
+                viewInstance!.SetOnlineUserAddresses(userConnectivityInfoProvider.GetOnlineUsersInConversation(channelId, channelType));
         }
 
         private async UniTaskVoid ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
@@ -1171,10 +1192,10 @@ namespace DCL.Chat
         private void CloseCommunityChat(string communityId)
         {
             // Store the chat as closed
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(closedCommunityChatsKey, string.Empty);
             if (!allClosedCommunityChats.Contains(communityId))
             {
-                DCLPlayerPrefs.SetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, $"{allClosedCommunityChats}{communityId},");
+                DCLPlayerPrefs.SetString(closedCommunityChatsKey, $"{allClosedCommunityChats}{communityId},");
                 DCLPlayerPrefs.Save();
             }
 
@@ -1186,8 +1207,8 @@ namespace DCL.Chat
         private void OpenCommunityChat(string communityId)
         {
             // Store the chat as opened
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
-            DCLPlayerPrefs.SetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, allClosedCommunityChats.Replace($"{communityId},", string.Empty));
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(closedCommunityChatsKey, string.Empty);
+            DCLPlayerPrefs.SetString(closedCommunityChatsKey, allClosedCommunityChats.Replace($"{communityId},", string.Empty));
             DCLPlayerPrefs.Save();
 
             // Open the conversation
@@ -1209,9 +1230,9 @@ namespace DCL.Chat
             viewInstance!.Focus();
         }
 
-        private static bool IsCommunityChatClosed(string communityId)
+        private bool IsCommunityChatClosed(string communityId)
         {
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(closedCommunityChatsKey, string.Empty);
             return allClosedCommunityChats.Contains(communityId);
         }
     }

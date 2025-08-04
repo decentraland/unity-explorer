@@ -24,6 +24,7 @@ namespace DCL.UI.GenericContextMenuParameter
         public readonly float width;
         public readonly RectOffset verticalLayoutPadding;
         public readonly int elementsSpacing;
+        public readonly bool showRim;
         public ContextMenuOpenDirection anchorPoint;
         public Vector2 offsetFromTarget;
 
@@ -32,13 +33,15 @@ namespace DCL.UI.GenericContextMenuParameter
         ///     offsetFromTarget has the default value of (11, 18).
         ///     horizontalLayoutPadding has the default value of (8, 8, 4, 12).
         /// </summary>
-        public GenericContextMenu(float width = 186, Vector2? offsetFromTarget = null, RectOffset verticalLayoutPadding = null, int elementsSpacing = 1, ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT)
+        public GenericContextMenu(float width = 186, Vector2? offsetFromTarget = null, RectOffset verticalLayoutPadding = null, int elementsSpacing = 1, ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT,
+            bool showRim = false)
         {
             this.width = width;
             this.offsetFromTarget = offsetFromTarget ?? DEFAULT_OFFSET_FROM_TARGET;
             this.verticalLayoutPadding = verticalLayoutPadding ?? DEFAULT_VERTICAL_LAYOUT_PADDING;
             this.elementsSpacing = elementsSpacing;
             this.anchorPoint = anchorPoint;
+            this.showRim = showRim;
         }
 
         public GenericContextMenu AddControl(IContextMenuControlSettings settings)

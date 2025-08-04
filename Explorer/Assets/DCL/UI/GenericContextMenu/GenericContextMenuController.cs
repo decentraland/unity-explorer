@@ -129,6 +129,7 @@ namespace DCL.UI.GenericContextMenu
 
             container.controlsLayoutGroup.spacing = contextMenuConfig.elementsSpacing;
             container.controlsLayoutGroup.padding = contextMenuConfig.verticalLayoutPadding;
+            container.containerRim.SetActive(contextMenuConfig.showRim);
 
             container.controlsContainer.sizeDelta = new Vector2(contextMenuConfig.width,
                 totalHeight
