@@ -86,7 +86,7 @@ GameObject:
   - component: {fileID: 3880449179589484630}
   - component: {fileID: 9126696253515206040}
   - component: {fileID: 8140227935265557796}
-  - component: {fileID: 3265608359215975880}
+  - component: {fileID: 1558684769046186394}
   m_Layer: 5
   m_Name: ChatTitleBarsContainer
   m_TagString: Untagged
@@ -160,7 +160,7 @@ MonoBehaviour:
   chatOptionsContextMenuData:
     DeleteChatHistoryText: Delete Chat History
     DeleteChatHistoryIcon: {fileID: 21300000, guid: 1fd5346f8c379443886cb2219a95d139, type: 3}
---- !u!225 &3265608359215975880
+--- !u!225 &1558684769046186394
 CanvasGroup:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -639,11 +639,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 323719160246335921, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 128.45
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 323719160246335921, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 16.75
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 351942880906133536, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_AnchorMax.y
@@ -695,7 +695,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1080718810062954991, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1
+      value: 152
       objectReference: {fileID: 0}
     - target: {fileID: 1276221008981094986, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_AnchorMax.y
@@ -767,11 +767,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1834217260288687424, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 183.26
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1834217260288687424, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 48.95
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2237691410408167853, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.x
@@ -899,27 +899,27 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: 2790348c2cfcf48199960d5e87498e08, type: 3}
     - target: {fileID: 5055282503106831136, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5055282503106831136, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5055282503106831136, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 151.26
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5055282503106831136, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 16.95
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5055282503106831136, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 91.63
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5055282503106831136, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -24.475
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5223414979427900879, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1191,7 +1191,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8104099380819368582, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8120959570122817844, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.x
