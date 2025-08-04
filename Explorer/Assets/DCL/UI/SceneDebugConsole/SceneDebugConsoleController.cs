@@ -15,6 +15,7 @@ namespace DCL.UI.SceneDebugConsole
     {
         private const string USS_COPY_TOAST_SHOW = "copy-success-toast--show";
         private const string USS_CONSOLE_HIDDEN = "scene-debug-console--hidden";
+        private const string USS_PAUSE_BUTTON_PLAY = "scene-debug-console__pause-button--play";
         private const long TOAST_DURATION = 1500L;
 
         private readonly SceneDebugConsoleLogHistory logsHistory = new ();
@@ -22,6 +23,7 @@ namespace DCL.UI.SceneDebugConsole
         private IInputBlock inputBlock;
 
         private VisualElement consoleWindow;
+        private VisualElement pauseButton;
         private Toggle showLogsToggle;
         private Toggle showErrorsToggle;
         private ListView consoleListView;
@@ -60,7 +62,7 @@ namespace DCL.UI.SceneDebugConsole
 
             var clearButton = root.Q<Button>("ClearButton");
             var copyAllButton = root.Q<Button>("CopyAllButton");
-            var pauseButton = root.Q<Button>("PauseButton");
+            pauseButton = root.Q("PauseButton");
             var closeButton = root.Q<Button>("CloseButton");
             showLogsToggle = root.Q<Toggle>("LogsToggle");
             showErrorsToggle = root.Q<Toggle>("ErrorsToggle");
@@ -86,7 +88,7 @@ namespace DCL.UI.SceneDebugConsole
 
             // Buttons / Toggles
             clearButton.clicked += OnClearClicked;
-            pauseButton.clicked += OnPauseClicked;
+            pauseButton.AddManipulator(new Clickable(OnPauseClicked));
             copyAllButton.clicked += OnCopyAllClicked;
             closeButton.clicked += ToggleHide;
             searchField.RegisterValueChangedCallback(_ => RefreshFilters());
@@ -142,8 +144,7 @@ namespace DCL.UI.SceneDebugConsole
         {
             logsHistory.Paused = !logsHistory.Paused;
 
-            // TODO: Set icon to pause / play
-            // pauseButton.iconImage = ?
+            pauseButton.EnableInClassList(USS_PAUSE_BUTTON_PLAY, logsHistory.Paused);
         }
 
         private void OnCopyAllClicked()

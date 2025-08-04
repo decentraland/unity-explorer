@@ -1,0 +1,34 @@
+:root {
+    --dcl-color-snow: rgb(252, 252, 252);
+    --dcl-color-pale-black: rgb(67, 64, 74);
+    --dcl-color-orange: rgb(255, 116, 57);
+    --dcl-color-rarity-unique: rgb(254, 162, 23);
+    --dcl-color-black-40: rgba(0, 0, 0, 0.4);
+    --dcl-color-black-70: rgba(0, 0, 0, 0.7);
+    --dcl-color-white-70: rgba(255, 255, 255, 0.7);
+    
+    --dcl-font-azeretmono-medium: url('/Assets/DCL/UIToolkit/Fonts/AzeretMono-Medium SDF.asset');
+    --dcl-font-inter-regular: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-Regular SDF.asset');
+    --dcl-font-inter-semibold: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-SemiBold SDF.asset');
+
+    -unity-font-definition: var(--dcl-font-inter-regular);
+}
+
+/* Labels have a default margin and padding that we almost always reset */
+Label {
+    margin: 0;
+    padding: 0;
+}
+
+.dcl-clickable {
+    transition-property: scale;
+    transition-duration: 0.2s;
+}
+
+.dcl-clickable:hover {
+    scale: 0.95;
+}
+
+.dcl-clickable:active {
+    scale: 0.9;
+}

@@ -1,0 +1,46 @@
+/* AUTO GENERATED */
+:root {
+    --sprite-common__icon-checkmark-thin: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-checkmark-thin.png');
+    --sprite-common__icon-close: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-close.png');
+    --sprite-common__icon-copy: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-copy.png');
+    --sprite-common__icon-pause: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-pause.png');
+    --sprite-common__icon-play: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-play.png');
+    --sprite-common__icon-search: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-search.png');
+}
+
+.sprite-common__icon-checkmark-thin {
+    background-image: var(--sprite-common__icon-checkmark-thin);
+    width: 24px;
+    height: 24px;
+}
+
+.sprite-common__icon-close {
+    background-image: var(--sprite-common__icon-close);
+    width: 16px;
+    height: 16px;
+}
+
+.sprite-common__icon-copy {
+    background-image: var(--sprite-common__icon-copy);
+    width: 24px;
+    height: 24.5px;
+}
+
+.sprite-common__icon-pause {
+    background-image: var(--sprite-common__icon-pause);
+    width: 13px;
+    height: 13px;
+}
+
+.sprite-common__icon-play {
+    background-image: var(--sprite-common__icon-play);
+    width: 13px;
+    height: 13px;
+}
+
+.sprite-common__icon-search {
+    background-image: var(--sprite-common__icon-search);
+    width: 20.5px;
+    height: 19.5px;
+}
+
