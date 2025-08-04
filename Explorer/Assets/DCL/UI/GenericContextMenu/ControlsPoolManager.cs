@@ -15,6 +15,8 @@ namespace DCL.UI.GenericContextMenu
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
         private readonly List<ControlsContainerView> currentContainers = new ();
         private readonly Transform controlsParent;
+        private readonly IObjectPool<SimpleButtonContextMenuControlSettings> simpleButtonPool;
+        private readonly List<SimpleButtonContextMenuControlSettings> currentSimpleButtonConfigs = new ();
 
         private readonly Dictionary<Type, (object Pool, Action<object> ReleaseAction)> poolRegistry = new ();
 
@@ -36,6 +38,10 @@ namespace DCL.UI.GenericContextMenu
         {
             this.controlsParent = controlsParent;
 
+            simpleButtonPool = new ObjectPool<SimpleButtonContextMenuControlSettings>(
+                createFunc: () => new SimpleButtonContextMenuControlSettings(),
+                actionOnRelease: component => component.callback = null);
+
             CreateObjectPool(controlsContainerPrefab);
             CreateObjectPool(separatorPrefab);
             CreateObjectPool(buttonPrefab);
@@ -53,6 +59,22 @@ namespace DCL.UI.GenericContextMenu
             CreateObjectPool(subMenuButtonPrefab);
             CreateObjectPool(simpleButtonPrefab);
             CreateObjectPool(buttonListPrefab);
+        }
+
+        public void Dispose() =>
+            ReleaseAllCurrentControls();
+
+        public SimpleButtonContextMenuControlSettings GetSimpleButtonConfig(string buttonText,
+            Action clickAction,
+            RectOffset horizontalLayoutPadding = null,
+            int horizontalLayoutSpacing = 10,
+            bool horizontalLayoutReverseArrangement = false,
+            Color textColor = default)
+        {
+            SimpleButtonContextMenuControlSettings config = simpleButtonPool.Get();
+            config.Configure(buttonText, clickAction, horizontalLayoutPadding, horizontalLayoutSpacing, horizontalLayoutReverseArrangement, textColor);
+            currentSimpleButtonConfigs.Add(config);
+            return config;
         }
 
         private void CreateObjectPool<T>(T prefab) where T: MonoBehaviour =>
@@ -77,9 +99,6 @@ namespace DCL.UI.GenericContextMenu
 
             throw new Exception($"No pool for type {typeof(T)} found. Did you forget to create it?");
         }
-
-        public void Dispose() =>
-            ReleaseAllCurrentControls();
 
         public GenericContextMenuComponentBase GetContextMenuComponent(IContextMenuControlSettings settings, int index, Transform parent)
         {
@@ -212,6 +231,10 @@ namespace DCL.UI.GenericContextMenu
             foreach (var containerView in currentContainers)
                 poolRegistry[typeof(ControlsContainerView)].ReleaseAction.Invoke(containerView);
 
+            foreach (SimpleButtonContextMenuControlSettings simpleButtonContextMenuControlSettings in currentSimpleButtonConfigs)
+                simpleButtonPool.Release(simpleButtonContextMenuControlSettings);
+
+            simpleButtonPool.Clear();
             currentControls.Clear();
             currentContainers.Clear();
         }

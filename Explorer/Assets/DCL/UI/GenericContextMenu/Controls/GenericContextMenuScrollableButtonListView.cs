@@ -33,7 +33,7 @@ namespace DCL.UI.GenericContextMenu.Controls
             {
                 int index = i; // Capture the current index for the lambda expression
                 buttonViews.Add((GenericContextMenuSimpleButtonView)controlsPoolManager.GetContextMenuComponent(
-                    new SimpleButtonContextMenuControlSettings(label, () => settings.callback.Invoke(index), settings.horizontalLayoutPadding, settings.horizontalLayoutSpacing),
+                    controlsPoolManager.GetSimpleButtonConfig(label, () => settings.callback.Invoke(index), settings.horizontalLayoutPadding, settings.horizontalLayoutSpacing),
                     i, ScrollContentParent));
 
                 i++;
