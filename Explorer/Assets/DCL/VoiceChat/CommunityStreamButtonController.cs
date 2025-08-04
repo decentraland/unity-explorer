@@ -12,6 +12,7 @@ namespace DCL.VoiceChat
     public class CommunityStreamButtonController : IDisposable
     {
         private readonly IDisposable currentChannelSubscription;
+        private readonly IDisposable communityCallStateSubscription;
 
         private readonly CallButtonView view;
         private readonly IVoiceChatOrchestrator orchestrator;
@@ -36,18 +37,23 @@ namespace DCL.VoiceChat
             this.communityDataProvider = communityDataProvider;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
-
-            // We might want to start the call directly here. And let the orchestrator handle the states.
-            // We will need to handle the parent view so it closes after the button is pressed and the call is successfully established (in case of Passport, etc.)
+            communityCallStateSubscription = orchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
             chatEventBus.StartCall += OnCallButtonClicked;
         }
 
         public void Dispose()
         {
-            currentChannelSubscription?.Dispose();
+            currentChannelSubscription.Dispose();
+            communityCallStateSubscription.Dispose();
             chatEventBus.StartCall -= OnCallButtonClicked;
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
-            communityCts?.Dispose();
+            communityCts.SafeCancelAndDispose();
+        }
+
+        private void OnCommunityCallStatusChanged(VoiceChatStatus status)
+        {
+            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL or VoiceChatStatus.VOICE_CHAT_BUSY)
+                OnCurrentChannelChanged(currentChannel.Value);
         }
 
         public void Reset()
@@ -69,7 +75,7 @@ namespace DCL.VoiceChat
             orchestrator.StartCall(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), VoiceChatType.COMMUNITY);
         }
 
-        private void OnCurrentCommunityCallStatusChanged(bool hasActiveCall)
+        private void OnCurrentCommunityActiveCallStatusChanged(bool hasActiveCall)
         {
             //We show the button if the current community doesn't have an active call
             view.gameObject.SetActive(!hasActiveCall);
@@ -106,7 +112,7 @@ namespace DCL.VoiceChat
 
             bool shouldSeeButton = !isVoiceChatActive;
 
-            currentCommunityCallStatusSubscription = orchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+            currentCommunityCallStatusSubscription = orchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityActiveCallStatusChanged);
 
             view.gameObject.SetActive(shouldSeeButton);
         }

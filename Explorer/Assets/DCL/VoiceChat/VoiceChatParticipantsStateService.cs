@@ -33,6 +33,7 @@ namespace DCL.VoiceChat
         public delegate void ParticipantLeftDelegate(string participantId);
         public delegate void ParticipantsStateRefreshDelegate(List<(string participantId, ParticipantState state)> joinedParticipants, List<string> leftParticipantIds);
         private const string TAG = nameof(VoiceChatParticipantsStateService);
+        private const int MAX_CONNECTION_UPDATES = 3;
 
         private readonly IRoom voiceChatRoom;
         private readonly IWeb3IdentityCache identityCache;
@@ -43,6 +44,7 @@ namespace DCL.VoiceChat
 
         private bool isDisposed;
         private HashSet<string> activeSpeakers = new ();
+        private int connectionUpdateCounter;
 
         public IReadOnlyCollection<string> ConnectedParticipants => connectedParticipants;
         public IReadOnlyCollection<string> ActiveSpeakers => activeSpeakers;
@@ -262,12 +264,23 @@ namespace DCL.VoiceChat
                 switch (connectionUpdate)
                 {
                     case ConnectionUpdate.Connected:
-                    case ConnectionUpdate.Reconnected:
-                        RefreshAllParticipantStates();
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection {connectionUpdate}, refreshed participant states");
-                        break;
+                        // We have this because the Connected event is sent several times as part of our reliability logic (to ensure updates reach all users despite Livekit)
+                        connectionUpdateCounter++;
 
+                        if (connectionUpdateCounter <= MAX_CONNECTION_UPDATES)
+                        {
+                            RefreshAllParticipantStates();
+                            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection {connectionUpdate} refreshed participant states");
+                        }
+
+                        break;
+                    case ConnectionUpdate.Reconnected:
+                        connectionUpdateCounter = 0;
+                        RefreshAllParticipantStates();
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection {connectionUpdate}, refreshed participant states");
+                        break;
                     case ConnectionUpdate.Disconnected:
+                        connectionUpdateCounter = 0;
                         HandleDisconnection(disconnectReason);
                         break;
                 }
@@ -305,9 +318,7 @@ namespace DCL.VoiceChat
 
             try
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Raw metadata for {participantId}: {metadataJson}");
                 ParticipantCallMetadata metadata = JsonUtility.FromJson<ParticipantCallMetadata>(metadataJson);
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Parsed metadata for {participantId}: {metadata}");
                 return metadata;
             }
             catch (Exception e)
@@ -328,31 +339,8 @@ namespace DCL.VoiceChat
             participantState.Role.Value = metadata.Role;
         }
 
-        private bool ShouldClearDataOnDisconnect(DisconnectReason? disconnectReason)
-        {
-            if (!disconnectReason.HasValue)
-                return false;
-
-            return disconnectReason.Value switch
-                   {
-                       DisconnectReason.RoomDeleted => true,
-                       DisconnectReason.RoomClosed => true,
-                       DisconnectReason.ParticipantRemoved => true,
-                       DisconnectReason.DuplicateIdentity => true,
-                       DisconnectReason.ServerShutdown => true,
-                       DisconnectReason.ClientInitiated => true,
-                       DisconnectReason.JoinFailure => true,
-                       DisconnectReason.UserRejected => true,
-                       DisconnectReason.SignalClose => true,
-                       DisconnectReason.ConnectionTimeout => true,
-                       DisconnectReason.StateMismatch => false,
-                       DisconnectReason.Migration => false,
-                       DisconnectReason.UnknownReason => false,
-                       DisconnectReason.UserUnavailable => false,
-                       DisconnectReason.SipTrunkFailure => false,
-                       _ => false,
-                   };
-        }
+        private bool ShouldClearDataOnDisconnect(DisconnectReason? disconnectReason) =>
+            VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason);
 
         private void OnParticipantMetadataChanged(string participantId, string metadata)
         {
@@ -590,12 +578,12 @@ namespace DCL.VoiceChat
                     return UserCommunityRoleMetadata.none;
 
                 return roleString.ToLowerInvariant() switch
-                {
-                    "user" => UserCommunityRoleMetadata.user,
-                    "moderator" => UserCommunityRoleMetadata.moderator,
-                    "owner" => UserCommunityRoleMetadata.owner,
-                    _ => UserCommunityRoleMetadata.none
-                };
+                       {
+                           "user" => UserCommunityRoleMetadata.user,
+                           "moderator" => UserCommunityRoleMetadata.moderator,
+                           "owner" => UserCommunityRoleMetadata.owner,
+                           _ => UserCommunityRoleMetadata.none,
+                       };
             }
 
             public override string ToString() =>

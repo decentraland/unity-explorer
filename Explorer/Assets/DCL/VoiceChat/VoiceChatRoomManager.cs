@@ -107,11 +107,7 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    if (currentStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL)
-                    {
-                        reconnectionManager.ConfirmOrderedDisconnection();
-                        DisconnectFromRoomAsync().Forget();
-                    }
+                    if (currentStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL) { DisconnectFromRoomAsync().Forget(); }
 
                     break;
 
@@ -300,7 +296,7 @@ namespace DCL.VoiceChat
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection cleanup completed");
 
-                reconnectionManager.StartOrderedDisconnectionGracePeriod(disconnectReason);
+                reconnectionManager.HandleDisconnection(disconnectReason);
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }
         }
