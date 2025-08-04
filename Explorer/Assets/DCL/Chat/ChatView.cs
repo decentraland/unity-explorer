@@ -280,6 +280,7 @@ namespace DCL.Chat
                     conversationsToolbar.SelectConversation(value);
                     chatInputBox.InputBoxText = string.Empty;
                     memberListView.IsVisible = false;
+                    chatTitleBar.SetCurrentChannel(currentChannel.Id);
 
                     switch (currentChannel.ChannelType)
                     {

@@ -627,7 +627,7 @@ namespace DCL.Chat
             }
             else
             {
-                HandleMessageAudioFeedback(addedMessage);
+                HandleMessageAudioFeedback(addedMessage, destinationChannel.Id);
 
                 if (IsViewReady)
                 {
@@ -652,12 +652,14 @@ namespace DCL.Chat
                 viewInstance?.MoveChannelToTop(destinationChannel.Id);
         }
 
-        private void HandleMessageAudioFeedback(ChatMessage message)
+        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId destinationChannelId)
         {
-            if (IsViewReady)
+            if (!IsViewReady)
                 return;
 
-            switch (chatSettings.chatAudioSettings)
+            ChatAudioSettings notificationPingValue = ChatUserSettings.GetNotificationPingValuePerChannel(destinationChannelId);
+
+            switch (notificationPingValue)
             {
                 case ChatAudioSettings.NONE:
                     return;
