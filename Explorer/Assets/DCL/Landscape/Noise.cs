@@ -1,33 +1,8 @@
 ﻿using System;
-using Unity.Collections;
-using Unity.Mathematics;
 using UnityEngine;
-using Random = System.Random;
 
 namespace DCL.Landscape.Config
 {
-    public static class Noise
-    {
-        private const int BIG_VALUE = 100000;
-
-        public static float CalculateOctaves(ref Unity.Mathematics.Random random, ref NoiseSettings settings, ref NativeArray<float2> octaveOffsets)
-        {
-            float maxPossibleHeight = 0;
-            float amplitude = 1;
-
-            for (var i = 0; i < settings.octaves; i++)
-            {
-                float offsetX = random.NextFloat(-BIG_VALUE, BIG_VALUE) + settings.offset.x;
-                float offsetY = random.NextFloat(-BIG_VALUE, BIG_VALUE) - settings.offset.y;
-                octaveOffsets[i] = new float2(offsetX, offsetY);
-                maxPossibleHeight += amplitude;
-                amplitude *= settings.persistance;
-            }
-
-            return maxPossibleHeight;
-        }
-    }
-
     [Serializable]
     public struct NoiseSettings
     {
