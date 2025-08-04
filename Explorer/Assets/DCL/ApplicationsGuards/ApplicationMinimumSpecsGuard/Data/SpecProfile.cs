@@ -46,6 +46,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public string GpuRequirement;
         public Func<string, bool> GpuCheck;
+        public string GpuIntegratedRequirement { get; set; }
+        public Func<string, bool> IsIntegratedGpuCheck { get; set; }
 
         public int MinRamMB;
         public string RamRequirement => $"{MinRamMB / 1024f} GB";

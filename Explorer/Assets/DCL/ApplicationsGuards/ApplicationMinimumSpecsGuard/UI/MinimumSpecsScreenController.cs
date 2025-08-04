@@ -6,8 +6,8 @@ using DCL.Prefs;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using Sentry;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -37,6 +37,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             viewInstance.ExitButton.onClick.AddListener(OnExitClicked);
             viewInstance.ContinueButton.onClick.AddListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.AddListener(OnReadMoreClicked);
+            viewInstance.DontShowAgainToggle.SetIsOnWithoutNotify(DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN));
             viewInstance.DontShowAgainToggle.onValueChanged.AddListener(OnToggleChanged);
 
             specsTablePresenter = new MinimumSpecsTablePresenter(viewInstance.TableView);
@@ -45,7 +46,10 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnToggleChanged(bool dontShowAgain)
         {
+            ReportHub.Log(ReportData.UNSPECIFIED, $"OnToggleChanged [before]: {dontShowAgain}");
             DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, dontShowAgain, true);
+            ReportHub.Log(ReportData.UNSPECIFIED, $"OnToggleChanged [after]: {DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN)}");
+
         }
 
         public override void Dispose()

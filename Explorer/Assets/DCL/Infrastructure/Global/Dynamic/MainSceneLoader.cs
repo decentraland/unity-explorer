@@ -311,7 +311,9 @@ namespace Global.Dynamic
 
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
-            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
+            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
+                new UnitySystemInfoProvider(),
+                new PlatformDriveInfoProvider());
 
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
@@ -321,8 +323,7 @@ namespace Global.Dynamic
             {
                 bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
             });
-
-
+            
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)

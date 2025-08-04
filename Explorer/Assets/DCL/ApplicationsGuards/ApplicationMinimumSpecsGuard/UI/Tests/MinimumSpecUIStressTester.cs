@@ -51,7 +51,11 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             if (!Application.isPlaying) return;
 
-            var realGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
+            var realGuard = new MinimumSpecsGuard(
+                new DefaultSpecProfileProvider(),
+                new UnitySystemInfoProvider(),
+                new PlatformDriveInfoProvider());
+            
             realGuard.HasMinimumSpecs();
             tablePresenter.Populate(realGuard.Results);
         }

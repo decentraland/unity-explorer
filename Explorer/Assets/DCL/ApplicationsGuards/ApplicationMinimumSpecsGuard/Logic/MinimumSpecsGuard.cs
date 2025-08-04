@@ -4,7 +4,6 @@ using System.IO;
 using DCL.Diagnostics;
 using UnityEngine;
 using Application = UnityEngine.Device.Application;
-using SystemInfo = UnityEngine.Device.SystemInfo;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -35,11 +34,17 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public IReadOnlyList<SpecResult> Results => cachedResults;
 
         private readonly ISpecProfileProvider profileProvider;
+        private readonly ISystemInfoProvider systemInfoProvider;
+        private readonly IDriveInfoProvider driveInfoProvider;
         private List<SpecResult> cachedResults = new();
 
-        public MinimumSpecsGuard(ISpecProfileProvider profileProvider)
+        public MinimumSpecsGuard(ISpecProfileProvider profileProvider,
+            ISystemInfoProvider systemInfoProvider,
+            IDriveInfoProvider driveInfoProvider)
         {
             this.profileProvider = profileProvider;
+            this.systemInfoProvider = systemInfoProvider;
+            this.driveInfoProvider = driveInfoProvider;
         }
 
         public bool HasMinimumSpecs()
@@ -69,30 +74,37 @@ namespace DCL.ApplicationMinimumSpecsGuard
             var results = new List<SpecResult>();
 
             // OS
-            string os = SystemInfo.operatingSystem;
+            string os = systemInfoProvider.OperatingSystem;
             results.Add(new SpecResult(SpecCategory.OS, profile.OsCheck(os), profile.OsRequirement, os));
 
             // CPU
-            string cpu = SystemInfo.processorType;
+            string cpu = systemInfoProvider.ProcessorType;
             results.Add(new SpecResult(SpecCategory.CPU, profile.CpuCheck(cpu), profile.CpuRequirement, cpu));
 
             // GPU
-            string gpuName = SystemInfo.graphicsDeviceName;
+            string gpuName = systemInfoProvider.GraphicsDeviceName;
             bool isGpuModelAcceptable = profile.GpuCheck(gpuName);
             bool hasRequiredFeatures = profile.ShaderCheck();
             bool isGpuSpecMet = isGpuModelAcceptable && hasRequiredFeatures;
 
+            // Integrated GPU check
+            string gpuRequirementMessage = profile.GpuRequirement;
+            if (!isGpuModelAcceptable && profile.IsIntegratedGpuCheck(gpuName))
+            {
+                gpuRequirementMessage = profile.GpuIntegratedRequirement;
+            }
+            
             string actualGpuDisplayString = $"{gpuName}".Trim();
 
             results.Add(new SpecResult(
                 SpecCategory.GPU,
                 isGpuSpecMet,
-                profile.GpuRequirement,
+                gpuRequirementMessage,
                 actualGpuDisplayString
             ));
 
             // VRAM
-            int actualVramMB = SystemInfo.graphicsMemorySize;
+            int actualVramMB = systemInfoProvider.GraphicsMemorySize;
             bool isVramMet = SystemSpecUtils.IsMemorySizeSufficient(actualVramMB, profile.MinVramMB);
             int roundedActualVramGB = Mathf.RoundToInt(actualVramMB / 1024f);
             
@@ -101,7 +113,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             results.Add(new SpecResult(SpecCategory.VRAM, isVramMet, profile.VramRequirement, actualVramDisplay));
 
             // RAM
-            int actualRamMB = SystemInfo.systemMemorySize;
+            int actualRamMB = systemInfoProvider.SystemMemorySize;
             bool isRamMet = SystemSpecUtils.IsMemorySizeSufficient(actualRamMB, profile.MinRamMB);
             int roundedActualRamGB = Mathf.RoundToInt(actualRamMB / 1024f);
             
@@ -111,11 +123,11 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             try
             {
-                var allDrives = Utility.PlatformUtils.GetAllDrivesInfo();
+                var allDrives = driveInfoProvider.GetDrivesInfo();
 
                 if (allDrives.Count > 0)
                 {
-                    var persistentPath = Application.persistentDataPath;
+                    string persistentPath = driveInfoProvider.GetPersistentDataPath();
                     persistentPath = persistentPath.Replace('/', Path.DirectorySeparatorChar);
                     Utility.PlatformUtils.DriveData targetDrive = null;
                     int longestMatchLength = -1;

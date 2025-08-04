@@ -22,6 +22,13 @@ namespace DCL.ApplicationMinimumSpecsGuard
             "Mac OS X", "macOS"
         };
 
+        private static readonly string[] INTEGRATED_GPU_KEYWORDS =
+        {
+            "intel(r) hd graphics", "intel(r) uhd graphics", "intel iris", "iris(r) xe graphics", "amd radeon(tm) graphics", // Catches the case from your image
+            "amd radeon graphics", "amd radeon vega", "amd radeon r5", // Catches R-series like R5, R6, R7
+            "amd radeon r6", "amd radeon r7"
+        };
+
         private const int MIN_MACOS_MAJOR_VERSION = 11;
         private const string MACOS_VERSION_PATTERN = @"(\d+)\.\d+";
 
@@ -29,6 +36,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         // Keywords and Patterns
         private const string RYZEN_CPU_PATTERN = @"ryzen\s*(\d)";
         private const string INTEL_CPU_PATTERN = @"i([3579])-?(\d{4,5})";
+        private const string INTEL_ULTRA_CPU_PATTERN = @"ultra\s+([579])";
 
         private static readonly string[] ALWAYS_ACCEPTED_CPU_KEYWORDS =
         {
@@ -39,6 +47,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private const int MIN_RYZEN_SERIES = 5;
         private const int MIN_INTEL_SERIES = 5;
         private const int MIN_INTEL_GENERATION = 7;
+        private const int MIN_INTEL_ULTRA_SERIES = 5;
 
         // GPU Requirement Constants
         // Keywords and Patterns
@@ -69,6 +78,10 @@ namespace DCL.ApplicationMinimumSpecsGuard
             if (ryzenMatch.Success && int.TryParse(ryzenMatch.Groups[1].Value, out int model))
                 return model >= MIN_RYZEN_SERIES;
 
+            var intelUltraMatch = Regex.Match(cpu, INTEL_ULTRA_CPU_PATTERN);
+            if (intelUltraMatch.Success && int.TryParse(intelUltraMatch.Groups[1].Value, out int ultraSeries))
+                return ultraSeries >= MIN_INTEL_ULTRA_SERIES;
+            
             var intelMatch = Regex.Match(cpu, INTEL_CPU_PATTERN);
             if (intelMatch.Success)
             {
@@ -83,6 +96,22 @@ namespace DCL.ApplicationMinimumSpecsGuard
             return false;
         }
 
+        public static bool IsIntegratedGpu(string gpuName)
+        {
+            if (string.IsNullOrEmpty(gpuName))
+                return false;
+
+            string lowerGpuName = gpuName.ToLowerInvariant();
+
+            foreach (string keyword in INTEGRATED_GPU_KEYWORDS)
+            {
+                if (lowerGpuName.Contains(keyword))
+                    return true;
+            }
+
+            return false;
+        }
+        
         public static bool IsWindowsGpuAcceptable(string gpu)
         {
             gpu = gpu.ToLowerInvariant();

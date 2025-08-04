@@ -8,6 +8,11 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
         // --- Windows CPU Tests ---
 
         [Test]
+        [TestCase("Intel(R) Core(TM) Ultra 9 185H", true, TestName = "Intel(R) Core(TM) Ultra 9 185H is accepted")]
+        [TestCase("Intel Core Ultra 7 165H", true, TestName = "Intel Core Ultra 7 165H is accepted")]
+        [TestCase("Intel Core Ultra 5 135U", true, TestName = "Intel Core Ultra 5 135U is accepted")]
+        [TestCase("Intel(R) Core(TM) Ultra 7 Processor 155H", true, TestName = "Intel Core Ultra 7 Processor 155H is accepted")]
+        [TestCase("Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz", true, TestName = "Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz is accepted")]
         [TestCase("Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz", true, TestName = "Intel i7 (8th Gen) is accepted")]
         [TestCase("12th Gen Intel(R) Core(TM) i7-12650H", true, TestName = "12th Gen Intel(R) Core(TM) i7-12650H is accepted")]
         [TestCase("Intel Core i5-7600", true, TestName = "Intel i5 (7th Gen) is accepted")]
