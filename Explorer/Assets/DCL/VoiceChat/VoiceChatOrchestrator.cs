@@ -1,6 +1,5 @@
 using DCL.Diagnostics;
 using DCL.Utilities;
-using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
 using System;
 
@@ -43,17 +42,14 @@ namespace DCL.VoiceChat
         void RejectCall();
 
         void HandleConnectionError();
-    }
 
-    public interface IVoiceChatOrchestratorUIEvents
-    {
         void ChangePanelSize(VoiceChatPanelSize panelSize);
     }
 
     /// <summary>
     ///     Interface for systems that need all interfaces (like voice chat UI)
     /// </summary>
-    public interface IVoiceChatOrchestrator : IVoiceChatOrchestratorState, IVoiceChatOrchestratorActions, IVoiceChatOrchestratorUIEvents
+    public interface IVoiceChatOrchestrator : IVoiceChatOrchestratorState, IVoiceChatOrchestratorActions
     {
         string CurrentConnectionUrl { get; }
         string CurrentCallId { get; }

@@ -16,8 +16,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly CommunityVoiceChatTitlebarView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatOrchestratorUIEvents voiceChatOrchestratorUIEvents;
-        private readonly IVoiceChatOrchestratorState voiceChatOrchestratorState;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
         private readonly Dictionary<string, PlayerEntryView> usedPlayerEntries = new ();
         private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
@@ -35,8 +33,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
-            voiceChatOrchestratorUIEvents = voiceChatOrchestrator;
-            voiceChatOrchestratorState = voiceChatOrchestrator;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
@@ -57,12 +53,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 actionOnGet: entry => entry.gameObject.SetActive(true),
                 actionOnRelease: entry => entry.gameObject.SetActive(false));
 
-            voiceChatTypeSubscription = voiceChatOrchestratorState.CurrentVoiceChatType.Subscribe(OnVoiceChatTypeChanged);
+            voiceChatTypeSubscription = voiceChatOrchestrator.CurrentVoiceChatType.Subscribe(OnVoiceChatTypeChanged);
 
-            OnVoiceChatTypeChanged(voiceChatOrchestratorState.CurrentVoiceChatType.Value);
+            OnVoiceChatTypeChanged(voiceChatOrchestrator.CurrentVoiceChatType.Value);
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
-            voiceChatOrchestratorUIEvents.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
         }
 
         public void Dispose()
@@ -166,7 +162,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnCollapsedButtonClicked()
         {
             isPanelCollapsed = !isPanelCollapsed;
-            voiceChatOrchestratorUIEvents.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.DEFAULT : VoiceChatPanelSize.EXPANDED);
+            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.DEFAULT : VoiceChatPanelSize.EXPANDED);
             view.SetCollapsedButtonState(isPanelCollapsed);
         }
 
@@ -188,7 +184,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries.Add(participantState.WalletId, entryView);
 
-            entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, ProfileNameColorHelper.GetNameColor(participantState.Name.Value), participantState.ProfilePictureUrl, participantState.WalletId, new CancellationToken()).Forget();
+            entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, ProfileNameColorHelper.GetNameColor(participantState.Name.Value), participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
             entryView.nameElement.Setup(participantState.Name.Value, participantState.WalletId, participantState.HasClaimedName.Value ?? false, ProfileNameColorHelper.GetNameColor(participantState.Name.Value));
 
             view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
