@@ -69,7 +69,7 @@ namespace DCL.Passport.Fields.Badges
         private void SetupTierImage(TierData tierData, string completedAt)
         {
             Color tierImageColor = string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor;
-            TierImage.SetColor(tierImageColor);
+            TierImage.ImageColor = tierImageColor;
             imageController?.SetImage(DefaultTierSprite);
             if (tierData.assets is { textures2d: not null } && !string.IsNullOrEmpty(tierData.assets.textures2d.normal))
                 imageController?.RequestImage(tierData.assets.textures2d.normal, tierImageColor, hideImageWhileLoading: true);
