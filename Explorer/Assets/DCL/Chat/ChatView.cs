@@ -280,6 +280,7 @@ namespace DCL.Chat
                     conversationsToolbar.SelectConversation(value);
                     chatInputBox.InputBoxText = string.Empty;
                     memberListView.IsVisible = false;
+                    chatTitleBar.SetCurrentChannel(currentChannel.Id);
 
                     switch (currentChannel.ChannelType)
                     {
@@ -1160,6 +1161,8 @@ namespace DCL.Chat
             if (currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER })
                 chatTitleBar.SetConnectionStatus(onlineUserAddresses.Contains(currentChannel.Id.Id) ? OnlineStatus.ONLINE
                                                                                                     : OnlineStatus.OFFLINE);
+            else
+                chatTitleBar.SetMemberListNumberText(onlineUserAddresses.Count.ToString());
 
             chatMessageViewer.SetOnlineUserAddresses(onlineUserAddresses);
         }

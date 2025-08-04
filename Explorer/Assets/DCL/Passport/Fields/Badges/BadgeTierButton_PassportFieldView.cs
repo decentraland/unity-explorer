@@ -68,10 +68,11 @@ namespace DCL.Passport.Fields.Badges
 
         private void SetupTierImage(TierData tierData, string completedAt)
         {
-            TierImage.ImageColor = string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor;
+            Color tierImageColor = string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor;
+            TierImage.ImageColor = tierImageColor;
             imageController?.SetImage(DefaultTierSprite);
             if (tierData.assets is { textures2d: not null } && !string.IsNullOrEmpty(tierData.assets.textures2d.normal))
-                imageController?.RequestImage(tierData.assets.textures2d.normal, hideImageWhileLoading: true);
+                imageController?.RequestImage(tierData.assets.textures2d.normal, tierImageColor, hideImageWhileLoading: true);
         }
     }
 }

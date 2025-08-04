@@ -77,13 +77,13 @@ namespace DCL.UI.ProfileElements
 
         public void SetDefaultThumbnail()
         {
-            thumbnailImageView.SetImage(defaultEmptyThumbnail);
+            thumbnailImageView.SetImage(defaultEmptyThumbnail, true);
             currentUrl = null;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
         {
-            thumbnailImageView.SetImage(sprite);
+            thumbnailImageView.SetImage(sprite, true);
             thumbnailImageView.ImageEnabled = true;
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
@@ -103,7 +103,7 @@ namespace DCL.UI.ProfileElements
 
                 if (sprite != null)
                 {
-                    thumbnailImageView.SetImage(sprite);
+                    thumbnailImageView.SetImage(sprite, true);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     return;
@@ -125,7 +125,7 @@ namespace DCL.UI.ProfileElements
             }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
+                ReportHub.LogException(e, ReportCategory.UI);
 
                 currentUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);

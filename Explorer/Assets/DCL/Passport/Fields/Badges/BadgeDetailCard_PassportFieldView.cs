@@ -153,7 +153,8 @@ namespace DCL.Passport.Fields.Badges
 
         private void SetupBadgeImage(in BadgeInfo badgeInfo)
         {
-            BadgeImage.ImageColor = badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
+            Color badgeColor = badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
+            BadgeImage.ImageColor = badgeColor;
             imageController?.SetImage(DefaultBadgeSprite);
 
             string imageToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierImage) ?
@@ -161,7 +162,7 @@ namespace DCL.Passport.Fields.Badges
                 badgeInfo.data.assets is { textures2d: not null } ? badgeInfo.data.assets.textures2d.normal : "";
 
             if (!string.IsNullOrEmpty(imageToLoad))
-                imageController?.RequestImage(imageToLoad, hideImageWhileLoading: true);
+                imageController?.RequestImage(imageToLoad, badgeColor, hideImageWhileLoading: true);
         }
     }
 }
