@@ -15,7 +15,7 @@ namespace DCL.VoiceChat
 
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly CommunityStreamSubTitleBarView view;
-        private readonly IVoiceChatOrchestrator orchestrator;
+        private readonly ICommunityCallOrchestrator orchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
 
         private readonly CommunityStreamJoinButtonController joinButtonController;
@@ -25,7 +25,7 @@ namespace DCL.VoiceChat
 
         public CommunityStreamSubTitleBarController(
             CommunityStreamSubTitleBarView view,
-            IVoiceChatOrchestrator orchestrator,
+            ICommunityCallOrchestrator orchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,
             CommunitiesDataProvider communityDataProvider)
         {
@@ -74,7 +74,7 @@ namespace DCL.VoiceChat
 
             if (!view.gameObject.activeSelf) return;
 
-            if (orchestrator.CurrentCallId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
+            if (orchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
             {
                 //If it's the current call, we can get the call information directly from the orchestrator
                 HandleCurrentCommunityCall();
@@ -110,14 +110,14 @@ namespace DCL.VoiceChat
             GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
             bool isVoiceChatActive = communityData.data.voiceChatStatus.isActive;
 
-            currentCommunityCallStatusSubscription = orchestrator.CommunityStatusService.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+            currentCommunityCallStatusSubscription = orchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
             //If there is no voice chat active, we just don't show this.
             if (!isVoiceChatActive) return;
 
             view.gameObject.SetActive(true);
 
-            if (orchestrator.CurrentCallId == communityId)
+            if (orchestrator.CurrentCommunityId == communityId)
             {
                 //If it's the current call, we can get the call information directly from the orchestrator
                 HandleCurrentCommunityCall();
@@ -134,7 +134,7 @@ namespace DCL.VoiceChat
             //We show the button if the current community has an active call
             view.gameObject.SetActive(hasActiveCall);
 
-            if (hasActiveCall && orchestrator.CurrentCallId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
+            if (hasActiveCall && orchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
                 HandleCurrentCommunityCall();
         }
 

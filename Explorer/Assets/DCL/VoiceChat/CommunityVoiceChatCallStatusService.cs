@@ -143,7 +143,7 @@ namespace DCL.VoiceChat
             PromoteToSpeaker(CallId, walletId);
         }
 
-        public void PromoteToSpeaker(string communityId, string walletId)
+        private void PromoteToSpeaker(string communityId, string walletId)
         {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
@@ -205,7 +205,7 @@ namespace DCL.VoiceChat
             KickPlayer(CallId, walletId);
         }
 
-        public void KickPlayer(string communityId, string walletId)
+        private void KickPlayer(string communityId, string walletId)
         {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 

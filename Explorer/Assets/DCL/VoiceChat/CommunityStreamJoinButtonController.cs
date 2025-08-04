@@ -17,7 +17,7 @@ namespace DCL.VoiceChat
         private readonly IDisposable currentChannelSubscription;
 
         private readonly CallButtonView view;
-        private readonly IVoiceChatOrchestrator orchestrator;
+        private readonly ICommunityCallOrchestrator orchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
         private bool isClickedOnce;
 
@@ -25,7 +25,7 @@ namespace DCL.VoiceChat
 
         public CommunityStreamJoinButtonController(
             CallButtonView view,
-            IVoiceChatOrchestrator orchestrator,
+            ICommunityCallOrchestrator orchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel)
         {
             this.view = view;
@@ -93,7 +93,7 @@ namespace DCL.VoiceChat
             {
                 // Join the call for the current community channel
                 string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
-                orchestrator.CommunityStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
+                orchestrator.JoinCommunityVoiceChat(communityId, ct);
             }
         }
 

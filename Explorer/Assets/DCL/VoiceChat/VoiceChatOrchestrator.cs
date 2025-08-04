@@ -2,63 +2,11 @@ using DCL.Diagnostics;
 using DCL.Utilities;
 using Decentraland.SocialService.V2;
 using System;
+using System.Threading;
 
 namespace DCL.VoiceChat
 {
-    public enum VoiceChatType
-    {
-        NONE,
-        PRIVATE,
-        COMMUNITY,
-    }
-
-    public enum VoiceChatPanelSize
-    {
-        DEFAULT,
-        EXPANDED,
-    }
-
-    /// <summary>
-    ///     Interface for systems that need to read or subscribe to voice chat state
-    /// </summary>
-    public interface IVoiceChatOrchestratorState
-    {
-        IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType { get; }
-        IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus { get; }
-        IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize { get; }
-    }
-
-    /// <summary>
-    ///     Interface for systems that need to perform voice chat actions
-    /// </summary>
-    public interface IVoiceChatOrchestratorActions
-    {
-        void StartCall(string callId, VoiceChatType callType);
-
-        void AcceptPrivateCall();
-
-        void HangUp();
-
-        void RejectCall();
-
-        void HandleConnectionError();
-
-        void ChangePanelSize(VoiceChatPanelSize panelSize);
-    }
-
-    /// <summary>
-    ///     Interface for systems that need all interfaces (like voice chat UI)
-    /// </summary>
-    public interface IVoiceChatOrchestrator : IVoiceChatOrchestratorState, IVoiceChatOrchestratorActions
-    {
-        string CurrentConnectionUrl { get; }
-        string CurrentCallId { get; }
-        IPrivateVoiceChatCallStatusService PrivateStatusService { get; }
-        ICommunityVoiceChatCallStatusService CommunityStatusService { get; }
-        VoiceChatParticipantsStateService ParticipantsStateService { get; }
-    }
-
-    public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
+   public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
     {
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
@@ -127,12 +75,6 @@ namespace DCL.VoiceChat
         {
             if (VoiceChatCallTypeValidator.IsPrivateCall(currentVoiceChatType.Value))
                 privateVoiceChatCallStatusService.AcceptCall();
-        }
-
-        public void KickPlayer(string communityId, string walletId)
-        {
-            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
-                communityVoiceChatCallStatusService.KickPlayer(communityId, walletId);
         }
 
         public void HangUp() =>
@@ -225,5 +167,49 @@ namespace DCL.VoiceChat
         {
             currentVoiceChatPanelSize.Value = panelSize;
         }
+
+        public void JoinCommunityVoiceChat(string communityId, CancellationToken ct)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
+        }
+
+        public void RequestToSpeakInCurrentCall()
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.RequestToSpeakInCurrentCall();
+        }
+
+        public void PromoteToSpeakerInCurrentCall(string walletId)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.PromoteToSpeakerInCurrentCall(walletId);
+        }
+
+        public void DemoteFromSpeakerInCurrentCall(string walletId)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.DemoteFromSpeakerInCurrentCall(walletId);
+        }
+
+        public void KickPlayerFromCurrentCall(string walletId)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.KickPlayerFromCurrentCall(walletId);
+        }
+
+        public IReadonlyReactiveProperty<VoiceChatStatus> CommunityCallStatus => communityVoiceChatCallStatusService.Status;
+
+        public string CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
+
+        public bool HasActiveVoiceChatCall(string communityId) =>
+            communityVoiceChatCallStatusService.HasActiveVoiceChatCall(communityId);
+
+        public ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId) =>
+            communityVoiceChatCallStatusService.SubscribeToCommunityUpdates(communityId);
+
+        public IReadonlyReactiveProperty<VoiceChatStatus> PrivateCallStatus => privateVoiceChatCallStatusService.Status;
+
+        public string CurrentTargetWallet => privateVoiceChatCallStatusService.CurrentTargetWallet;
     }
 }
