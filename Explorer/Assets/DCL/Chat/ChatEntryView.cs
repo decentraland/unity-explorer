@@ -41,6 +41,13 @@ namespace DCL.Chat
         private ChatMessage chatMessage;
         private readonly Vector3[] cornersCache = new Vector3[4];
 
+        private void Awake()
+        {
+            profileButton.onClick.AddListener(OnProfileButtonClicked);
+            usernameElement.UserNameClicked += OnUsernameClicked;
+            messageBubbleElement.messageOptionsButton.onClick.AddListener(() => onMessageContextMenuClicked?.Invoke(chatMessage.Message, this));
+        }
+
         public void AnimateChatEntry()
         {
             chatEntryCanvasGroup.alpha = 0;
@@ -72,7 +79,7 @@ namespace DCL.Chat
             else
                 return date.ToString("ddd, d MMM, yyyy", CultureInfo.InvariantCulture);
         }
-        
+
         public void SetItemData(ChatMessageViewModel viewModel, Action<string, ChatEntryView> onMessageContextMenuClicked, ChatEntryClickedDelegate? onProfileContextMenuClicked)
         {
             SetItemData(viewModel.Message, viewModel.ShowDateDivider);
