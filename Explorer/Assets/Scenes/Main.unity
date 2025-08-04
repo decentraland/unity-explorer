@@ -442,6 +442,7 @@ MonoBehaviour:
   launchSettings:
     initialRealm: 0
     targetScene: {x: 0, y: 0}
+    EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
       parcels:
@@ -514,6 +515,12 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <GenericUserProfileContextMenuSettings>k__BackingField:
       m_AssetGUID: 19167fed20773434b8bb06d4ca81f60c
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    <CommunityVoiceChatContextMenuSettings>k__BackingField:
+      m_AssetGUID: f3988fe058c9e463580d97c75e2b574d
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
