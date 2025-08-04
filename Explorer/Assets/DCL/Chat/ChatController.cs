@@ -303,12 +303,11 @@ namespace DCL.Chat
         {
             cameraEntity = world.CacheCamera();
 
-            viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
+            viewInstance!.SetProfileDataPovider(profileRepositoryWrapper);
 
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
 
-            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatOrchestrator, chatEventBus);
-            viewInstance.chatTitleBar.CallButton.gameObject.SetActive(isCallEnabled);
+            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatOrchestrator, chatEventBus, CurrentChannel);
 
             communityStreamButtonController = new CommunityStreamButtonController(
                 viewInstance.chatTitleBar.CommunitiesCallButton,

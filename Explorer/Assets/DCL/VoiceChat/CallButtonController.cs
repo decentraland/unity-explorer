@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using DCL.Chat.EventBus;
+using DCL.Chat.History;
 using DCL.Utilities;
 using System;
 using System.Threading;
@@ -31,6 +32,7 @@ namespace DCL.VoiceChat
         private readonly IDisposable statusSubscription;
         private readonly IDisposable orchestratorTypeSubscription;
         private readonly IDisposable privateVoiceChatAvailableSubscription;
+        private readonly IDisposable currentChannelSubscription;
 
         private readonly CallButtonView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
@@ -42,7 +44,7 @@ namespace DCL.VoiceChat
 
         public event Action<string> StartCall;
 
-        public CallButtonController(CallButtonView view, IVoiceChatOrchestratorState voiceChatState, IChatEventBus chatEventBus)
+        public CallButtonController(CallButtonView view, IVoiceChatOrchestratorState voiceChatState, IChatEventBus chatEventBus, ReactiveProperty<ChatChannel> currentChannel)
         {
             this.view = view;
             this.voiceChatState = voiceChatState;
@@ -51,10 +53,16 @@ namespace DCL.VoiceChat
             cts = new CancellationTokenSource();
 
             statusSubscription = voiceChatState.CurrentCallStatus.Subscribe(OnVoiceChatStatusChanged);
+            currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
 
-            // We might want to start the call directly here. And let the orchestrator handle the states.
-            // But we will need to handle the parent view so it closes after the button is pressed and the call is successfully established (in case of Passport, etc.)
             chatEventBus.StartCall += OnChatEventBusStartCall;
+            view.gameObject.SetActive(false);
+        }
+
+        private void OnCurrentChannelChanged(ChatChannel newChannel)
+        {
+            bool shouldShowButton = newChannel.ChannelType == ChatChannel.ChatChannelType.USER;
+            view.gameObject.SetActive(shouldShowButton);
         }
 
         private void OnChatEventBusStartCall()
@@ -171,6 +179,7 @@ namespace DCL.VoiceChat
             statusSubscription?.Dispose();
             orchestratorTypeSubscription?.Dispose();
             privateVoiceChatAvailableSubscription?.Dispose();
+            currentChannelSubscription?.Dispose();
             chatEventBus.StartCall -= OnChatEventBusStartCall;
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
         }
