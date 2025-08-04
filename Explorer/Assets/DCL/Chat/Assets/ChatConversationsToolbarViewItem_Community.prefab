@@ -30,19 +30,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3298753745947527529, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3298753745947527529, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3298753745947527529, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 42.34
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3298753745947527529, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3752543819072298511, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_IsActive
@@ -50,27 +50,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4217956794507611508, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4217956794507611508, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4217956794507611508, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 62.339996
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4217956794507611508, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 34
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4217956794507611508, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4217956794507611508, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -17
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4592461306694349958, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_IsActive
@@ -182,23 +182,23 @@ PrefabInstance:
       objectReference: {fileID: 8056878702841876624}
     - target: {fileID: 7252764938098805455, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7252764938098805455, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7252764938098805455, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 42.34
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7252764938098805455, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 10
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7252764938098805455, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -8
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8403886969632430484, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: PointerExited.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -298,6 +298,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5a77bd29e2b4b1baf5aa476555a4841, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  profilePictureView: {fileID: 0}
   thumbnailView: {fileID: 8056878702841876624}
   openButton: {fileID: 8593782159392838506}
   unreadMessagesBadge: {fileID: 1399253871722749221}
@@ -311,6 +312,7 @@ MonoBehaviour:
   removeButton: {fileID: 3472235725929291034}
   claimedNameIcon: {fileID: 9140495448314402907}
   tooltipPosition: {fileID: 272066746090127584}
+  offlineThumbnailGreyOutOpacity: 0.6
 --- !u!114 &7030288766036531753 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1280643333913694863, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}

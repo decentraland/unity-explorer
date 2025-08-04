@@ -195,17 +195,6 @@ namespace DCL.Chat.ChatMessages
             contextMenuService.ShowChatOptionsAsync(request).Forget();
         }
 
-        private void OnFakeMessageRequested()
-        {
-            ChatChannel.ChannelId currentChannelId = currentChannelService.CurrentChannelId;
-
-            string walletAddress = currentChannelService.CurrentChannel!.ChannelType == ChatChannel.ChatChannelType.USER ? currentChannelId.Id : "fake_wallet_id";
-
-            chatHistory.AddMessage(currentChannelId, currentChannelService.CurrentChannel!.ChannelType, new ChatMessage("some message", "FakeName",
-                walletAddress,
-                false, "#1234"));
-        }
-
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
             scrollToBottomPresenter.OnChannelChanged();
@@ -267,7 +256,6 @@ namespace DCL.Chat.ChatMessages
 
         private void Subscribe()
         {
-            view.OnFakeMessageRequested += OnFakeMessageRequested;
             view.OnChatContextMenuRequested += OnChatContextMenuRequested;
             view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
             view.OnScrolledToBottom += MarkCurrentChannelAsRead;
@@ -283,7 +271,6 @@ namespace DCL.Chat.ChatMessages
 
         private void Unsubscribe()
         {
-            view.OnFakeMessageRequested -= OnFakeMessageRequested;
             view.OnChatContextMenuRequested -= OnChatContextMenuRequested;
             view.OnProfileContextMenuRequested -= OnProfileContextMenuRequested;
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;

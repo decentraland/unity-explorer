@@ -24,7 +24,7 @@ namespace DCL.Chat.ChatCommands
         {
             var channelId = currentChannelService.CurrentChannelId;
 
-            if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID)) return;
+            //if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID)) return;
 
             if (chatHistory.Channels.ContainsKey(channelId))
             {

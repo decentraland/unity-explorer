@@ -9,8 +9,8 @@ namespace DCL.Chat.ChatViewModels
         public string ImageUrl { get; set; }
         public Sprite? Thumbnail { get; set; }
 
-        public CommunityChannelViewModel(ChatChannel.ChannelId id)
-            : base(id, ChatChannel.ChatChannelType.COMMUNITY)
+        public CommunityChannelViewModel(ChatChannel.ChannelId id, int unreadMessagesCount, bool hasUnreadMentions)
+            : base(id, ChatChannel.ChatChannelType.COMMUNITY, unreadMessagesCount, hasUnreadMentions)
         {
             DisplayName = "Loading...";
         }

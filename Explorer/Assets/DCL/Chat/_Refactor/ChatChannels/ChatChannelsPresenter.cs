@@ -184,7 +184,7 @@ namespace DCL.Chat
 
             if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
             {
-                UpdateUnreadCount(channel);
+                UpdateUnreadStatus(channel);
             }
 
             if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
@@ -195,15 +195,20 @@ namespace DCL.Chat
 
         private void OnReadMessagesChanged(ChatChannel changedChannel)
         {
-            // TODO: check if we are at the bottom of the channel
-            // TODO: check if the channel is the current one?
-            UpdateUnreadCount(changedChannel);
+            UpdateUnreadStatus(changedChannel);
         }
 
-        private void UpdateUnreadCount(ChatChannel channel)
+        private void UpdateUnreadStatus(ChatChannel channel)
         {
-            int unreadCount = channel.Messages.Count - channel.ReadMessages;
-            view.SetUnreadMessages(channel.Id, unreadCount);
+            (int unreadCount, bool hasMentions) = CalculateUnreadStatus(channel);
+
+            if (viewModels.TryGetValue(channel.Id, out var vm))
+            {
+                vm.UnreadMessagesCount = unreadCount;
+                vm.HasUnreadMentions = hasMentions;
+            }
+
+            view.SetUnreadMessages(channel.Id, unreadCount, hasMentions);
         }
 
         public void Show()
@@ -219,6 +224,32 @@ namespace DCL.Chat
         public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
         {
             view.SetFocusedState(isFocused, animate, duration, easing);
+        }
+
+        private (int unreadCount, bool hasMentions) CalculateUnreadStatus(ChatChannel channel)
+        {
+            if (channel == null)
+                return (0, false);
+
+            int unreadCount = channel.Messages.Count - channel.ReadMessages;
+
+            bool hasMentions = false;
+
+            if (unreadCount > 0)
+            {
+                var messages = channel.Messages;
+
+                for (int i = 0; i < unreadCount; i++)
+                {
+                    if (messages[i].IsMention)
+                    {
+                        hasMentions = true;
+                        break;
+                    }
+                }
+            }
+
+            return (unreadCount, hasMentions);
         }
 
         public void Dispose()
