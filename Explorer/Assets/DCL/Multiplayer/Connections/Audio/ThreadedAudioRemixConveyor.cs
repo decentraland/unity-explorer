@@ -2,7 +2,7 @@
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Audio;
-using Livekit.Utils;
+using Livekit.Types;
 using System;
 
 namespace DCL.Multiplayer.Connections.Audio

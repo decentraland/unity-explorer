@@ -2,7 +2,7 @@ using DCL.Diagnostics;
 using LiveKit.Audio;
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
-using Livekit.Utils;
+using Livekit.Types;
 using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.Connections.Audio
 
                 if (isEmptyFrame)
                 {
-                    var targetSamples = (int)(ownedAudioFrame.Length() / sizeof(short) / ownedAudioFrame.NumChannels * numChannels);
+                    var targetSamples = (int)(ownedAudioFrame.LengthBytes() / sizeof(short) / ownedAudioFrame.NumChannels * numChannels);
                     int silenceDataSize = targetSamples * sizeof(short);
 
                     WriteSilenceToBuffer(outputBuffer, silenceDataSize);
