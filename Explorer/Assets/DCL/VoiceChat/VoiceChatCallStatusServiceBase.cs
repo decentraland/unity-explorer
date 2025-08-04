@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
-using DCL.Web3;
 
 namespace DCL.VoiceChat
 {
@@ -11,9 +10,9 @@ namespace DCL.VoiceChat
     /// </summary>
     public abstract class VoiceChatCallStatusServiceBase
     {
-        protected readonly ReactiveProperty<VoiceChatStatus> statusProperty = new (VoiceChatStatus.DISCONNECTED);
+        private readonly ReactiveProperty<VoiceChatStatus> status = new (VoiceChatStatus.DISCONNECTED);
 
-        public IReadonlyReactiveProperty<VoiceChatStatus> Status => statusProperty;
+        public IReadonlyReactiveProperty<VoiceChatStatus> Status => status;
         public string CallId { get; protected set; }
         public string ConnectionUrl { get; protected set; }
 
@@ -25,14 +24,14 @@ namespace DCL.VoiceChat
 
         protected void UpdateStatus(VoiceChatStatus newStatus)
         {
-            UpdateStatusAsync(newStatus).Forget();
-        }
+            UpdateStatusAsync().Forget();
 
-        private async UniTaskVoid UpdateStatusAsync(VoiceChatStatus newStatus)
-        {
-            await UniTask.SwitchToMainThread();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"New status is {newStatus}");
-            statusProperty.Value = newStatus;
+            async UniTaskVoid UpdateStatusAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"New status is {newStatus}");
+                status.Value = newStatus;
+            }
         }
 
         protected void ResetVoiceChatData()
@@ -43,7 +42,7 @@ namespace DCL.VoiceChat
 
         public virtual void Dispose()
         {
-            statusProperty?.Dispose();
+            status?.Dispose();
         }
     }
 }

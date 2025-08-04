@@ -3,6 +3,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.SocialService;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using System;
 
 namespace DCL.VoiceChat
@@ -21,10 +22,11 @@ namespace DCL.VoiceChat
             ISocialServiceEventBus socialServiceEventBus,
             IRoomHub roomHub,
             IWeb3IdentityCache identityCache,
-            INotificationsBusController notificationsBusController)
+            INotificationsBusController notificationsBusController,
+            IWebRequestController webRequestController)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
-            rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus);
+            rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController);
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
             communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, notificationsBusController);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);

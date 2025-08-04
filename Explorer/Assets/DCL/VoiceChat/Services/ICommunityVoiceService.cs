@@ -24,6 +24,10 @@ namespace DCL.VoiceChat.Services
 
         UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct);
 
+        UniTask<EndCommunityVoiceChatResponse> EndCommunityVoiceChatAsync(string communityId, CancellationToken ct);
+
+        UniTask<ActiveCommunityVoiceChatsResponse> GetActiveCommunityVoiceChatsAsync(CancellationToken ct);
+
         UniTask SubscribeToCommunityVoiceChatUpdatesAsync(CancellationToken ct);
     }
 }

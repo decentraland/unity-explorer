@@ -52,7 +52,7 @@ namespace DCL.VoiceChat
 
             micController = new MicrophoneButtonController(list, microphoneHandler);
 
-            statusSubscription = this.privateCallOrchestrator.PrivateCallStatus.Subscribe(OnPrivateVoiceChatStatusChanged);
+            statusSubscription = privateCallOrchestrator.PrivateCallStatus.Subscribe(OnPrivateVoiceChatStatusChanged);
             this.voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
             this.voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;

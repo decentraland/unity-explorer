@@ -40,7 +40,7 @@ namespace DCL.VoiceChat
                 currentChannel);
 
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
-            statusSubscription = communityCallOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
+            statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
         }
 
         private void ParticipantsStateServiceOnParticipantLeft(string _)
@@ -68,11 +68,18 @@ namespace DCL.VoiceChat
             communityCallOrchestrator.ParticipantsStateService.ParticipantLeft -= ParticipantsStateServiceOnParticipantLeft;
         }
 
-        private void OnCallStatusChanged(VoiceChatStatus status)
+        private void OnCommunityCallStatusChanged(VoiceChatStatus status)
         {
-            if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
-
             if (!view.gameObject.activeSelf) return;
+
+            if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            {
+                if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
+                {
+                    OnCurrentChannelChanged(currentChannel.Value);
+                    return;
+                }
+            }
 
             if (communityCallOrchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
             {

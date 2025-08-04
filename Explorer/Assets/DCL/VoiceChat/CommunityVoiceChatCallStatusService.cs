@@ -82,6 +82,7 @@ namespace DCL.VoiceChat
         public override void HangUp()
         {
             //TODO: currently just exits, need to figure out how to handle hang up
+            ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.DISCONNECTED);
         }
 
