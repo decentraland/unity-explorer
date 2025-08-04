@@ -799,6 +799,8 @@ namespace DCL.Chat
 
         private void OnViewMemberListVisibilityChanged(bool isVisible)
         {
+            communityStreamSubTitleBarController?.OnMemberListVisibilityChanged(isVisible);
+
             if (isVisible && roomHub.HasAnyRoomConnected())
                 RefreshMemberList();
         }

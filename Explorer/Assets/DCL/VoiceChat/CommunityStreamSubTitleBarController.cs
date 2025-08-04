@@ -22,6 +22,7 @@ namespace DCL.VoiceChat
         private CancellationTokenSource communityCts = new ();
         private IDisposable currentCommunityCallStatusSubscription;
         private bool isCurrentCall;
+        private bool isMemberListVisible;
 
         public CommunityStreamSubTitleBarController(
             CommunityStreamSubTitleBarView view,
@@ -70,6 +71,8 @@ namespace DCL.VoiceChat
 
         private void OnCommunityCallStatusChanged(VoiceChatStatus status)
         {
+            if (isMemberListVisible) return;
+
             if (!view.gameObject.activeSelf) return;
 
             if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL)
@@ -93,6 +96,8 @@ namespace DCL.VoiceChat
         {
             //We hide it by default until we resolve if the user should see it.
             view.gameObject.SetActive(false);
+            // Reset member list visibility state since we're changing channels
+            isMemberListVisible = false;
             currentCommunityCallStatusSubscription?.Dispose();
             communityCallOrchestrator.ParticipantsStateService.ParticipantJoined -= ParticipantsStateServiceOnParticipantJoined;
             communityCallOrchestrator.ParticipantsStateService.ParticipantLeft -= ParticipantsStateServiceOnParticipantLeft;
@@ -111,6 +116,8 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid HandleChangeToCommunityChannelAsync(string communityId)
         {
+            if (isMemberListVisible) return;
+
             isCurrentCall = false;
 
             communityCts = communityCts.SafeRestart();
@@ -138,8 +145,11 @@ namespace DCL.VoiceChat
 
         private void OnCurrentCommunityCallStatusChanged(bool hasActiveCall)
         {
+            if (isMemberListVisible) return;
+
             //We show the button if the current community has an active call
-            view.gameObject.SetActive(hasActiveCall);
+            if (hasActiveCall)
+                view.gameObject.SetActive(true);
 
             if (hasActiveCall && communityCallOrchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
                 HandleCurrentCommunityCall();
@@ -148,6 +158,8 @@ namespace DCL.VoiceChat
 
         private void HandleCurrentCommunityCall()
         {
+            if (isMemberListVisible) return;
+
             isCurrentCall = true;
             view.gameObject.SetActive(true);
             SetParticipantsCount();
@@ -174,6 +186,22 @@ namespace DCL.VoiceChat
 
             view.InStreamSign.SetActive(true);
             view.JoinStreamButton.gameObject.SetActive(true);
+        }
+
+        public void OnMemberListVisibilityChanged(bool isVisible)
+        {
+            isMemberListVisible = isVisible;
+            
+            if (isVisible)
+            {
+                view.gameObject.SetActive(false);
+            }
+            else
+            {
+                // Re-setup subtitle bar when member list becomes hidden
+                // This will trigger the normal flow to determine if it should be shown
+                OnCurrentChannelChanged(currentChannel.Value);
+            }
         }
     }
 }
