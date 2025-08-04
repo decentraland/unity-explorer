@@ -9,13 +9,16 @@ namespace DCL.Utilities
 {
     public class UpscalingController
     {
+        // Used when system doesn't meet minimum specs
+        public const float MIN_SPECS_UPSCALER_VALUE = 0.8f;
+        
         private const float STP_VALUE_FOR_UI_OPEN = 1f;
         private const float STP_HIGH_RESOLUTION_WINDOWS = 0.5f;
         private const float STP_HIGH_RESOLUTION_MAC = 0.5f;
         private const float STP_MID_RESOLUTION_MAC = 0.6f;
         private const float STP_MID_RESOLUTION_WINDOWS = 1f;
         private const float INITIAL_UPSCALE_VALUE = 1f;
-
+        
         private readonly float highResolutionPreset;
         private readonly float midResolutionPreset;
         private readonly IMVCManager mvcManager;
