@@ -2,8 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.SDKComponents.NFTShape.Component;
-using DCL.Shaders;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;

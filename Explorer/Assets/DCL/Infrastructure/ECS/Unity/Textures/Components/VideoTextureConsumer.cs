@@ -102,8 +102,8 @@ namespace ECS.Unity.Textures.Components
         {
             foreach (var meshRenderer in renderers)
             {
-                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.BaseMap, texScale);
-                meshRenderer.sharedMaterial.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+                meshRenderer.material.SetTextureScale(ShaderUtils.BaseMap, texScale);
+                meshRenderer.material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
             }
         }
     }
