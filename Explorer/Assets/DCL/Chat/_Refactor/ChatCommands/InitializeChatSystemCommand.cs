@@ -22,8 +22,9 @@ namespace DCL.Chat.ChatCommands
         private readonly ChatHistoryStorage? chatHistoryStorage;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ICommunityDataService communityDataService;
-        private readonly ChatUserStateService chatUserStateUpdater;
+        private readonly PrivateConversationUserStateService chatUserStateUpdater;
         private readonly CurrentChannelService currentChannelService;
+        private readonly NearbyUserStateService nearbyUserStateService;
 
         public InitializeChatSystemCommand(
             IEventBus eventBus,
@@ -32,8 +33,9 @@ namespace DCL.Chat.ChatCommands
             ChatHistoryStorage? chatHistoryStorage,
             CommunitiesDataProvider communitiesDataProvider,
             ICommunityDataService communityDataService,
-            ChatUserStateService chatUserStateUpdater,
-            CurrentChannelService currentChannelService)
+            PrivateConversationUserStateService chatUserStateUpdater,
+            CurrentChannelService currentChannelService,
+            NearbyUserStateService nearbyUserStateService)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
@@ -43,6 +45,7 @@ namespace DCL.Chat.ChatCommands
             this.communityDataService = communityDataService;
             this.chatUserStateUpdater = chatUserStateUpdater;
             this.currentChannelService = currentChannelService;
+            this.nearbyUserStateService = nearbyUserStateService;
         }
 
         public async UniTaskVoid ExecuteAsync(CancellationToken ct)
@@ -137,7 +140,8 @@ namespace DCL.Chat.ChatCommands
 
         private void SetDefaultChannel(ChatChannel nearbyChannel)
         {
-            currentChannelService.SetCurrentChannel(nearbyChannel);
+            nearbyUserStateService.Activate();
+            currentChannelService.SetCurrentChannel(nearbyChannel, nearbyUserStateService);
             eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = nearbyChannel });
         }
     }

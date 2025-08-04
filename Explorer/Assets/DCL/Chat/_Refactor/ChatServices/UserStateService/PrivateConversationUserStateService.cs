@@ -19,8 +19,21 @@ using Utility.Types;
 
 namespace DCL.Chat.ChatServices
 {
-    public class ChatUserStateService : IDisposable
+    /// <summary>
+    ///     Responsible for managing the private conversation state.
+    ///     Always enabled
+    /// </summary>
+    public class PrivateConversationUserStateService : IDisposable, ICurrentChannelUserStateService
     {
+        public enum ChatUserState
+        {
+            CONNECTED, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
+            BLOCKED_BY_OWN_USER, //Own user blocked the other user
+            PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER, //Own user has privacy settings set to ONLY FRIENDS
+            PRIVATE_MESSAGES_BLOCKED, //The other user has its privacy settings set to ONLY FRIENDS
+            DISCONNECTED, //The other user is either offline or has blocked the own user.
+        }
+
         private const string PRIVACY_SETTING_ALL = "all";
 
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
@@ -35,9 +48,11 @@ namespace DCL.Chat.ChatServices
         private readonly IEventBus eventBus;
         private readonly CurrentChannelService currentChannelService;
 
+        private readonly HashSet<string> onlineParticipants = new (1); // always 1
+
         private CancellationTokenSource cts = new ();
 
-        public ChatUserStateService(CurrentChannelService currentChannelService, IEventBus eventBus, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ObjectProxy<IFriendsService> friendsService,
+        public PrivateConversationUserStateService(CurrentChannelService currentChannelService, IEventBus eventBus, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ObjectProxy<IFriendsService> friendsService,
             ChatSettingsAsset settingsAsset, RPCChatPrivacyService rpcChatPrivacyService, IFriendsEventBus friendsEventBus, IRoom chatRoom)
         {
             this.currentChannelService = currentChannelService;
@@ -49,6 +64,20 @@ namespace DCL.Chat.ChatServices
             this.rpcChatPrivacyService = rpcChatPrivacyService;
             this.friendsEventBus = friendsEventBus;
             this.chatRoom = chatRoom;
+            OnlineParticipants = new ReadOnlyHashSet<string>(onlineParticipants);
+        }
+
+        public ReadOnlyHashSet<string> OnlineParticipants { get; }
+
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+            UnsubscribeFromEvents();
+        }
+
+        public void Activate(string userId)
+        {
+            onlineParticipants.Add(userId);
         }
 
         public async UniTask<HashSet<string>> InitializeAsync(IEnumerable<ChatChannel.ChannelId> openConversations)
@@ -78,7 +107,7 @@ namespace DCL.Chat.ChatServices
         private void SubscribeToEvents()
         {
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
-            participantsHub.UpdatesFromParticipant += OnUpdatesFromParticipant;
+            chatRoom.Participants.UpdatesFromParticipant += OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
             friendsEventBus.OnYouUnblockedByUser += OnUserUnblocked;
             friendsEventBus.OnYouBlockedProfile += OnYouBlockedProfile;
@@ -92,7 +121,7 @@ namespace DCL.Chat.ChatServices
         private void UnsubscribeFromEvents()
         {
             settingsAsset.PrivacySettingsSet -= OnPrivacySettingsSet;
-            participantsHub.UpdatesFromParticipant -= OnUpdatesFromParticipant;
+            chatRoom.Participants.UpdatesFromParticipant -= OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser -= OnYouBlockedByUser;
             friendsEventBus.OnYouUnblockedByUser -= OnUserUnblocked;
             friendsEventBus.OnYouBlockedProfile -= OnYouBlockedProfile;
@@ -249,22 +278,15 @@ namespace DCL.Chat.ChatServices
             // This service doesn't know about the current channel list
             // so it's the responsibility of the corresponding presenter to detect if the user is in the list
 
-            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent
-            {
-                UserId = userId, IsOnline = isOnline,
-            });
+            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), userId, isOnline));
 
             if (currentChannelService.CurrentChannelId.Id == userId)
                 eventBus.Publish(new ChatEvents.CurrentChannelStateUpdatedEvent());
         }
 
-        public enum ChatUserState
+        void ICurrentChannelUserStateService.Deactivate()
         {
-            CONNECTED, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
-            BLOCKED_BY_OWN_USER, //Own user blocked the other user
-            PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER, //Own user has privacy settings set to ONLY FRIENDS
-            PRIVATE_MESSAGES_BLOCKED, //The other user has its privacy settings set to ONLY FRIENDS
-            DISCONNECTED, //The other user is either offline or has blocked the own user.
+            onlineParticipants.Clear();
         }
 
         [Serializable]
@@ -282,12 +304,6 @@ namespace DCL.Chat.ChatServices
 
             public override string ToString() =>
                 $"(Private Messages Privacy: {private_messages_privacy}";
-        }
-
-        public void Dispose()
-        {
-            cts.SafeCancelAndDispose();
-            UnsubscribeFromEvents();
         }
     }
 }

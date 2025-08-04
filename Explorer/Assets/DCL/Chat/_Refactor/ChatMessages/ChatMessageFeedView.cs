@@ -2,6 +2,7 @@
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Friends.UserBlocking;
 using DCL.UI.Utilities;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
@@ -19,19 +20,22 @@ namespace DCL.Chat.ChatMessages
     {
         [SerializeField] private ChatScrollToBottomView chatScrollToBottomView;
         public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
-        
+
         [SerializeField] private float chatEntriesFadeTime = 3f;
         [SerializeField] private int chatEntriesWaitBeforeFading = 10000;
         [SerializeField] private CanvasGroup scrollbarCanvasGroup;
         [SerializeField] private CanvasGroup chatEntriesCanvasGroup;
         [SerializeField] private LoopListView2 loopList;
         [SerializeField] private ScrollRect scrollRect;
+        [Range(0.0f, 1.0f)] [SerializeField] private float entryGreyOutOpacity = 0.6f;
 
         private CancellationTokenSource? fadeoutCts;
 
         // View models are reused and set
         // by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
+
+        private ReadOnlyHashSet<string> onlineParticipants = new (new HashSet<string>());
 
         public void Dispose()
         {
@@ -63,6 +67,11 @@ namespace DCL.Chat.ChatMessages
             scrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
+        public void SetUserConnectivityProvider(ReadOnlyHashSet<string> onlineParticipants)
+        {
+            this.onlineParticipants = onlineParticipants;
+        }
+
         private void ChatScrollToBottomToBottomClicked()
         {
             OnScrollToBottomButtonClicked?.Invoke();
@@ -81,6 +90,11 @@ namespace DCL.Chat.ChatMessages
             }
 
             return false;
+        }
+
+        public void RefreshVisibleElements()
+        {
+            loopList.RefreshAllShownItem();
         }
 
         /// <summary>
@@ -206,6 +220,10 @@ namespace DCL.Chat.ChatMessages
                 item = listView.NewListViewItem(GetPrefabName(prefabIndex));
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
                 itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
+
+                // Online connectivity could be integrated to the view model, but it's more efficient and simpler to do it here
+                // for shown elements only
+                itemScript.GreyOut(prefabIndex == ChatItemPrefabIndex.ChatEntry && !onlineParticipants.Contains(chatMessage.SenderWalletAddress) ? entryGreyOutOpacity : 0.0f);
 
                 if (viewModel.PendingToAnimate)
                 {

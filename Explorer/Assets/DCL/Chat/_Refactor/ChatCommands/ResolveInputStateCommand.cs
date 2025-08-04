@@ -17,28 +17,28 @@ namespace DCL.Chat.ChatCommands
             this.currentChannelService = currentChannelService;
         }
 
-        public async UniTask<Result<ChatUserStateService.ChatUserState>> ExecuteAsync(CancellationToken ct)
+        public async UniTask<Result<PrivateConversationUserStateService.ChatUserState>> ExecuteAsync(CancellationToken ct)
         {
             ChatChannel? currentChannel = currentChannelService.CurrentChannel;
 
             if (currentChannel == null)
-                return currentChannelService.InputState = Result<ChatUserStateService.ChatUserState>.ErrorResult("No channel selected");
+                return currentChannelService.InputState = Result<PrivateConversationUserStateService.ChatUserState>.ErrorResult("No channel selected");
 
             switch (currentChannel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.NEARBY:
                 case ChatChannel.ChatChannelType.COMMUNITY:
-                    return currentChannelService.InputState = Result<ChatUserStateService.ChatUserState>.SuccessResult(ChatUserStateService.ChatUserState.CONNECTED);
+                    return currentChannelService.InputState = Result<PrivateConversationUserStateService.ChatUserState>.SuccessResult(PrivateConversationUserStateService.ChatUserState.CONNECTED);
                 case ChatChannel.ChatChannelType.USER:
                 {
-                    ChatUserStateService.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(currentChannel.Id.Id, ct);
+                    PrivateConversationUserStateService.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(currentChannel.Id.Id, ct);
 
                     return currentChannelService.InputState = ct.IsCancellationRequested
-                        ? Result<ChatUserStateService.ChatUserState>.CancelledResult()
-                        : Result<ChatUserStateService.ChatUserState>.SuccessResult(status);
+                        ? Result<PrivateConversationUserStateService.ChatUserState>.CancelledResult()
+                        : Result<PrivateConversationUserStateService.ChatUserState>.SuccessResult(status);
                 }
                 default:
-                    return currentChannelService.InputState = Result<ChatUserStateService.ChatUserState>.ErrorResult($"{currentChannel.ChannelType} is not supported for input state resolution");
+                    return currentChannelService.InputState = Result<PrivateConversationUserStateService.ChatUserState>.ErrorResult($"{currentChannel.ChannelType} is not supported for input state resolution");
             }
         }
     }

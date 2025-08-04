@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatServices;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System.Threading;
@@ -10,15 +11,15 @@ namespace DCL.Chat.ChatCommands
     public class GetUserChatStatusCommand
     {
         private readonly IEventBus eventBus;
-        private readonly ChatUserStateService userStateService;
+        private readonly PrivateConversationUserStateService userStateService;
 
-        public GetUserChatStatusCommand(ChatUserStateService userStateService, IEventBus eventBus)
+        public GetUserChatStatusCommand(PrivateConversationUserStateService userStateService, IEventBus eventBus)
         {
             this.eventBus = eventBus;
             this.userStateService = userStateService;
         }
 
-        public async UniTask<ChatUserStateService.ChatUserState> ExecuteAsync(string userId, CancellationToken ct)
+        public async UniTask<PrivateConversationUserStateService.ChatUserState> ExecuteAsync(string userId, CancellationToken ct)
         {
             var result = await userStateService.GetChatUserStateAsync(userId, ct)
                                                .SuppressCancellationThrow()
@@ -26,12 +27,12 @@ namespace DCL.Chat.ChatCommands
 
             if (ct.IsCancellationRequested || !result.Success)
             {
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent { UserId = userId, IsOnline = false });
-                return ChatUserStateService.ChatUserState.DISCONNECTED;
+                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), userId, false));
+                return PrivateConversationUserStateService.ChatUserState.DISCONNECTED;
             }
 
-            bool isOnline = result.Value.Result == ChatUserStateService.ChatUserState.CONNECTED;
-            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent { UserId = userId, IsOnline = isOnline });
+            bool isOnline = result.Value.Result == PrivateConversationUserStateService.ChatUserState.CONNECTED;
+            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), userId, isOnline));
 
             return result.Value.Result;
         }

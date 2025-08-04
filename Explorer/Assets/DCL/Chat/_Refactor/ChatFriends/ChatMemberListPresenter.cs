@@ -46,8 +46,7 @@ namespace DCL.Chat.ChatFriends
             view.Show();
 
             lifeCts = new CancellationTokenSource();
-            memberListService.StartLiveMemberUpdates();
-            memberListService.OnMemberListUpdated += HandleLiveUpdate;
+            memberListService.StartLiveMemberUpdates(HandleLiveUpdate);
             memberListService.RequestInitialMemberListAsync().Forget();
         }
 
@@ -74,7 +73,6 @@ namespace DCL.Chat.ChatFriends
 
             view.Hide();
             memberListService.StopLiveMemberUpdates();
-            memberListService.OnMemberListUpdated -= HandleLiveUpdate;
 
             lifeCts.SafeCancelAndDispose();
         }
@@ -88,7 +86,6 @@ namespace DCL.Chat.ChatFriends
 
         public void Dispose()
         {
-            memberListService.OnMemberListUpdated -= HandleLiveUpdate;
             lifeCts.SafeCancelAndDispose();
             scope.Dispose();
         }

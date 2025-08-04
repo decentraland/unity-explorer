@@ -43,7 +43,9 @@ namespace DCL.Chat.ChatCommands
             IChatMessagesBus chatMessageBus,
             IChatHistory chatHistory,
             ChatHistoryStorage? chatHistoryStorage,
-            ChatUserStateService chatUserStateUpdater,
+            NearbyUserStateService nearbyUserStateService,
+            CommunityUserStateService communityUserStateService,
+            PrivateConversationUserStateService privateConversationUserStateService,
             CurrentChannelService currentChannelService,
             CommunitiesDataProvider communitiesDataProvider,
             ICommunityDataService communityDataService,
@@ -61,14 +63,18 @@ namespace DCL.Chat.ChatCommands
                 chatHistoryStorage,
                 communitiesDataProvider,
                 communityDataService,
-                chatUserStateUpdater,
-                currentChannelService);
+                privateConversationUserStateService,
+                currentChannelService,
+                nearbyUserStateService);
 
             CreateMessageViewModel = new CreateMessageViewModelCommand(profileRepositoryWrapper, chatConfig);
 
             SelectChannel = new SelectChannelCommand(eventBus,
                 chatHistory,
-                currentChannelService);
+                currentChannelService,
+                communityUserStateService,
+                nearbyUserStateService,
+                privateConversationUserStateService);
 
             DeleteChatHistory = new DeleteChatHistoryCommand(eventBus,
                 chatHistory,
@@ -85,7 +91,7 @@ namespace DCL.Chat.ChatCommands
 
             GetChannelMembersCommand = new GetChannelMembersCommand(chatConfig);
 
-            GetUserChatStatusCommand = new GetUserChatStatusCommand(chatUserStateUpdater,
+            GetUserChatStatusCommand = new GetUserChatStatusCommand(privateConversationUserStateService,
                 eventBus);
 
             OpenConversation = new OpenConversationCommand(eventBus,

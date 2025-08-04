@@ -129,11 +129,11 @@ namespace DCL.Chat.ChatCommands
 
         private async UniTaskVoid FetchInitialStatusAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
         {
-            ChatUserStateService.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
+            PrivateConversationUserStateService.ChatUserState status = await getUserChatStatusCommand.ExecuteAsync(viewModel.Id.Id, ct);
 
             if (ct.IsCancellationRequested) return;
 
-            viewModel.IsOnline = status == ChatUserStateService.ChatUserState.CONNECTED;
+            viewModel.IsOnline = status == PrivateConversationUserStateService.ChatUserState.CONNECTED;
 
             eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
             {

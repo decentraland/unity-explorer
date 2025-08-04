@@ -1,53 +1,47 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Diagnostics;
 using DCL.Friends;
+using DCL.Friends.UserBlocking;
 using DCL.Utilities;
-using DCL.Chat.History;
-using DCL.Communities;
-using DCL.Profiles.Helpers;
-using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
-using LiveKit.Rooms.Participants;
-using System.Threading.Tasks;
 using DCL.UI.Profiles.Helpers;
 using Utility;
 using Utility.Multithreading;
-using Utility.Types;
 
 namespace DCL.Chat.ChatServices
 {
     /// <summary>
-    /// Manages and provides data about members in the current chat channel. This service has two primary functions:
-    /// 1. Provide a continuous, lightweight member count for UI elements like the chat title bar.
-    /// 2. Provide a full, detailed list of members on-demand for the member list panel, with efficient live updates.
+    ///     Manages and provides data about members in the current chat channel. This service has two primary functions:
+    ///     1. Provide a continuous, lightweight member count for UI elements like the chat title bar.
+    ///     2. Provide a full, detailed list of members on-demand for the member list panel, with efficient live updates.
     /// </summary>
     public class ChatMemberListService : IDisposable
     {
         private const int UNIFIED_POLL_INTERVAL_MS = 500;
 
         private readonly CurrentChannelService currentChannelService;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IRoomHub roomHub;
-        private readonly IProfileCache profileCache;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly IEventBus eventBus;
 
-        private readonly List<ChatMemberListView.MemberData> membersBuffer = new();
+        private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
 
-        private readonly CancellationTokenSource lifeCts = new();
-        private CancellationTokenSource? channelCts;
-        private CancellationTokenSource? liveListUpdateCts;
-        private CancellationTokenSource? communityTaskCts;
         private readonly HashSet<string> lastKnownMemberIds = new (StringComparer.OrdinalIgnoreCase);
 
-        private int lastRefreshedMemberListCount = -1;
         private int lastKnownTitleBarCount = -1;
+
+        /// <summary>
+        ///     Will be cancelled when the live update is no longer needed (the view is closed).
+        /// </summary>
+        private CancellationTokenSource? liveUpdateCts;
+
+        private IDisposable? subscriptionToChannel;
+
+        private readonly EventSubscriptionScope subscriptionToCounterUpdate = new ();
+        private readonly EventSubscriptionScope subscriptionToUserStatus = new ();
 
         /// <summary>
         ///     Fires when the total number of members in the current channel changes.
@@ -59,24 +53,21 @@ namespace DCL.Chat.ChatServices
         ///     Fires with a detailed list of members after an update is triggered.
         ///     This is used to populate the full member list view.
         /// </summary>
-        public event Action<IReadOnlyList<ChatMemberListView.MemberData>>? OnMemberListUpdated;
+        private Action<IReadOnlyList<ChatMemberListView.MemberData>>? onMemberListUpdated;
 
-        public ChatMemberListService(IRoomHub roomHub,
-            IProfileCache profileCache,
-            ProfileRepositoryWrapper profileRepository,
+        public ChatMemberListService(ProfileRepositoryWrapper profileRepository,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             CurrentChannelService currentChannelService,
-            CommunitiesDataProvider communitiesDataProvider,
-            IWeb3IdentityCache web3IdentityCache)
+            IEventBus eventBus)
         {
-            this.roomHub = roomHub;
-            this.profileCache = profileCache;
             this.profileRepository = profileRepository;
             this.friendsServiceProxy = friendsServiceProxy;
             this.currentChannelService = currentChannelService;
-            this.communitiesDataProvider = communitiesDataProvider;
-            this.web3IdentityCache = web3IdentityCache;
+            this.eventBus = eventBus;
         }
+
+        public void Dispose() =>
+            Stop();
 
         /// <summary>
         ///     Starts the service by subscribing to channel changes.
@@ -89,8 +80,23 @@ namespace DCL.Chat.ChatServices
                 return;
             }
 
-            currentChannelService.OnChannelChanged += OnChannelChanged;
-            OnChannelChanged(currentChannelService.CurrentChannel);
+            subscriptionToChannel = eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected);
+            subscriptionToCounterUpdate.Add(eventBus.Subscribe<ChatEvents.NearbyUsersStatusUpdated>(UpdateCounter));
+            subscriptionToCounterUpdate.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(UpdateCounter));
+
+            OnChannelSelected();
+        }
+
+        private void UpdateCounter(ChatEvents.NearbyUsersStatusUpdated evt)
+        {
+            if (evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                UpdateAndBroadcastCount(evt.OnlineUsers.Count);
+        }
+
+        private void UpdateCounter(ChatEvents.UserStatusUpdatedEvent evt)
+        {
+            if (evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                UpdateAndBroadcastCount(currentChannelService.UserStateService!.OnlineParticipants.Count);
         }
 
         /// <summary>
@@ -98,20 +104,9 @@ namespace DCL.Chat.ChatServices
         /// </summary>
         private void Stop()
         {
+            subscriptionToChannel?.Dispose();
+            subscriptionToCounterUpdate.Dispose();
             StopLiveMemberUpdates();
-            TearDownCurrentChannelListeners();
-            currentChannelService.OnChannelChanged -= OnChannelChanged;
-            lifeCts.SafeCancelAndDispose();
-        }
-
-        /// <summary>
-        ///     Performs a single, fresh fetch of the full member list.
-        ///     This should be called by the UI when the member list panel is first opened.
-        /// </summary>
-        public async UniTask RequestInitialMemberListAsync()
-        {
-            if (channelCts == null || channelCts.IsCancellationRequested) return;
-            await RefreshFullListAsync(channelCts.Token);
         }
 
         /// <summary>
@@ -119,12 +114,25 @@ namespace DCL.Chat.ChatServices
         ///     The polling strategy is optimized based on the current channel type.
         ///     This should be called AFTER the initial list is displayed.
         /// </summary>
-        public void StartLiveMemberUpdates()
+        public void StartLiveMemberUpdates(Action<IReadOnlyList<ChatMemberListView.MemberData>> onMemberListUpdated)
         {
             ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Starting live member updates...");
-            StopLiveMemberUpdates();
-            liveListUpdateCts = CancellationTokenSource.CreateLinkedTokenSource(lifeCts.Token);
-            LiveMemberUpdateLoopAsync(liveListUpdateCts.Token).Forget();
+
+            // Emitted from the current channel user state service
+            subscriptionToUserStatus.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(RefreshFullListIfNeeded));
+            subscriptionToUserStatus.Add(eventBus.Subscribe<ChatEvents.NearbyUsersStatusUpdated>(RefreshFullListIfNeeded));
+
+            liveUpdateCts = new CancellationTokenSource();
+            this.onMemberListUpdated = onMemberListUpdated;
+        }
+
+        private void RefreshFullListIfNeeded(ChatEvents.NearbyUsersStatusUpdated evt)
+        {
+            if (!evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                return;
+
+            // If the event is for the current channel, refresh the full list
+            RefreshFullListIfNeededAsync(liveUpdateCts!.Token).Forget();
         }
 
         /// <summary>
@@ -134,232 +142,83 @@ namespace DCL.Chat.ChatServices
         public void StopLiveMemberUpdates()
         {
             ReportHub.Log(ReportCategory.UI, "[ChatMemberListService] Stopping live member updates...");
-            liveListUpdateCts?.Cancel();
-            liveListUpdateCts?.Dispose();
-            liveListUpdateCts = null;
+
+            subscriptionToUserStatus?.Dispose();
+            liveUpdateCts.SafeCancelAndDispose();
+            onMemberListUpdated = null;
+        }
+
+        private void RefreshFullListIfNeeded(ChatEvents.UserStatusUpdatedEvent @event)
+        {
+            if (!@event.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                return;
+
+            RefreshFullListIfNeededAsync(liveUpdateCts!.Token).Forget();
         }
 
         /// <summary>
-        ///     Reacts to changes in the current chat channel by tearing down old listeners
-        ///     and setting up new ones appropriate for the new channel type.
+        ///     Performs a single, fresh fetch of the full member list.
+        ///     This should be called by the UI when the member list panel is first opened.
         /// </summary>
-        private void OnChannelChanged(ChatChannel? newChannel)
+        public UniTask RequestInitialMemberListAsync() =>
+            RefreshFullListAsync(currentChannelService.UserStateService!.OnlineParticipants, liveUpdateCts!.Token);
+
+        private void OnChannelSelected(ChatEvents.ChannelSelectedEvent @event)
         {
-            TearDownCurrentChannelListeners();
+            OnChannelSelected();
+        }
+
+        private void OnChannelSelected()
+        {
             ResetAllMemberState();
-            
-            channelCts = CancellationTokenSource.CreateLinkedTokenSource(lifeCts.Token);
-
-            if (newChannel == null)
-            {
-                UpdateAndBroadcastCount(0);
-                return;
-            }
-
-            switch (newChannel.ChannelType)
-            {
-                case ChatChannel.ChatChannelType.NEARBY:
-                    SetupNearbyListeners();
-                    break;
-                case ChatChannel.ChatChannelType.COMMUNITY:
-                    StartCommunityChannelHandler(newChannel.Id, channelCts.Token);
-                    break;
-                case ChatChannel.ChatChannelType.USER:
-                    UpdateAndBroadcastCount(1);
-                    break;
-                default:
-                    UpdateAndBroadcastCount(0);
-                    break;
-            }
+            UpdateAndBroadcastCount(currentChannelService.UserStateService?.OnlineParticipants.Count ?? 0);
         }
 
         private void ResetAllMemberState()
         {
             membersBuffer.Clear();
             lastKnownMemberIds.Clear();
-            lastRefreshedMemberListCount = -1;
             lastKnownTitleBarCount = -1;
         }
 
-        /// <summary>
-        ///     Encapsulates all setup logic for handling a community channel.
-        /// </summary>
-        private void StartCommunityChannelHandler(ChatChannel.ChannelId channelId, CancellationToken parentCt)
+        private UniTask RefreshFullListIfNeededAsync(CancellationToken ct)
         {
-            communityTaskCts = CancellationTokenSource.CreateLinkedTokenSource(parentCt);
-            string communityId = ChatChannel.GetCommunityIdFromChannelId(channelId);
+            ReadOnlyHashSet<string> participants = currentChannelService.UserStateService!.OnlineParticipants;
 
-            UniTask.RunOnThreadPool(() =>
-                    CommunityCountUpdateLoopAsync(communityId, communityTaskCts.Token),
-                cancellationToken: communityTaskCts.Token).Forget();
-        }
+            if (lastKnownMemberIds.SetEquals(participants))
+                return UniTask.CompletedTask;
 
-        /// <summary>
-        ///     The core "smart" loop that runs while the member list is visible. It periodically checks for
-        ///     list changes and triggers a full refresh only when necessary.
-        /// </summary>
-        private async UniTaskVoid LiveMemberUpdateLoopAsync(CancellationToken ct)
-        {
-            while (!ct.IsCancellationRequested)
-            {
-                var currentChannel = currentChannelService.CurrentChannel;
-                if (currentChannel == null)
-                {
-                    await UnifiedDelay(ct);
-                    continue;
-                }
+            lastKnownMemberIds.Clear();
 
-                try
-                {
-                    switch (currentChannel.ChannelType)
-                    {
-                        case ChatChannel.ChatChannelType.NEARBY:
-                            await UnifiedDelay(ct);
-                            if (ct.IsCancellationRequested) break;
+            foreach (string participant in participants)
+                lastKnownMemberIds.Add(participant);
 
-                            // For Nearby, we can get a lightweight list of IDs locally.
-                            IReadOnlyCollection<string> newNearbyIds = roomHub.AllLocalRoomsRemoteParticipantIdentities();
-
-                            // NOTE:Only trigger a full refresh if the set of members has actually changed.
-                            // NOTE: we need something like this for a communities as well (to avoid situations where
-                            // NOTE: one user joins and another leaves, but the count remains the same).
-                            if (!lastKnownMemberIds.SetEquals(newNearbyIds))
-                                await RefreshFullListAsync(ct);
-                            break;
-
-                        case ChatChannel.ChatChannelType.COMMUNITY:
-                            await UnifiedDelay(ct);
-
-                            if (ct.IsCancellationRequested) break;
-
-                            var result = await communitiesDataProvider
-                                .GetOnlineMemberCountAsync(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Id), ct)
-                                .SuppressToResultAsync();
-
-                            if (!result.Success) continue;
-
-                            int liveCount = result.Value > 0 ? result.Value - 1 : 0;
-
-                            if (liveCount != lastRefreshedMemberListCount)
-                            {
-                                await RefreshFullListAsync(ct);
-                            }
-                            break;
-                    }
-                }
-                catch (OperationCanceledException) { break; }
-                catch (Exception ex)
-                {
-                    ReportHub.LogException(ex, ReportCategory.UI);
-                }
-            }
+            return RefreshFullListAsync(lastKnownMemberIds, ct);
         }
 
         /// <summary>
         ///     Fetches the full, detailed member list for the current channel, sorts it,
         ///     and broadcasts it via the OnMemberListUpdated event.
         /// </summary>
-        private async UniTask RefreshFullListAsync(CancellationToken ct)
+        private async UniTask RefreshFullListAsync(IReadOnlyCollection<string> participants, CancellationToken ct)
         {
+            // TODO execution must be deferred
+
             membersBuffer.Clear();
-            var currentChannel = currentChannelService.CurrentChannel;
-            if (currentChannel == null) return;
 
             try
             {
-                switch (currentChannel.ChannelType)
-                {
-                    case ChatChannel.ChatChannelType.NEARBY:
-                        await FetchNearbyMembers(ct);
-                        break;
-                    case ChatChannel.ChatChannelType.COMMUNITY:
-                        await FetchCommunityMembersAsync(currentChannel.Id, ct);
-                        break;
-                }
+                await FetchOnlineParticipantsMemberData(participants, ct);
 
                 if (ct.IsCancellationRequested) return;
-
-                lastRefreshedMemberListCount = membersBuffer.Count;
-                lastKnownMemberIds.Clear();
-                foreach (var member in membersBuffer)
-                    lastKnownMemberIds.Add(member.Id);
 
                 membersBuffer.Sort((a, b) =>
                     string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
-                OnMemberListUpdated?.Invoke(membersBuffer);
+                onMemberListUpdated?.Invoke(membersBuffer);
             }
             catch (OperationCanceledException) { }
-            catch (Exception ex)
-            {
-                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
-            }
-        }
-
-        private void TearDownCurrentChannelListeners()
-        {
-            communityTaskCts?.Cancel();
-            communityTaskCts?.Dispose();
-            communityTaskCts = null;
-
-            channelCts?.Cancel();
-            channelCts?.Dispose();
-            channelCts = null;
-
-            // Ensure we unsubscribe from events to prevent leaks
-            roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnParticipantUpdated;
-            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnParticipantUpdated;
-        }
-
-
-        private void SetupNearbyListeners()
-        {
-            roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnParticipantUpdated;
-            roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += OnParticipantUpdated;
-            RecalculateNearbyCount();
-        }
-
-        private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
-        {
-            RecalculateNearbyCount();
-        }
-
-        private void RecalculateNearbyCount()
-        {
-            int currentCount = roomHub.ParticipantsCount();
-            UpdateAndBroadcastCount(currentCount);
-        }
-
-        private async UniTaskVoid CommunityCountUpdateLoopAsync(string communityId, CancellationToken ct)
-        {
-            while (!ct.IsCancellationRequested)
-            {
-                try
-                {
-                    var result = await communitiesDataProvider
-                        .GetOnlineMemberCountAsync(communityId, ct)
-                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-                    if (ct.IsCancellationRequested || !result.Success)
-                    {
-                        await UnifiedDelay(ct);
-                        continue;
-                    }
-
-                    int memberCount = result.Value > 0 ? result.Value - 1 : 0;
-                    UpdateAndBroadcastCount(memberCount);
-                    await UnifiedDelay(ct);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
-                    await UnifiedDelay(ct);
-                }
-            }
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
         }
 
         private static UniTask UnifiedDelay(CancellationToken ct) =>
@@ -373,62 +232,29 @@ namespace DCL.Chat.ChatServices
             MultithreadingUtility.InvokeOnMainThread(() => OnMemberCountUpdated?.Invoke(lastKnownTitleBarCount));
         }
 
-        private async UniTask FetchNearbyMembers(CancellationToken ct)
+        private async UniTask FetchOnlineParticipantsMemberData(IReadOnlyCollection<string> participants, CancellationToken ct)
         {
+            // TODO requires pooling
             var profiles = new List<Profile>();
 
             // 1. Await the new asynchronous method to get the fully populated list of profiles.
-            await GetProfilesFromParticipantsAsync(profiles, ct);
+            await GetProfilesFromParticipantsAsync(participants, profiles, ct);
 
             // If cancellation was requested during the fetch, stop processing.
             if (ct.IsCancellationRequested) return;
 
             // 2. The rest of your logic remains the same.
             //    By the time we get here, 'profiles' contains all members that could be found.
-            foreach (var profile in profiles)
+            foreach (Profile? profile in profiles)
             {
                 if (ct.IsCancellationRequested) return;
                 membersBuffer.Add(CreateMemberDataFromProfile(profile));
             }
         }
 
-        private async UniTask FetchCommunityMembersAsync(ChatChannel.ChannelId channelId, CancellationToken ct)
-        {
-            string communityId = ChatChannel.GetCommunityIdFromChannelId(channelId);
-            Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(communityId, ct)
-                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-            if (ct.IsCancellationRequested || !result.Success) return;
-
-            string? localPlayerAddress = web3IdentityCache.Identity?.Address;
-
-            foreach (var memberData in result.Value.data.results)
-            {
-                if (ct.IsCancellationRequested) return;
-                if (memberData.memberAddress == localPlayerAddress) continue;
-
-                membersBuffer.Add(new ChatMemberListView.MemberData
-                {
-                    Id = memberData.memberAddress, Name = memberData.name, FaceSnapshotUrl = memberData.profilePictureUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
-                    WalletId = $"#{memberData.memberAddress[^4..]}", ProfileColor = ProfileNameColorHelper.GetNameColor(memberData.name), HasClaimedName = false
-                });
-            }
-        }
-
-        private void GetProfilesFromParticipants(List<Profile> outProfiles)
+        private async UniTask GetProfilesFromParticipantsAsync(IEnumerable<string> participantIdentities, List<Profile> outProfiles, CancellationToken ct)
         {
             outProfiles.Clear();
-            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
-            {
-                if (profileCache.TryGet(identity, out var profile))
-                    outProfiles.Add(profile);
-            }
-        }
-
-        private async UniTask GetProfilesFromParticipantsAsync(List<Profile> outProfiles, CancellationToken ct)
-        {
-            outProfiles.Clear();
-            var participantIdentities = roomHub.AllLocalRoomsRemoteParticipantIdentities();
 
             // 1. Create a list to hold all the asynchronous operations (Tasks).
             var profileTasks = new List<UniTask<Profile?>>();
@@ -447,24 +273,19 @@ namespace DCL.Chat.ChatServices
             Profile?[] profiles = await UniTask.WhenAll(profileTasks);
 
             // 4. Iterate through the results and add the valid, non-null profiles.
-            foreach (var profile in profiles)
+            foreach (Profile? profile in profiles)
             {
                 if (ct.IsCancellationRequested) return;
 
-                if (profile != null)
-                {
-                    outProfiles.Add(profile);
-                }
+                if (profile != null) { outProfiles.Add(profile); }
             }
         }
 
         private ChatMemberListView.MemberData CreateMemberDataFromProfile(Profile profile) =>
-            new()
+            new ()
             {
                 Id = profile.UserId, Name = profile.ValidatedName, FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
-                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, HasClaimedName = profile.HasClaimedName
+                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, HasClaimedName = profile.HasClaimedName,
             };
-
-        public void Dispose() => Stop();
     }
 }

@@ -226,6 +226,9 @@ namespace DCL.Chat.ChatMessages
 
                     RemoveNewMessagesSeparator();
                     TryAddNewMessagesSeparatorAfterPendingMessages(-1);
+
+                    view.SetUserConnectivityProvider(currentChannelService.UserStateService!.OnlineParticipants);
+
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
 

@@ -1,5 +1,9 @@
-﻿using DCL.Chat.ChatServices;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatServices;
 using DCL.Chat.History;
+using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
+using System.Threading;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -10,23 +14,61 @@ namespace DCL.Chat.ChatCommands
         private readonly IChatHistory chatHistory;
         private readonly CurrentChannelService currentChannelService;
 
+        private readonly CommunityUserStateService communityUserStateService;
+        private readonly NearbyUserStateService nearbyUserStateService;
+        private readonly PrivateConversationUserStateService privateConversationUserStateService;
+
+        private CancellationTokenSource? oneOpAtATimeCts;
+
         public SelectChannelCommand(
             IEventBus eventBus,
             IChatHistory chatHistory,
-            CurrentChannelService currentChannelService)
+            CurrentChannelService currentChannelService,
+            CommunityUserStateService communityUserStateService,
+            NearbyUserStateService nearbyUserStateService,
+            PrivateConversationUserStateService privateConversationUserStateService)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
             this.currentChannelService = currentChannelService;
+            this.communityUserStateService = communityUserStateService;
+            this.nearbyUserStateService = nearbyUserStateService;
+            this.privateConversationUserStateService = privateConversationUserStateService;
         }
 
-        public void Execute(ChatChannel.ChannelId channelId)
+        public async UniTaskVoid ExecuteAsync(ChatChannel.ChannelId channelId, CancellationToken ct)
         {
-            if (currentChannelService.CurrentChannelId.Equals(channelId)) { return; }
+            if (currentChannelService.CurrentChannelId.Equals(channelId))
+                return;
 
             if (chatHistory.Channels.TryGetValue(channelId, out ChatChannel? channel))
             {
-                currentChannelService.SetCurrentChannel(channel);
+                oneOpAtATimeCts = oneOpAtATimeCts.SafeRestart();
+
+                ct = CancellationTokenSource.CreateLinkedTokenSource(ct, oneOpAtATimeCts.Token).Token;
+
+                currentChannelService.UserStateService?.Deactivate();
+
+                // Select the new service based on the channel type
+                ICurrentChannelUserStateService userStateService;
+
+                switch (channel.ChannelType)
+                {
+                    case ChatChannel.ChatChannelType.COMMUNITY:
+                        await communityUserStateService.ActivateAsync(channelId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                        userStateService = communityUserStateService;
+                        break;
+                    case ChatChannel.ChatChannelType.USER:
+                        privateConversationUserStateService.Activate(channel.Id.Id);
+                        userStateService = privateConversationUserStateService;
+                        break;
+                    default:
+                        nearbyUserStateService.Activate();
+                        userStateService = nearbyUserStateService;
+                        break;
+                }
+
+                currentChannelService.SetCurrentChannel(channel, userStateService);
 
                 eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = channel });
             }

@@ -76,6 +76,9 @@ namespace DCL.Chat
 
         private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
         {
+            if (!userStatusUpdatedEvent.ChannelId.Equals(currentChannelService.CurrentChannelId))
+                return;
+
             var channelId = new ChatChannel.ChannelId(userStatusUpdatedEvent.UserId);
 
             if (viewModels.TryGetValue(channelId, out BaseChannelViewModel? baseVm) &&
@@ -88,12 +91,12 @@ namespace DCL.Chat
 
         private void OnOpenUserConversation(string userId)
         {
-            openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.USER);
+            openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.USER, lifeCts.Token);
         }
 
         private void OnOpenCommunityConversation(string userId)
         {
-            openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.COMMUNITY);
+            openConversationCommand.Execute(userId, ChatChannel.ChatChannelType.COMMUNITY, lifeCts.Token);
         }
 
         private void OnChannelUpdated(ChatEvents.ChannelUpdatedEvent evt)
@@ -133,12 +136,8 @@ namespace DCL.Chat
             viewModels.Remove(removedChannel);
             view.RemoveConversation(removedChannel);
 
-            if (currentChannelService.CurrentChannelId.Equals(removedChannel)) { selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID); }
-        }
-
-        private void RemoveChannelFromView(ChatChannel.ChannelId removedChannel)
-        {
-            throw new NotImplementedException();
+            if (currentChannelService.CurrentChannelId.Equals(removedChannel))
+                selectChannelCommand.ExecuteAsync(ChatChannel.NEARBY_CHANNEL_ID, lifeCts.Token).Forget();
         }
 
         private void OnChannelAdded(ChatEvents.ChannelAddedEvent evt)
@@ -153,7 +152,7 @@ namespace DCL.Chat
 
         private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
         {
-            selectChannelCommand.Execute(channelId);
+            selectChannelCommand.ExecuteAsync(channelId, lifeCts.Token).Forget();
         }
 
         private void OnViewConversationRemovalRequested(ChatChannel.ChannelId channelId)
@@ -182,7 +181,7 @@ namespace DCL.Chat
         private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             if (addedMessage.IsSentByOwnUser) return;
-            
+
             if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
             {
                 UpdateUnreadCount(channel);

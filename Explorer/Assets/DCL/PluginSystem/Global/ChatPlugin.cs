@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.Global
         private ChatController chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
-        private ChatUserStateService? chatUserStateService;
+        private PrivateConversationUserStateService? chatUserStateService;
         private ChatHistoryService? chatBusListenerService;
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
@@ -190,7 +190,7 @@ namespace DCL.PluginSystem.Global
 
             var currentChannelService = new CurrentChannelService();
 
-            chatUserStateService = new ChatUserStateService(
+            chatUserStateService = new PrivateConversationUserStateService(
                 currentChannelService,
                 eventBus,
                 userBlockingCacheProxy,
@@ -213,13 +213,13 @@ namespace DCL.PluginSystem.Global
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
 
-            var chatMemberService = new ChatMemberListService(roomHub,
-                profileCache,
-                profileRepositoryWrapper,
+            var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
+            var communityUserStateService = new CommunityUserStateService(communityDataProvider, communitiesEventBus, eventBus);
+
+            var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
                 friendsServiceProxy,
                 currentChannelService,
-                communityDataProvider,
-                web3IdentityCache);
+                eventBus);
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
 
@@ -230,6 +230,8 @@ namespace DCL.PluginSystem.Global
                 chatMessagesBus,
                 chatHistory,
                 chatStorage,
+                nearbyUserStateService,
+                communityUserStateService,
                 chatUserStateService,
                 currentChannelService,
                 communityDataProvider,

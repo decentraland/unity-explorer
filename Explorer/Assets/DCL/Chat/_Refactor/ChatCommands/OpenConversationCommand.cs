@@ -1,5 +1,6 @@
 ﻿using DCL.Chat.History;
 using DCL.Prefs;
+using System.Threading;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -29,7 +30,7 @@ namespace DCL.Chat.ChatCommands
         /// </summary>
         /// <param name="id">The user ID or community ID.</param>
         /// <param name="channelType">The type of channel to open (USER or COMMUNITY).</param>
-        public void Execute(string id, ChatChannel.ChatChannelType channelType)
+        public void Execute(string id, ChatChannel.ChatChannelType channelType, CancellationToken ct)
         {
             ChatChannel.ChannelId channelId;
 
@@ -49,7 +50,7 @@ namespace DCL.Chat.ChatCommands
 
             chatHistory.AddOrGetChannel(channelId, channelType);
 
-            selectChannelCommand.Execute(channelId);
+            selectChannelCommand.ExecuteAsync(channelId, ct).Forget();
 
             eventBus.Publish(new ChatEvents.FocusRequestedEvent());
         }

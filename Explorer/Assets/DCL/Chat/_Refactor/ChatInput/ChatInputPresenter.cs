@@ -66,7 +66,7 @@ namespace DCL.Chat.ChatInput
 
             fsm.ChangeState<InitializingChatInputState>();
 
-            Result<ChatUserStateService.ChatUserState> result = await resolveInputStateCommand.ExecuteAsync(cts.Token);
+            Result<PrivateConversationUserStateService.ChatUserState> result = await resolveInputStateCommand.ExecuteAsync(cts.Token);
             OnBlockedUpdated(result);
         }
 
@@ -98,13 +98,13 @@ namespace DCL.Chat.ChatInput
         {
             cts = cts.SafeRestart();
 
-            Result<ChatUserStateService.ChatUserState> result = await resolveInputStateCommand.ExecuteAsync(cts.Token);
+            Result<PrivateConversationUserStateService.ChatUserState> result = await resolveInputStateCommand.ExecuteAsync(cts.Token);
             OnBlockedUpdated(result);
         }
 
-        private void OnBlockedUpdated(Result<ChatUserStateService.ChatUserState> result)
+        private void OnBlockedUpdated(Result<PrivateConversationUserStateService.ChatUserState> result)
         {
-            fsm.CurrentState.OnBlockedUpdated(result is { Success: true, Value: ChatUserStateService.ChatUserState.CONNECTED });
+            fsm.CurrentState.OnBlockedUpdated(result is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.CONNECTED });
         }
 
         public void Dispose()

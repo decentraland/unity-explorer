@@ -22,6 +22,7 @@ namespace DCL.Chat
     /// It notifies when a user is connected or disconnected in a conversation, which does not mean to be connected or disconnected from DCL.
     /// For example, leaving a community will mark a user as disconnected.
     /// </summary>
+    [Obsolete("Super-seeded by PrivateConversationUserStateService")]
     internal class UserConnectivityInfoProvider : IDisposable
     {
         public delegate void UserConnectedDelegate(string userAddress, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType);

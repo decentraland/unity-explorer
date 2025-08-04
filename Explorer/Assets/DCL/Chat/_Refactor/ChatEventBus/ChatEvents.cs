@@ -1,5 +1,6 @@
 ﻿using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
+using DCL.Friends.UserBlocking;
 using System.Collections.Generic;
 
 namespace DCL.Chat
@@ -81,13 +82,37 @@ namespace DCL.Chat
         /// <summary>
         /// Event:          UserStatusUpdatedEvent
         /// Triggered By:   ChatUserStateUpdater
-        /// When:           A user's online status changes (e.g., a friend logs in or out).
+        /// When:           A user's online status changes for the given channel (e.g., a friend logs in or out). User State can be different in different channels.
         /// Subscribers:    ChatChannelsPresenter: Updates the online status indicator (green/grey dot) on the corresponding DM item.
         /// </summary>
-        public struct UserStatusUpdatedEvent
+        public readonly struct UserStatusUpdatedEvent
         {
-            public string UserId;
-            public bool IsOnline;
+            public readonly ChatChannel.ChannelId ChannelId;
+            public readonly string UserId;
+            public readonly bool IsOnline;
+
+            public UserStatusUpdatedEvent(ChatChannel.ChannelId channelId, string userId, bool isOnline)
+            {
+                ChannelId = channelId;
+                UserId = userId;
+                IsOnline = isOnline;
+            }
+        }
+
+        /// <summary>
+        ///     Triggered By:   NearbyUserStateService
+        ///     When:           Users' Status is changed in the batch when the LiveKit room connects/disconnects (applied to the Nearby channel only).
+        /// </summary>
+        public readonly struct NearbyUsersStatusUpdated
+        {
+            public readonly ChatChannel.ChannelId ChannelId;
+            public readonly ReadOnlyHashSet<string> OnlineUsers;
+
+            public NearbyUsersStatusUpdated(ChatChannel.ChannelId channelId, ReadOnlyHashSet<string> onlineUsers)
+            {
+                ChannelId = channelId;
+                OnlineUsers = onlineUsers;
+            }
         }
 
         /// <summary>

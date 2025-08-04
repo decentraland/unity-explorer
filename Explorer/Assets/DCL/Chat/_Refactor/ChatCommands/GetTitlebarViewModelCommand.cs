@@ -89,11 +89,11 @@ namespace DCL.Chat.ChatCommands
 
             var userStatus = await getUserChatStatusCommand.ExecuteAsync(profile.UserId, ct);
             if (ct.IsCancellationRequested) return null;
-            
+
             var viewModel = new ChatTitlebarViewModel
             {
                 ViewMode = TitlebarViewMode.DirectMessage, Id = profile.UserId, Username = profile.Name, HasClaimedName = profile.HasClaimedName,
-                WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor, IsOnline = userStatus == ChatUserStateService.ChatUserState.CONNECTED
+                WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor, IsOnline = userStatus == PrivateConversationUserStateService.ChatUserState.CONNECTED,
             };
 
             await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
