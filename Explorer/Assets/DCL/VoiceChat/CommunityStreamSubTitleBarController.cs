@@ -184,14 +184,14 @@ namespace DCL.VoiceChat
             int participantsCount = communityData.data.voiceChatStatus.participantCount;
             view.ParticipantsAmount.SetText(participantsCount.ToString());
 
-            view.InStreamSign.SetActive(true);
+            view.InStreamSign.SetActive(false);
             view.JoinStreamButton.gameObject.SetActive(true);
         }
 
         public void OnMemberListVisibilityChanged(bool isVisible)
         {
             isMemberListVisible = isVisible;
-            
+
             if (isVisible)
             {
                 view.gameObject.SetActive(false);

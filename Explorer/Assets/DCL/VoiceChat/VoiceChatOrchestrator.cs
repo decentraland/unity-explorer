@@ -170,7 +170,7 @@ namespace DCL.VoiceChat
 
         public void JoinCommunityVoiceChat(string communityId, CancellationToken ct)
         {
-            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+            if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
                 communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
         }
 
