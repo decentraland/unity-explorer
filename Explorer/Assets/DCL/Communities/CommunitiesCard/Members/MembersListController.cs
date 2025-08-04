@@ -49,6 +49,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly SectionFetchData<MemberData> allMembersFetchData = new (PAGE_SIZE);
         private readonly SectionFetchData<MemberData> bannedMembersFetchData = new (PAGE_SIZE);
         private readonly SectionFetchData<MemberData> requestingMembersFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData<MemberData> invitedMembersFetchData = new (PAGE_SIZE);
 
         private GetCommunityResponse.CommunityData? communityData = null;
 
@@ -71,13 +72,12 @@ namespace DCL.Communities.CommunitiesCard.Members
                 {
                     case MembersListView.MemberListSections.MEMBERS:
                         return allMembersFetchData;
-
                     case MembersListView.MemberListSections.BANNED:
                         return bannedMembersFetchData;
-
                     case MembersListView.MemberListSections.REQUESTS:
                         return requestingMembersFetchData;
-
+                    case MembersListView.MemberListSections.INVITES:
+                        return invitedMembersFetchData;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(currentSection), currentSection, null);
                 }
@@ -490,6 +490,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                     break;
                 case MembersListView.MemberListSections.REQUESTS:
                     responseTask = communitiesDataProvider.GetCommunityRequestsToJoin(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
+                    break;
+                case MembersListView.MemberListSections.INVITES:
+                    responseTask = communitiesDataProvider.GetCommunityInvitesToJoin(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(currentSection), currentSection, null);
             }

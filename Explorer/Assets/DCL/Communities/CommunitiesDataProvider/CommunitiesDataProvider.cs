@@ -162,6 +162,39 @@ namespace DCL.Communities
             };
         }
 
+        public async UniTask<GetCommunityMembersResponse> GetCommunityInvitesToJoin(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            await UniTask.Delay(Random.Range(500, 2000), cancellationToken: ct);
+            const int TOTAL = 3;
+
+            GetCommunityMembersResponse.MemberData[] members = new GetCommunityMembersResponse.MemberData[TOTAL];
+            for (int i = 0; i < TOTAL; i++)
+            {
+                members[i] = new GetCommunityMembersResponse.MemberData
+                {
+                    communityId = communityId,
+                    memberAddress = Guid.NewGuid().ToString(),
+                    role = CommunityMemberRole.none,
+                    profilePictureUrl = string.Empty,
+                    hasClaimedName = Random.Range(0, 101) > 50,
+                    name = $"User {i + 1}",
+                    mutualFriends = 0
+                };
+            }
+
+            return new ()
+            {
+                data = new GetCommunityMembersResponse.GetCommunityMembersResponseData
+                {
+                    results = members,
+                    total = TOTAL,
+                    page = pageNumber,
+                    pages = 1,
+                    limit = elementsPerPage
+                }
+            };
+        }
+
         public async UniTask<bool> ManageCommunityRequestAsync(string communityId, string userId, bool accept, CancellationToken ct) =>
             true;
 

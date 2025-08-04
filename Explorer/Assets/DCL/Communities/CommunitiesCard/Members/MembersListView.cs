@@ -27,7 +27,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             MEMBERS,
             BANNED,
-            REQUESTS
+            REQUESTS,
+            INVITES
         }
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
@@ -232,7 +233,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 sectionMapping.Button.gameObject.SetActive(true);
 
-                if (!community.isPrivate && sectionMapping.ForPrivateCommunitiesOnly)
+                if (community.privacy != CommunityPrivacy.@private && sectionMapping.ForPrivateCommunitiesOnly)
                     sectionMapping.Button.gameObject.SetActive(false);
             }
 

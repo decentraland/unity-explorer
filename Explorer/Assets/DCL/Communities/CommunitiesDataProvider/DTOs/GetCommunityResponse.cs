@@ -17,7 +17,6 @@ namespace DCL.Communities
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public int membersCount;
-            public bool isPrivate;
 
             public void DecreaseMembersCount()
             {
