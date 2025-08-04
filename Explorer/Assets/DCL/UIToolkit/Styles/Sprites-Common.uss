@@ -1,11 +1,11 @@
 /* AUTO GENERATED */
 :root {
-    --sprite-common__icon-checkmark-thin: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-checkmark-thin.png');
-    --sprite-common__icon-close: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-close.png');
-    --sprite-common__icon-copy: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-copy.png');
-    --sprite-common__icon-pause: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-pause.png');
-    --sprite-common__icon-play: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-play.png');
-    --sprite-common__icon-search: url('/Assets/DCL/UIToolkit/Sprites/Common/icon-search.png');
+    --sprite-common__icon-checkmark-thin: url('/Assets/Textures/UI/Common/icon-checkmark-thin.png');
+    --sprite-common__icon-close: url('/Assets/Textures/UI/Common/icon-close.png');
+    --sprite-common__icon-copy: url('/Assets/Textures/UI/Common/icon-copy.png');
+    --sprite-common__icon-pause: url('/Assets/Textures/UI/Common/icon-pause.png');
+    --sprite-common__icon-play: url('/Assets/Textures/UI/Common/icon-play.png');
+    --sprite-common__icon-search: url('/Assets/Textures/UI/Common/icon-search.png');
 }
 
 .sprite-common__icon-checkmark-thin {

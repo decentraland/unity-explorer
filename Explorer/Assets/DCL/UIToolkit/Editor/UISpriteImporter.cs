@@ -12,7 +12,7 @@ namespace DCL.UIToolkit.Editor
     [SuppressMessage("Domain reload", "UDR0001:Domain Reload Analyzer")]
     public class UISpriteImporter : AssetPostprocessor
     {
-        private const string SPRITES_PATH = "Assets/DCL/UIToolkit/Sprites";
+        private const string SPRITES_PATH = "Assets/Textures/UI/";
         private const string STYLES_FOLDER = "Assets/DCL/UIToolkit/Styles/";
 
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
@@ -56,23 +56,19 @@ namespace DCL.UIToolkit.Editor
             {
                 Debug.Log($"Generating USS: {grouping.Key}");
                 string uss = GenerateSpriteUss(grouping);
-                Debug.Log(uss);
 
                 string stylePathRelative = STYLES_FOLDER + $"Sprites-{GetCleanAtlasName(grouping.Key, false)}.uss";
                 string stylePathAbsolute = Application.dataPath.Replace("Assets", "") + stylePathRelative;
 
-                Debug.Log($"Writing USS: {grouping.Key} to file '{stylePathRelative}'");
-
                 File.WriteAllText(stylePathAbsolute, uss);
                 AssetDatabase.ImportAsset(stylePathRelative);
-                Debug.Log($"USS processed: {grouping.Key}");
             }
 
             EditorUtility.UnloadUnusedAssetsImmediate();
             Debug.Log("Sprite USS generation finished.");
         }
 
-        private static IEnumerable<IGrouping<string, string>> GetSpritesGroupedByDirectory(bool log = true)
+        private static IEnumerable<IGrouping<string, string>> GetSpritesGroupedByDirectory(bool log = false)
         {
             return AssetDatabase.GetAllAssetPaths()
                                 .OrderBy(s => s)
@@ -87,7 +83,7 @@ namespace DCL.UIToolkit.Editor
 
                                      return s;
                                  })
-                                .GroupBy(str => str.Split('/')[4]);
+                                .GroupBy(str => str.Split('/')[3]);
         }
 
         private static string GenerateSpriteUss(IGrouping<string, string> arg)
