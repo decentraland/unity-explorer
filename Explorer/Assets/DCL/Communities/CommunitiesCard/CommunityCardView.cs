@@ -11,6 +11,7 @@ using DCL.UI.GenericContextMenuParameter;
 using DCL.Utilities.Extensions;
 using MVC;
 using System;
+using System.Globalization;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -66,6 +67,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
         [field: SerializeField] private Sprite deleteCommunityImage { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
+        [field: SerializeField] private Sprite publicCommunityImage { get; set; } = null!;
+        [field: SerializeField] private Sprite privateCommunityImage { get; set; } = null!;
 
         [field: Header("Community interactions")]
         [field: SerializeField] private Button openChatButton { get; set; } = null!;
@@ -77,6 +80,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: Header("Community data references")]
         [field: SerializeField] private TMP_Text communityName { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityMembersNumber { get; set; } = null!;
+        [field: SerializeField] private TMP_Text communityPrivacyText { get; set; } = null!;
+        [field: SerializeField] private Image communityPrivacyImage { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityDescription { get; set; } = null!;
         [field: SerializeField] public ImageView CommunityThumbnail { get; private set; } = null!;
 
@@ -276,6 +281,8 @@ namespace DCL.Communities.CommunitiesCard
             communityName.text = communityData.name;
             UpdateMemberCount(communityData);
             communityDescription.text = communityData.description;
+            communityPrivacyText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(communityData.privacy.ToString());
+            communityPrivacyImage.sprite = communityData.privacy == CommunityPrivacy.@public ? publicCommunityImage : privateCommunityImage;
 
             if (communityData.thumbnails != null)
 
