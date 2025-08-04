@@ -1,4 +1,5 @@
 using DCL.UI.ProfileElements;
+using DG.Tweening;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,6 +9,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class PlayerEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        internal const float ANIMATION_DURATION = 0.5f;
         public event Action<VoiceChatParticipantsStateService.ParticipantState, VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
 
         [SerializeField] private RectTransform hoverElement;
@@ -16,13 +18,29 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [SerializeField] public ProfilePictureView ProfilePictureView;
         [SerializeField] public SimpleUserNameElement nameElement;
+        [field: SerializeField]
+        internal RectTransform isSpeakingIcon { get; private set; }
+
+        [field: SerializeField]
+        internal Image isSpeakingIconRenderer { get; private set; }
+
+        [field: SerializeField]
+        internal Image isSpeakingIconOuterRenderer { get; private set; }
+
+        [field: SerializeField]
+        internal RectTransform isSpeakingIconRect { get; private set; }
+
+        [field: SerializeField]
+        internal RectTransform isSpeakingIconOuterRect { get; private set; }
 
         private VoiceChatParticipantsStateService.ParticipantState userProfile;
         private VoiceChatParticipantsStateService.ParticipantState localUserProfile;
+        private Sequence isSpeakingCurrentSequence;
 
         private void Start()
         {
             hoverElement.gameObject.SetActive(false);
+            isSpeakingIcon.gameObject.SetActive(false);
             contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, localUserProfile!, contextMenuButton.transform.position, this));
         }
 
@@ -34,11 +52,24 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             userProfile.IsSpeaking.OnUpdate += OnChangeIsSpeaking;
         }
 
-        public bool CanUnHover;
-
         private void OnChangeIsSpeaking(bool isSpeaking)
         {
-            //Handle is speaking logic and visuals
+            isSpeakingIcon.gameObject.SetActive(isSpeaking);
+            if (isSpeaking)
+            {
+                isSpeakingCurrentSequence = DOTween.Sequence();
+                isSpeakingCurrentSequence.Append(isSpeakingIconRect.DOScaleY(0.2f, ANIMATION_DURATION));
+                isSpeakingCurrentSequence.Join(isSpeakingIconOuterRect.DOScaleY(1, ANIMATION_DURATION));
+                isSpeakingCurrentSequence.Append(isSpeakingIconOuterRect.DOScaleY(0.2f, ANIMATION_DURATION));
+                isSpeakingCurrentSequence.Join(isSpeakingIconRect.DOScaleY(1, ANIMATION_DURATION));
+                isSpeakingCurrentSequence.SetLoops(-1);
+                isSpeakingCurrentSequence.Play();
+            }
+            else
+            {
+                isSpeakingCurrentSequence?.Kill();
+                isSpeakingCurrentSequence = null;
+            }
         }
 
         public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu)

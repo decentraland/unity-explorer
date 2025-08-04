@@ -73,7 +73,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 default(Vector2),
                 popupCts.Token,
                 contextMenuTask.Task,
-                onHide: () => elementView.CanUnHover = true,
                 anchorPoint: MenuAnchorPoint.BOTTOM_RIGHT).Forget();
         }
 
