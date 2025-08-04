@@ -462,7 +462,7 @@
       }
     },
     "decentraland.grassshader": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader#feat/grass-shader-colour-instancing",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -470,7 +470,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "7aa85f76fe500491d47395e4198fa6f96532c073"
+      "hash": "7950d8a2cbfa90329cdd055f3acf3c4da6a331dd"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
