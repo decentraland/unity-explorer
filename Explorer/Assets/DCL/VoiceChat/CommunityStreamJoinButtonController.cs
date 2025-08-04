@@ -17,7 +17,7 @@ namespace DCL.VoiceChat
         private readonly IDisposable currentChannelSubscription;
 
         private readonly CallButtonView view;
-        private readonly ICommunityCallOrchestrator orchestrator;
+        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
         private bool isClickedOnce;
 
@@ -25,11 +25,11 @@ namespace DCL.VoiceChat
 
         public CommunityStreamJoinButtonController(
             CallButtonView view,
-            ICommunityCallOrchestrator orchestrator,
+            ICommunityCallOrchestrator communityCallOrchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel)
         {
             this.view = view;
-            this.orchestrator = orchestrator;
+            this.communityCallOrchestrator = communityCallOrchestrator;
             this.currentChannel = currentChannel;
             this.view.CallButton.onClick.AddListener(OnJoinButtonClicked);
             cts = new CancellationTokenSource();
@@ -81,7 +81,7 @@ namespace DCL.VoiceChat
             isClickedOnce = true;
 
             // Check if we're already in any call
-            if (orchestrator.CurrentCallStatus.Value is
+            if (communityCallOrchestrator.CurrentCallStatus.Value is
                 VoiceChatStatus.VOICE_CHAT_IN_CALL or
                 VoiceChatStatus.VOICE_CHAT_STARTED_CALL or
                 VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
@@ -93,7 +93,7 @@ namespace DCL.VoiceChat
             {
                 // Join the call for the current community channel
                 string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
-                orchestrator.JoinCommunityVoiceChat(communityId, ct);
+                communityCallOrchestrator.JoinCommunityVoiceChat(communityId, ct);
             }
         }
 

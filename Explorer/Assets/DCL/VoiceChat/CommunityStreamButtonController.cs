@@ -106,7 +106,7 @@ namespace DCL.VoiceChat
 
             bool shouldSeeButton = !isVoiceChatActive;
 
-            currentCommunityCallStatusSubscription = orchestrator.CommunityStatusService.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+            currentCommunityCallStatusSubscription = orchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
             view.gameObject.SetActive(shouldSeeButton);
         }

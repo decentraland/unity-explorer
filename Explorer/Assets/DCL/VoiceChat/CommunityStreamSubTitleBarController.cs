@@ -15,7 +15,7 @@ namespace DCL.VoiceChat
 
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly CommunityStreamSubTitleBarView view;
-        private readonly ICommunityCallOrchestrator orchestrator;
+        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
 
         private readonly CommunityStreamJoinButtonController joinButtonController;
@@ -25,22 +25,22 @@ namespace DCL.VoiceChat
 
         public CommunityStreamSubTitleBarController(
             CommunityStreamSubTitleBarView view,
-            ICommunityCallOrchestrator orchestrator,
+            ICommunityCallOrchestrator communityCallOrchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,
             CommunitiesDataProvider communityDataProvider)
         {
             this.view = view;
-            this.orchestrator = orchestrator;
+            this.communityCallOrchestrator = communityCallOrchestrator;
             this.currentChannel = currentChannel;
             this.communityDataProvider = communityDataProvider;
 
             joinButtonController = new CommunityStreamJoinButtonController(
                 view.JoinStreamButton,
-                orchestrator,
+                communityCallOrchestrator,
                 currentChannel);
 
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
-            statusSubscription = orchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
+            statusSubscription = communityCallOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
         }
 
         private void ParticipantsStateServiceOnParticipantLeft(string _)
@@ -64,8 +64,8 @@ namespace DCL.VoiceChat
             currentCommunityCallStatusSubscription?.Dispose();
             joinButtonController?.Dispose();
             communityCts?.SafeCancelAndDispose();
-            orchestrator.ParticipantsStateService.ParticipantJoined -= ParticipantsStateServiceOnParticipantJoined;
-            orchestrator.ParticipantsStateService.ParticipantLeft -= ParticipantsStateServiceOnParticipantLeft;
+            communityCallOrchestrator.ParticipantsStateService.ParticipantJoined -= ParticipantsStateServiceOnParticipantJoined;
+            communityCallOrchestrator.ParticipantsStateService.ParticipantLeft -= ParticipantsStateServiceOnParticipantLeft;
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
@@ -74,7 +74,7 @@ namespace DCL.VoiceChat
 
             if (!view.gameObject.activeSelf) return;
 
-            if (orchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
+            if (communityCallOrchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
             {
                 //If it's the current call, we can get the call information directly from the orchestrator
                 HandleCurrentCommunityCall();
@@ -87,8 +87,8 @@ namespace DCL.VoiceChat
             //We hide it by default until we resolve if the user should see it.
             view.gameObject.SetActive(false);
             currentCommunityCallStatusSubscription?.Dispose();
-            orchestrator.ParticipantsStateService.ParticipantJoined -= ParticipantsStateServiceOnParticipantJoined;
-            orchestrator.ParticipantsStateService.ParticipantLeft -= ParticipantsStateServiceOnParticipantLeft;
+            communityCallOrchestrator.ParticipantsStateService.ParticipantJoined -= ParticipantsStateServiceOnParticipantJoined;
+            communityCallOrchestrator.ParticipantsStateService.ParticipantLeft -= ParticipantsStateServiceOnParticipantLeft;
 
             switch (newChannel.ChannelType)
             {
@@ -110,14 +110,14 @@ namespace DCL.VoiceChat
             GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
             bool isVoiceChatActive = communityData.data.voiceChatStatus.isActive;
 
-            currentCommunityCallStatusSubscription = orchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+            currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
             //If there is no voice chat active, we just don't show this.
             if (!isVoiceChatActive) return;
 
             view.gameObject.SetActive(true);
 
-            if (orchestrator.CurrentCommunityId == communityId)
+            if (communityCallOrchestrator.CurrentCommunityId == communityId)
             {
                 //If it's the current call, we can get the call information directly from the orchestrator
                 HandleCurrentCommunityCall();
@@ -134,7 +134,7 @@ namespace DCL.VoiceChat
             //We show the button if the current community has an active call
             view.gameObject.SetActive(hasActiveCall);
 
-            if (hasActiveCall && orchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
+            if (hasActiveCall && communityCallOrchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
                 HandleCurrentCommunityCall();
         }
 
@@ -147,13 +147,13 @@ namespace DCL.VoiceChat
             view.JoinStreamButton.gameObject.SetActive(false);
             view.InStreamSign.SetActive(true);
 
-            orchestrator.ParticipantsStateService.ParticipantJoined += ParticipantsStateServiceOnParticipantJoined;
-            orchestrator.ParticipantsStateService.ParticipantLeft += ParticipantsStateServiceOnParticipantLeft;
+            communityCallOrchestrator.ParticipantsStateService.ParticipantJoined += ParticipantsStateServiceOnParticipantJoined;
+            communityCallOrchestrator.ParticipantsStateService.ParticipantLeft += ParticipantsStateServiceOnParticipantLeft;
         }
 
         private void SetParticipantsCount()
         {
-            int participantsCount = orchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
+            int participantsCount = communityCallOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
             view.ParticipantsAmount.SetText(participantsCount.ToString());
         }
 

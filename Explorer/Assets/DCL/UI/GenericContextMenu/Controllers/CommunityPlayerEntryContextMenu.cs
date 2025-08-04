@@ -288,19 +288,19 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private void OnDemoteSpeakerClicked(string walletId)
         {
-            voiceChatOrchestrator.CommunityStatusService.DemoteFromSpeakerInCurrentCall(walletId);
+            voiceChatOrchestrator.DemoteFromSpeakerInCurrentCall(walletId);
             closeContextMenuTask.TrySetResult();
         }
 
         private void OnPromoteToSpeakerClicked(string walletId)
         {
-            voiceChatOrchestrator.CommunityStatusService.PromoteToSpeakerInCurrentCall(walletId);
+            voiceChatOrchestrator.PromoteToSpeakerInCurrentCall(walletId);
             closeContextMenuTask.TrySetResult();
         }
 
         private void OnKickUserClicked(string walletId)
         {
-            voiceChatOrchestrator.CommunityStatusService.KickPlayerFromCurrentCall(walletId);
+            voiceChatOrchestrator.KickPlayerFromCurrentCall(walletId);
             closeContextMenuTask.TrySetResult();
         }
 

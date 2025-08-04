@@ -15,7 +15,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly IDisposable microphoneStateSubscription;
 
         private readonly CommunityVoiceChatInCallFooterView view;
-        private readonly IVoiceChatOrchestrator orchestrator;
+        private readonly ICommunityCallOrchestrator orchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
@@ -23,7 +23,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public CommunityVoiceChatInCallFooterController(
             CommunityVoiceChatInCallFooterView view,
-            IVoiceChatOrchestrator orchestrator,
+            ICommunityCallOrchestrator orchestrator,
             VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.view = view;
@@ -37,7 +37,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             isRequestingToSpeakSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsRequestingToSpeak.Subscribe(OnRequestingToSpeakChanged);
             isSpeakerSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Subscribe(OnIsSpeakerChanged);
-            callStateSubscription = orchestrator.CurrentCallStatus.Subscribe(OnCallStateChanged);
+            callStateSubscription = orchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStateChanged);
 
             microphoneStateSubscription = microphoneHandler.IsMicrophoneEnabled.Subscribe(OnMicrophoneStateChanged);
 
@@ -57,10 +57,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.MicrophoneButton.SetMicrophoneStatus(isEnabled);
         }
 
-        private void OnCallStateChanged(VoiceChatStatus callStatus)
+        private void OnCommunityCallStateChanged(VoiceChatStatus callStatus)
         {
-            if (orchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
-
             if (callStatus != VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             bool isSpeaker = orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value;
@@ -128,12 +126,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnRaiseHandButtonClicked()
         {
-            orchestrator.CommunityStatusService.RequestToSpeakInCurrentCall();
+            orchestrator.RequestToSpeakInCurrentCall();
         }
 
         private void OnLeaveStageButtonClicked()
         {
-            orchestrator.CommunityStatusService.DemoteFromSpeakerInCurrentCall(orchestrator.ParticipantsStateService.LocalParticipantId);
+            orchestrator.DemoteFromSpeakerInCurrentCall(orchestrator.ParticipantsStateService.LocalParticipantId);
         }
 
         private void OnEndCallButtonClicked()

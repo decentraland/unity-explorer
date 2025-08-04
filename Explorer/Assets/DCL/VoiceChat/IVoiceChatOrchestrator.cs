@@ -23,8 +23,6 @@ namespace DCL.VoiceChat
     {
         string CurrentConnectionUrl { get; }
         string CurrentCallId { get; }
-        IPrivateVoiceChatCallStatusService PrivateStatusService { get; }
-        ICommunityVoiceChatCallStatusService CommunityStatusService { get; }
     }
 
     public interface IVoiceChatOrchestratorState
