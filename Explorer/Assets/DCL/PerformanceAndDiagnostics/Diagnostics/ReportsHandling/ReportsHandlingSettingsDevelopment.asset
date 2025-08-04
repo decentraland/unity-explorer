@@ -518,26 +518,6 @@ MonoBehaviour:
       Severity: 4
     - Category: COMMUNITIES
       Severity: 1
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 3
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 2
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 0
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 4
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 1
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 1
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 4
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 0
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 2
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1
