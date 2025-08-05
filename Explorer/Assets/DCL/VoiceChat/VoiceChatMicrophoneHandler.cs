@@ -144,7 +144,12 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            option.Value.SwitchMicrophone(microphoneName);
+            var result = option.Value.SwitchMicrophone(microphoneName);
+
+            if (result.Success == false)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}");
+            }
         }
 
         public void EnableMicrophoneForCall()
