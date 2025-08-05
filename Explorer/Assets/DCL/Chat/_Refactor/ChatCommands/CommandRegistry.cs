@@ -43,6 +43,7 @@ namespace DCL.Chat.ChatCommands
             IChatMessagesBus chatMessageBus,
             IChatHistory chatHistory,
             ChatHistoryStorage? chatHistoryStorage,
+            ChatMemberListService chatMemberListService,
             NearbyUserStateService nearbyUserStateService,
             CommunityUserStateService communityUserStateService,
             PrivateConversationUserStateService privateConversationUserStateService,
@@ -65,7 +66,8 @@ namespace DCL.Chat.ChatCommands
                 communityDataService,
                 privateConversationUserStateService,
                 currentChannelService,
-                nearbyUserStateService);
+                nearbyUserStateService,
+                chatMemberListService);
 
             CreateMessageViewModel = new CreateMessageViewModelCommand(profileRepositoryWrapper, chatConfig);
 

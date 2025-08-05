@@ -29,11 +29,11 @@ namespace DCL.Chat.ChatMessages
         private readonly MarkMessagesAsReadCommand markMessagesAsReadCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
         private readonly EventSubscriptionScope scope = new ();
-        private CancellationTokenSource loadChannelCts = new ();
 
         private readonly List<ChatMessageViewModel> viewModels = new (500);
 
         private readonly ChatMessageViewModel separatorViewModel;
+        private CancellationTokenSource loadChannelCts = new ();
 
         // The index of the separator becomes fixed when
         // the new message arrives and the scroll is not at the bottom
@@ -44,6 +44,8 @@ namespace DCL.Chat.ChatMessages
         // Ideally it should be a state,
         // especially if the state machine grows further
         private bool isFocused;
+
+        private bool separatorIsVisible => separatorFixedIndexFromBottom > -1;
 
         public ChatMessageFeedPresenter(ChatMessageFeedView view,
             IEventBus eventBus,
@@ -71,7 +73,11 @@ namespace DCL.Chat.ChatMessages
             view.Initialize(viewModels);
         }
 
-        private bool separatorIsVisible => separatorFixedIndexFromBottom > -1;
+        public void Dispose()
+        {
+            scrollToBottomPresenter.Dispose();
+            loadChannelCts.SafeCancelAndDispose();
+        }
 
         private void OnScrollPositionChanged(Vector2 _)
         {
@@ -81,28 +87,22 @@ namespace DCL.Chat.ChatMessages
             if (!view.IsItemVisible(separatorFixedIndexFromBottom))
                 return;
 
+            // It is possible that the current channel is not yet set (initialization is in progress)
+            if (currentChannelService.CurrentChannel == null) return;
+
             messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel!.Messages.Count;
         }
 
-        private bool TryAddNewMessagesSeparatorAfterPendingMessages(int previousSeparatorIndex)
+        private void TryAddNewMessagesSeparatorAfterPendingMessages()
         {
-            if (previousSeparatorIndex == -1)
+            ChatChannel currentChannel = currentChannelService.CurrentChannel!;
+            int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
+
+            if (unreadMessagesCount > 0)
             {
-                ChatChannel currentChannel = currentChannelService.CurrentChannel!;
-                int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
-
-                if (unreadMessagesCount > 0)
-                {
-                    separatorFixedIndexFromBottom = unreadMessagesCount; // After the read message from the bottom
-                    viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
-                }
-
-                // Otherwise separatorFixedIndexFromBottom remains -1
-
-                return true;
+                separatorFixedIndexFromBottom = unreadMessagesCount; // After the read message from the bottom
+                viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
             }
-
-            return false;
         }
 
         private void RemoveNewMessagesSeparator()
@@ -124,49 +124,48 @@ namespace DCL.Chat.ChatMessages
 
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
-            // 2. Delegate the event to the specialized presenter. It will handle all the logic.
-            scrollToBottomPresenter.OnMessageReceived(isSentByOwnUser, wasAtBottom);
-
-            // 3. Perform the actions for the message feed itself (no button logic here)
+            // 2. Perform the actions for the message feed itself (no button logic here)
             (bool isTopMostMessage, ChatMessage? previousMessage) = GetMessageHistoryCommand.GetTopMostAndPreviousMessage(destinationChannel.Messages, index);
             ChatMessageViewModel newMessageViewModel = createMessageViewModelCommand.Execute(addedMessage, previousMessage, isTopMostMessage);
 
             int previousNewMessagesSeparatorIndex = separatorFixedIndexFromBottom;
+            bool separatorWasVisible = previousNewMessagesSeparatorIndex > -1;
             RemoveNewMessagesSeparator();
 
             newMessageViewModel.PendingToAnimate = true;
             viewModels.Insert(index, newMessageViewModel);
 
             // Handle separator logic (this is unrelated to the button)
-            bool separatorAdded = false;
+            bool qualifiedForAddingSeparator = !wasAtBottom && !isSentByOwnUser;
 
-            if (!wasAtBottom && !isSentByOwnUser)
+            if (qualifiedForAddingSeparator)
             {
+                // Mark only those messages that were viewed
                 if (messageCountWhenSeparatorViewed.HasValue)
                     markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!, messageCountWhenSeparatorViewed.Value);
-                separatorAdded = TryAddNewMessagesSeparatorAfterPendingMessages(previousNewMessagesSeparatorIndex);
-            }
 
-            if (!separatorAdded)
+                TryAddNewMessagesSeparatorAfterPendingMessages();
+            }
+            else if (separatorWasVisible)
             {
-                // Increment the separator index and move it to the new position
-                if (previousNewMessagesSeparatorIndex > -1)
-                {
-                    separatorFixedIndexFromBottom = previousNewMessagesSeparatorIndex + 1;
-                    viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
-                }
+                // If the separator was already visible increment its index to preserve its visual position
+                separatorFixedIndexFromBottom = previousNewMessagesSeparatorIndex + 1;
+                viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
             }
 
             messageCountWhenSeparatorViewed = null;
 
-            // 4. Update the view and auto-scroll if necessary
+            // 3. Update the view and auto-scroll if necessary
             view.ReconstructScrollView(false);
 
-            if (isSentByOwnUser || wasAtBottom)
+            if (!qualifiedForAddingSeparator)
             {
                 markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
                 view.ShowLastMessage();
             }
+
+            // 4. Delegate the event to the specialized presenter. It will handle all the logic. It should be done after messages are marked as read
+            scrollToBottomPresenter.OnMessageReceived(isSentByOwnUser, wasAtBottom);
 
             // 5. Handle the fade-out for unfocused chat
             if (!isFocused)
@@ -216,20 +215,17 @@ namespace DCL.Chat.ChatMessages
                 try
                 {
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
-                    TryAddNewMessagesSeparatorAfterPendingMessages(-1);
+                    TryAddNewMessagesSeparatorAfterPendingMessages();
 
                     view.SetUserConnectivityProvider(currentChannelService.UserStateService!.OnlineParticipants);
 
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
 
-                    var currentChannel = currentChannelService.CurrentChannel!;
+                    ChatChannel currentChannel = currentChannelService.CurrentChannel!;
                     int unreadCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
 
-                    if (unreadCount > 0 && !view.IsAtBottom())
-                    {
-                        view.SetScrollToBottomButtonVisibility(true, unreadCount, false);
-                    }
+                    if (unreadCount > 0 && !view.IsAtBottom()) { view.SetScrollToBottomButtonVisibility(true, unreadCount, false); }
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_HISTORY); }
@@ -333,17 +329,12 @@ namespace DCL.Chat.ChatMessages
 
             // Command its own view to update its visual state
             view.StopChatEntriesFadeout();
+
             if (!isFocused)
                 view.StartChatEntriesFadeout();
 
             float targetAlpha = isFocused ? 1f : 0f;
             view.StartScrollBarFade(targetAlpha, animate ? duration : 0f, easing);
-        }
-
-        public void Dispose()
-        {
-            scrollToBottomPresenter.Dispose();
-            loadChannelCts.SafeCancelAndDispose();
         }
     }
 }
