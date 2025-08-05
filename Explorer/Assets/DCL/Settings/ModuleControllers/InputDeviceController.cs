@@ -89,7 +89,7 @@ namespace DCL.Settings.ModuleControllers
         {
             view.DropdownView.Dropdown.options.Clear();
 
-            foreach (string option in Microphone.devices)
+            foreach (string option in MicrophoneSelection.Devices())
                 view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
         }
 
