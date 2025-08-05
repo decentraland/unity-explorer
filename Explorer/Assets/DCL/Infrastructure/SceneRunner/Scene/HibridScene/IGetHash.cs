@@ -89,7 +89,7 @@ namespace SceneRunner.Scene
             try
             {
                 var getSceneDefinition = await webRequestController.PostAsync(new CommonArguments(URLAddress.FromString("https://peer.decentraland.org/content/entities/active/")), GenericPostArguments.CreateJson($"{{\"pointers\": [\"{coordinate.x},{coordinate.y}\" ]}}"),
-                        new CancellationToken(), reportCategory)
+                                                                        CancellationToken.None, reportCategory)
                     .CreateFromJson<SceneEntityDefinition[]>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
                 return (true, getSceneDefinition[0].id!);
             }

@@ -13,5 +13,8 @@ namespace DCL.AvatarRendering.Emotes
         bool IsLooping();
 
         bool HasSameClipForAllGenders();
+
+        public static IEmote NewEmpty() =>
+            new Emote();
     }
 }
