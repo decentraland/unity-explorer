@@ -40,6 +40,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: Header("Join request buttons")]
         [field: SerializeField] private Button deleteRequestButton { get; set; } = null!;
         [field: SerializeField] private Button acceptRequestButton { get; set; } = null!;
+        [field: SerializeField] private Button cancelInviteButton { get; set; } = null!;
 
         private bool canUnHover = true;
         private bool isUserCard = false;
@@ -51,7 +52,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<MemberData, Vector2, MemberListItemView>? ContextMenuButtonClicked;
         public event Action<MemberData>? FriendButtonClicked;
         public event Action<MemberData>? UnbanButtonClicked;
-        public event Action<MemberData, bool>? ManageRequestClicked;
+        public event Action<MemberData, InviteRequestIntention>? ManageRequestClicked;
 
         private void RemoveAllListeners()
         {
@@ -88,8 +89,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             cancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
             unblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
 
-            deleteRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, false));
-            acceptRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, true));
+            deleteRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.reject));
+            acceptRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.accept));
+            cancelInviteButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.cancel));
 
             background.color = normalColor;
         }
@@ -124,13 +126,18 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             cancelFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.MEMBERS);
             unblockFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.MEMBERS);
+
+            deleteRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.REQUESTS);
+            acceptRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.REQUESTS);
+            cancelInviteButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.INVITES);
+            unbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.BANNED);
         }
 
         public void SubscribeToInteractions(Action<MemberData> mainButton,
             Action<MemberData, Vector2, MemberListItemView> contextMenuButton,
             Action<MemberData> friendButton,
             Action<MemberData> unbanButton,
-            Action<MemberData, bool> manageRequestClicked)
+            Action<MemberData, InviteRequestIntention> manageRequestClicked)
         {
             RemoveAllListeners();
 
@@ -144,20 +151,12 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void UnHover()
         {
             contextMenuButton.gameObject.SetActive(false);
-            unbanButton.gameObject.SetActive(false);
-            deleteRequestButton.gameObject.SetActive(false);
-            acceptRequestButton.gameObject.SetActive(false);
             background.color = normalColor;
         }
 
         private void Hover()
         {
             contextMenuButton.gameObject.SetActive(!isUserCard);
-
-            unbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.BANNED);
-            deleteRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.REQUESTS);
-            acceptRequestButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.REQUESTS);
-
             background.color = hoveredColor;
         }
 

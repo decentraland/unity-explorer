@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<MemberData>? ElementMainButtonClicked;
         public event Action<MemberData>? ElementFriendButtonClicked;
         public event Action<MemberData>? ElementUnbanButtonClicked;
-        public event Action<MemberData, bool>? ElementManageRequestClicked;
+        public event Action<MemberData, InviteRequestIntention>? ElementManageRequestClicked;
 
         public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
         public event Action<MemberData>? OpenProfilePassportRequested;
@@ -253,7 +253,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 OnContextMenuButtonClicked,
                 member => ElementFriendButtonClicked?.Invoke(member),
                 member => ElementUnbanButtonClicked?.Invoke(member),
-                (member, accept) => ElementManageRequestClicked?.Invoke(member, accept));
+                (member, intention) => ElementManageRequestClicked?.Invoke(member, intention));
 
             if (index >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)
                 NewDataRequested?.Invoke();

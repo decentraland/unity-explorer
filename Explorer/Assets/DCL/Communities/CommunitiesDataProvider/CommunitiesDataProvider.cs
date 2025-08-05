@@ -196,9 +196,6 @@ namespace DCL.Communities.CommunitiesDataProvider
             };
         }
 
-        public async UniTask<bool> ManageCommunityRequestAsync(string communityId, string userId, bool accept, CancellationToken ct) =>
-            true;
-
         public async UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members?offset=0&limit=1000&onlyOnline=true";
@@ -341,14 +338,9 @@ namespace DCL.Communities.CommunitiesDataProvider
             throw new NotImplementedException();
         }
 
-        public async UniTask<bool> ManageRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        public async UniTask<bool> ManageInviteRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
         {
-            throw new NotImplementedException();
-        }
-
-        public async UniTask<bool> ManageInviteToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
-        {
-            throw new NotImplementedException();
+            return true;
         }
 
         public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, CancellationToken ct)

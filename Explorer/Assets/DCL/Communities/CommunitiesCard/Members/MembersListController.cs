@@ -154,7 +154,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             base.Dispose();
         }
 
-        private void OnManageRequestClicked(MemberData profile, bool accept)
+        private void OnManageRequestClicked(MemberData profile, InviteRequestIntention intention)
         {
             communityOperationCts = communityOperationCts.SafeRestart();
             ManageRequestAsync(communityOperationCts.Token).Forget();
@@ -162,7 +162,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ManageRequestAsync(CancellationToken ct)
             {
-                Result<bool> result = await communitiesDataProvider.ManageCommunityRequestAsync(communityData!.Value.id, profile.memberAddress, accept, ct)
+                Result<bool> result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData!.Value.id, profile.memberAddress, intention, ct)
                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 if (!result.Success || !result.Value)
                 {
@@ -172,9 +172,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 }
 
                 RequestsAmount--;
-                requestingMembersFetchData.Items.Remove(profile);
+                currentSectionFetchData.Items.Remove(profile);
 
-                if (accept)
+                if (intention == InviteRequestIntention.accept)
                 {
                     profile.role = CommunityMemberRole.member;
                     allMembersFetchData.Items.Add(profile);
@@ -492,9 +492,11 @@ namespace DCL.Communities.CommunitiesCard.Members
                     responseTask = communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
                     break;
                 case MembersListView.MemberListSections.REQUESTS:
+                    //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request, membersData.PageNumber, PAGE_SIZE, ct);
                     responseTask = communitiesDataProvider.GetCommunityRequestsToJoin(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
                     break;
                 case MembersListView.MemberListSections.INVITES:
+                    //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.invite, membersData.PageNumber, PAGE_SIZE, ct);
                     responseTask = communitiesDataProvider.GetCommunityInvitesToJoin(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(currentSection), currentSection, null);
