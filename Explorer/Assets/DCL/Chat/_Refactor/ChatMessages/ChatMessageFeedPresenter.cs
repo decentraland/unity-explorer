@@ -206,6 +206,8 @@ namespace DCL.Chat.ChatMessages
         {
             loadChannelCts = loadChannelCts.SafeRestart();
 
+            RemoveNewMessagesSeparator();
+
             LoadChannelHistory(loadChannelCts.Token).Forget();
 
             async UniTaskVoid LoadChannelHistory(CancellationToken ct)
@@ -213,8 +215,6 @@ namespace DCL.Chat.ChatMessages
                 try
                 {
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
-
-                    RemoveNewMessagesSeparator();
                     TryAddNewMessagesSeparatorAfterPendingMessages(-1);
 
                     view.SetUserConnectivityProvider(currentChannelService.UserStateService!.OnlineParticipants);
