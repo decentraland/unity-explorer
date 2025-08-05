@@ -146,12 +146,43 @@ namespace DCL.VoiceChat
             PromoteToSpeaker(CallId, walletId);
         }
 
+
+        public void DenySpeakerInCurrentCall(string walletId)
+        {
+            if (CallId.IsNullOrEmpty()) return;
+            DenySpeaker(CallId, walletId);
+        }
+
         private void PromoteToSpeaker(string communityId, string walletId)
         {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
             PromoteToSpeakerAsync(communityId, walletId, cts.Token).Forget();
+        }
+
+        private void DenySpeaker(string communityId, string walletId)
+        {
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            DenySpeakerAsync(communityId, walletId, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid DenySpeakerAsync(string communityId, string walletId, CancellationToken ct)
+        {
+            try
+            {
+                PromoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    case PromoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                        //Handle promote logic here
+                        break;
+                }
+            }
+            catch (Exception e) { }
         }
 
         private async UniTaskVoid PromoteToSpeakerAsync(string communityId, string walletId, CancellationToken ct)
