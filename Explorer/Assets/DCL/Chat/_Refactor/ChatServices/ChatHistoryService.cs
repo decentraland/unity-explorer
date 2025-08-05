@@ -52,15 +52,17 @@ namespace DCL.Chat.ChatServices
                 // The system message is formatted apriori
                 chatHistory.AddMessage(channel, type, message);
 
-            HandleMessageAudioFeedback(message);
+            HandleMessageAudioFeedback(message, channel);
         }
 
-        private void HandleMessageAudioFeedback(ChatMessage message)
+        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId channelId)
         {
             if (message.IsSentByOwnUser)
                 return;
 
-            switch (chatSettings.chatAudioSettings)
+            var settings = ChatUserSettings.GetNotificationPingValuePerChannel(channelId);
+
+            switch (settings)
             {
                 case ChatAudioSettings.NONE:
                     return;

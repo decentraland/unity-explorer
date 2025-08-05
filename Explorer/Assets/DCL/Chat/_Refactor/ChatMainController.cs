@@ -44,7 +44,9 @@ namespace DCL.Chat
         public event Action? PointerEntered;
         public event Action? PointerExited;
 
-        public bool IsVisibleInSharedSpace => chatStateMachine != null && chatStateMachine!.IsFocused;
+        public bool IsVisibleInSharedSpace => chatStateMachine != null &&
+                                              !chatStateMachine.IsMinimized &&
+                                              !chatStateMachine.IsHidden;
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig.ChatConfig chatConfig,
@@ -175,19 +177,23 @@ namespace DCL.Chat
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
         {
-            if (State != ControllerState.ViewHidden)
+            // This method is called when we want to "show" the chat.
+            // This can happen when:
+            // 1. Toggling from a Minimized state.
+            // 2. Another panel (like Friends) that was obscuring the chat is closed.
+            if (State == ControllerState.ViewHidden)
             {
-                if (chatStateMachine.IsHidden)
-                {
-                    SetVisibility(true);
-                }
-                else
-                {
-                    chatStateMachine?.SetInitialState(!chatStateMachine.IsFocused);
-                }
-
-                ViewShowingComplete?.Invoke(this);
+                // If the entire controller view is not even active, we can't proceed.
+                await UniTask.CompletedTask;
+                return;
             }
+
+            // If the chat was fully hidden (e.g., by the Friends panel), transition to Default.
+            // If it was minimized, transition to Default or Focused based on the input.
+            // The `showParams.Focus` will be true when toggling with Enter/shortcut, and false when returning from another panel.
+            chatStateMachine?.SetInitialState(showParams.Focus);
+
+            ViewShowingComplete?.Invoke(this);
             await UniTask.CompletedTask;
         }
 
