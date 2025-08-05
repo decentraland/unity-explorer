@@ -21,4 +21,5 @@
             <ui:Button name="CloseButton" class="scene-debug-console__close-button dcl-clickable" />
         </ui:VisualElement>
     </ui:VisualElement>
+    <ui:Button name="ConsoleToggleButton" class="console-toggle-button" />
 </ui:UXML>

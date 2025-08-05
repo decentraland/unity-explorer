@@ -2,7 +2,9 @@
 :root {
     --sprite-common__icon-checkmark-thin: url('/Assets/Textures/UI/Common/icon-checkmark-thin.png');
     --sprite-common__icon-close: url('/Assets/Textures/UI/Common/icon-close.png');
+    --sprite-common__icon-console: url('/Assets/Textures/UI/Common/icon-console.png');
     --sprite-common__icon-copy: url('/Assets/Textures/UI/Common/icon-copy.png');
+    --sprite-common__icon-debug: url('/Assets/Textures/UI/Common/icon-debug.png');
     --sprite-common__icon-pause: url('/Assets/Textures/UI/Common/icon-pause.png');
     --sprite-common__icon-play: url('/Assets/Textures/UI/Common/icon-play.png');
     --sprite-common__icon-search: url('/Assets/Textures/UI/Common/icon-search.png');
@@ -20,10 +22,22 @@
     height: 16px;
 }
 
+.sprite-common__icon-console {
+    background-image: var(--sprite-common__icon-console);
+    width: 22px;
+    height: 22px;
+}
+
 .sprite-common__icon-copy {
     background-image: var(--sprite-common__icon-copy);
     width: 24px;
     height: 24.5px;
+}
+
+.sprite-common__icon-debug {
+    background-image: var(--sprite-common__icon-debug);
+    width: 22px;
+    height: 22px;
 }
 
 .sprite-common__icon-pause {

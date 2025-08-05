@@ -31,6 +31,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(SceneDebugConsoleSettings settings, CancellationToken ct)
         {
             sceneDebugConsoleController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<SceneDebugConsoleController>();
+            // sceneDebugConsoleController.Initialize();
             sceneDebugConsoleController.SetInputBlock(inputBlock);
         }
 

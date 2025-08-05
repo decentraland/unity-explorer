@@ -42,13 +42,10 @@ namespace DCL.UI.SceneDebugConsole
             this.inputBlock = block;
         }
 
-        private void Start()
-        {
-            logsHistory.LogsUpdated += OnLogsUpdated;
-        }
-
         private void OnEnable()
         {
+            logsHistory.LogsUpdated += OnLogsUpdated;
+
             var root = GetComponent<UIDocument>().rootVisualElement;
 
             // Log callbacks
@@ -62,6 +59,7 @@ namespace DCL.UI.SceneDebugConsole
             var copyAllButton = root.Q<Button>("CopyAllButton");
             pauseButton = root.Q<Button>("PauseButton");
             var closeButton = root.Q<Button>("CloseButton");
+            var consoleToggleButton = root.Q<Button>("ConsoleToggleButton");
             showLogsToggle = root.Q<Toggle>("LogsToggle");
             showErrorsToggle = root.Q<Toggle>("ErrorsToggle");
             consoleListView = root.Q<ListView>("ConsoleList");
@@ -89,6 +87,7 @@ namespace DCL.UI.SceneDebugConsole
             pauseButton.clicked += OnPauseClicked;
             copyAllButton.clicked += OnCopyAllClicked;
             closeButton.clicked += ToggleHide;
+            consoleToggleButton.clicked += ToggleHide;
             searchField.RegisterValueChangedCallback(_ => RefreshFilters());
             showLogsToggle.RegisterValueChangedCallback(_ => RefreshFilters());
             showErrorsToggle.RegisterValueChangedCallback(_ => RefreshFilters());
@@ -176,9 +175,14 @@ namespace DCL.UI.SceneDebugConsole
             toastScheduledItem.ExecuteLater(TOAST_DURATION);
         }
 
-        private void OnToggleConsoleShortcutPerformed(InputAction.CallbackContext obj)
+        private void OnToggleConsoleShortcutPerformed(InputAction.CallbackContext obj) =>
+            ToggleHide();
+
+        private void ToggleHide()
         {
-            if (!shownOnce)
+            isHidden = !isHidden;
+
+            if (!shownOnce && !isHidden)
             {
                 // We use this (plus setting display to None in OnEnable) to force UI Toolkit
                 // to redraw all the items on the first open. Without it some styles are not applied.
@@ -186,12 +190,6 @@ namespace DCL.UI.SceneDebugConsole
                 shownOnce = true;
             }
 
-            ToggleHide();
-        }
-
-        private void ToggleHide()
-        {
-            isHidden = !isHidden;
             consoleWindow.EnableInClassList(USS_CONSOLE_HIDDEN, isHidden);
 
             if (isHidden) return;

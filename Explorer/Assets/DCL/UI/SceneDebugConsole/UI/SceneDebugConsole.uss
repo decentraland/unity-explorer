@@ -301,3 +301,15 @@
     background-image: var(--sprite-common__icon-close);
     background-size: 53% 53%;
 }
+
+.console-toggle-button {
+    background-color: rgba(0, 0, 0, 0.8);
+    background-image: var(--sprite-common__icon-console);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background-size: 26px 26px;
+    top: 1032px;
+    left: 1830px;
+    bottom: auto;
+}
