@@ -51,10 +51,8 @@ namespace DCL.UI.SceneDebugConsole
         {
             var root = GetComponent<UIDocument>().rootVisualElement;
 
-            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
-
             // Log callbacks
-            logsHistory.LogsUpdated += OnLogsUpdated;
+            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
 
             consoleWindow = root.Q("ConsoleWindow");
             consoleWindow.EnableInClassList(USS_CONSOLE_HIDDEN, isHidden);

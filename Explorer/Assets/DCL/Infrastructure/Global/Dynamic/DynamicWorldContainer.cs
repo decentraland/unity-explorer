@@ -1048,7 +1048,7 @@ namespace Global.Dynamic
                 );
 
             if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
-                globalPlugins.Add(new SceneDebugConsolePlugin(bootstrapContainer.SceneDebugConsoleMessageBus!, staticContainer.InputBlock));
+                globalPlugins.Add(new SceneDebugConsolePlugin(bootstrapContainer.SceneDebugConsoleMessageBus!, staticContainer.InputBlock, assetsProvisioner));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
