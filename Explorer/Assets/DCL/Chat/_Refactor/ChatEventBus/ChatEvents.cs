@@ -33,16 +33,6 @@ namespace DCL.Chat
 #endregion
 
 #region Initialization events
-        /// <summary>
-        ///     Event:          InitialUserStatusLoadedEvent (NOT-USED)
-        ///     Triggered By:   InitializeChatSystemCommand
-        ///     When:           After initial channels are loaded, when the online status for relevant users has been fetched.
-        ///     Subscribers:    ChatChannelsPresenter (indirectly): Relies on the resulting UserStatusUpdatedEvents to set initial online states.
-        /// </summary>
-        public struct InitialUserStatusLoadedEvent
-        {
-            public HashSet<string> Users;
-        }
 
         /// <summary>
         ///     Event:          InitialChannelsLoadedEvent
@@ -144,6 +134,15 @@ namespace DCL.Chat
                 ChannelId = channelId;
                 OnlineUsers = onlineUsers;
                 ChannelType = channelType;
+            }
+
+            public bool Qualifies(ChatChannel chatChannel)
+            {
+                // If applied to every USER Channel
+                if (ChannelType == ChatChannel.ChatChannelType.USER && ChannelId.Equals(ChatChannel.EMPTY_CHANNEL_ID) && chatChannel.ChannelType == ChatChannel.ChatChannelType.USER)
+                    return true;
+
+                return chatChannel.Id.Equals(ChannelId);
             }
         }
 

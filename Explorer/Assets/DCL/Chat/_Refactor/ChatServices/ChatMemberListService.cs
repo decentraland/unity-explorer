@@ -89,7 +89,7 @@ namespace DCL.Chat.ChatServices
 
         private void UpdateCounter(ChatEvents.ChannelUsersStatusUpdated evt)
         {
-            if (evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
+            if (evt.Qualifies(currentChannelService.CurrentChannel!))
                 UpdateAndBroadcastCount(evt.OnlineUsers.Count);
         }
 
@@ -128,7 +128,7 @@ namespace DCL.Chat.ChatServices
 
         private void RefreshFullListIfNeeded(ChatEvents.ChannelUsersStatusUpdated evt)
         {
-            if (!evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
+            if (!evt.Qualifies(currentChannelService.CurrentChannel!))
                 return;
 
             // If the event is for the current channel, refresh the full list

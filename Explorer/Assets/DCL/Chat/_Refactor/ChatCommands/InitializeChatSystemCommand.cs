@@ -65,11 +65,7 @@ namespace DCL.Chat.ChatCommands
             });
 
             // Finalize Initialization
-            var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
-            eventBus.Publish(new ChatEvents.InitialUserStatusLoadedEvent
-            {
-                Users = connectedUsers
-            });
+            await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
 
             // Set default channel after all channels are loaded
             if (chatHistory.Channels.TryGetValue(ChatChannel.NEARBY_CHANNEL_ID, out var nearbyChannel))

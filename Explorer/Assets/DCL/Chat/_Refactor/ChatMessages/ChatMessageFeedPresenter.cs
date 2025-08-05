@@ -139,7 +139,8 @@ namespace DCL.Chat.ChatMessages
 
             // Handle separator logic (this is unrelated to the button)
             bool separatorAdded = false;
-            if (!wasAtBottom)
+
+            if (!wasAtBottom && !isSentByOwnUser)
             {
                 if (messageCountWhenSeparatorViewed.HasValue)
                     markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!, messageCountWhenSeparatorViewed.Value);
@@ -265,7 +266,7 @@ namespace DCL.Chat.ChatMessages
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
-            scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnNearbyUsersUpdated));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
             scope.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnUserStatusUpdated));
 
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
@@ -291,9 +292,9 @@ namespace DCL.Chat.ChatMessages
                 view.RefreshVisibleElements();
         }
 
-        private void OnNearbyUsersUpdated(ChatEvents.ChannelUsersStatusUpdated upd)
+        private void OnChannelUsersUpdated(ChatEvents.ChannelUsersStatusUpdated upd)
         {
-            if (upd.ChannelId.Equals(currentChannelService.CurrentChannelId))
+            if (upd.Qualifies(currentChannelService.CurrentChannel!))
                 view.RefreshVisibleElements();
         }
 
