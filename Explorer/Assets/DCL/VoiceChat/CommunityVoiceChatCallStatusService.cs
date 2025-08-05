@@ -131,11 +131,7 @@ namespace DCL.VoiceChat
             {
                 RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, ct);
 
-                switch (response.ResponseCase)
-                {
-                    case RequestToSpeakInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        break;
-                }
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"RequestToSpeak response: {response.ResponseCase} for community {communityId}");
             }
             catch (Exception e) { }
         }
@@ -160,12 +156,7 @@ namespace DCL.VoiceChat
             {
                 PromoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
 
-                switch (response.ResponseCase)
-                {
-                    case PromoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        //Handle promote logic here
-                        break;
-                }
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"PromoteToSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
             }
             catch (Exception e) { }
         }
@@ -191,12 +182,7 @@ namespace DCL.VoiceChat
             {
                 DemoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.DemoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
 
-                switch (response.ResponseCase)
-                {
-                    case DemoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        //Handle demote logic here
-                        break;
-                }
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"DemoteFromSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
             }
             catch (Exception e) { }
         }
@@ -222,12 +208,7 @@ namespace DCL.VoiceChat
             {
                 KickPlayerFromCommunityVoiceChatResponse response = await voiceChatService.KickPlayerFromCommunityVoiceChatAsync(communityId, walletId, ct);
 
-                switch (response.ResponseCase)
-                {
-                    case KickPlayerFromCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        //Handle kick logic
-                        break;
-                }
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"KickPlayer response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
             }
             catch (Exception e) { }
         }
