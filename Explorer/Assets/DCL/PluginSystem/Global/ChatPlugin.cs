@@ -223,7 +223,8 @@ namespace DCL.PluginSystem.Global
             var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
                 friendsServiceProxy,
                 currentChannelService,
-                eventBus);
+                eventBus,
+                web3IdentityCache);
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
 

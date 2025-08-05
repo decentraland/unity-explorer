@@ -8,6 +8,7 @@ using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Utilities;
 using DCL.UI.Profiles.Helpers;
+using DCL.Web3.Identities;
 using Utility;
 using Utility.Multithreading;
 
@@ -26,6 +27,7 @@ namespace DCL.Chat.ChatServices
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly IEventBus eventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
 
@@ -58,12 +60,14 @@ namespace DCL.Chat.ChatServices
         public ChatMemberListService(ProfileRepositoryWrapper profileRepository,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             CurrentChannelService currentChannelService,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.profileRepository = profileRepository;
             this.friendsServiceProxy = friendsServiceProxy;
             this.currentChannelService = currentChannelService;
             this.eventBus = eventBus;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public void Dispose() =>
@@ -183,6 +187,7 @@ namespace DCL.Chat.ChatServices
 
         private UniTask RefreshFullListIfNeededAsync(CancellationToken ct)
         {
+            
             ReadOnlyHashSet<string> participants = currentChannelService.UserStateService!.OnlineParticipants;
 
             if (lastKnownMemberIds.SetEquals(participants))
@@ -243,11 +248,19 @@ namespace DCL.Chat.ChatServices
             // If cancellation was requested during the fetch, stop processing.
             if (ct.IsCancellationRequested) return;
 
+            // get local identity address
+            // and exclude it from the member list
+            string? localPlayerAddress = web3IdentityCache.Identity?.Address;
+            
             // 2. The rest of your logic remains the same.
             //    By the time we get here, 'profiles' contains all members that could be found.
             foreach (Profile? profile in profiles)
             {
                 if (ct.IsCancellationRequested) return;
+
+                if (profile.UserId == localPlayerAddress)
+                    continue;
+                
                 membersBuffer.Add(CreateMemberDataFromProfile(profile));
             }
         }
