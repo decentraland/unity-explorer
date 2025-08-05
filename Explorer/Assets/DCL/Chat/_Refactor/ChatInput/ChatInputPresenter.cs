@@ -79,7 +79,8 @@ namespace DCL.Chat.ChatInput
 
         private void OnForceRefreshInputState(ChatEvents.CurrentChannelStateUpdatedEvent evt)
         {
-            UpdateStateForChannel().Forget();
+            if (fsm.CurrentState is not UnfocusedChatInputState)
+                UpdateStateForChannel().Forget();
         }
 
         public void OnBlur()

@@ -179,7 +179,7 @@ namespace DCL.Chat
         {
             if (State != ControllerState.ViewHidden)
             {
-                chatStateMachine?.SetInitialState(showParams.Focus);
+                chatStateMachine?.SetInitialState(!chatStateMachine.IsFocused);
                 ViewShowingComplete?.Invoke(this);
             }
             await UniTask.CompletedTask;

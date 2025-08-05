@@ -746,7 +746,8 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatCallStatusService,
                     includeVoiceChat,
-                    realmNavigator),
+                    realmNavigator,
+                    mainUIView.SidebarView.unreadMessagesButton.transform),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

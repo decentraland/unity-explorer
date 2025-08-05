@@ -83,6 +83,7 @@ namespace DCL.PluginSystem.Global
         private ChatMainController chatMainController;
         private PrivateConversationUserStateService? chatUserStateService;
         private ChatHistoryService? chatBusListenerService;
+        private readonly Transform chatViewRectTransform;
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
 
@@ -118,7 +119,8 @@ namespace DCL.PluginSystem.Global
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             bool isCallEnabled,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            Transform chatViewRectTransform)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -152,6 +154,7 @@ namespace DCL.PluginSystem.Global
             this.realmNavigator = realmNavigator;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.isCallEnabled = isCallEnabled;
+            this.chatViewRectTransform = chatViewRectTransform;
         }
 
         public void Dispose()
@@ -208,7 +211,8 @@ namespace DCL.PluginSystem.Global
                 viewInstance.TitlebarView.CloseMemberListButton.transform,
                 viewInstance.TitlebarView.OpenMemberListButton.transform,
                 viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.inputField.transform);
+                viewInstance.InputView.inputField.transform,
+                chatViewRectTransform);
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
