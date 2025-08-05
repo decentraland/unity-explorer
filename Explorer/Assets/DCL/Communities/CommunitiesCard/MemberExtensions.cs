@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Friends;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3;

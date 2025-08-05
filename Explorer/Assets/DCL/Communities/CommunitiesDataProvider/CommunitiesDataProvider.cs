@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
@@ -10,7 +11,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider
 {
     public class CommunitiesDataProvider
     {
