@@ -19,7 +19,7 @@ MonoBehaviour:
     m_Left: 10
     m_Right: 10
     m_Top: 16
-    m_Bottom: 8
+    m_Bottom: 12
   <KickFromStreamSprite>k__BackingField: {fileID: 21300000, guid: 63ca55af13b6147d9a3b2fb88a9e1c2f, type: 3}
   <KickFromStreamText>k__BackingField: Remove from stream
   <DemoteSpeakerSprite>k__BackingField: {fileID: 21300000, guid: 91ff41aba61ee4f728bbe3220aa9ec22, type: 3}

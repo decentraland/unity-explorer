@@ -128,14 +128,12 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             if (!showWalletSection)
             {
-                UserAddress.gameObject.SetActive(false);
-                CopyAddressButton.gameObject.SetActive(false);
+                userAddressRectTransform.gameObject.SetActive(false);
             }
             else
             {
-                UserAddress.gameObject.SetActive(true);
+                userAddressRectTransform.gameObject.SetActive(true);
                 UserAddress.text = $"{userAddress[..5]}...{userAddress[^5..]}";
-                CopyAddressButton.gameObject.SetActive(true);
             }
 
             UserNameTag.gameObject.SetActive(!hasClaimedName);
@@ -153,7 +151,7 @@ namespace DCL.UI.GenericContextMenu.Controls
                                 + HorizontalLayoutComponent.padding.top
                                 + ContentVerticalLayout.spacing;
 
-            if (UserAddress.isActiveAndEnabled)
+            if (userAddressRectTransform.gameObject.activeSelf)
                 totalHeight += Math.Max(userAddressRectTransform.rect.height, USER_NAME_MIN_HEIGHT) + ContentVerticalLayout.spacing;
 
             if (ProfilePictureView.gameObject.activeSelf)
