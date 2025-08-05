@@ -130,40 +130,45 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(banFromCommunityButton);
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
+        public async UniTask ShowUserProfileContextMenuAsync(Profile targetProfile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT,
-            bool isSpeaker = false, bool isModeratorOrAdmin = false
-        )
+            bool targetIsSpeaker = false)
         {
+
+            var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
+
+            bool targetIsLocalParticipant = targetProfile.WalletId == localParticipant.WalletId;
+            bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
+
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
 
-            if (friendServiceProxy.Configured)
+            if (!targetIsLocalParticipant && friendServiceProxy.Configured)
             {
-                FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
+                FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(targetProfile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
-                jumpInButtonControlSettings.SetData(profile.UserId);
+                jumpInButtonControlSettings.SetData(targetProfile.UserId);
 
                 contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
-                                                  friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
+                                                  friendOnlineStatusCacheProxy.Object.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
             }
 
-            userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
+            userProfileControlSettings.SetInitialData(targetProfile.ToUserData(), contextMenuFriendshipStatus);
 
-            openUserProfileButtonControlSettings.SetData(profile.UserId);
-            openConversationControlSettings.SetData(profile.UserId);
-            demoteSpeakerButtonControlSettings.SetData(profile.UserId);
-            promoteToSpeakerButtonControlSettings.SetData(profile.UserId);
-            kickFromStreamButtonControlSettings.SetData(profile.UserId);
-            banFromCommunityButtonControlSettings.SetData(profile.UserId);
+            openUserProfileButtonControlSettings.SetData(targetProfile.UserId);
+            openConversationControlSettings.SetData(targetProfile.UserId);
+            demoteSpeakerButtonControlSettings.SetData(targetProfile.UserId);
+            promoteToSpeakerButtonControlSettings.SetData(targetProfile.UserId);
+            kickFromStreamButtonControlSettings.SetData(targetProfile.UserId);
+            banFromCommunityButtonControlSettings.SetData(targetProfile.UserId);
 
-            promoteToSpeakerButton.Enabled = !isSpeaker && isModeratorOrAdmin;
-            demoteSpeakerButton.Enabled = isSpeaker && isModeratorOrAdmin;
-            kickFromStreamButton.Enabled = isModeratorOrAdmin;
-            banFromCommunityButton.Enabled = isModeratorOrAdmin;
+            promoteToSpeakerButton.Enabled = !targetIsSpeaker && localParticipantIsMod;
+            demoteSpeakerButton.Enabled = targetIsSpeaker && localParticipantIsMod;
+            kickFromStreamButton.Enabled = !targetIsLocalParticipant && localParticipantIsMod;
+            banFromCommunityButton.Enabled = !targetIsLocalParticipant && localParticipantIsMod;
 
             contextMenu.ChangeAnchorPoint(anchorPoint);
 

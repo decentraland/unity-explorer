@@ -1,9 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-using DCL.Communities;
-using DCL.UI;
-using DCL.VoiceChat;
-using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
@@ -60,18 +56,15 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             CollapseButton.onClick.AddListener(() => CollapseButtonClicked?.Invoke());
         }
 
-        private void OnContextMenuButtonClicked(VoiceChatParticipantsStateService.ParticipantState voiceChatMember, VoiceChatParticipantsStateService.ParticipantState localParticipantState, Vector2 buttonPosition, PlayerEntryView elementView)
+        private void OnContextMenuButtonClicked(VoiceChatParticipantsStateService.ParticipantState participant, Vector2 buttonPosition, PlayerEntryView elementView)
         {
             popupCts = popupCts.SafeRestart();
             contextMenuTask?.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
 
-            bool isModeratorOrAdmin = localParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
-
             ViewDependencies.GlobalUIViews.ShowCommunityPlayerEntryContextMenuAsync(
-                participantWalletId: voiceChatMember.WalletId,
-                isSpeaker: voiceChatMember.IsSpeaker.Value,
-                isModeratorOrAdmin: isModeratorOrAdmin,
+                participant.WalletId,
+                participant.IsSpeaker.Value,
                 buttonPosition,
                 default(Vector2),
                 popupCts.Token,

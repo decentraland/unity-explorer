@@ -109,7 +109,7 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint);
         }
 
-        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, bool isModeratorOrAdmin, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
             if (string.IsNullOrEmpty(participantWalletId)) return;
 
@@ -118,7 +118,7 @@ namespace MVC
 
             if (profile == null) return;
 
-            await ShowCommunityPlayerEntryContextMenu(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint, isSpeaker, isModeratorOrAdmin);
+            await ShowCommunityPlayerEntryContextMenu(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint, isSpeaker);
         }
 
         public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
@@ -151,7 +151,7 @@ namespace MVC
                 realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager,
                 voiceChatContextMenuSettings, voiceChatOrchestrator, communityDataProvider);
 
-            await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker, isModeratorOrAdmin);
+            await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker);
         }
 
 

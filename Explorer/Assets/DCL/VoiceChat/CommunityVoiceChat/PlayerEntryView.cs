@@ -10,7 +10,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     public class PlayerEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         internal const float ANIMATION_DURATION = 0.5f;
-        public event Action<VoiceChatParticipantsStateService.ParticipantState, VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
+        public event Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
 
         [SerializeField] private RectTransform hoverElement;
 
@@ -18,6 +18,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [SerializeField] public ProfilePictureView ProfilePictureView;
         [SerializeField] public SimpleUserNameElement nameElement;
+
         [field: SerializeField]
         internal RectTransform isSpeakingIcon { get; private set; }
 
@@ -53,11 +54,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             hoverElement.gameObject.SetActive(false);
             isSpeakingIcon.gameObject.SetActive(false);
-            contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, localUserProfile!, contextMenuButton.transform.position, this));
+            contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, contextMenuButton.transform.position, this));
         }
 
         public void SetUserProfile(VoiceChatParticipantsStateService.ParticipantState participantState, VoiceChatParticipantsStateService.ParticipantState localParticipantState)
         {
+            // We only show context menu button on our user if we are mods.
+            var showContextMenuButton = true;
+
+            if (participantState.Name.Value == localParticipantState.Name.Value)
+                showContextMenuButton = localUserProfile.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
+
+            contextMenuButton.gameObject.SetActive(showContextMenuButton);
+
             userProfile = participantState;
             localUserProfile = localParticipantState;
 
@@ -72,7 +81,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         }
 
         private void SetRequestingToSpeakSection(bool isRequestingToSpeak) =>
-            approveDenySection.SetActive(isRequestingToSpeak && (localUserProfile.Role.Value == VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator || localUserProfile.Role.Value == VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner));
+            approveDenySection.SetActive(isRequestingToSpeak && localUserProfile.Role.Value is
+                VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or
+                VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
 
         private void OnChangeIsSpeaking(bool isSpeaking)
         {
@@ -94,7 +105,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             }
         }
 
-        public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu, Action<string> approveSpeaker, Action<string> denySpeaker)
+        public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu, Action<string> approveSpeaker, Action<string> denySpeaker)
         {
             RemoveAllListeners();
 
