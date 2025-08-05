@@ -16,6 +16,8 @@ namespace DCL.VoiceChat.Services
 
         UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, CancellationToken ct);
 
+        UniTask<PromoteSpeakerInCommunityVoiceChatResponse> DenySpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct);
+
         UniTask<PromoteSpeakerInCommunityVoiceChatResponse> PromoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct);
 
         UniTask<DemoteSpeakerInCommunityVoiceChatResponse> DemoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct);

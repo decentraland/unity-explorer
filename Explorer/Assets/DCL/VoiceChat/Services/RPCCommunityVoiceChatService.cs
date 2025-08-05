@@ -183,6 +183,25 @@ namespace DCL.VoiceChat.Services
             return response;
         }
 
+        public async UniTask<PromoteSpeakerInCommunityVoiceChatResponse> DenySpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+            var payload = new PromoteSpeakerInCommunityVoiceChatPayload()
+            {
+                CommunityId = communityId,
+                UserAddress = userAddress
+            };
+
+            PromoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+                                                                                         .CallUnaryProcedure<PromoteSpeakerInCommunityVoiceChatResponse>(PROMOTE_TO_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
+                                                                                         .AttachExternalCancellation(ct)
+                                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
         public async UniTask<PromoteSpeakerInCommunityVoiceChatResponse> PromoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
         {
             ThrowIfServiceDisabled();

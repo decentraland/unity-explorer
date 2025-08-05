@@ -60,9 +60,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             userProfile = participantState;
             localUserProfile = localParticipantState;
+
             userProfile.IsSpeaking.OnUpdate -= OnChangeIsSpeaking;
             userProfile.IsSpeaking.OnUpdate += OnChangeIsSpeaking;
+
+            userProfile.IsRequestingToSpeak.OnUpdate -= SetRequestingToSpeakSection;
+            userProfile.IsRequestingToSpeak.OnUpdate += SetRequestingToSpeakSection;
+
+            approveButton.onClick.AddListener(() => ApproveSpeaker?.Invoke(userProfile.WalletId));
+            denyButton.onClick.AddListener(() => DenySpeaker?.Invoke(userProfile.WalletId));
         }
+
+        private void SetRequestingToSpeakSection(bool isRequestingToSpeak) =>
+            approveDenySection.SetActive(isRequestingToSpeak && (localUserProfile.Role.Value == VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator || localUserProfile.Role.Value == VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner));
 
         private void OnChangeIsSpeaking(bool isSpeaking)
         {
@@ -84,16 +94,20 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             }
         }
 
-        public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu)
+        public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu, Action<string> approveSpeaker, Action<string> denySpeaker)
         {
             RemoveAllListeners();
 
             ContextMenuButtonClicked += contextMenu;
+            ApproveSpeaker += approveSpeaker;
+            DenySpeaker += denySpeaker;
         }
 
         private void RemoveAllListeners()
         {
             ContextMenuButtonClicked = null;
+            ApproveSpeaker = null;
+            DenySpeaker = null;
         }
 
         public void OnPointerEnter(PointerEventData eventData)

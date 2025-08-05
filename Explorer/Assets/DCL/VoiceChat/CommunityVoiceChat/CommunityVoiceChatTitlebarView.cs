@@ -52,6 +52,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private CancellationTokenSource popupCts = new ();
         private UniTaskCompletionSource contextMenuTask = new ();
 
+        public event Action<string> ApproveSpeaker;
+        public event Action<string> DenySpeaker;
+
         private void Start()
         {
             CollapseButton.onClick.AddListener(() => CollapseButtonClicked?.Invoke());
@@ -78,7 +81,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void ConfigureEntry(PlayerEntryView entryView, VoiceChatParticipantsStateService.ParticipantState participantState, VoiceChatParticipantsStateService.ParticipantState localParticipantState)
         {
-            entryView.SubscribeToInteractions(OnContextMenuButtonClicked);
+            entryView.SubscribeToInteractions(OnContextMenuButtonClicked, ApproveSpeaker, DenySpeaker);
             entryView.SetUserProfile(participantState, localParticipantState);
         }
 

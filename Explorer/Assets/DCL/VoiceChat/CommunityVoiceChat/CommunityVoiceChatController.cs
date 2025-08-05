@@ -47,6 +47,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
             this.roomManager.ConnectionEstablished += OnConnectionEnstablished;
+            this.view.ApproveSpeaker += PromoteToSpeaker;
+            this.view.DenySpeaker += DenySpeaker;
 
             // Should we send this through an internal event bus to avoid having these sub-view subscriptions or bubbling up events?
             view.CommunityVoiceChatInCallView.InCallFooterView.OpenListenersSectionButton.onClick.AddListener(OpenListenersSection);
@@ -65,6 +67,16 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
         }
 
+        private void PromoteToSpeaker(string walletId)
+        {
+            voiceChatOrchestrator.PromoteToSpeakerInCurrentCall(walletId);
+        }
+
+        private void DenySpeaker(string walletId)
+        {
+            voiceChatOrchestrator.DenySpeakerInCurrentCall(walletId);
+        }
+
         private void OnConnectionEnstablished()
         {
             if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
@@ -73,13 +85,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
+            roomManager.ConnectionEstablished -= OnConnectionEnstablished;
+
             view.CollapseButtonClicked -= OnCollapsedButtonClicked;
+            view.ApproveSpeaker -= PromoteToSpeaker;
+            view.DenySpeaker -= DenySpeaker;
+
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed -= OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined -= OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft -= OnParticipantLeft;
 
             voiceChatTypeSubscription?.Dispose();
             communityVoiceChatSearchController?.Dispose();
+
             ClearPool();
         }
 

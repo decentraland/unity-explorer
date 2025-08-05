@@ -187,6 +187,12 @@ namespace DCL.VoiceChat
                 communityVoiceChatCallStatusService.PromoteToSpeakerInCurrentCall(walletId);
         }
 
+        public void DenySpeakerInCurrentCall(string walletId)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.DenySpeakerInCurrentCall(walletId);
+        }
+
         public void DemoteFromSpeakerInCurrentCall(string walletId)
         {
             if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
