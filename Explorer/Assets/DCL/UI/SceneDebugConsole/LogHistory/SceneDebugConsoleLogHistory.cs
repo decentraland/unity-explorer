@@ -9,7 +9,7 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         public readonly List<SceneDebugConsoleLogEntry> FilteredLogMessages = new ();
         public event Action LogsUpdated;
         public bool Paused { get; set; }
-        public int LogEntryCount => allLogMessages.Count(logEntry => logEntry.Type == LogMessageType.Log); // InvalidOperationException: Collection was modified; enumeration operation may not execute.
+        public int LogEntryCount => allLogMessages.Count(logEntry => logEntry.Type == LogMessageType.Log);
         public int ErrorEntryCount => allLogMessages.Count(logEntry => logEntry.Type == LogMessageType.Error);
 
         private readonly List<SceneDebugConsoleLogEntry> allLogMessages = new ();
