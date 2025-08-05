@@ -278,7 +278,7 @@ namespace DCL.Chat.ChatServices
             // This service doesn't know about the current channel list
             // so it's the responsibility of the corresponding presenter to detect if the user is in the list
 
-            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), userId, isOnline));
+            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, isOnline));
 
             if (currentChannelService.CurrentChannelId.Id == userId)
                 eventBus.Publish(new ChatEvents.CurrentChannelStateUpdatedEvent());

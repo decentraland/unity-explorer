@@ -88,14 +88,16 @@ namespace DCL.Chat
         public readonly struct UserStatusUpdatedEvent
         {
             public readonly ChatChannel.ChannelId ChannelId;
+            public readonly ChatChannel.ChatChannelType ChannelType;
             public readonly string UserId;
             public readonly bool IsOnline;
 
-            public UserStatusUpdatedEvent(ChatChannel.ChannelId channelId, string userId, bool isOnline)
+            public UserStatusUpdatedEvent(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, string userId, bool isOnline)
             {
                 ChannelId = channelId;
                 UserId = userId;
                 IsOnline = isOnline;
+                ChannelType = channelType;
             }
         }
 

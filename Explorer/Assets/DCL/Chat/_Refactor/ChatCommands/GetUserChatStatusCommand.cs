@@ -27,12 +27,12 @@ namespace DCL.Chat.ChatCommands
 
             if (ct.IsCancellationRequested || !result.Success)
             {
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), userId, false));
+                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, false));
                 return PrivateConversationUserStateService.ChatUserState.DISCONNECTED;
             }
 
             bool isOnline = result.Value.Result == PrivateConversationUserStateService.ChatUserState.CONNECTED;
-            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), userId, isOnline));
+            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, isOnline));
 
             return result.Value.Result;
         }

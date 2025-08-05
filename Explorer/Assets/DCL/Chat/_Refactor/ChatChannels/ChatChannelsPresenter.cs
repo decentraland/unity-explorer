@@ -76,6 +76,8 @@ namespace DCL.Chat
 
         private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
         {
+            if (userStatusUpdatedEvent.ChannelType != ChatChannel.ChatChannelType.USER) return;
+
             var channelId = new ChatChannel.ChannelId(userStatusUpdatedEvent.UserId);
 
             if (viewModels.TryGetValue(channelId, out BaseChannelViewModel? baseVm) &&
