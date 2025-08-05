@@ -33,9 +33,21 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         internal RectTransform isSpeakingIconOuterRect { get; private set; }
 
+        [field: SerializeField]
+        internal GameObject approveDenySection { get; private set; }
+
+        [field: SerializeField]
+        internal Button approveButton { get; private set; }
+
+        [field: SerializeField]
+        internal Button denyButton { get; private set; }
+
         private VoiceChatParticipantsStateService.ParticipantState userProfile;
         private VoiceChatParticipantsStateService.ParticipantState localUserProfile;
         private Sequence isSpeakingCurrentSequence;
+
+        public event Action<string> ApproveSpeaker;
+        public event Action<string> DenySpeaker;
 
         private void Start()
         {
