@@ -138,7 +138,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
 
-            bool targetIsLocalParticipant = targetProfile.WalletId == localParticipant.WalletId;
+            bool targetIsLocalParticipant = targetProfile.UserId == localParticipant.WalletId;
             bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
 
             closeContextMenuTask?.TrySetResult();
