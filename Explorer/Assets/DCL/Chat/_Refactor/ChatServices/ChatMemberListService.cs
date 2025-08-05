@@ -81,13 +81,13 @@ namespace DCL.Chat.ChatServices
             }
 
             subscriptionToChannel = eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected);
-            subscriptionToCounterUpdate.Add(eventBus.Subscribe<ChatEvents.NearbyUsersStatusUpdated>(UpdateCounter));
+            subscriptionToCounterUpdate.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(UpdateCounter));
             subscriptionToCounterUpdate.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(UpdateCounter));
 
             OnChannelSelected();
         }
 
-        private void UpdateCounter(ChatEvents.NearbyUsersStatusUpdated evt)
+        private void UpdateCounter(ChatEvents.ChannelUsersStatusUpdated evt)
         {
             if (evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
                 UpdateAndBroadcastCount(evt.OnlineUsers.Count);
@@ -120,13 +120,13 @@ namespace DCL.Chat.ChatServices
 
             // Emitted from the current channel user state service
             subscriptionToUserStatus.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(RefreshFullListIfNeeded));
-            subscriptionToUserStatus.Add(eventBus.Subscribe<ChatEvents.NearbyUsersStatusUpdated>(RefreshFullListIfNeeded));
+            subscriptionToUserStatus.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(RefreshFullListIfNeeded));
 
             liveUpdateCts = new CancellationTokenSource();
             this.onMemberListUpdated = onMemberListUpdated;
         }
 
-        private void RefreshFullListIfNeeded(ChatEvents.NearbyUsersStatusUpdated evt)
+        private void RefreshFullListIfNeeded(ChatEvents.ChannelUsersStatusUpdated evt)
         {
             if (!evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
                 return;

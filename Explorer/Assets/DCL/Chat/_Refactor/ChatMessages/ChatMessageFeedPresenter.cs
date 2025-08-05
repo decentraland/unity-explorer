@@ -265,7 +265,7 @@ namespace DCL.Chat.ChatMessages
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
-            scope.Add(eventBus.Subscribe<ChatEvents.NearbyUsersStatusUpdated>(OnNearbyUsersUpdated));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnNearbyUsersUpdated));
             scope.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnUserStatusUpdated));
 
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
@@ -291,7 +291,7 @@ namespace DCL.Chat.ChatMessages
                 view.RefreshVisibleElements();
         }
 
-        private void OnNearbyUsersUpdated(ChatEvents.NearbyUsersStatusUpdated upd)
+        private void OnNearbyUsersUpdated(ChatEvents.ChannelUsersStatusUpdated upd)
         {
             if (upd.ChannelId.Equals(currentChannelService.CurrentChannelId))
                 view.RefreshVisibleElements();

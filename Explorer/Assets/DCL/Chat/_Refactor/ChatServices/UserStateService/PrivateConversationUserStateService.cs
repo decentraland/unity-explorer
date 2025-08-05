@@ -107,6 +107,7 @@ namespace DCL.Chat.ChatServices
         private void SubscribeToEvents()
         {
             settingsAsset.PrivacySettingsSet += OnPrivacySettingsSet;
+            chatRoom.ConnectionUpdated += OnRoomConnectionStateChanged;
             chatRoom.Participants.UpdatesFromParticipant += OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser += OnYouBlockedByUser;
             friendsEventBus.OnYouUnblockedByUser += OnUserUnblocked;
@@ -174,6 +175,32 @@ namespace DCL.Chat.ChatServices
             bool isBlocked = userBlockingCacheProxy.Configured && userBlockingCacheProxy.StrictObject.UserIsBlocked(userId);
 
             return isBlocked ? ChatUserState.DISCONNECTED : ChatUserState.CONNECTED;
+        }
+
+        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate)
+        {
+            lock (onlineParticipants)
+            {
+                switch (connectionUpdate)
+                {
+                    case ConnectionUpdate.Connected:
+                        onlineParticipants.Clear();
+
+                        foreach (string remoteParticipantIdentity in chatRoom.Participants.RemoteParticipantIdentities())
+                        {
+                            if (!userBlockingCacheProxy.StrictObject.UserIsBlocked(remoteParticipantIdentity))
+                                onlineParticipants.Add(remoteParticipantIdentity);
+                        }
+
+                        NotifyChannelUsersStateUpdated();
+
+                        break;
+                    case ConnectionUpdate.Disconnected:
+                        onlineParticipants.Clear();
+                        NotifyChannelUsersStateUpdated();
+                        break;
+                }
+            }
         }
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
@@ -271,6 +298,11 @@ namespace DCL.Chat.ChatServices
             Web3Address userId = profile.Address;
 
             NotifyUserStateUpdated(userId, false);
+        }
+
+        private void NotifyChannelUsersStateUpdated()
+        {
+            eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.EMPTY_CHANNEL_ID, ChatChannel.ChatChannelType.USER, OnlineParticipants));
         }
 
         private void NotifyUserStateUpdated(string userId, bool isOnline)
