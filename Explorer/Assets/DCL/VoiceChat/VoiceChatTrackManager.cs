@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Diagnostics;
 using LiveKit.Audio;
 using LiveKit.Proto;
@@ -69,7 +70,12 @@ namespace DCL.VoiceChat
 
             try
             {
-                Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(microphoneHandler.CurrentMicrophoneName, configuration.AudioMixerGroup);
+                Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
+                    microphoneHandler.CurrentMicrophoneName,
+                    (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
+                    configuration.microphonePlaybackToSpeakers
+                );
+
                 if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
 
                 var rtcAudioSource = result.Value;

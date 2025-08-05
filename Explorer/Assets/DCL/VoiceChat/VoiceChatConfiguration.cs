@@ -42,5 +42,7 @@ namespace DCL.VoiceChat
 
         [Tooltip("Specify group where microphone should put its output")]
         public AudioMixerGroup AudioMixerGroup;
+        [Tooltip("Enables playback your recording microphone back to your speakers, allows to ensure sanity of recording on your side. May produce echoes due APM filter is not applied on this step")]
+        public bool microphonePlaybackToSpeakers;
     }
 }
