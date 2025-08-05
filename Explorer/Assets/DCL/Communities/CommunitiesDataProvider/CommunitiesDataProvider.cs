@@ -266,6 +266,31 @@ namespace DCL.Communities.CommunitiesDataProvider
             throw new NotImplementedException();
         }
 
+        public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> ManageRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> ManageInviteToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityList(string userAddress, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
         // TODO: Pending to implement these methods:
         //       public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct)
         //       public UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct)
