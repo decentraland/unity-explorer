@@ -203,7 +203,12 @@ namespace DCL.Nametags
             {
                 // Use head bone position + cached offset for wearables (like tall hats)
                 float3 headPosition = avatarBase.HeadAramatureBone.position;
-                position = new float3(headPosition.x, headPosition.y + avatarBase.CachedHeadWearableOffset, headPosition.z);
+
+                // Account for head scaling during emotes (e.g., head grows/shrinks)
+                float headScaleFactor = avatarBase.HeadAramatureBone.localScale.y;
+                float scaledOffset = avatarBase.CachedHeadWearableOffset * headScaleFactor;
+
+                position = new float3(headPosition.x, headPosition.y + scaledOffset, headPosition.z);
             }
             else
             {
