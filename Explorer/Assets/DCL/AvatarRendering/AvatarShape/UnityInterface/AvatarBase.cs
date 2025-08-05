@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 
-        [field: Header("Feet IK")]
+        [field: Header("FEET IK")]
 
         // This Rig controls the weight of ALL the feet IK constraints
         [field: SerializeField] public Rig FeetIKRig { get; private set; }
@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         //This constraint Applies an offset to the hips, lowering the avatar position based on the desired feet position
         [field: SerializeField] public MultiPositionConstraint HipsConstraint { get; private set; }
 
-        [field: Header("Hands IK")]
+        [field: Header("HANDS IK")]
         [field: SerializeField] public Rig HandsIKRig { get; private set; }
         [field: SerializeField] public TwoBoneIKConstraint LeftHandIK { get; private set; }
 
@@ -54,7 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightHandSubTarget { get; private set; }
         [field: SerializeField] public Transform RightHandRaycast { get; private set; }
 
-        [field: Header("LookAt IK")]
+        [field: Header("LOOK-AT IK")]
         [field: SerializeField] public Rig HeadIKRig { get; private set; }
 
         // The LookAt IK is based on 2 constraints, one for horizontal rotation and other for vertical rotation in order to control different bone chains for both of them, Horizontal is applied first
@@ -63,16 +63,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         // Position of the head after the animations
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
-        [field: SerializeField] public Transform HeadAramatureBone { get; private set; }
 
-        /// <summary>
-        ///     Cached offset from head bone to the highest point of head wearables (like tall hats).
-        ///     Updated when wearables change to avoid per-frame calculations.
-        /// </summary>
-        public float CachedHeadWearableOffset { get; private set; }
-
-        [field: Header("Other")]
-
+        [field: Header("OTHER")]
         // Anchor points to attach entities to, through the SDK
         [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; }
         [field: SerializeField] public Transform HeadAnchorPoint { get; private set; }
@@ -100,6 +92,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
 
+        [Header("NAMETAG RELATED")]
+        [SerializeField] private Transform headAramatureBone;
+        [SerializeField] private Transform[] potentialHighestBones;
+
+        /// Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
+        private float cachedHeadWearableOffset;
+
         private void Awake()
         {
             if (!AvatarAnimator)
@@ -118,6 +117,26 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public Transform GetTransform() =>
             transform;
+
+        public Vector3 GetAdaptiveNametagPosition()
+        {
+            Vector3 headPos = headAramatureBone.position;
+
+            float maxY = headPos.y;
+            var isHeadHighest = true;
+
+            foreach (Transform bone in potentialHighestBones)
+                if (bone.position.y > maxY)
+                {
+                    maxY = bone.position.y;
+                    isHeadHighest = false;
+                }
+
+            // apply scaling for head animation
+            float offset = isHeadHighest ? cachedHeadWearableOffset * headAramatureBone.localScale.y : cachedHeadWearableOffset;
+
+            return new Vector3(headPos.x, maxY + offset, headPos.z);
+        }
 
         public void SetAnimatorFloat(int hash, float value)
         {
@@ -185,13 +204,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void UpdateHeadWearableOffset(in Bounds skinningBounds)
         {
             // Calculate offset from head bone Y position to the highest point of wearables
-            float headBoneY = HeadAramatureBone.position.y;
+            float headBoneY = headAramatureBone.position.y;
             float maxWearableY = transform.position.y + skinningBounds.max.y; // Convert local to world Y
 
             // Ensure minimum offset for head clearance, add small buffer for nametag positioning
             const float NAMETAG_BUFFER = 0.025f;
 
-            CachedHeadWearableOffset = maxWearableY - headBoneY + NAMETAG_BUFFER;
+            cachedHeadWearableOffset = maxWearableY - headBoneY + NAMETAG_BUFFER;
         }
     }
 

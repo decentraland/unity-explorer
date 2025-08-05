@@ -95,7 +95,7 @@ namespace DCL.Nametags
                 return;
 
             NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, profile.HasClaimedName, profile);
-            UpdateTagPosition(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagPositionAndRotation(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
 
@@ -112,7 +112,7 @@ namespace DCL.Nametags
                 return;
 
             NametagView nametagView = CreateNameTagView(in avatarShape, true, false);
-            UpdateTagPosition(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagPositionAndRotation(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
 
@@ -145,7 +145,7 @@ namespace DCL.Nametags
             nametagView.gameObject.name = avatarShape.ID;
 
             UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
-            UpdateTagPosition(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagPositionAndRotation(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
         }
 
         [Query]
@@ -194,15 +194,11 @@ namespace DCL.Nametags
                 return;
             }
 
-            // Calculate nametag position using head bone + cached wearable offset scaled by amount of head scaling (via emotes)
-            Vector3 position = avatarBase.HeadAramatureBone.position
-                               + new Vector3(0, avatarBase.CachedHeadWearableOffset * avatarBase.HeadAramatureBone.localScale.y, 0);
-
-            UpdateTagPosition(nametagView.transform, position, cameraForward, cameraUp);
+            UpdateTagPositionAndRotation(nametagView.transform, avatarBase.GetAdaptiveNametagPosition(), cameraForward, cameraUp);
             UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
         }
 
-        private static void UpdateTagPosition(Transform view, float3 newPosition, float3 cameraForward, float3 cameraUp)
+        private static void UpdateTagPositionAndRotation(Transform view, float3 newPosition, float3 cameraForward, float3 cameraUp)
         {
             view.position = newPosition;
             view.LookAt(newPosition + cameraForward, cameraUp);

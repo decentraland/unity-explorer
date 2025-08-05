@@ -3547,7 +3547,6 @@ MonoBehaviour:
   <HeadLookAtTargetHorizontal>k__BackingField: {fileID: 649947946792223910}
   <HeadLookAtTargetVertical>k__BackingField: {fileID: 5233882474765970618}
   <HeadPositionConstraint>k__BackingField: {fileID: 3708642057345503796}
-  <HeadAramatureBone>k__BackingField: {fileID: 4808891874506309325}
   <NameTagAnchorPoint>k__BackingField: {fileID: 4404269078412893173}
   <HeadAnchorPoint>k__BackingField: {fileID: 4808891874506309325}
   <NeckAnchorPoint>k__BackingField: {fileID: 6393731801598406390}
@@ -3573,6 +3572,10 @@ MonoBehaviour:
   <RightLegAnchorPoint>k__BackingField: {fileID: 7773640597938076529}
   <RightFootAnchorPoint>k__BackingField: {fileID: 8530642813781257132}
   <RightToeBaseAnchorPoint>k__BackingField: {fileID: 3392771611989602023}
+  headAramatureBone: {fileID: 4808891874506309325}
+  potentialHighestBones:
+  - {fileID: 4332106098282305372}
+  - {fileID: 3392771611989602023}
 --- !u!1 &8135611663119746201
 GameObject:
   m_ObjectHideFlags: 0
