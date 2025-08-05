@@ -22,6 +22,7 @@ namespace DCL.Chat.ChatCommands
         private readonly ChatHistoryStorage? chatHistoryStorage;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ICommunityDataService communityDataService;
+        private readonly ChatMemberListService chatMemberListService;
         private readonly PrivateConversationUserStateService chatUserStateUpdater;
         private readonly CurrentChannelService currentChannelService;
         private readonly NearbyUserStateService nearbyUserStateService;
@@ -35,7 +36,8 @@ namespace DCL.Chat.ChatCommands
             ICommunityDataService communityDataService,
             PrivateConversationUserStateService chatUserStateUpdater,
             CurrentChannelService currentChannelService,
-            NearbyUserStateService nearbyUserStateService)
+            NearbyUserStateService nearbyUserStateService,
+            ChatMemberListService chatMemberListService)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
@@ -46,6 +48,7 @@ namespace DCL.Chat.ChatCommands
             this.chatUserStateUpdater = chatUserStateUpdater;
             this.currentChannelService = currentChannelService;
             this.nearbyUserStateService = nearbyUserStateService;
+            this.chatMemberListService = chatMemberListService;
         }
 
         public async UniTaskVoid ExecuteAsync(CancellationToken ct)
@@ -65,11 +68,13 @@ namespace DCL.Chat.ChatCommands
             });
 
             // Finalize Initialization
-            await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+            await chatUserStateUpdater.InitializeAsync();
 
             // Set default channel after all channels are loaded
             if (chatHistory.Channels.TryGetValue(ChatChannel.NEARBY_CHANNEL_ID, out var nearbyChannel))
                 SetDefaultChannel(nearbyChannel);
+
+            chatMemberListService.Start();
         }
 
         private async UniTask InitializeBaseChannelsAsync(CancellationToken ct)

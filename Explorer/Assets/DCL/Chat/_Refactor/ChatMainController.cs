@@ -88,8 +88,6 @@ namespace DCL.Chat
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
 
-            chatMemberListService.Start();
-
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,

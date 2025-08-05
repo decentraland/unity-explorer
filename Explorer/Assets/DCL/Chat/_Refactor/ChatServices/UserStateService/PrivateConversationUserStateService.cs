@@ -82,7 +82,7 @@ namespace DCL.Chat.ChatServices
 
         public void Activate() { }
 
-        public async UniTask<HashSet<string>> InitializeAsync(IEnumerable<ChatChannel.ChannelId> openConversations)
+        public async UniTask<HashSet<string>> InitializeAsync()
         {
             SubscribeToEvents();
 
