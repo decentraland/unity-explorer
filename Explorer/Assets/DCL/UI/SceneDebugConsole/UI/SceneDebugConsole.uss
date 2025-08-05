@@ -4,6 +4,7 @@
     position: absolute;
     width: 1520px;
     height: 770px;
+    max-width: 90%;
     background-color: rgba(0, 0, 0, 0.93);
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
@@ -47,6 +48,7 @@
 
 .scene-debug-console__list {
     flex-grow: 1;
+    flex-basis: 1px;
 }
 
 .scene-debug-console__list .unity-list-view__empty-label {
@@ -247,7 +249,7 @@
     background-image: var(--sprite-common__icon-copy);
 }
 
-.console-entry .console-entry__copy-icon {
+.console-entry:hover .console-entry__copy-icon {
     visibility: visible;
 }
 
