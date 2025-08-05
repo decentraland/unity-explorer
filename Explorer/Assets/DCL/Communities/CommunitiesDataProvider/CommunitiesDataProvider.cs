@@ -23,9 +23,12 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string> CommunityUserRemoved;
         public event Action<string, string> CommunityUserBanned;
 
+        public PrivateCommunitiesDataProvider PrivateCommunitiesDataProvider => privateCommunitiesDataProvider;
+
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly PrivateCommunitiesDataProvider privateCommunitiesDataProvider;
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
 
@@ -37,6 +40,8 @@ namespace DCL.Communities.CommunitiesDataProvider
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
             this.web3IdentityCache = web3IdentityCache;
+
+            privateCommunitiesDataProvider = new PrivateCommunitiesDataProvider(communitiesBaseUrl, web3IdentityCache);
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
