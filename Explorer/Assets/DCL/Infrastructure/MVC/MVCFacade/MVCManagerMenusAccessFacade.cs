@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
 using DCL.Chat.EventBus;
+using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
@@ -42,6 +43,7 @@ namespace MVC
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly CommunitiesDataProvider communityDataProvider;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
@@ -61,7 +63,8 @@ namespace MVC
             IProfileRepository profileRepository,
             ISharedSpaceManager sharedSpaceManager,
             CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            CommunitiesDataProvider communityDataProvider)
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
@@ -77,6 +80,7 @@ namespace MVC
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communityDataProvider = communityDataProvider;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -107,6 +111,8 @@ namespace MVC
 
         public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, bool isModeratorOrAdmin, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
+            if (string.IsNullOrEmpty(participantWalletId)) return;
+
             Web3Address walletId = new Web3Address(participantWalletId);
             Profile profile = await profileRepository.GetAsync(walletId, ct);
 
@@ -139,7 +145,11 @@ namespace MVC
         private async UniTask ShowCommunityPlayerEntryContextMenu(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false, bool isModeratorOrAdmin = false)
         {
-            communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, voiceChatContextMenuSettings, voiceChatOrchestrator);
+            communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
+                friendServiceProxy, chatEventBus, mvcManager,
+                contextMenuSettings, analytics, onlineUsersProvider,
+                realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager,
+                voiceChatContextMenuSettings, voiceChatOrchestrator, communityDataProvider);
 
             await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker, isModeratorOrAdmin);
         }

@@ -624,7 +624,8 @@ namespace Global.Dynamic
                 profileRepository,
                 sharedSpaceManager,
                 communityVoiceChatContextMenuSettingsSo,
-                voiceChatContainer.VoiceChatOrchestrator);
+                voiceChatContainer.VoiceChatOrchestrator,
+                communitiesDataProvider);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,

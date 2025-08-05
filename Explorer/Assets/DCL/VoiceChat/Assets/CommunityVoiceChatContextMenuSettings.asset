@@ -28,3 +28,4 @@ MonoBehaviour:
   <PromoteToSpeakerText>k__BackingField: Promote to speaker
   <BanUserSprite>k__BackingField: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
   <BanUserText>k__BackingField: Ban from community
+  <BanUserPopupSprite>k__BackingField: {fileID: 21300000, guid: 16f3bc32e2ad743e3b764015ec422c9e, type: 3}

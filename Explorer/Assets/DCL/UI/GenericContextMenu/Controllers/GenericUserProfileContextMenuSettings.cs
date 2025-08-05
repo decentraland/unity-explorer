@@ -1,10 +1,10 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controllers
 {
-    [CreateAssetMenu(fileName = "GenericUserProfileContextMenuSettings", menuName = "DCL/UI/Generic User Profile ContextMenu Settings")]
+    // We only need one of these, so its commented to reduce clutter
+    //[CreateAssetMenu(fileName = "GenericUserProfileContextMenuSettings", menuName = "DCL/UI/Generic User Profile ContextMenu Settings")]
     public class GenericUserProfileContextMenuSettings : ScriptableObject
     {
         [field: SerializeField] public GenericContextMenuControlConfig BlockButtonConfig { get; private set; }

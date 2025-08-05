@@ -46,7 +46,6 @@ namespace DCL.VoiceChat
         string CurrentCommunityId { get; }
         bool HasActiveVoiceChatCall(string communityId);
         ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId);
-
         bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData);
     }
 

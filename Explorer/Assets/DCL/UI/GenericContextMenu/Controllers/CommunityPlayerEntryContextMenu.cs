@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -12,6 +13,8 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
@@ -26,12 +29,18 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
+using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
 namespace DCL.UI.GenericContextMenu.Controllers
 {
     public class CommunityPlayerEntryContextMenu
     {
         private delegate void StringDelegate(string id);
+
+        private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
+        private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
+        private const string BAN_MEMBER_CONFIRM_TEXT = "BAN";
 
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
 
@@ -44,6 +53,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly IRealmNavigator realmNavigator;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
+        private readonly CommunitiesDataProvider communityDataProvider;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -75,7 +86,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
-            CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings, IVoiceChatOrchestrator voiceChatOrchestrator)
+            CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
+            IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -85,7 +97,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communityDataProvider = communityDataProvider;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -119,8 +133,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT,
-            bool isSpeaker = false,
-            bool isModeratorOrAdmin = false)
+            bool isSpeaker = false, bool isModeratorOrAdmin = false
+        )
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -132,6 +146,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
                 jumpInButtonControlSettings.SetData(profile.UserId);
+
                 contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
                                                   friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
             }
@@ -251,6 +266,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 await friendService.AcceptFriendshipAsync(userAddress, ct);
             }
         }
+
         private void OnShowUserPassportClicked(string userId)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
@@ -306,9 +322,54 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private void OnBanUserClicked(string walletId)
         {
-
             closeContextMenuTask.TrySetResult();
-            // TODO: Implement ban user logic
+            ShowBanConfirmationDialog(walletId);
+        }
+
+        private void ShowBanConfirmationDialog(string walletId)
+        {
+            string currentCommunityId = voiceChatOrchestrator.CurrentCommunityId;
+            if (!voiceChatOrchestrator.TryGetActiveCommunityData(currentCommunityId, out var community)) return;
+
+            var participant = voiceChatOrchestrator.ParticipantsStateService.GetParticipantState(walletId);
+
+            if (participant == null) return;
+
+            string communityName = community.communityName;
+
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            ShowBanConfirmationDialogAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(
+                                                                                         string.Format(BAN_MEMBER_TEXT_FORMAT, participant.Name, communityName),
+                                                                                         BAN_MEMBER_CANCEL_TEXT,
+                                                                                         BAN_MEMBER_CONFIRM_TEXT,
+                                                                                         voiceChatContextMenuSettings.BanUserPopupSprite,
+                                                                                         false, false,
+                                                                                         userInfo: new ConfirmationDialogParameter.UserData(walletId, participant.ProfilePictureUrl, ProfileNameColorHelper.GetNameColor(participant.Name))),
+                                                                                     ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+
+                BanUser(walletId, currentCommunityId);
+            }
+        }
+
+        private void BanUser(string userWallet, string communityId)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            BanUserAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid BanUserAsync(CancellationToken token)
+            {
+                await communityDataProvider.BanUserFromCommunityAsync(userWallet, communityId, token)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            }
         }
     }
 }

@@ -36,11 +36,11 @@ namespace DCL.VoiceChat.Services
         private CancellationTokenSource subscriptionCts = new();
         private bool isServiceDisabled = false;
 
-        public event Action<CommunityVoiceChatUpdate> CommunityVoiceChatUpdateReceived;
+        public event Action<CommunityVoiceChatUpdate>? CommunityVoiceChatUpdateReceived;
+        public event Action<ActiveCommunityVoiceChatsResponse>? ActiveCommunityVoiceChatsFetched;
 
-        public event Action Reconnected;
-        public event Action Disconnected;
-        public event Action<ActiveCommunityVoiceChatsResponse> ActiveCommunityVoiceChatsFetched;
+        public event Action? Reconnected;
+        public event Action? Disconnected;
 
         public RPCCommunityVoiceChatService(
             IRPCSocialServices socialServiceRPC,
