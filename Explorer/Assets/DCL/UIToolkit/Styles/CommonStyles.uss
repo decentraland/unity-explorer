@@ -5,6 +5,7 @@
     --dcl-color-rarity-unique: rgb(254, 162, 23);
     --dcl-color-black-40: rgba(0, 0, 0, 0.4);
     --dcl-color-black-70: rgba(0, 0, 0, 0.7);
+    --dcl-color-white-10: rgba(255, 255, 255, 0.1);
     --dcl-color-white-70: rgba(255, 255, 255, 0.7);
     
     --dcl-font-azeretmono-medium: url('/Assets/DCL/UIToolkit/Fonts/AzeretMono-Medium SDF.asset');
@@ -14,10 +15,15 @@
     -unity-font-definition: var(--dcl-font-inter-regular);
 }
 
-/* Labels have a default margin and padding that we almost always reset */
-Label {
+/* We reset some of the default Unity styles because they just get in the way */
+.unity-label {
     margin: 0;
     padding: 0;
+}
+
+.unity-button {
+    border-width: initial;
+    background-color: transparent;
 }
 
 .dcl-clickable {

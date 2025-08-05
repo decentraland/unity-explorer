@@ -23,7 +23,7 @@ namespace DCL.UI.SceneDebugConsole
         private IInputBlock inputBlock;
 
         private VisualElement consoleWindow;
-        private VisualElement pauseButton;
+        private Button pauseButton;
         private Toggle showLogsToggle;
         private Toggle showErrorsToggle;
         private ListView consoleListView;
@@ -60,7 +60,7 @@ namespace DCL.UI.SceneDebugConsole
 
             var clearButton = root.Q<Button>("ClearButton");
             var copyAllButton = root.Q<Button>("CopyAllButton");
-            pauseButton = root.Q("PauseButton");
+            pauseButton = root.Q<Button>("PauseButton");
             var closeButton = root.Q<Button>("CloseButton");
             showLogsToggle = root.Q<Toggle>("LogsToggle");
             showErrorsToggle = root.Q<Toggle>("ErrorsToggle");
@@ -86,7 +86,7 @@ namespace DCL.UI.SceneDebugConsole
 
             // Buttons / Toggles
             clearButton.clicked += OnClearClicked;
-            pauseButton.AddManipulator(new Clickable(OnPauseClicked));
+            pauseButton.clicked += OnPauseClicked;
             copyAllButton.clicked += OnCopyAllClicked;
             closeButton.clicked += ToggleHide;
             searchField.RegisterValueChangedCallback(_ => RefreshFilters());

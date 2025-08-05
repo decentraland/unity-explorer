@@ -290,9 +290,14 @@
     padding-right: 7px;
     padding-bottom: 7px;
     padding-left: 7px;
-    background-color: rgba(0, 0, 0, 0);
     border-top-width: 0;
     border-right-width: 0;
     border-bottom-width: 0;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.03);
+    width: 30px;
+    height: 30px;
     border-left-width: 0;
+    background-image: var(--sprite-common__icon-close);
+    background-size: 53% 53%;
 }
