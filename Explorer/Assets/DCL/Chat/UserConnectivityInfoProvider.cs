@@ -252,8 +252,10 @@ namespace DCL.Chat
             else if (update == UpdateFromParticipant.Disconnected)
             {
                 ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {participant.Identity}, {update}");
-                participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Remove(participant.Identity);
-                UserDisconnected?.Invoke(participant.Identity, ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+                // Hotfix: Due to a problem with Livekit connection messages, greying out nearby messages is not working properly (connected users look like disconnected)
+                //         So for now disconnections will be ignored in Nearby
+                // participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Remove(participant.Identity);
+                // UserDisconnected?.Invoke(participant.Identity, ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             }
         }
 
