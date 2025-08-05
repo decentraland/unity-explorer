@@ -10,6 +10,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using NSubstitute;
 using NSubstitute.Exceptions;
 using NUnit.Framework;
@@ -57,7 +58,7 @@ namespace DCL.LOD.Tests
             };
             sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
-            system = new UnloadSceneLODSystem(world, scenesCache, lodCache);
+            system = new UnloadSceneLODSystem(world, scenesCache, lodCache, Substitute.For<IGltfContainerAssetsCache>());
         }
 
         [Test]

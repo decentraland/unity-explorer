@@ -56,21 +56,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (localSceneDevelopment && !useRemoteAssetBundles)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
-            {
-                if (staticSceneAssetBundle.Supported && staticSceneAssetBundle.Assets.ContainsKey(intention.Hash))
-                {
-                    //Resolve immediately if in the static scene
-                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>(staticSceneAssetBundle.AssetBundleData.Asset));
-                    staticSceneAssetBundle.AssetBundleData.Asset.AddReference();
-                }
-                else
-                {
-                    // If not in cache, try load from asset bundle
-                    World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
-                }
-
-            }
-
+                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
         }
     }
 }

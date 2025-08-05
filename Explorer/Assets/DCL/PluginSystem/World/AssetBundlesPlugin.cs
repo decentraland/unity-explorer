@@ -12,6 +12,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using SceneRunner.Scene;
 using System;
 using System.Buffers;
@@ -41,9 +42,10 @@ namespace DCL.PluginSystem.World
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly URLDomain assetBundleURL;
         private readonly Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary;
+        private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
-            URLDomain assetBundleURL, Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary)
+            URLDomain assetBundleURL, Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary, IGltfContainerAssetsCache gltfContainerAssetsCache)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
@@ -51,6 +53,7 @@ namespace DCL.PluginSystem.World
             this.partialsDiskCache = partialsDiskCache;
             this.assetBundleURL = assetBundleURL;
             this.staticSceneAssetBundlesDictionary = staticSceneAssetBundlesDictionary;
+            this.gltfContainerAssetsCache = gltfContainerAssetsCache;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
 
@@ -73,7 +76,7 @@ namespace DCL.PluginSystem.World
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
 
-            ResolveStaticSceneAssetBundleSystem.InjectToWorld(ref builder, staticSceneAssetBundlesDictionary);
+            ResolveStaticSceneAssetBundleSystem.InjectToWorld(ref builder, staticSceneAssetBundlesDictionary, gltfContainerAssetsCache);
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);

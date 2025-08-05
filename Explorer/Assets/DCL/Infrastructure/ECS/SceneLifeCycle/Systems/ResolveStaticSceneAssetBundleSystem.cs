@@ -7,6 +7,8 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Systems;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -23,10 +25,12 @@ namespace ECS.SceneLifeCycle.Systems
     {
 
         private readonly Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary;
+        private IGltfContainerAssetsCache assetsCache;
 
-        public ResolveStaticSceneAssetBundleSystem(World world, Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary) : base(world)
+        public ResolveStaticSceneAssetBundleSystem(World world, Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary, IGltfContainerAssetsCache assetsCache) : base(world)
         {
             this.staticSceneAssetBundlesDictionary = staticSceneAssetBundlesDictionary;
+            this.assetsCache = assetsCache;
         }
 
         protected override void Update(float t)
@@ -68,20 +72,19 @@ namespace ECS.SceneLifeCycle.Systems
             if (staticSceneAssetBundle.AssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
                 staticSceneAssetBundle.AssetBundleData = Result;
+                staticSceneAssetBundle.staticAssets = new List<string>();
                 if (Result.Succeeded)
                 {
-                    staticSceneAssetBundle.Assets = new Dictionary<string, GameObject>();
                     foreach (Object asset in staticSceneAssetBundle.AssetBundleData.Asset.assets)
                     {
-                        if(asset is GameObject go)
-                            staticSceneAssetBundle.Assets.Add(asset.name, go);
+                        if (asset is GameObject go)
+                        {
+                            staticSceneAssetBundle.staticAssets.Add(asset.name);
+                            assetsCache.Dereference(asset.name, CreateGltfAssetFromAssetBundleSystem.CreateGltfObject(Result.Asset, go, "static_"));
+                            staticSceneAssetBundle.TotalStaticAssets++;
+                        }
                     }
                 }
-                else
-                {
-                    staticSceneAssetBundle.Assets = new Dictionary<string, GameObject>();
-                }
-
             }
         }
 

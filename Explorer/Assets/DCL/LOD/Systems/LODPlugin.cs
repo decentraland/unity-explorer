@@ -12,6 +12,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.Systems;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using UnityEngine;
 using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArrayConstants;
 
@@ -40,12 +41,14 @@ namespace DCL.PluginSystem.Global
         private readonly int lodLevels;
         private readonly Transform lodCacheParent;
 
+        private readonly GltfContainerAssetsCache gltfContainerAssetsCache;
+
         public LODPlugin(IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
             ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainerFactory textureArrayContainerFactory,
             ILODSettingsAsset lodSettingsAsset, IRealmPartitionSettings partitionSettings,
             ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, IDecentralandUrlsSource decentralandUrlsSource, Transform lodCacheParent, bool lodEnabled,
-            int lodLevels)
+            int lodLevels, GltfContainerAssetsCache gltfContainerAssetsCache)
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.memoryBudget = memoryBudget;
@@ -61,6 +64,7 @@ namespace DCL.PluginSystem.Global
             this.lodGroupPool = lodGroupPool;
             this.lodCacheParent = lodCacheParent;
             this.lodLevels = lodLevels;
+            this.gltfContainerAssetsCache = gltfContainerAssetsCache;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -77,7 +81,7 @@ namespace DCL.PluginSystem.Global
                     lodCacheParent, sceneReadinessReportQueue, scenesCache);
 
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, decentralandUrlsSource);
-                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, partitionSettings);
+                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, partitionSettings, gltfContainerAssetsCache);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodLevels);
             }
             else

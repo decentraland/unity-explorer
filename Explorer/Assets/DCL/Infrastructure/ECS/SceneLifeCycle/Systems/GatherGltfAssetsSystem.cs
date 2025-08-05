@@ -176,7 +176,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             void Conclude()
             {
-                UnityEngine.Debug.Log($"JUANI COMPLETED AT {sceneStateProvider.TickNumber}");
                 concluded = true;
                 sceneData.SceneLoadingConcluded = true;
 

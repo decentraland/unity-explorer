@@ -5,6 +5,7 @@ using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using UnityEngine;
 using Utility;
 
@@ -20,6 +21,10 @@ namespace DCL.LOD.Components
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
+
+        public bool RequestSingleSceneAssetBundleInstantiation;
+
+        public List<GltfContainerAsset> GltfContainerAssets;
 
 
         public void Dispose(World world)

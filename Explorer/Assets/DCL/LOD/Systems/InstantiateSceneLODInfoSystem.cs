@@ -17,6 +17,9 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Components;
+using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -35,9 +38,11 @@ namespace DCL.LOD.Systems
         private float defaultLodBias;
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly IGltfContainerAssetsCache assetsCache;
 
 
-        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, IRealmPartitionSettings realmPartitionSettings) : base(world)
+        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, IRealmPartitionSettings realmPartitionSettings,
+            IGltfContainerAssetsCache assetsCache) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
@@ -45,6 +50,7 @@ namespace DCL.LOD.Systems
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
             this.realmPartitionSettings = realmPartitionSettings;
+            this.assetsCache = assetsCache;
         }
 
         public override void Initialize()
@@ -56,6 +62,37 @@ namespace DCL.LOD.Systems
         protected override void Update(float t)
         {
             ResolveCurrentLODPromiseQuery(World);
+            InstantiateSingleSceneLODPromiseQuery(World);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void InstantiateSingleSceneLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref StaticSceneAssetBundle staticSceneAssetBundle)
+        {
+            if (sceneLODInfo.RequestSingleSceneAssetBundleInstantiation)
+            {
+                if (staticSceneAssetBundle is { Supported: true, AssetBundleData: { IsInitialized: false } })
+                {
+                    staticSceneAssetBundle.RequestAssetBundle();
+                    return;
+                }
+
+                var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
+                sceneLODInfo.GltfContainerAssets = new List<GltfContainerAsset>();
+
+                foreach (string staticAsset in staticSceneAssetBundle.staticAssets)
+                {
+                    if (assetsCache.TryGet(staticAsset, out var asset))
+                    {
+                        asset.Root.SetActive(true);
+                        asset.Root.transform.SetParent(instantiatedLOD.transform);
+                        sceneLODInfo.GltfContainerAssets.Add(asset);
+                    }
+                }
+
+                sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+                sceneLODInfo.RequestSingleSceneAssetBundleInstantiation = false;
+            }
         }
 
         [Query]

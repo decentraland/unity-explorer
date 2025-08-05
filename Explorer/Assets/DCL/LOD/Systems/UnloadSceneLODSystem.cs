@@ -12,6 +12,8 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -22,11 +24,14 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
+        private readonly IGltfContainerAssetsCache assetsCache;
 
-        public UnloadSceneLODSystem(World world, IScenesCache scenesCache, ILODCache lodCache) : base(world)
+
+        public UnloadSceneLODSystem(World world, IScenesCache scenesCache, ILODCache lodCache, IGltfContainerAssetsCache assetsCache) : base(world)
         {
             this.scenesCache = scenesCache;
             this.lodCache = lodCache;
+            this.assetsCache = assetsCache;
         }
 
         protected override void Update(float t)
@@ -52,10 +57,23 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         private void UnloadLODWhenSceneReady(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
+            ref SceneLODInfo sceneLODInfo, ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref StaticSceneAssetBundle staticSceneAssetBundle)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
+                if (staticSceneAssetBundle.Supported)
+                {
+                    for (var i = 0; i < staticSceneAssetBundle.staticAssets.Count; i++)
+                    {
+                        string staticAssetName = staticSceneAssetBundle.staticAssets[i];
+                        assetsCache.Dereference(staticAssetName, sceneLODInfo.GltfContainerAssets[i]);
+                    }
+
+                    sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                    World.Remove<SceneLODInfo>(entity);
+                    return;
+                }
+
                 if (!sceneFacade.IsSceneReady())
                     return;
 
