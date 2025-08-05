@@ -54,6 +54,8 @@ namespace DCL.VoiceChat
         void StartCall(string callId, VoiceChatType callType);
         void HangUp();
         void HandleConnectionError();
+        void HandleConnectionEnded();
+
         void ChangePanelSize(VoiceChatPanelSize panelSize);
     }
 

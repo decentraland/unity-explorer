@@ -80,7 +80,7 @@ namespace DCL.VoiceChat
 
             if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
-                if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
+                if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
                 {
                     ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Call ended with status {status}, triggering channel change");
                     OnCurrentChannelChanged(currentChannel.Value);

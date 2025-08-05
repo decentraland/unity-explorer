@@ -105,12 +105,12 @@ namespace DCL.VoiceChat
             switch (newStatus)
             {
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                    if (currentStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL) DisconnectFromRoomAsync().Forget();
+                    break;
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    if (currentStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL) { DisconnectFromRoomAsync().Forget(); }
-
+                    //We ignore these states as they are final states. If we reach these we should be already disconnected from the room altogether.
                     break;
-
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     ConnectToRoomAsync().Forget();
                     break;
@@ -132,9 +132,8 @@ namespace DCL.VoiceChat
 
                 if (!result.Success)
                 {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectionUrl}: {result.ErrorMessage}");
-
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectionUrl}: {result.ErrorMessage}");
+                    roomHub.VoiceChatRoom().StopAsync().Forget();
                     voiceChatOrchestrator.HandleConnectionError();
                 }
             }
@@ -296,7 +295,18 @@ namespace DCL.VoiceChat
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection cleanup completed");
 
-                reconnectionManager.HandleDisconnection(disconnectReason);
+                if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
+                {
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Valid disconnect reason ({disconnectReason}) - no reconnection needed");
+                    DisconnectFromRoomAsync().Forget();
+                    voiceChatOrchestrator.HandleConnectionEnded();
+                    return;
+                }
+
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Unexpected disconnect reason ({disconnectReason}) - starting reconnection attempts");
+
+
+                reconnectionManager.HandleDisconnection();
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }
         }

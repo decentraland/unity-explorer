@@ -46,7 +46,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
-            this.roomManager.ConnectionEstablished += OnConnectionEnstablished;
+            this.roomManager.ConnectionEstablished += OnConnectionEstablished;
             this.view.ApproveSpeaker += PromoteToSpeaker;
             this.view.DenySpeaker += DenySpeaker;
 
@@ -67,25 +67,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
         }
 
-        private void PromoteToSpeaker(string walletId)
-        {
-            voiceChatOrchestrator.PromoteToSpeakerInCurrentCall(walletId);
-        }
-
-        private void DenySpeaker(string walletId)
-        {
-            voiceChatOrchestrator.DenySpeakerInCurrentCall(walletId);
-        }
-
-        private void OnConnectionEnstablished()
-        {
-            if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
-                view.SetConnectedPanel(true);
-        }
-
         public void Dispose()
         {
-            roomManager.ConnectionEstablished -= OnConnectionEnstablished;
+            roomManager.ConnectionEstablished -= OnConnectionEstablished;
 
             view.CollapseButtonClicked -= OnCollapsedButtonClicked;
             view.ApproveSpeaker -= PromoteToSpeaker;
@@ -99,6 +83,22 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             communityVoiceChatSearchController?.Dispose();
 
             ClearPool();
+        }
+
+        private void PromoteToSpeaker(string walletId)
+        {
+            voiceChatOrchestrator.PromoteToSpeakerInCurrentCall(walletId);
+        }
+
+        private void DenySpeaker(string walletId)
+        {
+            voiceChatOrchestrator.DenySpeakerInCurrentCall(walletId);
+        }
+
+        private void OnConnectionEstablished()
+        {
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
+                view.SetConnectedPanel(true);
         }
 
         private void CloseListenersSection()
@@ -211,7 +211,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private PlayerEntryView GetAndConfigurePlayerEntry(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
             playerEntriesPool.Get(out PlayerEntryView entryView);
-            usedPlayerEntries.Add(participantState.WalletId, entryView);
+            usedPlayerEntries[participantState.WalletId] =  entryView;
 
             entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, ProfileNameColorHelper.GetNameColor(participantState.Name.Value), participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
             entryView.nameElement.Setup(participantState.Name.Value, participantState.WalletId, participantState.HasClaimedName.Value ?? false, ProfileNameColorHelper.GetNameColor(participantState.Name.Value));

@@ -22,6 +22,8 @@ namespace DCL.VoiceChat
 
         public abstract void HandleLivekitConnectionFailed();
 
+        public abstract void HandleLivekitConnectionEnded();
+
         protected void UpdateStatus(VoiceChatStatus newStatus)
         {
             UpdateStatusAsync().Forget();

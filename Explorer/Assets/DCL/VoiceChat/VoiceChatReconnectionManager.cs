@@ -51,17 +51,10 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
 
-        public void HandleDisconnection(DisconnectReason? disconnectReason)
+        public void HandleDisconnection()
         {
             if (isDisposed) return;
 
-            if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
-            {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Valid disconnect reason ({disconnectReason}) - no reconnection needed");
-                return;
-            }
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Unexpected disconnect reason ({disconnectReason}) - starting reconnection attempts");
             HandleUnexpectedDisconnection();
         }
 
@@ -76,6 +69,7 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} No remote participants in room, skipping reconnection attempts");
                 voiceChatOrchestrator.HandleConnectionError();
                 ReconnectionFailed?.Invoke();
+                roomHub.VoiceChatRoom().StopAsync().Forget();
                 return;
             }
 
