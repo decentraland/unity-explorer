@@ -102,13 +102,13 @@ namespace DCL.Chat.ChatServices
         private void SetOnline(string userId)
         {
             if (onlineParticipants.Add(userId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, userId, true));
+                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, true));
         }
 
         private void SetOffline(string userId)
         {
             if (onlineParticipants.Remove(userId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, userId, false));
+                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, false));
         }
     }
 }

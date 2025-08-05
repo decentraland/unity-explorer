@@ -112,7 +112,7 @@ namespace DCL.Chat.ChatServices
                     case ConnectionState.ConnDisconnected:
                     case ConnectionState.ConnConnected:
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
-                        eventBus.Publish(new ChatEvents.NearbyUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, OnlineParticipants));
+                        eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants));
                         break;
                 }
             }
@@ -121,13 +121,13 @@ namespace DCL.Chat.ChatServices
         private void SetOnline(string userId)
         {
             if (onlineParticipants.Add(userId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, userId, true));
+                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, true));
         }
 
         private void SetOffline(string userId)
         {
             if (onlineParticipants.Remove(userId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, userId, false));
+                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false));
         }
     }
 }

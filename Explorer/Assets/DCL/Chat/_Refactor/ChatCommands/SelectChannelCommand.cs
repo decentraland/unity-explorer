@@ -59,7 +59,7 @@ namespace DCL.Chat.ChatCommands
                         userStateService = communityUserStateService;
                         break;
                     case ChatChannel.ChatChannelType.USER:
-                        privateConversationUserStateService.Activate(channel.Id.Id);
+                        privateConversationUserStateService.Activate();
                         userStateService = privateConversationUserStateService;
                         break;
                     default:

@@ -72,16 +72,33 @@ namespace DCL.Chat
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
         }
 
         private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
         {
+            if (userStatusUpdatedEvent.ChannelType != ChatChannel.ChatChannelType.USER) return;
+
             var channelId = new ChatChannel.ChannelId(userStatusUpdatedEvent.UserId);
 
             if (viewModels.TryGetValue(channelId, out BaseChannelViewModel? baseVm) &&
                 baseVm is UserChannelViewModel userVm)
             {
                 userVm.IsOnline = userStatusUpdatedEvent.IsOnline;
+                view.UpdateConversation(userVm);
+            }
+        }
+
+        private void OnChannelUsersStatusUpdated(ChatEvents.ChannelUsersStatusUpdated @event)
+        {
+            if (@event.ChannelType != ChatChannel.ChatChannelType.USER) return;
+
+            foreach (KeyValuePair<ChatChannel.ChannelId, BaseChannelViewModel> kvp in viewModels)
+            {
+                if (kvp.Value is not UserChannelViewModel userVm) continue;
+
+                bool isOnline = @event.OnlineUsers.Contains(kvp.Key.Id);
+                userVm.IsOnline = isOnline;
                 view.UpdateConversation(userVm);
             }
         }
