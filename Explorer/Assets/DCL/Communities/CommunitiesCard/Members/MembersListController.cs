@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -22,7 +23,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Types;
-using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
+using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -40,7 +41,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly MembersListView view;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
@@ -94,7 +95,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             ProfileRepositoryWrapper profileDataProvider,
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            CommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             WarningNotificationView inWorldWarningNotificationView,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,

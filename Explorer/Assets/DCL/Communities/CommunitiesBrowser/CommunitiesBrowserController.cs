@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -35,7 +36,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
-        private readonly CommunitiesDataProvider dataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IInputBlock inputBlock;
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
@@ -63,7 +64,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
             ICursor cursor,
-            CommunitiesDataProvider dataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
             WarningNotificationView warningNotificationView,

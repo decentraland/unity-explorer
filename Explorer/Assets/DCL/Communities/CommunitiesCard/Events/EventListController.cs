@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
@@ -17,7 +18,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
-using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 
 namespace DCL.Communities.CommunitiesCard.Events

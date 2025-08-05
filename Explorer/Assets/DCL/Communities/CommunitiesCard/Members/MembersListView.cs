@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel;
 using DCL.UI;
@@ -17,7 +18,7 @@ using System.Threading;
 using UnityEngine.UI;
 using Utility;
 using Utility.Types;
-using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
+using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {

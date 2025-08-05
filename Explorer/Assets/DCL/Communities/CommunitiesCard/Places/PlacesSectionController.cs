@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
@@ -17,7 +18,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
-using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
 
@@ -50,7 +51,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
 
         private readonly PlacesSectionView view;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly SectionFetchData<PlaceData> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
@@ -73,7 +74,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public PlacesSectionController(PlacesSectionView view,
             ThumbnailLoader thumbnailLoader,
-            CommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IPlacesAPIService placesAPIService,
             WarningNotificationView inWorldWarningNotificationView,
             WarningNotificationView inWorldSuccessNotificationView,

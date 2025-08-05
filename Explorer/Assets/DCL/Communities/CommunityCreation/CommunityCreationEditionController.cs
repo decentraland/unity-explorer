@@ -3,6 +3,7 @@ using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -41,7 +42,7 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
-        private readonly CommunitiesDataProvider dataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
@@ -89,7 +90,7 @@ namespace DCL.Communities.CommunityCreation
             ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
-            CommunitiesDataProvider dataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,

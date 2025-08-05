@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
@@ -11,7 +12,7 @@ using System.Threading;
 using UnityEngine.Networking;
 using Random = UnityEngine.Random;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider
 {
     public class CommunitiesDataProvider
     {
@@ -328,6 +329,36 @@ namespace DCL.Communities
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
+        }
+
+        public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> ManageRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> ManageInviteToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityList(string userAddress, CancellationToken ct)
+        {
+            throw new NotImplementedException();
         }
 
         // TODO: Pending to implement these methods:
