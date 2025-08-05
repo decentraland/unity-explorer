@@ -120,14 +120,15 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(voiceChatContextMenuSettings.ContextMenuWidth, CONTEXT_MENU_OFFSET, voiceChatContextMenuSettings.VerticalPadding, voiceChatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right))
-                         .AddControl(openUserProfileButtonControlSettings)
-                         .AddControl(openConversationControlSettings)
-                         .AddControl(contextMenuJumpInButton)
-                         .AddControl(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right))
                          .AddControl(demoteSpeakerButton)
                          .AddControl(promoteToSpeakerButton)
                          .AddControl(kickFromStreamButton)
-                         .AddControl(banFromCommunityButton);
+                         .AddControl(banFromCommunityButton)
+                         .AddControl(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right))
+                         .AddControl(openUserProfileButtonControlSettings)
+                         .AddControl(openConversationControlSettings)
+                         .AddControl(contextMenuJumpInButton)
+                          ;
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile targetProfile, Vector3 position, Vector2 offset,
