@@ -278,7 +278,8 @@ namespace DCL.VoiceChat
 
             public void Dispose()
             {
-                source.Dispose();
+                source.Dispose(out var inner);
+                inner?.Dispose();
             }
         }
     }

@@ -37,7 +37,7 @@ namespace Utility.Ownership
         T Value { get; }
     }
 
-    public class Owned<T> : IDisposable where T: class
+    public class Owned<T> where T: class
     {
         private T? resource;
         private bool disposed;
@@ -52,9 +52,13 @@ namespace Utility.Ownership
             disposed = false;
         }
 
-        public void Dispose()
+        /// <summary>
+        /// Caller is responsible to manually dispose the inner resource
+        /// </summary>
+        public void Dispose(out T? inner)
         {
             disposed = true;
+            inner = resource;
             resource = null;
         }
 
@@ -69,7 +73,7 @@ namespace Utility.Ownership
         static Weak()
         {
             Owned<T> empty = new Owned<T>(null!);
-            empty.Dispose();
+            empty.Dispose(out _);
             Null = new Weak<T>(empty);
         }
 
