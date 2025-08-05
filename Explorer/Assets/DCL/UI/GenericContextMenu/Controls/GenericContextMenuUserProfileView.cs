@@ -83,7 +83,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor);
+            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor, settings.showWalletSection);
 
             if (settings.showProfilePicture)
             {
@@ -120,12 +120,23 @@ namespace DCL.UI.GenericContextMenu.Controls
             }
         }
 
-        private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor)
+        private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor, bool showWalletSection)
         {
             UserName.text = userName;
             UserName.color = userColor;
             UserNameTag.text = $"#{userAddress[^4..]}";
-            UserAddress.text = $"{userAddress[..5]}...{userAddress[^5..]}";
+
+            if (!showWalletSection)
+            {
+                UserAddress.gameObject.SetActive(false);
+                CopyAddressButton.gameObject.SetActive(false);
+            }
+            else
+            {
+                UserAddress.gameObject.SetActive(true);
+                UserAddress.text = $"{userAddress[..5]}...{userAddress[^5..]}";
+                CopyAddressButton.gameObject.SetActive(true);
+            }
 
             UserNameTag.gameObject.SetActive(!hasClaimedName);
             ClaimedNameBadge.gameObject.SetActive(hasClaimedName);
@@ -138,10 +149,12 @@ namespace DCL.UI.GenericContextMenu.Controls
         private float CalculateComponentHeight()
         {
             float totalHeight = Math.Max(userNameRectTransform.rect.height, USER_NAME_MIN_HEIGHT)
-                                + Math.Max(userAddressRectTransform.rect.height, USER_NAME_MIN_HEIGHT)
                                 + HorizontalLayoutComponent.padding.bottom
                                 + HorizontalLayoutComponent.padding.top
-                                + (ContentVerticalLayout.spacing * 2);
+                                + ContentVerticalLayout.spacing;
+
+            if (UserAddress.isActiveAndEnabled)
+                totalHeight += Math.Max(userAddressRectTransform.rect.height, USER_NAME_MIN_HEIGHT) + ContentVerticalLayout.spacing;
 
             if (ProfilePictureView.gameObject.activeSelf)
                 totalHeight += Math.Max(faceFrameRectTransform.rect.height, FACE_FRAME_MIN_HEIGHT);

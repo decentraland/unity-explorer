@@ -67,11 +67,14 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly ButtonWithDelegateContextMenuControlSettings<string> promoteToSpeakerButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> kickFromStreamButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> banFromCommunityButtonControlSettings;
-        private readonly GenericContextMenuElement contextMenuJumpInButton;
+        private readonly GenericContextMenuElement jumpInButton;
         private readonly GenericContextMenuElement demoteSpeakerButton;
         private readonly GenericContextMenuElement promoteToSpeakerButton;
         private readonly GenericContextMenuElement kickFromStreamButton;
         private readonly GenericContextMenuElement banFromCommunityButton;
+        private readonly GenericContextMenuElement separatorElement;
+        private readonly GenericContextMenuElement viewProfileButton;
+        private readonly GenericContextMenuElement chatButton;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
@@ -101,21 +104,24 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communityDataProvider;
 
-            userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
+            userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked, null, false, false);
+
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
             jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
-
             demoteSpeakerButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(voiceChatContextMenuSettings.DemoteSpeakerText, voiceChatContextMenuSettings.DemoteSpeakerSprite, new StringDelegate(OnDemoteSpeakerClicked));
             promoteToSpeakerButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(voiceChatContextMenuSettings.PromoteToSpeakerText, voiceChatContextMenuSettings.PromoteToSpeakerSprite, new StringDelegate(OnPromoteToSpeakerClicked));
             kickFromStreamButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(voiceChatContextMenuSettings.KickFromStreamText, voiceChatContextMenuSettings.KickFromStreamSprite, new StringDelegate(OnKickUserClicked));
             banFromCommunityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(voiceChatContextMenuSettings.BanUserText, voiceChatContextMenuSettings.BanUserSprite, new StringDelegate(OnBanUserClicked));
 
-            contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
+            jumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             demoteSpeakerButton = new GenericContextMenuElement(demoteSpeakerButtonControlSettings, false);
             promoteToSpeakerButton = new GenericContextMenuElement(promoteToSpeakerButtonControlSettings, false);
             kickFromStreamButton = new GenericContextMenuElement(kickFromStreamButtonControlSettings, false);
             banFromCommunityButton = new GenericContextMenuElement(banFromCommunityButtonControlSettings, false);
+            separatorElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right), false);
+            viewProfileButton = new GenericContextMenuElement(openUserProfileButtonControlSettings, false);
+            chatButton = new GenericContextMenuElement(openConversationControlSettings, false);
 
             contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(voiceChatContextMenuSettings.ContextMenuWidth, CONTEXT_MENU_OFFSET, voiceChatContextMenuSettings.VerticalPadding, voiceChatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
@@ -124,10 +130,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(promoteToSpeakerButton)
                          .AddControl(kickFromStreamButton)
                          .AddControl(banFromCommunityButton)
-                         .AddControl(new SeparatorContextMenuControlSettings(voiceChatContextMenuSettings.SeparatorHeight, -voiceChatContextMenuSettings.VerticalPadding.left, -voiceChatContextMenuSettings.VerticalPadding.right))
-                         .AddControl(openUserProfileButtonControlSettings)
-                         .AddControl(openConversationControlSettings)
-                         .AddControl(contextMenuJumpInButton)
+                         .AddControl(separatorElement)
+                         .AddControl(viewProfileButton)
+                         .AddControl(chatButton)
+                         .AddControl(jumpInButton)
                           ;
         }
 
@@ -139,7 +145,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
 
-            bool targetIsLocalParticipant = targetProfile.UserId == localParticipant.WalletId;
+            bool targetIsLocalParticipant = targetProfile.UserId.Equals(localParticipant.WalletId, StringComparison.InvariantCultureIgnoreCase);
             bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
 
             closeContextMenuTask?.TrySetResult();
@@ -153,7 +159,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
                 jumpInButtonControlSettings.SetData(targetProfile.UserId);
 
-                contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
+                jumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
                                                   friendOnlineStatusCacheProxy.Object.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
             }
 
@@ -166,6 +172,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
             kickFromStreamButtonControlSettings.SetData(targetProfile.UserId);
             banFromCommunityButtonControlSettings.SetData(targetProfile.UserId);
 
+            chatButton.Enabled = !targetIsLocalParticipant;
+            viewProfileButton.Enabled = !targetIsLocalParticipant;
+            separatorElement.Enabled = !targetIsLocalParticipant && localParticipantIsMod;
             promoteToSpeakerButton.Enabled = !targetIsSpeaker && localParticipantIsMod;
             demoteSpeakerButton.Enabled = targetIsSpeaker && localParticipantIsMod;
             kickFromStreamButton.Enabled = !targetIsLocalParticipant && localParticipantIsMod;
