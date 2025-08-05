@@ -87,6 +87,9 @@ namespace DCL.Chat.ChatMessages
             if (!view.IsItemVisible(separatorFixedIndexFromBottom))
                 return;
 
+            // It is possible that the current channel is not yet set (initialization is in progress)
+            if (currentChannelService.CurrentChannel == null) return;
+
             messageCountWhenSeparatorViewed = currentChannelService.CurrentChannel!.Messages.Count;
         }
 
