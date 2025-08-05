@@ -184,21 +184,14 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         /// <param name="skinningBounds">The LocalBounds from AvatarCustomSkinningComponent</param>
         public void UpdateHeadWearableOffset(in Bounds skinningBounds)
         {
-            if (HeadAramatureBone == null)
-            {
-                CachedHeadWearableOffset = 0.2f; // Fallback small offset if no head bone
-                return;
-            }
-
             // Calculate offset from head bone Y position to the highest point of wearables
             float headBoneY = HeadAramatureBone.position.y;
             float maxWearableY = transform.position.y + skinningBounds.max.y; // Convert local to world Y
 
             // Ensure minimum offset for head clearance, add small buffer for nametag positioning
-            const float MIN_HEAD_CLEARANCE = 0.2f;
-            const float NAMETAG_BUFFER = 0.1f;
+            const float NAMETAG_BUFFER = 0.025f;
 
-            CachedHeadWearableOffset = Mathf.Max(MIN_HEAD_CLEARANCE, maxWearableY - headBoneY + NAMETAG_BUFFER);
+            CachedHeadWearableOffset = maxWearableY - headBoneY + NAMETAG_BUFFER;
         }
     }
 

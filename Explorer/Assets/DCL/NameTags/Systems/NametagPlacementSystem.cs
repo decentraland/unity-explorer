@@ -30,7 +30,6 @@ namespace DCL.Nametags
     {
         private const float NAMETAG_SCALE_MULTIPLIER = 0.15f;
         private const string NAMETAG_DEFAULT_WALLET_ID = "0000";
-        private const float NAMETAG_MAX_HEIGHT = 4f;
 
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly NametagsData nametagsData;
@@ -96,7 +95,7 @@ namespace DCL.Nametags
                 return;
 
             NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, profile.HasClaimedName, profile);
-            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagPosition(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
 
@@ -113,7 +112,7 @@ namespace DCL.Nametags
                 return;
 
             NametagView nametagView = CreateNameTagView(in avatarShape, true, false);
-            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagPosition(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
 
@@ -146,7 +145,7 @@ namespace DCL.Nametags
             nametagView.gameObject.name = avatarShape.ID;
 
             UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
-            UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
+            UpdateTagPosition(nametagView.transform, characterTransform.Position, cameraForward, cameraUp);
         }
 
         [Query]
@@ -195,36 +194,18 @@ namespace DCL.Nametags
                 return;
             }
 
-            // Calculate nametag position using head bone + cached wearable offset
-            // This approach works correctly with both wearables and emotes
-            float3 position;
+            // Calculate nametag position using head bone + cached wearable offset scaled by amount of head scaling (via emotes)
+            Vector3 position = avatarBase.HeadAramatureBone.position
+                               + new Vector3(0, avatarBase.CachedHeadWearableOffset * avatarBase.HeadAramatureBone.localScale.y, 0);
 
-            if (avatarBase.HeadAramatureBone != null)
-            {
-                // Use head bone position + cached offset for wearables (like tall hats)
-                float3 headPosition = avatarBase.HeadAramatureBone.position;
-
-                // Account for head scaling during emotes (e.g., head grows/shrinks)
-                float headScaleFactor = avatarBase.HeadAramatureBone.localScale.y;
-                float scaledOffset = avatarBase.CachedHeadWearableOffset * headScaleFactor;
-
-                position = new float3(headPosition.x, headPosition.y + scaledOffset, headPosition.z);
-            }
-            else
-            {
-                // Fallback to old method if head bone is not available
-                NametagMathHelper.CalculateTagPosition(characterTransform.Position, NAMETAG_MAX_HEIGHT, 2.0f, out position);
-            }
-
-            UpdateTagPosition(nametagView, position, cameraForward, cameraUp);
+            UpdateTagPosition(nametagView.transform, position, cameraForward, cameraUp);
             UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
         }
 
-        private void UpdateTagPosition(NametagView view, float3 newPosition, float3 cameraForward, float3 cameraUp)
+        private static void UpdateTagPosition(Transform view, float3 newPosition, float3 cameraForward, float3 cameraUp)
         {
-            Transform transform = view.transform;
-            transform.position = newPosition;
-            transform.LookAt(newPosition + cameraForward, cameraUp);
+            view.position = newPosition;
+            view.LookAt(newPosition + cameraForward, cameraUp);
         }
 
         private void UpdateTagTransparencyAndScale(NametagView view, float3 cameraPosition, float3 characterPosition, float fovScaleFactor)
