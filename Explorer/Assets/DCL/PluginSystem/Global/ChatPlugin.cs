@@ -230,6 +230,7 @@ namespace DCL.PluginSystem.Global
                 chatMessagesBus,
                 chatHistory,
                 chatStorage,
+                chatMemberService,
                 nearbyUserStateService,
                 communityUserStateService,
                 chatUserStateService,
