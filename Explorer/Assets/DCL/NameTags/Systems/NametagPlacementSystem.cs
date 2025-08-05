@@ -21,10 +21,6 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Unity.Mathematics;
 
-// #if UNITY_EDITOR
-// using Utility.Editor;
-// #endif
-
 namespace DCL.Nametags
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -186,7 +182,7 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
-            NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
+            NametagView nametagView, in AvatarBase avatarBase, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
             if (avatarShape.HiddenByModifierArea ||
                 partitionComponent.IsBehind
@@ -199,14 +195,21 @@ namespace DCL.Nametags
                 return;
             }
 
-            // To view and test bounds:
-            //#if UNITY_EDITOR
-            //            Bounds avatarBounds = avatarSkinningComponent.LocalBounds;
-            //            avatarBounds.center += characterTransform.Position;
-            //            avatarBounds.DrawInEditor(Color.red);
-            //#endif
+            // Calculate nametag position using head bone + cached wearable offset
+            // This approach works correctly with both wearables and emotes
+            float3 position;
 
-            NametagMathHelper.CalculateTagPosition(characterTransform.Position, NAMETAG_MAX_HEIGHT, avatarSkinningComponent.LocalBounds.max.y, out float3 position);
+            if (avatarBase.HeadAramatureBone != null)
+            {
+                // Use head bone position + cached offset for wearables (like tall hats)
+                float3 headPosition = avatarBase.HeadAramatureBone.position;
+                position = new float3(headPosition.x, headPosition.y + avatarBase.CachedHeadWearableOffset, headPosition.z);
+            }
+            else
+            {
+                // Fallback to old method if head bone is not available
+                NametagMathHelper.CalculateTagPosition(characterTransform.Position, NAMETAG_MAX_HEIGHT, 2.0f, out position);
+            }
 
             UpdateTagPosition(nametagView, position, cameraForward, cameraUp);
             UpdateTagTransparencyAndScale(nametagView, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);

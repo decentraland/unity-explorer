@@ -63,6 +63,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         // Position of the head after the animations
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
+        [field: SerializeField] public Transform HeadAramatureBone { get; private set; }
+
+        /// <summary>
+        ///     Cached offset from head bone to the highest point of head wearables (like tall hats).
+        ///     Updated when wearables change to avoid per-frame calculations.
+        /// </summary>
+        public float CachedHeadWearableOffset { get; private set; }
 
         [field: Header("Other")]
 
@@ -168,6 +175,30 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             lastEmote = animationClip;
             AvatarAnimator.enabled = true;
+        }
+
+        /// <summary>
+        ///     Updates the cached head wearable offset based on current skinning bounds.
+        ///     Should be called whenever wearables change.
+        /// </summary>
+        /// <param name="skinningBounds">The LocalBounds from AvatarCustomSkinningComponent</param>
+        public void UpdateHeadWearableOffset(in Bounds skinningBounds)
+        {
+            if (HeadAramatureBone == null)
+            {
+                CachedHeadWearableOffset = 0.2f; // Fallback small offset if no head bone
+                return;
+            }
+
+            // Calculate offset from head bone Y position to the highest point of wearables
+            float headBoneY = HeadAramatureBone.position.y;
+            float maxWearableY = transform.position.y + skinningBounds.max.y; // Convert local to world Y
+
+            // Ensure minimum offset for head clearance, add small buffer for nametag positioning
+            const float MIN_HEAD_CLEARANCE = 0.2f;
+            const float NAMETAG_BUFFER = 0.1f;
+
+            CachedHeadWearableOffset = Mathf.Max(MIN_HEAD_CLEARANCE, maxWearableY - headBoneY + NAMETAG_BUFFER);
         }
     }
 

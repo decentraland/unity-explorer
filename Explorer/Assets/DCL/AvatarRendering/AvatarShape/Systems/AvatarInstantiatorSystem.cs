@@ -226,6 +226,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();
 
+            avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds); // Update cached head wearable offset for nametag positioning
+
             avatarShapeComponent.IsDirty = false;
 
             return skinningComponent;
