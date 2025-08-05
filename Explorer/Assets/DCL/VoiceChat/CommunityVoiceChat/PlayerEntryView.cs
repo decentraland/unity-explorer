@@ -59,11 +59,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void SetUserProfile(VoiceChatParticipantsStateService.ParticipantState participantState, VoiceChatParticipantsStateService.ParticipantState localParticipantState)
         {
-            // We only show context menu button on our user if we are mods.
+            // We only show context menu button on top of local participant if local participant is a mod.
             var showContextMenuButton = true;
 
             if (participantState.Name.Value == localParticipantState.Name.Value)
-                showContextMenuButton = localUserProfile.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
+                showContextMenuButton = localParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
 
             contextMenuButton.gameObject.SetActive(showContextMenuButton);
 
