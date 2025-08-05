@@ -22,6 +22,7 @@ namespace DCL.VoiceChat
         private readonly ICommunityVoiceService voiceChatService;
         private readonly INotificationsBusController notificationBusController;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
+        private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
 
         private CancellationTokenSource cts = new ();
 
@@ -32,6 +33,7 @@ namespace DCL.VoiceChat
             this.voiceChatService = voiceChatService;
             this.notificationBusController = notificationBusController;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
+            this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
         }
 
         public override void StartCall(string communityId)
@@ -91,7 +93,6 @@ namespace DCL.VoiceChat
             try
             {
                 if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
-
                     //we should throw here and let the catch handle it?
                     return;
 
@@ -107,6 +108,7 @@ namespace DCL.VoiceChat
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
                     default:
+                        ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Error when connecting to call {response}");
                         ResetVoiceChatData();
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
                         break;
@@ -244,9 +246,38 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
+            if (communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatEnded)
             {
-                existingData.Value = communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted;
+                // Remove from active community voice chats when the call ends
+                activeCommunityVoiceChats.Remove(communityUpdate.CommunityId);
+
+                if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
+                {
+                    existingData.Value = false;
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Community voice chat ended for {communityUpdate.CommunityId}");
+                }
+                return;
+            }
+
+            // Update or add the active community voice chat information from the update
+            var activeChat = new ActiveCommunityVoiceChat
+            {
+                communityId = communityUpdate.CommunityId,
+                communityName = communityUpdate.CommunityName,
+                communityImage = communityUpdate.CommunityImage,
+                isMember = communityUpdate.IsMember,
+                positions = new List<string>(communityUpdate.Positions),
+                worlds = string.Join(",", communityUpdate.Worlds),
+                participantCount = 0, // This would need to be populated from other sources
+                moderatorCount = 0 // This would need to be populated from other sources
+            };
+
+            // Update the active community voice chats dictionary
+            activeCommunityVoiceChats[communityUpdate.CommunityId] = activeChat;
+
+            if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingCallData))
+            {
+                existingCallData.Value = communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted;
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Updated community {communityUpdate.CommunityId}");
             }
             else
@@ -258,14 +289,51 @@ namespace DCL.VoiceChat
             notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
         }
 
+        private void OnActiveCommunityVoiceChatsFetched(ActiveCommunityVoiceChatsResponse response)
+        {
+            if (response.data.activeChats == null)
+            {
+                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Received null or empty active community voice chats data");
+                return;
+            }
+
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Processing {response.data.activeChats.Count} active community voice chats");
+
+            foreach (var activeChat in response.data.activeChats)
+            {
+                if (string.IsNullOrEmpty(activeChat.communityId))
+                {
+                    ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Skipping active community voice chat with empty community ID");
+                    continue;
+                }
+
+                activeCommunityVoiceChats[activeChat.communityId] = activeChat;
+
+                // Ensure we have a reactive property for this community
+                if (!communityVoiceChatCalls.TryGetValue(activeChat.communityId, out ReactiveProperty<bool>? communityVoiceChatCall))
+                {
+                    communityVoiceChatCalls[activeChat.communityId] = new ReactiveProperty<bool>(true);
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Added new community {activeChat.communityId} from active chats fetch");
+                }
+                else
+                {
+                    // Update existing reactive property to reflect active status
+                    communityVoiceChatCall.Value = true;
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Updated existing community {activeChat.communityId} from active chats fetch");
+                }
+            }
+        }
+
         public override void Dispose()
         {
             voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
+            voiceChatService.ActiveCommunityVoiceChatsFetched -= OnActiveCommunityVoiceChatsFetched;
             voiceChatService.Dispose();
 
             foreach (ReactiveProperty<bool>? callData in communityVoiceChatCalls.Values) { callData.Dispose(); }
 
             communityVoiceChatCalls.Clear();
+            activeCommunityVoiceChats.Clear();
 
             cts.SafeCancelAndDispose();
             base.Dispose();
@@ -295,6 +363,17 @@ namespace DCL.VoiceChat
 
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Created new subscription for community {communityId}");
             return newCallData;
+        }
+
+        public bool TryGetActiveCommunityVoiceChat(string communityId, out ActiveCommunityVoiceChat activeCommunityVoiceChat)
+        {
+            if (string.IsNullOrEmpty(communityId))
+            {
+                activeCommunityVoiceChat = default(ActiveCommunityVoiceChat);
+                return false;
+            }
+
+            return activeCommunityVoiceChats.TryGetValue(communityId, out activeCommunityVoiceChat);
         }
     }
 }

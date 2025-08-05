@@ -12,6 +12,8 @@ namespace DCL.VoiceChat.Services
         /// </summary>
         event Action<CommunityVoiceChatUpdate> CommunityVoiceChatUpdateReceived;
 
+        event Action<ActiveCommunityVoiceChatsResponse> ActiveCommunityVoiceChatsFetched;
+
         UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, CancellationToken ct);
 
         UniTask<PromoteSpeakerInCommunityVoiceChatResponse> PromoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct);

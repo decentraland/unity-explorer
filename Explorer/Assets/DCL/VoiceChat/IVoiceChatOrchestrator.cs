@@ -1,4 +1,5 @@
 using DCL.Utilities;
+using DCL.VoiceChat.Services;
 using System.Threading;
 
 namespace DCL.VoiceChat
@@ -45,6 +46,8 @@ namespace DCL.VoiceChat
         string CurrentCommunityId { get; }
         bool HasActiveVoiceChatCall(string communityId);
         ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId);
+
+        bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData);
     }
 
     public interface IVoiceChatOrchestratorActions

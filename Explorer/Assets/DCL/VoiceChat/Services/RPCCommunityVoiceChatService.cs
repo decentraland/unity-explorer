@@ -40,6 +40,7 @@ namespace DCL.VoiceChat.Services
 
         public event Action Reconnected;
         public event Action Disconnected;
+        public event Action<ActiveCommunityVoiceChatsResponse> ActiveCommunityVoiceChatsFetched;
 
         public RPCCommunityVoiceChatService(
             IRPCSocialServices socialServiceRPC,
@@ -60,6 +61,7 @@ namespace DCL.VoiceChat.Services
             if (!isServiceDisabled)
             {
                 SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+                FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
             }
         }
 
@@ -83,6 +85,7 @@ namespace DCL.VoiceChat.Services
             {
                 Reconnected?.Invoke();
                 SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+                FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
             }
         }
 
@@ -280,6 +283,22 @@ namespace DCL.VoiceChat.Services
                     ReportHub.LogError($"Unexpected error in community voice chat stream: {e.Message}", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
                     throw; // Re-throw to let KeepServerStreamOpenAsync handle the retry
                 }
+            }
+        }
+
+        private async UniTaskVoid FetchActiveCommunityVoiceChatsAsync(CancellationToken ct)
+        {
+            try
+            {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Fetching active community voice chats");
+                var response = await GetActiveCommunityVoiceChatsAsync(ct);
+                ActiveCommunityVoiceChatsFetched?.Invoke(response);
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Fetched {response.data.total} active community voice chats");
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
             }
         }
 

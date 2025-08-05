@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.Utilities;
+using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
 using System;
 using System.Threading;
@@ -204,6 +205,9 @@ namespace DCL.VoiceChat
 
         public bool HasActiveVoiceChatCall(string communityId) =>
             communityVoiceChatCallStatusService.HasActiveVoiceChatCall(communityId);
+
+        public bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData) =>
+            communityVoiceChatCallStatusService.TryGetActiveCommunityVoiceChat(communityId, out activeCommunityData);
 
         public ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId) =>
             communityVoiceChatCallStatusService.SubscribeToCommunityUpdates(communityId);

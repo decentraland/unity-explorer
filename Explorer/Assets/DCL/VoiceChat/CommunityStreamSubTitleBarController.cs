@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.Utilities;
 using System;
 using System.Threading;
@@ -10,6 +11,8 @@ namespace DCL.VoiceChat
 {
     public class CommunityStreamSubTitleBarController : IDisposable
     {
+        private const string TAG = "CommunityStreamSubTitleBarController";
+
         private readonly IDisposable statusSubscription;
         private readonly IDisposable currentChannelSubscription;
 
@@ -79,6 +82,7 @@ namespace DCL.VoiceChat
             {
                 if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
                 {
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Call ended with status {status}, triggering channel change");
                     OnCurrentChannelChanged(currentChannel.Value);
                     return;
                 }
@@ -89,12 +93,17 @@ namespace DCL.VoiceChat
                 //If it's the current call, we can get the call information directly from the orchestrator
                 HandleCurrentCommunityCall();
             }
-            else { view.gameObject.SetActive(false); }
+            else
+            {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Hiding subtitle bar - not current community call orchestrator communityID: {communityCallOrchestrator.CurrentCommunityId}");
+                view.gameObject.SetActive(false);
+            }
         }
 
         private void OnCurrentChannelChanged(ChatChannel newChannel)
         {
             //We hide it by default until we resolve if the user should see it.
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCurrentChannelChanged: Hiding subtitle bar by default for channel type {newChannel.ChannelType}");
             view.gameObject.SetActive(false);
             // Reset member list visibility state since we're changing channels
             isMemberListVisible = false;
@@ -105,7 +114,7 @@ namespace DCL.VoiceChat
             switch (newChannel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.COMMUNITY:
-                    HandleChangeToCommunityChannelAsync(ChatChannel.GetCommunityIdFromChannelId(newChannel.Id)).Forget();
+                    HandleChangeToCommunityChannel(ChatChannel.GetCommunityIdFromChannelId(newChannel.Id));
                     break;
                 case ChatChannel.ChatChannelType.NEARBY:
                 case ChatChannel.ChatChannelType.USER:
@@ -114,21 +123,23 @@ namespace DCL.VoiceChat
             }
         }
 
-        private async UniTaskVoid HandleChangeToCommunityChannelAsync(string communityId)
+        private void HandleChangeToCommunityChannel(string communityId)
         {
             if (isMemberListVisible) return;
 
             isCurrentCall = false;
-
-            communityCts = communityCts.SafeRestart();
-            GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
-            bool isVoiceChatActive = communityData.data.voiceChatStatus.isActive;
+            bool isVoiceChatActive = communityCallOrchestrator.HasActiveVoiceChatCall(communityId);
 
             currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
             //If there is no voice chat active, we just don't show this.
-            if (!isVoiceChatActive) return;
+            if (!isVoiceChatActive)
+            {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: No voice chat active for community {communityId}, keeping subtitle bar hidden");
+                return;
+            }
 
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: Showing subtitle bar for community {communityId} with active voice chat");
             view.gameObject.SetActive(true);
 
             if (communityCallOrchestrator.CurrentCommunityId == communityId)
@@ -149,7 +160,10 @@ namespace DCL.VoiceChat
 
             //We show the button if the current community has an active call
             if (hasActiveCall)
+            {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCurrentCommunityCallStatusChanged: Showing subtitle bar - community has active call");
                 view.gameObject.SetActive(true);
+            }
 
             if (hasActiveCall && communityCallOrchestrator.CurrentCommunityId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
                 HandleCurrentCommunityCall();
@@ -161,6 +175,7 @@ namespace DCL.VoiceChat
             if (isMemberListVisible) return;
 
             isCurrentCall = true;
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleCurrentCommunityCall: Setting up subtitle bar for current community call");
             view.gameObject.SetActive(true);
             SetParticipantsCount();
             view.JoinStreamButton.gameObject.SetActive(false);
@@ -194,10 +209,12 @@ namespace DCL.VoiceChat
 
             if (isVisible)
             {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnMemberListVisibilityChanged: Hiding subtitle bar - member list is visible");
                 view.gameObject.SetActive(false);
             }
             else
             {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnMemberListVisibilityChanged: Member list hidden, re-evaluating subtitle bar visibility");
                 // Re-setup subtitle bar when member list becomes hidden
                 // This will trigger the normal flow to determine if it should be shown
                 OnCurrentChannelChanged(currentChannel.Value);
