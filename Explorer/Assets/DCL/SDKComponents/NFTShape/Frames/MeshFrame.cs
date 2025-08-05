@@ -76,11 +76,6 @@ namespace DCL.SDKComponents.NFTShape.Frames
             current.SetActive(true);
         }
 
-        public override void SetTextureScale(Vector2 texScale)
-        {
-            renderer.SetPropertyBlock(viewNftMaterialPropertyBlock, placeIndex);
-        }
-
         private void ApplyCanvasMaterial(Material material)
         {
             var materials = renderer.materials!;
