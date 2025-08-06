@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities.Extensions;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
 using System.Threading;
@@ -67,9 +66,7 @@ namespace DCL.VoiceChat
             if (remoteCount == 0)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} No remote participants in room, skipping reconnection attempts");
-                voiceChatOrchestrator.HandleConnectionError();
                 ReconnectionFailed?.Invoke();
-                roomHub.VoiceChatRoom().StopAsync().Forget();
                 return;
             }
 
@@ -90,7 +87,6 @@ namespace DCL.VoiceChat
                     {
                         reconnectionAttempts = 0;
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Max reconnection attempts ({configuration.MaxReconnectionAttempts}) reached");
-                        voiceChatOrchestrator.HandleConnectionError();
                         ReconnectionFailed?.Invoke();
                         return;
                     }
@@ -123,7 +119,6 @@ namespace DCL.VoiceChat
             catch (Exception ex)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Unexpected exception in reconnection loop: {ex.Message}");
-                voiceChatOrchestrator.HandleConnectionError();
                 ReconnectionFailed?.Invoke();
             }
         }

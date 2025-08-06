@@ -27,7 +27,6 @@ namespace DCL.VoiceChat
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager;
         private readonly IDisposable statusSubscription;
 
@@ -52,7 +51,6 @@ namespace DCL.VoiceChat
             this.roomHub = roomHub;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            this.configuration = configuration;
             this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
 
             reconnectionManager = new VoiceChatReconnectionManager(
@@ -259,6 +257,8 @@ namespace DCL.VoiceChat
         private void OnReconnectionFailed()
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection failed");
+            DisconnectFromRoomAsync().Forget();
+            voiceChatOrchestrator.HandleConnectionError();
         }
 
         private void OnConnectionEstablished()
@@ -298,14 +298,13 @@ namespace DCL.VoiceChat
                 if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Valid disconnect reason ({disconnectReason}) - no reconnection needed");
+                    // We call this here in case the disconnection was not triggered by us but by the server, if it was already stopped, it won't do anything.
                     DisconnectFromRoomAsync().Forget();
                     voiceChatOrchestrator.HandleConnectionEnded();
                     return;
                 }
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Unexpected disconnect reason ({disconnectReason}) - starting reconnection attempts");
-
-
                 reconnectionManager.HandleDisconnection();
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }

@@ -1,3 +1,4 @@
+#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
@@ -80,7 +81,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft -= OnParticipantLeft;
 
             voiceChatTypeSubscription?.Dispose();
-            communityVoiceChatSearchController?.Dispose();
+            communityVoiceChatSearchController.Dispose();
 
             ClearPool();
         }
