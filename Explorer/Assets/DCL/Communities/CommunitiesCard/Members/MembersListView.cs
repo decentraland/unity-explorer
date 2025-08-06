@@ -116,7 +116,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void OnDisable()
         {
-            ToggleSection(MemberListSections.MEMBERS);
+            ToggleSection(MemberListSections.MEMBERS, false);
             confirmationDialogCts.SafeCancelAndDispose();
         }
 
@@ -193,7 +193,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void SetActive(bool active) => gameObject.SetActive(active);
 
-        private void ToggleSection(MemberListSections section)
+        private void ToggleSection(MemberListSections section, bool invokeEvent = true)
         {
             if (currentSection == section) return;
 
@@ -206,7 +206,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
 
             currentSection = section;
-            ActiveSectionChanged?.Invoke(section);
+            if (invokeEvent)
+                ActiveSectionChanged?.Invoke(section);
         }
 
         public void SetSectionButtonsActive(bool isActive)

@@ -20,10 +20,8 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 using Utility.Types;
-using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -47,10 +45,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
-        private readonly SectionFetchData<ICommunityMemberData> allMembersFetchData = new (PAGE_SIZE);
-        private readonly SectionFetchData<ICommunityMemberData> bannedMembersFetchData = new (PAGE_SIZE);
-        private readonly SectionFetchData<ICommunityMemberData> requestingMembersFetchData = new (PAGE_SIZE);
-        private readonly SectionFetchData<ICommunityMemberData> invitedMembersFetchData = new (PAGE_SIZE);
+        private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
 
         private GetCommunityResponse.CommunityData? communityData = null;
 
@@ -65,25 +60,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 view.UpdateRequestsCounter(value);
             }
         }
-        protected override SectionFetchData<ICommunityMemberData> currentSectionFetchData
-        {
-            get
-            {
-                switch (currentSection)
-                {
-                    case MembersListView.MemberListSections.MEMBERS:
-                        return allMembersFetchData;
-                    case MembersListView.MemberListSections.BANNED:
-                        return bannedMembersFetchData;
-                    case MembersListView.MemberListSections.REQUESTS:
-                        return requestingMembersFetchData;
-                    case MembersListView.MemberListSections.INVITES:
-                        return invitedMembersFetchData;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(currentSection), currentSection, null);
-                }
-            }
-        }
+        protected override SectionFetchData<ICommunityMemberData> currentSectionFetchData => sectionsFetchData[currentSection];
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
@@ -128,6 +105,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.BanUserRequested += OnBanUser;
 
             this.view.SetProfileDataProvider(profileDataProvider);
+
+            foreach (MembersListView.MemberListSections section in EnumUtils.Values<MembersListView.MemberListSections>())
+                sectionsFetchData[section] = new SectionFetchData<ICommunityMemberData>(PAGE_SIZE);
         }
 
         public override void Dispose()
@@ -177,8 +157,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (intention == InviteRequestIntention.accept)
                 {
                     profile.Role = CommunityMemberRole.member;
-                    allMembersFetchData.Items.Add(profile);
-                    MembersSorter.SortMembersList(allMembersFetchData.Items);
+                    List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
+                    memberList.Add(profile);
+                    MembersSorter.SortMembersList(memberList);
                 }
 
                 RefreshGrid(true);
@@ -253,9 +234,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.Items.Remove(profile);
+                sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items.Remove(profile);
 
-                List<ICommunityMemberData> memberList = bannedMembersFetchData.Items;
+                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.BANNED].Items;
                 profile.Role = CommunityMemberRole.none;
                 memberList.Add(profile);
 
@@ -286,18 +267,20 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.Items.Remove(profile);
+                sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items.Remove(profile);
                 RefreshGrid(true);
             }
         }
 
         public void TryRemoveLocalUser()
         {
+            List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
+
             string? userAddress = web3IdentityCache.Identity?.Address;
-            for (int i = 0; i < allMembersFetchData.Items.Count; i++)
-                if (allMembersFetchData.Items[i].Address.Equals(userAddress, StringComparison.OrdinalIgnoreCase))
+            for (int i = 0; i < memberList.Count; i++)
+                if (memberList[i].Address.Equals(userAddress, StringComparison.OrdinalIgnoreCase))
                 {
-                    allMembersFetchData.Items.RemoveAt(i);
+                    memberList.RemoveAt(i);
                     if (currentSection == MembersListView.MemberListSections.MEMBERS)
                         RefreshGrid(true);
                     break;
@@ -325,7 +308,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<ICommunityMemberData> memberList = allMembersFetchData.Items;
+                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
 
                 foreach (ICommunityMemberData member in memberList)
                     if (member.Address.Equals(profile.Address))
@@ -362,7 +345,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<ICommunityMemberData> memberList = allMembersFetchData.Items;
+                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
                 foreach (ICommunityMemberData member in memberList)
                     if (member.Address.Equals(profile.Address))
                     {
@@ -402,10 +385,10 @@ namespace DCL.Communities.CommunitiesCard.Members
         public override void Reset()
         {
             communityData = null;
+            currentSection = MembersListView.MemberListSections.MEMBERS;
 
-            allMembersFetchData.Reset();
-            bannedMembersFetchData.Reset();
-            requestingMembersFetchData.Reset();
+            foreach (var sectionFetchData in sectionsFetchData)
+                sectionFetchData.Value.Reset();
 
             panelLifecycleTask?.TrySetResult();
 
@@ -576,7 +559,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                bannedMembersFetchData.Items.Remove(profile);
+                sectionsFetchData[MembersListView.MemberListSections.BANNED].Items.Remove(profile);
                 RefreshGrid(false);
             }
         }
