@@ -151,47 +151,35 @@ namespace DCL.Passport
         }
 #endif
 
-        public void OpenPhotosSection()
+        public void OpenSection(PassportSection passportSection)
         {
-            OverviewSectionButton.SetSelected(false);
-            BadgesSectionButton.SetSelected(false);
-            PhotosSectionButton.SetSelected(true);
+            OverviewSectionButton.SetSelected(passportSection == PassportSection.OVERVIEW);
+            BadgesSectionButton.SetSelected(passportSection == PassportSection.BADGES);
+            PhotosSectionButton.SetSelected(passportSection == PassportSection.PHOTOS);
 
-            OverviewSectionPanel.SetActive(false);
-            PhotosSectionPanel.SetActive(true);
-            BadgesSectionPanel.SetActive(false);
-            BadgeInfoModuleView.gameObject.SetActive(false);
-            ViewportSoftMask.enabled = false;
-            MainScroll.content = PhotosSectionPanel.transform as RectTransform;
-            MainScroll.verticalNormalizedPosition = 1;
-        }
+            OverviewSectionPanel.SetActive(passportSection == PassportSection.OVERVIEW);
+            BadgesSectionPanel.SetActive(passportSection == PassportSection.BADGES);
+            PhotosSectionPanel.SetActive(passportSection == PassportSection.PHOTOS);
 
-        public void OpenBadgesSection()
-        {
-            OverviewSectionButton.SetSelected(false);
-            BadgesSectionButton.SetSelected(true);
-            PhotosSectionButton.SetSelected(false);
-            OverviewSectionPanel.SetActive(false);
-            BadgesSectionPanel.SetActive(true);
-            PhotosSectionPanel.SetActive(false);
-            ViewportSoftMask.enabled = true;
-            MainScroll.content = BadgesSectionPanel.transform as RectTransform;
-            MainScroll.verticalNormalizedPosition = 1;
-            CharacterPreviewView.gameObject.SetActive(false);
-        }
+            BadgeInfoModuleView.gameObject.SetActive(passportSection == PassportSection.BADGES);
 
-        public void OpenOverviewSection()
-        {
-            OverviewSectionButton.SetSelected(true);
-            BadgesSectionButton.SetSelected(false);
-            PhotosSectionButton.SetSelected(false);
-            OverviewSectionPanel.SetActive(true);
-            BadgesSectionPanel.SetActive(false);
-            PhotosSectionPanel.SetActive(false);
-            ViewportSoftMask.enabled = true;
-            MainScroll.content = OverviewSectionPanel.transform as RectTransform;
+            ViewportSoftMask.enabled = passportSection != PassportSection.PHOTOS;
+
+            switch (passportSection)
+            {
+                case PassportSection.OVERVIEW:
+                    MainScroll.content = OverviewSectionPanel.transform as RectTransform;
+                    break;
+                case PassportSection.BADGES:
+                    MainScroll.content = BadgesSectionPanel.transform as RectTransform;
+                    break;
+                case PassportSection.PHOTOS:
+                    MainScroll.content = PhotosSectionPanel.transform as RectTransform;
+                    break;
+            }
             MainScroll.verticalNormalizedPosition = 1;
-            CharacterPreviewView.gameObject.SetActive(true);
+
+            CharacterPreviewView.gameObject.SetActive(passportSection != PassportSection.BADGES);
         }
     }
 }

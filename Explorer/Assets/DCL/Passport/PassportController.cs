@@ -560,11 +560,10 @@ namespace DCL.Passport
 
             photoLoadingCts = photoLoadingCts.SafeRestart();
 
-            viewInstance!.OpenPhotosSection();
-
             cameraReelGalleryController!.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
 
             currentSection = PassportSection.PHOTOS;
+            viewInstance!.OpenSection(currentSection);
 
             if (!viewInstance.CharacterPreviewView.gameObject.activeSelf)
             {
@@ -578,12 +577,12 @@ namespace DCL.Passport
             if (currentSection == PassportSection.OVERVIEW)
                 return;
 
-            viewInstance!.OpenOverviewSection();
-
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId!, PassportSection.OVERVIEW, characterPreviewLoadingCts.Token).Forget();
+
             currentSection = PassportSection.OVERVIEW;
-            viewInstance.BadgeInfoModuleView.gameObject.SetActive(false);
+            viewInstance!.OpenSection(currentSection);
+
             characterPreviewController?.OnShow();
         }
 
@@ -592,12 +591,12 @@ namespace DCL.Passport
             if (currentSection == PassportSection.BADGES)
                 return;
 
-            viewInstance!.OpenBadgesSection();
-
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId!, PassportSection.BADGES, characterPreviewLoadingCts.Token, badgeIdSelected).Forget();
+
             currentSection = PassportSection.BADGES;
-            viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
+            viewInstance!.OpenSection(currentSection);
+
             characterPreviewController?.OnHide(false);
             bool isOwnPassport = ownProfile?.UserId == currentUserId;
             BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, OpenBadgeSectionOrigin.BUTTON.ToString());
