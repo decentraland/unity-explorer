@@ -482,25 +482,20 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             SectionFetchData<MemberData> membersData = currentSectionFetchData;
 
-            UniTask<GetCommunityMembersResponse> responseTask;
-            switch (currentSection)
-            {
-                case MembersListView.MemberListSections.MEMBERS:
-                    responseTask = communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
-                    break;
-                case MembersListView.MemberListSections.BANNED:
-                    responseTask = communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
-                    break;
-                case MembersListView.MemberListSections.REQUESTS:
-                    //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request, membersData.PageNumber, PAGE_SIZE, ct);
-                    responseTask = communitiesDataProvider.GetCommunityRequestsToJoin(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
-                    break;
-                case MembersListView.MemberListSections.INVITES:
-                    //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.invite, membersData.PageNumber, PAGE_SIZE, ct);
-                    responseTask = communitiesDataProvider.GetCommunityInvitesToJoin(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct);
-                    break;
-                default: throw new ArgumentOutOfRangeException(nameof(currentSection), currentSection, null);
-            }
+            UniTask<GetCommunityMembersResponse> responseTask = currentSection switch
+                                                                {
+                                                                    MembersListView.MemberListSections.MEMBERS => communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                    MembersListView.MemberListSections.BANNED => communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                    MembersListView.MemberListSections.REQUESTS =>
+
+                                                                        //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request, membersData.PageNumber, PAGE_SIZE, ct);
+                                                                        communitiesDataProvider.GetCommunityRequestsToJoin(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                    MembersListView.MemberListSections.INVITES =>
+
+                                                                        //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.invite, membersData.PageNumber, PAGE_SIZE, ct);
+                                                                        communitiesDataProvider.GetCommunityInvitesToJoin(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                    _ => throw new ArgumentOutOfRangeException(nameof(currentSection), currentSection, null)
+                                                                };
 
             Result<GetCommunityMembersResponse> response = await responseTask.SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -543,6 +538,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid FetchRequestsToJoinAsync(CancellationToken ctkn)
             {
+                //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request, 1, 0, ctkn);
                 Result<GetCommunityMembersResponse> response = await communitiesDataProvider.GetCommunityRequestsToJoin(communityData?.id, 1, 0, ctkn)
                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
