@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.Friends.UI.FriendPanel;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -21,12 +22,14 @@ using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMemb
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MembersListView : MonoBehaviour, ICommunityFetchingView<MemberData>
+    public class MembersListView : MonoBehaviour, ICommunityFetchingView<ICommunityMemberData>
     {
         public enum MemberListSections
         {
-            ALL,
-            BANNED
+            MEMBERS,
+            BANNED,
+            REQUESTS,
+            INVITES
         }
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
@@ -43,6 +46,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private RectTransform scrollViewRect { get; set; } = null!;
         [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
+        [field: SerializeField] private NotificationIndicatorView requestsNotificationIndicator { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyStateParent { get; set; } = null!;
 
         [field: Header("Assets")]
         [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
@@ -51,27 +56,28 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public event Action<MemberListSections>? ActiveSectionChanged;
         public event Action? NewDataRequested;
-        public event Action<MemberData>? ElementMainButtonClicked;
-        public event Action<MemberData>? ElementFriendButtonClicked;
-        public event Action<MemberData>? ElementUnbanButtonClicked;
+        public event Action<ICommunityMemberData>? ElementMainButtonClicked;
+        public event Action<ICommunityMemberData>? ElementFriendButtonClicked;
+        public event Action<ICommunityMemberData>? ElementUnbanButtonClicked;
+        public event Action<ICommunityMemberData, InviteRequestIntention>? ElementManageRequestClicked;
 
         public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
-        public event Action<MemberData>? OpenProfilePassportRequested;
-        public event Action<MemberData>? OpenUserChatRequested;
-        public event Action<MemberData>? CallUserRequested;
-        public event Action<MemberData>? BlockUserRequested;
-        public event Action<MemberData>? RemoveModeratorRequested;
-        public event Action<MemberData>? AddModeratorRequested;
-        public event Action<MemberData>? KickUserRequested;
-        public event Action<MemberData>? BanUserRequested;
+        public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
+        public event Action<ICommunityMemberData>? OpenUserChatRequested;
+        public event Action<ICommunityMemberData>? CallUserRequested;
+        public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<ICommunityMemberData>? RemoveModeratorRequested;
+        public event Action<ICommunityMemberData>? AddModeratorRequested;
+        public event Action<ICommunityMemberData>? KickUserRequested;
+        public event Action<ICommunityMemberData>? BanUserRequested;
 
         private float scrollViewMaxHeight;
         private float scrollViewHeight;
         private MemberListSections currentSection;
         private CancellationTokenSource confirmationDialogCts = new ();
-        private SectionFetchData<MemberData> membersData = null!;
+        private SectionFetchData<ICommunityMemberData> membersData = null!;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
-        private MemberData lastClickedProfileCtx = null!;
+        private ICommunityMemberData lastClickedProfileCtx = null!;
         private GenericContextMenu? contextMenu;
         private UserProfileContextMenuControlSettings? userProfileContextMenuControlSettings;
         private GenericContextMenuElement? removeModeratorContextMenuElement;
@@ -108,26 +114,29 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))));
         }
 
-        private void OnDisable()
+        public void Close()
         {
-            ToggleSection(MemberListSections.ALL);
+            ToggleSection(MemberListSections.MEMBERS, false);
             confirmationDialogCts.SafeCancelAndDispose();
         }
 
-        private void OnContextMenuButtonClicked(MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
+        public void UpdateRequestsCounter(int amount) =>
+            requestsNotificationIndicator.SetNotificationCount(amount);
+
+        private void OnContextMenuButtonClicked(ICommunityMemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
         {
             lastClickedProfileCtx = profile;
-            UserProfileContextMenuControlSettings.FriendshipStatus status = profile.friendshipStatus.Convert();
+            UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
             // Disable all buttons and leave only the unfriend one, as part of the UI/UX decision. The old passed value was:
             // status == UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED ? UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED : status
             userProfileContextMenuControlSettings!.SetInitialData(profile.ToUserData(), status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
             elementView.CanUnHover = false;
 
-            removeModeratorContextMenuElement!.Enabled = profile.role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
-            addModeratorContextMenuElement!.Enabled = profile.role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;
-            blockUserContextMenuElement!.Enabled = profile.friendshipStatus != FriendshipStatus.blocked && profile.friendshipStatus != FriendshipStatus.blocked_by;
-            kickUserContextMenuElement!.Enabled = profile.role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.ALL;
-            banUserContextMenuElement!.Enabled = profile.role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.ALL;
+            removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
+            addModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;
+            blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;
+            kickUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
+            banUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
 
             communityOptionsSeparatorContextMenuElement!.Enabled = removeModeratorContextMenuElement.Enabled || addModeratorContextMenuElement.Enabled || kickUserContextMenuElement.Enabled || banUserContextMenuElement.Enabled;
 
@@ -136,7 +145,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                            closeTask: panelTask), cancellationToken);
         }
 
-        private void ShowKickConfirmationDialog(MemberData profile, string communityName)
+        private void ShowKickConfirmationDialog(ICommunityMemberData profile, string communityName)
         {
             confirmationDialogCts = confirmationDialogCts.SafeRestart();
             ShowKickConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
@@ -144,12 +153,12 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowKickConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityName),
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.Name, communityName),
                                                                                          KICK_MEMBER_CANCEL_TEXT,
                                                                                          KICK_MEMBER_CONFIRM_TEXT,
                                                                                          kickSprite,
                                                                                          false, false,
-                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -159,7 +168,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void ShowBanConfirmationDialog(MemberData profile, string communityName)
+        private void ShowBanConfirmationDialog(ICommunityMemberData profile, string communityName)
         {
             confirmationDialogCts = confirmationDialogCts.SafeRestart();
             ShowBanConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
@@ -167,12 +176,12 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityName),
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.Name, communityName),
                                                                                          BAN_MEMBER_CANCEL_TEXT,
                                                                                          BAN_MEMBER_CONFIRM_TEXT,
                                                                                          banSprite,
                                                                                          false, false,
-                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -184,7 +193,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void SetActive(bool active) => gameObject.SetActive(active);
 
-        private void ToggleSection(MemberListSections section)
+        private void ToggleSection(MemberListSections section, bool invokeEvent = true)
         {
             if (currentSection == section) return;
 
@@ -197,7 +206,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
 
             currentSection = section;
-            ActiveSectionChanged?.Invoke(section);
+            if (invokeEvent)
+                ActiveSectionChanged?.Invoke(section);
         }
 
         public void SetSectionButtonsActive(bool isActive)
@@ -221,6 +231,15 @@ namespace DCL.Communities.CommunitiesCard.Members
             communityData = community;
             cancellationToken = ct;
             this.panelTask = panelTask;
+
+            foreach (var sectionMapping in memberListSectionsElements)
+            {
+                sectionMapping.Button.gameObject.SetActive(true);
+
+                if (community.privacy != CommunityPrivacy.@private && sectionMapping.ForPrivateCommunitiesOnly)
+                    sectionMapping.Button.gameObject.SetActive(false);
+            }
+
         }
 
         private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
@@ -228,13 +247,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
 
-            MemberData memberData = membersData.Items[index];
-            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address), profileRepositoryWrapper);
+            ICommunityMemberData memberData = membersData.Items[index];
+            elementView.Configure(memberData, currentSection, memberData.Address.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address), profileRepositoryWrapper);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 OnContextMenuButtonClicked,
                 member => ElementFriendButtonClicked?.Invoke(member),
-                member => ElementUnbanButtonClicked?.Invoke(member));
+                member => ElementUnbanButtonClicked?.Invoke(member),
+                (member, intention) => ElementManageRequestClicked?.Invoke(member, intention));
 
             if (index >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)
                 NewDataRequested?.Invoke();
@@ -242,7 +262,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             return listItem;
         }
 
-        public void RefreshGrid(SectionFetchData<MemberData> data, bool redraw)
+        public void RefreshGrid(SectionFetchData<ICommunityMemberData> data, bool redraw)
         {
             membersData = data;
 
@@ -252,7 +272,17 @@ namespace DCL.Communities.CommunitiesCard.Members
                 loopGrid.RefreshAllShownItem();
         }
 
-        public void SetEmptyStateActive(bool active) { }
+        public void SetEmptyStateActive(bool active)
+        {
+            if (active)
+            {
+                emptyStateParent.SetActive(true);
+                foreach (var sectionMapping in memberListSectionsElements)
+                    sectionMapping.EmptyState.SetActive(sectionMapping.Section == currentSection);
+            }
+            else
+                emptyStateParent.SetActive(false);
+        }
 
         public void SetLoadingStateActive(bool active)
         {
@@ -269,6 +299,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             public MemberListSections Section { get; private set; }
 
             [field: SerializeField]
+            public bool ForPrivateCommunitiesOnly { get; private set; }
+
+            [field: SerializeField]
             public Button Button { get; private set; }
 
             [field: SerializeField]
@@ -282,6 +315,10 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             [field: SerializeField]
             public GameObject UnselectedText { get; private set; }
+
+            [field: Space(10)]
+            [field: SerializeField]
+            public GameObject EmptyState { get; private set; }
         }
     }
 }

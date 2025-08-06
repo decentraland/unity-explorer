@@ -18,6 +18,16 @@ namespace DCL.Communities.CommunitiesCard
                 userThumbnailAddress = profile.profilePictureUrl
             };
 
+        public static UserProfileContextMenuControlSettings.UserData ToUserData(this ICommunityMemberData profile) =>
+            new ()
+            {
+                hasClaimedName = profile.HasClaimedName,
+                userAddress = profile.Address,
+                userColor = profile.GetUserNameColor(),
+                userName = profile.Name,
+                userThumbnailAddress = profile.ProfilePictureUrl
+            };
+
         public static GetCommunityMembersResponse.MemberData ToMemberData(this UserProfileContextMenuControlSettings.UserData user) =>
             new ()
             {

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
+using Random = UnityEngine.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
@@ -111,7 +112,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<ICommunityMemberPagedResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
@@ -120,7 +121,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        public async UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<ICommunityMemberPagedResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/bans?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
@@ -266,19 +267,37 @@ namespace DCL.Communities.CommunitiesDataProvider
             throw new NotImplementedException();
         }
 
-        public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<ICommunityMemberPagedResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            await UniTask.Delay(Random.Range(500, 2000), cancellationToken: ct);
+            int total = action == InviteRequestAction.request ? 5 : 3;
+
+            GetCommunityInviteRequestResponse.CommunityInviteRequestData[] members = new GetCommunityInviteRequestResponse.CommunityInviteRequestData[total];
+            for (int i = 0; i < total; i++)
+            {
+                members[i] = new GetCommunityInviteRequestResponse.CommunityInviteRequestData
+                {
+                    id = Guid.NewGuid().ToString(),
+                    address = Guid.NewGuid().ToString(),
+                    profilePictureUrl = string.Empty,
+                    hasClaimedName = Random.Range(0, 101) > 50,
+                    name = $"User {i + 1}",
+                };
+            }
+
+            return new GetCommunityInviteRequestResponse ()
+            {
+                data = new GetCommunityInviteRequestResponse.GetCommunityInviteRequestResponseData
+                {
+                    results = members,
+                    total = total,
+                }
+            };
         }
 
-        public async UniTask<bool> ManageRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        public async UniTask<bool> ManageInviteRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
         {
-            throw new NotImplementedException();
-        }
-
-        public async UniTask<bool> ManageInviteToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
-        {
-            throw new NotImplementedException();
+            return true;
         }
 
         public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, CancellationToken ct)
