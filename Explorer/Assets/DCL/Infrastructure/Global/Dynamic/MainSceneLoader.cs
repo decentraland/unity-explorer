@@ -325,7 +325,8 @@ namespace Global.Dynamic
 
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
-            // if (!shouldShowScreen) return;
+            if (!shouldShowScreen)
+                return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
                 .AssetsProvisioner!
