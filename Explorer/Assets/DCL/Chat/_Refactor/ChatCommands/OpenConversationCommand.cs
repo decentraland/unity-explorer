@@ -50,7 +50,7 @@ namespace DCL.Chat.ChatCommands
 
             chatHistory.AddOrGetChannel(channelId, channelType);
 
-            selectChannelCommand.ExecuteAsync(channelId, ct).Forget();
+            selectChannelCommand.Execute(channelId, ct);
 
             eventBus.Publish(new ChatEvents.FocusRequestedEvent());
         }

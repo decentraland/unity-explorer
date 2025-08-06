@@ -9,6 +9,7 @@ using DG.Tweening;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,7 +31,7 @@ namespace DCL.Chat.ChatMessages
 
         private CancellationTokenSource? fadeoutCts;
 
-        private ReadOnlyHashSet<string> onlineParticipants = new (new HashSet<string>());
+        private IReadOnlyCollection<string> onlineParticipants = Array.Empty<string>();
 
         // View models are reused and set
         // by reference from the presenter
@@ -68,7 +69,7 @@ namespace DCL.Chat.ChatMessages
             scrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
-        public void SetUserConnectivityProvider(ReadOnlyHashSet<string> onlineParticipants)
+        public void SetUserConnectivityProvider(IReadOnlyCollection<string> onlineParticipants)
         {
             this.onlineParticipants = onlineParticipants;
         }

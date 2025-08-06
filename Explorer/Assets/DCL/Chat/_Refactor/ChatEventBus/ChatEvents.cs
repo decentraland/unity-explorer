@@ -137,9 +137,9 @@ namespace DCL.Chat
             /// </summary>
             public readonly ChatChannel.ChannelId ChannelId;
             public readonly ChatChannel.ChatChannelType ChannelType;
-            public readonly ReadOnlyHashSet<string> OnlineUsers;
+            public readonly IReadOnlyCollection<string> OnlineUsers;
 
-            public ChannelUsersStatusUpdated(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ReadOnlyHashSet<string> onlineUsers)
+            public ChannelUsersStatusUpdated(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, IReadOnlyCollection<string> onlineUsers)
             {
                 ChannelId = channelId;
                 OnlineUsers = onlineUsers;
