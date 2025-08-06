@@ -1,44 +1,79 @@
 using System.Collections.Generic;
+using System.Linq;
 using DCL.Diagnostics;
+using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
     public class MinimumSpecsTablePresenter
     {
-        private const string PASS_ICON_SPRITE_TAG = "<sprite name=\"2705\">";
         private const string FAIL_ICON_SPRITE_TAG = "<sprite name=\"274c\">";
-        
-        private readonly Dictionary<SpecCategory, MinimumSpecsRowView> rowMap;
+
+        private readonly MinimumSpecsTableView tableView;
+        private readonly List<MinimumSpecsRowView> spawnedRows = new ();
 
         public MinimumSpecsTablePresenter(MinimumSpecsTableView view)
         {
-            rowMap = new Dictionary<SpecCategory, MinimumSpecsRowView>();
-
-            foreach (var row in view.Rows)
-            {
-                if (rowMap.ContainsKey(row.Category))
-                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Duplicate SpecCategory in table: {row.Category}");
-
-                rowMap[row.Category] = row;
-            }
+            tableView = view;
         }
 
         public void Populate(IEnumerable<SpecResult> results)
         {
-            foreach (var result in results)
-            {
-                if (rowMap.TryGetValue(result.Category, out var row))
-                {
-                    string icon = result.IsMet ? PASS_ICON_SPRITE_TAG : FAIL_ICON_SPRITE_TAG;
-                    string formattedActualText = $"{icon} {result.Actual}";
+            ClearSpawnedRows();
 
-                    row.SetTitle(result.Category.ToString());
-                    row.SetRequiredText(result.Required);
-                    row.SetActualText(formattedActualText);
-                }
-                else
-                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"No UI row defined for category: {result.Category}");
+            var unmetResults = results.Where(r => !r.IsMet).ToList();
+
+            if (unmetResults.Count == 0)
+            {
+                tableView.LastRow.gameObject.SetActive(false);
+                return;
             }
+
+            PopulateRow(tableView.LastRow, unmetResults[0]);
+            tableView.LastRow.gameObject.SetActive(true);
+
+            for (var i = 1; i < unmetResults.Count; i++)
+            {
+                MinimumSpecsRowView newRow = Object.Instantiate(tableView.RowTemplate, tableView.RowTemplate.transform.parent);
+                PopulateRow(newRow, unmetResults[i]);
+                newRow.gameObject.SetActive(true);
+                spawnedRows.Add(newRow);
+            }
+        }
+
+        private void PopulateRow(MinimumSpecsRowView row, SpecResult result)
+        {
+            var formattedActualText = $"{FAIL_ICON_SPRITE_TAG} {result.Actual}";
+
+            row.SetTitle(GetCategoryDisplayName(result.Category));
+            row.SetRequiredText(result.Required);
+            row.SetActualText(formattedActualText);
+        }
+
+        private void ClearSpawnedRows()
+        {
+            foreach (MinimumSpecsRowView row in spawnedRows)
+            {
+                if (row != null)
+                    Object.Destroy(row.gameObject);
+            }
+
+            spawnedRows.Clear();
+        }
+
+        private string GetCategoryDisplayName(SpecCategory category)
+        {
+            return category switch
+                   {
+                       SpecCategory.OS => "Operating System",
+                       SpecCategory.CPU => "Processor",
+                       SpecCategory.GPU => "Graphics Card",
+                       SpecCategory.VRAM => "Graphics Memory",
+                       SpecCategory.RAM => "System Memory",
+                       SpecCategory.Storage => "Storage Space",
+                       SpecCategory.ComputeShaders => "Compute Shaders",
+                       _ => category.ToString(),
+                   };
         }
     }
 }
