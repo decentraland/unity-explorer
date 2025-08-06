@@ -205,7 +205,9 @@ namespace DCL.VoiceChat
 
                     case ConnectionUpdate.Reconnected:
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnected successfully");
-                        bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value;
+
+                        bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value ||
+                                        voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE;
                         if (canSpeak)
                             voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                         break;
@@ -291,7 +293,8 @@ namespace DCL.VoiceChat
                 ConnectionEstablished?.Invoke();
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection setup completed");
 
-                bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value;
+                bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value ||
+                                voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE;
 
                 if (canSpeak)
                 {
