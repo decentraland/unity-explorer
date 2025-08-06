@@ -170,7 +170,10 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT,
                     result.Success ? $"{TAG} Completed disconnection" : $"{TAG} Exception during disconnection: {result.Error?.Message}");
             }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to disconnect from room: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to disconnect from room: {ex.Message}");
+            }
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)

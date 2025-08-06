@@ -88,7 +88,8 @@ namespace DCL.VoiceChat
 
         public void HandleConnectionEnded()
         {
-            activeCallStatusService?.HandleLivekitConnectionEnded();
+            communityVoiceChatCallStatusService.HandleLivekitConnectionEnded();
+            privateVoiceChatCallStatusService.HandleLivekitConnectionEnded();
         }
 
         public void HandleConnectionError()

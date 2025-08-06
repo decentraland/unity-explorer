@@ -258,8 +258,11 @@ namespace DCL.VoiceChat
 
         public override void HandleLivekitConnectionEnded()
         {
-            ResetVoiceChatData();
-            UpdateStatus(VoiceChatStatus.DISCONNECTED);
+            if (Status.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL)
+            {
+                UpdateStatus(VoiceChatStatus.DISCONNECTED);
+                ResetVoiceChatData();
+            }
         }
 
         private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate communityUpdate)
