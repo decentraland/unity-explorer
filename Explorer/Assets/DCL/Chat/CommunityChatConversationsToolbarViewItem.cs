@@ -48,6 +48,17 @@ namespace DCL.Chat
             communitySubscription = communityUpdates.Subscribe(OnCommunityStateUpdated);
 
             this.currentCommunityCallId = currentCommunityCallId;
+
+            communityCallIdSubscription?.Dispose();
+            communityCallIdSubscription = currentCommunityCallId.Subscribe(OnCommunityCallIdChanged);
+        }
+
+        private void OnCommunityCallIdChanged(string currentCallId)
+        {
+            if (!isActiveAndEnabled) return;
+            if (!connectionStatusIndicatorContainer.activeSelf) return;
+
+            IconImage.sprite = currentCallId.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase)? ListeningToCallIcon : HasCallIcon;
         }
 
         private void OnCommunityStateUpdated(bool hasActiveCall)
