@@ -104,6 +104,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument sceneUIRoot,
+            bool hasDebugFlag,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -128,7 +129,8 @@ namespace Global.Dynamic
                 partialsDiskCache,
                 sceneUIRoot,
                 profileRepositoryProxy,
-                ct
+                ct,
+                hasDebugFlag
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
@@ -223,6 +225,11 @@ namespace Global.Dynamic
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
+        }
+
+        public void InitializeFeaturesRegistry()
+        {
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
         }
 
         public GlobalWorld CreateGlobalWorld(

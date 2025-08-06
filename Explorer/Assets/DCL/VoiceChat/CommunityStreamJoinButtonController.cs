@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
-using DCL.Communities;
 using DCL.Utilities;
 using DG.Tweening;
 using System;
@@ -18,24 +17,20 @@ namespace DCL.VoiceChat
         private readonly IDisposable currentChannelSubscription;
 
         private readonly CallButtonView view;
-        private readonly IVoiceChatOrchestrator orchestrator;
+        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
-        private readonly CommunitiesDataProvider communityDataProvider;
         private bool isClickedOnce;
-        private CancellationTokenSource communityCts = new ();
 
         private CancellationTokenSource cts;
 
         public CommunityStreamJoinButtonController(
             CallButtonView view,
-            IVoiceChatOrchestrator orchestrator,
-            IReadonlyReactiveProperty<ChatChannel> currentChannel,
-            CommunitiesDataProvider communityDataProvider)
+            ICommunityCallOrchestrator communityCallOrchestrator,
+            IReadonlyReactiveProperty<ChatChannel> currentChannel)
         {
             this.view = view;
-            this.orchestrator = orchestrator;
+            this.communityCallOrchestrator = communityCallOrchestrator;
             this.currentChannel = currentChannel;
-            this.communityDataProvider = communityDataProvider;
             this.view.CallButton.onClick.AddListener(OnJoinButtonClicked);
             cts = new CancellationTokenSource();
 
@@ -47,10 +42,9 @@ namespace DCL.VoiceChat
             currentChannelSubscription?.Dispose();
             view.CallButton.onClick.RemoveListener(OnJoinButtonClicked);
             cts?.Dispose();
-            communityCts?.Dispose();
         }
 
-        public void Reset()
+        private void Reset()
         {
             if (!PlayerLoopHelper.IsMainThread)
                 ResetAsync().Forget();
@@ -87,7 +81,7 @@ namespace DCL.VoiceChat
             isClickedOnce = true;
 
             // Check if we're already in any call
-            if (orchestrator.CurrentCallStatus.Value is
+            if (communityCallOrchestrator.CurrentCallStatus.Value is
                 VoiceChatStatus.VOICE_CHAT_IN_CALL or
                 VoiceChatStatus.VOICE_CHAT_STARTED_CALL or
                 VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
@@ -99,7 +93,7 @@ namespace DCL.VoiceChat
             {
                 // Join the call for the current community channel
                 string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
-                orchestrator.CommunityStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
+                communityCallOrchestrator.JoinCommunityVoiceChat(communityId, ct);
             }
         }
 

@@ -14,7 +14,6 @@ namespace DCL.VoiceChat
     public class VoiceChatReconnectionManager : IDisposable
     {
         private const string TAG = nameof(VoiceChatReconnectionManager);
-        private const int WAIT_BEFORE_DISCONNECT_DELAY = 500;
 
         private readonly IRoomHub roomHub;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
@@ -22,10 +21,8 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
 
         private int reconnectionAttempts;
-        private bool isOrderedDisconnection;
         private bool isDisposed;
 
-        private CancellationTokenSource orderedDisconnectionCts;
         private CancellationTokenSource reconnectionCts;
 
         public event Action ReconnectionStarted;
@@ -54,55 +51,11 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
 
-        public void StartOrderedDisconnectionGracePeriod(DisconnectReason? disconnectReason)
+        public void HandleDisconnection()
         {
             if (isDisposed) return;
 
-            //TODO FRAN: Extract this checking into a static helper method to simplify this, we use this at least in 2 places.
-            if (disconnectReason is
-                DisconnectReason.ClientInitiated or
-                DisconnectReason.DuplicateIdentity or
-                DisconnectReason.JoinFailure or
-                DisconnectReason.ParticipantRemoved or
-                DisconnectReason.RoomClosed or
-                DisconnectReason.RoomDeleted or
-                DisconnectReason.ServerShutdown or
-                DisconnectReason.UserRejected)
-                isOrderedDisconnection = true;
-            else
-            {
-                isOrderedDisconnection = false;
-            }
-
-            orderedDisconnectionCts = orderedDisconnectionCts.SafeRestart();
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Starting ordered disconnection grace period");
-            WaitForOrderedDisconnectionAsync().Forget();
-        }
-
-        public void ConfirmOrderedDisconnection()
-        {
-            if (isDisposed) return;
-
-            isOrderedDisconnection = true;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Ordered disconnection confirmed");
-        }
-
-        private async UniTaskVoid WaitForOrderedDisconnectionAsync()
-        {
-            try
-            {
-                await UniTask.Delay(WAIT_BEFORE_DISCONNECT_DELAY, cancellationToken: orderedDisconnectionCts.Token)
-                             .SuppressCancellationThrow();
-
-                if (!isOrderedDisconnection)
-                {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} No ordered disconnection received after grace period - starting reconnection attempts");
-                    HandleUnexpectedDisconnection();
-                }
-                else { ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Ordered disconnection received during grace period - no reconnection needed"); }
-            }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Exception during grace period: {ex.Message}"); }
+            HandleUnexpectedDisconnection();
         }
 
         private void HandleUnexpectedDisconnection()
@@ -116,6 +69,7 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} No remote participants in room, skipping reconnection attempts");
                 voiceChatOrchestrator.HandleConnectionError();
                 ReconnectionFailed?.Invoke();
+                roomHub.VoiceChatRoom().StopAsync().Forget();
                 return;
             }
 
@@ -179,8 +133,6 @@ namespace DCL.VoiceChat
             reconnectionCts.SafeCancelAndDispose();
             reconnectionCts = null;
             reconnectionAttempts = 0;
-            orderedDisconnectionCts.SafeCancelAndDispose();
-            orderedDisconnectionCts = null;
         }
     }
 }

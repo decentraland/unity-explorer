@@ -2,6 +2,8 @@
 using Castle.Core.Internal;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
@@ -17,25 +19,29 @@ namespace DCL.VoiceChat
     /// </summary>
     public class CommunityVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, ICommunityVoiceChatCallStatusService
     {
+        private const string TAG = "CommunityVoiceChatCallStatusService";
+
         private readonly ICommunityVoiceService voiceChatService;
-        private readonly VoiceChatParticipantsStateService participantsStateService;
+        private readonly INotificationsBusController notificationBusController;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
+        private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
 
         private CancellationTokenSource cts = new ();
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
-            VoiceChatParticipantsStateService participantsStateService)
+            INotificationsBusController notificationBusController)
         {
             this.voiceChatService = voiceChatService;
-            this.participantsStateService = participantsStateService;
+            this.notificationBusController = notificationBusController;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
+            this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
         }
 
         public override void StartCall(string communityId)
         {
             //We can start a call only if we are not connected or trying to start a call
-            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
+            if (!Status.Value.IsNotConnected()) return;
 
             cts = cts.SafeRestart();
 
@@ -79,15 +85,15 @@ namespace DCL.VoiceChat
 
         public override void HangUp()
         {
-            //TODO: currently just exits, need to figure out how to handle hang up
-            UpdateStatus(VoiceChatStatus.DISCONNECTED);
+            ResetVoiceChatData();
+            UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
         }
 
         public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
             try
             {
-                if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
+                if (!Status.Value.IsNotConnected())
 
                     //we should throw here and let the catch handle it?
                     return;
@@ -104,6 +110,7 @@ namespace DCL.VoiceChat
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
                     default:
+                        ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Error when connecting to call {response}");
                         ResetVoiceChatData();
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
                         break;
@@ -114,167 +121,225 @@ namespace DCL.VoiceChat
 
         public void RequestToSpeakInCurrentCall()
         {
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || CallId == null) return;
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || CallId.IsNullOrEmpty()) return;
 
             cts = cts.SafeRestart();
             RequestToSpeakAsync(CallId, cts.Token).Forget();
-        }
+            return;
 
-        private async UniTaskVoid RequestToSpeakAsync(string communityId, CancellationToken ct)
-        {
-            try
+            async UniTaskVoid RequestToSpeakAsync(string communityId, CancellationToken ct)
             {
-                RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, ct);
-
-                switch (response.ResponseCase)
+                try
                 {
-                    case RequestToSpeakInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        // participantsStateService.LocalParticipantState.IsRequestingToSpeak.Value = true;
-                        // We should not be able to do this so easily, we do it here to avoid waiting for metadata update, for now I disable it until we test how fast this comes.
-                        break;
+                    RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, ct);
+
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} RequestToSpeak response: {response.ResponseCase} for community {communityId}");
                 }
+                catch (Exception e) { }
             }
-            catch (Exception e) { }
         }
 
         public void PromoteToSpeakerInCurrentCall(string walletId)
         {
             if (CallId.IsNullOrEmpty()) return;
-            PromoteToSpeaker(CallId, walletId);
-        }
-
-        public void PromoteToSpeaker(string communityId, string walletId)
-        {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            PromoteToSpeakerAsync(communityId, walletId, cts.Token).Forget();
+            PromoteToSpeakerAsync(CallId).Forget();
+            return;
+
+            async UniTaskVoid PromoteToSpeakerAsync(string communityId)
+            {
+                try
+                {
+                    PromoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, cts.Token);
+
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} PromoteToSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
+                }
+                catch (Exception e) { }
+            }
         }
 
-        private async UniTaskVoid PromoteToSpeakerAsync(string communityId, string walletId, CancellationToken ct)
+        public void DenySpeakerInCurrentCall(string walletId)
         {
-            try
-            {
-                PromoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+            if (CallId.IsNullOrEmpty()) return;
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
-                switch (response.ResponseCase)
+            cts = cts.SafeRestart();
+            DenySpeakerAsync(CallId, walletId, cts.Token).Forget();
+
+            return;
+
+            async UniTaskVoid DenySpeakerAsync(string communityId, string walletId, CancellationToken ct)
+            {
+                try
                 {
-                    case PromoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        //Handle promote logic here
-                        break;
+                    PromoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+
+                    switch (response.ResponseCase)
+                    {
+                        case PromoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                            //Handle promote logic here
+                            break;
+                    }
                 }
+                catch (Exception e) { }
             }
-            catch (Exception e) { }
         }
 
         public void DemoteFromSpeakerInCurrentCall(string walletId)
         {
             if (CallId.IsNullOrEmpty()) return;
-
-            DemoteFromSpeaker(CallId, walletId);
-        }
-
-        public void DemoteFromSpeaker(string communityId, string walletId)
-        {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            DemoteFromSpeakerAsync(communityId, walletId, cts.Token).Forget();
-        }
+            DemoteFromSpeakerAsync(CallId, cts.Token).Forget();
+            return;
 
-        private async UniTaskVoid DemoteFromSpeakerAsync(string communityId, string walletId, CancellationToken ct)
-        {
-            try
+            async UniTaskVoid DemoteFromSpeakerAsync(string communityId, CancellationToken ct)
             {
-                DemoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.DemoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
-
-                switch (response.ResponseCase)
+                try
                 {
-                    case DemoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        //Handle demote logic here
-                        break;
+                    DemoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.DemoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} DemoteFromSpeaker response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
                 }
+                catch (Exception e) { }
             }
-            catch (Exception e) { }
         }
 
         public void KickPlayerFromCurrentCall(string walletId)
         {
             if (CallId.IsNullOrEmpty()) return;
-
-            KickPlayer(CallId, walletId);
-        }
-
-        public void KickPlayer(string communityId, string walletId)
-        {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            KickPlayerAsync(communityId, walletId, cts.Token).Forget();
-        }
+            KickPlayerAsync(CallId, walletId, cts.Token).Forget();
+            return;
 
-        private async UniTaskVoid KickPlayerAsync(string communityId, string walletId, CancellationToken ct)
-        {
-            try
+            async UniTaskVoid KickPlayerAsync(string communityId, string walletId, CancellationToken ct)
             {
-                KickPlayerFromCommunityVoiceChatResponse response = await voiceChatService.KickPlayerFromCommunityVoiceChatAsync(communityId, walletId, ct);
-
-                switch (response.ResponseCase)
+                try
                 {
-                    case KickPlayerFromCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        //Handle kick logic
-                        break;
+                    KickPlayerFromCommunityVoiceChatResponse response = await voiceChatService.KickPlayerFromCommunityVoiceChatAsync(communityId, walletId, ct);
+
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} KickPlayer response: {response.ResponseCase} for community {communityId}, wallet {walletId}");
                 }
+                catch (Exception e) { }
             }
-            catch (Exception e) { }
         }
 
         public override void HandleLivekitConnectionFailed()
         {
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Community voice chat HandleLivekitConnectionFailed not yet implemented");
+            ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+        }
+
+        public override void HandleLivekitConnectionEnded()
+        {
+            ResetVoiceChatData();
+            UpdateStatus(VoiceChatStatus.DISCONNECTED);
         }
 
         private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate communityUpdate)
         {
             if (string.IsNullOrEmpty(communityUpdate.CommunityId))
             {
-                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Received community voice chat update with empty community ID");
+                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Received community voice chat update with empty community ID");
                 return;
             }
 
-            if (string.IsNullOrEmpty(communityUpdate.VoiceChatId))
+            if (communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatEnded)
             {
-                // Remove community from dictionary if call_id is empty
-                if (communityVoiceChatCalls.Remove(communityUpdate.CommunityId)) { ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Removed community {communityUpdate.CommunityId} from voice chat calls"); }
+                // Remove from active community voice chats when the call ends
+                activeCommunityVoiceChats.Remove(communityUpdate.CommunityId);
+
+                if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
+                {
+                    existingData.Value = false;
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Community voice chat ended for {communityUpdate.CommunityId}");
+                }
+
+                return;
+            }
+
+            // Update or add the active community voice chat information from the update
+            var activeChat = new ActiveCommunityVoiceChat
+            {
+                communityId = communityUpdate.CommunityId,
+                communityName = communityUpdate.CommunityName,
+                communityImage = communityUpdate.CommunityImage,
+                isMember = communityUpdate.IsMember,
+                positions = new List<string>(communityUpdate.Positions),
+                worlds = new List<string>(communityUpdate.Worlds),
+                participantCount = 0, // This would need to be populated from other sources
+                moderatorCount = 0, // This would need to be populated from other sources
+            };
+
+            // Update the active community voice chats dictionary
+            activeCommunityVoiceChats[communityUpdate.CommunityId] = activeChat;
+
+            if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingCallData))
+            {
+                existingCallData.Value = communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted;
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Updated community {communityUpdate.CommunityId}");
             }
             else
             {
-                // Add or update community with new call_id
-                if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
+                communityVoiceChatCalls[communityUpdate.CommunityId] = new ReactiveProperty<bool>(communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted);
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Added community {communityUpdate.CommunityId}");
+            }
+
+            notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
+        }
+
+        private void OnActiveCommunityVoiceChatsFetched(ActiveCommunityVoiceChatsResponse response)
+        {
+            if (response.data.activeChats == null)
+            {
+                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Received null or empty active community voice chats data");
+                return;
+            }
+
+            foreach (ActiveCommunityVoiceChat activeChat in response.data.activeChats)
+            {
+                if (string.IsNullOrEmpty(activeChat.communityId))
                 {
-                    existingData.Value = !string.IsNullOrEmpty(communityUpdate.VoiceChatId);
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Updated community {communityUpdate.CommunityId} with Voice Chat ID {communityUpdate.VoiceChatId}");
+                    ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Skipping active community voice chat with empty community ID");
+                    continue;
+                }
+
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Processing community {activeChat.communityId} - Name: {activeChat.communityName}, Participants: {activeChat.participantCount}, IsMember: {activeChat.isMember}");
+
+                activeCommunityVoiceChats[activeChat.communityId] = activeChat;
+
+                // Ensure we have a reactive property for this community
+                if (!communityVoiceChatCalls.TryGetValue(activeChat.communityId, out ReactiveProperty<bool>? communityVoiceChatCall))
+                {
+                    communityVoiceChatCalls[activeChat.communityId] = new ReactiveProperty<bool>(true);
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Added new community {activeChat.communityId} from active chats fetch");
                 }
                 else
                 {
-                    communityVoiceChatCalls[communityUpdate.CommunityId] = new ReactiveProperty<bool>(!string.IsNullOrEmpty(communityUpdate.VoiceChatId));
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Added community {communityUpdate.CommunityId} with Voice Chat ID {communityUpdate.VoiceChatId}");
+                    // Update existing reactive property to reflect active status
+                    communityVoiceChatCall.Value = true;
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Updated existing community {activeChat.communityId} from active chats fetch");
                 }
             }
+
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Completed processing. Total communities in cache: {communityVoiceChatCalls.Count}");
         }
 
         public override void Dispose()
         {
-            if (voiceChatService != null)
-            {
-                voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
-                voiceChatService.Dispose();
-            }
+            voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
+            voiceChatService.ActiveCommunityVoiceChatsFetched -= OnActiveCommunityVoiceChatsFetched;
+            voiceChatService.Dispose();
 
             foreach (ReactiveProperty<bool>? callData in communityVoiceChatCalls.Values) { callData.Dispose(); }
 
             communityVoiceChatCalls.Clear();
+            activeCommunityVoiceChats.Clear();
 
             cts.SafeCancelAndDispose();
             base.Dispose();
@@ -294,7 +359,7 @@ namespace DCL.VoiceChat
 
             if (communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? existingData))
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Returning existing subscription for community {communityId}");
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Returning existing subscription for community {communityId}");
                 return existingData;
             }
 
@@ -302,8 +367,19 @@ namespace DCL.VoiceChat
             var newCallData = new ReactiveProperty<bool>(false);
             communityVoiceChatCalls[communityId] = newCallData;
 
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Created new subscription for community {communityId}");
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Created new subscription for community {communityId}");
             return newCallData;
+        }
+
+        public bool TryGetActiveCommunityVoiceChat(string communityId, out ActiveCommunityVoiceChat activeCommunityVoiceChat)
+        {
+            if (string.IsNullOrEmpty(communityId))
+            {
+                activeCommunityVoiceChat = default(ActiveCommunityVoiceChat);
+                return false;
+            }
+
+            return activeCommunityVoiceChats.TryGetValue(communityId, out activeCommunityVoiceChat);
         }
     }
 }

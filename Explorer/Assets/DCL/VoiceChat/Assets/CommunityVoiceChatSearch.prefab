@@ -63,7 +63,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.9019608}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.8}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -159,6 +159,10 @@ PrefabInstance:
     - target: {fileID: 618380612025691475, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 668733424437873406, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.00001434794
       objectReference: {fileID: 0}
     - target: {fileID: 1281661203296871137, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
       propertyPath: m_AnchorMax.y
@@ -293,6 +297,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1883747033996901122, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1883747033996901122, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
@@ -323,6 +331,10 @@ PrefabInstance:
     - target: {fileID: 2361768466791512719, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4307287351790292099, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
+      propertyPath: m_Size
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4307287351790292099, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
       propertyPath: m_Value
@@ -366,6 +378,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5970993927800665121, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
       propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5970993927800665121, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}
+      propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5970993927800665121, guid: fd6e61025999d48cc8195bbfa6551e76, type: 3}

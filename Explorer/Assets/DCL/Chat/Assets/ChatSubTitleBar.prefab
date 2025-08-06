@@ -66,6 +66,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2542918132137397923}
     m_Modifications:
+    - target: {fileID: 2636177983206373435, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3278602879228568808, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 6a691ff28b59f4236a6a8d3b7f4aa258, type: 3}
     - target: {fileID: 3435545857806573646, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
       propertyPath: m_Name
       value: LiveStreamSubTitleBarView
@@ -149,6 +157,26 @@ PrefabInstance:
     - target: {fileID: 4773166297052838194, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5808528923737414412, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5808528923737414412, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6493454624063325010, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 105
+      objectReference: {fileID: 0}
+    - target: {fileID: 6493454624063325010, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6493454624063325010, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 14.299999
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -12,7 +12,11 @@ namespace DCL.VoiceChat.Services
         /// </summary>
         event Action<CommunityVoiceChatUpdate> CommunityVoiceChatUpdateReceived;
 
+        event Action<ActiveCommunityVoiceChatsResponse> ActiveCommunityVoiceChatsFetched;
+
         UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, CancellationToken ct);
+
+        UniTask<PromoteSpeakerInCommunityVoiceChatResponse> DenySpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct);
 
         UniTask<PromoteSpeakerInCommunityVoiceChatResponse> PromoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct);
 
@@ -23,6 +27,10 @@ namespace DCL.VoiceChat.Services
         UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct);
 
         UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct);
+
+        UniTask<EndCommunityVoiceChatResponse> EndCommunityVoiceChatAsync(string communityId, CancellationToken ct);
+
+        UniTask<ActiveCommunityVoiceChatsResponse> GetActiveCommunityVoiceChatsAsync(CancellationToken ct);
 
         UniTask SubscribeToCommunityVoiceChatUpdatesAsync(CancellationToken ct);
     }

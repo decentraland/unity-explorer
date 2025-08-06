@@ -36,3 +36,21 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  <PlayerEntryView>k__BackingField:
+    m_AssetGUID: 1f35770447348416ab31f59bfd77ac2b
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  <MuteMicrophoneAudio>k__BackingField:
+    m_AssetGUID: e95bf9b95c2484148a081ec1b18e3aa6
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  <UnmuteMicrophoneAudio>k__BackingField:
+    m_AssetGUID: bbf6fdc100a3def44853fe48acbf4fd5
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0

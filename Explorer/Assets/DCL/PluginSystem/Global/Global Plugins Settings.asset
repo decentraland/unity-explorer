@@ -394,6 +394,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <LightSourceSettings>k__BackingField:
+          m_AssetGUID: 52c856180dc5d6447b902f06d38f4161
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
@@ -770,6 +776,42 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        DefaultMaleMouthTexture:
+          m_AssetGUID: 1d6ca002a7e7b4f9c881a203eb97996f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        DefaultMaleEyesTexture:
+          m_AssetGUID: 9372c7ef01a5a4a52a0e9b3467605717
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        DefaultMaleEyebrowsTexture:
+          m_AssetGUID: 41b6cad6750bc4b35ba63ebbeb956830
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        DefaultFemaleMouthTexture:
+          m_AssetGUID: 5de5609d1e6c441b5a7c56a77903cab7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        DefaultFemaleEyesTexture:
+          m_AssetGUID: 17775668c745d4edfae3bff500f95f32
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        DefaultFemaleEyebrowsTexture:
+          m_AssetGUID: eae766b15f997414794bfd4f17de5949
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264129
       type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
       data:
@@ -897,6 +939,8 @@ MonoBehaviour:
         <ShareToXMessage>k__BackingField: Check out what I'm doing in @decentraland
           right now and join me!
         <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
+        <PhotoSuccessfullySetAsPublicMessage>k__BackingField: Photo successfully
+          updated
         <LinkCopiedMessage>k__BackingField: Link copied!
         <CategoryIconsMapping>k__BackingField:
           m_AssetGUID: 4a2a7b610414b45c1b576946ce094877

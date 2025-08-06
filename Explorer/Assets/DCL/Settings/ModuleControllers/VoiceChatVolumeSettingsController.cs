@@ -1,4 +1,5 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.FeatureFlags;
+using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
 using DCL.Prefs;
@@ -12,7 +13,7 @@ namespace DCL.Settings.ModuleControllers
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
 
-        public VoiceChatVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, bool isVoiceChatEnabled)
+        public VoiceChatVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer)
         {
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
@@ -23,6 +24,7 @@ namespace DCL.Settings.ModuleControllers
             view.SliderView.Slider.onValueChanged.AddListener(SetVoiceChatVolumeSettings);
             SetVoiceChatVolumeSettings(view.SliderView.Slider.value);
 
+            bool isVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             view.SetActive(isVoiceChatEnabled);
         }
 

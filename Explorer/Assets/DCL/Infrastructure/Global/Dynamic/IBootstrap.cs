@@ -29,6 +29,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
+            bool hasDebugFlag,
             CancellationToken ct
         );
 
@@ -65,5 +66,7 @@ namespace Global.Dynamic
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 
         void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache);
+
+        void InitializeFeaturesRegistry();
     }
 }

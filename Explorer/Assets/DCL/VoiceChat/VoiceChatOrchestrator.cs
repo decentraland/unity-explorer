@@ -3,71 +3,14 @@ using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
 using System;
+using System.Threading;
 
 namespace DCL.VoiceChat
 {
-    public enum VoiceChatType
-    {
-        NONE,
-        PRIVATE,
-        COMMUNITY,
-    }
-
-    public enum VoiceChatPanelSize
-    {
-        DEFAULT,
-        EXPANDED,
-    }
-
-    /// <summary>
-    ///     Interface for systems that need to read or subscribe to voice chat state
-    /// </summary>
-    public interface IVoiceChatOrchestratorState
-    {
-        IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType { get; }
-        IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus { get; }
-        IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize { get; }
-    }
-
-    /// <summary>
-    ///     Interface for systems that need to perform voice chat actions
-    /// </summary>
-    public interface IVoiceChatOrchestratorActions
-    {
-        void StartCall(string callId, VoiceChatType callType);
-
-        void AcceptPrivateCall();
-
-        void HangUp();
-
-        void RejectCall();
-
-        void HandleConnectionError();
-    }
-
-    public interface IVoiceChatOrchestratorUIEvents
-    {
-        void ChangePanelSize(VoiceChatPanelSize panelSize);
-    }
-
-    /// <summary>
-    ///     Interface for systems that need all interfaces (like voice chat UI)
-    /// </summary>
-    public interface IVoiceChatOrchestrator : IVoiceChatOrchestratorState, IVoiceChatOrchestratorActions, IVoiceChatOrchestratorUIEvents
-    {
-        string CurrentConnectionUrl { get; }
-        string CurrentCallId { get; }
-        IPrivateVoiceChatCallStatusService PrivateStatusService { get; }
-        ICommunityVoiceChatCallStatusService CommunityStatusService { get; }
-        VoiceChatParticipantsStateService ParticipantsStateService { get; }
-    }
-
     public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
     {
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
-        private readonly IVoiceService rpcPrivateVoiceChatService;
-        private readonly ICommunityVoiceService rpcCommunityVoiceChatService;
 
         private readonly IDisposable privateStatusSubscription;
         private readonly IDisposable communityStatusSubscription;
@@ -92,32 +35,33 @@ namespace DCL.VoiceChat
         public ICommunityVoiceChatCallStatusService CommunityStatusService => communityVoiceChatCallStatusService;
         public VoiceChatParticipantsStateService ParticipantsStateService { get; }
 
+        public IReadonlyReactiveProperty<VoiceChatStatus> CommunityCallStatus => communityVoiceChatCallStatusService.Status;
+
+        public string CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
+
+        public IReadonlyReactiveProperty<VoiceChatStatus> PrivateCallStatus => privateVoiceChatCallStatusService.Status;
+
+        public string CurrentTargetWallet => privateVoiceChatCallStatusService.CurrentTargetWallet;
+
         public VoiceChatOrchestrator(
             PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
-            IVoiceService rpcPrivateVoiceChatService,
-            ICommunityVoiceService rpcCommunityVoiceChatService,
             VoiceChatParticipantsStateService participantsStateService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
-            this.rpcPrivateVoiceChatService = rpcPrivateVoiceChatService;
-            this.rpcCommunityVoiceChatService = rpcCommunityVoiceChatService;
-            this.ParticipantsStateService = participantsStateService;
+            ParticipantsStateService = participantsStateService;
 
-            rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
+            privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
 
-            //I think we dont need this one for now, as these updates are only for communities data, doesnt affect the relation between both states.
-            //rpcCommunityVoiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
             privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
             communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
         }
 
         public void Dispose()
         {
-            rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
+            privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
 
-            //rpcCommunityVoiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
 
@@ -129,30 +73,17 @@ namespace DCL.VoiceChat
 
         public void StartCall(string callId, VoiceChatType callType)
         {
-            if (currentVoiceChatType.Value != VoiceChatType.NONE)
+            if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot start a call while in another call");
-                return;
+                SetActiveCallService(callType);
+                activeCallStatusService.StartCall(callId);
             }
-
-            SetActiveCallService(callType);
-            activeCallStatusService.StartCall(callId);
         }
 
         public void AcceptPrivateCall()
         {
-            if (activeCallStatusService is PrivateVoiceChatCallStatusService privateService)
-                privateService.AcceptCall();
-            else
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "AcceptCall not supported for current voice chat type");
-        }
-
-        public void KickPlayer(string communityId, string walletId)
-        {
-            if (activeCallStatusService is CommunityVoiceChatCallStatusService communityService)
-                communityService.KickPlayer(communityId, walletId);
-            else
-                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "KickPlayer is not supported for current voice chat type");
+            if (VoiceChatCallTypeValidator.IsPrivateCall(currentVoiceChatType.Value))
+                privateVoiceChatCallStatusService.AcceptCall();
         }
 
         public void HangUp() =>
@@ -160,18 +91,19 @@ namespace DCL.VoiceChat
 
         public void RejectCall()
         {
-            if (activeCallStatusService is PrivateVoiceChatCallStatusService privateService)
-                privateService.RejectCall();
-            else
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "RejectCall not supported for current voice chat type");
+            if (VoiceChatCallTypeValidator.IsPrivateCall(currentVoiceChatType.Value))
+                privateVoiceChatCallStatusService.RejectCall();
+        }
+
+        public void HandleConnectionEnded()
+        {
+            activeCallStatusService?.HandleLivekitConnectionEnded();
         }
 
         public void HandleConnectionError()
         {
             activeCallStatusService?.HandleLivekitConnectionFailed();
         }
-
-        private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate update) { }
 
         private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
         {
@@ -188,14 +120,14 @@ namespace DCL.VoiceChat
             if (currentVoiceChatType.Value == VoiceChatType.PRIVATE) { currentCallStatus.Value = status; }
 
             // Handle transitions to/from private call
-            if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR || status== VoiceChatStatus.VOICE_CHAT_BUSY)
+            if (status.IsNotConnected())
             {
-                if (currentVoiceChatType.Value == VoiceChatType.PRIVATE) { SetActiveCallService(VoiceChatType.NONE); }
+                if (currentVoiceChatType.Value == VoiceChatType.PRIVATE) SetActiveCallService(VoiceChatType.NONE);
             }
-            else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL ||
-                     status == VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL ||
-                     status == VoiceChatStatus.VOICE_CHAT_STARTED_CALL ||
-                     status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            else if (status is VoiceChatStatus.VOICE_CHAT_STARTING_CALL
+                     or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL
+                     or VoiceChatStatus.VOICE_CHAT_STARTED_CALL
+                     or VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
                 SetActiveCallService(VoiceChatType.PRIVATE);
                 currentCallStatus.Value = status;
@@ -210,14 +142,14 @@ namespace DCL.VoiceChat
             if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY) { currentCallStatus.Value = status; }
 
             // Handle transitions to/from community call
-            if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR || status== VoiceChatStatus.VOICE_CHAT_BUSY)
+            if (status.IsNotConnected())
             {
-                if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY) { SetActiveCallService(VoiceChatType.NONE); }
+                if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY) SetActiveCallService(VoiceChatType.NONE);
             }
-            else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL ||
-                     status == VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL ||
-                     status == VoiceChatStatus.VOICE_CHAT_STARTED_CALL ||
-                     status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            else if (status is VoiceChatStatus.VOICE_CHAT_STARTING_CALL
+                     or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL
+                     or VoiceChatStatus.VOICE_CHAT_STARTED_CALL
+                     or VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
                 SetActiveCallService(VoiceChatType.COMMUNITY);
                 currentCallStatus.Value = status;
@@ -249,5 +181,50 @@ namespace DCL.VoiceChat
         {
             currentVoiceChatPanelSize.Value = panelSize;
         }
+
+        public void JoinCommunityVoiceChat(string communityId, CancellationToken ct)
+        {
+            if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
+        }
+
+        public void RequestToSpeakInCurrentCall()
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.RequestToSpeakInCurrentCall();
+        }
+
+        public void PromoteToSpeakerInCurrentCall(string walletId)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.PromoteToSpeakerInCurrentCall(walletId);
+        }
+
+        public void DenySpeakerInCurrentCall(string walletId)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.DenySpeakerInCurrentCall(walletId);
+        }
+
+        public void DemoteFromSpeakerInCurrentCall(string walletId)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.DemoteFromSpeakerInCurrentCall(walletId);
+        }
+
+        public void KickPlayerFromCurrentCall(string walletId)
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.KickPlayerFromCurrentCall(walletId);
+        }
+
+        public bool HasActiveVoiceChatCall(string communityId) =>
+            communityVoiceChatCallStatusService.HasActiveVoiceChatCall(communityId);
+
+        public bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData) =>
+            communityVoiceChatCallStatusService.TryGetActiveCommunityVoiceChat(communityId, out activeCommunityData);
+
+        public ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId) =>
+            communityVoiceChatCallStatusService.SubscribeToCommunityUpdates(communityId);
     }
 }

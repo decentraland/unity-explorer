@@ -1,10 +1,10 @@
+using Cysharp.Threading.Tasks;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
-using DCL.Web3;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using Vector3 = UnityEngine.Vector3;
@@ -15,9 +15,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly CommunityVoiceChatTitlebarView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly VoiceChatRoomManager roomManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatOrchestratorUIEvents voiceChatOrchestratorUIEvents;
-        private readonly IVoiceChatOrchestratorState voiceChatOrchestratorState;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
         private readonly Dictionary<string, PlayerEntryView> usedPlayerEntries = new ();
         private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
@@ -30,26 +29,26 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             CommunityVoiceChatTitlebarView view,
             PlayerEntryView playerEntry,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            VoiceChatMicrophoneHandler microphoneHandler,
+            VoiceChatRoomManager roomManager)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
-            voiceChatOrchestratorUIEvents = voiceChatOrchestrator;
-            voiceChatOrchestratorState = voiceChatOrchestrator;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.roomManager = roomManager;
 
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
-            inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator);
+            inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler);
 
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
-            this.view.PromoteToSpeaker += OnPromoteToSpeaker;
-            this.view.DemoteSpeaker += OnDemoteSpeaker;
-            this.view.Kick += OnKickUser;
-            this.view.Ban += OnBanUser;
+            this.roomManager.ConnectionEstablished += OnConnectionEstablished;
+            this.view.ApproveSpeaker += PromoteToSpeaker;
+            this.view.DenySpeaker += DenySpeaker;
 
             // Should we send this through an internal event bus to avoid having these sub-view subscriptions or bubbling up events?
             view.CommunityVoiceChatInCallView.InCallFooterView.OpenListenersSectionButton.onClick.AddListener(OpenListenersSection);
@@ -60,28 +59,46 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 actionOnGet: entry => entry.gameObject.SetActive(true),
                 actionOnRelease: entry => entry.gameObject.SetActive(false));
 
-            voiceChatTypeSubscription = voiceChatOrchestratorState.CurrentVoiceChatType.Subscribe(OnVoiceChatTypeChanged);
+            voiceChatTypeSubscription = voiceChatOrchestrator.CurrentVoiceChatType.Subscribe(OnVoiceChatTypeChanged);
 
-            OnVoiceChatTypeChanged(voiceChatOrchestratorState.CurrentVoiceChatType.Value);
+            OnVoiceChatTypeChanged(voiceChatOrchestrator.CurrentVoiceChatType.Value);
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
-            voiceChatOrchestratorUIEvents.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
         }
 
         public void Dispose()
         {
+            roomManager.ConnectionEstablished -= OnConnectionEstablished;
+
             view.CollapseButtonClicked -= OnCollapsedButtonClicked;
-            view.PromoteToSpeaker -= OnPromoteToSpeaker;
-            view.DemoteSpeaker -= OnDemoteSpeaker;
-            view.Kick -= OnKickUser;
-            view.Ban -= OnBanUser;
+            view.ApproveSpeaker -= PromoteToSpeaker;
+            view.DenySpeaker -= DenySpeaker;
+
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed -= OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined -= OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft -= OnParticipantLeft;
 
             voiceChatTypeSubscription?.Dispose();
             communityVoiceChatSearchController?.Dispose();
+
             ClearPool();
+        }
+
+        private void PromoteToSpeaker(string walletId)
+        {
+            voiceChatOrchestrator.PromoteToSpeakerInCurrentCall(walletId);
+        }
+
+        private void DenySpeaker(string walletId)
+        {
+            voiceChatOrchestrator.DenySpeakerInCurrentCall(walletId);
+        }
+
+        private void OnConnectionEstablished()
+        {
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
+                view.SetConnectedPanel(true);
         }
 
         private void CloseListenersSection()
@@ -143,23 +160,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             usedPlayerEntries.Remove(leftParticipantId);
         }
 
-        private void OnPromoteToSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
-        {
-            voiceChatOrchestrator.CommunityStatusService.PromoteToSpeakerInCurrentCall(member.WalletId);
-        }
-
-        private void OnDemoteSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
-        {
-            voiceChatOrchestrator.CommunityStatusService.DemoteFromSpeakerInCurrentCall(member.WalletId);
-        }
-
-        private void OnKickUser(VoiceChatParticipantsStateService.ParticipantState member)
-        {
-            voiceChatOrchestrator.CommunityStatusService.KickPlayerFromCurrentCall(member.WalletId);
-        }
-
-        private void OnBanUser(VoiceChatParticipantsStateService.ParticipantState member) { }
-
         private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
         {
             switch (voiceChatType)
@@ -169,6 +169,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     break;
                 case VoiceChatType.COMMUNITY:
                     Show();
+                    view.SetConnectedPanel(false);
                     break;
                 case VoiceChatType.NONE:
                 default:
@@ -190,7 +191,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnCollapsedButtonClicked()
         {
             isPanelCollapsed = !isPanelCollapsed;
-            voiceChatOrchestratorUIEvents.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.DEFAULT : VoiceChatPanelSize.EXPANDED);
+            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.DEFAULT : VoiceChatPanelSize.EXPANDED);
             view.SetCollapsedButtonState(isPanelCollapsed);
         }
 
@@ -210,25 +211,27 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private PlayerEntryView GetAndConfigurePlayerEntry(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
             playerEntriesPool.Get(out PlayerEntryView entryView);
-            usedPlayerEntries.Add(participantState.WalletId, entryView);
+            usedPlayerEntries[participantState.WalletId] =  entryView;
 
-            entryView.profileView.SetupAsync(new Web3Address(participantState.WalletId), profileRepositoryWrapper, CancellationToken.None).Forget();
+            entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, ProfileNameColorHelper.GetNameColor(participantState.Name.Value), participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
+            entryView.nameElement.Setup(participantState.Name.Value, participantState.WalletId, participantState.HasClaimedName.Value ?? false, ProfileNameColorHelper.GetNameColor(participantState.Name.Value));
 
             view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
 
             participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
             participantState.IsSpeaker.OnUpdate += isSpeaker => SetUserEntryParent(isSpeaker, entryView);
-            participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView);
+            participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name);
 
             return entryView;
         }
 
-        private void SetUserRequestingToSpeak(bool isRequestingToSpeak, PlayerEntryView entryView)
+        private void SetUserRequestingToSpeak(bool isRequestingToSpeak, PlayerEntryView entryView, string playerName)
         {
             if (isRequestingToSpeak)
             {
                 entryView.transform.parent = view.CommunityVoiceChatSearchView.RequestToSpeakParent;
                 entryView.transform.localScale = Vector3.one;
+                inCallController.ShowRaiseHandTooltip(playerName);
             }
 
             inCallController.RefreshCounter();

@@ -66,7 +66,6 @@ namespace DCL.Friends.UI.FriendPanel
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
             bool includeUserBlocking,
-            bool includeCall,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
@@ -103,7 +102,6 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     chatEventBus,
                     sharedSpaceManager,
-                    includeCall,
                     voiceChatOrchestrator);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,

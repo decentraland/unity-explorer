@@ -30,6 +30,12 @@ namespace DCL.NotificationsBusController.NotificationTypes
         BADGE_GRANTED,
         SOCIAL_SERVICE_FRIENDSHIP_REQUEST,
         SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED,
+        COMMUNITY_EVENT_CREATED,
+        COMMUNITY_EVENT_ABOUT_TO_START,
+        COMMUNITY_MEMBER_REMOVED,
+        COMMUNITY_MEMBER_BANNED,
+        COMMUNITY_RENAMED,
+        COMMUNITY_DELETED,
 
         //Internal notification types
         INTERNAL_ARRIVED_TO_DESTINATION,
@@ -45,5 +51,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         // Referral
         REFERRAL_INVITED_USERS_ACCEPTED,
         REFERRAL_NEW_TIER_REACHED,
+
+        COMMUNITY_VOICE_CHAT_STARTED,
     }
 }

@@ -20,12 +20,15 @@ namespace DCL.VoiceChat
 
         public string CurrentTargetWallet { get; private set; }
 
+        public event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
+
         public PrivateVoiceChatCallStatusService(IVoiceService voiceChatService)
         {
             this.voiceChatService = voiceChatService;
 
             this.voiceChatService.Reconnected += OnReconnected;
             this.voiceChatService.Disconnected += OnRCPDisconnected;
+            this.voiceChatService.PrivateVoiceChatUpdateReceived += OnRPCPrivateVoiceChatUpdateReceived;
             cts = new CancellationTokenSource();
         }
 
@@ -35,11 +38,17 @@ namespace DCL.VoiceChat
             {
                 voiceChatService.Reconnected -= OnReconnected;
                 voiceChatService.Disconnected -= OnRCPDisconnected;
+                voiceChatService.PrivateVoiceChatUpdateReceived -= OnRPCPrivateVoiceChatUpdateReceived;
                 voiceChatService.Dispose();
             }
 
             cts.SafeCancelAndDispose();
             base.Dispose();
+        }
+
+        private void OnRPCPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
+        {
+            PrivateVoiceChatUpdateReceived?.Invoke(update);
         }
 
         public void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
@@ -96,7 +105,7 @@ namespace DCL.VoiceChat
         public override void StartCall(string walletId)
         {
             //We can start a call only if we are not connected or trying to start a call
-            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
+            if (!Status.Value.IsNotConnected()) return;
 
             CurrentTargetWallet = walletId;
 
@@ -254,6 +263,15 @@ namespace DCL.VoiceChat
             {
                 ResetVoiceChatData();
                 UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+            }
+        }
+
+        public override void HandleLivekitConnectionEnded()
+        {
+            if (Status.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL)
+            {
+                ResetVoiceChatData();
+                UpdateStatus(VoiceChatStatus.DISCONNECTED);
             }
         }
     }

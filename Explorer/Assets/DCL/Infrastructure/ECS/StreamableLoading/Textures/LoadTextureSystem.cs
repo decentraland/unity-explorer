@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
-        private const int AVATAR_TEXTURE_MAX_ATTEMPTS = 4;
+        private const int AVATAR_TEXTURE_MAX_ATTEMPTS = 3;
         private const int AVATAR_TEXTURE_REQUEST_DELAY_MS = 5000;
 
         private readonly IWebRequestController webRequestController;
@@ -30,7 +30,8 @@ namespace ECS.StreamableLoading.Textures
             // A replacement of IProfileRepository to avoid cyclic dependencies
             IAvatarTextureUrlProvider avatarTextureUrlProvider)
             : base(
-                world, cache, new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
+                world, cache, 
+                new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
             )
         {
             this.webRequestController = webRequestController;
@@ -67,7 +68,7 @@ namespace ECS.StreamableLoading.Textures
 
         private async UniTask<IOwnedTexture2D?> TryResolveAvatarTextureAsync(URLAddress url, GetTextureIntention intention, CancellationToken ct)
         {
-            CommonArguments newCommonArgs = new CommonArguments(url, AVATAR_TEXTURE_MAX_ATTEMPTS, StreamableLoadingDefaults.TIMEOUT, AVATAR_TEXTURE_REQUEST_DELAY_MS);
+            var newCommonArgs = new CommonArguments(url, RetryPolicy.WithRetries(AVATAR_TEXTURE_MAX_ATTEMPTS, AVATAR_TEXTURE_REQUEST_DELAY_MS));
 
             GetTextureWebRequest.CreateTextureOp textureOp = GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode);
             GetTextureArguments textureArguments = new GetTextureArguments(intention.TextureType);

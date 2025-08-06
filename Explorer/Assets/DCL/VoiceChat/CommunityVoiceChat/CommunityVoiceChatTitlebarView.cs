@@ -1,6 +1,4 @@
-using DCL.Communities.CommunitiesCard.Members;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using MVC;
 using System;
@@ -47,55 +45,36 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public CommunityVoiceChatSearchView CommunityVoiceChatSearchView { get; private set; }
 
+        private CancellationTokenSource popupCts = new ();
+        private UniTaskCompletionSource contextMenuTask = new ();
 
-        [field: Header("Assets")]
-        [field: SerializeField] private CommunityVoiceChatContextMenuConfiguration contextMenuSettings = null!;
-
-        public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
-        public event Action<VoiceChatParticipantsStateService.ParticipantState>? DemoteSpeaker;
-        public event Action<VoiceChatParticipantsStateService.ParticipantState>? PromoteToSpeaker;
-        public event Action<VoiceChatParticipantsStateService.ParticipantState>? Kick;
-        public event Action<VoiceChatParticipantsStateService.ParticipantState>? Ban;
-
-        private GenericContextMenu? contextMenu;
-        private UserProfileContextMenuControlSettings? userProfileContextMenuControlSettings;
-        private GenericContextMenuElement? demoteSpeakerButton;
-        private GenericContextMenuElement? promoteToSpeakerButton;
-        private GenericContextMenuElement? kickFromStreamButton;
-        private GenericContextMenuElement? banFromCommunityButton;
-        private VoiceChatParticipantsStateService.ParticipantState lastClickedProfile;
-        private CancellationTokenSource cts = new ();
+        public event Action<string> ApproveSpeaker;
+        public event Action<string> DenySpeaker;
 
         private void Start()
         {
             CollapseButton.onClick.AddListener(() => CollapseButtonClicked?.Invoke());
-            contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing)
-                         //.AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus)))
-                         //.AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
-                         .AddControl(demoteSpeakerButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DemoteSpeakerText, contextMenuSettings.DemoteSpeakerSprite, () => DemoteSpeaker?.Invoke(lastClickedProfile!))))
-                         .AddControl(promoteToSpeakerButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.PromoteToSpeakerText, contextMenuSettings.PromoteToSpeakerSprite, () => PromoteToSpeaker?.Invoke(lastClickedProfile!))))
-                         .AddControl(kickFromStreamButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.KickFromStreamText, contextMenuSettings.KickFromStreamSprite, () => Kick?.Invoke(lastClickedProfile!))))
-                         .AddControl(banFromCommunityButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => Ban?.Invoke(lastClickedProfile!))));
         }
 
-        private void OnContextMenuButtonClicked(VoiceChatParticipantsStateService.ParticipantState voiceChatMember, VoiceChatParticipantsStateService.ParticipantState localParticipantState, Vector2 buttonPosition, PlayerEntryView elementView)
+        private void OnContextMenuButtonClicked(VoiceChatParticipantsStateService.ParticipantState participant, Vector2 buttonPosition, PlayerEntryView elementView)
         {
-            cts = cts.SafeRestart();
-            lastClickedProfile = voiceChatMember;
+            popupCts = popupCts.SafeRestart();
+            contextMenuTask?.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
 
-            bool isModeratorOrAdmin = localParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner;
-
-            promoteToSpeakerButton!.Enabled = !voiceChatMember.IsSpeaker && isModeratorOrAdmin;
-            demoteSpeakerButton!.Enabled = voiceChatMember.IsSpeaker && isModeratorOrAdmin;
-            kickFromStreamButton!.Enabled = isModeratorOrAdmin;
-            banFromCommunityButton!.Enabled = isModeratorOrAdmin;
-
-            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition), cts.Token);
+            ViewDependencies.GlobalUIViews.ShowCommunityPlayerEntryContextMenuAsync(
+                participant.WalletId,
+                participant.IsSpeaker.Value,
+                buttonPosition,
+                default(Vector2),
+                popupCts.Token,
+                contextMenuTask.Task,
+                anchorPoint: MenuAnchorPoint.BOTTOM_RIGHT).Forget();
         }
 
         public void ConfigureEntry(PlayerEntryView entryView, VoiceChatParticipantsStateService.ParticipantState participantState, VoiceChatParticipantsStateService.ParticipantState localParticipantState)
         {
-            entryView.SubscribeToInteractions(OnContextMenuButtonClicked);
+            entryView.SubscribeToInteractions(OnContextMenuButtonClicked, ApproveSpeaker, DenySpeaker);
             entryView.SetUserProfile(participantState, localParticipantState);
         }
 
@@ -122,6 +101,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Hide()
         {
+            contextMenuTask?.TrySetResult();
+            popupCts.SafeCancelAndDispose();
+
             VoiceChatCanvasGroup.alpha = 1;
             VoiceChatCanvasGroup
                .DOFade(0, SHOW_HIDE_ANIMATION_DURATION)
@@ -131,6 +113,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     VoiceChatContainer.SetActive(false);
                     VoiceChatCanvasGroup.alpha = 0;
                 });
+        }
+
+        public void SetConnectedPanel(bool isConnected)
+        {
+            CommunityVoiceChatInCallView.ConnectingPanel.SetActive(!isConnected);
+            CommunityVoiceChatInCallView.ContentPanel.SetActive(isConnected);
+            CommunityVoiceChatInCallView.FooterPanel.SetActive(isConnected);
+        }
+
+        private void OnDestroy()
+        {
+            contextMenuTask?.TrySetResult();
+            popupCts.SafeCancelAndDispose();
         }
     }
 }

@@ -123,6 +123,8 @@ namespace DCL.Chat
         [field: Header("Voice Chat")]
         [field: SerializeField] public CommunityStreamSubTitleBarView CommunityStreamSubTitleBar { get; private set; }
 
+        [field: SerializeField] public CanvasGroup CommunitySubTitleBarCanvasGroup { get; private set; }
+
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.
         /// </summary>
@@ -735,7 +737,22 @@ namespace DCL.Chat
         /// <param name="destinationChannel">The Id of the conversation.</param>
         public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
         {
-            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
+            int unreadMessages = channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages;
+            IReadOnlyList<ChatMessage> messages = channels[destinationChannel].Messages;
+
+            // Checks if there is any mention to the current user among the unread messages
+            bool hasMentions = false;
+
+            for (int i = 0; i < unreadMessages; ++i)
+            {
+                if (messages[i + 1].IsMention) // Note: +1 due to padding
+                {
+                    hasMentions = true;
+                    break;
+                }
+            }
+
+            conversationsToolbar.SetUnreadMessages(destinationChannel, unreadMessages, hasMentions);
         }
 #endregion
 
@@ -847,7 +864,7 @@ namespace DCL.Chat
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
 
-            chatTitleBar.SetCallButtonStatus(currentChannel.ChannelType is ChatChannel.ChatChannelType.COMMUNITY or ChatChannel.ChatChannelType.USER);
+            chatTitleBar.SetCallButtonStatus(currentChannel.ChannelType is ChatChannel.ChatChannelType.USER);
             chatInputBoxGameObject.SetActive(isOtherUserConnected);
             inputMaskGameObject.SetActive(!isOtherUserConnected);
 
@@ -1056,6 +1073,7 @@ namespace DCL.Chat
             messagesPanelBackgroundCanvasGroup.DOKill();
             conversationsToolbarCanvasGroup.DOKill();
             titlebarCanvasGroup.DOKill();
+            CommunitySubTitleBarCanvasGroup.DOKill();
 
             if (useAnimation)
             {
@@ -1067,12 +1085,14 @@ namespace DCL.Chat
                     messagesPanelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
                     conversationsToolbarCanvasGroup.DOFade(1, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(1, BackgroundFadeTime);
+                    CommunitySubTitleBarCanvasGroup.DOFade(1, BackgroundFadeTime);
                 }
                 else
                 {
                     messagesPanelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime).OnComplete(() => { SetBackgroundVisibility(false, false); });
                     conversationsToolbarCanvasGroup.DOFade(0, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(0, BackgroundFadeTime);
+                    CommunitySubTitleBarCanvasGroup.DOFade(0, BackgroundFadeTime);
                 }
             }
             else
@@ -1083,6 +1103,7 @@ namespace DCL.Chat
                 conversationsToolbarCanvasGroup.gameObject.SetActive(isVisible);
                 titlebarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
                 titlebarCanvasGroup.gameObject.SetActive(isVisible);
+                CommunitySubTitleBarCanvasGroup.alpha = isVisible? 1.0f : 0.0f;
             }
         }
 
@@ -1092,6 +1113,7 @@ namespace DCL.Chat
                 OnMemberListClosingButtonClicked();
 
             Blur();
+            ;
         }
 
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)
@@ -1136,6 +1158,20 @@ namespace DCL.Chat
         public void MoveChannelToTop(ChatChannel.ChannelId channelToMove)
         {
             conversationsToolbar.MoveConversationToPosition(channelToMove, 1);
+        }
+
+        /// <summary>
+        /// Stores a list of users that are online (so if a user is not in it, it's offline). Visual elements (messages, profile pictures, etc.) of offline users
+        /// will be greyed out.
+        /// </summary>
+        /// <param name="onlineUserAddresses">A list of online user addresses.</param>
+        public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
+        {
+            if (currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER })
+                chatTitleBar.SetConnectionStatus(onlineUserAddresses.Contains(currentChannel.Id.Id) ? OnlineStatus.ONLINE
+                                                                                                    : OnlineStatus.OFFLINE);
+
+            chatMessageViewer.SetOnlineUserAddresses(onlineUserAddresses);
         }
     }
 }

@@ -40,7 +40,7 @@ namespace DCL.VoiceChat.Services
         private readonly IRPCSocialServices socialServiceRPC;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private CancellationTokenSource subscriptionCts = new();
-        private bool isServiceDisabled = false;
+        private bool isServiceDisabled;
 
         public RPCPrivateVoiceChatService(
             IRPCSocialServices socialServiceRPC,

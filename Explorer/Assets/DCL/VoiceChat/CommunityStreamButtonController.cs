@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.Utilities;
 using System;
 using System.Threading;
@@ -11,7 +12,10 @@ namespace DCL.VoiceChat
 {
     public class CommunityStreamButtonController : IDisposable
     {
+        private const string TAG = "CommunityStreamButtonController";
+
         private readonly IDisposable currentChannelSubscription;
+        private readonly IDisposable communityCallStateSubscription;
 
         private readonly CallButtonView view;
         private readonly IVoiceChatOrchestrator orchestrator;
@@ -36,18 +40,23 @@ namespace DCL.VoiceChat
             this.communityDataProvider = communityDataProvider;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
-
-            // We might want to start the call directly here. And let the orchestrator handle the states.
-            // We will need to handle the parent view so it closes after the button is pressed and the call is successfully established (in case of Passport, etc.)
+            communityCallStateSubscription = orchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
             chatEventBus.StartCall += OnCallButtonClicked;
         }
 
         public void Dispose()
         {
-            currentChannelSubscription?.Dispose();
+            currentChannelSubscription.Dispose();
+            communityCallStateSubscription.Dispose();
             chatEventBus.StartCall -= OnCallButtonClicked;
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
-            communityCts?.Dispose();
+            communityCts.SafeCancelAndDispose();
+        }
+
+        private void OnCommunityCallStatusChanged(VoiceChatStatus status)
+        {
+            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR or VoiceChatStatus.VOICE_CHAT_ENDING_CALL or VoiceChatStatus.VOICE_CHAT_BUSY)
+                OnCurrentChannelChanged(currentChannel.Value);
         }
 
         public void Reset()
@@ -69,15 +78,38 @@ namespace DCL.VoiceChat
             orchestrator.StartCall(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), VoiceChatType.COMMUNITY);
         }
 
-        private void OnCurrentCommunityCallStatusChanged(bool hasActiveCall)
+        private void OnCurrentCommunityActiveCallStatusChanged(bool hasActiveCall)
         {
-            //We show the button if the current community doesn't have an active call
-            view.gameObject.SetActive(!hasActiveCall);
+            // We show the button if the current community doesn't have an active call
+            // We only get this update if we were mods of that community when we entered the channel.
+            OnCurrentCommunityActiveCallStatusChangedAsync().Forget();
+            return;
+
+            async UniTaskVoid OnCurrentCommunityActiveCallStatusChangedAsync()
+            {
+                string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
+                GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
+
+                //We check again if we are mods as this data might have changed in between we entered the channel and we left it
+                bool isMod = communityData.data.role.IsAnyMod();
+
+                if (!isMod)
+                {
+                    view.gameObject.SetActive(false);
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: User is not moderator/owner for community {communityId}, keeping button hidden");
+                    return;
+                }
+
+                bool shouldBeActive = !hasActiveCall;
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCurrentCommunityActiveCallStatusChanged: Setting button active={shouldBeActive} (hasActiveCall={hasActiveCall})");
+                view.gameObject.SetActive(shouldBeActive);
+            }
         }
 
         private void OnCurrentChannelChanged(ChatChannel newChannel)
         {
             //We hide it by default until we resolve if the user should see it.
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCurrentChannelChanged: Hiding button by default for channel type {newChannel.ChannelType}");
             view.gameObject.SetActive(false);
             currentCommunityCallStatusSubscription?.Dispose();
 
@@ -99,16 +131,20 @@ namespace DCL.VoiceChat
         {
             communityCts = communityCts.SafeRestart();
             GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
-            bool isVoiceChatActive = communityData.data.voiceChatStatus.isActive;
+
             bool isMod = communityData.data.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
+            if (!isMod)
+            {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: User is not moderator/owner for community {communityId}, keeping button hidden");
+                return;
+            }
 
-            if (!isMod) return;
-
+            bool isVoiceChatActive = communityData.data.voiceChatStatus.isActive;
             bool shouldSeeButton = !isVoiceChatActive;
-
-            currentCommunityCallStatusSubscription = orchestrator.CommunityStatusService.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
-
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: Setting button active={shouldSeeButton} for community {communityId} (isVoiceChatActive={isVoiceChatActive}");
             view.gameObject.SetActive(shouldSeeButton);
+
+            currentCommunityCallStatusSubscription = orchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityActiveCallStatusChanged);
         }
     }
 }

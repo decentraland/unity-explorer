@@ -36,8 +36,7 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus,
-            bool isVoiceChatEnabled);
+            WorldVolumeMacBus worldVolumeMacBus);
     }
 
     [Serializable]

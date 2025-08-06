@@ -1,7 +1,9 @@
+#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.SocialService;
 using Decentraland.SocialService.V2;
+using DCL.WebRequests;
 using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
@@ -16,40 +18,38 @@ namespace DCL.VoiceChat.Services
         /// </summary>
         private const int FOREGROUND_TIMEOUT_SECONDS = 10;
 
-        /// <summary>
-        ///     Maximum number of retry attempts for server stream connection
-        /// </summary>
-        private const int MAX_STREAM_RETRY_ATTEMPTS = 5;
-
-        /// <summary>
-        ///     Base delay in seconds between retry attempts (will be exponentially increased)
-        /// </summary>
-        private const int BASE_RETRY_DELAY_SECONDS = 2;
-
         private const string START_COMMUNITY_VOICE_CHAT = "StartCommunityVoiceChat";
         private const string JOIN_COMMUNITY_VOICE_CHAT = "JoinCommunityVoiceChat";
         private const string REQUEST_TO_SPEAK_COMMUNITY_VOICE_CHAT = "RequestToSpeakInCommunityVoiceChat";
         private const string PROMOTE_TO_SPEAKER_COMMUNITY_VOICE_CHAT = "PromoteSpeakerInCommunityVoiceChat";
         private const string DEMOTE_FROM_SPEAKER_COMMUNITY_VOICE_CHAT = "DemoteSpeakerInCommunityVoiceChat";
         private const string KICK_FROM_COMMUNITY_VOICE_CHAT = "KickPlayerFromCommunityVoiceChat";
+        private const string END_COMMUNITY_VOICE_CHAT = "EndCommunityVoiceChat";
         private const string SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES = "SubscribeToCommunityVoiceChatUpdates";
+
+        private const string ACTIVE_COMMUNITY_VOICE_CHATS_ENDPOINT = "/v1/community-voice-chats/active";
+        private const string SOCIAL_SERVICE_BASE_URL = "https://social-api.decentraland.zone";
 
         private readonly IRPCSocialServices socialServiceRPC;
         private readonly ISocialServiceEventBus socialServiceEventBus;
+        private readonly IWebRequestController webRequestController;
         private CancellationTokenSource subscriptionCts = new();
         private bool isServiceDisabled = false;
 
-        public event Action<CommunityVoiceChatUpdate> CommunityVoiceChatUpdateReceived;
+        public event Action<CommunityVoiceChatUpdate>? CommunityVoiceChatUpdateReceived;
+        public event Action<ActiveCommunityVoiceChatsResponse>? ActiveCommunityVoiceChatsFetched;
 
-        public event Action Reconnected;
-        public event Action Disconnected;
+        public event Action? Reconnected;
+        public event Action? Disconnected;
 
         public RPCCommunityVoiceChatService(
             IRPCSocialServices socialServiceRPC,
-            ISocialServiceEventBus socialServiceEventBus)
+            ISocialServiceEventBus socialServiceEventBus,
+            IWebRequestController webRequestController)
         {
             this.socialServiceRPC = socialServiceRPC;
             this.socialServiceEventBus = socialServiceEventBus;
+            this.webRequestController = webRequestController;
 
             socialServiceEventBus.TransportClosed += OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
@@ -61,6 +61,7 @@ namespace DCL.VoiceChat.Services
             if (!isServiceDisabled)
             {
                 SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+                FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
             }
         }
 
@@ -84,6 +85,7 @@ namespace DCL.VoiceChat.Services
             {
                 Reconnected?.Invoke();
                 SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+                FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
             }
         }
 
@@ -132,6 +134,37 @@ namespace DCL.VoiceChat.Services
             return response;
         }
 
+        public async UniTask<EndCommunityVoiceChatResponse> EndCommunityVoiceChatAsync(string communityId, CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+            var payload = new EndCommunityVoiceChatPayload()
+            {
+                CommunityId = communityId
+            };
+
+            EndCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+                                                                              .CallUnaryProcedure<EndCommunityVoiceChatResponse>(END_COMMUNITY_VOICE_CHAT, payload)
+                                                                              .AttachExternalCancellation(ct)
+                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<ActiveCommunityVoiceChatsResponse> GetActiveCommunityVoiceChatsAsync(CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            var url = $"{SOCIAL_SERVICE_BASE_URL}{ACTIVE_COMMUNITY_VOICE_CHATS_ENDPOINT}";
+
+            var result = await webRequestController
+                .SignedFetchGetAsync(url, string.Empty, ct)
+                .CreateFromJson<ActiveCommunityVoiceChatsResponse>(WRJsonParser.Newtonsoft);
+
+            return result;
+        }
+
         public async UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
@@ -146,6 +179,25 @@ namespace DCL.VoiceChat.Services
                                                                              .CallUnaryProcedure<RequestToSpeakInCommunityVoiceChatResponse>(REQUEST_TO_SPEAK_COMMUNITY_VOICE_CHAT, payload)
                                                                              .AttachExternalCancellation(ct)
                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<PromoteSpeakerInCommunityVoiceChatResponse> DenySpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
+        {
+            ThrowIfServiceDisabled();
+
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+            var payload = new PromoteSpeakerInCommunityVoiceChatPayload()
+            {
+                CommunityId = communityId,
+                UserAddress = userAddress
+            };
+
+            PromoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+                                                                                         .CallUnaryProcedure<PromoteSpeakerInCommunityVoiceChatResponse>(PROMOTE_TO_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
+                                                                                         .AttachExternalCancellation(ct)
+                                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
             return response;
         }
@@ -213,69 +265,59 @@ namespace DCL.VoiceChat.Services
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
-                int retryAttempt = 0;
-                bool streamOpened = false;
+                IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream =
+                    socialServiceRPC.Module()!.CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
 
-                while (retryAttempt < MAX_STREAM_RETRY_ATTEMPTS && !ct.IsCancellationRequested)
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Attempting to open community voice chat updates stream");
+
+                try
                 {
-                    try
+                    await foreach (CommunityVoiceChatUpdate? response in stream)
                     {
-                        IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream =
-                            socialServiceRPC.Module()!.CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
-
-                        streamOpened = true;
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, "Successfully opened community voice chat updates stream");
-
-                        await foreach (CommunityVoiceChatUpdate? response in stream)
-                        {
-                            try
-                            {
-                                CommunityVoiceChatUpdateReceived?.Invoke(response);
-                            }
-                            // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT)); }
-                        }
-
-                        // If we reach here, the stream has ended normally
-                        break;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // Cancellation requested, exit the retry loop
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        retryAttempt++;
-                        ReportHub.LogError($"Failed to open community voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS} exception {e}", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
-
-                        if (retryAttempt >= MAX_STREAM_RETRY_ATTEMPTS)
-                        {
-                            ReportHub.LogError($"Failed to open community voice chat updates stream after {MAX_STREAM_RETRY_ATTEMPTS} attempts. Disabling voice chat service.", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
-                            isServiceDisabled = true;
-                            break;
-                        }
-
-                        // Calculate exponential backoff delay
-                        int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
-                        ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Retrying community voice chat updates stream connection in {delaySeconds} seconds...");
-
                         try
                         {
-                            await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
+                            // Validate the response before processing
+                            if (response == null)
+                            {
+                                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Received null community voice chat update");
+                                continue;
+                            }
+
+                            CommunityVoiceChatUpdateReceived?.Invoke(response);
                         }
-                        catch (OperationCanceledException)
+                        // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
+                        catch (Exception e) when (e is not OperationCanceledException)
                         {
-                            // Cancellation requested during delay, exit the retry loop
-                            break;
+                            ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
                         }
                     }
                 }
-
-                if (!streamOpened && !ct.IsCancellationRequested)
+                catch (InvalidOperationException e) when (e.Message.Contains("undefined"))
                 {
-                    ReportHub.LogError("Failed to establish community voice chat updates stream after all retry attempts", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                    ReportHub.LogError($"Server sent undefined data in community voice chat stream: {e.Message}", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                    throw; // Re-throw to let KeepServerStreamOpenAsync handle the retry
                 }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogError($"Unexpected error in community voice chat stream: {e.Message}", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                    throw; // Re-throw to let KeepServerStreamOpenAsync handle the retry
+                }
+            }
+        }
+
+        private async UniTaskVoid FetchActiveCommunityVoiceChatsAsync(CancellationToken ct)
+        {
+            try
+            {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Fetching active community voice chats");
+                var response = await GetActiveCommunityVoiceChatsAsync(ct);
+                ActiveCommunityVoiceChatsFetched?.Invoke(response);
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Fetched {response.data.total} active community voice chats");
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
             }
         }
 

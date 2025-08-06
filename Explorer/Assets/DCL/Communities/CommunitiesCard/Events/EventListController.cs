@@ -7,6 +7,7 @@ using DCL.Communities.CommunityCreation;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities.Extensions;
@@ -44,10 +45,10 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly string createEventFormat;
 
         private CommunityData? communityData = null;
         private CancellationTokenSource eventCardOperationsCts = new ();
-        private string[] communityPlaceIds;
 
         protected override SectionFetchData<PlaceAndEventDTO> currentSectionFetchData => eventsFetchData;
 
@@ -60,7 +61,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             WarningNotificationView inWorldSuccessNotificationView,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IRealmNavigator realmNavigator) : base(view, PAGE_SIZE)
+            IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.eventsApiService = eventsApiService;
@@ -73,6 +75,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
 
+            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}";
+
             view.InitList(thumbnailLoader, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
@@ -81,6 +85,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             view.InterestedButtonClicked += OnInterestedButtonClicked;
             view.EventShareButtonClicked += OnEventShareButtonClicked;
             view.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
+            view.CreateEventRequested += OnCreateEventButtonClicked;
         }
 
         public override void Dispose()
@@ -91,11 +96,15 @@ namespace DCL.Communities.CommunitiesCard.Events
             view.InterestedButtonClicked -= OnInterestedButtonClicked;
             view.EventShareButtonClicked -= OnEventShareButtonClicked;
             view.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
+            view.CreateEventRequested -= OnCreateEventButtonClicked;
 
             eventCardOperationsCts.SafeCancelAndDispose();
 
             base.Dispose();
         }
+
+        private void OnCreateEventButtonClicked() =>
+            webBrowser.OpenUrl(string.Format(createEventFormat, communityData?.id));
 
         private void OnEventCopyLinkButtonClicked(PlaceAndEventDTO eventData)
         {
@@ -174,7 +183,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetEventsByPlaceIdsAsync(communityPlaceIds, eventsFetchData.PageNumber, PAGE_SIZE, ct)
+            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetCommunityEventsAsync(communityData!.Value.id, eventsFetchData.PageNumber, PAGE_SIZE, ct)
                                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -227,11 +236,10 @@ namespace DCL.Communities.CommunitiesCard.Events
             return eventResponse.Value.data.total;
         }
 
-        public void ShowEvents(CommunityData community, string[] placeIds, CancellationToken token)
+        public void ShowEvents(CommunityData community, CancellationToken token)
         {
             cancellationToken = token;
             communityData = community;
-            communityPlaceIds = placeIds;
             view.SetCanModify(community.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             FetchNewDataAsync(token).Forget();
         }

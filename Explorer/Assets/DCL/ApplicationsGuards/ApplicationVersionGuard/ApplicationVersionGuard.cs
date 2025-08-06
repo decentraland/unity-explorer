@@ -48,8 +48,8 @@ namespace DCL.ApplicationVersionGuard
                 ReportCategory.VERSION_CONTROL,
                 new WebRequestHeadersInfo());
 
-            GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
-            string latestVersion = latestRelease.tag_name.TrimStart('v');
+            ClientVersionInfo versionInfo = JsonUtility.FromJson<ClientVersionInfo>(response.body);
+            string latestVersion = versionInfo.version.TrimStart('v');
 
             return latestVersion;
         }
@@ -159,9 +159,10 @@ namespace DCL.ApplicationVersionGuard
             SystemInfo.processorType.Contains("apple", StringComparison.OrdinalIgnoreCase);
 
         [Serializable]
-        private struct GitHubRelease
+        private struct ClientVersionInfo
         {
-            public string tag_name;
+            public string version;
+            public string timestamp;
         }
     }
 }

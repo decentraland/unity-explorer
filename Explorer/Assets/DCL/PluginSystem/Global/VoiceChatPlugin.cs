@@ -2,19 +2,19 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
-using DCL.VoiceChat.Services;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using AudioSettings = UnityEngine.AudioSettings;
 
 namespace DCL.PluginSystem.Global
 {
@@ -34,6 +34,8 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
         private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> combinedAudioSource;
         private ProvidedAsset<PlayerEntryView> playerEntry;
+        private ProvidedAsset<AudioClipConfig> muteMicrophoneAudio;
+        private ProvidedAsset<AudioClipConfig> unmuteMicrophoneAudio;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatTrackManager? trackManager;
         private VoiceChatRoomManager? roomManager;
@@ -42,6 +44,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
         private CommunityVoiceChatController? communitiesVoiceChatController;
         private VoiceChatPanelResizeController? voiceChatPanelResizeController;
+        private MicrophoneAudioToggleController? microphoneAudioToggleController;
 
         public VoiceChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -76,11 +79,14 @@ namespace DCL.PluginSystem.Global
             nametagsHandler?.Dispose();
             voiceChatHandler.Dispose();
             roomManager?.Dispose();
+            microphoneAudioToggleController?.Dispose();
 
             combinedAudioSource.Dispose();
             voiceChatConfigurationAsset.Dispose();
             voiceChatSettingsAsset.Dispose();
             voiceChatConfigurations.Dispose();
+            muteMicrophoneAudio.Dispose();
+            unmuteMicrophoneAudio.Dispose();
             privateVoiceChatController?.Dispose();
             communitiesVoiceChatController?.Dispose();
             voiceChatOrchestrator?.Dispose();
@@ -119,25 +125,23 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
 
-            playerEntry = await assetsProvisioner.ProvideMainAssetAsync(settings.PlayerEntryView, ct: ct);
+            playerEntry = await assetsProvisioner.ProvideMainAssetAsync(configurations.PlayerEntryView, ct: ct);
+
+            muteMicrophoneAudio = await assetsProvisioner.ProvideMainAssetAsync(configurations.MuteMicrophoneAudio, ct: ct);
+            unmuteMicrophoneAudio = await assetsProvisioner.ProvideMainAssetAsync(configurations.UnmuteMicrophoneAudio, ct: ct);
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(mainUIView.VoiceChatPanelResizeView, voiceChatOrchestrator);
+
+            microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio.Value, unmuteMicrophoneAudio.Value);
+
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator);
+            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager);
         }
 
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public VoiceChatConfigurationsReference VoiceChatConfigurations { get; private set; }
-
-            [field: SerializeField] public PlayerEntryViewRef PlayerEntryView { get; private set; }
-
-            [Serializable]
-            public class PlayerEntryViewRef : ComponentReference<PlayerEntryView>
-            {
-                public PlayerEntryViewRef(string guid) : base(guid) { }
-            }
 
             [Serializable]
             public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
