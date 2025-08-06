@@ -189,6 +189,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 playerEntriesPool.Release(entry);
                 usedPlayerEntries.Remove(leftParticipantId);
             }
+
+            RefreshCounters();
         }
 
         private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
