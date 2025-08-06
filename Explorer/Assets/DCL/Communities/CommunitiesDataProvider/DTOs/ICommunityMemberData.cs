@@ -4,6 +4,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     public interface ICommunityMemberData
     {
+        string Id { get; }
         string Address { get; }
         string ProfilePictureUrl { get; }
         bool HasClaimedName { get; }

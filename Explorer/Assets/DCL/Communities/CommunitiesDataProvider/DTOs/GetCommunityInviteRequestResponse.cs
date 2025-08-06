@@ -17,6 +17,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public string name;
             public string requestedAt;
 
+            public string Id => id;
             public string Address => address;
             public string ProfilePictureUrl => profilePictureUrl;
             public bool HasClaimedName => hasClaimedName;

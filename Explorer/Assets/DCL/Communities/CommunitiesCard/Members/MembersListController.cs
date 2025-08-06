@@ -142,7 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ManageRequestAsync(CancellationToken ct)
             {
-                Result<bool> result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData!.Value.id, profile.Address, intention, ct)
+                Result<bool> result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData!.Value.id, profile.Id, intention, ct)
                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 if (!result.Success || !result.Value)
                 {

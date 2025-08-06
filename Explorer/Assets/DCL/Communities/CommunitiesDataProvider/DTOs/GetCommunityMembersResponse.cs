@@ -37,6 +37,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             private FriendshipStatus friendStatus;
             private Color userNameColor;
 
+            public string Id => communityId;
             public string Address => memberAddress;
             public string ProfilePictureUrl => profilePictureUrl;
             public bool HasClaimedName => hasClaimedName;
