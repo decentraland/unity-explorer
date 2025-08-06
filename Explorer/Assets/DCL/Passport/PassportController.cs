@@ -553,6 +553,7 @@ namespace DCL.Passport
         private void OnProfilePublished(Profile profile) =>
             SetupPassportModules(profile, PassportSection.OVERVIEW);
 
+        // MAURIZIO TEST COMMENT
         private void OpenPhotosSection()
         {
             if (currentSection == PassportSection.PHOTOS)
