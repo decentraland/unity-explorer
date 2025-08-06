@@ -34,6 +34,7 @@ namespace DCL.VoiceChat
         private bool isDisposed;
         private VoiceChatStatus currentStatus;
         private ConnectionUpdate connectionState = ConnectionUpdate.Disconnected;
+        private bool isClientInitiatedDisconnection = false;
 
         public event Action ConnectionEstablished;
         public event Action ConnectionLost;
@@ -103,7 +104,8 @@ namespace DCL.VoiceChat
             switch (newStatus)
             {
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
-                    if (currentStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL) DisconnectFromRoomAsync().Forget();
+                        isClientInitiatedDisconnection = true;
+                        DisconnectFromRoomAsync().Forget();
                     break;
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
@@ -322,6 +324,14 @@ namespace DCL.VoiceChat
                 ConnectionLost?.Invoke();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection cleanup completed");
+
+                if (isClientInitiatedDisconnection)
+                {
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Client-initiated disconnection - no reconnection needed");
+                    isClientInitiatedDisconnection = false;
+                    voiceChatOrchestrator.HandleConnectionEnded();
+                    return;
+                }
 
                 if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
                 {

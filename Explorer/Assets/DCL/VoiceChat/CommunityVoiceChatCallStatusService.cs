@@ -68,7 +68,6 @@ namespace DCL.VoiceChat
                         SetCallId(communityId);
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
-
                     case StartCommunityVoiceChatResponse.ResponseOneofCase.InvalidRequest:
                     case StartCommunityVoiceChatResponse.ResponseOneofCase.ConflictingError:
                         ResetVoiceChatData();
@@ -258,11 +257,10 @@ namespace DCL.VoiceChat
 
         public override void HandleLivekitConnectionEnded()
         {
-            if (Status.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL)
-            {
-                UpdateStatus(VoiceChatStatus.DISCONNECTED);
-                ResetVoiceChatData();
-            }
+            if (Status.Value == VoiceChatStatus.DISCONNECTED) return;
+
+            ResetVoiceChatData();
+            UpdateStatus(VoiceChatStatus.DISCONNECTED);
         }
 
         private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate communityUpdate)

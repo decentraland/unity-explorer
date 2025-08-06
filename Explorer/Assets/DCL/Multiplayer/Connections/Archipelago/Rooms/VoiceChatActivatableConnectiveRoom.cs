@@ -127,7 +127,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
-            SendConnectionStatusAsync(ct).Forget();
+            //SendConnectionStatusAsync(ct).Forget();
 
             while (ct.IsCancellationRequested == false)
             {
@@ -194,6 +194,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             {
                 room.Assign(freshRoom, out IRoom _);
                 roomState.Set(IConnectiveRoom.State.Running);
+                room.SimulateConnectionStateChanged();
             }
 
             return connectResult.Success;
