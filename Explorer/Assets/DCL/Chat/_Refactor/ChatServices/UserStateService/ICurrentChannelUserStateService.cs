@@ -1,10 +1,10 @@
-﻿using DCL.Friends.UserBlocking;
+﻿using System.Collections.Generic;
 
 namespace DCL.Chat.ChatServices
 {
     public interface ICurrentChannelUserStateService
     {
-        ReadOnlyHashSet<string> OnlineParticipants { get; }
+        IReadOnlyCollection<string> OnlineParticipants { get; }
 
         void Deactivate();
     }

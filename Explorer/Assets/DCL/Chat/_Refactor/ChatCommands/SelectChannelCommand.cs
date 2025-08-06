@@ -36,7 +36,7 @@ namespace DCL.Chat.ChatCommands
             this.privateConversationUserStateService = privateConversationUserStateService;
         }
 
-        public async UniTaskVoid ExecuteAsync(ChatChannel.ChannelId channelId, CancellationToken ct)
+        public void Execute(ChatChannel.ChannelId channelId, CancellationToken ct)
         {
             if (currentChannelService.CurrentChannelId.Equals(channelId))
                 return;
@@ -55,7 +55,7 @@ namespace DCL.Chat.ChatCommands
                 switch (channel.ChannelType)
                 {
                     case ChatChannel.ChatChannelType.COMMUNITY:
-                        await communityUserStateService.ActivateAsync(channelId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                        communityUserStateService.Activate(channelId);
                         userStateService = communityUserStateService;
                         break;
                     case ChatChannel.ChatChannelType.USER:

@@ -21,17 +21,21 @@ namespace DCL.Chat.ChatServices
 
         private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
 
-        public ReadOnlyHashSet<string> OnlineParticipants { get; }
+        public IReadOnlyCollection<string> OnlineParticipants
+        {
+            get
+            {
+                lock (onlineParticipants) { return onlineParticipants; }
+            }
+        }
 
         public NearbyUserStateService(IRoomHub roomHub, IEventBus eventBus)
         {
             this.roomHub = roomHub;
             this.eventBus = eventBus;
-
-            OnlineParticipants = new ReadOnlyHashSet<string>(onlineParticipants);
         }
 
-        public ReadOnlyHashSet<string> Activate()
+        public void Activate()
         {
             // Retrieve all connected users from both rooms
             IReadOnlyCollection<string> participantIdentities = roomHub.AllLocalRoomsRemoteParticipantIdentities();
@@ -43,8 +47,6 @@ namespace DCL.Chat.ChatServices
 
             roomHub.IslandRoom().ConnectionStateChanged += OnRoomConnectionStateChange;
             roomHub.SceneRoom().Room().ConnectionStateChanged += OnRoomConnectionStateChange;
-
-            return OnlineParticipants;
         }
 
         public void Deactivate()

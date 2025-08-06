@@ -187,8 +187,7 @@ namespace DCL.Chat.ChatServices
 
         private UniTask RefreshFullListIfNeededAsync(CancellationToken ct)
         {
-            
-            ReadOnlyHashSet<string> participants = currentChannelService.UserStateService!.OnlineParticipants;
+            IReadOnlyCollection<string> participants = currentChannelService.UserStateService!.OnlineParticipants;
 
             if (lastKnownMemberIds.SetEquals(participants))
                 return UniTask.CompletedTask;
@@ -251,7 +250,7 @@ namespace DCL.Chat.ChatServices
             // get local identity address
             // and exclude it from the member list
             string? localPlayerAddress = web3IdentityCache.Identity?.Address;
-            
+
             // 2. The rest of your logic remains the same.
             //    By the time we get here, 'profiles' contains all members that could be found.
             foreach (Profile? profile in profiles)
@@ -260,7 +259,7 @@ namespace DCL.Chat.ChatServices
 
                 if (profile.UserId == localPlayerAddress)
                     continue;
-                
+
                 membersBuffer.Add(CreateMemberDataFromProfile(profile));
             }
         }

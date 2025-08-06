@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Utility;
 
@@ -151,7 +152,7 @@ namespace DCL.Chat
             view.RemoveConversation(removedChannel);
 
             if (currentChannelService.CurrentChannelId.Equals(removedChannel))
-                selectChannelCommand.ExecuteAsync(ChatChannel.NEARBY_CHANNEL_ID, lifeCts.Token).Forget();
+                selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID, lifeCts.Token);
         }
 
         private void OnChannelAdded(ChatEvents.ChannelAddedEvent evt)
@@ -166,7 +167,7 @@ namespace DCL.Chat
 
         private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
         {
-            selectChannelCommand.ExecuteAsync(channelId, lifeCts.Token).Forget();
+            selectChannelCommand.Execute(channelId, lifeCts.Token);
         }
 
         private void OnViewConversationRemovalRequested(ChatChannel.ChannelId channelId)

@@ -75,14 +75,13 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly CommunityDataService communityDataService;
         private readonly ISpriteCache thumbnailCache;
-        private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private readonly IRealmNavigator realmNavigator;
         private ChatController chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private PrivateConversationUserStateService? chatUserStateService;
         private ChatHistoryService? chatBusListenerService;
+        private CommunityUserStateService communityUserStateService;
         private readonly Transform chatViewRectTransform;
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
@@ -149,9 +148,7 @@ namespace DCL.PluginSystem.Global
             communityDataProvider = communitiesDataProvider;
             this.communityDataService = communityDataService;
             this.thumbnailCache = thumbnailCache;
-            this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
-            this.realmNavigator = realmNavigator;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.isCallEnabled = isCallEnabled;
             this.chatViewRectTransform = chatViewRectTransform;
@@ -162,6 +159,7 @@ namespace DCL.PluginSystem.Global
             chatStorage?.Dispose();
             chatBusListenerService?.Dispose();
             chatUserStateService?.Dispose();
+            communityUserStateService?.Dispose();
             pluginScope.Dispose();
         }
 
@@ -218,7 +216,7 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
-            var communityUserStateService = new CommunityUserStateService(communityDataProvider, communitiesEventBus, eventBus);
+            communityUserStateService = new CommunityUserStateService(communityDataProvider, communitiesEventBus, eventBus, chatHistory);
 
             var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
                 friendsServiceProxy,

@@ -57,7 +57,7 @@ namespace DCL.Chat.ChatServices
 
         private CancellationTokenSource cts = new ();
 
-        public ReadOnlyHashSet<string> OnlineParticipants { get; }
+        public IReadOnlyCollection<string> OnlineParticipants { get; }
 
         public PrivateConversationUserStateService(CurrentChannelService currentChannelService, IEventBus eventBus, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ObjectProxy<IFriendsService> friendsService,
             ChatSettingsAsset settingsAsset, RPCChatPrivacyService rpcChatPrivacyService, IFriendsEventBus friendsEventBus, IRoom chatRoom)
