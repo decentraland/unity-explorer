@@ -219,13 +219,16 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
-            communityUserStateService = new CommunityUserStateService(communityDataProvider, communitiesEventBus, eventBus, chatHistory);
+            communityUserStateService = new CommunityUserStateService(communityDataProvider,
+                communitiesEventBus,
+                eventBus,
+                chatHistory,
+                web3IdentityCache);
 
             var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
                 friendsServiceProxy,
                 currentChannelService,
-                eventBus,
-                web3IdentityCache);
+                eventBus);
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
 

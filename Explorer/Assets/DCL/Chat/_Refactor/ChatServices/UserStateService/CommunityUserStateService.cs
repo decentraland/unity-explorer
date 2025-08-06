@@ -2,13 +2,13 @@
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Diagnostics;
-using DCL.Friends.UserBlocking;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using Decentraland.SocialService.V2;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Web3.Identities;
 using Utility;
 using Utility.Types;
 
@@ -30,17 +30,20 @@ namespace DCL.Chat.ChatServices
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly CommunitiesEventBus communitiesEventBus;
         private readonly IEventBus eventBus;
+        public readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly IChatHistory chatHistory;
 
         private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> onlineParticipantsPerChannel = new (10);
 
-        public CommunityUserStateService(CommunitiesDataProvider communitiesDataProvider, CommunitiesEventBus communitiesEventBus, IEventBus eventBus, IChatHistory chatHistory)
+        public CommunityUserStateService(CommunitiesDataProvider communitiesDataProvider, CommunitiesEventBus communitiesEventBus, IEventBus eventBus, IChatHistory chatHistory,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.communitiesDataProvider = communitiesDataProvider;
             this.communitiesEventBus = communitiesEventBus;
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
+            this.web3IdentityCache = web3IdentityCache;
 
             OnlineParticipants = Array.Empty<string>();
 
@@ -92,8 +95,15 @@ namespace DCL.Chat.ChatServices
 
             GetCommunityMembersResponse response = result.Value;
 
+            string? localPlayerAddress = web3IdentityCache.Identity?.Address;
+            
             foreach (GetCommunityMembersResponse.MemberData memberData in response.data.results)
+            {
+                if (!string.IsNullOrEmpty(localPlayerAddress) && memberData.memberAddress == localPlayerAddress)
+                    continue;
+                
                 onlineParticipants.Add(memberData.memberAddress);
+            }
 
             // Edge case - the channel is initialized AFTER the community is selected
             // (on the moment of the community selection the online users collection was empty)
