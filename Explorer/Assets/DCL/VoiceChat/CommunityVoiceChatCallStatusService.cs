@@ -405,4 +405,10 @@ namespace DCL.VoiceChat
             return activeCommunityVoiceChats.TryGetValue(communityId, out activeCommunityVoiceChat);
         }
     }
+
+    internal static class CommunityVoiceChatCallStatusServiceExtensions
+    {
+        public static bool IsNullOrEmpty(this string? value) =>
+            string.IsNullOrEmpty(value!);
+    }
 }
