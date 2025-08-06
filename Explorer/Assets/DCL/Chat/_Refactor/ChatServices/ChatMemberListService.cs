@@ -211,7 +211,7 @@ namespace DCL.Chat.ChatServices
 
             try
             {
-                await FetchOnlineParticipantsMemberData(participants, ct);
+                await FetchOnlineParticipantsMemberDataAsync(participants, ct);
 
                 if (ct.IsCancellationRequested) return;
 
@@ -235,7 +235,7 @@ namespace DCL.Chat.ChatServices
             MultithreadingUtility.InvokeOnMainThread(() => OnMemberCountUpdated?.Invoke(lastKnownTitleBarCount));
         }
 
-        private async UniTask FetchOnlineParticipantsMemberData(IReadOnlyCollection<string> participants, CancellationToken ct)
+        private async UniTask FetchOnlineParticipantsMemberDataAsync(IReadOnlyCollection<string> participants, CancellationToken ct)
         {
             // TODO requires pooling
             var profiles = new List<Profile>();

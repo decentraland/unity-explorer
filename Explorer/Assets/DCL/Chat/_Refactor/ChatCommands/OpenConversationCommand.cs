@@ -56,7 +56,7 @@ namespace DCL.Chat.ChatCommands
         }
 
         /// <summary>
-        ///     Removes a community ID from the "closed" list in PlayerPrefs.
+        ///     Removes a community ID from the "closed" list in DCLPlayerPrefs.
         /// </summary>
         private void OpenCommunityChat(string communityId)
         {

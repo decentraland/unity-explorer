@@ -74,13 +74,13 @@ namespace DCL.Chat.ChatInput
         {
             view.ClearInput();
 
-            UpdateStateForChannel().Forget();
+            UpdateStateForChannelAsync().Forget();
         }
 
         private void OnForceRefreshInputState(ChatEvents.CurrentChannelStateUpdatedEvent evt)
         {
             if (fsm.CurrentState is not UnfocusedChatInputState)
-                UpdateStateForChannel().Forget();
+                UpdateStateForChannelAsync().Forget();
         }
 
         public void OnBlur()
@@ -95,7 +95,7 @@ namespace DCL.Chat.ChatInput
             fsm.ChangeState<UnfocusedChatInputState>();
         }
 
-        private async UniTaskVoid UpdateStateForChannel()
+        private async UniTaskVoid UpdateStateForChannelAsync()
         {
             cts = cts.SafeRestart();
 

@@ -69,7 +69,7 @@ namespace DCL.Chat.ChatMessages
                 currentChannelService);
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
-            
+
             view.Initialize(viewModels);
         }
 
@@ -208,9 +208,9 @@ namespace DCL.Chat.ChatMessages
 
             RemoveNewMessagesSeparator();
 
-            LoadChannelHistory(loadChannelCts.Token).Forget();
+            LoadChannelHistoryAsync(loadChannelCts.Token).Forget();
 
-            async UniTaskVoid LoadChannelHistory(CancellationToken ct)
+            async UniTaskVoid LoadChannelHistoryAsync(CancellationToken ct)
             {
                 try
                 {
