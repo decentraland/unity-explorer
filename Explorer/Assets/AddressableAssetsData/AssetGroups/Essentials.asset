@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 03dabb815fc004f9581a9528b72c106f
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonList.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 04a7ffcd277754f7c91237894604f522
     m_Address: NftRarityBackgrounds
     m_ReadOnly: 0
@@ -110,6 +115,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33891647b85dc47319f39490bb24594d
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithCheck.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 35aa85d68d15435418848a03a2db81ec
     m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-Regular SDF.asset
     m_ReadOnly: 0
@@ -145,6 +155,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 497073cedbc8540c2b17104cfee96158
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/SubMenuButton.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4a2a7b610414b45c1b576946ce094877
     m_Address: NftCategoryIcons
     m_ReadOnly: 0
@@ -176,7 +191,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 52c856180dc5d6447b902f06d38f4161
-    m_Address: LightSourceDefaults
+    m_Address: LightSourceSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -285,6 +300,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a24101494a664ee59a8952e20b8f441
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ControlsContainer.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7a43321b8055d407ba2e871e873c7062
     m_Address: EmoteWheelRarityBackgrounds.asset
     m_ReadOnly: 0
@@ -377,6 +397,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aabac5666448b4345a76347f94ea32a4
     m_Address: BackpackItem
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acb5d5500934645ac89935fe64d8bf01
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonWithText.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

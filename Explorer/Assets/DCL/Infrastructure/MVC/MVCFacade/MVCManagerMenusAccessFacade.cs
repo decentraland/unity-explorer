@@ -9,7 +9,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
@@ -43,7 +42,6 @@ namespace MVC
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
-        private ChatOptionsContextMenuController chatOptionsContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
@@ -106,12 +104,6 @@ namespace MVC
             Profile profile = profileCache.GetByUserName(userName);
             if (profile == null) return;
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask);
-        }
-
-        public async UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask)
-        {
-            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.DeleteChatHistoryIcon, data.DeleteChatHistoryText, onDeleteChatHistoryClicked);
-            await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
         }
 
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,

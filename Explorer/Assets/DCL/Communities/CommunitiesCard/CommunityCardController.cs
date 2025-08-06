@@ -10,11 +10,14 @@ using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Friends;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -58,7 +61,10 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly GalleryEventBus galleryEventBus;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -90,7 +96,10 @@ namespace DCL.Communities.CommunitiesCard
             IEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
-            IWeb3IdentityCache web3IdentityCache)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IWeb3IdentityCache web3IdentityCache,
+            LambdasProfilesProvider lambdasProfilesProvider,
+            GalleryEventBus galleryEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -107,7 +116,10 @@ namespace DCL.Communities.CommunitiesCard
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
+            this.lambdasProfilesProvider = lambdasProfilesProvider;
+            this.galleryEventBus = galleryEventBus;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
@@ -232,7 +244,7 @@ namespace DCL.Communities.CommunitiesCard
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
-                    viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
+                    viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false, galleryEventBus);
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
             membersListController = new MembersListController(viewInstance.MembersListView,
@@ -254,7 +266,8 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 mvcManager,
                 clipboard,
-                webBrowser);
+                webBrowser,
+                lambdasProfilesProvider);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
@@ -265,7 +278,8 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.successNotificationView,
                 clipboard,
                 webBrowser,
-                realmNavigator);
+                realmNavigator,
+                decentralandUrlsSource);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
@@ -307,7 +321,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance.ResetToggle(true);
 
-                eventListController?.ShowEvents(communityData, communityPlaceIds, ct);
+                eventListController?.ShowEvents(communityData, ct);
             }
         }
 
@@ -329,8 +343,11 @@ namespace DCL.Communities.CommunitiesCard
             eventListController?.Reset();
         }
 
-        private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
-            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, false, reelDeleteIntention)));
+        private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
+            Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
+                true, PhotoDetailParameter.CallerContext.CommunityCard, reelDeleteIntention,
+                reelListRefreshIntention, galleryEventBus)));
 
         private void OnSectionChanged(CommunityCardView.Sections section)
         {

@@ -14,7 +14,6 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
     {
         public HideWearablesResolution HideWearablesResolution;
         public readonly BodyShape BodyShape;
-        public readonly bool FallbackToDefaultWearables;
 
         public readonly AssetSource PermittedSources;
         public readonly List<URN> Pointers;
@@ -24,13 +23,11 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         /// </summary>
         public long ResolvedWearablesIndices;
 
-        internal GetWearablesByPointersIntention(List<URN> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.ALL,
-            bool fallbackToDefaultWearables = true)
+        internal GetWearablesByPointersIntention(List<URN> pointers, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.ALL)
         {
             Pointers = pointers;
             BodyShape = bodyShape;
             HideWearablesResolution = new HideWearablesResolution(forceRender);
-            FallbackToDefaultWearables = fallbackToDefaultWearables;
             PermittedSources = permittedSources;
             CancellationTokenSource = new CancellationTokenSource();
             ResolvedWearablesIndices = 0;

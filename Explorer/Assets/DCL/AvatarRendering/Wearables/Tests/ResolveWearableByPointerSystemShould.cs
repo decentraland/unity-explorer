@@ -45,11 +45,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             wearableStorage.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
 
-            world.Create(new DefaultWearablesComponent
-            {
-                ResolvedState = DefaultWearablesComponent.State.Success,
-            });
-
             system = new FinalizeAssetBundleWearableLoadingSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()));
             system.Initialize();
         }

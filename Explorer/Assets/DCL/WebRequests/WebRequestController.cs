@@ -14,11 +14,12 @@ namespace DCL.WebRequests
 {
     public class WebRequestController : IWebRequestController
     {
+        private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRequestHub requestHub;
 
-        private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
+        IRequestHub IWebRequestController.requestHub => requestHub;
 
         public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache web3IdentityCache, IRequestHub requestHub)
         {
@@ -34,20 +35,24 @@ namespace DCL.WebRequests
         {
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
 
-            int attemptsLeft = envelope.CommonArguments.TotalAttempts();
+            RetryPolicy retryPolicy = envelope.CommonArguments.RetryPolicy;
+            var attemptNumber = 0;
 
             // ensure disposal of headersInfo
             using RequestEnvelope<TWebRequest, TWebRequestArgs> _ = envelope;
 
-            while (attemptsLeft > 0)
+            while (true)
             {
                 TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
+                bool idempotent = request.IsIdempotent(envelope.signInfo);
 
                 // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
                 using UnityWebRequest wr = request.UnityWebRequest;
 
                 try
                 {
+                    attemptNumber++;
+
                     await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
 
                     // if no exception is thrown Request is successful and the continuation op can be executed
@@ -61,42 +66,29 @@ namespace DCL.WebRequests
                     if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
                         return default(TResult);
 
-                    attemptsLeft--;
-
                     if (!envelope.SuppressErrors)
 
                         // Print verbose
                         ReportHub.LogError(
                             envelope.ReportData,
-                            $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
-                            + $"Attempt Left: {attemptsLeft}"
+                            $"Exception (code {exception.ResponseCode}) occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
+                            + $"Attempt: {attemptNumber}/{retryPolicy.maxRetriesCount + 1}"
                         );
 
-                    if (exception.Message.Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))
-                    {
-                        // TODO: (JUANI) From time to time we can get several curl errors that need a small delay to recover
-                        // This can be removed if we solve the issue with Unity
-                        await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
-                    }
+                    (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, idempotent, exception);
 
-                    if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
-                        await UniTask.Delay(TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds()));
-
-
-                    if (exception.IsIrrecoverableError(attemptsLeft) && !envelope.IgnoreIrrecoverableErrors)
+                    if (!canBeRepeated && !envelope.IgnoreIrrecoverableErrors)
                     {
                         // Ignore the file error as we always try to read from the file first
                         if (!envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
-                            SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+                            SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
 
                         throw;
                     }
+
+                    await UniTask.Delay(retryDelay, DelayType.Realtime, cancellationToken: envelope.Ct);
                 }
             }
-
-            throw new Exception($"{nameof(WebRequestController)}: Unexpected code path!");
         }
-
-        IRequestHub IWebRequestController.requestHub => requestHub;
     }
 }
