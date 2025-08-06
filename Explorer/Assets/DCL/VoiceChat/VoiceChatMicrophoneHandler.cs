@@ -3,7 +3,7 @@ using DCL.Settings.Settings;
 using System;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
-using RichTypes;
+using DCL.Utilities;
 using Utility.Ownership;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
@@ -13,13 +13,14 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         private readonly VoiceChatSettingsAsset voiceChatSettings;
+        private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty = new (false);
+
         private Weak<MicrophoneRtcAudioSource> source = Weak<MicrophoneRtcAudioSource>.Null;
         private bool isInCall;
 
-        public event Action? EnabledMicrophone;
-        public event Action? DisabledMicrophone;
-
         public MicrophoneSelection? CurrentMicrophoneName => voiceChatSettings.SelectedMicrophone;
+
+        public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
 
         public VoiceChatMicrophoneHandler(
             VoiceChatSettingsAsset voiceChatSettings)
@@ -84,7 +85,7 @@ namespace DCL.VoiceChat
             var option = source.Resource;
             if (option.Has) option.Value.Start();
 
-            EnabledMicrophone?.Invoke();
+            isMicrophoneEnabledProperty.Value = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
 
@@ -110,7 +111,7 @@ namespace DCL.VoiceChat
             var option = source.Resource;
             if (option.Has) option.Value.Stop();
 
-            DisabledMicrophone?.Invoke();
+            isMicrophoneEnabledProperty.Value = false;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
 
@@ -146,10 +147,7 @@ namespace DCL.VoiceChat
 
             var result = option.Value.SwitchMicrophone(microphoneName);
 
-            if (result.Success == false)
-            {
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}");
-            }
+            if (result.Success == false) { ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}"); }
         }
 
         public void EnableMicrophoneForCall()
