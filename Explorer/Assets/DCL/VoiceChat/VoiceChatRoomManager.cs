@@ -28,9 +28,9 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager;
-        private readonly IDisposable statusSubscription;
+        private readonly IDisposable callStatusSubscription;
+        private readonly IDisposable localParticipantIsSpeakerSubscription;
 
-        private IDisposable localParticipantIsSpeakerSubscriontion;
         private bool isDisposed;
         private VoiceChatStatus currentStatus;
         private ConnectionUpdate connectionState = ConnectionUpdate.Disconnected;
@@ -65,7 +65,8 @@ namespace DCL.VoiceChat
             reconnectionManager.ReconnectionSuccessful += OnReconnectionSuccessful;
             reconnectionManager.ReconnectionFailed += OnReconnectionFailed;
 
-            statusSubscription = voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
+            callStatusSubscription = voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
+            localParticipantIsSpeakerSubscription = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Subscribe(OnLocalParticipantIsSpeakerUpdated);
         }
 
         public void Dispose()
@@ -83,7 +84,7 @@ namespace DCL.VoiceChat
             reconnectionManager.ReconnectionSuccessful -= OnReconnectionSuccessful;
             reconnectionManager.ReconnectionFailed -= OnReconnectionFailed;
 
-            statusSubscription?.Dispose();
+            callStatusSubscription?.Dispose();
             reconnectionManager?.Dispose();
             trackManager?.Dispose();
 
@@ -116,6 +117,21 @@ namespace DCL.VoiceChat
             currentStatus = newStatus;
         }
 
+        private void OnLocalParticipantIsSpeakerUpdated(bool isSpeaker)
+        {
+            if (isSpeaker && voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL && roomHub.VoiceChatRoom().Activated)
+            {
+                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
+                trackManager.PublishLocalTrack(CancellationToken.None);
+            }
+            else
+            {
+                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
+                trackManager.UnpublishLocalTrack();
+            }
+        }
+
+
         private async UniTaskVoid ConnectToRoomAsync()
         {
             try
@@ -130,7 +146,7 @@ namespace DCL.VoiceChat
                 if (!result.Success)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectionUrl}: {result.ErrorMessage}");
-                    roomHub.VoiceChatRoom().StopAsync().Forget();
+                    roomHub.VoiceChatRoom().DeactivateAsync().Forget();
                     voiceChatOrchestrator.HandleConnectionError();
                 }
             }
@@ -189,7 +205,9 @@ namespace DCL.VoiceChat
 
                     case ConnectionUpdate.Reconnected:
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnected successfully");
-                        voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
+                        bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value;
+                        if (canSpeak)
+                            voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                         break;
                 }
             }
@@ -268,7 +286,6 @@ namespace DCL.VoiceChat
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
-                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                 trackManager.StartListeningToRemoteTracks();
 
                 ConnectionEstablished?.Invoke();
@@ -277,7 +294,10 @@ namespace DCL.VoiceChat
                 bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value;
 
                 if (canSpeak)
+                {
+                    voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                     trackManager.PublishLocalTrack(CancellationToken.None);
+                }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
         }
