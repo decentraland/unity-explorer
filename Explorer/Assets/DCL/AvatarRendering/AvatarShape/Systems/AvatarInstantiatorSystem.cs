@@ -219,14 +219,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
+            avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds, wearableIntention); // Update cached head wearable offset for nametag positioning
 
             avatarShapeComponent.CreateOutlineCompatibilityList();
             wearableIntention.Dispose();
 
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();
-
-            avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds); // Update cached head wearable offset for nametag positioning
 
             avatarShapeComponent.IsDirty = false;
 

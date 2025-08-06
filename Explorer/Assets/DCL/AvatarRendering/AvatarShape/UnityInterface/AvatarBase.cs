@@ -1,7 +1,11 @@
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
@@ -93,9 +97,15 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
 
         [Header("NAMETAG RELATED")]
+        [SerializeField, Tooltip("How high could nametag be, [m]")]
+        private float nametagMaxOffset = 2f;
+        [SerializeField] [Tooltip("Offset when nametag is higher than allowed max (means wearable is broken), [m]")]
+        private float nametagBoundedOffset = 1f;
+        [SerializeField] [Tooltip("Small buffer to have some air/space between nametag and head, [m]")]
+        private float nametagBuffer = 0.025f;
+
         [SerializeField] private Transform headAramatureBone;
         [SerializeField] private Transform[] potentialHighestBones;
-
         /// Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
         private float cachedHeadWearableOffset;
 
@@ -117,26 +127,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public Transform GetTransform() =>
             transform;
-
-        public Vector3 GetAdaptiveNametagPosition()
-        {
-            Vector3 headPos = headAramatureBone.position;
-
-            float maxY = headPos.y;
-            var isHeadHighest = true;
-
-            foreach (Transform bone in potentialHighestBones)
-                if (bone.position.y > maxY)
-                {
-                    maxY = bone.position.y;
-                    isHeadHighest = false;
-                }
-
-            // apply scaling for head animation
-            float offset = isHeadHighest ? cachedHeadWearableOffset * headAramatureBone.localScale.y : cachedHeadWearableOffset;
-
-            return new Vector3(headPos.x, maxY + offset, headPos.z);
-        }
 
         public void SetAnimatorFloat(int hash, float value)
         {
@@ -196,21 +186,48 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.enabled = true;
         }
 
-        /// <summary>
-        ///     Updates the cached head wearable offset based on current skinning bounds.
-        ///     Should be called whenever wearables change.
-        /// </summary>
-        /// <param name="skinningBounds">The LocalBounds from AvatarCustomSkinningComponent</param>
-        public void UpdateHeadWearableOffset(in Bounds skinningBounds)
+        public Vector3 GetAdaptiveNametagPosition()
         {
-            // Calculate offset from head bone Y position to the highest point of wearables
-            float headBoneY = headAramatureBone.position.y;
+            Vector3 headPos = headAramatureBone.position;
+
+            float maxY = headPos.y;
+            var isHeadHighest = true;
+
+            // NOTE (Vit) : If performance critical - then iterate only if avatar is emoting (or jobify)
+            foreach (Transform bone in potentialHighestBones)
+                if (bone.position.y > maxY)
+                {
+                    maxY = bone.position.y;
+                    isHeadHighest = false;
+                }
+
+            // apply scaling for head animation
+            float offset = isHeadHighest ? cachedHeadWearableOffset * headAramatureBone.localScale.y : cachedHeadWearableOffset;
+
+            return new Vector3(headPos.x, maxY + offset, headPos.z);
+        }
+
+        /// <summary>
+        /// Updates the cached head wearable offset based on current skinning bounds. Should be called whenever wearables change.
+        /// </summary>
+        public void UpdateHeadWearableOffset(in Bounds skinningBounds, in GetWearablesByPointersIntention wearable)
+        {
             float maxWearableY = transform.position.y + skinningBounds.max.y; // Convert local to world Y
 
-            // Ensure minimum offset for head clearance, add small buffer for nametag positioning
-            const float NAMETAG_BUFFER = 0.025f;
+            // Calculate offset from head bone Y position to the highest point of wearables
+            cachedHeadWearableOffset = maxWearableY - headAramatureBone.position.y + nametagBuffer;
 
-            cachedHeadWearableOffset = maxWearableY - headBoneY + NAMETAG_BUFFER;
+            // if offset is too high, it means something wrong with the wearable, so we bound it by smaller value than MAX (by NAMETAG_BOUNDED_OFFSET)
+            if (cachedHeadWearableOffset > nametagMaxOffset)
+            {
+                ReportHub.LogError(ReportCategory.WEARABLE, $"Wearable for {wearable.BodyShape.Value} produces very high nametag offset = {cachedHeadWearableOffset} [m]. Bouncing it by {nameof(nametagBoundedOffset)} = {nametagBoundedOffset}");
+                ReportHub.LogError(ReportCategory.WEARABLE, $"transform.position.y = {transform.position.y} | skinningBounds.max = {skinningBounds.max.ToString()} | skinningBounds.center = {skinningBounds.center.ToString()}");
+
+                foreach (URN pointer in wearable.Pointers)
+                    ReportHub.LogError(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
+
+                cachedHeadWearableOffset = nametagBoundedOffset;
+            }
         }
     }
 
