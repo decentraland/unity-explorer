@@ -9,6 +9,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly CommunityVoiceChatInCallView view;
         private readonly CommunityVoiceChatInCallFooterController footerController;
+
+        public event Action EndStream;
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct;
 
@@ -16,8 +18,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             this.view = view;
             footerController = new CommunityVoiceChatInCallFooterController(view.InCallFooterView, orchestrator, microphoneHandler);
+
+            view.EndStreamButton.onClick.AddListener(() => EndStream?.Invoke());
             ct = new CancellationTokenSource();
         }
+
+        public void SetEndStreamButtonStatus(bool isActive) =>
+            view.EndStreamButton.gameObject.SetActive(isActive);
 
         public void Dispose()
         {

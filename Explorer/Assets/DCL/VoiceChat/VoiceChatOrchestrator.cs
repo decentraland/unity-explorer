@@ -24,20 +24,11 @@ namespace DCL.VoiceChat
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
-
+        public IReadonlyReactiveProperty<string> CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
         public string CurrentConnectionUrl => activeCallStatusService?.ConnectionUrl ?? string.Empty;
-
-        /// <summary>
-        ///     For Private Conversations, it is the Wallet Address of the other user, for Communities, it is the Community ID
-        /// </summary>
-        public string CurrentCallId => activeCallStatusService?.CallId ?? string.Empty;
-        public IPrivateVoiceChatCallStatusService PrivateStatusService => privateVoiceChatCallStatusService;
-        public ICommunityVoiceChatCallStatusService CommunityStatusService => communityVoiceChatCallStatusService;
         public VoiceChatParticipantsStateService ParticipantsStateService { get; }
 
         public IReadonlyReactiveProperty<VoiceChatStatus> CommunityCallStatus => communityVoiceChatCallStatusService.Status;
-
-        public string CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
 
         public IReadonlyReactiveProperty<VoiceChatStatus> PrivateCallStatus => privateVoiceChatCallStatusService.Status;
 
@@ -97,7 +88,8 @@ namespace DCL.VoiceChat
 
         public void HandleConnectionEnded()
         {
-            activeCallStatusService?.HandleLivekitConnectionEnded();
+            communityVoiceChatCallStatusService.HandleLivekitConnectionEnded();
+            privateVoiceChatCallStatusService.HandleLivekitConnectionEnded();
         }
 
         public void HandleConnectionError()
@@ -216,6 +208,12 @@ namespace DCL.VoiceChat
         {
             if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
                 communityVoiceChatCallStatusService.KickPlayerFromCurrentCall(walletId);
+        }
+
+        public void EndStreamInCurrentCall()
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.EndStreamInCurrentCall();
         }
 
         public bool HasActiveVoiceChatCall(string communityId) =>

@@ -23,7 +23,6 @@ namespace DCL.VoiceChat
     public interface IVoiceChatOrchestrator : ICommunityCallOrchestrator, IPrivateCallOrchestrator
     {
         string CurrentConnectionUrl { get; }
-        string CurrentCallId { get; }
     }
 
     public interface IVoiceChatOrchestratorState
@@ -43,7 +42,7 @@ namespace DCL.VoiceChat
     public interface ICommunityCallState
     {
         IReadonlyReactiveProperty<VoiceChatStatus> CommunityCallStatus { get; }
-        string CurrentCommunityId { get; }
+        IReadonlyReactiveProperty<string> CurrentCommunityId { get; }
         bool HasActiveVoiceChatCall(string communityId);
         ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId);
         bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData);
@@ -73,6 +72,7 @@ namespace DCL.VoiceChat
         void DenySpeakerInCurrentCall(string walletId);
         void DemoteFromSpeakerInCurrentCall(string walletId);
         void KickPlayerFromCurrentCall(string walletId);
+        void EndStreamInCurrentCall();
     }
 
     // Combined interfaces for convenience

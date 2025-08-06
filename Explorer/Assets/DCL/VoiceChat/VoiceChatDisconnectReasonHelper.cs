@@ -25,13 +25,13 @@ namespace DCL.VoiceChat
                        DisconnectReason.UserRejected => true,
                        DisconnectReason.SignalClose => true,
                        DisconnectReason.ConnectionTimeout => true,
-                       DisconnectReason.StateMismatch => false,
-                       DisconnectReason.Migration => false,
+                       DisconnectReason.StateMismatch => true,
+                       DisconnectReason.Migration => true,
                        DisconnectReason.UnknownReason => false,
-                       DisconnectReason.UserUnavailable => false,
-                       DisconnectReason.SipTrunkFailure => false,
+                       DisconnectReason.UserUnavailable => true,
+                       DisconnectReason.SipTrunkFailure => true,
                        _ => false,
                    };
         }
     }
-} 
+}

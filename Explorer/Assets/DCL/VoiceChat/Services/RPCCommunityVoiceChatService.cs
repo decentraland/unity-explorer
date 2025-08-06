@@ -22,6 +22,7 @@ namespace DCL.VoiceChat.Services
         private const string JOIN_COMMUNITY_VOICE_CHAT = "JoinCommunityVoiceChat";
         private const string REQUEST_TO_SPEAK_COMMUNITY_VOICE_CHAT = "RequestToSpeakInCommunityVoiceChat";
         private const string PROMOTE_TO_SPEAKER_COMMUNITY_VOICE_CHAT = "PromoteSpeakerInCommunityVoiceChat";
+        private const string REJECT_SPEAKER_COMMUNITY_VOICE_CHAT = "RejectSpeakRequestInCommunityVoiceChat";
         private const string DEMOTE_FROM_SPEAKER_COMMUNITY_VOICE_CHAT = "DemoteSpeakerInCommunityVoiceChat";
         private const string KICK_FROM_COMMUNITY_VOICE_CHAT = "KickPlayerFromCommunityVoiceChat";
         private const string END_COMMUNITY_VOICE_CHAT = "EndCommunityVoiceChat";
@@ -183,7 +184,7 @@ namespace DCL.VoiceChat.Services
             return response;
         }
 
-        public async UniTask<PromoteSpeakerInCommunityVoiceChatResponse> DenySpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
+        public async UniTask<PromoteSpeakerInCommunityVoiceChatResponse> PromoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
 
@@ -202,21 +203,21 @@ namespace DCL.VoiceChat.Services
             return response;
         }
 
-        public async UniTask<PromoteSpeakerInCommunityVoiceChatResponse> PromoteSpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
+        public async UniTask<RejectSpeakRequestInCommunityVoiceChatResponse> DenySpeakerInCommunityVoiceChatAsync(string communityId, string userAddress, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
 
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            var payload = new PromoteSpeakerInCommunityVoiceChatPayload()
+            var payload = new RejectSpeakRequestInCommunityVoiceChatPayload()
             {
                 CommunityId = communityId,
                 UserAddress = userAddress
             };
 
-            PromoteSpeakerInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
-                                                                                         .CallUnaryProcedure<PromoteSpeakerInCommunityVoiceChatResponse>(PROMOTE_TO_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
-                                                                                         .AttachExternalCancellation(ct)
-                                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+            RejectSpeakRequestInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+                                                                                             .CallUnaryProcedure<RejectSpeakRequestInCommunityVoiceChatResponse>(REJECT_SPEAKER_COMMUNITY_VOICE_CHAT, payload)
+                                                                                             .AttachExternalCancellation(ct)
+                                                                                             .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
             return response;
         }

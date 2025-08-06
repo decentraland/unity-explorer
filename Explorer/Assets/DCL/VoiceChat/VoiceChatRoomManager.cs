@@ -27,9 +27,9 @@ namespace DCL.VoiceChat
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager;
-        private readonly IDisposable statusSubscription;
+        private readonly IDisposable callStatusSubscription;
+        private readonly IDisposable localParticipantIsSpeakerSubscription;
 
         private bool isDisposed;
         private VoiceChatStatus currentStatus;
@@ -37,8 +37,6 @@ namespace DCL.VoiceChat
 
         public event Action ConnectionEstablished;
         public event Action ConnectionLost;
-        public event Action MediaActivated;
-        public event Action MediaDeactivated;
 
         public VoiceChatRoomManager(
             VoiceChatTrackManager trackManager,
@@ -52,7 +50,6 @@ namespace DCL.VoiceChat
             this.roomHub = roomHub;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            this.configuration = configuration;
             this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
 
             reconnectionManager = new VoiceChatReconnectionManager(
@@ -68,7 +65,8 @@ namespace DCL.VoiceChat
             reconnectionManager.ReconnectionSuccessful += OnReconnectionSuccessful;
             reconnectionManager.ReconnectionFailed += OnReconnectionFailed;
 
-            statusSubscription = voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
+            callStatusSubscription = voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
+            localParticipantIsSpeakerSubscription = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Subscribe(OnLocalParticipantIsSpeakerUpdated);
         }
 
         public void Dispose()
@@ -86,7 +84,7 @@ namespace DCL.VoiceChat
             reconnectionManager.ReconnectionSuccessful -= OnReconnectionSuccessful;
             reconnectionManager.ReconnectionFailed -= OnReconnectionFailed;
 
-            statusSubscription?.Dispose();
+            callStatusSubscription?.Dispose();
             reconnectionManager?.Dispose();
             trackManager?.Dispose();
 
@@ -119,6 +117,21 @@ namespace DCL.VoiceChat
             currentStatus = newStatus;
         }
 
+        private void OnLocalParticipantIsSpeakerUpdated(bool isSpeaker)
+        {
+            if (isSpeaker && voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL && roomHub.VoiceChatRoom().Activated)
+            {
+                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
+                trackManager.PublishLocalTrack(CancellationToken.None);
+            }
+            else
+            {
+                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
+                trackManager.UnpublishLocalTrack();
+            }
+        }
+
+
         private async UniTaskVoid ConnectToRoomAsync()
         {
             try
@@ -133,7 +146,7 @@ namespace DCL.VoiceChat
                 if (!result.Success)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectionUrl}: {result.ErrorMessage}");
-                    roomHub.VoiceChatRoom().StopAsync().Forget();
+                    roomHub.VoiceChatRoom().DeactivateAsync().Forget();
                     voiceChatOrchestrator.HandleConnectionError();
                 }
             }
@@ -157,7 +170,10 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT,
                     result.Success ? $"{TAG} Completed disconnection" : $"{TAG} Exception during disconnection: {result.Error?.Message}");
             }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to disconnect from room: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to disconnect from room: {ex.Message}");
+            }
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
@@ -192,7 +208,11 @@ namespace DCL.VoiceChat
 
                     case ConnectionUpdate.Reconnected:
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnected successfully");
-                        voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
+
+                        bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value ||
+                                        voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE;
+                        if (canSpeak)
+                            voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                         break;
                 }
             }
@@ -259,22 +279,31 @@ namespace DCL.VoiceChat
         private void OnReconnectionFailed()
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection failed");
+            DisconnectFromRoomAsync().Forget();
+            voiceChatOrchestrator.HandleConnectionError();
         }
 
         private void OnConnectionEstablished()
         {
             try
             {
+                // If its a community chat but local participant is not a speaker, we dont publish the track.
+
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
-                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                 trackManager.StartListeningToRemoteTracks();
-                trackManager.PublishLocalTrack(CancellationToken.None);
 
                 ConnectionEstablished?.Invoke();
-                MediaActivated?.Invoke();
-
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection setup completed");
+
+                bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value ||
+                                voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE;
+
+                if (canSpeak)
+                {
+                    voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
+                    trackManager.PublishLocalTrack(CancellationToken.None);
+                }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
         }
@@ -291,21 +320,19 @@ namespace DCL.VoiceChat
                 voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
 
                 ConnectionLost?.Invoke();
-                MediaDeactivated?.Invoke();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection cleanup completed");
 
                 if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Valid disconnect reason ({disconnectReason}) - no reconnection needed");
+                    // We call this here in case the disconnection was not triggered by us but by the server, if it was already stopped, it won't do anything.
                     DisconnectFromRoomAsync().Forget();
                     voiceChatOrchestrator.HandleConnectionEnded();
                     return;
                 }
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Unexpected disconnect reason ({disconnectReason}) - starting reconnection attempts");
-
-
                 reconnectionManager.HandleDisconnection();
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }
