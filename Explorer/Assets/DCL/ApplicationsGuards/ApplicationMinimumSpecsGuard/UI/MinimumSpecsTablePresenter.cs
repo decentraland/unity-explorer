@@ -22,12 +22,15 @@ namespace DCL.ApplicationMinimumSpecsGuard
                               .Where(r => !r.IsMet)
                               .ToList();
 
-            PopulateRow(tableView.LastRow, unmetResults[0]);
+            PopulateRow(tableView.LastRow, unmetResults[^1]);
 
-            for (var i = 1; i < unmetResults.Count; i++)
+            for (var i = 0; i < unmetResults.Count - 1; i++)
             {
                 MinimumSpecsRowView newRow = Object.Instantiate(tableView.RowTemplate, tableView.RowTemplate.transform.parent);
+
                 PopulateRow(newRow, unmetResults[i]);
+
+                newRow.transform.SetSiblingIndex(tableView.RowTemplate.transform.GetSiblingIndex());
                 newRow.gameObject.SetActive(true);
                 spawnedRows.Add(newRow);
             }
