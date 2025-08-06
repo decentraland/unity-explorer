@@ -11,9 +11,10 @@ namespace DCL.VoiceChat
     public abstract class VoiceChatCallStatusServiceBase
     {
         private readonly ReactiveProperty<VoiceChatStatus> status = new (VoiceChatStatus.DISCONNECTED);
+        private readonly ReactiveProperty<string> callId = new (string.Empty);
 
         public IReadonlyReactiveProperty<VoiceChatStatus> Status => status;
-        public string CallId { get; protected set; }
+        public IReadonlyReactiveProperty<string> CallId => callId;
         public string ConnectionUrl { get; protected set; }
 
         public abstract void StartCall(string target);
@@ -38,13 +39,19 @@ namespace DCL.VoiceChat
 
         protected void ResetVoiceChatData()
         {
-            CallId = string.Empty;
+            callId.Value = string.Empty;
             ConnectionUrl = string.Empty;
+        }
+
+        protected void SetCallId(string newCallId)
+        {
+            callId.Value = newCallId;
         }
 
         public virtual void Dispose()
         {
             status?.Dispose();
+            callId?.Dispose();
         }
     }
 }

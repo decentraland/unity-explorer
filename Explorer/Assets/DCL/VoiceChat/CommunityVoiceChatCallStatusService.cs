@@ -65,7 +65,7 @@ namespace DCL.VoiceChat
                     //When the call can be started
                     case StartCommunityVoiceChatResponse.ResponseOneofCase.Ok:
                         ConnectionUrl = response.Ok.Credentials.ConnectionUrl;
-                        CallId = communityId;
+                        SetCallId(communityId);
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
 
@@ -106,7 +106,7 @@ namespace DCL.VoiceChat
                 {
                     case JoinCommunityVoiceChatResponse.ResponseOneofCase.Ok:
                         ConnectionUrl = response.Ok.Credentials.ConnectionUrl;
-                        CallId = communityId;
+                        SetCallId(communityId);
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
                     default:
@@ -121,10 +121,10 @@ namespace DCL.VoiceChat
 
         public void RequestToSpeakInCurrentCall()
         {
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || CallId.IsNullOrEmpty()) return;
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || CallId.Value.IsNullOrEmpty()) return;
 
             cts = cts.SafeRestart();
-            RequestToSpeakAsync(CallId, cts.Token).Forget();
+            RequestToSpeakAsync(CallId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid RequestToSpeakAsync(string communityId, CancellationToken ct)
@@ -141,11 +141,11 @@ namespace DCL.VoiceChat
 
         public void PromoteToSpeakerInCurrentCall(string walletId)
         {
-            if (CallId.IsNullOrEmpty()) return;
+            if (CallId.Value.IsNullOrEmpty()) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            PromoteToSpeakerAsync(CallId).Forget();
+            PromoteToSpeakerAsync(CallId.Value).Forget();
             return;
 
             async UniTaskVoid PromoteToSpeakerAsync(string communityId)
@@ -162,11 +162,11 @@ namespace DCL.VoiceChat
 
         public void DenySpeakerInCurrentCall(string walletId)
         {
-            if (CallId.IsNullOrEmpty()) return;
+            if (CallId.Value.IsNullOrEmpty()) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            DenySpeakerAsync(CallId, walletId, cts.Token).Forget();
+            DenySpeakerAsync(CallId.Value, walletId, cts.Token).Forget();
 
             return;
 
@@ -188,11 +188,11 @@ namespace DCL.VoiceChat
 
         public void DemoteFromSpeakerInCurrentCall(string walletId)
         {
-            if (CallId.IsNullOrEmpty()) return;
+            if (CallId.Value.IsNullOrEmpty()) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            DemoteFromSpeakerAsync(CallId, cts.Token).Forget();
+            DemoteFromSpeakerAsync(CallId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid DemoteFromSpeakerAsync(string communityId, CancellationToken ct)
@@ -209,11 +209,11 @@ namespace DCL.VoiceChat
 
         public void KickPlayerFromCurrentCall(string walletId)
         {
-            if (CallId.IsNullOrEmpty()) return;
+            if (CallId.Value.IsNullOrEmpty()) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            KickPlayerAsync(CallId, walletId, cts.Token).Forget();
+            KickPlayerAsync(CallId.Value, walletId, cts.Token).Forget();
             return;
 
             async UniTaskVoid KickPlayerAsync(string communityId, string walletId, CancellationToken ct)

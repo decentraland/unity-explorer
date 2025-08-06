@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Diagnostics;
+using DCL.Utilities;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -823,11 +824,13 @@ namespace DCL.Chat
         /// </summary>
         /// <param name="channelToAdd">The channel for which the item will be created.</param>
         /// <param name="thumbnailCache">A reference to the thumbnail cache to get the icon of the toolbar.</param>
-        public void AddCommunityConversation(ChatChannel channelToAdd, ISpriteCache thumbnailCache)
+        /// <param name="communityUpdates"></param>
+        /// <param name="currentCommunityCallId"></param>
+        public void AddCommunityConversation(ChatChannel channelToAdd, ISpriteCache thumbnailCache, ReactiveProperty<bool> communityUpdates, IReadonlyReactiveProperty<string> currentCommunityCallId)
         {
             conversationsToolbar.AddConversation(channelToAdd);
             GetUserCommunitiesData.CommunityData communityData = communitiesData[channelToAdd.Id];
-            conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData, communityConversationItemCts.Token);
+            conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData, communityUpdates, currentCommunityCallId, communityConversationItemCts.Token);
         }
 
         /// <summary>

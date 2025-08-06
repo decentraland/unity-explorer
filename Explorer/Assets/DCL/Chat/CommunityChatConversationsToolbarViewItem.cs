@@ -1,12 +1,26 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.UI;
 using DCL.UI.Communities;
+using DCL.Utilities;
+using System;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Chat
 {
     public class CommunityChatConversationsToolbarViewItem : ChatConversationsToolbarViewItem
     {
+        private IDisposable? communitySubscription;
+        private IDisposable? communityCallIdSubscription;
+
+        private IReadonlyReactiveProperty<string> currentCommunityCallId;
+
+        [field: SerializeField] private Sprite ListeningToCallIcon;
+        [field: SerializeField] private Sprite HasCallIcon;
+        [field: SerializeField] private Image IconImage;
+
         /// <summary>
         /// Provides the data required to display the community thumbnail.
         /// </summary>
@@ -26,6 +40,24 @@ namespace DCL.Chat
         {
             base.Start();
             removeButton.gameObject.SetActive(true);
+        }
+
+        public void SetupCommunityUpdates(ReactiveProperty<bool> communityUpdates, IReadonlyReactiveProperty<string> currentCommunityCallId)
+        {
+            communitySubscription?.Dispose();
+            communitySubscription = communityUpdates.Subscribe(OnCommunityStateUpdated);
+
+            this.currentCommunityCallId = currentCommunityCallId;
+        }
+
+        private void OnCommunityStateUpdated(bool hasActiveCall)
+        {
+            if (!isActiveAndEnabled) return;
+
+            connectionStatusIndicatorContainer.SetActive(hasActiveCall);
+            if (!hasActiveCall) return;
+
+            IconImage.sprite = currentCommunityCallId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase)? ListeningToCallIcon : HasCallIcon;
         }
     }
 }

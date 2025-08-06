@@ -870,7 +870,12 @@ namespace DCL.Chat
                     break;
                 case ChatChannel.ChatChannelType.COMMUNITY:
                     if (userCommunities.ContainsKey(addedChannel.Id))
-                        viewInstance!.AddCommunityConversation(addedChannel, thumbnailCache);
+                    {
+                        var communityUpdates = voiceChatOrchestrator.SubscribeToCommunityUpdates(ChatChannel.GetCommunityIdFromChannelId(addedChannel.Id));
+                        var currentCommunityCallId = voiceChatOrchestrator.CurrentCommunityId;
+                        viewInstance!.AddCommunityConversation(addedChannel, thumbnailCache, communityUpdates, currentCommunityCallId);
+                    }
+
                     break;
                 case ChatChannel.ChatChannelType.USER:
                     chatUserStateUpdater.AddConversation(addedChannel.Id.Id);
