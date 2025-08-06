@@ -12,6 +12,11 @@
         public override void OnToggleMembers() =>
             ChangeState<FocusedChatState>();
 
+        public override void OnFocusRequested()
+        {
+            ChangeState<FocusedChatState>();
+        }
+
         public override void OnCloseRequested() =>
             ChangeState<FocusedChatState>();
 

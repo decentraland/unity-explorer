@@ -15,8 +15,9 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
-
+using UnityEngine;
 using Utility;
 
 namespace DCL.Chat
@@ -134,6 +135,7 @@ namespace DCL.Chat
             var memberListPresenter = new ChatMemberListPresenter(
                 viewInstance.MemberListView,
                 eventBus,
+                chatEventBus,
                 chatMemberListService,
                 chatContextMenuService,
                 commandRegistry.GetChannelMembersCommand);

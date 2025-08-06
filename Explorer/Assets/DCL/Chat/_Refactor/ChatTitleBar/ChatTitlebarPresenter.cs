@@ -78,7 +78,8 @@ namespace DCL.Chat
             chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
-            scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
 
             var contextMenuSettings = chatConfig.communityChatConversationContextMenuSettings;
             contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
@@ -91,6 +92,14 @@ namespace DCL.Chat
                     OpenCommunityCard));
 
             InitializeChannelContextMenu();
+        }
+
+        private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)
+        {
+            profileLoadCts.SafeCancelAndDispose();
+            currentViewModel = null;
+            view.defaultTitlebarView.Setup(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
+            view.membersTitlebarView.SetChannelName(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
         }
 
         private void OnDeleteChatHistoryButtonClicked()

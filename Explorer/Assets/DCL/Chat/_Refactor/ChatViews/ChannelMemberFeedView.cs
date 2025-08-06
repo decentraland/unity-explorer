@@ -73,7 +73,7 @@ namespace DCL.Chat.ChatViews
         {
             var data = new UserProfileMenuRequest
             {
-                WalletAddress = new Web3Address(request.UserId), Position = request.Position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero,
+                WalletAddress = new Web3Address(request.UserId), Position = request.Position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
             };
 
             OnMemberContextMenuRequested?.Invoke(data);

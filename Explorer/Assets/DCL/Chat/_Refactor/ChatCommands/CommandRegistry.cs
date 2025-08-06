@@ -33,7 +33,7 @@ namespace DCL.Chat.ChatCommands
         public GetChannelMembersCommand GetChannelMembersCommand { get; }
         public GetParticipantProfilesCommand GetParticipantProfilesCommand { get; }
         public GetUserChatStatusCommand GetUserChatStatusCommand { get; }
-
+        public ResetChatCommand ResetChat { get; }
         public ResolveInputStateCommand ResolveInputStateCommand { get; }
 
         public CommandRegistry(
@@ -56,6 +56,8 @@ namespace DCL.Chat.ChatCommands
             AudioClipConfig sendMessageSound,
             GetParticipantProfilesCommand getParticipantProfilesCommand)
         {
+            ResetChat = new ResetChatCommand(eventBus);
+            
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
 
             InitializeChat = new InitializeChatSystemCommand(eventBus,

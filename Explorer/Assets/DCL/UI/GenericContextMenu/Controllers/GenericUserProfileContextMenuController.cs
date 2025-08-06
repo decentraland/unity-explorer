@@ -50,7 +50,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
-        private readonly UI.GenericContextMenuParameter.GenericContextMenu contextMenu;
+        private readonly GenericContextMenuParameter.GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
@@ -106,7 +106,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
 
-            contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
+            contextMenu = new GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(mentionUserButtonControlSettings)
@@ -264,8 +264,13 @@ namespace DCL.UI.GenericContextMenu.Controllers
         {
             closeContextMenuTask.TrySetResult();
 
+            chatEventBus.OpenPrivateConversationUsingUserId(targetProfile.UserId);
+
+            chatEventBus.InsertText(userName + " ");
+            
             //Per design request we need to add an extra character after adding the mention to the chat.
-            ShowChatAsync(() => chatEventBus.InsertText(userName + " ")).Forget();
+            // ShowChatAsync(() => chatEventBus.InsertText(userName + " ")).Forget();
+            ShowChatAsync(() => { }).Forget();
         }
 
         private void OnOpenConversationButtonClicked(string userId)

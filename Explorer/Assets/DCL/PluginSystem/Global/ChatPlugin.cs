@@ -35,6 +35,7 @@ using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
+using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -86,6 +87,8 @@ namespace DCL.PluginSystem.Global
         private readonly Transform chatViewRectTransform;
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
+
+        private CommandRegistry commandRegistry;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -228,7 +231,7 @@ namespace DCL.PluginSystem.Global
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
 
-            var useCaseFactory = new CommandRegistry(
+            commandRegistry = new CommandRegistry(
                 chatConfig,
                 chatSettingsAsset.Value,
                 eventBus,
@@ -248,7 +251,8 @@ namespace DCL.PluginSystem.Global
                 settings.ChatSendMessageAudio,
                 getParticipantProfilesCommand
             );
-            pluginScope.Add(useCaseFactory);
+
+            pluginScope.Add(commandRegistry);
 
             chatMainController = new ChatMainController(
                 () =>
@@ -263,7 +267,7 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 currentChannelService,
                 chatInputBlockingService,
-                useCaseFactory,
+                commandRegistry,
                 chatHistory,
                 profileRepositoryWrapper,
                 chatMemberService,
@@ -293,6 +297,9 @@ namespace DCL.PluginSystem.Global
 
         private void OnIdentityCleared()
         {
+            ReportHub.Log(ReportData.UNSPECIFIED, "ChatPlugin.OnIdentityCleared");
+            commandRegistry.ResetChat.Execute();
+            
             if (chatMainController.IsVisibleInSharedSpace)
                 chatMainController.HideViewAsync(CancellationToken.None).Forget();
         }

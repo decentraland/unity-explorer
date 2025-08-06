@@ -69,7 +69,7 @@ namespace DCL.Chat.ChatMessages
                 currentChannelService);
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
-
+            
             view.Initialize(viewModels);
         }
 

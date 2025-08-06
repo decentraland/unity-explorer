@@ -3,12 +3,14 @@ using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Utilities;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
+using UnityEngine;
 using Utility;
 using Utility.Multithreading;
 

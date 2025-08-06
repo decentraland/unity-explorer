@@ -66,6 +66,7 @@ namespace DCL.Chat
             this.chatEventBus.OpenPrivateConversationRequested += OnOpenUserConversation;
             this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
 
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
             scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
@@ -73,6 +74,13 @@ namespace DCL.Chat
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
+        }
+
+        private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)
+        {
+            isInitialized = false;
+            viewModels.Clear();
+            view.RemoveAllConversations();
         }
 
         private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)

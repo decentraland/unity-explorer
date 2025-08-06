@@ -84,6 +84,16 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        ///     Event:          ChatResetEvent
+        ///     Triggered By:   ResetChatCommand
+        ///     When:           A user logs out (OnIdentityCleared).
+        ///     Subscribers:    - ChatChannelsPresenter: Clears the conversation toolbar.
+        /// </summary>
+        public struct ChatResetEvent
+        {
+        }
+        
+        /// <summary>
         ///     Event:          ChannelLeftEvent
         ///     Triggered By:   LeaveChannelCommand
         ///     When:           A user chooses to leave a channel (e.g., by closing a DM conversation).
