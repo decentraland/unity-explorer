@@ -38,7 +38,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private static void PopulateRow(MinimumSpecsRowView row, SpecResult result)
         {
-            row.SetTitle(GetCategoryDisplayName(result.Category));
+            row.SetTitle(result.Category.ToString());
             row.SetRequiredText(result.Required);
             row.SetActualText(result.Actual);
         }
@@ -50,8 +50,5 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             spawnedRows.Clear();
         }
-
-        private static string GetCategoryDisplayName(SpecCategory category) =>
-            category.ToString();
     }
 }
