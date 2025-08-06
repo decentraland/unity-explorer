@@ -76,8 +76,6 @@ namespace DCL.VoiceChat
         {
             if (isMemberListVisible) return;
 
-            if (!view.gameObject.activeSelf) return;
-
             if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
                 if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
@@ -95,7 +93,7 @@ namespace DCL.VoiceChat
             }
             else
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Hiding subtitle bar - not current community call orchestrator communityID: {communityCallOrchestrator.CurrentCommunityId}");
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Hiding subtitle bar - not current community call {ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)} - orchestrator communityID: {communityCallOrchestrator.CurrentCommunityId.Value}");
                 view.gameObject.SetActive(false);
             }
         }
@@ -105,8 +103,10 @@ namespace DCL.VoiceChat
             //We hide it by default until we resolve if the user should see it.
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCurrentChannelChanged: Hiding subtitle bar by default for channel type {newChannel.ChannelType}");
             view.gameObject.SetActive(false);
+
             // Reset member list visibility state since we're changing channels
             isMemberListVisible = false;
+
             currentCommunityCallStatusSubscription?.Dispose();
             communityCallOrchestrator.ParticipantsStateService.ParticipantJoined -= ParticipantsStateServiceOnParticipantJoined;
             communityCallOrchestrator.ParticipantsStateService.ParticipantLeft -= ParticipantsStateServiceOnParticipantLeft;
