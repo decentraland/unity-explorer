@@ -61,6 +61,7 @@ namespace DCL.UI.Skybox
         private void OnTimeSliderValueChanged(float sliderValue)
         {
             skyboxSettings.TimeOfDayNormalized = sliderValue;
+            skyboxSettings.TargetTimeOfDayNormalized = sliderValue;
             viewInstance!.TimeText.text = GetFormatedTime(sliderValue);
         }
 
@@ -70,11 +71,14 @@ namespace DCL.UI.Skybox
 
             ToggleDayCycleEnabled(isOn);
 
-            // We only subscribe to time changes when it is not controller by the ui
-            // otherwise, the slider will change the time, and immediately after we will receive the time change event
-            // provoking a duplicate update in the slider
             if (skyboxSettings.IsUIControlled)
+            {
+                skyboxSettings.UIOverrideTimeOfDayNormalized = viewInstance!.TimeSlider.normalizedValue;
+                // We only subscribe to time changes when it is not controller by the ui
+                // otherwise, the slider will change the time, and immediately after we will receive the time change event
+                // provoking a duplicate update in the slider
                 skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
+            }
             else
                 skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
         }
