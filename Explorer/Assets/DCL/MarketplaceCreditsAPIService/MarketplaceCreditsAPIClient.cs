@@ -11,7 +11,8 @@ namespace DCL.MarketplaceCreditsAPIService
 {
     public class MarketplaceCreditsAPIClient
     {
-        private const string MARKETPLACE_CREDITS_NO_DATA = "NO_DATA";
+        private const string NO_DATA_STATE = "NO_DATA";
+        private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
 
         private readonly IWebRequestController webRequestController;
@@ -87,9 +88,9 @@ namespace DCL.MarketplaceCreditsAPIService
             var result = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                     .CreateFromJson<SeasonsData>(WRJsonParser.Unity);
 
-            result.lastSeason.state ??= MARKETPLACE_CREDITS_NO_DATA;
-            result.currentSeason.season.state ??= MARKETPLACE_CREDITS_NO_DATA;
-            result.nextSeason.state ??= MARKETPLACE_CREDITS_NO_DATA;
+            result.lastSeason.state ??= NO_DATA_STATE;
+            result.currentSeason.season.state ??= NO_DATA_STATE;
+            result.nextSeason.state = string.IsNullOrEmpty(result.nextSeason.startDate) ? NO_DATA_STATE : SEASON_NOT_STARTED_STATE;
             
             seasonsData = result;
         }
