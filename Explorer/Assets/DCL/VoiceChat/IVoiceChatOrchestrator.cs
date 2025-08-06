@@ -72,6 +72,7 @@ namespace DCL.VoiceChat
         void DenySpeakerInCurrentCall(string walletId);
         void DemoteFromSpeakerInCurrentCall(string walletId);
         void KickPlayerFromCurrentCall(string walletId);
+        void EndStreamInCurrentCall();
     }
 
     // Combined interfaces for convenience

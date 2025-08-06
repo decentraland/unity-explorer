@@ -228,6 +228,28 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void EndStreamInCurrentCall()
+        {
+            if (CallId.IsNullOrEmpty()) return;
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            EndStreamAsync(CallId, cts.Token).Forget();
+            return;
+
+            async UniTaskVoid EndStreamAsync(string communityId, CancellationToken ct)
+            {
+                try
+                {
+                    EndCommunityVoiceChatResponse response = await voiceChatService.EndCommunityVoiceChatAsync(communityId, ct);
+
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} End stream response: {response.ResponseCase} for community {communityId}");
+                }
+                catch (Exception e) { }
+            }
+
+        }
+
         public override void HandleLivekitConnectionFailed()
         {
             ResetVoiceChatData();
@@ -289,7 +311,8 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Added community {communityUpdate.CommunityId}");
             }
 
-            notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
+            if(communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted)
+                notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
         }
 
         private void OnActiveCommunityVoiceChatsFetched(ActiveCommunityVoiceChatsResponse response)
