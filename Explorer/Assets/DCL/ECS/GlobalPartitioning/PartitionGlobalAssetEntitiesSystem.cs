@@ -22,7 +22,7 @@ namespace DCL.Systems
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class PartitionGlobalAssetEntitiesSystem : BaseUnityLoopSystem
     {
-        private readonly IReadOnlyCameraSamplingData samplingData;
+        private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IPartitionSettings partitionSettings;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
 
@@ -31,7 +31,7 @@ namespace DCL.Systems
         {
             this.partitionComponentPool = partitionComponentPool;
             partitionSettings = settings;
-            samplingData = cameraSamplingData;
+            this.cameraSamplingData = cameraSamplingData;
         }
 
         protected override void Update(float t)
@@ -39,10 +39,10 @@ namespace DCL.Systems
             // First re-partition if player position or rotation is changed
             // if is true then re-partition if Transform.isDirty
 
-            Vector3 cameraPosition = samplingData.Position;
-            Vector3 cameraForward = samplingData.Forward;
+            Vector3 cameraPosition = cameraSamplingData.Position;
+            Vector3 cameraForward = cameraSamplingData.Forward;
 
-            if (samplingData.IsDirty)
+            if (cameraSamplingData.IsDirty)
             {
                 // Repartition everything
                 RePartitionExistingEntityQuery(World, cameraPosition, cameraForward);
@@ -50,6 +50,8 @@ namespace DCL.Systems
             else
             {
                 ResetDirtyQuery(World);
+
+                RePartitionDirtyTransformsQuery(World, cameraPosition, cameraForward);
 
                 // Repartition all entities with dirty transform
                 // TODO we don't have a scheme for changing transform in the global world at the moment
@@ -72,6 +74,7 @@ namespace DCL.Systems
         [None(typeof(PartitionComponent))]
         private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref CharacterTransform transformComponent)
         {
+            Debug.Log($"PartitionNewEntity {transformComponent.Position}", transformComponent.Transform);
             PartitionComponent partitionComponent = partitionComponentPool.Get();
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
             partitionComponent.IsDirty = true;
@@ -84,7 +87,21 @@ namespace DCL.Systems
         private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
             ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent)
         {
+            Debug.Log("RePartitionExistingEntity");
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
+        }
+
+        [Query]
+        [Any(typeof(PBAvatarShape), typeof(Profile))]
+        [None(typeof(PlayerComponent))]
+        private void RePartitionDirtyTransforms([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
+            ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent, ref TransformDirtyFlagComponent dirtyFlag)
+        {
+            if (!dirtyFlag.IsDirty) return;
+            
+            Debug.Log("Repartitioning dirty transform");
+            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
+            dirtyFlag.ClearDirty();
         }
 
         private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, ref PartitionComponent partitionComponent)

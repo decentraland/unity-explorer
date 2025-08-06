@@ -56,6 +56,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
+        [All(typeof(TransformDirtyFlagComponent))]
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape), typeof(PlayerComponent))]
         private void CreateAvatarShapeFromProfile(in Entity entity, in Profile profile, ref PartitionComponent partition)
         {
