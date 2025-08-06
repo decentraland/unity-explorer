@@ -1,14 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using DCL.Diagnostics;
 using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
     public class MinimumSpecsTablePresenter
     {
-        private const string FAIL_ICON_SPRITE_TAG = "<sprite name=\"274c\">";
-
         private readonly MinimumSpecsTableView tableView;
         private readonly List<MinimumSpecsRowView> spawnedRows = new ();
 
@@ -21,16 +18,11 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             ClearSpawnedRows();
 
-            var unmetResults = results.Where(r => !r.IsMet).ToList();
-
-            if (unmetResults.Count == 0)
-            {
-                tableView.LastRow.gameObject.SetActive(false);
-                return;
-            }
+            var unmetResults = results
+                              .Where(r => !r.IsMet)
+                              .ToList();
 
             PopulateRow(tableView.LastRow, unmetResults[0]);
-            tableView.LastRow.gameObject.SetActive(true);
 
             for (var i = 1; i < unmetResults.Count; i++)
             {
@@ -41,39 +33,22 @@ namespace DCL.ApplicationMinimumSpecsGuard
             }
         }
 
-        private void PopulateRow(MinimumSpecsRowView row, SpecResult result)
+        private static void PopulateRow(MinimumSpecsRowView row, SpecResult result)
         {
-            var formattedActualText = $"{FAIL_ICON_SPRITE_TAG} {result.Actual}";
-
             row.SetTitle(GetCategoryDisplayName(result.Category));
             row.SetRequiredText(result.Required);
-            row.SetActualText(formattedActualText);
+            row.SetActualText(result.Actual);
         }
 
         private void ClearSpawnedRows()
         {
             foreach (MinimumSpecsRowView row in spawnedRows)
-            {
-                if (row != null)
-                    Object.Destroy(row.gameObject);
-            }
+                Object.Destroy(row.gameObject);
 
             spawnedRows.Clear();
         }
 
-        private string GetCategoryDisplayName(SpecCategory category)
-        {
-            return category switch
-                   {
-                       SpecCategory.OS => "Operating System",
-                       SpecCategory.CPU => "Processor",
-                       SpecCategory.GPU => "Graphics Card",
-                       SpecCategory.VRAM => "Graphics Memory",
-                       SpecCategory.RAM => "System Memory",
-                       SpecCategory.Storage => "Storage Space",
-                       SpecCategory.ComputeShaders => "Compute Shaders",
-                       _ => category.ToString(),
-                   };
-        }
+        private static string GetCategoryDisplayName(SpecCategory category) =>
+            category.ToString();
     }
 }
