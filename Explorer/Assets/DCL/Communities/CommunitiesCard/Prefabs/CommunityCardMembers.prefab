@@ -10923,7 +10923,7 @@ MonoBehaviour:
     <UnselectedText>k__BackingField: {fileID: 4405078360112298443}
     <EmptyState>k__BackingField: {fileID: 8230150716060239584}
   - <Section>k__BackingField: 3
-    <ForPrivateCommunitiesOnly>k__BackingField: 1
+    <ForPrivateCommunitiesOnly>k__BackingField: 0
     <Button>k__BackingField: {fileID: 7939425779750655740}
     <SelectedBackground>k__BackingField: {fileID: 3667263529635691912}
     <SelectedText>k__BackingField: {fileID: 515998790923845664}
