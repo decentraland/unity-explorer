@@ -47,6 +47,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
+            voiceChatOrchestrator.CommunityCallStatus.OnUpdate += OnCommunityCallStatusUpdate;
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
             this.roomManager.ConnectionEstablished += OnConnectionEstablished;
@@ -70,6 +71,17 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
         }
 
+        private void OnCommunityCallStatusUpdate(VoiceChatStatus status)
+        {
+            switch (status)
+            {
+                case VoiceChatStatus.DISCONNECTED:
+                case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
+                    ClearPool();
+                    break;
+            }
+        }
+
         private void OnEndStream()
         {
             voiceChatOrchestrator.EndStreamInCurrentCall();
@@ -86,6 +98,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed -= OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined -= OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft -= OnParticipantLeft;
+            voiceChatOrchestrator.CommunityCallStatus.OnUpdate -= OnCommunityCallStatusUpdate;
 
             voiceChatTypeSubscription?.Dispose();
             communityVoiceChatSearchController.Dispose();
@@ -173,8 +186,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void RemoveParticipant(string leftParticipantId)
         {
-            playerEntriesPool.Release(usedPlayerEntries[leftParticipantId]);
-            usedPlayerEntries.Remove(leftParticipantId);
+            if (usedPlayerEntries.TryGetValue(leftParticipantId, out PlayerEntryView entry))
+            {
+                playerEntriesPool.Release(entry);
+                usedPlayerEntries.Remove(leftParticipantId);
+            }
         }
 
         private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
@@ -232,7 +248,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, ProfileNameColorHelper.GetNameColor(participantState.Name.Value), participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
             entryView.nameElement.Setup(participantState.Name.Value, participantState.WalletId, participantState.HasClaimedName.Value ?? false, ProfileNameColorHelper.GetNameColor(participantState.Name.Value));
-
             view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
 
             participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
