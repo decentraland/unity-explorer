@@ -130,6 +130,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
+        //TODO: Remove this, use GetCommunityInviteRequestAsync instead
         public async UniTask<GetCommunityMembersResponse> GetCommunityRequestsToJoin(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             await UniTask.Delay(Random.Range(500, 2000), cancellationToken: ct);
@@ -163,6 +164,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             };
         }
 
+        //TODO: Remove this, use GetCommunityInviteRequestAsync instead
         public async UniTask<GetCommunityMembersResponse> GetCommunityInvitesToJoin(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             await UniTask.Delay(Random.Range(500, 2000), cancellationToken: ct);
