@@ -30,14 +30,13 @@ namespace DCL.VoiceChat
         private readonly VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager;
         private readonly IDisposable statusSubscription;
 
+        private IDisposable localParticipantIsSpeakerSubscriontion;
         private bool isDisposed;
         private VoiceChatStatus currentStatus;
         private ConnectionUpdate connectionState = ConnectionUpdate.Disconnected;
 
         public event Action ConnectionEstablished;
         public event Action ConnectionLost;
-        public event Action MediaActivated;
-        public event Action MediaDeactivated;
 
         public VoiceChatRoomManager(
             VoiceChatTrackManager trackManager,
@@ -265,16 +264,20 @@ namespace DCL.VoiceChat
         {
             try
             {
+                // If its a community chat but local participant is not a speaker, we dont publish the track.
+
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
                 voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                 trackManager.StartListeningToRemoteTracks();
-                trackManager.PublishLocalTrack(CancellationToken.None);
 
                 ConnectionEstablished?.Invoke();
-                MediaActivated?.Invoke();
-
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection setup completed");
+
+                bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value;
+
+                if (canSpeak)
+                    trackManager.PublishLocalTrack(CancellationToken.None);
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
         }
@@ -291,7 +294,6 @@ namespace DCL.VoiceChat
                 voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
 
                 ConnectionLost?.Invoke();
-                MediaDeactivated?.Invoke();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection cleanup completed");
 

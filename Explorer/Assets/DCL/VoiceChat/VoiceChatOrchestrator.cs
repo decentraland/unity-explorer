@@ -73,7 +73,7 @@ namespace DCL.VoiceChat
 
         public void AcceptPrivateCall()
         {
-            if (VoiceChatCallTypeValidator.IsPrivateCall(currentVoiceChatType.Value))
+            if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
                 privateVoiceChatCallStatusService.AcceptCall();
         }
 
@@ -82,7 +82,7 @@ namespace DCL.VoiceChat
 
         public void RejectCall()
         {
-            if (VoiceChatCallTypeValidator.IsPrivateCall(currentVoiceChatType.Value))
+            if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
                 privateVoiceChatCallStatusService.RejectCall();
         }
 

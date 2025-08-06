@@ -8,12 +8,14 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneStateManager : IDisposable
     {
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly IDisposable? statusSubscription;
+        private readonly IDisposable? isSpeakerSubscription;
+
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
         private VoiceChatStatus currentCallStatus;
         private bool isRoomConnected;
         private bool disposed;
-        private IDisposable? statusSubscription;
 
         public VoiceChatMicrophoneStateManager(
             VoiceChatMicrophoneHandler microphoneHandler,
