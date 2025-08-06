@@ -126,12 +126,16 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnParticipantLeft(string participantId)
         {
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+
             RemoveParticipant(participantId);
             inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count);
         }
 
         private void OnParticipantJoined(string participantId, VoiceChatParticipantsStateService.ParticipantState participantState)
         {
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+
             if (participantState.IsSpeaker)
                 AddSpeaker(participantState);
             else
@@ -145,6 +149,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnParticipantStateRefreshed(List<(string participantId, VoiceChatParticipantsStateService.ParticipantState state)> joinedParticipants, List<string> leftParticipantIds)
         {
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+
             if (!usedPlayerEntries.ContainsKey(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.WalletId))
             {
                 if (voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker)
