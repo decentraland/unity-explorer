@@ -230,11 +230,11 @@ namespace DCL.VoiceChat
 
         public void EndStreamInCurrentCall()
         {
-            if (CallId.IsNullOrEmpty()) return;
+            if (CallId.Value.IsNullOrEmpty()) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            EndStreamAsync(CallId, cts.Token).Forget();
+            EndStreamAsync(CallId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid EndStreamAsync(string communityId, CancellationToken ct)
