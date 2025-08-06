@@ -520,6 +520,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             MembersSorter.SortMembersList(membersData.Items);
 
+            if (currentSection == MembersListView.MemberListSections.REQUESTS)
+                RequestsAmount = response.Value.data.total;
+
             return response.Value.data.total;
         }
 
@@ -536,20 +539,21 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             FetchNewDataAsync(ct).Forget();
             FetchRequestsToJoinAsync(ct).Forget();
-        }
+            return;
 
-        private async UniTaskVoid FetchRequestsToJoinAsync(CancellationToken ct)
-        {
-            Result<GetCommunityMembersResponse> response = await communitiesDataProvider.GetCommunityRequestsToJoin(communityData?.id, 1, 0, ct)
-                                                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            async UniTaskVoid FetchRequestsToJoinAsync(CancellationToken ctkn)
+            {
+                Result<GetCommunityMembersResponse> response = await communitiesDataProvider.GetCommunityRequestsToJoin(communityData?.id, 1, 0, ctkn)
+                                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (ct.IsCancellationRequested)
-                return;
+                if (ct.IsCancellationRequested)
+                    return;
 
-            if (!response.Success)
-                return;
+                if (!response.Success)
+                    return;
 
-            RequestsAmount = response.Value.data.total;
+                RequestsAmount = response.Value.data.total;
+            }
         }
 
         private void OnMainButtonClicked(MemberData profile) =>
