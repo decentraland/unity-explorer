@@ -19,6 +19,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ct = new CancellationTokenSource();
         }
 
+        public void SetEndStreamButtonStatus(bool isActive) =>
+            view.EndStreamButton.gameObject.SetActive(isActive);
+
         public void Dispose()
         {
             footerController.Dispose();

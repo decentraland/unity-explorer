@@ -193,7 +193,7 @@ namespace DCL.VoiceChat
 
             cts = cts.SafeRestart();
             DemoteFromSpeakerAsync(CallId, cts.Token).Forget();
-            return; 
+            return;
 
             async UniTaskVoid DemoteFromSpeakerAsync(string communityId, CancellationToken ct)
             {

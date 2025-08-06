@@ -98,7 +98,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnConnectionEstablished()
         {
             if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
+            {
                 view.SetConnectedPanel(true);
+                inCallController.SetEndStreamButtonStatus(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
+            }
         }
 
         private void CloseListenersSection()

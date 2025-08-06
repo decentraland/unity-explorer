@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
@@ -38,6 +39,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField]
         public TMP_Text RaiseHandTooltipText { get; private set; }
+
+        [field: SerializeField]
+        public Button EndStreamButton { get; private set; }
 
         public void SetCommunityName(string communityName)
         {
