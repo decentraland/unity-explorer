@@ -174,12 +174,11 @@ namespace DCL.VoiceChat
             {
                 try
                 {
-                    PromoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+                    RejectSpeakRequestInCommunityVoiceChatResponse response = await voiceChatService.DenySpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
 
                     switch (response.ResponseCase)
                     {
-                        case PromoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                            //Handle promote logic here
+                        case RejectSpeakRequestInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
                             break;
                     }
                 }
@@ -194,7 +193,7 @@ namespace DCL.VoiceChat
 
             cts = cts.SafeRestart();
             DemoteFromSpeakerAsync(CallId, cts.Token).Forget();
-            return;
+            return; 
 
             async UniTaskVoid DemoteFromSpeakerAsync(string communityId, CancellationToken ct)
             {
