@@ -42,6 +42,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
             inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler);
 
+            inCallController.EndStream += OnEndStream;
+
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
@@ -66,6 +68,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+        }
+
+        private void OnEndStream()
+        {
+            voiceChatOrchestrator.EndStreamInCurrentCall();
         }
 
         public void Dispose()

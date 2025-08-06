@@ -218,6 +218,12 @@ namespace DCL.VoiceChat
                 communityVoiceChatCallStatusService.KickPlayerFromCurrentCall(walletId);
         }
 
+        public void EndStreamInCurrentCall()
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.EndStreamInCurrentCall();
+        }
+
         public bool HasActiveVoiceChatCall(string communityId) =>
             communityVoiceChatCallStatusService.HasActiveVoiceChatCall(communityId);
 
