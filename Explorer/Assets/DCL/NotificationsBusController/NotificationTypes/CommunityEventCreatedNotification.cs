@@ -19,7 +19,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
             string.Format(NOTIFICATION_TITLE, Metadata.CommunityName);
 
         public override string GetThumbnail() =>
-            Metadata.ThumbnailUrl;
+            Metadata.EventImageUrl;
     }
 
     [Serializable]
@@ -31,7 +31,13 @@ namespace DCL.NotificationsBusController.NotificationTypes
         [JsonProperty("communityName")]
         public string CommunityName { get; set; }
 
-        [JsonProperty("thumbnailUrl")]
-        public string ThumbnailUrl { get; set; }
+        [JsonProperty("image")]
+        public string EventImageUrl { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("communityThumbnail")]
+        public string CommunityThumbnailUrl { get; set; }
     }
 }
