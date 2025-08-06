@@ -386,6 +386,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             communityData = null;
             currentSection = MembersListView.MemberListSections.MEMBERS;
+            view.Close();
 
             foreach (var sectionFetchData in sectionsFetchData)
                 sectionFetchData.Value.Reset();

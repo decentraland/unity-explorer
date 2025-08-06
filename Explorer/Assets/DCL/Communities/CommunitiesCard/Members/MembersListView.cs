@@ -114,7 +114,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))));
         }
 
-        private void OnDisable()
+        public void Close()
         {
             ToggleSection(MemberListSections.MEMBERS, false);
             confirmationDialogCts.SafeCancelAndDispose();
