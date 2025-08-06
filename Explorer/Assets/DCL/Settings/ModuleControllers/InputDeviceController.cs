@@ -55,10 +55,11 @@ namespace DCL.Settings.ModuleControllers
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME))
             {
                 string microphoneName = DCLPlayerPrefs.GetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME);
+                string[] devices = MicrophoneSelection.Devices();
 
-                for (var i = 0; i < Microphone.devices.Length; i++)
+                for (var i = 0; i < devices.Length; i++)
                 {
-                    if (!Microphone.devices[i].Equals(microphoneName)) continue;
+                    if (!devices[i].Equals(microphoneName)) continue;
 
                     UpdateDropdownSelection(i);
                     return;
