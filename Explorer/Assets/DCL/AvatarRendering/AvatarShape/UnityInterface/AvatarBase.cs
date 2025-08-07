@@ -1,3 +1,6 @@
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -21,7 +24,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 
-        [field: Header("Feet IK")]
+        [field: Header("FEET IK")]
 
         // This Rig controls the weight of ALL the feet IK constraints
         [field: SerializeField] public Rig FeetIKRig { get; private set; }
@@ -41,7 +44,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         //This constraint Applies an offset to the hips, lowering the avatar position based on the desired feet position
         [field: SerializeField] public MultiPositionConstraint HipsConstraint { get; private set; }
 
-        [field: Header("Hands IK")]
+        [field: Header("HANDS IK")]
         [field: SerializeField] public Rig HandsIKRig { get; private set; }
         [field: SerializeField] public TwoBoneIKConstraint LeftHandIK { get; private set; }
 
@@ -54,7 +57,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightHandSubTarget { get; private set; }
         [field: SerializeField] public Transform RightHandRaycast { get; private set; }
 
-        [field: Header("LookAt IK")]
+        [field: Header("LOOK-AT IK")]
         [field: SerializeField] public Rig HeadIKRig { get; private set; }
 
         // The LookAt IK is based on 2 constraints, one for horizontal rotation and other for vertical rotation in order to control different bone chains for both of them, Horizontal is applied first
@@ -64,8 +67,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         // Position of the head after the animations
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
 
-        [field: Header("Other")]
-
+        [field: Header("OTHER")]
         // Anchor points to attach entities to, through the SDK
         [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; }
         [field: SerializeField] public Transform HeadAnchorPoint { get; private set; }
@@ -92,6 +94,18 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightLegAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
+
+        [Header("NAMETAG RELATED")]
+        [SerializeField] [Tooltip("How high could nametag be, [m]")]
+        private float nametagMaxOffset = 2f;
+        [SerializeField] [Tooltip("Offset when nametag is higher than allowed max (means wearable is broken), [m]")]
+        private float nametagBoundedOffset = 1f;
+        [SerializeField] [Tooltip("Small buffer to have some air/space between nametag and head, [m]")]
+        private float nametagBuffer = 0.025f;
+
+        [SerializeField] private Transform headAramatureBone;
+        [SerializeField] private Transform[] potentialHighestBones;
+        private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
 
         private void Awake()
         {
@@ -168,6 +182,50 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             lastEmote = animationClip;
             AvatarAnimator.enabled = true;
+        }
+
+        public Vector3 GetAdaptiveNametagPosition()
+        {
+            Vector3 headPos = headAramatureBone.position;
+
+            float maxY = headPos.y;
+            var isHeadHighest = true;
+
+            // NOTE (Vit) : If performance critical - then iterate only if avatar is emoting (or jobify)
+            foreach (Transform bone in potentialHighestBones)
+                if (bone.position.y > maxY)
+                {
+                    maxY = bone.position.y;
+                    isHeadHighest = false;
+                }
+
+            // apply scaling for head animation
+            float offset = isHeadHighest ? cachedHeadWearableOffset * headAramatureBone.localScale.y : cachedHeadWearableOffset;
+
+            return new Vector3(headPos.x, maxY + offset, headPos.z);
+        }
+
+        /// <summary>
+        /// Updates the cached head wearable offset based on current skinning bounds. Should be called whenever wearables change.
+        /// </summary>
+        public void UpdateHeadWearableOffset(in Bounds skinningBounds, in GetWearablesByPointersIntention wearable)
+        {
+            float maxWearableY = transform.position.y + skinningBounds.max.y; // Convert local to world Y
+
+            // Calculate offset from head bone Y position to the highest point of wearables
+            cachedHeadWearableOffset = maxWearableY - headAramatureBone.position.y + nametagBuffer;
+
+            // if offset is too high, it means something wrong with the wearable, so we bound it by smaller value than MAX_OFFSET (by BOUNDED_OFFSET)
+            if (cachedHeadWearableOffset > nametagMaxOffset)
+            {
+                ReportHub.LogError(ReportCategory.WEARABLE, $"Wearable for {wearable.BodyShape.Value} produces very high nametag offset = {cachedHeadWearableOffset} [m]. Bouncing it by {nameof(nametagBoundedOffset)} = {nametagBoundedOffset}");
+                ReportHub.LogError(ReportCategory.WEARABLE, $"transform.position.y = {transform.position.y} | skinningBounds.max = {skinningBounds.max.ToString()} | skinningBounds.center = {skinningBounds.center.ToString()}");
+
+                foreach (URN pointer in wearable.Pointers)
+                    ReportHub.LogError(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
+
+                cachedHeadWearableOffset = nametagBoundedOffset;
+            }
         }
     }
 
