@@ -8,8 +8,10 @@ using DCL.UI.ProfileElements;
 using MVC;
 using SoftMasking;
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.Passport
@@ -62,22 +64,7 @@ namespace DCL.Passport
         public WarningNotificationView ErrorNotification { get; private set; }
 
         [field: SerializeField]
-        public ButtonWithSelectableStateView OverviewSectionButton { get; private set; }
-
-        [field: SerializeField]
-        public ButtonWithSelectableStateView BadgesSectionButton { get; private set; }
-
-        [field: SerializeField]
-        public ButtonWithSelectableStateView PhotosSectionButton { get; private set; }
-
-        [field: SerializeField]
-        public GameObject OverviewSectionPanel { get; private set; }
-
-        [field: SerializeField]
-        public GameObject BadgesSectionPanel { get; private set; }
-
-        [field: SerializeField]
-        public GameObject PhotosSectionPanel { get; private set; }
+        public List<SectionData> Sections;
 
         [field: SerializeField]
         public SoftMask ViewportSoftMask { get; private set; }
@@ -143,6 +130,14 @@ namespace DCL.Passport
             }
         }
 
+        [Serializable]
+        public class SectionData
+        {
+            public PassportSection PassportSection;
+            public ButtonWithSelectableStateView ButtonWithState;
+            public GameObject Panel;
+        }
+
 #if UNITY_EDITOR
         private void Awake()
         {
@@ -151,47 +146,25 @@ namespace DCL.Passport
         }
 #endif
 
-        public void OpenPhotosSection()
+        public void OpenSection(PassportSection passportSection)
         {
-            OverviewSectionButton.SetSelected(false);
-            BadgesSectionButton.SetSelected(false);
-            PhotosSectionButton.SetSelected(true);
+            foreach (var section in Sections)
+            {
+                bool isActive = passportSection == section.PassportSection;
+                section.ButtonWithState.SetSelected(isActive);
+                section.Panel.SetActive(isActive);
 
-            OverviewSectionPanel.SetActive(false);
-            PhotosSectionPanel.SetActive(true);
-            BadgesSectionPanel.SetActive(false);
-            BadgeInfoModuleView.gameObject.SetActive(false);
-            ViewportSoftMask.enabled = false;
-            MainScroll.content = PhotosSectionPanel.transform as RectTransform;
-            MainScroll.verticalNormalizedPosition = 1;
-        }
+                if (isActive)
+                    MainScroll.content = section.Panel.transform as RectTransform;
+            }
 
-        public void OpenBadgesSection()
-        {
-            OverviewSectionButton.SetSelected(false);
-            BadgesSectionButton.SetSelected(true);
-            PhotosSectionButton.SetSelected(false);
-            OverviewSectionPanel.SetActive(false);
-            BadgesSectionPanel.SetActive(true);
-            PhotosSectionPanel.SetActive(false);
-            ViewportSoftMask.enabled = true;
-            MainScroll.content = BadgesSectionPanel.transform as RectTransform;
-            MainScroll.verticalNormalizedPosition = 1;
-            CharacterPreviewView.gameObject.SetActive(false);
-        }
+            BadgeInfoModuleView.gameObject.SetActive(passportSection == PassportSection.BADGES);
 
-        public void OpenOverviewSection()
-        {
-            OverviewSectionButton.SetSelected(true);
-            BadgesSectionButton.SetSelected(false);
-            PhotosSectionButton.SetSelected(false);
-            OverviewSectionPanel.SetActive(true);
-            BadgesSectionPanel.SetActive(false);
-            PhotosSectionPanel.SetActive(false);
-            ViewportSoftMask.enabled = true;
-            MainScroll.content = OverviewSectionPanel.transform as RectTransform;
+            ViewportSoftMask.enabled = passportSection != PassportSection.PHOTOS;
+
             MainScroll.verticalNormalizedPosition = 1;
-            CharacterPreviewView.gameObject.SetActive(true);
+
+            CharacterPreviewView.gameObject.SetActive(passportSection != PassportSection.BADGES);
         }
     }
 }
