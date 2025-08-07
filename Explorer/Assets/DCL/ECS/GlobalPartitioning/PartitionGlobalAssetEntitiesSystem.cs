@@ -49,13 +49,8 @@ namespace DCL.Systems
             }
             else
             {
-                ResetDirtyQuery(World);
-
                 RePartitionDirtyTransformsQuery(World, cameraPosition, cameraForward);
-
-                // Repartition all entities with dirty transform
-                // TODO we don't have a scheme for changing transform in the global world at the moment
-                // RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, true);
+                ResetDirtyQuery(World);
             }
 
             // Then partition all entities that are not partitioned yet
@@ -75,7 +70,6 @@ namespace DCL.Systems
         private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, 
             ref CharacterTransform transformComponent)
         {
-            Debug.Log($"PartitionNewEntity {transformComponent.Position}", transformComponent.Transform);
             PartitionComponent partitionComponent = partitionComponentPool.Get();
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
             partitionComponent.IsDirty = true;
@@ -88,7 +82,6 @@ namespace DCL.Systems
         private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
             ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent)
         {
-            Debug.Log("RePartitionExistingEntity");
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
         }
 
@@ -100,7 +93,6 @@ namespace DCL.Systems
         {
             if (!dirtyFlag.IsDirty) return;
             
-            Debug.Log("Repartitioning dirty transform");
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
             dirtyFlag.ClearDirty();
         }
