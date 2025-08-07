@@ -189,6 +189,8 @@ namespace DCL.UI.Sidebar
 
             checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
             CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
+
+            OnChatViewFoldingChanged(true);
         }
 
         private void OnSceneRestrictionChanged(SceneRestriction restriction)
@@ -242,7 +244,7 @@ namespace DCL.UI.Sidebar
             else if (closedController is FriendsPanelController)
             {
                 viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-                //OnChatViewFoldingChanged(chatView.IsUnfolded);
+                OnChatViewFoldingChanged(true);
             }
         }
 
