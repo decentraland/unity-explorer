@@ -23,6 +23,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
         private readonly Dictionary<string, PlayerEntryView> usedPlayerEntries = new ();
+        private readonly Dictionary<string, List<IDisposable>> participantSubscriptions = new ();
         private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
         private readonly CommunityVoiceChatInCallController inCallController;
         private readonly CommunitiesDataProvider communityDataProvider;
@@ -204,6 +205,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             if (usedPlayerEntries.TryGetValue(leftParticipantId, out PlayerEntryView entry))
             {
                 playerEntriesPool.Release(entry);
+                if (participantSubscriptions.TryGetValue(leftParticipantId, out var subscriptions))
+                {
+                    foreach (var subscription in subscriptions)
+                    {
+                        subscription.Dispose();
+                    }
+                    participantSubscriptions.Remove(leftParticipantId);
+                }
                 usedPlayerEntries.Remove(leftParticipantId);
             }
 
@@ -274,11 +283,15 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, ProfileNameColorHelper.GetNameColor(participantState.Name.Value), participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
             entryView.nameElement.Setup(participantState.Name.Value, participantState.WalletId, participantState.HasClaimedName.Value ?? false, ProfileNameColorHelper.GetNameColor(participantState.Name.Value));
             view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
-
-            participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
-            participantState.IsSpeaker.OnUpdate += isSpeaker => SetUserEntryParent(isSpeaker, entryView);
-            participantState.IsRequestingToSpeak.OnUpdate += isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name);
-
+            
+            var subscriptions = new List<IDisposable>
+            {
+                participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView)),
+                participantState.IsSpeaker.Subscribe(isSpeaker => SetUserEntryParent(isSpeaker, entryView)),
+                participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name))
+            };
+            
+            participantSubscriptions[participantState.WalletId] = subscriptions;
             return entryView;
         }
 
@@ -309,6 +322,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void ClearPool()
         {
+            foreach (var subscriptions in participantSubscriptions.Values)
+            {
+                foreach (var subscription in subscriptions)
+                {
+                    subscription.Dispose();
+                }
+            }
+            participantSubscriptions.Clear();
             foreach (KeyValuePair<string, PlayerEntryView> usedPlayerEntry in usedPlayerEntries)
                 playerEntriesPool.Release(usedPlayerEntry.Value);
 
