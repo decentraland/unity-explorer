@@ -59,6 +59,7 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
                 }
 
+
                 if (assetBundleIntention.SingleAssetBundleHack)
                 {
                     CommonLoadingArguments caHack = assetBundleIntention.CommonArguments;
@@ -73,13 +74,14 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
                 }
 
+
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
                 ca.URL = GetAssetBundleURL(assetBundleIntention.HasParentEntityIDPathInURL, assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleVersion);
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleVersion);
+                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleBuildDate);
             }
         }
 
@@ -91,13 +93,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
 
-        private unsafe Hash128 ComputeHash(string hash, string assetBundleManifestVersion)
+        public unsafe Hash128 ComputeHash(string hash, string buildDate)
         {
-            //TODO (JUANI): Doing it like this we lose the ability to rebuild assets on a same version, since
-            // new builds with the same version and hash will be incorrectly cached. Tolerated?
-            Span<char> hashBuilder = stackalloc char[assetBundleManifestVersion.Length + hash.Length];
-            assetBundleManifestVersion.AsSpan().CopyTo(hashBuilder);
-            hash.AsSpan().CopyTo(hashBuilder[assetBundleManifestVersion.Length..]);
+            Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
+            buildDate.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
 
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }

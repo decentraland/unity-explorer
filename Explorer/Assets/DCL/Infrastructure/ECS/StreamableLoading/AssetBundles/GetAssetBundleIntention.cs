@@ -14,6 +14,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public string? Hash;
 
         public string AssetBundleVersion;
+        public string AssetBundleBuildDate;
         public bool HasParentEntityIDPathInURL;
         public string ParentEntityID;
 
@@ -73,9 +74,11 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleVersion = assetBundleVersion;
             HasParentEntityIDPathInURL = hasParentEntityIDPathInURL;
             ParentEntityID = parentEntityID;
+            AssetBundleBuildDate = "dummy";
 
             SingleAssetBundleHack = singleAssetBundleHack;
             HasMultipleAssets = hasMultipleAssets;
+
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()

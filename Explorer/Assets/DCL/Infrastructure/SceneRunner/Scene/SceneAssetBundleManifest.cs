@@ -17,13 +17,17 @@ namespace SceneRunner.Scene
         private readonly string buildDate;
         private readonly bool ignoreConvertedFiles;
 
-        public SceneAssetBundleManifest(string version)
+        public SceneAssetBundleManifest(string version, string buildDate)
         {
             this.version = version;
+            this.buildDate = buildDate;
         }
 
         public string GetVersion() =>
             version;
+
+        public string GetBuildDate() =>
+            buildDate;
 
         public bool HasHashInPathID() =>
             int.Parse(version.AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
