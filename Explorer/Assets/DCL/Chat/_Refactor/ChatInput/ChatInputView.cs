@@ -73,6 +73,11 @@ namespace DCL.Chat.ChatInput
             inputField.DeactivateInputField();
         }
 
+        public void Initialize()
+        {
+            characterCounter.SetMaximumLength(inputField.characterLimit);
+        }
+        
         public void InsertTextAtCaretPosition(string text)
         {
             inputField.InsertTextAtCaretPosition(text);

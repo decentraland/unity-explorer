@@ -34,6 +34,8 @@ namespace DCL.Chat.ChatInput
             SendMessageCommand sendMessageCommand)
         {
             this.view = view;
+            this.view.Initialize();
+            
             this.resolveInputStateCommand = resolveInputStateCommand;
 
             var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
