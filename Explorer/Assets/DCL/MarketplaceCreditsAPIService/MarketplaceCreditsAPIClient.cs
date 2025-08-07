@@ -39,17 +39,6 @@ namespace DCL.MarketplaceCreditsAPIService
 
         public async UniTask<CreditsProgramProgressResponse> GetProgramProgressAsync(string walletId, CancellationToken ct)
         {
-            try
-            {
-
-            }
-            catch (OperationCanceledException e) { }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
 
             CreditsProgramProgressResponse creditsProgramProgressResponse = 

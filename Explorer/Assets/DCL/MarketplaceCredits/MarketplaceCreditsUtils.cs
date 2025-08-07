@@ -96,6 +96,11 @@ namespace DCL.MarketplaceCredits
             return targetDate.ToString("MMMM d", CultureInfo.InvariantCulture);
         }
 
+        public static string FormatSeasonDate(string seasonDate)
+        {
+            return $"{seasonDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}";
+        }
+
         /// <summary>
         /// Formats the season date range in a human-readable format.
         /// </summary>
