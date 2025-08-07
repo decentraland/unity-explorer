@@ -336,9 +336,6 @@ namespace DCL.Passport
                     section.ButtonWithState.Button.gameObject.SetActive(enableCameraReel);
             }
 
-            // viewInstance.OverviewSectionButton.Button.onClick.AddListener(OpenOverviewSection);
-            // viewInstance.BadgesSectionButton.Button.onClick.AddListener(() => OpenBadgesSection());
-            // viewInstance.PhotosSectionButton.Button.onClick.AddListener(OpenPhotosSection);
             viewInstance.AcceptFriendButton.onClick.AddListener(AcceptFriendship);
             viewInstance.AddFriendButton.onClick.AddListener(SendFriendRequest);
             viewInstance.CancelFriendButton.onClick.AddListener(CancelFriendRequest);
@@ -353,7 +350,6 @@ namespace DCL.Passport
             if (isCallEnabled)
                 viewInstance.CallButton.onClick.AddListener(OnStartCallButtonClicked);
 
-            // viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
             viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
 
