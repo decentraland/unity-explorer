@@ -75,16 +75,16 @@ namespace DCL.UI.DebugMenu
             base.Toggle();
 
             if (Visible)
-                Refresh();
+                Refresh(true);
         }
 
-        public void Refresh()
+        public void Refresh(bool shouldScrollToBottom = false)
         {
             bool atBottom = IsScrollAtBottom();
 
             consoleListView.RefreshItems();
 
-            if (atBottom)
+            if (shouldScrollToBottom || atBottom)
                 consoleListView.ScrollToItem(consoleListView.itemsSource.Count - 1);
 
             showLogsToggle.text = $"LOGS ({logsHistory.LogEntryCount})";
