@@ -8,6 +8,7 @@ using DCL.UI.ProfileElements;
 using MVC;
 using SoftMasking;
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -61,23 +62,28 @@ namespace DCL.Passport
         [field: SerializeField]
         public WarningNotificationView ErrorNotification { get; private set; }
 
-        [field: SerializeField]
-        public ButtonWithSelectableStateView OverviewSectionButton { get; private set; }
+        // TODO insert here new list
 
         [field: SerializeField]
-        public ButtonWithSelectableStateView BadgesSectionButton { get; private set; }
+        public List<SectionData> Sections;
 
-        [field: SerializeField]
-        public ButtonWithSelectableStateView PhotosSectionButton { get; private set; }
-
-        [field: SerializeField]
-        public GameObject OverviewSectionPanel { get; private set; }
-
-        [field: SerializeField]
-        public GameObject BadgesSectionPanel { get; private set; }
-
-        [field: SerializeField]
-        public GameObject PhotosSectionPanel { get; private set; }
+        // [field: SerializeField]
+        // public ButtonWithSelectableStateView OverviewSectionButton { get; private set; }
+        //
+        // [field: SerializeField]
+        // public ButtonWithSelectableStateView BadgesSectionButton { get; private set; }
+        //
+        // [field: SerializeField]
+        // public ButtonWithSelectableStateView PhotosSectionButton { get; private set; }
+        //
+        // [field: SerializeField]
+        // public GameObject OverviewSectionPanel { get; private set; }
+        //
+        // [field: SerializeField]
+        // public GameObject BadgesSectionPanel { get; private set; }
+        //
+        // [field: SerializeField]
+        // public GameObject PhotosSectionPanel { get; private set; }
 
         [field: SerializeField]
         public SoftMask ViewportSoftMask { get; private set; }
@@ -143,6 +149,14 @@ namespace DCL.Passport
             }
         }
 
+        [Serializable]
+        public class SectionData
+        {
+            public PassportSection PassportSection;
+            public ButtonWithSelectableStateView Button;
+            public GameObject Panel;
+        }
+
 #if UNITY_EDITOR
         private void Awake()
         {
@@ -153,30 +167,40 @@ namespace DCL.Passport
 
         public void OpenSection(PassportSection passportSection)
         {
-            OverviewSectionButton.SetSelected(passportSection == PassportSection.OVERVIEW);
-            BadgesSectionButton.SetSelected(passportSection == PassportSection.BADGES);
-            PhotosSectionButton.SetSelected(passportSection == PassportSection.PHOTOS);
+            foreach (var section in Sections)
+            {
+                bool isActive = passportSection == section.PassportSection;
+                section.Button.SetSelected(isActive);
+                section.Panel.SetActive(isActive);
 
-            OverviewSectionPanel.SetActive(passportSection == PassportSection.OVERVIEW);
-            BadgesSectionPanel.SetActive(passportSection == PassportSection.BADGES);
-            PhotosSectionPanel.SetActive(passportSection == PassportSection.PHOTOS);
+                if (isActive)
+                    MainScroll.content = section.Panel.transform as RectTransform;
+            }
+
+            // OverviewSectionButton.SetSelected(passportSection == PassportSection.OVERVIEW);
+            // BadgesSectionButton.SetSelected(passportSection == PassportSection.BADGES);
+            // PhotosSectionButton.SetSelected(passportSection == PassportSection.PHOTOS);
+
+            // OverviewSectionPanel.SetActive(passportSection == PassportSection.OVERVIEW);
+            // BadgesSectionPanel.SetActive(passportSection == PassportSection.BADGES);
+            // PhotosSectionPanel.SetActive(passportSection == PassportSection.PHOTOS);
 
             BadgeInfoModuleView.gameObject.SetActive(passportSection == PassportSection.BADGES);
 
             ViewportSoftMask.enabled = passportSection != PassportSection.PHOTOS;
 
-            switch (passportSection)
-            {
-                case PassportSection.OVERVIEW:
-                    MainScroll.content = OverviewSectionPanel.transform as RectTransform;
-                    break;
-                case PassportSection.BADGES:
-                    MainScroll.content = BadgesSectionPanel.transform as RectTransform;
-                    break;
-                case PassportSection.PHOTOS:
-                    MainScroll.content = PhotosSectionPanel.transform as RectTransform;
-                    break;
-            }
+            // switch (passportSection)
+            // {
+            //     case PassportSection.OVERVIEW:
+            //         MainScroll.content = OverviewSectionPanel.transform as RectTransform;
+            //         break;
+            //     case PassportSection.BADGES:
+            //         MainScroll.content = BadgesSectionPanel.transform as RectTransform;
+            //         break;
+            //     case PassportSection.PHOTOS:
+            //         MainScroll.content = PhotosSectionPanel.transform as RectTransform;
+            //         break;
+            // }
             MainScroll.verticalNormalizedPosition = 1;
 
             CharacterPreviewView.gameObject.SetActive(passportSection != PassportSection.BADGES);

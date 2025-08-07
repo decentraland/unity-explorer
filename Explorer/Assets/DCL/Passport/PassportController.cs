@@ -319,9 +319,14 @@ namespace DCL.Passport
             passportProfileInfoController.OnProfilePublished += OnProfilePublished;
             badgesDetailsPassportModuleController.OnBadgeSelected += OnBadgeSelected;
 
-            viewInstance.OverviewSectionButton.Button.onClick.AddListener(OpenOverviewSection);
-            viewInstance.BadgesSectionButton.Button.onClick.AddListener(() => OpenBadgesSection());
-            viewInstance.PhotosSectionButton.Button.onClick.AddListener(OpenPhotosSection);
+            foreach (PassportView.SectionData section in viewInstance.Sections)
+            {
+                PassportSection selectedSection = section.PassportSection;
+                section.Button.Button.onClick.AddListener(() => OpenSection(selectedSection));
+            }
+            // viewInstance.OverviewSectionButton.Button.onClick.AddListener(OpenOverviewSection);
+            // viewInstance.BadgesSectionButton.Button.onClick.AddListener(() => OpenBadgesSection());
+            // viewInstance.PhotosSectionButton.Button.onClick.AddListener(OpenPhotosSection);
             viewInstance.AcceptFriendButton.onClick.AddListener(AcceptFriendship);
             viewInstance.AddFriendButton.onClick.AddListener(SendFriendRequest);
             viewInstance.CancelFriendButton.onClick.AddListener(CancelFriendRequest);
