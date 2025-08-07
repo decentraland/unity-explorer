@@ -14,6 +14,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public string? Hash;
 
         public string AssetBundleVersion;
+        public string AssetBundleBuildDate;
         public bool HasParentEntityIDPathInURL;
         public string ParentEntityID;
 
@@ -54,6 +55,7 @@ namespace ECS.StreamableLoading.AssetBundles
             string assetBundleVersion = "",
             bool hasParentEntityIDPathInURL = false,
             string parentEntityID = "",
+            string assetBundleBuildDate = "",
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -69,6 +71,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleVersion = assetBundleVersion;
             HasParentEntityIDPathInURL = hasParentEntityIDPathInURL;
             ParentEntityID = parentEntityID;
+            AssetBundleBuildDate = assetBundleBuildDate;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()

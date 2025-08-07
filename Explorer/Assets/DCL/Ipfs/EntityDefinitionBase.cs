@@ -21,6 +21,7 @@ namespace DCL.Ipfs
         public string assetBundleManifestVersion;
         public bool hasSceneInPath;
         public bool assetBundleManifestRequestFailed;
+        public string assetBundleBuildDate;
 
         [JsonProperty("status")]
         public AssetBundleRegistryEnum assetBundleRegistryEnum;

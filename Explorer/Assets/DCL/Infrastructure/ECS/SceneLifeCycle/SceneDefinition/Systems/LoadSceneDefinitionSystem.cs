@@ -82,7 +82,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
 
-            return new SceneAssetBundleManifest(sceneAbDto.Version);
+            return new SceneAssetBundleManifest(sceneAbDto.Version, sceneAbDto.Date);
         }
     }
 }
