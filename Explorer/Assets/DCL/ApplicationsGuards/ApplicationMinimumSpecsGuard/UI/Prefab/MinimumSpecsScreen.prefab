@@ -637,7 +637,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 22}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2347938901446842036
@@ -1865,7 +1865,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 2814871423585080172}
   <raycaster>k__BackingField: {fileID: 8454101078806804241}
-  <ExitButton>k__BackingField: {fileID: 0}
   <ContinueButton>k__BackingField: {fileID: 7527790854327616287}
   <ReadMoreButton>k__BackingField: {fileID: 8121701456940151430}
   <DontShowAgainToggle>k__BackingField: {fileID: 2628921312718943879}

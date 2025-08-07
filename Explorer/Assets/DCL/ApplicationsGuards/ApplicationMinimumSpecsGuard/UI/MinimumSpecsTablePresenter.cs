@@ -22,6 +22,9 @@ namespace DCL.ApplicationMinimumSpecsGuard
                               .Where(r => !r.IsMet)
                               .ToList();
 
+            if (unmetResults.Count == 0)
+                return;
+
             PopulateRow(tableView.LastRow, unmetResults[^1]);
 
             for (var i = 0; i < unmetResults.Count - 1; i++)
