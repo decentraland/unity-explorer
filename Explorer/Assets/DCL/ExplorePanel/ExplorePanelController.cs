@@ -124,11 +124,11 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Communities, CommunitiesBrowserController },
             };
 
-            sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
-
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
+
+            sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, lastShownSection);
 
             foreach (KeyValuePair<ExploreSections, ISection> keyValuePair in exploreSections)
                 keyValuePair.Value.Deactivate();
