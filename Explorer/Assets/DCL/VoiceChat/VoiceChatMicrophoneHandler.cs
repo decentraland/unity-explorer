@@ -15,7 +15,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty;
 
-        private Weak<MicrophoneRtcAudioSource> source = Weak<MicrophoneRtcAudioSource>.Null;
+        private Weak<MicrophoneRtcAudioSource> microphoneSource = Weak<MicrophoneRtcAudioSource>.Null;
         private bool isInCall;
 
         public MicrophoneSelection? CurrentMicrophoneName => voiceChatSettings.SelectedMicrophone;
@@ -48,8 +48,8 @@ namespace DCL.VoiceChat
 
             // Start the microphone immediately when button is pressed
             // If it's a quick press, we'll handle it in OnReleased
-            var option = source.Resource;
-            if (option.Has) option.Value.Start();
+            var weakMicrophoneSource = microphoneSource.Resource;
+            if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Start();
         }
 
         private void OnReleased(InputAction.CallbackContext obj)
@@ -62,13 +62,13 @@ namespace DCL.VoiceChat
         {
             if (!isInCall) return;
 
-            var option = source.Resource;
-            if (option.Has) option.Value.Toggle();
+            var weakMicrophoneSource = microphoneSource.Resource;
+            if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Toggle();
         }
 
         public void Assign(Weak<MicrophoneRtcAudioSource> newSource)
         {
-            source = newSource;
+            microphoneSource = newSource;
         }
 
         // TODO
@@ -84,8 +84,8 @@ namespace DCL.VoiceChat
 
         private void EnableMicrophone()
         {
-            var option = source.Resource;
-            if (option.Has) option.Value.Start();
+            var weakMicrophoneSource = microphoneSource.Resource;
+            if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Start();
 
             isMicrophoneEnabledProperty.Value = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
@@ -110,8 +110,8 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophoneInternal()
         {
-            var option = source.Resource;
-            if (option.Has) option.Value.Stop();
+            var weakMicrophoneSource = microphoneSource.Resource;
+            if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Stop();
 
             isMicrophoneEnabledProperty.Value = false;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
@@ -139,15 +139,15 @@ namespace DCL.VoiceChat
 
         private void HandleMicrophoneChange(MicrophoneSelection microphoneName)
         {
-            var option = source.Resource;
+            var weakMicrophoneSource = microphoneSource.Resource;
 
-            if (option.Has == false)
+            if (weakMicrophoneSource.Has == false)
             {
                 ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName}");
                 return;
             }
 
-            var result = option.Value.SwitchMicrophone(microphoneName);
+            var result = weakMicrophoneSource.Value.SwitchMicrophone(microphoneName);
 
             if (result.Success == false) { ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}"); }
         }
