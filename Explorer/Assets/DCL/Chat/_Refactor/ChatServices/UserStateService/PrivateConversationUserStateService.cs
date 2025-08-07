@@ -339,7 +339,6 @@ namespace DCL.Chat.ChatServices
 
         void ICurrentChannelUserStateService.Deactivate()
         {
-            onlineParticipants.Clear();
         }
 
         [Serializable]
