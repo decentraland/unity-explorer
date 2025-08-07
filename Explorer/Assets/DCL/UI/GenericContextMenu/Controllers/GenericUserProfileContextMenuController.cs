@@ -264,13 +264,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
         {
             closeContextMenuTask.TrySetResult();
 
-            chatEventBus.OpenPrivateConversationUsingUserId(targetProfile.UserId);
-
-            chatEventBus.InsertText(userName + " ");
-            
-            //Per design request we need to add an extra character after adding the mention to the chat.
-            // ShowChatAsync(() => chatEventBus.InsertText(userName + " ")).Forget();
-            ShowChatAsync(() => { }).Forget();
+            ShowChatAsync(() =>
+            {
+                chatEventBus.InsertText(userName + " ");
+            }).Forget();
         }
 
         private void OnOpenConversationButtonClicked(string userId)

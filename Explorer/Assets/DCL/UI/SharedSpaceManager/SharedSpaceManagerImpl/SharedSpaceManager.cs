@@ -130,10 +130,11 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.Chat:
                     {
                         IController controller = registration.GetPanel<IController>();
-
+                        var chatParams = (ChatControllerShowParams)(object)parameters;
+                        
                         if (controller.State == ControllerState.ViewHidden)
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
-                        else if (!panelInSharedSpace.IsVisibleInSharedSpace)
+                        else if (!panelInSharedSpace.IsVisibleInSharedSpace || chatParams.Focus)
                             await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
                         else
                             isTransitioning = false;
