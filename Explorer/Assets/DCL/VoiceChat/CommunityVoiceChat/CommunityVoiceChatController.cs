@@ -1,12 +1,15 @@
 #nullable enable
 using Cysharp.Threading.Tasks;
+using DCL.Communities;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 using Object = UnityEngine.Object;
 using Vector3 = UnityEngine.Vector3;
 
@@ -22,6 +25,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly Dictionary<string, PlayerEntryView> usedPlayerEntries = new ();
         private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
         private readonly CommunityVoiceChatInCallController inCallController;
+        private readonly CommunitiesDataProvider communityDataProvider;
         private readonly IDisposable? voiceChatTypeSubscription;
 
         private bool isPanelCollapsed;
@@ -32,15 +36,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
-            VoiceChatRoomManager roomManager)
+            VoiceChatRoomManager roomManager,
+            CommunitiesDataProvider communityDataProvider,
+            IWebRequestController webRequestController)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.roomManager = roomManager;
+            this.communityDataProvider = communityDataProvider;
 
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
-            inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler);
+            inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController);
 
             inCallController.EndStream += OnEndStream;
 
@@ -48,6 +55,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
             voiceChatOrchestrator.CommunityCallStatus.OnUpdate += OnCommunityCallStatusUpdate;
+            voiceChatOrchestrator.CurrentCommunityId.OnUpdate += UpdateCommunityHeader;
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
             this.roomManager.ConnectionEstablished += OnConnectionEstablished;
@@ -69,6 +77,15 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+        }
+
+        private void UpdateCommunityHeader(string communityId)
+        {
+            if (string.IsNullOrEmpty(communityId))
+                return;
+
+            cts = cts.SafeRestart();
+            GetCommunitiyInfoAsync(communityId, cts.Token).Forget();
         }
 
         private void OnCommunityCallStatusUpdate(VoiceChatStatus status)
@@ -122,6 +139,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             {
                 view.SetConnectedPanel(true);
                 inCallController.SetEndStreamButtonStatus(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
+                RefreshCounters();
             }
         }
 
@@ -154,10 +172,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             else
                 AddListener(participantState);
 
-            inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count);
-
-            inCallController.RefreshCounter();
-            communityVoiceChatSearchController.RefreshCounters();
+            RefreshCounters();
         }
 
         private void OnParticipantStateRefreshed(List<(string participantId, VoiceChatParticipantsStateService.ParticipantState state)> joinedParticipants, List<string> leftParticipantIds)
@@ -191,7 +206,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 playerEntriesPool.Release(entry);
                 usedPlayerEntries.Remove(leftParticipantId);
             }
+
+            RefreshCounters();
         }
+
+        private CancellationTokenSource cts = new ();
 
         private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
         {
@@ -209,6 +228,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     Hide();
                     break;
             }
+        }
+
+        private async UniTaskVoid GetCommunitiyInfoAsync(string communityId, CancellationToken ct)
+        {
+            GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, ct);
+            inCallController.SetCommunityData(communityData);
         }
 
         private void Show()
@@ -266,17 +291,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 inCallController.ShowRaiseHandTooltip(playerName);
             }
 
-            inCallController.RefreshCounter();
-            communityVoiceChatSearchController.RefreshCounters();
+            RefreshCounters();
         }
 
         private void SetUserEntryParent(bool isSpeaker, PlayerEntryView entryView)
         {
             entryView.transform.parent = isSpeaker ? inCallController.SpeakersParent : view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
-
-            communityVoiceChatSearchController.RefreshCounters();
-            inCallController.RefreshCounter();
+            RefreshCounters();
         }
 
         private void PlayerEntryIsRequestingToSpeak(bool? isRequestingToSpeak, PlayerEntryView entryView)
@@ -291,6 +313,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 playerEntriesPool.Release(usedPlayerEntry.Value);
 
             usedPlayerEntries.Clear();
+        }
+
+        private void RefreshCounters()
+        {
+            inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1);
+            inCallController.RefreshCounter();
+            communityVoiceChatSearchController.RefreshCounters();
         }
     }
 }

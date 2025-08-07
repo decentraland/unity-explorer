@@ -145,7 +145,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                 };
 
             // TODO check the order of these messages
-            ConnectionUpdated?.Invoke(assigned, connectionUpdate, null);
+            ConnectionUpdated?.Invoke(assigned, connectionUpdate);
             ConnectionStateChanged?.Invoke(currentState);
         }
 
