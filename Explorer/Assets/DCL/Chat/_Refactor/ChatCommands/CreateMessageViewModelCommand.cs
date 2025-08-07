@@ -37,7 +37,7 @@ namespace DCL.Chat.ChatCommands
                                          || isTopMostInTheFeed);
 
             if (message.IsSystemMessage)
-                viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(ProfileNameColorHelper.GetNameColor(message.SenderValidatedName)));
+                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true), ProfileNameColorHelper.GetNameColor(message.SenderValidatedName)));
             else
                 FetchProfileAsync(message.SenderWalletAddress, viewModel).Forget();
 
