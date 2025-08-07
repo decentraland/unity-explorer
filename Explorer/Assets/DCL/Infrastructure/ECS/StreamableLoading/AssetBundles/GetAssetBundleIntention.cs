@@ -99,7 +99,7 @@ namespace ECS.StreamableLoading.AssetBundles
             new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleVersion, hasParentEntityIDPathInURL: hasParentEntityIDPathInURL, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, cancellationTokenSource: cancellationTokenSource);
 
         public static GetAssetBundleIntention CreateSingleAssetBundleHack(string url) =>
-            new (typeof(GameObject), hash: url, singleAssetBundleHack: true, hasMultipleAssets: true, permittedSources: AssetSource.WEB);
+            new (typeof(GameObject), hash: url, singleAssetBundleHack: true, hasMultipleAssets: true, permittedSources: AssetSource.ALL);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);

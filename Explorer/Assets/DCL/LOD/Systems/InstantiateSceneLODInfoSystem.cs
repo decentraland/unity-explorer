@@ -80,17 +80,24 @@ namespace DCL.LOD.Systems
                 var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
                 sceneLODInfo.GltfContainerAssets = new List<GltfContainerAsset>();
 
-                foreach (string staticAsset in staticSceneAssetBundle.staticAssets)
+                for (var i = 0; i < staticSceneAssetBundle.StaticSceneDescriptor.assetHash.Count; i++)
                 {
-                    if (assetsCache.TryGet(staticAsset, out var asset))
+                    string assetHash = staticSceneAssetBundle.StaticSceneDescriptor.assetHash[i];
+                    if (assetsCache.TryGet(assetHash, out var asset))
                     {
                         asset.Root.SetActive(true);
                         asset.Root.transform.SetParent(instantiatedLOD.transform);
+                        asset.Root.transform.position = staticSceneAssetBundle.StaticSceneDescriptor.positions[i];
+                        asset.Root.transform.rotation = staticSceneAssetBundle.StaticSceneDescriptor.rotations[i];
+                        asset.Root.transform.localScale = staticSceneAssetBundle.StaticSceneDescriptor.scales[i];
                         sceneLODInfo.GltfContainerAssets.Add(asset);
                     }
                 }
+                instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
+                var newLod = new LODAsset(instantiatedLOD, staticSceneAssetBundle.AssetBundleData.Asset,
+                    GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 
-                sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+                sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
                 sceneLODInfo.RequestSingleSceneAssetBundleInstantiation = false;
             }
         }

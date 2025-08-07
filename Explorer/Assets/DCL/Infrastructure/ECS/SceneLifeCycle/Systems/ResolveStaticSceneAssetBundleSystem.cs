@@ -9,6 +9,8 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Systems;
+using Microsoft.ClearScript.JavaScript;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -58,8 +60,11 @@ namespace ECS.SceneLifeCycle.Systems
             if (staticSceneAssetBundle.Request && staticSceneAssetBundle.AssetBundlePromise == AssetBundlePromise.NULL)
             {
                 staticSceneAssetBundle.AssetBundlePromise = AssetBundlePromise.Create(World,
-                    GetAssetBundleIntention.CreateSingleAssetBundleHack($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA"),
+                    GetAssetBundleIntention.CreateSingleAssetBundleHack("GP_staticscene_LZMA_StaticSceneDescriptor"),
                     PartitionComponent.TOP_PRIORITY);
+                /*staticSceneAssetBundle.AssetBundlePromise = AssetBundlePromise.Create(World,
+                    GetAssetBundleIntention.CreateSingleAssetBundleHack($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_LZMA"),
+                    PartitionComponent.TOP_PRIORITY);*/
             }
         }
 
@@ -72,18 +77,12 @@ namespace ECS.SceneLifeCycle.Systems
             if (staticSceneAssetBundle.AssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
                 staticSceneAssetBundle.AssetBundleData = Result;
-                staticSceneAssetBundle.staticAssets = new List<string>();
                 if (Result.Succeeded)
                 {
-                    foreach (Object asset in staticSceneAssetBundle.AssetBundleData.Asset.assets)
-                    {
-                        if (asset is GameObject go)
-                        {
-                            staticSceneAssetBundle.staticAssets.Add(asset.name);
-                            assetsCache.Dereference(asset.name, CreateGltfAssetFromAssetBundleSystem.CreateGltfObject(Result.Asset, go, "static_"));
-                            staticSceneAssetBundle.TotalStaticAssets++;
-                        }
-                    }
+                    staticSceneAssetBundle.StaticSceneDescriptor =
+                        (StaticSceneDescriptor)JsonConvert.DeserializeObject<StaticSceneDescriptor>(((TextAsset)staticSceneAssetBundle.AssetBundleData.Asset.AssetDictionary["StaticSceneDescriptor"]).text);
+                    foreach (string assetHashes in staticSceneAssetBundle.StaticSceneDescriptor.assetHash)
+                        assetsCache.Dereference(assetHashes, CreateGltfAssetFromAssetBundleSystem.CreateGltfObject(Result.Asset, (GameObject)staticSceneAssetBundle.AssetBundleData.Asset.AssetDictionary[assetHashes], "static_"));
                 }
             }
         }

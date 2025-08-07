@@ -15,6 +15,8 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
+        public Dictionary<string, Object> AssetDictionary;
+
         public readonly Object?[] assets;
         private readonly Type? assetType;
 
@@ -28,7 +30,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private bool unloaded;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object?[] assets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object?[] assets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "", bool hasMultipleAssets = false)
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
@@ -36,6 +38,15 @@ namespace ECS.StreamableLoading.AssetBundles
             this.assets = assets;
             Dependencies = dependencies;
             this.assetType = assetType;
+
+            if (hasMultipleAssets)
+            {
+                AssetDictionary = new Dictionary<string, Object>();
+
+                foreach (Object asset in assets)
+                    AssetDictionary.TryAdd(asset.name, asset);;
+            }
+
 
             description = $"AB:{AssetBundle?.name}_{version}_{source}";
             UnloadAB();
@@ -94,27 +105,7 @@ namespace ECS.StreamableLoading.AssetBundles
             return (T)assets[0]!;
         }
 
-        //TODO (JUANI) : OPTIMIZE
-        public T GetAsset<T>(string name) where T : Object
-        {
-            Assert.IsNotNull(assetType, "GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified");
-
-            if (assetType != typeof(T))
-                throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
-
-            //TODO (JUANI): Handle name missing issue
-            T objectToReturn = (T)assets[0]!;
-            foreach (Object asset in assets)
-            {
-                if (asset.name.Equals(name, StringComparison.OrdinalIgnoreCase))
-                    return (T)asset;
-            }
-            return objectToReturn;
-        }
-
         public string GetInstanceName() => description;
-
-        public bool HasMultipleAssets() => assets.Length > 1;
 
     }
 }

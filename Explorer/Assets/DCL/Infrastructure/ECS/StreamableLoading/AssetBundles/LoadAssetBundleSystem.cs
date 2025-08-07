@@ -157,7 +157,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,
-                source: source));
+                source: source,
+                hasMultipleAssets: hasMultipleAssets));
         }
 
         private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, bool hasMultipleAssets, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,

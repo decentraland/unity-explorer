@@ -51,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(ISceneFacade))]
         private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
             World.Remove<SceneLODInfo, DeleteEntityIntention>(entity);
         }
 
@@ -61,15 +61,16 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
-                if (staticSceneAssetBundle.Supported)
+                if (staticSceneAssetBundle.Supported && sceneLODInfo.HasLOD(0))
                 {
-                    for (var i = 0; i < staticSceneAssetBundle.staticAssets.Count; i++)
+                    for (var i = 0; i < staticSceneAssetBundle.StaticSceneDescriptor.assetHash.Count; i++)
                     {
-                        string staticAssetName = staticSceneAssetBundle.staticAssets[i];
-                        assetsCache.Dereference(staticAssetName, sceneLODInfo.GltfContainerAssets[i]);
+                        string assetHash = staticSceneAssetBundle.StaticSceneDescriptor.assetHash[i];
+                        assetsCache.Dereference(assetHash, sceneLODInfo.GltfContainerAssets[i]);
                     }
 
-                    sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                    sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
+                    sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                     World.Remove<SceneLODInfo>(entity);
                     return;
                 }
@@ -77,7 +78,7 @@ namespace ECS.SceneLifeCycle.Systems
                 if (!sceneFacade.IsSceneReady())
                     return;
 
-                sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                 World.Remove<SceneLODInfo>(entity);
             }
         }
@@ -94,7 +95,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         private void DestroySceneLOD(ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+            sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
         }
     }
 }
