@@ -44,9 +44,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
         }
 
         public delegate void ThumbnailClick(
-            List<CameraReelResponseCompact> reels, 
-            int index, 
-            Action<CameraReelResponseCompact> reelDeleteIntention, 
+            List<CameraReelResponseCompact> reels,
+            int index,
+            Action<CameraReelResponseCompact> reelDeleteIntention,
             Action<CameraReelResponseCompact> reelListRefreshIntention);
         public event ThumbnailClick? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
@@ -97,13 +97,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ReelGalleryConfigParams reelGalleryConfigParams,
             bool useSignedRequest,
+            GalleryEventBus galleryEventBus,
             CameraReelOptionButtonView? optionButtonView = null,
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             ISystemClipboard? systemClipboard = null,
             ReelGalleryStringMessages? reelGalleryStringMessages = null,
-            IMVCManager? mvcManager = null,
-            GalleryEventBus galleryEventBus = null)
+            IMVCManager? mvcManager = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -272,7 +272,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if (reelToHide != null)
                 RemoveThumbnailFromList(reelToHide.id, reelToHide.dateTime);
         }
-        
+
         private void RemoveThumbnailFromList(string reelId, string dateTime)
         {
             int indexToRemove = -1;
@@ -302,17 +302,17 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
 
             pagedCameraReelManager.RemoveReelId(reelId);
-            
+
             if(currentSize <= 0)
                 view.emptyState.SetActive(true);
         }
-        
+
         private void OnReelPublicStateChange(string reelId, bool isPublic)
         {
             foreach (var thumbnail in pagedCameraReelManager.AllOrderedResponses)
             {
                 if(thumbnail.id != reelId) continue;
-                
+
                 thumbnail.isPublic = isPublic;
                 return;
             }
@@ -422,7 +422,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 IReadOnlyList<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
                     cameraReelResponse =>
-                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse), 
+                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse),
                             reelToDelete =>
                             {
                                 this.reelToDelete = reelToDelete;
@@ -593,7 +593,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             HideDeleteModal();
             optionButtonController?.HideControl();
-            
+
             galleryEventBus.ReelPublicStateChangeEvent -= OnReelPublicStateChange;
         }
 

@@ -71,19 +71,15 @@ namespace DCL.AvatarRendering.Emotes
             ref EmotesFromRealmPromise promise
         )
         {
-            if (promise.IsCancellationRequested(World))
-            {
-                World.Destroy(entity);
+            if (TryFinalizeIfCancelled(entity, promise))
                 return;
-            }
 
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
                     foreach (var pointerID in promise.LoadingIntention.Pointers)
-                        if (storage.TryGetElement(pointerID, out IEmote component))
-                            component.UpdateLoadingStatus(false);
+                        ReportAndFinalizeWithError(pointerID);
                 }
                 else
                     using (var list = promiseResult.Asset.ConsumeAttachments())

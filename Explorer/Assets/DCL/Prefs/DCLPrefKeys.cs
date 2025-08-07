@@ -17,7 +17,7 @@ namespace DCL.Prefs
 
         public const string CAMERA_SENSITIVITY = "CameraSensitivity";
 
-        public const string CLOSED_COMMUNITY_CHATS = "ClosedCommunityChats";
+        public const string CLOSED_COMMUNITY_CHATS = "ClosedCommunityChats_{0}";
 
         public const string PS_RENDERER_FEATURE_ACTIVE = "RendererFeature_{0}";
         public const string PS_FOG_ACTIVE = "FogActive";

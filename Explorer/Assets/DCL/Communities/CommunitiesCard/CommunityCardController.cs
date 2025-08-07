@@ -244,7 +244,7 @@ namespace DCL.Communities.CommunitiesCard
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
-                    viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
+                    viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false, galleryEventBus);
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
             membersListController = new MembersListController(viewInstance.MembersListView,
@@ -321,7 +321,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance.ResetToggle(true);
 
-                eventListController?.ShowEvents(communityData, communityPlaceIds, ct);
+                eventListController?.ShowEvents(communityData, ct);
             }
         }
 
@@ -343,9 +343,9 @@ namespace DCL.Communities.CommunitiesCard
             eventListController?.Reset();
         }
 
-        private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
+        private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
             Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
-            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
                 true, PhotoDetailParameter.CallerContext.CommunityCard, reelDeleteIntention,
                 reelListRefreshIntention, galleryEventBus)));
 

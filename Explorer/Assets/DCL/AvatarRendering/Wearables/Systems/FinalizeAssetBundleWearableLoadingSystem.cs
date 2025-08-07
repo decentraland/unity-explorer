@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (result.Succeeded)
                     wearable.UpdateManifest();
                 else
-                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
+                    SetAsFailed(wearable, in bodyShape);
 
                 wearable.UpdateLoadingStatus(false);
                 World.Destroy(entity);

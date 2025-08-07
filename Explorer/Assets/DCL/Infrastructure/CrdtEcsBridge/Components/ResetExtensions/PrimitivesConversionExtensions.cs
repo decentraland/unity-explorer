@@ -47,8 +47,5 @@ namespace CrdtEcsBridge.Components.Conversion
                 b = protoColor.B,
                 a = protoColor.A,
             };
-
-        public static float PBIntensityInLumensToUnityCandels(float lumens) =>
-            lumens / (4f * Mathf.PI);
     }
 }

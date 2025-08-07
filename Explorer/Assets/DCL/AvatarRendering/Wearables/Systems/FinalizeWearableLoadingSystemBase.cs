@@ -17,6 +17,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -29,7 +30,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
         private SingleInstanceEntity defaultWearablesState;
-        protected bool defaultWearablesResolved { get; private set; }
 
         public FinalizeWearableLoadingSystemBase(
             World world,
@@ -41,15 +41,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
             this.realmData = realmData;
         }
 
-        public override void Initialize()
-        {
-            defaultWearablesState = World!.CacheDefaultWearablesState();
-        }
+        public override void Initialize() { }
 
         protected override void Update(float t)
         {
-            defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
-
             // Only DTO loading requires realmData
             if (realmData.Configured)
                 FinalizeWearableDTOQuery(World);
@@ -97,58 +92,29 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
         }
 
-        protected void SetDefaultWearables(bool defaultWearablesLoaded, IWearable wearable, in BodyShape bodyShape)
+        protected void SetAsFailed(IWearable wearable, in BodyShape bodyShape)
         {
-            if (!defaultWearablesLoaded)
-            {
-                StreamableLoadingResult<AttachmentAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(
-                    GetReportData(),
-                    new Exception($"Default wearable {wearable.DTO.GetHash()} failed to load")
-                ).ToWearableAsset(wearable);
-
-                if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
-                {
-                    SetFailure(BodyShape.MALE);
-                    SetFailure(BodyShape.FEMALE);
-                }
-                else
-                    SetFailure(bodyShape);
-
-                return;
-
-                void SetFailure(BodyShape bs)
-                {
-                    // the destination array might be not created if DTO itself has failed to load
-                    ref var result = ref wearable.WearableAssetResults[bs];
-                    result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[1]; // default capacity, can't tell without the DTO
-                    result.ReplacedWithDefaults = true;
-                    result.Results[0] = failedResult;
-                }
-            }
-
-            ReportHub.Log(GetReportData(), $"Request for wearable with hash {wearable.DTO.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
+            StreamableLoadingResult<AttachmentAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(
+                GetReportData(),
+                new Exception($"Wearable {wearable.DTO.GetHash()} failed to load")
+            ).ToWearableAsset(wearable);
 
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {
-                CopyDefaultResults(BodyShape.MALE);
-                CopyDefaultResults(BodyShape.FEMALE);
+                SetFailure(BodyShape.MALE);
+                SetFailure(BodyShape.FEMALE);
             }
             else
-                CopyDefaultResults(bodyShape);
+                SetFailure(bodyShape);
 
             return;
 
-            void CopyDefaultResults(BodyShape bs)
+            void SetFailure(BodyShape bs)
             {
-                IWearable defaultWearable = wearableStorage.GetDefaultWearable(bs, wearable.GetCategory());
-                var defaultWearableResults = defaultWearable.WearableAssetResults[bs];
-
                 // the destination array might be not created if DTO itself has failed to load
                 ref var result = ref wearable.WearableAssetResults[bs];
-                result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[defaultWearableResults.Results.Length];
-                result.ReplacedWithDefaults = true;
-
-                Array.Copy(defaultWearableResults.Results, result.Results, defaultWearableResults.Results.Length);
+                result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[1]; // default capacity, can't tell without the DTO
+                result.Results[0] = failedResult;
             }
         }
 
@@ -180,16 +146,21 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
         {
-            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results.Length; i++)
-                if (wearable.WearableAssetResults[bodyShape].Results[i] is not { IsInitialized: true })
+            if (wearable.WearableAssetResults[bodyShape].Results == null) return false;
+
+            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results!.Length; i++)
+                if (wearable.WearableAssetResults[bodyShape].Results![i] is { IsInitialized: false })
                     return false;
 
             return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape) =>
-            wearable.WearableAssetResults[bodyShape].ReplacedWithDefaults;
+        private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape)
+        {
+            return wearable.WearableAssetResults[bodyShape].Results == null
+                   || wearable.WearableAssetResults[bodyShape].Results!.Any(result => result is { Succeeded: false });
+        }
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AttachmentAssetBase> wearableResult, in BodyShape bodyShape, int index)
         {
@@ -217,7 +188,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             in BodyShape bodyShape,
             int index,
             Func<StreamableLoadingResult<TAsset>, StreamableLoadingResult<AttachmentAssetBase>> toWearableAsset
-        ) where TLoadingIntention : IAssetIntention, IEquatable<TLoadingIntention>
+        ) where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -233,7 +204,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
                     SetWearableResult(wearable, toWearableAsset(result), in bodyShape, index);
                 else
-                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
+                    SetAsFailed(wearable, in bodyShape);
 
                 wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
                 World.Destroy(entity);
