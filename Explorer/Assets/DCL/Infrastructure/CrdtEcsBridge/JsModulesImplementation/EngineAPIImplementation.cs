@@ -104,6 +104,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 crdtProcessMessagesSampler.Begin();
 
                 CRDTMessage message = messages[i];
+                if (message.Type == CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT)
+                    UnityEngine.Debug.Log($"[UNITY CRDT] About to process AUTHORITATIVE_PUT_COMPONENT - Entity: {message.EntityId}, Component: {message.ComponentId}, Type: {message.Type}");
                 CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
 
                 crdtProcessMessagesSampler.End();
@@ -217,6 +219,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 case CRDTMessageType.DELETE_COMPONENT:
                 case CRDTMessageType.PUT_COMPONENT:
+                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
                     // instead of processing via CRDTProtocol.ProcessMessage
                     // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
                     crdtProtocol.EnforceLWWState(message.message);
