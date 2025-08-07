@@ -16,7 +16,6 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty;
 
         private Weak<MicrophoneRtcAudioSource> microphoneSource = Weak<MicrophoneRtcAudioSource>.Null;
-        private bool isInCall;
 
         public MicrophoneSelection? CurrentMicrophoneName => voiceChatSettings.SelectedMicrophone;
 
@@ -31,7 +30,6 @@ namespace DCL.VoiceChat
             DCLInput.Instance.VoiceChat.Talk!.performed += OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
-            isInCall = false;
         }
 
         public void Dispose()
@@ -44,24 +42,16 @@ namespace DCL.VoiceChat
 
         private void OnPressed(InputAction.CallbackContext obj)
         {
-            if (!isInCall) return;
-
-            // Start the microphone immediately when button is pressed
-            // If it's a quick press, we'll handle it in OnReleased
-            var weakMicrophoneSource = microphoneSource.Resource;
-            if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Start();
+            EnableMicrophone();
         }
 
         private void OnReleased(InputAction.CallbackContext obj)
         {
-            if (!isInCall) return;
             DisableMicrophone();
         }
 
         public void ToggleMicrophone()
         {
-            if (!isInCall) return;
-
             var weakMicrophoneSource = microphoneSource.Resource;
 
             if (weakMicrophoneSource.Has)
@@ -92,7 +82,6 @@ namespace DCL.VoiceChat
         {
             var weakMicrophoneSource = microphoneSource.Resource;
             if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Start();
-
             isMicrophoneEnabledProperty.Value = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
@@ -118,7 +107,6 @@ namespace DCL.VoiceChat
         {
             var weakMicrophoneSource = microphoneSource.Resource;
             if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Stop();
-
             isMicrophoneEnabledProperty.Value = false;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
@@ -160,14 +148,12 @@ namespace DCL.VoiceChat
 
         public void EnableMicrophoneForCall()
         {
-            isInCall = true;
             EnableMicrophone();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone enabled for call (room connected)");
         }
 
         public void DisableMicrophoneForCall()
         {
-            isInCall = false;
             DisableMicrophone();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone disabled for call");
         }
