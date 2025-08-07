@@ -83,10 +83,10 @@ namespace DCL.CharacterMotion.Systems
         private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
             ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
         {
-            headIK.IsDisabled = emoteComponent.CurrentEmoteReference != null || !this.headIKIsEnabled;
-            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, headIK.IsDisabled ? 0 : 1, settings.HeadIKWeightChangeSpeed * dt);
+            bool isEnabled = emoteComponent.CurrentEmoteReference == null && headIKIsEnabled && headIK.IsEnabled;
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
-            if (headIK.IsDisabled) return;
+            if (!isEnabled) return;
 
             (Vector3 bottomLeft, Vector3 topRight) = GetImageScreenCorners(previewComponent.RenderImageRect);
             Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
@@ -161,12 +161,10 @@ namespace DCL.CharacterMotion.Systems
             in CharacterPlatformComponent platformComponent
         )
         {
-            headIK.IsDisabled = !this.headIKIsEnabled;
-
             bool isEnabled = !stunComponent.IsStunned
                              && rigidTransform.IsGrounded
                              && !rigidTransform.IsOnASteepSlope
-                             && !headIK.IsDisabled
+                             && headIKIsEnabled && headIK.IsEnabled
                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
                              && !emoteComponent.IsPlayingEmote
                              && !platformComponent.IsMovingPlatform;
@@ -174,7 +172,7 @@ namespace DCL.CharacterMotion.Systems
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
-            if (headIK.IsDisabled || inWorldCameraActive) return;
+            if (!isEnabled || inWorldCameraActive) return;
 
             // TODO: Tie this to a proper look-at system to decide what to look at
             Vector3 targetDirection = cameraComponent.Camera.transform.forward;
