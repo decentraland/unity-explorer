@@ -121,29 +121,30 @@ namespace DCL.VoiceChat
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing on main thread (sync)");
-            HandleMicrophoneChange(microphoneName);
+            TryHandleMicrophoneChange(microphoneName);
         }
 
         private async UniTaskVoid OnMicrophoneChangedAsync(MicrophoneSelection microphoneName)
         {
             await UniTask.SwitchToMainThread();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
-            HandleMicrophoneChange(microphoneName);
+            TryHandleMicrophoneChange(microphoneName);
         }
 
-        private void HandleMicrophoneChange(MicrophoneSelection microphoneName)
+        private void TryHandleMicrophoneChange(MicrophoneSelection microphoneName)
         {
             var weakMicrophoneSource = microphoneSource.Resource;
 
             if (weakMicrophoneSource.Has == false)
             {
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName}");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName}");
                 return;
             }
 
             var result = weakMicrophoneSource.Value.SwitchMicrophone(microphoneName);
 
-            if (result.Success == false) { ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}"); }
+            if (result.Success == false)
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}");
         }
 
         public void EnableMicrophoneForCall()
