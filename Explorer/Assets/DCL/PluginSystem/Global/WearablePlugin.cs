@@ -15,27 +15,24 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables
 {
-    public class WearablePlugin : IDCLGlobalPlugin
+    public class WearablePlugin : IDCLGlobalPluginWithoutSettings
     {
         //Should be taken from the catalyst
         private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
         private static readonly URLSubdirectory WEARABLES_COMPLEMENT_URL = URLSubdirectory.FromString("/wearables/");
         private static readonly URLSubdirectory WEARABLES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Wearables/");
         private readonly string builderContentURL;
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
         private readonly bool builderCollectionsPreview;
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner,
-            IWebRequestController webRequestController,
+        public WearablePlugin(IWebRequestController webRequestController,
             IRealmData realmData,
             CacheCleaner cacheCleaner,
             IWearableStorage wearableStorage,
@@ -43,7 +40,6 @@ namespace DCL.AvatarRendering.Wearables
             bool builderCollectionsPreview)
         {
             this.wearableStorage = wearableStorage;
-            this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.builderContentURL = builderContentURL;
@@ -68,5 +64,6 @@ namespace DCL.AvatarRendering.Wearables
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
             ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
         }
+
     }
 }

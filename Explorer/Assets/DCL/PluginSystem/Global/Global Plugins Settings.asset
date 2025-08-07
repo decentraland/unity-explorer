@@ -18,7 +18,6 @@ MonoBehaviour:
   - rid: 6784895265412481027
   - rid: 1268264176566403074
   - rid: 5215741520409264128
-  - rid: 5215741520409264129
   - rid: 1501337502808539138
   - rid: 1095376790733193218
   - rid: 4107643854440628226
@@ -818,9 +817,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 5215741520409264129
-      type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
-      data: 
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
