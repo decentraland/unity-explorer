@@ -61,6 +61,7 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.UpdateManifest();
+
                 World.Destroy(entity);
             }
         }

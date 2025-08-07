@@ -37,7 +37,8 @@ namespace ECS.StreamableLoading.AssetBundles
             assetBundleIntention.AssetBundleVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
             assetBundleIntention.HasParentEntityIDPathInURL = sceneData.SceneEntityDefinition.hasSceneInPath;
-            assetBundleIntention.AssetBundleBuildDate = sceneData.SceneEntityDefinition.assetBundleBuildDate;
+            //assetBundleIntention.AssetBundleBuildDate = sceneData.SceneEntityDefinition.assetBundleBuildDate;
+            assetBundleIntention.AssetBundleBuildDate = "dummy";
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

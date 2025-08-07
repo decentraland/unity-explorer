@@ -233,7 +233,10 @@ namespace DCL.AvatarRendering.Emotes.Load
                         hash! + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        cancellationTokenSource: intention.CancellationTokenSource
+                        cancellationTokenSource: intention.CancellationTokenSource,
+                        assetBundleVersion: component.DTO.assetBundleManifestVersion,
+                        parentEntityID: component.DTO.id,
+                        hasParentEntityIDPathInURL : component.DTO.hasSceneInPath
                     ),
                     partitionComponent
                 );
