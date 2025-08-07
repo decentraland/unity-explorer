@@ -64,6 +64,8 @@ namespace DCL.Chat
             this.chatHistory = chatHistory;
             this.communitiesEventBus = communitiesEventBus;
             this.realmNavigator = realmNavigator;
+
+            participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
         }
 
         public void Dispose()
@@ -262,9 +264,6 @@ namespace DCL.Chat
             if (connectionState == ConnectionState.ConnConnected)
             {
                 chatRoom.ConnectionStateChanged -= OnChatRoomConnectionStateChangedAsync;
-
-                if(!participantsPerChannel.ContainsKey(privateConversationOnlineUserListId))
-                   participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
 
                 IReadOnlyCollection<string> roomParticipants = chatRoom.Participants.RemoteParticipantIdentities();
                 participantsPerChannel[privateConversationOnlineUserListId].Clear();
