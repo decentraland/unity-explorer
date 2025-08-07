@@ -72,7 +72,8 @@ namespace DCL.Systems
         [Query]
         [Any(typeof(PBAvatarShape), typeof(Profile))]
         [None(typeof(PartitionComponent))]
-        private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref CharacterTransform transformComponent)
+        private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, 
+            ref CharacterTransform transformComponent)
         {
             Debug.Log($"PartitionNewEntity {transformComponent.Position}", transformComponent.Transform);
             PartitionComponent partitionComponent = partitionComponentPool.Get();
@@ -115,7 +116,8 @@ namespace DCL.Systems
             Vector3 vectorToCamera = entityPosition - cameraTransform;
             float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
 
-            PartitionAssetEntitiesSystem.ResolvePartitionFromDistance(partitionSettings, cameraForward, partitionComponent, sqrDistance, vectorToCamera);
+            PartitionAssetEntitiesSystem.ResolvePartitionFromDistance(partitionSettings, cameraForward, partitionComponent, 
+                 sqrDistance, vectorToCamera);
 
             partitionComponent.IsDirty = bucket != partitionComponent.Bucket || isBehind != partitionComponent.IsBehind;
         }

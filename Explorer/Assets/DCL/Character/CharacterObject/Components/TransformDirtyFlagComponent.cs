@@ -4,7 +4,7 @@ namespace DCL.Character.Components
 {
 	public struct TransformDirtyFlagComponent
 	{
-		private const float MINIMAL_DISTANCE_DIFFERENCE = 0.2f;
+		private const float MINIMAL_DISTANCE_DIFFERENCE = 0.01f;
 		
 		public bool IsDirty { get; private set; }
 
@@ -20,9 +20,9 @@ namespace DCL.Character.Components
 		{
 			if (!IsDirty)
 			{
-				float distance = Vector3.Distance(oldPosition, newPosition);
+				float distance = CheapDistance(oldPosition, newPosition);
 				
-				if(distance <= MINIMAL_DISTANCE_DIFFERENCE)
+				if(distance >= MINIMAL_DISTANCE_DIFFERENCE)
 					IsDirty = true;
 			} 
 			
@@ -32,6 +32,12 @@ namespace DCL.Character.Components
 		public void ClearDirty()
 		{
 			IsDirty = false;
+		}
+
+		private float CheapDistance(Vector3 positionA, Vector3 positionB)
+		{
+			Vector3 diff = positionA - positionB;
+			return Mathf.Abs(diff.x) + Mathf.Abs(diff.y) + Mathf.Abs(diff.z);
 		}
 	}
 }
