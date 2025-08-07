@@ -90,7 +90,7 @@ namespace DCL.UI.ProfileElements
                     break;
                 case ProfileThumbnailViewModel.State.FALLBACK:
                 case ProfileThumbnailViewModel.State.LOADED_FROM_CACHE:
-                    thumbnailImageView.SetImage(model.Sprite!);
+                    thumbnailImageView.SetImage(model.Sprite!, true);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     break;
@@ -98,7 +98,7 @@ namespace DCL.UI.ProfileElements
                     SetThumbnailImageWithAnimationAsync(model.Sprite!, destroyCancellationToken).Forget();
                     break;
                 default:
-                    thumbnailImageView.SetImage(defaultEmptyThumbnail);
+                    thumbnailImageView.SetImage(defaultEmptyThumbnail, true);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     break;
@@ -124,7 +124,7 @@ namespace DCL.UI.ProfileElements
         [Obsolete("Use" + nameof(Bind) + " instead.")]
         public void SetImage(Sprite image)
         {
-            thumbnailImageView.SetImage(image);
+            thumbnailImageView.SetImage(image, true);
             SetLoadingState(false);
         }
 
@@ -142,13 +142,13 @@ namespace DCL.UI.ProfileElements
 
         public void SetDefaultThumbnail()
         {
-            thumbnailImageView.SetImage(defaultEmptyThumbnail);
+            thumbnailImageView.SetImage(defaultEmptyThumbnail, true);
             currentUrl = null;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
         {
-            thumbnailImageView.SetImage(sprite);
+            thumbnailImageView.SetImage(sprite, true);
             thumbnailImageView.ImageEnabled = true;
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
@@ -168,7 +168,7 @@ namespace DCL.UI.ProfileElements
 
                 if (sprite != null)
                 {
-                    thumbnailImageView.SetImage(sprite);
+                    thumbnailImageView.SetImage(sprite, true);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     return;
