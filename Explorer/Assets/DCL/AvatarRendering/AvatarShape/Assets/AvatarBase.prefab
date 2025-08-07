@@ -3572,10 +3572,14 @@ MonoBehaviour:
   <RightLegAnchorPoint>k__BackingField: {fileID: 7773640597938076529}
   <RightFootAnchorPoint>k__BackingField: {fileID: 8530642813781257132}
   <RightToeBaseAnchorPoint>k__BackingField: {fileID: 3392771611989602023}
+  nametagMaxOffset: 2
+  nametagBoundedOffset: 1
+  nametagBuffer: 0.025
   headAramatureBone: {fileID: 4808891874506309325}
   potentialHighestBones:
   - {fileID: 4332106098282305372}
   - {fileID: 3392771611989602023}
+  - {fileID: 8350878165225546196}
 --- !u!1 &8135611663119746201
 GameObject:
   m_ObjectHideFlags: 0
