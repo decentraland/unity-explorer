@@ -290,7 +290,7 @@ namespace DCL.Chat.ChatMessages
 
         private void OnChannelUsersUpdated(ChatEvents.ChannelUsersStatusUpdated upd)
         {
-            if (upd.Qualifies(currentChannelService.CurrentChannel!))
+            if (upd.Qualifies(currentChannelService.CurrentChannel))
                 view.RefreshVisibleElements();
         }
 

@@ -92,7 +92,7 @@ namespace DCL.Chat
         public struct ChatResetEvent
         {
         }
-        
+
         /// <summary>
         ///     Event:          ChannelLeftEvent
         ///     Triggered By:   LeaveChannelCommand
@@ -146,8 +146,11 @@ namespace DCL.Chat
                 ChannelType = channelType;
             }
 
-            public bool Qualifies(ChatChannel chatChannel)
+            public bool Qualifies(ChatChannel? chatChannel)
             {
+                if (chatChannel == null)
+                    return false;
+
                 // If applied to every USER Channel
                 if (ChannelType == ChatChannel.ChatChannelType.USER && ChannelId.Equals(ChatChannel.EMPTY_CHANNEL_ID) && chatChannel.ChannelType == ChatChannel.ChatChannelType.USER)
                     return true;
