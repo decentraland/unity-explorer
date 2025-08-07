@@ -28,14 +28,14 @@ namespace DCL.AuthenticationScreenFlow
             this.settings = settings;
         }
 
-        public override void Initialize(Avatar avatar)
+        public override void Initialize(Avatar avatar, Vector3 position)
         {
             playEmotesCts = playEmotesCts.SafeRestart();
 
             previewAvatarModel.Wearables = ShortenWearables(avatar);
             previewAvatarModel.Emotes = ShortenEmotes(avatar);
 
-            base.Initialize(avatar);
+            base.Initialize(avatar, position);
             previewController!.Value.AddHeadIK();
             PlayEmote(settings.IntroEmoteURN);
         }

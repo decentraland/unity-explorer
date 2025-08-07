@@ -522,7 +522,7 @@ namespace DCL.Passport
                 if (sectionToLoad == PassportSection.OVERVIEW)
                 {
                     // Load avatar preview
-                    characterPreviewController!.Initialize(profile.Avatar);
+                    characterPreviewController!.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_3);
                     characterPreviewController.OnShow();
                 }
 
