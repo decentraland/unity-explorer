@@ -1,0 +1,16 @@
+{
+    "name": "DCL.UI.DebugMenu.MessageBus",
+    "rootNamespace": "",
+    "references": [
+        "GUID:37cb5599d7914a6f8aa89a24fe37578f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -2,6 +2,7 @@
 :root {
     --sprite-common__icon-checkmark-thin: url('/Assets/Textures/UI/Common/icon-checkmark-thin.png');
     --sprite-common__icon-close: url('/Assets/Textures/UI/Common/icon-close.png');
+    --sprite-common__icon-connection: url('/Assets/Textures/UI/Common/icon-connection.png');
     --sprite-common__icon-console: url('/Assets/Textures/UI/Common/icon-console.png');
     --sprite-common__icon-copy: url('/Assets/Textures/UI/Common/icon-copy.png');
     --sprite-common__icon-debug: url('/Assets/Textures/UI/Common/icon-debug.png');
@@ -20,6 +21,12 @@
     background-image: var(--sprite-common__icon-close);
     width: 16px;
     height: 16px;
+}
+
+.sprite-common__icon-connection {
+    background-image: var(--sprite-common__icon-connection);
+    width: 22px;
+    height: 22px;
 }
 
 .sprite-common__icon-console {

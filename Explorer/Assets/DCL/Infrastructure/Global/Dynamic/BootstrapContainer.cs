@@ -11,6 +11,7 @@ using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings;
+using DCL.UI.DebugMenu.MessageBus;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Abstract;
@@ -31,7 +32,6 @@ using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.UI.SceneDebugConsole.MessageBus;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -58,7 +58,7 @@ namespace Global.Dynamic
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
-        public SceneDebugConsoleLogEntryBus? SceneDebugConsoleMessageBus { get; private set; }
+        public DebugMenuLogEntryBus? SceneDebugConsoleMessageBus { get; private set; }
 
         public DecentralandEnvironment Environment { get; private set; }
 
@@ -95,7 +95,7 @@ namespace Global.Dynamic
             var web3AccountFactory = new Web3AccountFactory();
 
             bool enableSceneDebugConsole = realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
-            var sceneDebugConsoleMessageBus = enableSceneDebugConsole ? new SceneDebugConsoleLogEntryBus() : null;
+            var sceneDebugConsoleMessageBus = enableSceneDebugConsole ? new DebugMenuLogEntryBus() : null;
 
             var bootstrapContainer = new BootstrapContainer
             {
