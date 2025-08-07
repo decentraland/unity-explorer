@@ -688,7 +688,6 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    new DefaultFaceFeaturesHandler(wearableCatalog),
                     nametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
@@ -739,7 +738,8 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     communitiesEventBus,
                     voiceChatCallStatusService,
-                    includeVoiceChat),
+                    includeVoiceChat,
+                    realmNavigator),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -1022,6 +1022,7 @@ namespace Global.Dynamic
                     galleryEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
+                    notificationsBusController,
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache));

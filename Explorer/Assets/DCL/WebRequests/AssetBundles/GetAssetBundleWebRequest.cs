@@ -18,6 +18,8 @@ namespace DCL.WebRequests
 
         public UnityWebRequest UnityWebRequest { get; }
 
+        public bool Idempotent => true;
+
         internal static GetAssetBundleWebRequest Initialize(in CommonArguments commonArguments, GetAssetBundleArguments arguments)
         {
             UnityWebRequest unityWebRequest =

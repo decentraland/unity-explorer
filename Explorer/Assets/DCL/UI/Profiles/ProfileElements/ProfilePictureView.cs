@@ -18,10 +18,34 @@ namespace DCL.UI.ProfileElements
         [SerializeField] private ImageView thumbnailImageView;
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
+        [SerializeField] private Image thumbnailFrame;
 
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private CancellationTokenSource? cts;
         private string? currentUrl;
+
+        private Color originalThumbnailImageColor;
+        private Color originalThumbnailBackgroundColor;
+        private Color originalThumbnailFrameColor;
+
+        private bool isColorInitialized;
+        private float greyOutOpacity;
+
+        private void Awake()
+        {
+            if (!isColorInitialized)
+            {
+                if (thumbnailImageView != null)
+                    originalThumbnailImageColor = thumbnailImageView.ImageColor;
+
+                if(thumbnailFrame != null)
+                    originalThumbnailFrameColor = thumbnailFrame.color;
+
+                isColorInitialized = true;
+            }
+
+            GreyOut(greyOutOpacity);
+        }
 
         public void Dispose()
         {
@@ -44,7 +68,20 @@ namespace DCL.UI.ProfileElements
 
         public void SetupOnlyColor(Color userColor)
         {
-            thumbnailBackground.color = userColor;
+            if (!isColorInitialized)
+            {
+                if (thumbnailImageView != null)
+                    originalThumbnailImageColor = thumbnailImageView.ImageColor;
+
+                if(thumbnailFrame != null)
+                    originalThumbnailFrameColor = thumbnailFrame.color;
+
+                isColorInitialized = true;
+            }
+
+            originalThumbnailBackgroundColor = userColor;
+
+            GreyOut(greyOutOpacity);
         }
 
         public void SetLoadingState(bool isLoading)
@@ -55,13 +92,13 @@ namespace DCL.UI.ProfileElements
 
         public void SetDefaultThumbnail()
         {
-            thumbnailImageView.SetImage(defaultEmptyThumbnail);
+            thumbnailImageView.SetImage(defaultEmptyThumbnail, true);
             currentUrl = null;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
         {
-            thumbnailImageView.SetImage(sprite);
+            thumbnailImageView.SetImage(sprite, true);
             thumbnailImageView.ImageEnabled = true;
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
@@ -81,7 +118,7 @@ namespace DCL.UI.ProfileElements
 
                 if (sprite != null)
                 {
-                    thumbnailImageView.SetImage(sprite);
+                    thumbnailImageView.SetImage(sprite, true);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     return;
@@ -103,7 +140,7 @@ namespace DCL.UI.ProfileElements
             }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
+                ReportHub.LogException(e, ReportCategory.UI);
 
                 currentUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
@@ -115,5 +152,24 @@ namespace DCL.UI.ProfileElements
 
         public void OnPointerExit(PointerEventData eventData) =>
             PointerExit?.Invoke();
+
+        public void GreyOut(float opacity)
+        {
+            if (!isColorInitialized)
+            {
+                // The method was called before Awake, it stores the value to be applied on Awake later
+                greyOutOpacity = opacity;
+                return;
+            }
+
+            if(thumbnailImageView != null)
+                thumbnailImageView.ImageColor = Color.Lerp(originalThumbnailImageColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailImageColor.a), opacity);
+
+            if(thumbnailBackground != null)
+                thumbnailBackground.color = Color.Lerp(originalThumbnailBackgroundColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailBackgroundColor.a), opacity);
+
+            if(thumbnailFrame != null)
+                thumbnailFrame.color = Color.Lerp(originalThumbnailFrameColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailFrameColor.a), opacity);
+        }
     }
 }

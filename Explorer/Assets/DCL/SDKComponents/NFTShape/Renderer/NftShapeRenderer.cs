@@ -62,11 +62,6 @@ namespace DCL.SDKComponents.NFTShape.Renderer
             if (frame != null) { frame.gameObject.SetActive(true); }
         }
 
-        public void SetTextureScale(Vector2 texScale)
-        {
-            if (frame != null) frame.SetTextureScale(texScale);
-        }
-
         public void Dispose()
         {
             if (frame == null)

@@ -78,7 +78,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
                 ca.URL = GetAssetBundleURL(assetBundleIntention.HasParentEntityIDPathInURL, assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleVersion);
-                ca.CacheableURL = GetCacheableURL(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
                 assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleVersion);
             }
@@ -111,9 +110,5 @@ namespace ECS.StreamableLoading.AssetBundles
             return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{hash}"));
         }
 
-        //Used for the OngoingRequests cache. We need to avoid version and sceneID in this URL to be able to reuse assets.
-        //The first loaded hash will be the one used for all the other requests
-        private URLAddress GetCacheableURL(string hash) =>
-            assetBundlesURL.Append(new URLPath(hash));
     }
 }

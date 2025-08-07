@@ -42,6 +42,15 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
+            // Early return if the same looping emote is already playing
+            if (emoteInUse != null &&
+                emotesInUse.ContainsKey(emoteInUse) &&
+                pools.ContainsKey(mainAsset) &&
+                emotesInUse[emoteInUse] == pools[mainAsset] &&
+                emoteComponent.EmoteLoop &&
+                isLooping)
+                return true;
+
             if (emoteInUse != null)
                 Stop(emoteInUse);
 

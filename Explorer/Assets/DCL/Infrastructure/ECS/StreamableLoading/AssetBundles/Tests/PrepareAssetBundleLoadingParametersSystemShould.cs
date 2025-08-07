@@ -133,21 +133,19 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             system.Update(0);
             intent = world.Get<GetAssetBundleIntention>(entity1);
             string firstStandardURL = intent.CommonArguments.URL;
-            string firstCacheableHash = intent.CommonArguments.GetCacheableURL();
             world.Destroy(entity1);
 
             //Now, we simulate another scene, that has a different asset bundle version
             version = "v" + (SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH + 1);
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, version, new[] { "abcd" }, "scene_hash_1", "04_10_2024"));
-            intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
-            Entity entity2 = world.Create(intent, new StreamableLoadingState());
+            var intent2 = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
+            Entity entity2 = world.Create(intent2, new StreamableLoadingState());
             system.Update(0);
-            intent = world.Get<GetAssetBundleIntention>(entity2);
-            string secondStandardURL = intent.CommonArguments.URL;
-            string secondCacheableHash = intent.CommonArguments.GetCacheableURL();
+            intent2 = world.Get<GetAssetBundleIntention>(entity2);
+            string secondStandardURL = intent2.CommonArguments.URL;
 
             Assert.AreNotEqual(firstStandardURL, secondStandardURL);
-            Assert.AreEqual(firstCacheableHash, secondCacheableHash);
+            Assert.AreEqual(intent, intent2);
         }
 
         [Test]
@@ -161,20 +159,18 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             system.Update(0);
             intent = world.Get<GetAssetBundleIntention>(entity1);
             string firstStandardURL = intent.CommonArguments.URL;
-            string firstCacheableHash = intent.CommonArguments.GetCacheableURL();
             world.Destroy(entity1);
 
             //Now, we simulate another scene, that has a differente scene hash but same version
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, version, new[] { "abcd" }, "scene_hash_2", "04_10_2024"));
-            intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
-            Entity entity2 = world.Create(intent, new StreamableLoadingState());
+            var intent2 = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
+            Entity entity2 = world.Create(intent2, new StreamableLoadingState());
             system.Update(0);
-            intent = world.Get<GetAssetBundleIntention>(entity2);
-            string secondStandardURL = intent.CommonArguments.URL;
-            string secondCacheableHash = intent.CommonArguments.GetCacheableURL();
+            intent2 = world.Get<GetAssetBundleIntention>(entity2);
+            string secondStandardURL = intent2.CommonArguments.URL;
 
             Assert.AreNotEqual(firstStandardURL, secondStandardURL);
-            Assert.AreEqual(firstCacheableHash, secondCacheableHash);
+            Assert.AreEqual(intent, intent2);
         }
     }
     */

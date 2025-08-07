@@ -6,10 +6,12 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -24,85 +26,18 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadDefaultWearablesSystem : BaseUnityLoopSystem
     {
-        private readonly WearablesDTOList defaultWearableDefinition;
         private readonly IWearableStorage wearableStorage;
-        private readonly GameObject emptyDefaultWearable;
 
         internal LoadDefaultWearablesSystem(World world,
-            WearablesDTOList defaultWearableDefinition, GameObject emptyDefaultWearable,
             IWearableStorage wearableStorage) : base(world)
         {
-            this.defaultWearableDefinition = defaultWearableDefinition;
             this.wearableStorage = wearableStorage;
-            this.emptyDefaultWearable = emptyDefaultWearable;
         }
 
         public override void Initialize()
         {
-            var pointersRequest = new List<URN>[BodyShape.COUNT];
-            using var consumedDefaultWearableDefinition = defaultWearableDefinition.ConsumeAttachments();
-
-            for (var i = 0; i < BodyShape.VALUES.Count; i++)
-                pointersRequest[BodyShape.VALUES[i]] = new List<URN>(consumedDefaultWearableDefinition.Value.Count);
-
-            var state = new DefaultWearablesComponent(new AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[BodyShape.COUNT]);
-
-            for (var i = 0; i < consumedDefaultWearableDefinition.Value.Count; i++)
-            {
-                WearableDTO dto = consumedDefaultWearableDefinition.Value[i];
-                IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
-
-                BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
-                pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());
-            }
-
-            for (var i = 0; i < BodyShape.VALUES.Count; i++)
-            {
-                BodyShape bodyShape = BodyShape.VALUES[i];
-                List<URN> pointers = pointersRequest[bodyShape];
-
-                state.PromisePerBodyShape[bodyShape] = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>
-                   .Create(World, new GetWearablesByPointersIntention(pointers, bodyShape, Array.Empty<string>(), AssetSource.EMBEDDED, false), PartitionComponent.TOP_PRIORITY);
-            }
-
-            // Add empty default wearable
-            var wearableDTO = new WearableDTO
-            {
-                metadata = new WearableDTO.WearableMetadataDto
-                {
-                    id = WearablesConstants.EMPTY_DEFAULT_WEARABLE,
-                    data = new WearableDTO.WearableMetadataDto.DataDto
-                    {
-                        category = WearablesConstants.Categories.HELMET
-                    }
-                },
-            };
-
-            var mesh = new Mesh();
-            mesh.vertices = new []
-            {
-                Vector3.zero
-            };
-            var boneWeights = new BoneWeight[1];
-            boneWeights[0].weight0 = 1; // 100% influence from the first (and only) bone
-            mesh.boneWeights = boneWeights;
-
-            var rendererInfos = new List<AttachmentRegularAsset.RendererInfo>();
-            foreach (var skinnedMeshRenderer in emptyDefaultWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
-            {
-                skinnedMeshRenderer.sharedMesh = mesh;
-                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
-            }
-
-            IWearable emptyWearable = wearableStorage.GetOrAddByDTO(wearableDTO, false);
-            var wearableAsset = new AttachmentRegularAsset(emptyDefaultWearable, rendererInfos, null);
-            wearableAsset.AddReference();
-
-            // only game-objects here
-            emptyWearable.AssignWearableAsset(wearableAsset, BodyShape.MALE);
-            emptyWearable.AssignWearableAsset(wearableAsset, BodyShape.FEMALE);
-
-            World.Create(state);
+            // Update this data if by any reason is changed in the server
+            AddBodyShapes();
         }
 
         protected override void Update(float t)
@@ -134,6 +69,161 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
             if (allPromisesAreConsumed)
                 defaultWearablesComponent.ResolvedState = finalState;
+        }
+
+        private void AddBodyShapes()
+        {
+            var state = new DefaultWearablesComponent(new AssetPromise<WearablesResolution, GetWearablesByPointersIntention>[BodyShape.COUNT]);
+
+            // Important NOTE: the body shapes have been customized for this client.
+            // The face features (eyes, mouth, eyebrows) have been removed because they share the same ABs with other wearables, like urn:decentraland:off-chain:base-avatars:f_mouth_00,
+            // but we have problems by trying to solve them as dependencies
+            // ABs have been specifically built without these dependencies
+            {
+                WearableDTO dto = new WearableDTO
+                {
+                    id = "bafkreiavl7hrbq4hycv6q3jlzig632cvouw6ms2lbob4b2zy5qx4mbny64",
+                    version = "v3",
+                    type = "wearable",
+                    pointers = new[] { "urn:decentraland:off-chain:base-avatars:basemale" },
+                    timestamp = 1689946443828,
+                    content = new[]
+                    {
+                        new ContentDefinition() { file = "Avatar_MaleSkinBase.png", hash = "bafkreiaubk2exzcqiutttnjajktvu6uys3zeb4poxpzauv6yccghz5heta" },
+                        new ContentDefinition() { file = "BaseMale.glb", hash = "bafkreicxwj4mhufwziveusb733zs3ly2vz7evnpsbybto3izqtfrbr7umq" },
+                        // new AvatarAttachmentDTO.Content { file = "M_EyeBrows_00.png", hash = "bafkreiax475w7ueo4idkzy4i2mizzmfqynipyzb2v4kp5bqncujlqnhxky" },
+                        // new AvatarAttachmentDTO.Content { file = "M_Eyes_00.png", hash = "bafkreihse7i7mqabinjq4aydv3kngpxkoownwx2z3ul5ko3vz3zcn6qzii" },
+                        // new AvatarAttachmentDTO.Content { file = "M_Mouth_00.png", hash = "bafkreih3id67pbqkfw2ikggwv6uz5dmroo4z2nkcdjbzbkpzjhd3rfbz6y" },
+                        new ContentDefinition() { file = "thumbnail.png", hash = "bafkreihqzejw6hhse4tupftqaaxnnwvobslj4xdwwpaj2rbqj4n2o2ymyy" },
+                    },
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        id = "urn:decentraland:off-chain:base-avatars:BaseMale",
+                        name = "BaseMale",
+                        description = string.Empty,
+                        thumbnail = "thumbnail.png",
+                        data = new WearableDTO.WearableMetadataDto.DataDto
+                        {
+                            replaces = Array.Empty<string>(),
+                            hides = Array.Empty<string>(),
+                            tags = new[] { "body", "male", "man", "base-wearable" },
+                            category = WearablesConstants.Categories.BODY_SHAPE,
+                            representations = new[]
+                            {
+                                new AvatarAttachmentDTO.Representation
+                                {
+                                    bodyShapes = new[] { "urn:decentraland:off-chain:base-avatars:BaseMale" },
+                                    mainFile = "BaseMale.glb",
+                                    overrideReplaces = Array.Empty<string>(),
+                                    overrideHides = Array.Empty<string>(),
+                                    contents = new[]
+                                    {
+                                        "Avatar_MaleSkinBase.png",
+                                        "BaseMale.glb",
+                                        // "M_EyeBrows_00.png",
+                                        // "M_Eyes_00.png",
+                                        // "M_Mouth_00.png",
+                                    }
+                                }
+                            },
+                        },
+                        i18n = new[]
+                        {
+                            new AvatarAttachmentDTO.I18n
+                            {
+                                code = "en",
+                                text = "Man",
+                            },
+                            new AvatarAttachmentDTO.I18n
+                            {
+                                code = "es",
+                                text = "Hombre",
+                            },
+                        },
+                    },
+                };
+
+                IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
+
+                state.PromisePerBodyShape[BodyShape.MALE] = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>
+                   .Create(World, new GetWearablesByPointersIntention(new List<URN>{wearable.GetUrn()}, BodyShape.MALE,
+                        Array.Empty<string>(), AssetSource.EMBEDDED),
+                        PartitionComponent.TOP_PRIORITY);
+            }
+
+            {
+                WearableDTO dto = new WearableDTO
+                {
+                    id = "bafkreier7sbttkajs77gj7q4shlxvo7k3rcpojpukqo7xggghleurx6uki",
+                    version = "v3",
+                    type = "wearable",
+                    pointers = new[] { "urn:decentraland:off-chain:base-avatars:basefemale" },
+                    timestamp = 1689946443741,
+                    content = new[]
+                    {
+                        new ContentDefinition() { file = "Avatar_FemaleSkinBase.png", hash = "bafkreidgli7y7lyskioyjcgkub3ja2af7b2cj7hsjjjqvgifjk7eusixoe" },
+                        new ContentDefinition() { file = "BaseFemale.glb", hash = "bafkreicjhpml7xdib2knhbl2qn7sgqq7cudwys75xwgejdd47cxp3dkbc4" },
+                        // new AvatarAttachmentDTO.Content { file = "F_Eyebrows_00.png", hash = "bafkreicljlsrh7upl5guvinmtjjqn7eagyu7e6wsef4a5nyerjuyw7t5fu" },
+                        // new AvatarAttachmentDTO.Content { file = "F_Eyes_00.png", hash = "bafkreihm3s5xcauc6i256xnywwssnodcvtrs6z3454itsf2ph63e3tx7iq" },
+                        // new AvatarAttachmentDTO.Content { file = "F_Mouth_00.png", hash = "bafkreiaryit63vshyvyddoo3dfjdapvlfcyf2jfbd6enktal3kbv2pcdru" },
+                        new ContentDefinition() { file = "thumbnail.png", hash = "bafkreigohcob7ium7ynqeya6ceavkkuvdndx6kjprgqah4lgpvmze6jzji" },
+                    },
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        id = "urn:decentraland:off-chain:base-avatars:BaseFemale",
+                        name = "BaseFemale",
+                        description = string.Empty,
+                        thumbnail = "thumbnail.png",
+                        data = new WearableDTO.WearableMetadataDto.DataDto
+                        {
+                            replaces = Array.Empty<string>(),
+                            hides = Array.Empty<string>(),
+                            tags = new[] { "body", "female", "woman", "base-wearable" },
+                            category = WearablesConstants.Categories.BODY_SHAPE,
+                            representations = new[]
+                            {
+                                new AvatarAttachmentDTO.Representation
+                                {
+                                    bodyShapes = new[] { "urn:decentraland:off-chain:base-avatars:BaseFemale" },
+                                    mainFile = "BaseFemale.glb",
+                                    overrideReplaces = Array.Empty<string>(),
+                                    overrideHides = Array.Empty<string>(),
+                                    contents = new[]
+                                    {
+                                        "Avatar_FemaleSkinBase.png",
+                                        "BaseFemale.glb",
+                                        // "F_Eyebrows_00.png",
+                                        // "F_Eyes_00.png",
+                                        // "F_Mouth_00.png",
+                                    }
+                                }
+                            },
+                        },
+                        i18n = new[]
+                        {
+                            new AvatarAttachmentDTO.I18n
+                            {
+                                code = "en",
+                                text = "Woman",
+                            },
+                            new AvatarAttachmentDTO.I18n
+                            {
+                                code = "es",
+                                text = "Mujer",
+                            },
+                        },
+                    },
+                };
+
+                IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
+
+                state.PromisePerBodyShape[BodyShape.FEMALE] = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>
+                   .Create(World, new GetWearablesByPointersIntention(new List<URN>{wearable.GetUrn()}, BodyShape.FEMALE,
+                        Array.Empty<string>(), AssetSource.EMBEDDED),
+                        PartitionComponent.TOP_PRIORITY);
+            }
+
+            World.Create(state);
         }
     }
 }

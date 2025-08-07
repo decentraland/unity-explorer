@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -16,6 +17,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -123,8 +125,11 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
-                if (emote.DTO.assetBundleManifestRequestFailed)
+                if (emote.DTO.assetBundleManifestRequestFailed || emote.Model is { Exception: not null })
+                {
                     emotesWithResponse++;
+                    continue;
+                }
 
                 if (emote.IsLoading) continue;
                 if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
@@ -187,18 +192,19 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                 URN shortenedPointer = loadingIntentionPointer.Shorten();
 
-                if (!emoteStorage.TryGetElement(shortenedPointer, out IEmote emote))
+                if (!emoteStorage.TryGetElement(shortenedPointer, out var emote))
                 {
-                    if (!intention.RequestedPointers.Contains(loadingIntentionPointer))
-                    {
-                        missingPointers.Add(shortenedPointer);
-                        intention.RequestedPointers.Add(loadingIntentionPointer);
-                    }
-                    continue;
+                    emote = IEmote.NewEmpty();
+                    emoteStorage.Set(shortenedPointer, emote);
                 }
 
-                if (emote.Model.Succeeded)
+                if (emote.Model.IsInitialized)
                     resolvedEmotes.List.Add(emote);
+                else if (!emote.IsLoading)
+                {
+                    emote.UpdateLoadingStatus(true);
+                    missingPointers.Add(shortenedPointer);
+                }
             }
         }
 
@@ -210,10 +216,9 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                 // Skip processing manifest for embedded emotes which do not start with 'urn'
                 && component.GetUrn().IsValid())
-            {
+
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 return component.CreateAssetBundleManifestPromise(World!, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
-            }
 
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
                 return false;
@@ -228,9 +233,6 @@ namespace DCL.AvatarRendering.Emotes.Load
                         hash! + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        assetBundleVersion: component.DTO.assetBundleManifestVersion,
-                        parentEntityID: component.DTO.id,
-                        hasParentEntityIDPathInURL : component.DTO.hasSceneInPath,
                         cancellationTokenSource: intention.CancellationTokenSource
                     ),
                     partitionComponent
@@ -250,7 +252,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             ContentDefinition[]? content = component.Model.Asset!.content;
 
-            foreach (ContentDefinition item in content ?? Array.Empty<ContentDefinition>())
+            foreach (ContentDefinition item in content)
             {
                 var audioType = item.file.ToAudioType();
 

@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "232e2c6e028e35f5ae55cd644e6ae2c5dcbf441b"
+      "hash": "02cb6f1758fd15ebe9a36a33677309d31eee8c73"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
@@ -92,7 +92,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "cb7468413582b05ed5c676df4d2bdb2891795617"
+      "hash": "0577e5f90c309e0188db63ceb2790d78bd97c33b"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -472,8 +472,12 @@
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
       "depth": 0,
       "source": "git",
-      "dependencies": {},
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+      "dependencies": {
+        "com.unity.modules.imageconversion": "1.0.0",
+        "com.unity.modules.particlesystem": "1.0.0",
+        "com.unity.modules.wind": "1.0.0"
+      },
+      "hash": "7aa85f76fe500491d47395e4198fa6f96532c073"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
