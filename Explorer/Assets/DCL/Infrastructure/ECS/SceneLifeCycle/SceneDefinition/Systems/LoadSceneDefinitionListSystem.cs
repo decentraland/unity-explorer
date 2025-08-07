@@ -111,6 +111,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             {
                 try
                 {
+                    //TODO (JUANI) : Remove after it comes with the asset-bundle-registry
                     SceneAssetBundleManifest sceneAssetBundleManifest =
                         await LoadAssetBundleManifestAsync(
                             sceneEntityDefinition.id,
@@ -139,7 +140,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                       .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
                       .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
 
-            SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
+            SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), RetryPolicy.WithRetries(1)), ct, reportCategory)
                                                               .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
 
             AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);

@@ -190,17 +190,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
 
                     // emote failed to load? remove intent
-                    if (emote.DTO.assetBundleManifestRequestFailed)
+                    if (emote.Model is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n the DTO");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
 
                     // emote failed to load? remove intent
-                    if (emote.Model is { IsInitialized: true, Succeeded: false })
+                    if (emote.DTO.assetBundleManifestRequestFailed)
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the DTO");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }

@@ -21,7 +21,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables
 {
-    public class WearablePlugin : IDCLGlobalPlugin<WearablePlugin.WearableSettings>
+    public class WearablePlugin : IDCLGlobalPlugin
     {
         //Should be taken from the catalyst
         private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
@@ -54,9 +54,6 @@ namespace DCL.AvatarRendering.Wearables
 
         public void Dispose() { }
 
-        public async UniTask InitializeAsync(WearableSettings settings, CancellationToken ct)
-        {
-        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
