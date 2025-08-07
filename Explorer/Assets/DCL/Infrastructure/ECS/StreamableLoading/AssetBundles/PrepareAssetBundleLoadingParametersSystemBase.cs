@@ -57,20 +57,6 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
                 }
 
-                /*
-                TODO (JUANI) : This validation should be done in an upper level. It can go away if so;
-                - For GLTF we do it in LoadGltfContainerSystem
-                - And for textures? Where is that done? Do we even requests textures as ABs when not thumbanils?
-                if (!assetBundleIntention.Manifest.Contains(assetBundleIntention.Hash))
-                {
-                    // Add the failure to the entity
-                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (GetReportCategory(), CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} {assetBundleIntention.Name} not found in the manifest"))));
-
-                    return;
-                }
-                */
-
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
