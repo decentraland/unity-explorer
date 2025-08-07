@@ -50,6 +50,7 @@ namespace DCL.PluginSystem.Global
         private CommunityVoiceChatController? communitiesVoiceChatController;
         private VoiceChatPanelResizeController? voiceChatPanelResizeController;
         private MicrophoneAudioToggleController? microphoneAudioToggleController;
+        private SceneVoiceChatController? sceneVoiceChatController;
 
         public VoiceChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -140,7 +141,6 @@ namespace DCL.PluginSystem.Global
                 playerEntity);
 
             playerEntry = await assetsProvisioner.ProvideMainAssetAsync(configurations.PlayerEntryView, ct: ct);
-
             muteMicrophoneAudio = await assetsProvisioner.ProvideMainAssetAsync(configurations.MuteMicrophoneAudio, ct: ct);
             unmuteMicrophoneAudio = await assetsProvisioner.ProvideMainAssetAsync(configurations.UnmuteMicrophoneAudio, ct: ct);
 
@@ -150,6 +150,7 @@ namespace DCL.PluginSystem.Global
 
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            sceneVoiceChatController = new SceneVoiceChatController(mainUIView.SceneVoiceChatTitlebarView, communityDataProvider, voiceChatOrchestrator);
         }
 
         [Serializable]
