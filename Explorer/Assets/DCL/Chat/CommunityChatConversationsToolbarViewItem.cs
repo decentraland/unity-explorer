@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.Communities;
 using DCL.Utilities;
@@ -51,20 +52,20 @@ namespace DCL.Chat
 
             communityCallIdSubscription?.Dispose();
             communityCallIdSubscription = currentCommunityCallId.Subscribe(OnCommunityCallIdChanged);
+
+
+            connectionStatusIndicatorContainer.SetActive(communityUpdates.Value);
+            if (!communityUpdates.Value) return;
+            IconImage.sprite = currentCommunityCallId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase)? ListeningToCallIcon : HasCallIcon;
         }
 
         private void OnCommunityCallIdChanged(string currentCallId)
         {
-            if (!isActiveAndEnabled) return;
-            if (!connectionStatusIndicatorContainer.activeSelf) return;
-
             IconImage.sprite = currentCallId.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase)? ListeningToCallIcon : HasCallIcon;
         }
 
         private void OnCommunityStateUpdated(bool hasActiveCall)
         {
-            if (!isActiveAndEnabled) return;
-
             connectionStatusIndicatorContainer.SetActive(hasActiveCall);
             if (!hasActiveCall) return;
 
