@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.Passport
@@ -153,7 +154,7 @@ namespace DCL.Passport
         public class SectionData
         {
             public PassportSection PassportSection;
-            public ButtonWithSelectableStateView Button;
+            public ButtonWithSelectableStateView ButtonWithState;
             public GameObject Panel;
         }
 
@@ -170,7 +171,7 @@ namespace DCL.Passport
             foreach (var section in Sections)
             {
                 bool isActive = passportSection == section.PassportSection;
-                section.Button.SetSelected(isActive);
+                section.ButtonWithState.SetSelected(isActive);
                 section.Panel.SetActive(isActive);
 
                 if (isActive)
