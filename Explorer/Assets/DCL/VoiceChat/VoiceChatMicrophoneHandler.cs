@@ -63,7 +63,13 @@ namespace DCL.VoiceChat
             if (!isInCall) return;
 
             var weakMicrophoneSource = microphoneSource.Resource;
-            if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Toggle();
+
+            if (weakMicrophoneSource.Has)
+            {
+                MicrophoneRtcAudioSource source = weakMicrophoneSource.Value;
+                source.Toggle();
+                isMicrophoneEnabledProperty.Value = source.IsRecording;
+            }
         }
 
         public void Assign(Weak<MicrophoneRtcAudioSource> newSource)
