@@ -23,8 +23,7 @@ using Unity.Mathematics;
 
 namespace DCL.Nametags
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class NametagPlacementSystem : BaseUnityLoopSystem
     {

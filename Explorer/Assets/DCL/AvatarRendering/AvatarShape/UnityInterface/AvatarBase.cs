@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
@@ -97,7 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
 
         [Header("NAMETAG RELATED")]
-        [SerializeField, Tooltip("How high could nametag be, [m]")]
+        [SerializeField] [Tooltip("How high could nametag be, [m]")]
         private float nametagMaxOffset = 2f;
         [SerializeField] [Tooltip("Offset when nametag is higher than allowed max (means wearable is broken), [m]")]
         private float nametagBoundedOffset = 1f;
@@ -106,8 +105,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         [SerializeField] private Transform headAramatureBone;
         [SerializeField] private Transform[] potentialHighestBones;
-        /// Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
-        private float cachedHeadWearableOffset;
+        private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
 
         private void Awake()
         {
@@ -217,7 +215,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             // Calculate offset from head bone Y position to the highest point of wearables
             cachedHeadWearableOffset = maxWearableY - headAramatureBone.position.y + nametagBuffer;
 
-            // if offset is too high, it means something wrong with the wearable, so we bound it by smaller value than MAX (by NAMETAG_BOUNDED_OFFSET)
+            // if offset is too high, it means something wrong with the wearable, so we bound it by smaller value than MAX_OFFSET (by BOUNDED_OFFSET)
             if (cachedHeadWearableOffset > nametagMaxOffset)
             {
                 ReportHub.LogError(ReportCategory.WEARABLE, $"Wearable for {wearable.BodyShape.Value} produces very high nametag offset = {cachedHeadWearableOffset} [m]. Bouncing it by {nameof(nametagBoundedOffset)} = {nametagBoundedOffset}");
