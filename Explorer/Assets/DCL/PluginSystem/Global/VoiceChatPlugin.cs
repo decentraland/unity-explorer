@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.Communities;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
@@ -10,6 +11,7 @@ using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
+using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -27,6 +29,8 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly IWebRequestController webRequestController;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
@@ -55,7 +59,9 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             Arch.Core.World world,
-            Entity playerEntity
+            Entity playerEntity,
+            CommunitiesDataProvider communityDataProvider,
+            IWebRequestController webRequestController
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -65,6 +71,8 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.communityDataProvider = communityDataProvider;
+            this.webRequestController = webRequestController;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -141,7 +149,7 @@ namespace DCL.PluginSystem.Global
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio.Value, unmuteMicrophoneAudio.Value);
 
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager);
+            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
         }
 
         [Serializable]

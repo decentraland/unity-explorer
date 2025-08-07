@@ -893,7 +893,9 @@ namespace Global.Dynamic
                         profileRepositoryWrapper,
                         entityParticipantTable,
                         globalWorld,
-                        playerEntity
+                        playerEntity,
+                        communitiesDataProvider,
+                        staticContainer.WebRequestsContainer.WebRequestController
                         )
                     );
 

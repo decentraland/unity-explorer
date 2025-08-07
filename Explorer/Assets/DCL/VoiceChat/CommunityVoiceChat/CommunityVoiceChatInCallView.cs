@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -12,6 +13,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField]
         public TMP_Text CommunityName { get; private set; }
+
+        [field: SerializeField]
+        public ImageView CommunityThumbnail { get; private set; }
 
         [field: SerializeField]
         public TMP_Text ParticipantCount { get; private set; }

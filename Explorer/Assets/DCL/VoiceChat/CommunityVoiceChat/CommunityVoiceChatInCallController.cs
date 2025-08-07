@@ -1,3 +1,6 @@
+using DCL.Communities;
+using DCL.UI;
+using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -13,12 +16,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public event Action EndStream;
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct;
+        private ImageController thumbnailController;
 
-        public CommunityVoiceChatInCallController(CommunityVoiceChatInCallView view, IVoiceChatOrchestrator orchestrator, VoiceChatMicrophoneHandler microphoneHandler)
+        public CommunityVoiceChatInCallController(
+            CommunityVoiceChatInCallView view,
+            IVoiceChatOrchestrator orchestrator,
+            VoiceChatMicrophoneHandler microphoneHandler,
+            IWebRequestController webRequestController)
         {
             this.view = view;
             footerController = new CommunityVoiceChatInCallFooterController(view.InCallFooterView, orchestrator, microphoneHandler);
 
+            thumbnailController = new ImageController(view.CommunityThumbnail, webRequestController);
             view.EndStreamButton.onClick.AddListener(() => EndStream?.Invoke());
             ct = new CancellationTokenSource();
         }
@@ -51,6 +60,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             ct = ct.SafeRestart();
             view.ShowRaiseHandTooltipAndWaitAsync(playerName, ct.Token).Forget();
+        }
+
+        public void SetCommunityData(GetCommunityResponse communityData)
+        {
+            view.SetCommunityName(communityData.data.name);
+            thumbnailController.RequestImage(communityData.data.thumbnails.Value.raw);
         }
     }
 }
