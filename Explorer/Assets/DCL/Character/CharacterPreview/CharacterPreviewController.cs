@@ -61,7 +61,7 @@ namespace DCL.CharacterPreview
                 new HeadIKComponent { IsEnabled = false });
         }
 
-        public void AddHeadIK()
+        public void EnableHeadIK()
         {
             ref HeadIKComponent headIK = ref globalWorld.TryGetRef<HeadIKComponent>(characterPreviewEntity, out bool exists);
 
