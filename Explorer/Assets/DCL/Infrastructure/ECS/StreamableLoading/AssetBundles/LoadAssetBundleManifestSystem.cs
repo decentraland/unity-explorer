@@ -43,7 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles
                         ct
                     );
 
-                //When we have the manifest version embedded in the entity, we can delete all of this as the number will be already applied
+                //TODO (JUANI): When we have the manifest version embedded in the entity, we can delete all of this as the number will be already applied
                 intention.ApplyAssetBundleManifestResultTo.ApplyAssetBundleManifestResult(sceneAssetBundleManifest.GetVersion(), sceneAssetBundleManifest.HasHashInPathID());
             }
             catch (Exception e)
