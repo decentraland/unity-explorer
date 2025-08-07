@@ -13,7 +13,7 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         private readonly VoiceChatSettingsAsset voiceChatSettings;
-        private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty = new (false);
+        private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty;
 
         private Weak<MicrophoneRtcAudioSource> source = Weak<MicrophoneRtcAudioSource>.Null;
         private bool isInCall;
@@ -26,6 +26,7 @@ namespace DCL.VoiceChat
             VoiceChatSettingsAsset voiceChatSettings)
         {
             this.voiceChatSettings = voiceChatSettings;
+            isMicrophoneEnabledProperty = new ReactiveProperty<bool>(false);
 
             DCLInput.Instance.VoiceChat.Talk!.performed += OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnReleased;
@@ -35,6 +36,7 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
+            isMicrophoneEnabledProperty.Dispose();
             DCLInput.Instance.VoiceChat.Talk!.performed -= OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled -= OnReleased;
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
