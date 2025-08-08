@@ -306,13 +306,38 @@ namespace DCL.Communities.CommunitiesCard.Places
             int offset = (placesFetchData.PageNumber - 1) * PAGE_SIZE;
             int total = communityPlaceIds.Length;
 
-            int remaining = total - offset;
-            int count = Math.Min(PAGE_SIZE, remaining);
+            Result<PlacesData.PlacesAPIResponse> response;
 
-            ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
+            if (offset < 0 || offset >= total)
+            {
+                response = Result<PlacesData.PlacesAPIResponse>.SuccessResult(new PlacesData.PlacesAPIResponse
+                {
+                    ok = true,
+                    data = new List<PlaceInfo>(),
+                    total = 0
+                });
+            }
+            else
+            {
+                int remaining = total - offset;
+                int count = Math.Min(PAGE_SIZE, remaining);
 
-            Result<PlacesData.PlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
-                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                if (count <= 0)
+                {
+                    response = Result<PlacesData.PlacesAPIResponse>.SuccessResult(new PlacesData.PlacesAPIResponse
+                    {
+                        ok = true,
+                        data = new List<PlaceInfo>(),
+                        total = 0
+                    });
+                }
+                else
+                {
+                    ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
+                    response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
+                                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                }
+            }
 
             if (ct.IsCancellationRequested)
                 return 0;
