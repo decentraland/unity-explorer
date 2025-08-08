@@ -142,42 +142,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  whitelistedShaders:
-  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
-  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
-  Name: RoadSideDeadend
+  GPUInstancingSettings: {fileID: 11400000, guid: fb981fee23899ef4eacd98e0c788b4e0, type: 2}
   Reference: {fileID: 6567635890269063131}
-  Transform: {fileID: 2125401755580018858}
   RefRenderers:
   - {fileID: 2186494982004470996}
   - {fileID: 5501835947894334652}
-  ObjectSize: 16.000002
-  Bounds:
-    m_Center: {x: 0, y: 0.049999997, z: 0}
-    m_Extent: {x: 8.000001, y: 0.049999997, z: 8.000001}
-  LodsScreenSpaceSizes:
-  - 0.13763738
-  - 0.04849844
-  LODSizesMatrix:
-    e00: 1
-    e01: 0.15546517
-    e02: 0
-    e03: 0
-    e10: 0
-    e11: 0
-    e12: 0
-    e13: 0
-    e20: 0.13763738
-    e21: 0
-    e22: 0
-    e23: 0
-    e30: 0
-    e31: 0
-    e32: 0
-    e33: 0
-  CombinedLodsRenderers:
+  <LODGroupData>k__BackingField:
+    lodsScreenSpaceSizes:
+    - 0.13763738
+    - 0.04849844
+    objectSize: 16.000002
+    LODSizesMatrix:
+      e00: 1
+      e01: 0.15546517
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 0
+      e12: 0
+      e13: 0
+      e20: 0.13763738
+      e21: 0
+      e22: 0
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 0
+    Bounds:
+      m_Center: {x: 0, y: 0.049999997, z: 0}
+      m_Extent: {x: 8.000001, y: 0.049999997, z: 8.000001}
+    LODCount: 2
+  <CombinedLodsRenderers>k__BackingField:
   - SubMeshId: 0
-    CombinedMesh: {fileID: 7206537339003687317}
+    CombinedMesh: {fileID: -8592963728388986297}
     SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 2186494982004470996}
@@ -189,11 +187,6 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
---- !u!4 &2125401755580018858 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
-  m_PrefabInstance: {fileID: 1942257465020897089}
-  m_PrefabAsset: {fileID: 0}
 --- !u!23 &2186494982004470996 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 334310108423463829, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
@@ -209,7 +202,7 @@ LODGroup:
   m_CorrespondingSourceObject: {fileID: 4742473837712756890, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
   m_PrefabInstance: {fileID: 1942257465020897089}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &7206537339003687317
+--- !u!43 &-8592963728388986297
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

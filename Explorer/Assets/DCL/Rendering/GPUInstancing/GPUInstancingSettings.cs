@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.Rendering.GPUInstancing
@@ -11,10 +10,14 @@ namespace DCL.Rendering.GPUInstancing
         private const float ENV_DIST_MIN = 1000f;
         private const float ENV_DIST_MAX = 7000f;
 
+        public Shader[] WhitelistedShaders;
+
+        [Header("COMPUTE SHADERS")]
         public ComputeShader FrustumCullingAndLODGenComputeShader;
         public ComputeShader IndirectBufferGenerationComputeShader;
         public ComputeShader DrawArgsInstanceCountTransferComputeShader;
 
+        [Space]
         public float RenderDistScaleFactor = 1f;
 
         public float RoadsSceneDistance(float envDistance)
