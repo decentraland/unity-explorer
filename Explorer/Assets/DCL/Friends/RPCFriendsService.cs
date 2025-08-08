@@ -2,9 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.SocialService;
-using DCL.Profiles.Helpers;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
@@ -12,8 +12,6 @@ using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace DCL.Friends
 {
