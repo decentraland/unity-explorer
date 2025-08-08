@@ -57,6 +57,7 @@ namespace DCL.DebugUtilities
                     () => viewsCatalog.ControlContainer.InstantiateForElement<DebugControl>(),
                     new Dictionary<Type, IDebugElementFactory>
                     {
+                        { typeof(AverageFpsBannerDef), new AverageFpsBannerFactory() },
                         { typeof(DebugButtonDef), new DebugElementBase<DebugButtonElement, DebugButtonDef>.Factory(viewsCatalog.Button) },
                         { typeof(DebugConstLabelDef), new DebugElementBase<DebugConstLabelElement, DebugConstLabelDef>.Factory(viewsCatalog.ConstLabel) },
                         { typeof(DebugFloatFieldDef), new DebugElementBase<DebugFloatFieldElement, DebugFloatFieldDef>.Factory(viewsCatalog.FloatField) },
