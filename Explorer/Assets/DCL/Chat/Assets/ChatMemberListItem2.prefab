@@ -895,6 +895,7 @@ MonoBehaviour:
   usernameView: {fileID: 1591832411926934258}
   onlineIndicator: {fileID: 2555170270695154175}
   contextMenuButton: {fileID: 875082943068834232}
+  itemButton: {fileID: 1826130427877179729}
 --- !u!1 &4419881928416968843
 GameObject:
   m_ObjectHideFlags: 0

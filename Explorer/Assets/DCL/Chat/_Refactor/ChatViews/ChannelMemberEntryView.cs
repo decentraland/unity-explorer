@@ -24,12 +24,14 @@ namespace DCL.Chat.ChatViews
         [SerializeField] private ChatUsernameView usernameView;
         [SerializeField] private GameObject onlineIndicator;
         [SerializeField] private Button contextMenuButton;
+        [SerializeField] private Button itemButton;
 
         private ChatMemberListViewModel model;
 
         private void Awake()
         {
             contextMenuButton.onClick.AddListener(HandleContextMenuRequest);
+            itemButton.onClick.AddListener(HandleItemContextMenuRequest);
         }
 
         private void HandleContextMenuRequest()
@@ -37,6 +39,15 @@ namespace DCL.Chat.ChatViews
             var request = new MemberEntryContextMenuRequest
             {
                 UserId = model.UserId, Position = contextMenuButton.transform.position
+            };
+            OnContextMenuRequested?.Invoke(request);
+        }
+
+        private void HandleItemContextMenuRequest()
+        {
+            var request = new MemberEntryContextMenuRequest
+            {
+                UserId = model.UserId, Position = itemButton.transform.position
             };
             OnContextMenuRequested?.Invoke(request);
         }

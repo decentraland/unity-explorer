@@ -65,6 +65,8 @@ namespace DCL.Chat.ChatViews
 
             itemComponent.OnContextMenuRequested -= HandleItemContextMenuRequest;
             itemComponent.OnContextMenuRequested += HandleItemContextMenuRequest;
+            
+            
 
             return newItem;
         }
