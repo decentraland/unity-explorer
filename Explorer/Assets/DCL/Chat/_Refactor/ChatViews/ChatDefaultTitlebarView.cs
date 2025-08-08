@@ -57,7 +57,9 @@ namespace DCL.Chat.ChatViews
 
             buttonOpenMembers.gameObject.SetActive(shouldShowMembersButton);
 
-            if (model.Thumbnail.Value.ThumbnailState is ProfileThumbnailViewModel.State.LOADING or ProfileThumbnailViewModel.State.NOT_BOUND)
+            if (model.Thumbnail.Value.ThumbnailState
+                is ProfileThumbnailViewModel.State.LOADING or
+                ProfileThumbnailViewModel.State.NOT_BOUND)
             {
                 chatProfileView.gameObject.SetActive(false);
                 nearbyElementsContainer.SetActive(false);

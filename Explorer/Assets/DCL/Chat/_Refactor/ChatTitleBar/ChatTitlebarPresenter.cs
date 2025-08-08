@@ -10,6 +10,7 @@ using DCL.Web3;
 using DG.Tweening;
 using MVC;
 using System.Collections.Generic;
+using System.Linq;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
@@ -77,6 +78,7 @@ namespace DCL.Chat
 
             chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
+            scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
@@ -131,11 +133,26 @@ namespace DCL.Chat
             scope.Dispose();
         }
 
-        private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
+        private void OnChannelUsersStatusUpdated(ChatEvents.ChannelUsersStatusUpdated @event)
         {
+            if (@event.ChannelType != ChatChannel.ChatChannelType.USER) return;
+
             if (currentViewModel == null ||
+                currentViewModel?.Id == null ||
                 currentViewModel.ViewMode != TitlebarViewMode.DirectMessage) return;
 
+            currentViewModel.IsOnline = @event.OnlineUsers.Contains(currentViewModel.Id);
+            view.defaultTitlebarView.Setup(currentViewModel);
+        }
+        
+        private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
+        {
+            if (userStatusUpdatedEvent.ChannelType != ChatChannel.ChatChannelType.USER) return;
+            
+            if (currentViewModel == null ||
+                currentViewModel?.Id == null ||
+                currentViewModel.ViewMode != TitlebarViewMode.DirectMessage) return;
+            
             if (currentViewModel.Id.Equals(userStatusUpdatedEvent.UserId, StringComparison.OrdinalIgnoreCase))
             {
                 currentViewModel.IsOnline = userStatusUpdatedEvent.IsOnline;

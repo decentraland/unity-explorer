@@ -234,6 +234,8 @@ namespace DCL.Chat.ChatMessages
 
         private void MarkCurrentChannelAsRead()
         {
+            if (currentChannelService.CurrentChannel == null) return;
+            
             markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
             scrollToBottomPresenter.OnScrolledToBottom();
         }
