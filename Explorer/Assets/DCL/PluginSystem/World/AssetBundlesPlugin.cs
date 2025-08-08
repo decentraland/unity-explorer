@@ -74,7 +74,7 @@ namespace DCL.PluginSystem.World
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
 
-            ResolveStaticSceneAssetBundleSystem.InjectToWorld(ref builder, gltfContainerAssetsCache);
+            ResolveStaticSceneAssetBundleSystem.InjectToWorld(ref builder);
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);

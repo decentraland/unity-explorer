@@ -8,9 +8,10 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using Newtonsoft.Json;
-using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -21,14 +22,13 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateAfter(typeof(LoadStaticPointersSystem))]
     [UpdateBefore(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
+    [UpdateBefore(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
     public partial class ResolveStaticSceneAssetBundleSystem : BaseUnityLoopSystem
     {
 
-        private IGltfContainerAssetsCache assetsCache;
 
-        public ResolveStaticSceneAssetBundleSystem(World world, IGltfContainerAssetsCache assetsCache) : base(world)
+        public ResolveStaticSceneAssetBundleSystem(World world) : base(world)
         {
-            this.assetsCache = assetsCache;
         }
 
         protected override void Update(float t)
@@ -59,8 +59,9 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     staticSceneAssetBundle.StaticSceneDescriptor =
                         (StaticSceneDescriptor)JsonConvert.DeserializeObject<StaticSceneDescriptor>(((TextAsset)staticSceneAssetBundle.AssetBundleData.Asset.AssetDictionary["StaticSceneDescriptor"]).text);
-                    foreach (string assetHashes in staticSceneAssetBundle.StaticSceneDescriptor.assetHash)
-                        assetsCache.Dereference(assetHashes, CreateGltfAssetFromAssetBundleSystem.CreateGltfObject(Result.Asset, (GameObject)staticSceneAssetBundle.AssetBundleData.Asset.AssetDictionary[assetHashes], "static_"));
+
+                    foreach (string assetHash in staticSceneAssetBundle.StaticSceneDescriptor.assetHash)
+                        World.Create(new GetGltfContainerAssetIntention($"static_assset_{assetHash}", assetHash, new CancellationTokenSource()), Result);
                 }
             }
         }

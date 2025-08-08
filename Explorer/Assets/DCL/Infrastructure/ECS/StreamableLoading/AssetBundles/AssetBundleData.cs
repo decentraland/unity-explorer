@@ -105,6 +105,9 @@ namespace ECS.StreamableLoading.AssetBundles
             return (T)assets[0]!;
         }
 
+        public T GetAsset<T>(string hash) where T : Object =>
+            (T)AssetDictionary[hash]!;
+
         public string GetInstanceName() => description;
 
     }
