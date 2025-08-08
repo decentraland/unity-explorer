@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
-public class StaticSceneDescriptor : ScriptableObject
+public class StaticSceneDescriptor
 {
     public List<string> assetHash = new();
     public List<Vector3> positions = new();

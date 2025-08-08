@@ -47,7 +47,6 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.SkyboxTime;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -195,6 +194,8 @@ namespace Global
                 return (null, false);
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
+            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
+
 
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
@@ -202,7 +203,8 @@ namespace Global
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
-                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
+                // Ignore frame time cap while global loading is not completed
+                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider, () => container.LoadingStatus.CurrentStage.Value != DCL.RealmNavigation.LoadingStatus.LoadingStage.Completed),
                 new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
                 new SceneMapping()
             );
@@ -256,7 +258,6 @@ namespace Global
                 ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
 
 
-            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
             var gltfContainerPlugin =  new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache);
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
