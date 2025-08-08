@@ -85,10 +85,10 @@ namespace ECS.SceneLifeCycle.Systems
         {
             bool shouldWait;
 
-            if (staticSceneAssetBundle is { Supported: true })
+            if (staticSceneAssetBundle.IsSupported())
             {
                 // If supported but not initialized, and no entities under observation, wait
-                shouldWait = !staticSceneAssetBundle.AssetBundleData.IsInitialized || entitiesUnderObservation.Count == 0;
+                shouldWait = !staticSceneAssetBundle.IsReady() || entitiesUnderObservation.Count == 0;
             }
             else
             {

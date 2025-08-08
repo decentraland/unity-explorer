@@ -71,11 +71,8 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.RequestSingleSceneAssetBundleInstantiation)
             {
-                if (staticSceneAssetBundle is { Supported: true, AssetBundleData: { IsInitialized: false } })
-                {
-                    staticSceneAssetBundle.RequestAssetBundle();
+                if (!staticSceneAssetBundle.IsReady())
                     return;
-                }
 
                 var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
                 sceneLODInfo.GltfContainerAssets = new List<GltfContainerAsset>();

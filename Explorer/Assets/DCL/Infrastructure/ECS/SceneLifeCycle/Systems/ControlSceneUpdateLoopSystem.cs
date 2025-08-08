@@ -64,11 +64,8 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
             }
 
-            if (staticSceneAssetBundle is { Supported: true, AssetBundleData: { IsInitialized: false } })
-            {
-                staticSceneAssetBundle.RequestAssetBundle();
+            if (!staticSceneAssetBundle.IsReady())
                 return;
-            }
 
             if (promise.TryConsume(World, out var result) && result.Succeeded)
             {

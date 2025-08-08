@@ -66,7 +66,7 @@ namespace DCL.LOD.Systems
 
         private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level, StaticSceneAssetBundle staticSceneAssetBundle)
         {
-            if (level == 0 && staticSceneAssetBundle.Supported)
+            if (level == 0 && staticSceneAssetBundle.IsSupported())
             {
                 sceneLODInfo.RequestSingleSceneAssetBundleInstantiation = true;
                 sceneLODInfo.CurrentLODLevelPromise = level;

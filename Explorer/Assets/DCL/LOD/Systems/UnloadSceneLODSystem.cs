@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
-                if (staticSceneAssetBundle.Supported && sceneLODInfo.HasLOD(0))
+                if (staticSceneAssetBundle.IsSupported() && sceneLODInfo.HasLOD(0))
                 {
                     for (var i = 0; i < staticSceneAssetBundle.StaticSceneDescriptor.assetHash.Count; i++)
                     {
