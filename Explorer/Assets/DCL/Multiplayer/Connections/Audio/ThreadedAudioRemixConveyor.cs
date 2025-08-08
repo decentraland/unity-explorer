@@ -1,7 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
-using Livekit.Utils;
+using LiveKit.Audio;
+using Livekit.Types;
 using System;
 
 namespace DCL.Multiplayer.Connections.Audio

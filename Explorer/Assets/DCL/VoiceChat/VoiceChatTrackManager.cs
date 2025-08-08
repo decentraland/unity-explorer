@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Diagnostics;
 using LiveKit.Audio;
 using LiveKit.Proto;
@@ -11,6 +12,7 @@ using RichTypes;
 using System;
 using System.Threading;
 using Utility;
+using Utility.Ownership;
 
 namespace DCL.VoiceChat
 {
@@ -26,10 +28,10 @@ namespace DCL.VoiceChat
         private readonly VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
-        private ITrack microphoneTrack;
-        private MicrophoneRtcAudioSource2 rtcAudioSource;
-        private CancellationTokenSource trackPublishingCts;
+        private CancellationTokenSource? trackPublishingCts;
         private bool isDisposed;
+
+        private MicrophoneTrack? microphoneTrack;
 
         public VoiceChatTrackManager(
             IRoom voiceChatRoom,
@@ -60,7 +62,7 @@ namespace DCL.VoiceChat
         /// </summary>
         public void PublishLocalTrack(CancellationToken ct)
         {
-            if (microphoneTrack != null)
+            if (microphoneTrack.HasValue)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track already published");
                 return;
@@ -68,15 +70,24 @@ namespace DCL.VoiceChat
 
             try
             {
-                Result<MicrophoneRtcAudioSource2> result = MicrophoneRtcAudioSource2.New(microphoneHandler.AudioFilter);
+                Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
+                    microphoneHandler.CurrentMicrophoneName,
+                    (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
+                    configuration.microphonePlaybackToSpeakers
+                );
+
                 if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
 
-                rtcAudioSource = result.Value;
+                var rtcAudioSource = result.Value;
                 rtcAudioSource.Start();
 
-                microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
+                var livekitMicrophoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
-                    rtcAudioSource);
+                    rtcAudioSource
+                );
+
+                microphoneTrack = new MicrophoneTrack(livekitMicrophoneTrack, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
+                microphoneHandler.Assign(microphoneTrack.Value.Source);
 
                 var options = new TrackPublishOptions
                 {
@@ -87,7 +98,7 @@ namespace DCL.VoiceChat
                     Source = TrackSource.SourceMicrophone,
                 };
 
-                voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack, options, ct);
+                voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack.Value.Track, options, ct);
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track published successfully");
             }
@@ -101,16 +112,14 @@ namespace DCL.VoiceChat
 
         public void UnpublishLocalTrack()
         {
-            if (microphoneTrack != null)
-            {
+            if (microphoneTrack.HasValue)
                 try
                 {
-                    voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
+                    voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack.Value.Track, true);
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track unpublished");
                 }
                 catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to unpublish local track: {ex.Message}"); }
                 finally { CleanupLocalTrack(); }
-            }
         }
 
         public void StartListeningToRemoteTracks()
@@ -247,11 +256,31 @@ namespace DCL.VoiceChat
 
         private void CleanupLocalTrack()
         {
+            microphoneTrack?.Dispose();
             microphoneTrack = null;
-            rtcAudioSource?.Dispose();
-            rtcAudioSource = null;
             trackPublishingCts?.SafeCancelAndDispose();
             trackPublishingCts = null;
+        }
+
+        private readonly struct MicrophoneTrack : IDisposable
+        {
+            private readonly Owned<MicrophoneRtcAudioSource> source;
+
+            public ITrack Track { get; }
+
+            public Weak<MicrophoneRtcAudioSource> Source => source.Downgrade();
+
+            public MicrophoneTrack(ITrack track, Owned<MicrophoneRtcAudioSource> source)
+            {
+                this.Track = track;
+                this.source = source;
+            }
+
+            public void Dispose()
+            {
+                source.Dispose(out var inner);
+                inner?.Dispose();
+            }
         }
     }
 }

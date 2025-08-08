@@ -1,5 +1,3 @@
-#nullable enable
-using Castle.Core.Internal;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -404,5 +402,11 @@ namespace DCL.VoiceChat
 
             return activeCommunityVoiceChats.TryGetValue(communityId, out activeCommunityVoiceChat);
         }
+    }
+
+    internal static class CommunityVoiceChatCallStatusServiceExtensions
+    {
+        public static bool IsNullOrEmpty(this string? value) =>
+            string.IsNullOrEmpty(value!);
     }
 }

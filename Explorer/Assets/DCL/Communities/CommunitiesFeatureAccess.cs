@@ -28,6 +28,10 @@ namespace DCL.Communities
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
         public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct, bool ignoreAllowedList = false, bool cacheResult = true)
         {
+#if UNITY_EDITOR && !COMMUNITIES_FORCE_USER_WHITELIST
+            return true;
+#endif
+
             if (!cacheResult)
                 storedResult = null;
 

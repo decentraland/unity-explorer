@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -18,9 +19,12 @@ namespace DCL.Profiles.Helpers
             nameColors = colors;
         }
 
-        public static Color GetNameColor(string username)
+        public static Color GetNameColor(string? username)
         {
             if (nameColors.Count == 0) return DEFAULT_COLOR;
+
+            if (username == null)
+                return DEFAULT_COLOR;
 
             seed = 0;
             asciiValues = Encoding.ASCII.GetBytes(username);
