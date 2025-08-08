@@ -17,13 +17,14 @@ namespace DCL.Landscape.Systems
     public sealed partial class RenderTerrainSystem : BaseUnityLoopSystem
     {
         private readonly GrassIndirectRenderer grassIndirectRenderer;
-        private readonly TerrainData terrainData;
+        private readonly TerrainRendererState state;
 
         private RenderTerrainSystem(World world, TerrainData terrainData,
             GrassIndirectRenderer grassIndirectRenderer) : base(world)
         {
             this.grassIndirectRenderer = grassIndirectRenderer;
-            this.terrainData = terrainData;
+            state = new TerrainRendererState(terrainData);
+            state.RenderDetailIndirect = true;
         }
 
         protected override void Update(float t) =>
@@ -35,13 +36,15 @@ namespace DCL.Landscape.Systems
             Camera camera = cinemachinePreset.Brain.OutputCamera;
 
 #if UNITY_EDITOR
-            bool renderToAllCameras = true;
+            state.RenderToAllCameras = true;
 #else
-            bool renderToAllCameras = false;
+            state.RenderToAllCameras = false;
 #endif
 
-            grassIndirectRenderer.Render(terrainData, camera, renderToAllCameras);
-            TerrainRenderer.Render(terrainData, camera, renderToAllCameras, true);
+            if (state.RenderDetailIndirect)
+                grassIndirectRenderer.Render(state.TerrainData, camera, state.RenderToAllCameras);
+
+            TerrainRenderer.Render(state, camera);
         }
     }
 }

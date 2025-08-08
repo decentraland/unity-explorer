@@ -495,7 +495,7 @@
         "com.unity.collections": "2.5.1",
         "com.unity.mathematics": "1.3.2"
       },
-      "hash": "cd88e29557360cb6af6591db91816214d17b27c2"
+      "hash": "d5741694b256621a4af2dc8709fa9ccfe9e86bea"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

@@ -50,19 +50,25 @@ namespace DCL.Landscape.Systems
                         .AddIntSliderField("Detail Density %", detailDensity, 0, 100)
                         .AddIntSliderField("Detail Distance", detailDistance, 0, 300)
                         .AddIntSliderField("Environment Distance", environmentDistance, 1, 10000)
-                        .AddToggleField("Ground", OnTerrainToggle, terrainData.RenderGround)
-                        .AddToggleField("Trees and Detail", OnDetailToggle, terrainData.RenderTreesAndDetail)
+                        .AddToggleField("Ground", OnGroundToggle, terrainData.RenderGround)
+                        .AddToggleField("Trees", OnTreesToggle, terrainData.RenderTrees)
+                        .AddToggleField("Detail", OnDetailToggle, terrainData.RenderDetail)
                         .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.showSatelliteView);
         }
 
-        private void OnTerrainToggle(ChangeEvent<bool> evt)
+        private void OnGroundToggle(ChangeEvent<bool> evt)
         {
             terrainData.RenderGround = evt.newValue;
         }
 
+        private void OnTreesToggle(ChangeEvent<bool> evt)
+        {
+            terrainData.RenderTrees = evt.newValue;
+        }
+
         private void OnDetailToggle(ChangeEvent<bool> evt)
         {
-            terrainData.RenderTreesAndDetail = evt.newValue;
+            terrainData.RenderDetail = evt.newValue;
         }
 
         private void OnSatelliteToggle(ChangeEvent<bool> evt)
