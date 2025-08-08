@@ -19,16 +19,12 @@ namespace DCL.Profiles.Helpers
             nameColors = colors;
         }
 
-        public static Color GetNameColor(string username)
+        public static Color GetNameColor(string? username)
         {
             if (nameColors.Count == 0) return DEFAULT_COLOR;
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (username == null)
-            {
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Unexpected null argument at, fallback as default color: {nameof(GetNameColor)}");
                 return DEFAULT_COLOR;
-            }
 
             seed = 0;
             asciiValues = Encoding.ASCII.GetBytes(username);
