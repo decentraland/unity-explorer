@@ -67,17 +67,6 @@ namespace DCL.VoiceChat
             microphoneSource = newSource;
         }
 
-        // TODO
-        // #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-        //
-        //         // On macOS, check if we have microphone permission
-        //         if (Microphone.devices.Length == 0)
-        //         {
-        //             ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "No microphone devices found on macOS. This may indicate missing microphone permissions.");
-        //             return;
-        //         }
-        // #endif
-
         private void EnableMicrophone()
         {
             var weakMicrophoneSource = microphoneSource.Resource;
