@@ -13,6 +13,7 @@ namespace DCL.Character.Components
         private const float MINIMAL_DISTANCE_DIFFERENCE = 0.01f;
         
         public readonly Transform Transform;
+        
         public bool IsDirty { get; private set; }
         
         private Vector3 oldPosition;
@@ -29,8 +30,25 @@ namespace DCL.Character.Components
         public Quaternion Rotation => Transform.rotation;
 
         public void Dispose() { }
+
+        public void SetPositionAndRotationWithDirtyCheck(Vector3 position, Quaternion rotation)
+        {
+            Transform.SetPositionAndRotation(position, rotation);
+            TrySetDirty(position);
+        }
+
+        public void SetPositionWithDirtyCheck(Vector3 position)
+        {
+            Transform.position = position;
+            TrySetDirty(position);
+        }
+
+        public void ClearDirty()
+        {
+            IsDirty = false;
+        }
         
-        public void PushNewPosition(Vector3 newPosition)
+        private void TrySetDirty(Vector3 newPosition)
         {
             if (!IsDirty)
             {
@@ -41,11 +59,6 @@ namespace DCL.Character.Components
             } 
 			
             oldPosition = newPosition;
-        }
-
-        public void ClearDirty()
-        {
-            IsDirty = false;
         }
 
         private float CheapDistance(Vector3 positionA, Vector3 positionB)

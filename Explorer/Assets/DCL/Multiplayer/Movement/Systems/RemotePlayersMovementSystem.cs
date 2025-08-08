@@ -221,8 +221,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private static void SetPositionAndRotation(ref CharacterTransform transformComp, Vector3 position, float rotationY)
         {
             var newRotation = Quaternion.Euler(transformComp.Transform.rotation.x, rotationY, transformComp.Transform.rotation.z);
-            transformComp.Transform.SetPositionAndRotation(position, newRotation);
-            transformComp.PushNewPosition(position);
+            transformComp.SetPositionAndRotationWithDirtyCheck(position, newRotation);
         }
 
         private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
