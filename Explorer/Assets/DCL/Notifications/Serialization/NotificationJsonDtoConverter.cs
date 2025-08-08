@@ -23,8 +23,7 @@ namespace DCL.Notifications.Serialization
         private const string STREAMING_PLACE_UPDATED = "streaming_place_updated";
         private const string REFERRAL_INVITED_USERS_ACCEPTED = "referral_invited_users_accepted";
         private const string REFERRAL_NEW_TIER_REACHED = "referral_new_tier_reached";
-        private const string COMMUNITY_EVENT_CREATED_TYPE = "community_event_created";
-        private const string COMMUNITY_EVENT_ABOUT_TO_START_TYPE = "community_event_about_to_start";
+        private const string EVENT_CREATED_TYPE = "event_created";
         private const string COMMUNITY_MEMBER_REMOVED_TYPE = "community_member_removed";
         private const string COMMUNITY_MEMBER_BANNED_TYPE = "community_member_banned";
         private const string COMMUNITY_RENAMED_TYPE = "community_renamed";
@@ -89,9 +88,7 @@ namespace DCL.Notifications.Serialization
                     STREAMING_PLACE_UPDATED => new StreamingFeatureNotification(),
                     REFERRAL_INVITED_USERS_ACCEPTED => new ReferralNotification(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED),
                     REFERRAL_NEW_TIER_REACHED => new ReferralNotification(NotificationType.REFERRAL_NEW_TIER_REACHED),
-                    // TODO: Uncomment when the community events are implemented
-                    // COMMUNITY_EVENT_CREATED_TYPE => new CommunityEventCreatedNotification(),
-                    // COMMUNITY_EVENT_ABOUT_TO_START_TYPE => new CommunityEventSoonNotification(),
+                    EVENT_CREATED_TYPE => new CommunityEventCreatedNotification(),
                     COMMUNITY_MEMBER_REMOVED_TYPE => new CommunityUserRemovedNotification(),
                     COMMUNITY_MEMBER_BANNED_TYPE => new CommunityUserBannedNotification(),
                     COMMUNITY_RENAMED_TYPE => new CommunityRenamedNotification(),
