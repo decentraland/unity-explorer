@@ -309,7 +309,6 @@ namespace DCL.Communities.CommunitiesCard.Places
             int offset = (placesFetchData.PageNumber - 1) * PAGE_SIZE;
             int total = communityPlaceIds.Length;
 
-            // Ensure offset doesn't exceed the array bounds
             if (offset >= total)
                 return 0;
 
