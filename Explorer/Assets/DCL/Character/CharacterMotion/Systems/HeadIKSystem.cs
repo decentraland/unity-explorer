@@ -161,10 +161,12 @@ namespace DCL.CharacterMotion.Systems
             in CharacterPlatformComponent platformComponent
         )
         {
+            bool isFeatureAndComponentEnabled = headIKIsEnabled && headIK.IsEnabled;
+
             bool isEnabled = !stunComponent.IsStunned
                              && rigidTransform.IsGrounded
                              && !rigidTransform.IsOnASteepSlope
-                             && headIKIsEnabled && headIK.IsEnabled
+                             && isFeatureAndComponentEnabled
                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
                              && !emoteComponent.IsPlayingEmote
                              && !platformComponent.IsMovingPlatform;
