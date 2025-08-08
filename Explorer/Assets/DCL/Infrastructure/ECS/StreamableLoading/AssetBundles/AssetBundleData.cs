@@ -1,6 +1,7 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiling;
 using System;
+using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -14,7 +15,9 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
-        private readonly Object? mainAsset;
+        public Dictionary<string, Object> AssetDictionary;
+
+        public readonly Object?[] assets;
         private readonly Type? assetType;
 
         internal AssetBundle AssetBundle => Asset;
@@ -25,17 +28,25 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly string description;
 
-
         private bool unloaded;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object?[] assets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "", bool hasMultipleAssets = false)
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
 
-            this.mainAsset = mainAsset;
+            this.assets = assets;
             Dependencies = dependencies;
             this.assetType = assetType;
+
+            if (hasMultipleAssets)
+            {
+                AssetDictionary = new Dictionary<string, Object>();
+
+                foreach (Object asset in assets)
+                    AssetDictionary.TryAdd(asset.name, asset);;
+            }
+
 
             description = $"AB:{AssetBundle?.name}_{version}_{source}";
             UnloadAB();
@@ -46,13 +57,13 @@ namespace ECS.StreamableLoading.AssetBundles
             //Dependencies cant be unloaded, since we dont know who will need them =(
             Metrics = metrics;
 
-            this.mainAsset = null;
+            this.assets = Array.Empty<Object>();
             this.assetType = null;
             Dependencies = dependencies;
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
-        : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies)
+        : this(assetBundle, metrics, new Object?[]{mainAsset}, typeof(GameObject), dependencies)
         {
         }
 
@@ -78,8 +89,8 @@ namespace ECS.StreamableLoading.AssetBundles
             foreach (AssetBundleData child in Dependencies)
                 child.Dereference();
 
-            if(mainAsset!=null)
-                Object.DestroyImmediate(mainAsset, true);
+            foreach (Object asset in assets)
+                Object.DestroyImmediate(asset, true);
 
             if (unloaded) return;
             if(AssetBundle && AssetBundle != null) AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
@@ -91,8 +102,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (assetType != typeof(T))
                 throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
-            return (T)mainAsset!;
+            return (T)assets[0]!;
         }
+
+        public T GetAsset<T>(string hash) where T : Object =>
+            (T)AssetDictionary[hash]!;
 
         public string GetInstanceName() => description;
 

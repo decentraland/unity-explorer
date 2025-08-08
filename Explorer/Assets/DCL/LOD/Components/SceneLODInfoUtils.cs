@@ -8,6 +8,12 @@
             return result;
         }
 
+        public static byte ClearLODResult(byte result, int lodLevel)
+        {
+            result &= (byte)~(1 << lodLevel);
+            return result;
+        }
+
         public static int LODCount(byte loadedLODs)
         {
             int count = 0;
@@ -32,13 +38,13 @@
             return objectExtents / (distanceToCenter * tanValue) * defaultLODBias;
         }
 
-        //This will give us the distance at which the LOD change should occur if we consider the percentage at the middle between 
+        //This will give us the distance at which the LOD change should occur if we consider the percentage at the middle between
         //cull distance and 100% of the screen
         public static float CalculateLODChangeRelativeHeight(float cullRelativeHeightPercentage, float tanValue, float objectExtents, float defaultLodBias)
         {
             float halfDistancePercentage = ((1 - cullRelativeHeightPercentage) / 2 + cullRelativeHeightPercentage) / defaultLodBias;
             return objectExtents / (halfDistancePercentage * tanValue) - objectExtents;
         }
-        
+
     }
 }

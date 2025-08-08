@@ -7,6 +7,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -22,7 +23,7 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
-        private const int FRAMES_COUNT = 90;
+        private int FRAMES_COUNT = 90;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
@@ -42,6 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly MemoryBudget memoryBudget;
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
+
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
@@ -78,10 +80,24 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
+            /*
+             TODO (JUANI) : How can we finalize sooner if we have the asset ready?
+            bool shouldWait;
+
+            if (staticSceneAssetBundle.IsSupported())
             {
-                eventsBuffer.ForEach(forEachEvent);
+                // If supported but not initialized, and no entities under observation, wait
+                shouldWait = !staticSceneAssetBundle.IsReady() || entitiesUnderObservation.Count == 0;
             }
+            else
+            {
+                // If not supported, run for frame count
+                shouldWait = sceneStateProvider.TickNumber < FRAMES_COUNT;
+            }
+            */
+
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
+                eventsBuffer.ForEach(forEachEvent);
             else if (!concluded)
             {
                 if (totalAssetsToResolve == -1)

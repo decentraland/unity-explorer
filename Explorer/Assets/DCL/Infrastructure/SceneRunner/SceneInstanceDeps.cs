@@ -24,6 +24,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;

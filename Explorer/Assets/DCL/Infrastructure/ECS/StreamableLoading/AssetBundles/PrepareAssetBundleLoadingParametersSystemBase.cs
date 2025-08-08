@@ -5,6 +5,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using Utility;
 
@@ -21,6 +22,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly URLDomain streamingAssetURL;
         private readonly URLDomain assetBundlesURL;
+
 
         protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world)
         {
@@ -49,13 +51,14 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (string.IsNullOrEmpty(assetBundleIntention.AssetBundleVersion))
+                if (string.IsNullOrEmpty(assetBundleIntention.AssetBundleVersion) && !assetBundleIntention.SingleAssetBundleHack)
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
 
                     return;
                 }
+
 
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;

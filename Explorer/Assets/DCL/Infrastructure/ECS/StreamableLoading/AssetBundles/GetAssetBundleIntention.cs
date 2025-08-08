@@ -18,7 +18,6 @@ namespace ECS.StreamableLoading.AssetBundles
         public bool HasParentEntityIDPathInURL;
         public string ParentEntityID;
 
-
         /// <summary>
         ///     If the expected object type is null we don't know which asset will be loaded.
         ///     It's valid for dependencies for which we need to load the asset bundle itself only
@@ -48,6 +47,9 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         public bool LookForShaderAssets;
 
+        public bool SingleAssetBundleHack;
+        public bool HasMultipleAssets;
+
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default,
@@ -55,6 +57,8 @@ namespace ECS.StreamableLoading.AssetBundles
             string assetBundleVersion = "",
             bool hasParentEntityIDPathInURL = false,
             string parentEntityID = "",
+            bool singleAssetBundleHack = false,
+            bool hasMultipleAssets = false,
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -71,6 +75,10 @@ namespace ECS.StreamableLoading.AssetBundles
             HasParentEntityIDPathInURL = hasParentEntityIDPathInURL;
             ParentEntityID = parentEntityID;
             AssetBundleBuildDate = "dummy";
+
+            SingleAssetBundleHack = singleAssetBundleHack;
+            HasMultipleAssets = hasMultipleAssets;
+
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -79,7 +87,6 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public bool Equals(GetAssetBundleIntention other) =>
-
             // It doesn't take into consideration the asset bundle version, so whatever is retrieved and cached first will be served for all versions
             StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash);
 
@@ -95,6 +102,9 @@ namespace ECS.StreamableLoading.AssetBundles
             URLSubdirectory customEmbeddedSubDirectory = default, bool lookForShaderAsset = false , CancellationTokenSource cancellationTokenSource = null,
             string assetBundleVersion = "", bool hasParentEntityIDPathInURL = false, string parentEntityID = "") =>
             new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleVersion, hasParentEntityIDPathInURL: hasParentEntityIDPathInURL, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, cancellationTokenSource: cancellationTokenSource);
+
+        public static GetAssetBundleIntention CreateSingleAssetBundleHack(string url) =>
+            new (typeof(GameObject), hash: url, singleAssetBundleHack: true, hasMultipleAssets: true, permittedSources: AssetSource.ALL);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);
