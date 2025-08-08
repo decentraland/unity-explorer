@@ -88,11 +88,11 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "https://github.com/decentraland/unity-shared-dependencies.git",
+      "version": "https://github.com/decentraland/unity-shared-dependencies.git#fix/scene-shader-gpu-instancing-normals",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0577e5f90c309e0188db63ceb2790d78bd97c33b"
+      "hash": "623ddb683347e1724b9b4d76bda309f8c6d25672"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
