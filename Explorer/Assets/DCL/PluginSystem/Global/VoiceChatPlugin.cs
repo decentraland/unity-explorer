@@ -11,6 +11,7 @@ using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
+using DCL.VoiceChat.Systems;
 using DCL.WebRequests;
 using System;
 using System.Threading;
@@ -32,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
@@ -75,6 +77,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
+            communityVoiceChatCallStatusService = voiceChatContainer.CommunityVoiceChatCallStatusService;
         }
 
         public void Dispose()
@@ -104,7 +107,13 @@ namespace DCL.PluginSystem.Global
             voiceChatPanelResizeController?.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) 
+        {
+            // Register the voice chat scene change system
+            // Note: We need to get ISceneData from the scene context
+            // For now, we'll create a placeholder system that will be properly initialized later
+            // builder.AddSystem(new VoiceChatSceneChangeSystem(world, communityVoiceChatCallStatusService, null));
+        }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {

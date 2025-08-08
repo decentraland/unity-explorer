@@ -7,9 +7,11 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.VoiceChat
@@ -26,6 +28,10 @@ namespace DCL.VoiceChat
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
 
+        // Scene-to-community mapping: maps scene coordinates to community IDs that have active voice chats
+        private readonly Dictionary<Vector2Int, string> sceneToCommunityMap = new();
+        private readonly Dictionary<string, Vector2Int> communityToSceneMap = new();
+
         private CancellationTokenSource cts = new ();
 
         public CommunityVoiceChatCallStatusService(
@@ -36,6 +42,112 @@ namespace DCL.VoiceChat
             this.notificationBusController = notificationBusController;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
             this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
+        }
+
+        /// <summary>
+        /// Called when a scene becomes current - checks if the scene has an active community voice chat
+        /// </summary>
+        public void OnSceneBecameCurrent(ISceneData sceneData)
+        {
+            if (sceneData?.SceneEntityDefinition?.metadata?.scene?.DecodedBase == null)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Scene has no base parcel information");
+                return;
+            }
+
+            Vector2Int sceneBaseParcel = sceneData.SceneEntityDefinition.metadata.scene.DecodedBase;
+
+            if (sceneToCommunityMap.TryGetValue(sceneBaseParcel, out string? communityId))
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Scene {sceneBaseParcel} has active community voice chat: {communityId}");
+
+                // Trigger UI updates or notifications for the active voice chat
+                OnActiveVoiceChatDetectedInScene(communityId, sceneData);
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Scene {sceneBaseParcel} has no active community voice chat");
+            }
+        }
+
+        /// <summary>
+        /// Called when leaving a scene
+        /// </summary>
+        public void OnSceneLeft()
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Left scene - clearing any scene-specific voice chat UI");
+            // Clear any scene-specific voice chat UI or notifications
+        }
+
+        /// <summary>
+        /// Register a scene as having an active community voice chat
+        /// </summary>
+        public void RegisterSceneCommunity(Vector2Int sceneParcel, string communityId)
+        {
+            sceneToCommunityMap[sceneParcel] = communityId;
+            communityToSceneMap[communityId] = sceneParcel;
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Registered scene {sceneParcel} with community {communityId}");
+        }
+
+        /// <summary>
+        /// Unregister a scene from having an active community voice chat
+        /// </summary>
+        public void UnregisterSceneCommunity(string communityId)
+        {
+            if (communityToSceneMap.TryGetValue(communityId, out Vector2Int sceneParcel))
+            {
+                sceneToCommunityMap.Remove(sceneParcel);
+                communityToSceneMap.Remove(communityId);
+
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Unregistered scene {sceneParcel} from community {communityId}");
+            }
+        }
+
+        /// <summary>
+        /// Check if a scene has an active community voice chat
+        /// </summary>
+        public bool HasActiveVoiceChatInScene(Vector2Int sceneParcel)
+        {
+            return sceneToCommunityMap.ContainsKey(sceneParcel);
+        }
+
+        /// <summary>
+        /// Get the community ID for a scene if it has an active voice chat
+        /// </summary>
+        public bool TryGetCommunityForScene(Vector2Int sceneParcel, out string communityId)
+        {
+            return sceneToCommunityMap.TryGetValue(sceneParcel, out communityId);
+        }
+
+        private void OnActiveVoiceChatDetectedInScene(string communityId, ISceneData sceneData)
+        {
+            // Here you can trigger UI updates, notifications, or other actions
+            // when an active voice chat is detected in the current scene
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat detected in scene for community: {communityId}");
+
+            // Example: Show voice chat UI, send notification, etc.
+            // This is where you'd integrate with your UI system
+        }
+
+        /// <summary>
+        /// Register scene mapping for a voice chat when it starts
+        /// </summary>
+        private void RegisterSceneCommunityForVoiceChat(string communityId, CommunityVoiceChatUpdate communityUpdate)
+        {
+            // TODO: We need to get scene coordinates from the community data
+            // This might require:
+            // 1. Additional API call to get community scene information
+            // 2. Community data structure to include scene coordinates
+            // 3. Or mapping communities to scenes through a separate service
+
+            // For now, we'll log that we need to implement this
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Need to implement scene mapping for community {communityId}");
+
+            // Example implementation when we have scene coordinates:
+            // Vector2Int sceneParcel = GetSceneParcelForCommunity(communityId);
+            // RegisterSceneCommunity(sceneParcel, communityId);
         }
 
         public override void StartCall(string communityId)
@@ -282,6 +394,9 @@ namespace DCL.VoiceChat
                     ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Community voice chat ended for {communityUpdate.CommunityId}");
                 }
 
+                // Unregister scene mapping when voice chat ends
+                UnregisterSceneCommunity(communityUpdate.CommunityId);
+
                 return;
             }
 
@@ -313,7 +428,14 @@ namespace DCL.VoiceChat
             }
 
             if(communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted)
+            {
                 notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
+
+                // Register scene mapping when voice chat starts
+                // Note: We need scene coordinates from the community data or a separate API call
+                // For now, we'll need to implement this when we have scene information
+                RegisterSceneCommunityForVoiceChat(communityUpdate.CommunityId, communityUpdate);
+            }
         }
 
         private void OnActiveCommunityVoiceChatsFetched(ActiveCommunityVoiceChatsResponse response)

@@ -4,6 +4,7 @@ using DCL.SocialService;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle;
 using System;
 
 namespace DCL.VoiceChat
@@ -16,6 +17,9 @@ namespace DCL.VoiceChat
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly VoiceChatParticipantsStateService participantsStateService;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
+        
+        // Expose the community voice chat service for scene change system
+        public CommunityVoiceChatCallStatusService CommunityVoiceChatCallStatusService => communityVoiceChatCallStatusService;
 
         public VoiceChatContainer(
             IRPCSocialServices socialServiceRPC,
