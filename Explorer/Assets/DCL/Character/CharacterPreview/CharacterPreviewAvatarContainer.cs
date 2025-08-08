@@ -12,7 +12,11 @@ namespace DCL.CharacterPreview
     /// </summary>
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
+        private CinemachineComposer middleRigComposer;
+
         private Tween fovTween;
+        private Tween xAxisValueTween;
+
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
         [field: SerializeField] internal Camera camera { get; private set; }
@@ -37,27 +41,63 @@ namespace DCL.CharacterPreview
 
             //We disable post processing on all platforms as the shader is not working correctly and it shows a black background
             cameraData.renderPostProcessing = false;
+
+            middleRigComposer = freeLookCamera.GetRig(1).GetCinemachineComponent<CinemachineComposer>();
         }
 
-        public void SetCameraPosition(CharacterPreviewCameraPreset preset)
+        public void SetCamera(CharacterPreviewCameraPreset preset)
         {
+            StopCameraTween();
+
             if (cameraTarget != null)
                 cameraTarget.localPosition = preset.verticalPosition;
 
-            StopCameraTween();
+            if (middleRigComposer != null)
+            {
+                middleRigComposer.m_ScreenX = preset.cameraScreenX;
+                middleRigComposer.m_ScreenY = preset.cameraScreenY;
+            }
 
-            fovTween = DOTween.To(() => freeLookCamera.m_Lens.FieldOfView, x => freeLookCamera.m_Lens.FieldOfView = x, preset.cameraFieldOfView, 1)
-                              .SetEase(Ease.OutQuad)
-                              .OnComplete(() => fovTween = null);
+            freeLookCamera.m_Orbits[1].m_Radius = preset.cameraMiddleRigRadius;
+
+            TweenFovTo(preset.cameraFieldOfView, preset.cameraFieldOfViewEaseDuration, preset.cameraFieldOfViewEase);
+            // freeLookCamera.m_Lens.FieldOfView = preset.cameraFieldOfView;
         }
 
         public void StopCameraTween()
         {
             fovTween?.Kill();
+            xAxisValueTween?.Kill();
         }
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
+
+        public void TweenFovTo(float targetValue, float duration, Ease ease)
+        {
+            StopCameraTween();
+
+            fovTween = DOTween.To(
+                                   () => freeLookCamera.m_Lens.FieldOfView,
+                                   x => freeLookCamera.m_Lens.FieldOfView = x,
+                                   targetValue,
+                                   duration)
+                              .SetEase(ease)
+                              .OnComplete(() => fovTween = null);
+        }
+
+        public void TweenXAxisTo(float targetValue, float duration, Ease ease)
+        {
+            StopCameraTween();
+
+            xAxisValueTween = DOTween.To(
+                                          () => freeLookCamera.m_XAxis.Value,
+                                          x => freeLookCamera.m_XAxis.Value = x,
+                                          targetValue,
+                                          duration)
+                                     .SetEase(ease)
+                                     .OnComplete(() => xAxisValueTween = null);
+        }
     }
 
     [Serializable]
