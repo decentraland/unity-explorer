@@ -129,12 +129,6 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask);
         }
 
-        public async UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask)
-        {
-            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.DeleteChatHistoryIcon, data.DeleteChatHistoryText, onDeleteChatHistoryClicked);
-            await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
-        }
-
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {

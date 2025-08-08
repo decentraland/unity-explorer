@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 03dabb815fc004f9581a9528b72c106f
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonList.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 04a7ffcd277754f7c91237894604f522
     m_Address: NftRarityBackgrounds
     m_ReadOnly: 0
@@ -395,6 +400,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acb5d5500934645ac89935fe64d8bf01
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonWithText.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b028edf69a2c54c9194c4ce6524befff
     m_Address: ChatBubbleConfiguration
     m_ReadOnly: 0
@@ -452,11 +462,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e8f593404f0a19749bc68df2b5064215
     m_Address: StylizedSkyboxAnimation
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f3988fe058c9e463580d97c75e2b574d
-    m_Address: Assets/DCL/VoiceChat/Assets/CommunityVoiceChatContextMenuSettings.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

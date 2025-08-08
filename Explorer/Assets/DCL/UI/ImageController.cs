@@ -17,6 +17,7 @@ namespace DCL.UI
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
         private readonly IWebRequestController? webRequestController;
+        private readonly Color defaultColor = Color.white;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
 
@@ -31,7 +32,14 @@ namespace DCL.UI
             this.webRequestController = webRequestController;
         }
 
-        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false, bool fitAndCenterImage = false)
+        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
+            bool useKtx = false, bool fitAndCenterImage = false)
+        {
+            RequestImage(uri, defaultColor, removePrevious, hideImageWhileLoading, useKtx, fitAndCenterImage);
+        }
+
+        public void RequestImage(string uri, Color targetColor, bool removePrevious = false, bool hideImageWhileLoading = false, 
+            bool useKtx = false, bool fitAndCenterImage = false)
         {
             if (removePrevious)
                 view.Image.sprite = null;
@@ -40,7 +48,7 @@ namespace DCL.UI
                 view.Image.enabled = false;
 
             cts = cts.SafeRestart();
-            RequestImageAsync(uri, useKtx, cts.Token, fitAndCenterImage).Forget();
+            RequestImageAsync(uri, useKtx, targetColor, cts.Token, fitAndCenterImage).Forget();
         }
 
         public void SetVisible(bool isVisible)
@@ -48,7 +56,7 @@ namespace DCL.UI
             view.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask RequestImageAsync(string uri, bool useKtx, CancellationToken ct, bool fitAndCenterImage = false)
+        public async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false)
         {
             try
             {
@@ -83,7 +91,7 @@ namespace DCL.UI
                     SetImage(sprite, fitAndCenterImage);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
-                    view.Image.DOColor(Color.white, view.imageLoadingFadeDuration);
+                    view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
                 }
             }
             catch (OperationCanceledException) { }

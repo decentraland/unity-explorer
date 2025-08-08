@@ -28,18 +28,21 @@ namespace DCL.UI.ProfileElements
         private Color originalThumbnailBackgroundColor;
         private Color originalThumbnailFrameColor;
 
-        private bool initialized;
+        private bool isColorInitialized;
         private float greyOutOpacity;
 
         private void Awake()
         {
-            if(thumbnailImageView != null)
-                originalThumbnailImageColor = thumbnailImageView.ImageColor;
+            if (!isColorInitialized)
+            {
+                if (thumbnailImageView != null)
+                    originalThumbnailImageColor = thumbnailImageView.ImageColor;
 
-            if(thumbnailFrame != null)
-                originalThumbnailFrameColor = thumbnailFrame.color;
+                if(thumbnailFrame != null)
+                    originalThumbnailFrameColor = thumbnailFrame.color;
 
-            initialized = true;
+                isColorInitialized = true;
+            }
 
             GreyOut(greyOutOpacity);
         }
@@ -65,7 +68,19 @@ namespace DCL.UI.ProfileElements
 
         public void SetupOnlyColor(Color userColor)
         {
+            if (!isColorInitialized)
+            {
+                if (thumbnailImageView != null)
+                    originalThumbnailImageColor = thumbnailImageView.ImageColor;
+
+                if(thumbnailFrame != null)
+                    originalThumbnailFrameColor = thumbnailFrame.color;
+
+                isColorInitialized = true;
+            }
+
             originalThumbnailBackgroundColor = userColor;
+
             GreyOut(greyOutOpacity);
         }
 
@@ -77,13 +92,13 @@ namespace DCL.UI.ProfileElements
 
         public void SetDefaultThumbnail()
         {
-            thumbnailImageView.SetImage(defaultEmptyThumbnail);
+            thumbnailImageView.SetImage(defaultEmptyThumbnail, true);
             currentUrl = null;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
         {
-            thumbnailImageView.SetImage(sprite);
+            thumbnailImageView.SetImage(sprite, true);
             thumbnailImageView.ImageEnabled = true;
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
@@ -103,7 +118,7 @@ namespace DCL.UI.ProfileElements
 
                 if (sprite != null)
                 {
-                    thumbnailImageView.SetImage(sprite);
+                    thumbnailImageView.SetImage(sprite, true);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     return;
@@ -125,7 +140,7 @@ namespace DCL.UI.ProfileElements
             }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
+                ReportHub.LogException(e, ReportCategory.UI);
 
                 currentUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
@@ -140,7 +155,7 @@ namespace DCL.UI.ProfileElements
 
         public void GreyOut(float opacity)
         {
-            if (!initialized)
+            if (!isColorInitialized)
             {
                 // The method was called before Awake, it stores the value to be applied on Awake later
                 greyOutOpacity = opacity;
