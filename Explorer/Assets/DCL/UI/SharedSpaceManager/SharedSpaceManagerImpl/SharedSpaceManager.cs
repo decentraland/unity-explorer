@@ -243,6 +243,12 @@ namespace DCL.UI.SharedSpaceManager
 
             bool show = !registrations[panel].panel.IsVisibleInSharedSpace;
 
+            if (panel == PanelsSharingSpace.Chat)
+            {
+                await ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,  true));
+                return;
+            }
+            
             if (show)
                 await ShowAsync(panel, parameters);
             else
