@@ -151,8 +151,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(queuePool),
                 new InterpolationComponent(),
-                new ExtrapolationComponent(),
-                new TransformDirtyFlagComponent(transform.position)
+                new ExtrapolationComponent()
             );
 
             collidersGlobalCache.Associate(remoteAvatarCollider.Collider, entity);

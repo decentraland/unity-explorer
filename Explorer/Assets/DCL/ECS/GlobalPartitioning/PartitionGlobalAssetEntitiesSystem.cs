@@ -49,7 +49,7 @@ namespace DCL.Systems
             }
             else
             {
-                RePartitionDirtyTransformsQuery(World, cameraPosition, cameraForward);
+                RepartitionDirtyPlayersQuery(World, cameraPosition, cameraForward);
                 ResetDirtyQuery(World);
             }
 
@@ -88,13 +88,13 @@ namespace DCL.Systems
         [Query]
         [Any(typeof(PBAvatarShape), typeof(Profile))]
         [None(typeof(PlayerComponent))]
-        private void RePartitionDirtyTransforms([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
-            ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent, ref TransformDirtyFlagComponent dirtyFlag)
+        private void RepartitionDirtyPlayers([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
+            ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent)
         {
-            if (!dirtyFlag.IsDirty) return;
+            if (!transformComponent.IsDirty) return;
             
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
-            dirtyFlag.ClearDirty();
+            transformComponent.ClearDirty();
         }
 
         private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, ref PartitionComponent partitionComponent)

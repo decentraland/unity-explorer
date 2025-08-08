@@ -37,9 +37,9 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, 
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref TransformDirtyFlagComponent transformDirtyFlag)
+            ref RemotePlayerMovementComponent remotePlayerMovement)
         {
-            SetPositionAndRotation(transComp.Transform, firstRemote.position, firstRemote.rotationY, ref transformDirtyFlag);
+            SetPositionAndRotation(ref transComp, firstRemote.position, firstRemote.rotationY);
             
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
@@ -49,7 +49,7 @@ namespace DCL.Multiplayer.Movement.Systems
         [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp,
-            ref ExtrapolationComponent extComp, ref TransformDirtyFlagComponent transformDirtyFlag)
+            ref ExtrapolationComponent extComp)
         {
             SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
@@ -59,7 +59,7 @@ namespace DCL.Multiplayer.Movement.Systems
             // First message
             if (!remotePlayerMovement.Initialized && playerInbox.Count > 0)
             {
-                HandleFirstMessage(ref transComp, playerInbox.Dequeue(), ref remotePlayerMovement, ref transformDirtyFlag);
+                HandleFirstMessage(ref transComp, playerInbox.Dequeue(), ref remotePlayerMovement);
                 if (playerInbox.Count == 0) return;
             }
 
@@ -97,12 +97,11 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             if (playerInbox.Count > 0)
-                HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, ref transformDirtyFlag, playerInbox);
+                HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
         }
 
         private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, ref TransformDirtyFlagComponent transformDirtyFlag,
-            SimplePriorityQueue<NetworkMovementMessage> playerInbox)
+            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
 
@@ -119,14 +118,14 @@ namespace DCL.Multiplayer.Movement.Systems
             if (CanTeleport(remotePlayerMovement, remote))
             {
                 isBlend = false;
-                TeleportFiltered(ref remote, ref transComp, ref remotePlayerMovement, ref transformDirtyFlag, playerInbox);
+                TeleportFiltered(ref remote, ref transComp, ref remotePlayerMovement, playerInbox);
 
                 if (playerInbox.Count == 0) return;
 
                 remote = playerInbox.Dequeue();
             }
 
-            StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref transformDirtyFlag, remote, isBlend);
+            StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
         }
 
         private bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
@@ -168,7 +167,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, 
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref TransformDirtyFlagComponent transformDirtyFlag,
+            ref RemotePlayerMovementComponent remotePlayerMovement,
             SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             // Filter messages with the same position and rotation
@@ -178,7 +177,7 @@ namespace DCL.Multiplayer.Movement.Systems
                        && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
 
-            SetPositionAndRotation(transComp.Transform, remote.position, remote.rotationY, ref transformDirtyFlag);
+            SetPositionAndRotation(ref transComp, remote.position, remote.rotationY);
 
             remotePlayerMovement.AddPassed(remote, characterControllerSettings, wasTeleported: true);
         }
@@ -192,8 +191,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void StartInterpolation(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            ref InterpolationComponent intComp, ref TransformDirtyFlagComponent transformDirtyFlag, 
-            in NetworkMovementMessage remote, bool isBlend)
+            ref InterpolationComponent intComp, in NetworkMovementMessage remote, bool isBlend)
         {
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
@@ -214,18 +212,17 @@ namespace DCL.Multiplayer.Movement.Systems
             else if (intSettings.UseSpeedUp)
                 SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
 
-            SetPositionAndRotation(transComp.Transform, intComp.Start.position, intComp.Start.rotationY, ref transformDirtyFlag);
+            SetPositionAndRotation(ref transComp, intComp.Start.position, intComp.Start.rotationY);
 
             // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
             float unusedTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
         }
 
-        private static void SetPositionAndRotation(Transform transform, Vector3 position, float rotationY, 
-            ref TransformDirtyFlagComponent transformDirtyFlag)
+        private static void SetPositionAndRotation(ref CharacterTransform transformComp, Vector3 position, float rotationY)
         {
-            var newRotation = Quaternion.Euler(transform.rotation.x, rotationY, transform.rotation.z);
-            transform.SetPositionAndRotation(position, newRotation);
-            transformDirtyFlag.PushNewPosition(position);
+            var newRotation = Quaternion.Euler(transformComp.Transform.rotation.x, rotationY, transformComp.Transform.rotation.z);
+            transformComp.Transform.SetPositionAndRotation(position, newRotation);
+            transformComp.PushNewPosition(position);
         }
 
         private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
