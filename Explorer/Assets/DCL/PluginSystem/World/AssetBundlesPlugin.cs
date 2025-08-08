@@ -56,6 +56,8 @@ namespace DCL.PluginSystem.World
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache);
+
+            ProcessGameObjectSystem.InjectToWorld(ref builder);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -65,6 +67,8 @@ namespace DCL.PluginSystem.World
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);
+
+            ProcessGameObjectSystem.InjectToWorld(ref builder);
         }
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>

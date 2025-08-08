@@ -94,6 +94,12 @@ namespace ECS.StreamableLoading.AssetBundles
             return (T)mainAsset!;
         }
 
+        public bool TryGetMainAsset<T>(out T? result) where T: Object
+        {
+            result = mainAsset as T;
+            return result;
+        }
+
         public string GetInstanceName() => description;
 
     }
