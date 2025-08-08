@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using UnityEngine;
 
 namespace DCL.CharacterPreview
@@ -18,6 +19,11 @@ namespace DCL.CharacterPreview
     {
         [field: SerializeField] internal Vector3 verticalPosition { get; private set; }
         [field: SerializeField] internal float cameraFieldOfView { get; private set; }
+        [field: SerializeField] public Ease cameraFieldOfViewEase { get; private set; }
+        [field: SerializeField] public float cameraFieldOfViewEaseDuration { get; private set; }
+        [field: SerializeField] internal float cameraMiddleRigRadius { get; private set; }
+        [field: SerializeField, Range(-0.5f, 1.5f)] internal float cameraScreenX { get; private set; }
+        [field: SerializeField, Range(-0.5f, 1.5f)] internal float cameraScreenY { get; private set; }
         [field: SerializeField] internal AvatarWearableCategoryEnum wearableCategoryEnum { get; private set; }
     }
 
@@ -39,10 +45,14 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal float fieldOfViewThresholdForPanning { get; private set; }
         [field: SerializeField] internal float fieldOfViewThresholdForReCentering { get; private set; }
         [field: SerializeField] internal Vector2 fieldOfViewLimits { get; private set; }
+        [field: SerializeField] public Ease fieldOfViewEase { get; private set; }
+        [field: SerializeField] public float fieldOfViewEaseDuration { get; private set; }
 
         [field: Header("Rotation Settings")]
         [field: SerializeField] public bool rotationEnabled { get; private set; }
         [field: SerializeField] public float rotationModifier { get; private set; }
+        [field: SerializeField] public Ease rotationEase { get; private set; }
+        [field: SerializeField] public float rotationEaseDuration { get; private set; }
     }
 
     [Serializable]

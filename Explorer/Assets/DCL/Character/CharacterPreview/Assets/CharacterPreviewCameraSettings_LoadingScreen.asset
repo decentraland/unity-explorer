@@ -14,8 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <cameraSettings>k__BackingField:
     <cameraPositions>k__BackingField:
-    - <verticalPosition>k__BackingField: {x: 1, y: 0, z: 1}
-      <cameraFieldOfView>k__BackingField: 24
+    - <verticalPosition>k__BackingField: {x: 0, y: -0.2, z: 0}
+      <cameraFieldOfView>k__BackingField: 20
+      <cameraFieldOfViewEase>k__BackingField: 6
+      <cameraFieldOfViewEaseDuration>k__BackingField: 0.5
+      <cameraMiddleRigRadius>k__BackingField: 8
+      <cameraScreenX>k__BackingField: 0.7
+      <cameraScreenY>k__BackingField: 0.55
       <wearableCategoryEnum>k__BackingField: 4
     <dragEnabled>k__BackingField: 1
     <dragMovementModifier>k__BackingField: 0.3
@@ -26,8 +31,12 @@ MonoBehaviour:
     <fieldOfViewThresholdForPanning>k__BackingField: 32
     <fieldOfViewThresholdForReCentering>k__BackingField: 10
     <fieldOfViewLimits>k__BackingField: {x: 40, y: 16}
+    <fieldOfViewEase>k__BackingField: 6
+    <fieldOfViewEaseDuration>k__BackingField: 0.4
     <rotationEnabled>k__BackingField: 1
-    <rotationModifier>k__BackingField: 10
+    <rotationModifier>k__BackingField: 35
+    <rotationEase>k__BackingField: 6
+    <rotationEaseDuration>k__BackingField: 0.75
   <cursorSettings>k__BackingField:
   - inputAction: 1
     cursorSprite: {fileID: 21300000, guid: d34aedda08e64344091b34deada8211e, type: 3}

@@ -16,18 +16,43 @@ MonoBehaviour:
     <cameraPositions>k__BackingField:
     - <verticalPosition>k__BackingField: {x: 0, y: -0.2, z: 0}
       <cameraFieldOfView>k__BackingField: 26.5
+      <cameraFieldOfViewEase>k__BackingField: 6
+      <cameraFieldOfViewEaseDuration>k__BackingField: 0.5
+      <cameraMiddleRigRadius>k__BackingField: 6
+      <cameraScreenX>k__BackingField: 0.5
+      <cameraScreenY>k__BackingField: 0.55
       <wearableCategoryEnum>k__BackingField: 4
     - <verticalPosition>k__BackingField: {x: 0, y: 0.5, z: 0}
       <cameraFieldOfView>k__BackingField: 9.5
+      <cameraFieldOfViewEase>k__BackingField: 6
+      <cameraFieldOfViewEaseDuration>k__BackingField: 0.5
+      <cameraMiddleRigRadius>k__BackingField: 6
+      <cameraScreenX>k__BackingField: 0.5
+      <cameraScreenY>k__BackingField: 0.55
       <wearableCategoryEnum>k__BackingField: 3
     - <verticalPosition>k__BackingField: {x: 0, y: 0.15, z: 0}
       <cameraFieldOfView>k__BackingField: 15
+      <cameraFieldOfViewEase>k__BackingField: 6
+      <cameraFieldOfViewEaseDuration>k__BackingField: 0.5
+      <cameraMiddleRigRadius>k__BackingField: 6
+      <cameraScreenX>k__BackingField: 0.5
+      <cameraScreenY>k__BackingField: 0.55
       <wearableCategoryEnum>k__BackingField: 0
     - <verticalPosition>k__BackingField: {x: 0, y: -0.4, z: 0}
       <cameraFieldOfView>k__BackingField: 15
+      <cameraFieldOfViewEase>k__BackingField: 6
+      <cameraFieldOfViewEaseDuration>k__BackingField: 0.5
+      <cameraMiddleRigRadius>k__BackingField: 6
+      <cameraScreenX>k__BackingField: 0.5
+      <cameraScreenY>k__BackingField: 0.55
       <wearableCategoryEnum>k__BackingField: 1
     - <verticalPosition>k__BackingField: {x: 0, y: -0.75, z: 0}
       <cameraFieldOfView>k__BackingField: 11.5
+      <cameraFieldOfViewEase>k__BackingField: 6
+      <cameraFieldOfViewEaseDuration>k__BackingField: 0.5
+      <cameraMiddleRigRadius>k__BackingField: 6
+      <cameraScreenX>k__BackingField: 0.5
+      <cameraScreenY>k__BackingField: 0.55
       <wearableCategoryEnum>k__BackingField: 2
     <dragEnabled>k__BackingField: 1
     <dragMovementModifier>k__BackingField: 0.3
@@ -38,8 +63,12 @@ MonoBehaviour:
     <fieldOfViewThresholdForPanning>k__BackingField: 18
     <fieldOfViewThresholdForReCentering>k__BackingField: 10
     <fieldOfViewLimits>k__BackingField: {x: 27, y: 8}
+    <fieldOfViewEase>k__BackingField: 6
+    <fieldOfViewEaseDuration>k__BackingField: 0.4
     <rotationEnabled>k__BackingField: 1
-    <rotationModifier>k__BackingField: 10
+    <rotationModifier>k__BackingField: 15
+    <rotationEase>k__BackingField: 6
+    <rotationEaseDuration>k__BackingField: 0.75
   <cursorSettings>k__BackingField:
   - inputAction: 0
     cursorSprite: {fileID: 21300000, guid: a0dd824ee2daadd46a4437a4e3145c9e, type: 3}
