@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace DCL.Friends
 {
@@ -352,6 +353,9 @@ namespace DCL.Friends
 
         public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentException("GetFriendshipStatus called with empty userId", nameof(userId));
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetFriendshipStatusPayload
