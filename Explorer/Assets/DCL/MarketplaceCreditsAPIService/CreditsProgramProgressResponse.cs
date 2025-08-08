@@ -6,8 +6,10 @@ namespace DCL.MarketplaceCreditsAPIService
     [Serializable]
     public struct CreditsProgramProgressResponse
     {
-        public SeasonData season;
-        public CurrentWeekData currentWeek;
+	    public SeasonData lastSeason;
+	    public SeasonData currentSeason;
+	    public Week currentWeek;
+	    public SeasonData nextSeason;
         public UserData user;
         public CreditsData credits;
         public List<GoalData> goals;
@@ -16,16 +18,24 @@ namespace DCL.MarketplaceCreditsAPIService
     [Serializable]
     public struct SeasonData
     {
-        public string startDate;
-        public string endDate;
-        public uint timeLeft;
-        public string seasonState;
+    	public int id;
+    	public string name;
+    	public string startDate;
+    	public string endDate;
+    	public string maxMana;
+	    public int timeLeft;
+    	public int amountOfWeeks;
+    	public string state;
     }
 
     [Serializable]
-    public struct CurrentWeekData
+    public struct Week
     {
-        public uint timeLeft;
+    	public int weekNumber;
+    	public uint timeLeft;
+    	public string startDate;
+    	public string endDate;
+    	public uint secondsRemaining;
     }
 
     [Serializable]
@@ -60,4 +70,24 @@ namespace DCL.MarketplaceCreditsAPIService
         public uint totalSteps;
         public uint completedSteps;
     }
+	
+	/// <summary>
+	/// Struct used to deserialize backend json data.
+	/// </summary>
+	public struct SeasonsData
+	{
+		public SeasonData lastSeason;
+		public CurrentSeasonInfo currentSeason;
+		public SeasonData nextSeason;
+	}
+
+	/// <summary>
+	/// Struct used to deserialize backend json data.
+	/// </summary>
+	[Serializable]
+	public struct CurrentSeasonInfo
+	{
+		public SeasonData season;
+		public Week week;
+	}
 }

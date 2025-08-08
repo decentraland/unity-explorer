@@ -68,6 +68,7 @@ namespace DCL.MarketplaceCredits
         private CancellationTokenSource sidebarButtonStateCts;
 
         private bool haveJustClaimedCredits;
+        private SeasonsData? seasonsData;
 
         public MarketplaceCreditsMenuController(
             ViewFactoryMethod viewFactory,
@@ -323,11 +324,14 @@ namespace DCL.MarketplaceCredits
                 if (ownProfile == null)
                     return;
 
-                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, ownProfile.UserId, ct);
+                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, 
+                    ownProfile.UserId, ct);
                 if (!isFeatureActivated)
                     return;
-
-                var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
+                
+                var creditsProgramProgressResponse = 
+                    await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
+                
                 SetSidebarButtonState(creditsProgramProgressResponse);
 
                 if (!creditsProgramProgressResponse.HasUserStartedProgram())
@@ -360,7 +364,6 @@ namespace DCL.MarketplaceCredits
         private void SetSidebarButtonState(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
             if (creditsProgramProgressResponse.IsProgramEnded())
-
             {
                 SetSidebarButtonAnimationAsAlert(false);
                 SetSidebarButtonAsClaimIndicator(false);
@@ -368,8 +371,14 @@ namespace DCL.MarketplaceCredits
             }
 
             bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
-            SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || (thereIsSomethingToClaim && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
-            SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
+            SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() 
+                                             || !creditsProgramProgressResponse.IsUserEmailVerified() 
+                                             || (thereIsSomethingToClaim 
+                                                 && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
+            SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() 
+                                             && creditsProgramProgressResponse.IsUserEmailVerified() 
+                                             && thereIsSomethingToClaim 
+                                             && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
         }
     }
 }

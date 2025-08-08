@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -11,6 +12,8 @@ namespace DCL.MarketplaceCreditsAPIService
 {
     public class MarketplaceCreditsAPIClient
     {
+        private const string NO_DATA_STATE = "NO_DATA";
+        private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
 
         private readonly IWebRequestController webRequestController;
@@ -37,15 +40,44 @@ namespace DCL.MarketplaceCreditsAPIService
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/progress";
 
-            CreditsProgramProgressResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                                      .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
+            CreditsProgramProgressResponse creditsProgramProgressResponse = 
+                await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                    .CreateFromJson<CreditsProgramProgressResponse>(WRJsonParser.Unity);
 
             EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
-            creditsProgramProgressResponse.user.email = !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) ? emailSubscriptionResponse.unconfirmedEmail : emailSubscriptionResponse.email;
-            creditsProgramProgressResponse.user.isEmailConfirmed = string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
+            SeasonsData seasonResult = await UpdateProgramSeasonsAsync(ct);
+
+            creditsProgramProgressResponse.lastSeason = seasonResult!.lastSeason;
+            creditsProgramProgressResponse.currentSeason = seasonResult!.currentSeason.season;
+            // Setting this here, so we don't need to check for null everytime.
+            if (seasonResult!.currentSeason.season.state == null)
+                creditsProgramProgressResponse.currentSeason.state = NO_DATA_STATE;
+            creditsProgramProgressResponse.currentWeek = seasonResult!.currentSeason.week;
+            creditsProgramProgressResponse.nextSeason = seasonResult!.nextSeason;
+            creditsProgramProgressResponse.user.email = 
+                !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) 
+                    ? emailSubscriptionResponse.unconfirmedEmail 
+                    : emailSubscriptionResponse.email;
+            creditsProgramProgressResponse.user.isEmailConfirmed = 
+                string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail) 
+                && !string.IsNullOrEmpty(emailSubscriptionResponse.email);
 
             OnProgramProgressUpdated?.Invoke(creditsProgramProgressResponse);
             return creditsProgramProgressResponse;
+        }
+
+        private async Task<SeasonsData> UpdateProgramSeasonsAsync(CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/seasons";
+            
+            var result = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                    .CreateFromJson<SeasonsData>(WRJsonParser.Unity);
+
+            result.lastSeason.state ??= NO_DATA_STATE;
+            result.currentSeason.season.state ??= NO_DATA_STATE;
+            result.nextSeason.state = string.IsNullOrEmpty(result.nextSeason.startDate) ? NO_DATA_STATE : SEASON_NOT_STARTED_STATE;
+
+            return result;
         }
 
         public async UniTask<Sprite> GenerateCaptchaAsync(CancellationToken ct)
