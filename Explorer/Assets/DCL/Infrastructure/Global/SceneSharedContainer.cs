@@ -72,8 +72,7 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata,
-                    staticContainer.StaticSceneAssetBundlesDictionary)
+                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata)
             };
         }
     }

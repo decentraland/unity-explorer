@@ -73,8 +73,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>(),
-                Substitute.For<IRemoteMetadata>(),
-                new Dictionary<string, StaticSceneAssetBundle>());
+                Substitute.For<IRemoteMetadata>());
         }
 
         [TearDown]

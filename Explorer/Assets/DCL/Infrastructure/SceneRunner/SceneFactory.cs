@@ -63,7 +63,6 @@ namespace SceneRunner
         private readonly IRemoteMetadata remoteMetadata;
 
         private IGlobalWorldActions globalWorldActions = null!;
-        private readonly Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -83,8 +82,7 @@ namespace SceneRunner
             IRealmData? realmData,
             IPortableExperiencesController portableExperiencesController,
             ISceneCommunicationPipe messagePipesHub,
-            IRemoteMetadata remoteMetadata,
-            Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundleDictionary)
+            IRemoteMetadata remoteMetadata)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -104,7 +102,6 @@ namespace SceneRunner
             this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
             this.portableExperiencesController = portableExperiencesController;
-            this.staticSceneAssetBundlesDictionary = staticSceneAssetBundleDictionary;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -159,7 +156,7 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory, webRequestController, staticSceneAssetBundlesDictionary[sceneData.SceneEntityDefinition.id]);
+            var deps = new SceneInstanceDependencies(decentralandUrlsSource, sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory, webRequestController);
 
             // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;

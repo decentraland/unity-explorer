@@ -17,12 +17,10 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class PrepareAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
         private readonly ISceneData sceneData;
-        private readonly StaticSceneAssetBundle staticSceneAssetBundle;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL, StaticSceneAssetBundle staticSceneAssetBundle) : base(world, streamingAssetURL, assetBundlesURL)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
         {
             this.sceneData = sceneData;
-            this.staticSceneAssetBundle = staticSceneAssetBundle;
         }
 
         protected override void Update(float t)

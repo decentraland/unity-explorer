@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.World
                 new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
 
             // Asset loading
-            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles, sharedDependencies.StaticSceneAssetBundle);
+            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);
 
             if (localSceneDevelopment && !useRemoteAssetBundles)
                 CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
@@ -96,7 +96,7 @@ namespace DCL.PluginSystem.World
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
-                persistentEntities.SceneContainer, sharedDependencies.StaticSceneAssetBundle);
+                persistentEntities.SceneContainer);
         }
     }
 }

@@ -24,12 +24,10 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class ResolveStaticSceneAssetBundleSystem : BaseUnityLoopSystem
     {
 
-        private readonly Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary;
         private IGltfContainerAssetsCache assetsCache;
 
-        public ResolveStaticSceneAssetBundleSystem(World world, Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary, IGltfContainerAssetsCache assetsCache) : base(world)
+        public ResolveStaticSceneAssetBundleSystem(World world, IGltfContainerAssetsCache assetsCache) : base(world)
         {
-            this.staticSceneAssetBundlesDictionary = staticSceneAssetBundlesDictionary;
             this.assetsCache = assetsCache;
         }
 
@@ -45,7 +43,6 @@ namespace ECS.SceneLifeCycle.Systems
         public void InitializeStaticSceneAssetBundle(Entity entity, in SceneDefinitionComponent sceneDefinitionComponent)
         {
             StaticSceneAssetBundle staticScene = new StaticSceneAssetBundle(World, sceneDefinitionComponent.Definition.id);
-            staticSceneAssetBundlesDictionary.Add(sceneDefinitionComponent.Definition.id, staticScene);
             World.Add(entity, staticScene);
         }
 

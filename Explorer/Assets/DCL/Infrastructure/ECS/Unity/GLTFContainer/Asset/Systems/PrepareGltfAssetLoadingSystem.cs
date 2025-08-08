@@ -26,14 +26,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private readonly IGltfContainerAssetsCache cache;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
-        private readonly StaticSceneAssetBundle staticSceneAssetBundle;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, bool localSceneDevelopment, bool useRemoteAssetBundles, StaticSceneAssetBundle staticSceneAssetBundle) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, bool localSceneDevelopment, bool useRemoteAssetBundles) : base(world)
         {
             this.cache = cache;
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
-            this.staticSceneAssetBundle = staticSceneAssetBundle;
         }
 
         protected override void Update(float t)

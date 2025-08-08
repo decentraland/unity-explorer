@@ -127,8 +127,7 @@ namespace SceneRunner
             IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory,
             ISceneEntityFactory entityFactory,
-            IWebRequestController webRequestController,
-            StaticSceneAssetBundle staticSceneAssetBundle)
+            IWebRequestController webRequestController)
         {
             this.sceneData = sceneData;
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
@@ -149,7 +148,7 @@ namespace SceneRunner
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
                 ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
-                worldTimeProvider, systemGroupThrottler, systemsUpdateGate, staticSceneAssetBundle);
+                worldTimeProvider, systemGroupThrottler, systemsUpdateGate);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);

@@ -118,8 +118,6 @@ namespace Global
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
 
-        //TODO (JUANI) : Where should this go? Doesnt seem right here
-        public Dictionary<string, StaticSceneAssetBundle> StaticSceneAssetBundlesDictionary;
         public GltfContainerAssetsCache  GltfContainerAssetsCache;
 
 
@@ -186,7 +184,6 @@ namespace Global
             container.MemoryCap = memoryCap;
             container.SceneRestrictionBusController = new SceneRestrictionBusController();
             container.LaunchMode = launchMode;
-            container.StaticSceneAssetBundlesDictionary = new Dictionary<string, StaticSceneAssetBundle>();
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -228,7 +225,7 @@ namespace Global
             container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
             var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
-            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), container.StaticSceneAssetBundlesDictionary, container.GltfContainerAssetsCache);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), container.GltfContainerAssetsCache);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, profileRepository);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();

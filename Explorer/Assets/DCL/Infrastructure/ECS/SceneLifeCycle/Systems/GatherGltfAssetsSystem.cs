@@ -44,14 +44,12 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
 
-        private StaticSceneAssetBundle staticSceneAssetBundle;
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
             ILoadingStatus loadingStatus,
-            Entity sceneContainerEntity,
-            StaticSceneAssetBundle staticSceneAssetBundle) : base(world)
+            Entity sceneContainerEntity) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
@@ -60,7 +58,6 @@ namespace ECS.SceneLifeCycle.Systems
             this.memoryBudget = memoryBudget;
             this.loadingStatus = loadingStatus;
             this.sceneContainerEntity = sceneContainerEntity;
-            this.staticSceneAssetBundle = staticSceneAssetBundle;
 
             forEachEvent = GatherEntities;
         }
@@ -83,6 +80,8 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
+            /*
+             TODO (JUANI) : How can we finalize sooner if we have the asset ready?
             bool shouldWait;
 
             if (staticSceneAssetBundle.IsSupported())
@@ -95,8 +94,9 @@ namespace ECS.SceneLifeCycle.Systems
                 // If not supported, run for frame count
                 shouldWait = sceneStateProvider.TickNumber < FRAMES_COUNT;
             }
+            */
 
-            if (shouldWait)
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
                 eventsBuffer.ForEach(forEachEvent);
             else if (!concluded)
             {

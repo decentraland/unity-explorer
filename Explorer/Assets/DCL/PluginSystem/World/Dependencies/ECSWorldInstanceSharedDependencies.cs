@@ -27,8 +27,6 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly MultiThreadSync MultiThreadSync;
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
-        //TODO (JUANI): I dont love this injection over here
-        public readonly StaticSceneAssetBundle StaticSceneAssetBundle;
 
         public readonly IWorldTimeProvider WorldTimeProvider;
 
@@ -41,8 +39,7 @@ namespace DCL.PluginSystem.World.Dependencies
             IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
             MultiThreadSync multiThreadSync, IWorldTimeProvider worldTimeProvider,
-            ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate,
-            StaticSceneAssetBundle staticSceneAssetBundle)
+            ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate)
         {
             SceneData = sceneData;
             EcsToCRDTWriter = ecsToCRDTWriter;
@@ -56,7 +53,6 @@ namespace DCL.PluginSystem.World.Dependencies
             WorldTimeProvider = worldTimeProvider;
             EcsGroupThrottler = ecsGroupThrottler;
             EcsSystemsGate = ecsSystemsGate;
-            StaticSceneAssetBundle = staticSceneAssetBundle;
             EntityEventsBuilder = entityEventsBuilder;
         }
     }

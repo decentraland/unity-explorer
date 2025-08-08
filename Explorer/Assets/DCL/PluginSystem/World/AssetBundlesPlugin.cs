@@ -41,18 +41,16 @@ namespace DCL.PluginSystem.World
         private readonly ArrayPool<byte> buffersPool;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly URLDomain assetBundleURL;
-        private readonly Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary;
         private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
-            URLDomain assetBundleURL, Dictionary<string, StaticSceneAssetBundle> staticSceneAssetBundlesDictionary, IGltfContainerAssetsCache gltfContainerAssetsCache)
+            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
             this.partialsDiskCache = partialsDiskCache;
             this.assetBundleURL = assetBundleURL;
-            this.staticSceneAssetBundlesDictionary = staticSceneAssetBundlesDictionary;
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
@@ -63,7 +61,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             // Asset Bundles
-            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL, assetBundleURL, sharedDependencies.StaticSceneAssetBundle);
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL, assetBundleURL);
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache);
@@ -76,7 +74,7 @@ namespace DCL.PluginSystem.World
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
 
-            ResolveStaticSceneAssetBundleSystem.InjectToWorld(ref builder, staticSceneAssetBundlesDictionary, gltfContainerAssetsCache);
+            ResolveStaticSceneAssetBundleSystem.InjectToWorld(ref builder, gltfContainerAssetsCache);
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);
