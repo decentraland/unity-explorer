@@ -56,7 +56,7 @@ namespace DCL.Chat
             {
                 var data = new UserProfileMenuRequest
                 {
-                    WalletAddress = new Web3Address(""), Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
+                    WalletAddress = new Web3Address(""), Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_LEFT, Offset = Vector2.zero
                 };
                 OnProfileContextMenuRequested?.Invoke(data);
             }
@@ -64,7 +64,7 @@ namespace DCL.Chat
             {
                 var data = new ShowContextMenuRequest
                 {
-                    Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
+                    Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_LEFT, Offset = Vector2.zero
                 };
                 OnCommunityContextMenuRequested?.Invoke(data);
             }
