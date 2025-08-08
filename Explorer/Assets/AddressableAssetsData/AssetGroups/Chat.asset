@@ -85,6 +85,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3988fe058c9e463580d97c75e2b574d
+    m_Address: Assets/DCL/VoiceChat/Assets/CommunityVoiceChatContextMenuSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f3b1d401bc50845629a6b982f9793f16
     m_Address: Chat
     m_ReadOnly: 0

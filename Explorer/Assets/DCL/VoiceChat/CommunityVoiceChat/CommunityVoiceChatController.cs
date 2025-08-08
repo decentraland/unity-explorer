@@ -86,7 +86,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 return;
 
             cts = cts.SafeRestart();
-            GetCommunitiyInfoAsync(communityId, cts.Token).Forget();
+            GetCommunityInfoAsync(communityId, cts.Token).Forget();
         }
 
         private void OnCommunityCallStatusUpdate(VoiceChatStatus status)
@@ -239,7 +239,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             }
         }
 
-        private async UniTaskVoid GetCommunitiyInfoAsync(string communityId, CancellationToken ct)
+        private async UniTaskVoid GetCommunityInfoAsync(string communityId, CancellationToken ct)
         {
             GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, ct);
             inCallController.SetCommunityData(communityData);
@@ -280,17 +280,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries[participantState.WalletId] =  entryView;
 
-            entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, ProfileNameColorHelper.GetNameColor(participantState.Name.Value), participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
+            var nameColor = ProfileNameColorHelper.GetNameColor(participantState.Name.Value);
+
+            entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, nameColor, participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
             entryView.nameElement.Setup(participantState.Name.Value, participantState.WalletId, participantState.HasClaimedName.Value ?? false, ProfileNameColorHelper.GetNameColor(participantState.Name.Value));
             view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
-            
+
             var subscriptions = new List<IDisposable>
             {
                 participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView)),
                 participantState.IsSpeaker.Subscribe(isSpeaker => SetUserEntryParent(isSpeaker, entryView)),
                 participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name))
             };
-            
+
             participantSubscriptions[participantState.WalletId] = subscriptions;
             return entryView;
         }
