@@ -125,6 +125,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8521b529ac852454480e3f6596bca3ba
+    m_Address: SceneDebugConsoleRootCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8fd0fd0188702304689c461c6aacc7c5
     m_Address: HoverCanvas
     m_ReadOnly: 0
