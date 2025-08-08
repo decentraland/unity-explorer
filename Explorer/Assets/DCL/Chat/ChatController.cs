@@ -39,7 +39,6 @@ using DCL.Web3;
 using Decentraland.SocialService.V2;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Realm;
-using LiveKit.Rooms;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -66,7 +65,6 @@ namespace DCL.Chat
         private readonly IChatHistory chatHistory;
         private readonly World world;
         private readonly IInputBlock inputBlock;
-        private readonly IRoom islandRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatSettingsAsset chatSettings;
@@ -91,7 +89,6 @@ namespace DCL.Chat
         private readonly bool isCallEnabled;
 
         private readonly List<ChatUserData> membersBuffer = new ();
-        private readonly List<ChatUserData> participantProfileBuffer = new ();
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> userCommunities = new ();
         private readonly UserConnectivityInfoProvider userConnectivityInfoProvider;
 
@@ -111,7 +108,7 @@ namespace DCL.Chat
         private CancellationTokenSource isUserAllowedInInitializationCts;
         private CancellationTokenSource isUserAllowedInCommunitiesBusSubscriptionCts;
 
-        public ReactiveProperty<ChatChannel> CurrentChannel { get; } = new ReactiveProperty<ChatChannel>(ChatChannel.NEARBY_CHANNEL);
+        public ReactiveProperty<ChatChannel> CurrentChannel { get; } = new (ChatChannel.NEARBY_CHANNEL);
 
         public event ConversationOpenedDelegate? ConversationOpened;
         public event ConversationClosedDelegate? ConversationClosed;
@@ -157,7 +154,6 @@ namespace DCL.Chat
             this.nametagsData = nametagsData;
             this.world = world;
             this.inputBlock = inputBlock;
-            this.islandRoom = roomHub.IslandRoom();
             this.roomHub = roomHub;
             this.chatSettings = chatSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;

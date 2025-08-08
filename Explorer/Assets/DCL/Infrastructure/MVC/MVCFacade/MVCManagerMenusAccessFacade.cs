@@ -48,7 +48,6 @@ namespace MVC
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
         private CommunityPlayerEntryContextMenu communityPlayerEntryContextMenu;
-        private ChatOptionsContextMenuController chatOptionsContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
@@ -137,7 +136,7 @@ namespace MVC
         }
 
         private async UniTask ShowCommunityPlayerEntryContextMenu(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false, bool isModeratorOrAdmin = false)
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
                 friendServiceProxy, chatEventBus, mvcManager,
