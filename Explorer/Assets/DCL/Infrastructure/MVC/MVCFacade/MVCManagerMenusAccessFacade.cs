@@ -117,7 +117,7 @@ namespace MVC
 
             if (profile == null) return;
 
-            await ShowCommunityPlayerEntryContextMenu(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint, isSpeaker);
+            await ShowCommunityPlayerEntryContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint, isSpeaker);
         }
 
         public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
@@ -135,7 +135,7 @@ namespace MVC
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
         }
 
-        private async UniTask ShowCommunityPlayerEntryContextMenu(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
+        private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
