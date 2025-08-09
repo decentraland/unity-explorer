@@ -43,17 +43,25 @@ namespace DCL.Chat.ChatServices
             if (EventSystem.current == null) return;
             if (isPaused) return;
 
-            var eventData = new PointerEventData(EventSystem.current) { position = Mouse.current.position.ReadValue() };
+            // var eventData = new PointerEventData(EventSystem.current)
+            // {
+            //     position = Mouse.current.position.ReadValue()
+            // };
 
+            var eventData = new PointerEventData(EventSystem.current)
+            {
+                position = GetPointerPosition(context)
+            };
+        
             using PooledObject<List<RaycastResult>> _ = ListPool<RaycastResult>.Get(out List<RaycastResult>? results);
-
+        
             EventSystem.current.RaycastAll(eventData, results);
-
+        
             if (results.Count > 0 && IsIgnored(results[0].gameObject))
                 return;
-
+        
             var clickedInside = false;
-
+        
             foreach (RaycastResult result in results)
             {
                 if (result.gameObject.transform.IsChildOf(targetArea))
@@ -62,7 +70,7 @@ namespace DCL.Chat.ChatServices
                     break;
                 }
             }
-
+        
             if (clickedInside) OnClickInside?.Invoke();
             else OnClickOutside?.Invoke();
         }
@@ -85,6 +93,16 @@ namespace DCL.Chat.ChatServices
             }
 
             return false;
+        }
+
+        private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
+        {
+            if (ctx.control is Pointer pCtrl) return pCtrl.position.ReadValue();
+            if (Pointer.current != null) return Pointer.current.position.ReadValue();
+            if (Mouse.current != null) return Mouse.current.position.ReadValue();
+            if (Touchscreen.current?.primaryTouch != null)
+                return Touchscreen.current.primaryTouch.position.ReadValue();
+            return Vector2.zero;
         }
     }
 }
