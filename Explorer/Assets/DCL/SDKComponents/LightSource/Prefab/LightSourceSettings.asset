@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f88d85d4a404487b6d1d67e6a3b6a09, type: 3}
   m_Name: LightSourceSettings
   m_EditorClassIdentifier: 
-  RangeFormulaExponent: 0.5
+  RangeFormulaExponent: 0.25
   FadeDuration: 0.25
-  SpotLightIntensityScale: 0.1
-  PointLightIntensityScale: 0.08
+  SpotLightIntensityScale: 0.0005
+  PointLightIntensityScale: 0.0005
   DefaultValues:
     Active: 1
     Color: {r: 1, g: 1, b: 1, a: 1}
-    Intensity: 100
+    Intensity: 16000
     Range: -1
     Shadows: 0
     InnerAngle: 21.8
