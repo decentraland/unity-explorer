@@ -22,7 +22,7 @@ namespace DCL.Systems
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class PartitionGlobalAssetEntitiesSystem : BaseUnityLoopSystem
     {
-        private readonly IReadOnlyCameraSamplingData samplingData;
+        private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IPartitionSettings partitionSettings;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
 
@@ -31,7 +31,7 @@ namespace DCL.Systems
         {
             this.partitionComponentPool = partitionComponentPool;
             partitionSettings = settings;
-            samplingData = cameraSamplingData;
+            this.cameraSamplingData = cameraSamplingData;
         }
 
         protected override void Update(float t)
@@ -39,21 +39,18 @@ namespace DCL.Systems
             // First re-partition if player position or rotation is changed
             // if is true then re-partition if Transform.isDirty
 
-            Vector3 cameraPosition = samplingData.Position;
-            Vector3 cameraForward = samplingData.Forward;
+            Vector3 cameraPosition = cameraSamplingData.Position;
+            Vector3 cameraForward = cameraSamplingData.Forward;
 
-            if (samplingData.IsDirty)
+            if (cameraSamplingData.IsDirty)
             {
                 // Repartition everything
                 RePartitionExistingEntityQuery(World, cameraPosition, cameraForward);
             }
             else
             {
+                RePartitionDirtyTransformsQuery(World, cameraPosition, cameraForward);
                 ResetDirtyQuery(World);
-
-                // Repartition all entities with dirty transform
-                // TODO we don't have a scheme for changing transform in the global world at the moment
-                // RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, true);
             }
 
             // Then partition all entities that are not partitioned yet
@@ -70,7 +67,8 @@ namespace DCL.Systems
         [Query]
         [Any(typeof(PBAvatarShape), typeof(Profile))]
         [None(typeof(PartitionComponent))]
-        private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref CharacterTransform transformComponent)
+        private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, 
+            ref CharacterTransform transformComponent)
         {
             PartitionComponent partitionComponent = partitionComponentPool.Get();
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
@@ -87,6 +85,18 @@ namespace DCL.Systems
             RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
         }
 
+        [Query]
+        [Any(typeof(PBAvatarShape), typeof(Profile))]
+        [None(typeof(PlayerComponent))]
+        private void RePartitionDirtyTransforms([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
+            ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent, ref TransformDirtyFlagComponent dirtyFlag)
+        {
+            if (!dirtyFlag.IsDirty) return;
+            
+            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
+            dirtyFlag.ClearDirty();
+        }
+
         private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, ref PartitionComponent partitionComponent)
         {
             // TODO pure math logic can be jobified for much better performance
@@ -98,7 +108,8 @@ namespace DCL.Systems
             Vector3 vectorToCamera = entityPosition - cameraTransform;
             float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
 
-            PartitionAssetEntitiesSystem.ResolvePartitionFromDistance(partitionSettings, cameraForward, partitionComponent, sqrDistance, vectorToCamera);
+            PartitionAssetEntitiesSystem.ResolvePartitionFromDistance(partitionSettings, cameraForward, partitionComponent, 
+                 sqrDistance, vectorToCamera);
 
             partitionComponent.IsDirty = bucket != partitionComponent.Bucket || isBehind != partitionComponent.IsBehind;
         }
