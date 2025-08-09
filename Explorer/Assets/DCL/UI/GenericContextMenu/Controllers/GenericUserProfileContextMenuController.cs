@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -77,8 +78,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ISharedSpaceManager sharedSpaceManager,
-            bool includeVoiceChat)
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -89,7 +89,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.includeVoiceChat = includeVoiceChat;
+            this.includeVoiceChat = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;

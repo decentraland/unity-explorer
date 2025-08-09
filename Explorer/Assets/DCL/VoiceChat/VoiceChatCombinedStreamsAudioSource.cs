@@ -1,20 +1,30 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using LiveKit.Rooms.Streaming.Audio;
 using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
+using Utility;
 
 namespace DCL.VoiceChat
 {
     public class VoiceChatCombinedStreamsAudioSource : MonoBehaviour
     {
         [field: SerializeField] private AudioSource audioSource;
-        private const int DEFAULT_LIVEKIT_CHANNELS = 1;
+        [field: SerializeField] private VoiceChatCombinedStreamsAudioFilter audioFilter;
+        private readonly Dictionary<IAudioStream, LivekitAudioSource> sourcesMap = new ();
 
-        private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
         private int sampleRate = 48000;
-        private float[] tempBuffer;
+
+        public void Reset()
+        {
+            audioFilter.Reset();
+
+            foreach (LivekitAudioSource audioSource in sourcesMap.Values) { audioSource.SelfDestroy(); }
+
+            sourcesMap.Clear();
+            isPlaying = false;
+        }
 
         private void OnEnable()
         {
@@ -25,85 +35,49 @@ namespace DCL.VoiceChat
         private void OnDisable()
         {
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
-            if (tempBuffer != null)
-                Array.Clear(tempBuffer, 0, tempBuffer.Length);
-
-            streams.Clear();
+            audioFilter.Clear();
             isPlaying = false;
             sampleRate = 48000;
         }
 
+        private void OnDestroy()
+        {
+            audioFilter.Dispose();
+        }
+
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            if (!isPlaying || streams.Count == 0)
-            {
-                data.AsSpan().Clear();
-                return;
-            }
-
-            if (tempBuffer == null || tempBuffer.Length != (channels == 2 ? data.Length / 2 : data.Length))
-            {
-                tempBuffer = new float[channels == 2 ? data.Length / 2 : data.Length];
-            }
-
-            Span<float> dataSpan = data.AsSpan();
-            dataSpan.Clear();
-            var activeStreams = 0;
-
-            foreach (WeakReference<IAudioStream> weakStream in streams)
-            {
-                if (weakStream.TryGetTarget(out IAudioStream stream))
-                {
-                    Array.Clear(tempBuffer, 0, tempBuffer.Length);
-
-                    // Read mono data
-                    stream.ReadAudio(tempBuffer, DEFAULT_LIVEKIT_CHANNELS, sampleRate);
-
-                    if (channels == 2)
-                    {
-                        // Upmix mono to stereo
-                        for (int i = 0, j = 0; i < data.Length; i += 2, j++)
-                        {
-                            data[i] += tempBuffer[j];     // Left
-                            data[i + 1] += tempBuffer[j]; // Right
-                        }
-                    }
-                    else
-                    {
-                        for (var i = 0; i < data.Length; i++)
-                            data[i] += tempBuffer[i];
-                    }
-
-                    activeStreams++;
-                }
-            }
-
-            // Normalize only if multiple streams
-            if (activeStreams > 1)
-            {
-                float norm = 1f / activeStreams;
-                for (var i = 0; i < data.Length; i++)
-                    data[i] *= norm;
-            }
+            audioFilter.ProcessAudioForLiveKit(data, sampleRate);
         }
 
         public void AddStream(WeakReference<IAudioStream> weakStream)
         {
-            streams.Add(weakStream);
+            /*if (weakStream.TryGetTarget(out var audioStream))
+            {
+                if (sourcesMap.ContainsKey(audioStream) == false)
+                {
+                    var livekitAudioSource = LivekitAudioSource.New(true);
+                    livekitAudioSource.Construct(weakStream);
+                    livekitAudioSource.Play();
+                    sourcesMap[audioStream] = livekitAudioSource;
+                }
+            }*/
+            audioFilter.AddStream(weakStream);
         }
 
         public void RemoveStream(WeakReference<IAudioStream> stream)
         {
-            streams.Remove(stream);
-        }
+            if (stream.TryGetTarget(out IAudioStream audioStream))
+            {
+                if (sourcesMap.TryGetValue(audioStream, out LivekitAudioSource audioSource))
+                {
+                    audioSource.Stop();
+                    audioSource.SelfDestroy();
+                    sourcesMap.Remove(audioStream);
+                }
+            }
 
-        public void Reset()
-        {
-            streams.Clear();
-            isPlaying = false;
-
-            if (tempBuffer != null)
-                Array.Clear(tempBuffer, 0, tempBuffer.Length);
+            audioFilter.RemoveStream(stream);
         }
 
         public void Play()
@@ -116,13 +90,21 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            audioSource.Play();
-        }
+            PlayInternal();
+            return;
 
-        private async UniTaskVoid PlayAsync()
-        {
-            await UniTask.SwitchToMainThread();
-            audioSource.Play();
+            void PlayInternal()
+            {
+                foreach (LivekitAudioSource livekitAudioSource in sourcesMap.Values) { livekitAudioSource.Play(); }
+
+                audioSource.Play();
+            }
+
+            async UniTaskVoid PlayAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                PlayInternal();
+            }
         }
 
         public void Stop()
@@ -135,18 +117,27 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            audioSource.Stop();
-        }
+            StopInternal();
+            return;
 
-        private async UniTaskVoid StopAsync()
-        {
-            await UniTask.SwitchToMainThread();
-            audioSource.Stop();
+            void StopInternal()
+            {
+                foreach (LivekitAudioSource livekitAudioSource in sourcesMap.Values) { livekitAudioSource.Stop(); }
+
+                audioSource.Stop();
+            }
+
+            async UniTaskVoid StopAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                StopInternal();
+            }
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
             sampleRate = AudioSettings.outputSampleRate;
+            audioFilter.SetSampleRate(sampleRate);
         }
     }
 }
