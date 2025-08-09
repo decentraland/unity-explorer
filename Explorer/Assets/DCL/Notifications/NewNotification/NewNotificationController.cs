@@ -31,6 +31,7 @@ namespace DCL.Notifications.NewNotification
         private ImageController badgeThumbnailImageController;
         private ImageController friendsThumbnailImageController;
         private ImageController marketplaceCreditsThumbnailImageController;
+        private ImageController communityThumbnailImageController;
         private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -62,6 +63,7 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
             marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
+            communityThumbnailImageController = new ImageController(viewInstance.CommunityNotificationView.NotificationImage, webRequestController);
         }
 
         private void StopAnimation()
@@ -99,6 +101,9 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
                         await ProcessArrivedNotificationAsync(notification);
                         break;
+                    case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
+                        await ProcessCommunityVoiceChatStartedNotificationAsync(notification);
+                        break;
                     case NotificationType.BADGE_GRANTED:
                         await ProcessBadgeNotificationAsync(notification);
                         break;
@@ -116,6 +121,18 @@ namespace DCL.Notifications.NewNotification
             }
 
             isDisplaying = false;
+        }
+
+        private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
+        {
+            viewInstance!.CommunityNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.CommunityNotificationView.NotificationType = notification.Type;
+            viewInstance.CommunityNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
         }
 
         private async UniTask ProcessArrivedNotificationAsync(INotification notification)

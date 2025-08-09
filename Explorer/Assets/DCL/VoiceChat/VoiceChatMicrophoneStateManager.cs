@@ -8,21 +8,23 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneStateManager : IDisposable
     {
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IDisposable? statusSubscription;
+        private readonly IDisposable? isSpeakerSubscription;
+
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
         private VoiceChatStatus currentCallStatus;
         private bool isRoomConnected;
         private bool disposed;
-        private IDisposable? statusSubscription;
 
         public VoiceChatMicrophoneStateManager(
             VoiceChatMicrophoneHandler microphoneHandler,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.microphoneHandler = microphoneHandler;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
 
-            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
+            statusSubscription = voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
         }
 
         public void Dispose()
@@ -39,12 +41,12 @@ namespace DCL.VoiceChat
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Room connection changed: {isRoomConnected} -> {connected}");
             isRoomConnected = connected;
-            
+
             if (connected)
             {
                 microphoneHandler.Reset();
             }
-            
+
             UpdateMicrophoneState();
         }
 
@@ -61,9 +63,10 @@ namespace DCL.VoiceChat
         private void UpdateMicrophoneState()
         {
             bool shouldEnableMicrophone = currentCallStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL && isRoomConnected;
-            bool shouldDisableMicrophone = currentCallStatus == VoiceChatStatus.DISCONNECTED || 
+
+            bool shouldDisableMicrophone = currentCallStatus == VoiceChatStatus.DISCONNECTED ||
                                          (currentCallStatus == VoiceChatStatus.VOICE_CHAT_ENDING_CALL) ||
-                                         (!isRoomConnected && currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTING_CALL && 
+                                         (!isRoomConnected && currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTING_CALL &&
                                           currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
 
             if (shouldEnableMicrophone)
