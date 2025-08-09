@@ -18,6 +18,7 @@ using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Chat
@@ -92,6 +93,7 @@ namespace DCL.Chat
 
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
+            DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
 
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
@@ -167,6 +169,17 @@ namespace DCL.Chat
             uiScope.Add(chatStateMachine);
         }
 
+        private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
+        {
+            if (chatStateMachine == null) return;
+
+            if (!chatStateMachine.IsFocused && IsVisibleInSharedSpace)
+            {
+                chatStateMachine.SetInitialState(true);
+                commandRegistry.SelectChannel.SelectNearbyChannelAndInsertAsync("/", CancellationToken.None);
+            }
+        }
+
         protected override void OnViewShow()
         {
             initCts = new CancellationTokenSource();
@@ -227,6 +240,7 @@ namespace DCL.Chat
             {
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
+                DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             }
 
             base.Dispose();

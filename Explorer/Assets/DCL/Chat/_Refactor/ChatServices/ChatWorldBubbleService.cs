@@ -8,6 +8,7 @@ using DCL.Profiles.Helpers;
 using DCL.Settings.Settings;
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Utility.Arch;
 
 namespace DCL.Chat.ChatServices
@@ -44,6 +45,7 @@ namespace DCL.Chat.ChatServices
             this.communityDataService = communityDataService;
 
             chatHistory.MessageAdded += OnChatMessageAdded;
+            DCLInput.Instance.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
         }
 
         private void OnChatMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
@@ -131,7 +133,13 @@ namespace DCL.Chat.ChatServices
 
         public void Dispose()
         {
+            DCLInput.Instance.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             chatHistory.MessageAdded -= OnChatMessageAdded;
+        }
+
+        private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
+        {
+            nametagsData.showNameTags = !nametagsData.showNameTags;
         }
     }
 }

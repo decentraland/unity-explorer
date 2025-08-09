@@ -4,6 +4,7 @@ using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System.Threading;
+using DCL.Chat.EventBus;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -11,6 +12,7 @@ namespace DCL.Chat.ChatCommands
     public class SelectChannelCommand
     {
         private readonly IEventBus eventBus;
+        private readonly IChatEventBus chatEventBus;
         private readonly IChatHistory chatHistory;
         private readonly CurrentChannelService currentChannelService;
 
@@ -22,6 +24,7 @@ namespace DCL.Chat.ChatCommands
 
         public SelectChannelCommand(
             IEventBus eventBus,
+            IChatEventBus chatEventBus,
             IChatHistory chatHistory,
             CurrentChannelService currentChannelService,
             CommunityUserStateService communityUserStateService,
@@ -29,6 +32,7 @@ namespace DCL.Chat.ChatCommands
             PrivateConversationUserStateService privateConversationUserStateService)
         {
             this.eventBus = eventBus;
+            this.chatEventBus = chatEventBus;
             this.chatHistory = chatHistory;
             this.currentChannelService = currentChannelService;
             this.communityUserStateService = communityUserStateService;
@@ -75,6 +79,20 @@ namespace DCL.Chat.ChatCommands
 
             // If the channel doesn't exist, we simply do nothing.
             // We could also log an error here if this case is unexpected.
+        }
+
+        private void SelectAndInsertAsync(ChatChannel.ChannelId channelId, string text, CancellationToken ct)
+        {
+            Execute(channelId, ct);
+            chatEventBus.InsertText(text);
+        }
+
+        /// <summary>
+        ///     Convenience: switch to Nearby and insert <paramref name="text" />.
+        /// </summary>
+        public void SelectNearbyChannelAndInsertAsync(string text, CancellationToken ct)
+        {
+            SelectAndInsertAsync(ChatChannel.NEARBY_CHANNEL_ID, text, ct);
         }
     }
 }

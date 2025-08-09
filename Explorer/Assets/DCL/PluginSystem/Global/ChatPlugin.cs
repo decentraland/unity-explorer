@@ -236,6 +236,7 @@ namespace DCL.PluginSystem.Global
                 chatConfig,
                 chatSettingsAsset.Value,
                 eventBus,
+                chatEventBus,
                 chatMessagesBus,
                 chatHistory,
                 chatStorage,

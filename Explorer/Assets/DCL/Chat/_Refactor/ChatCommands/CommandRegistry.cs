@@ -10,6 +10,7 @@ using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using System;
+using DCL.Chat.EventBus;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -40,6 +41,7 @@ namespace DCL.Chat.ChatCommands
             ChatConfig.ChatConfig chatConfig,
             ChatSettingsAsset chatSettings,
             IEventBus eventBus,
+            IChatEventBus chatEventBus,
             IChatMessagesBus chatMessageBus,
             IChatHistory chatHistory,
             ChatHistoryStorage? chatHistoryStorage,
@@ -74,6 +76,7 @@ namespace DCL.Chat.ChatCommands
             CreateMessageViewModel = new CreateMessageViewModelCommand(profileRepositoryWrapper, chatConfig);
 
             SelectChannel = new SelectChannelCommand(eventBus,
+                chatEventBus,
                 chatHistory,
                 currentChannelService,
                 communityUserStateService,
