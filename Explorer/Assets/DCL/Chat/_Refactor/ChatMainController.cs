@@ -49,6 +49,8 @@ namespace DCL.Chat
                                               !chatStateMachine.IsMinimized &&
                                               !chatStateMachine.IsHidden;
 
+        public bool IsFocused => chatStateMachine != null && chatStateMachine.IsFocused;
+
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
@@ -175,6 +177,11 @@ namespace DCL.Chat
         public void SetVisibility(bool isVisible)
         {
             chatStateMachine?.SetVisibility(isVisible);
+        }
+
+        public void SetInitialState(bool isVisible)
+        {
+            chatStateMachine?.SetInitialState(isVisible);
         }
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)

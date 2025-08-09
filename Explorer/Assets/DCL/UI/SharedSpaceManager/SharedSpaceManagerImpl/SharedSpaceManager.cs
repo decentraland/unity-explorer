@@ -236,23 +236,31 @@ namespace DCL.UI.SharedSpaceManager
             }
         }
 
+        
         public async UniTask ToggleVisibilityAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
         {
             if (!IsRegistered(panel) || isTransitioning)
                 return;
 
             bool show = !registrations[panel].panel.IsVisibleInSharedSpace;
-
-            if (panel == PanelsSharingSpace.Chat)
-            {
-                await ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,  true));
-                return;
-            }
             
             if (show)
                 await ShowAsync(panel, parameters);
             else
+            {
+                if (panel == PanelsSharingSpace.Chat)
+                {
+                    var controllerInSharedSpace = registrations[panel].panel;
+                    var ctr = (ChatMainController)controllerInSharedSpace;
+                    if (ctr != null)
+                        ctr.SetInitialState(!ctr.IsFocused);
+
+                    return;
+                }
+                
                 await HideAsync(panel);
+            }
+                
         }
 
         private bool IsRegistered(PanelsSharingSpace panel) =>
