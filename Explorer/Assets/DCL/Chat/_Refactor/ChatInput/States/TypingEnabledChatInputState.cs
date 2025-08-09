@@ -5,6 +5,8 @@ using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine.EventSystems;
 using Utility;
 
@@ -135,6 +137,19 @@ namespace DCL.Chat.ChatInput
             }
         }
 
+        private CancellationTokenSource? suggestionCloseCts;
+        
+        private async UniTaskVoid DeactivateSuggestionsNextFrameAsync(CancellationToken ct)
+        {
+            // If you want to hide visuals instantly but keep IsActive=true, do it here
+            // suggestionPanelState.HideVisualsOnly(); // optional, if you have it
+
+            // Let this frame finish so any submit in the same frame gets ignored by "panel is active" guards
+            await UniTask.NextFrame(ct);
+
+            if (!ct.IsCancellationRequested)
+                suggestionPanelState.TryDeactivate();
+        }
         private void ReplaceSuggestionInText(InputSuggestionsEvents.SuggestionSelectedEvent suggestion)
         {
             // Not great
@@ -142,7 +157,10 @@ namespace DCL.Chat.ChatInput
                 return;
 
             suggestionPanelState!.ReplaceSuggestionInText(suggestion.Id);
-            suggestionPanelState.TryDeactivate();
+            // suggestionPanelState.TryDeactivate();
+            
+            suggestionCloseCts = suggestionCloseCts.SafeRestart();
+            DeactivateSuggestionsNextFrameAsync(suggestionCloseCts.Token).Forget();
         }
 
         private void PasteClipboardText(object sender, string pastedText)

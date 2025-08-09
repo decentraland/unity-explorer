@@ -90,6 +90,11 @@ namespace DCL.Chat.ChatInput
             layoutElement.preferredHeight = inputField.preferredHeight;
         }
 
+        public void RefreshCharacterCount()
+        {
+            characterCounter.SetCharacterCount(inputField.text.Length);
+        }
+
         public void ClearInput()
         {
             inputField.text = string.Empty;

@@ -72,15 +72,19 @@ namespace DCL.Chat.ChatInput
 
         internal void ReplaceSuggestionInText(string suggestion)
         {
-            Assert.IsTrue(lastMatch.Success);
+            //Assert.IsTrue(lastMatch.Success);
 
-            if (!inputField.IsWithinCharacterLimit(suggestion.Length - lastMatch.Groups[1].Length)) return;
+            if (lastMatch.Success)
+            {
+                if (!inputField.IsWithinCharacterLimit(suggestion.Length - lastMatch.Groups[1].Length)) return;
 
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(context.ChatInputView.emojiContainer.addEmojiAudio);
-            int replaceAmount = lastMatch.Groups[1].Length;
-            int replaceAt = wordMatchIndex + lastMatch.Groups[1].Index;
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(context.ChatInputView.emojiContainer.addEmojiAudio);
+                int replaceAmount = lastMatch.Groups[1].Length;
+                int replaceAt = wordMatchIndex + lastMatch.Groups[1].Index;
 
-            inputField.ReplaceTextAtPosition(replaceAt, replaceAmount, suggestion);
+                inputField.ReplaceTextAtPosition(replaceAt, replaceAmount, suggestion);
+                context.ChatInputView.RefreshCharacterCount();
+            }
 
             // TODO It's here because the input field needs to be focused again after losing focus
             context.ChatInputView.SelectInputField();
