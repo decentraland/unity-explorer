@@ -9,7 +9,7 @@ namespace DCL.UI.SuggestionPanel
 {
     public class InputSuggestionPanelView : MonoBehaviour
     {
-        public event SuggestionSelectedDelegate SuggestionSelected;
+        // public event SuggestionSelectedDelegate SuggestionSelected;
 
         [Header("Panel Configuration")]
         [SerializeField] private SuggestionPanelConfigurationSO configurationSo;
@@ -19,6 +19,9 @@ namespace DCL.UI.SuggestionPanel
         [field: SerializeField] private ScrollRect scrollViewComponent;
         [field: SerializeField] private GameObject noResultsIndicator;
         [field: SerializeField] public RectTransform ScrollViewRect { get; private set; }
+
+        [Header("Event Bus")]
+        [SerializeField] private ViewEventBus eventBus;
 
         public bool IsActive { get; private set; }
 
@@ -69,16 +72,23 @@ namespace DCL.UI.SuggestionPanel
 
         private void OnSuggestionSelected(string suggestionId)
         {
-            SuggestionSelected?.Invoke(suggestionId);
-            SetPanelVisibility(false);
+            // SuggestionSelected?.Invoke(suggestionId);
+            // Control the state from the upper layer
+            // SetPanelVisibility(false);
+
+            eventBus.Publish(new InputSuggestionsEvents.SuggestionSelectedEvent(suggestionId));
         }
 
         private void OnSubmit(InputAction.CallbackContext obj)
         {
-            if (lastSelectedInputSuggestion != null && IsActive)
-                SuggestionSelected?.Invoke(lastSelectedInputSuggestion.SuggestionId);
+            // if (lastSelectedInputSuggestion != null && IsActive)
+            //     SuggestionSelected?.Invoke(lastSelectedInputSuggestion.SuggestionId);
 
-            SetPanelVisibility(false);
+            // Control the state from the upper layer
+            // SetPanelVisibility(false);
+
+            if (lastSelectedInputSuggestion != null)
+                eventBus.Publish(new InputSuggestionsEvents.SuggestionSelectedEvent(lastSelectedInputSuggestion.SuggestionId));
         }
 
         private void OnArrowDown(InputAction.CallbackContext obj)

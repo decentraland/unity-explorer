@@ -1,20 +1,17 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
-using DCL.Diagnostics;
-using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -27,6 +24,10 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
+using CommunicationData.URLHelpers;
+using DCL.Communities;
+using DCL.Diagnostics;
+using DCL.Profiles;
 using UnityEngine;
 using Utility;
 
@@ -47,7 +48,7 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
-        private readonly ChatView chatView;
+        private readonly ChatMainView chatView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
@@ -80,7 +81,7 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            ChatView chatView,
+            ChatMainView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
@@ -165,7 +166,7 @@ namespace DCL.UI.Sidebar
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
-            chatView.FoldingChanged += OnChatViewFoldingChanged;
+            //chatView.FoldingChanged += OnChatViewFoldingChanged;
 
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(profileMenuController);
@@ -188,6 +189,8 @@ namespace DCL.UI.Sidebar
 
             checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
             CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
+
+            OnChatViewFoldingChanged(true);
         }
 
         private void OnSceneRestrictionChanged(SceneRestriction restriction)
@@ -240,8 +243,8 @@ namespace DCL.UI.Sidebar
                 viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             else if (closedController is FriendsPanelController)
             {
-                viewInstance?.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-                OnChatViewFoldingChanged(chatView.IsUnfolded);
+                viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                OnChatViewFoldingChanged(true);
             }
         }
 
@@ -257,7 +260,7 @@ namespace DCL.UI.Sidebar
             }
         }
 
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
         }
@@ -311,7 +314,6 @@ namespace DCL.UI.Sidebar
 
             await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
             var ownProfile = await selfProfile.ProfileAsync(ct);
-
             if (ownProfile == null)
                 return;
 
@@ -321,7 +323,6 @@ namespace DCL.UI.Sidebar
                 ct);
 
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
-
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
         }
@@ -367,9 +368,9 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSidebarSettingsAsync()
         {
-            viewInstance?.BlockSidebar();
+            viewInstance.BlockSidebar();
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
-            viewInstance?.UnblockSidebar();
+            viewInstance.UnblockSidebar();
 
             viewInstance!.sidebarSettingsButton.OnDeselect(null);
         }
@@ -390,20 +391,20 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSkyboxSettingsAsync()
         {
-            viewInstance?.BlockSidebar();
-            viewInstance?.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance.BlockSidebar();
+            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-            viewInstance?.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-            viewInstance?.UnblockSidebar();
+            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
-            viewInstance?.BlockSidebar();
-            viewInstance?.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance.BlockSidebar();
+            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            viewInstance?.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-            viewInstance?.UnblockSidebar();
+            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.UnblockSidebar();
         }
 
         private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
@@ -411,6 +412,7 @@ namespace DCL.UI.Sidebar
             // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
         }
-#endregion
+
+        #endregion
     }
 }

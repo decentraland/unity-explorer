@@ -1,0 +1,24 @@
+{
+    "name": "Chat.UseCases.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:766b242fb43af451aaa331f39872177d",
+        "GUID:809870cbfd80a7b46bcf72b178ab210b",
+        "GUID:587c960710478634e995922333a93f34",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "NSubstitute.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

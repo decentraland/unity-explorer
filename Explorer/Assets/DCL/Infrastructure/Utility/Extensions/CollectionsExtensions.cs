@@ -12,6 +12,11 @@ namespace Utility
             lock (dictionary) { dictionary.Remove(key); }
         }
 
+        public static void SyncAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        {
+            lock (dictionary) { dictionary.Add(key, value); }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool SyncTryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
         {

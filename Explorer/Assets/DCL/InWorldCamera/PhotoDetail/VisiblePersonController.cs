@@ -79,7 +79,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.userName.text = visiblePerson.userName;
             view.userName.color = userColor;
             view.userNameTag.text = $"#{visiblePerson.userAddress[^4..]}";
-            view.profilePictureView.SetupOnlyColor(userColor);
+            view.profilePictureView.SetBackgroundColor(userColor);
             view.profilePictureView.SetLoadingState(true);
 
             Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);

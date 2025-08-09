@@ -197,9 +197,11 @@ namespace DCL.Chat
             for (int i = 0; i < notificationPingToggles.Length; ++i)
                 notificationPingToggles[i].SetInitialValue(i == (int)ChatUserSettings.GetNotificationPingValuePerChannel(currentChannelId));
 
-            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenuInstance,
-                                                                                             openContextMenuButton.transform.position,
-                                                                                               actionOnHide: OnContextMenuClosed), contextMenuCts.Token);
+            ViewDependencies
+                .ContextMenuOpener
+                .OpenContextMenu(new GenericContextMenuParameter(contextMenuInstance,
+                    openContextMenuButton.transform.position,
+                    actionOnHide: OnContextMenuClosed), contextMenuCts.Token);
         }
 
         private void OnNotificationPingOptionSelected(ChatAudioSettings selectedMode)
@@ -274,7 +276,7 @@ namespace DCL.Chat
                                         .AddControl(notificationPingToggles[(int)ChatAudioSettings.MENTIONS_ONLY] = new ToggleWithCheckContextMenuControlSettings("Mentions Only", x => OnNotificationPingOptionSelected(ChatAudioSettings.MENTIONS_ONLY), toggleGroup))
                                         .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] = new ToggleWithCheckContextMenuControlSettings("None", x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
 
-            contextMenuInstance = new UI.GenericContextMenuParameter.GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
+            contextMenuInstance = new GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
                .AddControl(subMenuSettings)
                .AddControl(deleteChatHistoryButton);
         }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace DCL.Utilities
 {
     [Serializable]
-    public class ReactiveProperty<T> : IReactiveProperty<T>, IDisposable
+    public class ReactiveProperty<T> : IReactiveProperty<T>
     {
         private T latestValue;
 
@@ -27,7 +27,7 @@ namespace DCL.Utilities
             latestValue = initialValue;
         }
 
-        public void Dispose()
+        public void ClearSubscriptionsList()
         {
             OnUpdate = null;
         }

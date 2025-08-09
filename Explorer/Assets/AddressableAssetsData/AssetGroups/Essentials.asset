@@ -150,6 +150,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4359e32789e7f914c8e7e12d16286b76
+    m_Address: Assets/DCL/Chat/_Refactor/ChatConfig/Resources_moved/ChatConfig.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4362b43091b0d462db2641f8c866e9b9
     m_Address: Assets/DCL/UI/Profile/Names/Assets/ProfileNameEditor.prefab
     m_ReadOnly: 0
@@ -191,7 +196,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 52c856180dc5d6447b902f06d38f4161
-    m_Address: LightSourceSettings
+    m_Address: LightSourceDefaults
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -41,9 +41,13 @@ namespace DCL.UI.Buttons
         }
 
         /// <summary>
-        /// It replaces the number with an '@'. Afterwards, changing the number will not show the number until the mention sign is hidden.
+        ///     It replaces the number with an '@'. Afterwards, changing the number will not show the number until the mention sign
+        ///     is hidden.
         /// </summary>
-        /// <param name="show">When True, it replaces the number; otherwise it deactivates the mention sign (setting the number will show the number).</param>
+        /// <param name="show">
+        ///     When True, it replaces the number; otherwise it deactivates the mention sign (setting the number
+        ///     will show the number).
+        /// </param>
         public void ShowMentionsSign(bool show)
         {
             isMentionsVisible = show;

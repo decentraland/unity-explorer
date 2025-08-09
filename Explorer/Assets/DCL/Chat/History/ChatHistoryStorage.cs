@@ -210,8 +210,6 @@ namespace DCL.Chat.History
             if (messagesBuffer.Count > 0)
                 chatHistory.Channels[channelId].FillChannel(messagesBuffer);
 
-            channelFile.IsInitialized = true;
-
             ReportHub.Log(reportData, $"Conversation initialized.");
         }
 
@@ -356,7 +354,7 @@ namespace DCL.Chat.History
             }
         }
 
-        private async void OnChatHistoryMessageAddedAsync(ChatChannel destinationChannel, ChatMessage addedMessage)
+        private async void OnChatHistoryMessageAddedAsync(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             if (destinationChannel.ChannelType == ChatChannel.ChatChannelType.USER)
             {

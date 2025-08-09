@@ -84,9 +84,9 @@ namespace DCL.Chat.History
             ChannelRemoved?.Invoke(channelId, channel.ChannelType);
         }
 
-        public void AddMessage(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage newMessage)
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType? channelType, ChatMessage newMessage)
         {
-            var channel = AddOrGetChannel(channelId, channelType);
+            var channel = AddOrGetChannel(channelId, channelType ?? ChatChannel.ChatChannelType.UNDEFINED);
             channel.AddMessage(newMessage);
         }
 
@@ -113,10 +113,10 @@ namespace DCL.Chat.History
             isTotalMessagesDirty = true;
         }
 
-        private void OnChannelMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        private void OnChannelMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
         {
             isTotalMessagesDirty = true;
-            MessageAdded?.Invoke(destinationChannel, addedMessage);
+            MessageAdded?.Invoke(destinationChannel, addedMessage, index);
         }
 
         private void OnChannelCleared(ChatChannel clearedChannel)
