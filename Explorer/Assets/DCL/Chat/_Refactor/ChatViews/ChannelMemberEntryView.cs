@@ -17,6 +17,7 @@ namespace DCL.Chat.ChatViews
     public class ChannelMemberEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         public event Action<MemberEntryContextMenuRequest> OnContextMenuRequested;
+        public event Action<MemberEntryContextMenuRequest> OnItemSelectRequested;
 
         [Header("UI References")]
         [SerializeField] private TMP_Text userNameText;
@@ -49,7 +50,7 @@ namespace DCL.Chat.ChatViews
             {
                 UserId = model.UserId, Position = itemButton.transform.position
             };
-            OnContextMenuRequested?.Invoke(request);
+            OnItemSelectRequested?.Invoke(request);
         }
 
         public void Setup(ChatMemberListViewModel model)

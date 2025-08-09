@@ -43,6 +43,7 @@ namespace DCL.Chat.ChatFriends
             this.chatContextMenuService = chatContextMenuService;
 
             this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
+            this.view.OnMemberItemRequested += OnMemberSelectionRequested;
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
         }
 
@@ -87,6 +88,14 @@ namespace DCL.Chat.ChatFriends
             chatContextMenuService
                .ShowUserProfileMenuAsync(data)
                .Forget();
+        }
+        
+        private void OnMemberSelectionRequested(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+                return;
+            
+            chatEventBus.OpenPrivateConversationUsingUserId(userId);
         }
 
         private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)
