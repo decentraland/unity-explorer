@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
@@ -10,7 +11,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider
 {
     public class CommunitiesDataProvider
     {
@@ -57,7 +58,7 @@ namespace DCL.Communities
             return response;
         }
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CancellationToken ct)
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CancellationToken ct)
         {
             CreateOrUpdateCommunityResponse response;
 
@@ -65,6 +66,7 @@ namespace DCL.Communities
             {
                 new MultipartFormDataSection("name", name),
                 new MultipartFormDataSection("description", description),
+                new MultipartFormDataSection("privacy", privacy.ToString()),
             };
 
             StringBuilder placeIdsJsonString = new StringBuilder("[");
@@ -257,6 +259,36 @@ namespace DCL.Communities
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
+        }
+
+        public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> ManageRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> ManageInviteToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityList(string userAddress, CancellationToken ct)
+        {
+            throw new NotImplementedException();
         }
 
         // TODO: Pending to implement these methods:

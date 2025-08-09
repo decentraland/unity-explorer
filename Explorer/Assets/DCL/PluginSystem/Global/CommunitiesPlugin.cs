@@ -8,6 +8,7 @@ using DCL.Input;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.EventInfo;
 using DCL.EventsApi;

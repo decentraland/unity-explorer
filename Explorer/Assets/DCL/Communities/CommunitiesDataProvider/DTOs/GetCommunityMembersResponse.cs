@@ -1,11 +1,10 @@
-
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
+using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using System;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
     public class GetCommunityMembersResponse
