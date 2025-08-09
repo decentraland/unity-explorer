@@ -32,9 +32,9 @@ namespace SceneRuntime.Apis.Modules.SceneApi
             /// </summary>
             public string baseUrl;
 
-            private static readonly List<ContentDefinition> EMPTY_LIST = new ();
+            private static readonly ContentDefinition[] EMPTY_LIST = Array.Empty<ContentDefinition>();
 
-            public GetSceneResponse(string cid, List<ContentDefinition>? contents, string metadata, string baseUrl)
+            public GetSceneResponse(string cid, ContentDefinition[] contents, string metadata, string baseUrl)
             {
                 this.cid = cid;
 

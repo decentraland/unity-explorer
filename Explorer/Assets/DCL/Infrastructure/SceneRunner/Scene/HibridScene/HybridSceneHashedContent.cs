@@ -35,7 +35,7 @@ namespace SceneRunner.Scene
             URLDomain abDomain)
         {
             filesToGetFromLocalHost.Add(contentDefinitions.metadata.main);
-            fileToHash = new Dictionary<string, string>(contentDefinitions.content!.Count, StringComparer.OrdinalIgnoreCase);
+            fileToHash = new Dictionary<string, string>(contentDefinitions.content!.Length, StringComparer.OrdinalIgnoreCase);
             foreach (var contentDefinition in contentDefinitions.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
             resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
 

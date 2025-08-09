@@ -190,17 +190,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
 
                     // emote failed to load? remove intent
-                    if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
+                    if (emote.Model is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the manifest");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n the DTO");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
 
                     // emote failed to load? remove intent
-                    if (emote.Model is { IsInitialized: true, Succeeded: false })
+                    if (emote.DTO.assetBundleManifestRequestFailed)
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the DTO");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
@@ -209,7 +209,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
 
                     // the emote is still loading? don't remove the intent yet, wait for it
-                    //TODO (JUANI) : This will go away when the manifest request is out. 
+                    //TODO (JUANI) : This will go away when the manifest request is out.
                     if (streamableAsset == null)
                         return;
 
@@ -228,7 +228,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.DTO.assetBundleManifestVersion} should be >= 16");
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }

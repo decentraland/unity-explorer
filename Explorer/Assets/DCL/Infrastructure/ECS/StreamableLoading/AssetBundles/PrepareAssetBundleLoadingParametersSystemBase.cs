@@ -5,6 +5,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -19,10 +20,12 @@ namespace ECS.StreamableLoading.AssetBundles
         };
 
         private readonly URLDomain streamingAssetURL;
+        private readonly URLDomain assetBundlesURL;
 
-        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL) : base(world)
+        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world)
         {
             this.streamingAssetURL = streamingAssetURL;
+            this.assetBundlesURL = assetBundlesURL;
         }
 
         protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
@@ -46,19 +49,10 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (assetBundleIntention.Manifest == null)
+                if (string.IsNullOrEmpty(assetBundleIntention.AssetBundleVersion))
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
-
-                    return;
-                }
-
-                if (!assetBundleIntention.Manifest.Contains(assetBundleIntention.Hash))
-                {
-                    // Add the failure to the entity
-                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (GetReportCategory(), CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} {assetBundleIntention.Name} not found in the manifest"))));
 
                     return;
                 }
@@ -67,9 +61,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
-                ca.URL = assetBundleIntention.Manifest.GetAssetBundleURL(assetBundleIntention.Hash);
+                ca.URL = GetAssetBundleURL(assetBundleIntention.HasParentEntityIDPathInURL, assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleVersion);
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = assetBundleIntention.Manifest.ComputeHash(assetBundleIntention.Hash);
+                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleBuildDate);
             }
         }
 
@@ -80,5 +74,23 @@ namespace ECS.StreamableLoading.AssetBundles
             customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
+
+        public unsafe Hash128 ComputeHash(string hash, string buildDate)
+        {
+            Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
+            buildDate.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
+
+            fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
+        }
+
+        private URLAddress GetAssetBundleURL(bool hasSceneIDInPath, string hash, string sceneID, string assetBundleManifestVersion)
+        {
+            if (hasSceneIDInPath)
+                return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{sceneID}/{hash}"));
+
+            return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{hash}"));
+        }
+
     }
 }

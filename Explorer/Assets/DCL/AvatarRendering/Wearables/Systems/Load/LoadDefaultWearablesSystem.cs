@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -88,12 +89,12 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     timestamp = 1689946443828,
                     content = new[]
                     {
-                        new AvatarAttachmentDTO.Content { file = "Avatar_MaleSkinBase.png", hash = "bafkreiaubk2exzcqiutttnjajktvu6uys3zeb4poxpzauv6yccghz5heta" },
-                        new AvatarAttachmentDTO.Content { file = "BaseMale.glb", hash = "bafkreicxwj4mhufwziveusb733zs3ly2vz7evnpsbybto3izqtfrbr7umq" },
+                        new ContentDefinition() { file = "Avatar_MaleSkinBase.png", hash = "bafkreiaubk2exzcqiutttnjajktvu6uys3zeb4poxpzauv6yccghz5heta" },
+                        new ContentDefinition() { file = "BaseMale.glb", hash = "bafkreicxwj4mhufwziveusb733zs3ly2vz7evnpsbybto3izqtfrbr7umq" },
                         // new AvatarAttachmentDTO.Content { file = "M_EyeBrows_00.png", hash = "bafkreiax475w7ueo4idkzy4i2mizzmfqynipyzb2v4kp5bqncujlqnhxky" },
                         // new AvatarAttachmentDTO.Content { file = "M_Eyes_00.png", hash = "bafkreihse7i7mqabinjq4aydv3kngpxkoownwx2z3ul5ko3vz3zcn6qzii" },
                         // new AvatarAttachmentDTO.Content { file = "M_Mouth_00.png", hash = "bafkreih3id67pbqkfw2ikggwv6uz5dmroo4z2nkcdjbzbkpzjhd3rfbz6y" },
-                        new AvatarAttachmentDTO.Content { file = "thumbnail.png", hash = "bafkreihqzejw6hhse4tupftqaaxnnwvobslj4xdwwpaj2rbqj4n2o2ymyy" },
+                        new ContentDefinition() { file = "thumbnail.png", hash = "bafkreihqzejw6hhse4tupftqaaxnnwvobslj4xdwwpaj2rbqj4n2o2ymyy" },
                     },
                     metadata = new WearableDTO.WearableMetadataDto
                     {
@@ -160,12 +161,12 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     timestamp = 1689946443741,
                     content = new[]
                     {
-                        new AvatarAttachmentDTO.Content { file = "Avatar_FemaleSkinBase.png", hash = "bafkreidgli7y7lyskioyjcgkub3ja2af7b2cj7hsjjjqvgifjk7eusixoe" },
-                        new AvatarAttachmentDTO.Content { file = "BaseFemale.glb", hash = "bafkreicjhpml7xdib2knhbl2qn7sgqq7cudwys75xwgejdd47cxp3dkbc4" },
+                        new ContentDefinition() { file = "Avatar_FemaleSkinBase.png", hash = "bafkreidgli7y7lyskioyjcgkub3ja2af7b2cj7hsjjjqvgifjk7eusixoe" },
+                        new ContentDefinition() { file = "BaseFemale.glb", hash = "bafkreicjhpml7xdib2knhbl2qn7sgqq7cudwys75xwgejdd47cxp3dkbc4" },
                         // new AvatarAttachmentDTO.Content { file = "F_Eyebrows_00.png", hash = "bafkreicljlsrh7upl5guvinmtjjqn7eagyu7e6wsef4a5nyerjuyw7t5fu" },
                         // new AvatarAttachmentDTO.Content { file = "F_Eyes_00.png", hash = "bafkreihm3s5xcauc6i256xnywwssnodcvtrs6z3454itsf2ph63e3tx7iq" },
                         // new AvatarAttachmentDTO.Content { file = "F_Mouth_00.png", hash = "bafkreiaryit63vshyvyddoo3dfjdapvlfcyf2jfbd6enktal3kbv2pcdru" },
-                        new AvatarAttachmentDTO.Content { file = "thumbnail.png", hash = "bafkreigohcob7ium7ynqeya6ceavkkuvdndx6kjprgqah4lgpvmze6jzji" },
+                        new ContentDefinition() { file = "thumbnail.png", hash = "bafkreigohcob7ium7ynqeya6ceavkkuvdndx6kjprgqah4lgpvmze6jzji" },
                     },
                     metadata = new WearableDTO.WearableMetadataDto
                     {

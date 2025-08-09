@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DCL.Ipfs;
+using System;
 
 namespace DCL.AvatarRendering.Loading.DTO
 {
@@ -13,14 +13,8 @@ namespace DCL.AvatarRendering.Loading.DTO
     /// <summary>
     /// Contains common serialization data for Wearables and Emotes
     /// </summary>
-    public abstract class AvatarAttachmentDTO
+    public abstract class AvatarAttachmentDTO : EntityDefinitionBase
     {
-        public string id;
-        public string type;
-        public string[] pointers;
-        public long timestamp;
-        public string version;
-        public Content[] content;
         public string? ContentDownloadUrl { get; protected set; }
 
         public abstract MetadataBase Metadata { get; }
@@ -71,13 +65,6 @@ namespace DCL.AvatarRendering.Loading.DTO
             public string[] hides;
             public string[] removesDefaultHiding;
             public bool outlineCompatible = true;
-        }
-
-        [Serializable]
-        public struct Content
-        {
-            public string file;
-            public string hash;
         }
 
         [Serializable]
