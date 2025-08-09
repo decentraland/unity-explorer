@@ -7100,6 +7100,10 @@ PrefabInstance:
       value: -16.5
       objectReference: {fileID: 0}
     - target: {fileID: 5443551243198898368, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+      propertyPath: m_text
+      value: Press Enter to chat
+      objectReference: {fileID: 0}
+    - target: {fileID: 5443551243198898368, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
       propertyPath: m_fontStyle
       value: 0
       objectReference: {fileID: 0}
@@ -7305,6 +7309,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8517794174848120442, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
   m_PrefabInstance: {fileID: 7677052889731195008}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2378252370096275520 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5443551243198898368, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+  m_PrefabInstance: {fileID: 7677052889731195008}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &3111979384719019556 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4730369702282686116, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
@@ -7400,6 +7415,7 @@ MonoBehaviour:
   characterCounter: {fileID: 6554740894032467766}
   emojiButtonObject: {fileID: 672841032480400079}
   backgroundImage: {fileID: 4097775063419158369}
+  inputPlaceholderObject: {fileID: 2378252370096275520}
   focusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.8784314}
   unfocusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.57254905}
   <emojiContainer>k__BackingField:

@@ -45,6 +45,7 @@ namespace DCL.Chat.ChatInput
         [SerializeField] private CharacterCounterView characterCounter;
         [SerializeField] private GameObject emojiButtonObject;
         [SerializeField] private Image backgroundImage;
+        [SerializeField] private TextMeshProUGUI inputPlaceholderObject;
         [SerializeField] private Color focusedBackgroundColor;
         [SerializeField] private Color unfocusedBackgroundColor;
 
@@ -58,11 +59,15 @@ namespace DCL.Chat.ChatInput
         [field: Header("Event Bus")]
         [field: SerializeField] internal ViewEventBus inputEventBus { get; private set; }
 
+        private string previousText = string.Empty;
+        
         public void ApplyFocusStyle()
         {
             outlineObject.SetActive(true);
             characterCounterObject.SetActive(true);
             emojiButtonObject.SetActive(true);
+            inputPlaceholderObject.text = "Write a message";
+            InsertTextAtCaretPosition(previousText);
         }
 
         private void ApplyUnfocusStyle()
@@ -71,6 +76,9 @@ namespace DCL.Chat.ChatInput
             characterCounterObject.SetActive(false);
             emojiButtonObject.SetActive(false);
             inputField.DeactivateInputField();
+            inputPlaceholderObject.text = "Press Enter to chat";
+            previousText = inputField.text;
+            inputField.SetTextWithoutNotify("");
         }
 
         public void Initialize()
@@ -80,6 +88,13 @@ namespace DCL.Chat.ChatInput
         
         public void InsertTextAtCaretPosition(string text)
         {
+            inputField.InsertTextAtCaretPosition(text);
+            characterCounter.SetCharacterCount(inputField.text.Length);
+        }
+
+        public void ClearAndInsertText(string text)
+        {
+            inputField.SetTextWithoutNotify("");
             inputField.InsertTextAtCaretPosition(text);
             characterCounter.SetCharacterCount(inputField.text.Length);
         }

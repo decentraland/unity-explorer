@@ -94,6 +94,7 @@ namespace DCL.Chat
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.UI.Close.performed += OnUIClose;
 
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
@@ -180,6 +181,14 @@ namespace DCL.Chat
             }
         }
 
+        private void OnUIClose(InputAction.CallbackContext obj)
+        {
+            if (chatStateMachine == null) return;
+            if (chatStateMachine.IsMinimized) return;
+
+            chatStateMachine?.SetInitialState(false);
+        }
+
         protected override void OnViewShow()
         {
             initCts = new CancellationTokenSource();
@@ -241,6 +250,7 @@ namespace DCL.Chat
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
                 DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+                DCLInput.Instance.UI.Close.performed -= OnUIClose;
             }
 
             base.Dispose();

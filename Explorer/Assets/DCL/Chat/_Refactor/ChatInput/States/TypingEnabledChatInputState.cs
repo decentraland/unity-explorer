@@ -24,9 +24,10 @@ namespace DCL.Chat.ChatInput
         private PasteToastState? pasteToastState;
         private SuggestionPanelChatInputState? suggestionPanelState;
         private EmojiPanelChatInputState? emojiPanelState;
-
+        private bool isLocked;
         private CustomInputField inputField = null!;
-
+        private CancellationTokenSource? suggestionCloseCts;
+        
         public TypingEnabledChatInputState(IChatEventBus chatEventBus)
         {
             this.chatEventBus = chatEventBus;
@@ -47,11 +48,13 @@ namespace DCL.Chat.ChatInput
 
         public override void Begin()
         {
+            LockInputField(true);
             context.ChatInputView.Show();
             context.ChatInputView.ApplyFocusStyle();
             context.ChatInputView.SetActiveTyping();
 
             chatEventBus.InsertTextInChatRequested += InsertText;
+            chatEventBus.ClearAndInsertTextInChatRequested += ClearAndInsertText;
 
             ViewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
             inputField.onSubmit.AddListener(HandleMessageSubmitted);
@@ -60,12 +63,16 @@ namespace DCL.Chat.ChatInput
             inputField.PasteShortcutPerformed += OnPasteShortcut;
             eventsScope.Add(context.InputEventBus.Subscribe<InputSuggestionsEvents.SuggestionSelectedEvent>(ReplaceSuggestionInText));
 
+            inputField.onDeselect.AddListener(OnInputDeselected);
             context.ChatInputView.emojiContainer.emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
+            context.ChatInputView.UpdateCharacterCount();
         }
 
         public override void End()
         {
+            LockInputField(false);
             chatEventBus.InsertTextInChatRequested -= InsertText;
+            chatEventBus.ClearAndInsertTextInChatRequested -= ClearAndInsertText;
 
             ViewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             inputField.onSubmit.RemoveListener(HandleMessageSubmitted);
@@ -73,7 +80,7 @@ namespace DCL.Chat.ChatInput
             inputField.onValueChanged.RemoveListener(OnInputChanged);
             inputField.PasteShortcutPerformed -= OnPasteShortcut;
             context.ChatInputView.emojiContainer.emojiPanelButton.Button.onClick.RemoveListener(ToggleEmojiPanel);
-
+            inputField.onDeselect.RemoveListener(OnInputDeselected);
             eventsScope.Dispose();
 
             pasteToastState!.TryDeactivate();
@@ -89,6 +96,8 @@ namespace DCL.Chat.ChatInput
                 suggestionPanelState!.TryDeactivate();
             }
             else { emojiPanelState.TryDeactivate(); }
+
+            LockInputField(!emojiPanelState.IsActive);
         }
 
         private void OnInputChanged(string inputText)
@@ -137,19 +146,14 @@ namespace DCL.Chat.ChatInput
             }
         }
 
-        private CancellationTokenSource? suggestionCloseCts;
-        
         private async UniTaskVoid DeactivateSuggestionsNextFrameAsync(CancellationToken ct)
         {
-            // If you want to hide visuals instantly but keep IsActive=true, do it here
-            // suggestionPanelState.HideVisualsOnly(); // optional, if you have it
-
-            // Let this frame finish so any submit in the same frame gets ignored by "panel is active" guards
             await UniTask.NextFrame(ct);
 
             if (!ct.IsCancellationRequested)
                 suggestionPanelState.TryDeactivate();
         }
+        
         private void ReplaceSuggestionInText(InputSuggestionsEvents.SuggestionSelectedEvent suggestion)
         {
             // Not great
@@ -174,6 +178,11 @@ namespace DCL.Chat.ChatInput
             context.ChatInputView.InsertTextAtCaretPosition(text);
         }
 
+        private void ClearAndInsertText(string text)
+        {
+            context.ChatInputView.ClearAndInsertText(text);
+        }
+
         protected override void OnInputBlocked()
         {
             ChangeState<BlockedChatInputState>();
@@ -183,6 +192,19 @@ namespace DCL.Chat.ChatInput
         {
             // Regain the focus on the input field
             context.ChatInputView.SelectInputField();
+        }
+
+        private void LockInputField(bool locked)
+        {
+            isLocked = locked;
+        }
+
+        private void OnInputDeselected(string text)
+        {
+            if (isLocked)
+            {
+                context.ChatInputView.SelectInputField();
+            }
         }
     }
 }
