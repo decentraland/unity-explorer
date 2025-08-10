@@ -104,6 +104,33 @@ namespace MVC
             return (R)CurrentState;
         }
 
+        /// <summary>
+        ///     Reverts to the single previous state, if one exists.
+        /// </summary>
+        public void PopState()
+        {
+            // Ensure there is a previous state to go back to.
+            if (PreviousState == null)
+            {
+                return;
+            }
+
+            // End the current, swap to the previous.
+            CurrentState.End();
+
+            CurrentState = PreviousState;
+
+            // After popping, there is no longer a "previous" state to go back to.
+            // A new "previous" state will be set on the next call to ChangeState.
+            PreviousState = null;
+
+            // Begin the new (old) state.
+            CurrentState.Begin();
+            ElapsedTimeInState = 0f;
+
+            OnStateChanged?.Invoke();
+        }
+
         public void Dispose()
         {
             disposalCts.SafeCancelAndDispose();

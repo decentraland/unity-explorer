@@ -112,9 +112,25 @@ namespace DCL.Chat.ChatStates
             if (focus)
                 fsm.ChangeState<FocusedChatState>();
             else
-                fsm.ChangeState<DefaultChatState>();
+            {
+                // fsm.ChangeState<MinimizedChatState>();
+                fsm.PopState();
+            }
         }
 
+        public void SetToggleState()
+        {
+            if (IsMinimized)
+                fsm.ChangeState<FocusedChatState>();
+            else
+                fsm.ChangeState<MinimizedChatState>();
+        }
+
+        public void PopState()
+        {
+            fsm.PopState();
+        }
+        
         /// <summary>
         /// NOTE: called from the SharedSpaceManager
         /// </summary>
@@ -125,6 +141,11 @@ namespace DCL.Chat.ChatStates
                 fsm.ChangeState<DefaultChatState>();
             else
                 fsm.ChangeState<HiddenChatState>();
+        }
+
+        public void SetFocusState()
+        {
+            fsm.ChangeState<FocusedChatState>();
         }
     }
 }

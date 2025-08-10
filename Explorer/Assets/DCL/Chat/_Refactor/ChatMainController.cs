@@ -174,9 +174,9 @@ namespace DCL.Chat
         {
             if (chatStateMachine == null) return;
 
-            if (!chatStateMachine.IsFocused && IsVisibleInSharedSpace)
+            if (!chatStateMachine.IsFocused && (IsVisibleInSharedSpace || chatStateMachine.IsMinimized))
             {
-                chatStateMachine.SetInitialState(true);
+                chatStateMachine.SetFocusState();
                 commandRegistry.SelectChannel.SelectNearbyChannelAndInsertAsync("/", CancellationToken.None);
             }
         }
@@ -186,7 +186,7 @@ namespace DCL.Chat
             if (chatStateMachine == null) return;
             if (chatStateMachine.IsMinimized) return;
 
-            chatStateMachine?.SetInitialState(false);
+            chatStateMachine?.SetVisibility(true);
         }
 
         protected override void OnViewShow()
@@ -201,9 +201,14 @@ namespace DCL.Chat
             chatStateMachine?.SetVisibility(isVisible);
         }
 
-        public void SetInitialState(bool isVisible)
+        public void SetFocusState()
         {
-            chatStateMachine?.SetInitialState(isVisible);
+            chatStateMachine?.SetFocusState();
+        }
+
+        public void ToggleState()
+        {
+            chatStateMachine?.SetToggleState();
         }
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)

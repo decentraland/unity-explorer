@@ -159,7 +159,8 @@ namespace DCL.UI.SharedSpaceManager
 
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
                             if (panelBeingShown != PanelsSharingSpace.Chat)
-                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatMainController>().OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false, false));
+                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatMainController>()
+                                    .OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false));
                         }
                         else
                             isTransitioning = false;
@@ -252,8 +253,21 @@ namespace DCL.UI.SharedSpaceManager
                 {
                     var controllerInSharedSpace = registrations[panel].panel;
                     var ctr = (ChatMainController)controllerInSharedSpace;
+
                     if (ctr != null)
-                        ctr.SetInitialState(!ctr.IsFocused);
+                    {
+                        if (parameters is ChatControllerShowParams
+                            {
+                                ForceFocusFromShortcut: true
+                            } )
+                        {
+                            ctr.SetFocusState();
+                        }
+                        else
+                        {
+                            ctr.ToggleState();
+                        }
+                    }
 
                     return;
                 }
@@ -420,7 +434,8 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnInputShortcutsOpenChatPerformedAsync(InputAction.CallbackContext obj)
         {
             if (!isExplorePanelVisible && !isTransitioning)
-                await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                await ToggleVisibilityAsync(PanelsSharingSpace.Chat,
+                    new ChatControllerShowParams(true, true, forceFocusFromShortcut: true));
         }
 
         private async void OnInputShortcutsCommunitiesPerformedAsync(InputAction.CallbackContext obj)
