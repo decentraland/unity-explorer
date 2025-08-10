@@ -127,6 +127,10 @@ namespace DCL.Chat.ChatInput
 
             emojiPanelState!.TryDeactivate();
 
+            // NOTE: We need to select the input field again because
+            // NOTE: the input field loses focus when the message is submitted
+            inputField.SelectInputField();
+            
             if (string.IsNullOrWhiteSpace(message))
                 return;
 
