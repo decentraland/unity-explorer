@@ -78,8 +78,18 @@ namespace DCL.Chat.ChatInput
             emojiButtonObject.SetActive(false);
             inputPlaceholderObject.text = chatConfig.InputUnfocusedMessages;
 
-            if (inputField.text.Length > 1)
+            // NOTE: Remember the last typed message when going to unfocused state,
+            // NOTE: except when it's a single "/" which is used to trigger commands.
+            // NOTE: This prevents storing incomplete command triggers as normal messages.
+            if (inputField.text.Length > 1 ||
+                (inputField.text.Length == 1 && inputField.text[0] != '/'))
+            {
                 previousText = inputField.text;
+            }
+            else
+            {
+                previousText = string.Empty;
+            }
             
             inputField.text = string.Empty;
             inputField.DeactivateInputField();
