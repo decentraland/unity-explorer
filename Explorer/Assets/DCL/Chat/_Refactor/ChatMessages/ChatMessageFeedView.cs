@@ -57,6 +57,8 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrolledToBottom;
         public event Action? OnScrollToBottomButtonClicked;
 
+        private Sequence? _fadeSequenceTween;
+        
         public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels)
         {
             this.viewModels = viewModels;
@@ -271,21 +273,41 @@ namespace DCL.Chat.ChatMessages
 
         internal void StartChatEntriesFadeout()
         {
-            fadeoutCts = fadeoutCts.SafeRestart();
-            AwaitAndFadeChatEntriesAsync(fadeoutCts.Token).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES).Forget();
-        }
+            // Kill any previous sequence or
+            // tweens touching this CanvasGroup
+            _fadeSequenceTween?.Kill();
+            chatEntriesCanvasGroup.DOKill();
 
+            chatEntriesCanvasGroup.alpha = 1f;
+
+            bool completed = false;
+            float waitSeconds = chatEntriesWaitBeforeFading / 1000f;
+
+            _fadeSequenceTween = DOTween.Sequence()
+                .AppendInterval(waitSeconds)
+                .Append(chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime))
+                .OnComplete(() =>
+                {
+                    completed = true;
+                    _fadeSequenceTween = null;
+                })
+                .OnKill(() =>
+                {
+                    // If killed before completion,
+                    // snap back to fully visible
+                    if (!completed && chatEntriesCanvasGroup)
+                        chatEntriesCanvasGroup.alpha = 1f;
+
+                    _fadeSequenceTween = null;
+                });
+        }
+        
         internal void StopChatEntriesFadeout()
         {
-            fadeoutCts.SafeCancelAndDispose();
-            chatEntriesCanvasGroup.alpha = 1;
-        }
-
-        private async UniTask AwaitAndFadeChatEntriesAsync(CancellationToken ct)
-        {
-            chatEntriesCanvasGroup.alpha = 1;
-            await UniTask.Delay(chatEntriesWaitBeforeFading, cancellationToken: ct);
-            await chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime).ToUniTask(cancellationToken: ct);
+            _fadeSequenceTween?.Kill();
+            chatEntriesCanvasGroup.DOKill();
+            chatEntriesCanvasGroup.alpha = 1f;
+            _fadeSequenceTween = null;
         }
 
         public void SetScrollToBottomButtonVisibility(bool isVisible, int unreadCount, bool useAnimation)
