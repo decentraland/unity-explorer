@@ -8,10 +8,11 @@ namespace DCL.Chat.ChatInput
         {
             context.ChatInputView.Show();
             context.ChatInputView.SetDefault();
-
+            context.ChatInputView.RefreshHeight();
+            
             if (EventSystem.current != null)
                 EventSystem.current.SetSelectedGameObject(null);
-            
+
             context.ChatInputView.inputField.onSelect.AddListener(OnInputSelected);
         }
 

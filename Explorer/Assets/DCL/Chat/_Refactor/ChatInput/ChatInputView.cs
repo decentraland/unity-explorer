@@ -60,13 +60,14 @@ namespace DCL.Chat.ChatInput
         [field: SerializeField] internal ViewEventBus inputEventBus { get; private set; }
 
         private string previousText = string.Empty;
+        private ChatConfig.ChatConfig chatConfig;
         
         public void ApplyFocusStyle()
         {
             outlineObject.SetActive(true);
             characterCounterObject.SetActive(true);
             emojiButtonObject.SetActive(true);
-            inputPlaceholderObject.text = "Write a message";
+            inputPlaceholderObject.text = chatConfig.InputFocusedMessages;
             InsertTextAtCaretPosition(previousText);
         }
 
@@ -75,15 +76,19 @@ namespace DCL.Chat.ChatInput
             outlineObject.SetActive(false);
             characterCounterObject.SetActive(false);
             emojiButtonObject.SetActive(false);
-            inputPlaceholderObject.text = "Press Enter to chat";
-            previousText = inputField.text;
+            inputPlaceholderObject.text = chatConfig.InputUnfocusedMessages;
+
+            if (inputField.text.Length > 1)
+                previousText = inputField.text;
+            
             inputField.text = string.Empty;
             inputField.DeactivateInputField();
         }
 
-        public void Initialize()
+        public void Initialize(ChatConfig.ChatConfig chatConfig)
         {
             characterCounter.SetMaximumLength(inputField.characterLimit);
+            this.chatConfig = chatConfig;
         }
         
         public void InsertTextAtCaretPosition(string text)
@@ -110,9 +115,15 @@ namespace DCL.Chat.ChatInput
             characterCounter.SetCharacterCount(inputField.text.Length);
         }
 
+        public void RefreshHeight()
+        {
+            layoutElement.preferredHeight = inputField.preferredHeight;
+        }
+
         public void ClearInput()
         {
             inputField.text = string.Empty;
+            previousText = string.Empty;
             UpdateCharacterCount();
         }
 

@@ -32,5 +32,7 @@ MonoBehaviour:
   OnlyFriendsOwnUserMessage: Add this user as a friend to chat, or update your <b><u>DM
     settings</b></u> to connect with everyone.
   CheckingUserStatusMessage: Checking user status...
+  InputUnfocusedMessages: Press Enter to chat
+  InputFocusedMessages: Write a message
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}

@@ -74,6 +74,14 @@ namespace DCL.Chat.ChatConfig
         [Tooltip("Message when status is being checked.")]
         public string CheckingUserStatusMessage = "Checking user status...";
 
+        [Tooltip("Message when input is unfocused.")]
+        public string InputUnfocusedMessages = "Press Enter to chat";
+
+        [Tooltip("Message when input is focused but empty.")]
+        public string InputFocusedMessages = "Write a message";
+        
+        
+        
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio { get; private set; }

@@ -34,7 +34,7 @@ namespace DCL.Chat.ChatInput
             SendMessageCommand sendMessageCommand)
         {
             this.view = view;
-            this.view.Initialize();
+            this.view.Initialize(chatConfig);
             
             this.resolveInputStateCommand = resolveInputStateCommand;
 
