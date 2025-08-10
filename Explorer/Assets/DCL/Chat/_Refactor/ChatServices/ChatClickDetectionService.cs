@@ -5,8 +5,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
 
-// Make sure this is included
-
 namespace DCL.Chat.ChatServices
 {
     public class ChatClickDetectionService : IDisposable
@@ -14,14 +12,16 @@ namespace DCL.Chat.ChatServices
         public event Action? OnClickInside;
         public event Action? OnClickOutside;
 
-        private readonly Transform targetArea;
+        private readonly RectTransform targetArea;
+        private readonly Canvas? rootCanvas;
         private readonly HashSet<Transform> ignoredElementsSet;
 
         private bool isPaused;
 
         public ChatClickDetectionService(Transform targetArea, params Transform[] ignoredElements)
         {
-            this.targetArea = targetArea;
+            this.targetArea = (RectTransform)targetArea;
+            rootCanvas = this.targetArea.GetComponentInParent<Canvas>();
             ignoredElementsSet = new HashSet<Transform>(ignoredElements);
 
             DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
@@ -42,12 +42,7 @@ namespace DCL.Chat.ChatServices
         {
             if (EventSystem.current == null) return;
             if (isPaused) return;
-
-            // var eventData = new PointerEventData(EventSystem.current)
-            // {
-            //     position = Mouse.current.position.ReadValue()
-            // };
-
+        
             var eventData = new PointerEventData(EventSystem.current)
             {
                 position = GetPointerPosition(context)
@@ -74,27 +69,27 @@ namespace DCL.Chat.ChatServices
             if (clickedInside) OnClickInside?.Invoke();
             else OnClickOutside?.Invoke();
         }
-
+        
         private bool IsIgnored(GameObject clickedObject)
         {
             if (clickedObject == null) return false;
-
+        
             Transform current = clickedObject.transform;
-
+        
             while (current != null)
             {
                 if (ignoredElementsSet.Contains(current))
                     return true;
-
+        
                 if (current == targetArea)
                     return false;
-
+        
                 current = current.parent;
             }
-
+        
             return false;
         }
-
+        
         private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
         {
             if (ctx.control is Pointer pCtrl) return pCtrl.position.ReadValue();

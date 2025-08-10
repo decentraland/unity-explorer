@@ -1,4 +1,6 @@
-﻿namespace DCL.Chat.ChatInput
+﻿using UnityEngine.EventSystems;
+
+namespace DCL.Chat.ChatInput
 {
     public class UnfocusedChatInputState : ChatInputState
     {
@@ -7,6 +9,9 @@
             context.ChatInputView.Show();
             context.ChatInputView.SetDefault();
 
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(null);
+            
             context.ChatInputView.inputField.onSelect.AddListener(OnInputSelected);
         }
 

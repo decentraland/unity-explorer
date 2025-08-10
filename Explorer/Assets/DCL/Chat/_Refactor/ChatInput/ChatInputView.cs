@@ -75,10 +75,10 @@ namespace DCL.Chat.ChatInput
             outlineObject.SetActive(false);
             characterCounterObject.SetActive(false);
             emojiButtonObject.SetActive(false);
-            inputField.DeactivateInputField();
             inputPlaceholderObject.text = "Press Enter to chat";
             previousText = inputField.text;
-            inputField.SetTextWithoutNotify("");
+            inputField.text = string.Empty;
+            inputField.DeactivateInputField();
         }
 
         public void Initialize()

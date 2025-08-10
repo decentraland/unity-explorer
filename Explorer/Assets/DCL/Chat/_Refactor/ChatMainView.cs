@@ -40,13 +40,16 @@ namespace DCL.Chat
         {
         }
 
+        public bool IsPointerInside { get; private set; }
         public void OnPointerEnter(PointerEventData eventData)
         {
+            IsPointerInside = true;
             OnPointerEnterEvent?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            IsPointerInside = false;
             OnPointerExitEvent?.Invoke();
         }
         
