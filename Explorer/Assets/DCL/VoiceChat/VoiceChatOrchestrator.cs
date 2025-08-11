@@ -20,12 +20,14 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<VoiceChatType> currentVoiceChatType = new (VoiceChatType.NONE);
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.DEFAULT);
+        private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
 
         private VoiceChatCallStatusServiceBase activeCallStatusService;
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
+        public IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneActiveCommunityVoiceChatData => currentActiveCommunityData;
         public IReadonlyReactiveProperty<string> CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
         public string CurrentConnectionUrl => activeCallStatusService?.ConnectionUrl ?? string.Empty;
         public VoiceChatParticipantsStateService ParticipantsStateService { get; }
@@ -47,6 +49,7 @@ namespace DCL.VoiceChat
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             communityVoiceChatCallStatusService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
+            communityVoiceChatCallStatusService.ActiveVoiceChatStoppedInScene += OnActiveVoiceChatStoppedInScene;
 
             privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
             communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
@@ -56,6 +59,7 @@ namespace DCL.VoiceChat
         {
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
             communityVoiceChatCallStatusService.ActiveVoiceChatDetectedInScene -= OnActiveVoiceChatDetectedInScene;
+            communityVoiceChatCallStatusService.ActiveVoiceChatStoppedInScene -= OnActiveVoiceChatStoppedInScene;
 
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
@@ -63,6 +67,7 @@ namespace DCL.VoiceChat
             currentVoiceChatType?.Dispose();
             currentCallStatus?.Dispose();
             currentVoiceChatPanelSize?.Dispose();
+            currentActiveCommunityData?.Dispose();
             ParticipantsStateService?.Dispose();
         }
 
@@ -132,9 +137,16 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Switched Orchestrator state to {currentVoiceChatType.Value}");
         }
 
-        private void OnActiveVoiceChatDetectedInScene(string communityId)
+        private void OnActiveVoiceChatDetectedInScene(ActiveCommunityVoiceChat activeCommunityData)
         {
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat detected in scene for community: {communityId}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat detected in scene for community: {activeCommunityData.communityName} ({activeCommunityData.communityId})");
+            currentActiveCommunityData.Value = activeCommunityData;
+        }
+
+        private void OnActiveVoiceChatStoppedInScene()
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat stopped in scene");
+            currentActiveCommunityData.Value = null;
         }
 
         private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)
@@ -174,7 +186,6 @@ namespace DCL.VoiceChat
                 case VoiceChatType.COMMUNITY:
                     activeCallStatusService = communityVoiceChatCallStatusService;
                     break;
-                default: throw new ArgumentOutOfRangeException(nameof(newType), newType, null);
             }
         }
 

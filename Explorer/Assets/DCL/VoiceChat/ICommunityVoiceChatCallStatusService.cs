@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -11,6 +12,13 @@ namespace DCL.VoiceChat
     /// </summary>
     public interface ICommunityVoiceChatCallStatusService
     {
+        /// <summary>
+        ///     Event fired when active voice chat is detected in the current scene
+        /// </summary>
+        event Action<ActiveCommunityVoiceChat>? ActiveVoiceChatDetectedInScene;
+
+        event Action? ActiveVoiceChatStoppedInScene;
+
         /// <summary>
         ///     Checks if a community has an active voice chat call
         /// </summary>

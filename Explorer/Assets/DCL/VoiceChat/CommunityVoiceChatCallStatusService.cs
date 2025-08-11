@@ -35,7 +35,8 @@ namespace DCL.VoiceChat
 
         private CancellationTokenSource cts = new ();
 
-        public event Action<string>? ActiveVoiceChatDetectedInScene;
+        public event Action<ActiveCommunityVoiceChat>? ActiveVoiceChatDetectedInScene;
+        public event Action? ActiveVoiceChatStoppedInScene;
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
@@ -60,12 +61,21 @@ namespace DCL.VoiceChat
                 string? communityId = communities[0];
                 OnActiveVoiceChatDetectedInScene(communityId);
             }
-            else { ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {playerParcelData.ParcelPosition} has no active community voice chat"); }
+            else 
+            { 
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {playerParcelData.ParcelPosition} has no active community voice chat");
+                OnActiveVoiceChatStoppedInScene();
+            }
         }
 
         private void OnActiveVoiceChatDetectedInScene(string communityId)
         {
-            ActiveVoiceChatDetectedInScene?.Invoke(communityId);
+            ActiveVoiceChatDetectedInScene?.Invoke(activeCommunityVoiceChats[communityId]);
+        }
+
+        private void OnActiveVoiceChatStoppedInScene()
+        {
+            ActiveVoiceChatStoppedInScene?.Invoke();
         }
 
         private void UnregisterCommunityCallFromScene(string communityId)
