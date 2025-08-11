@@ -23,6 +23,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -65,7 +66,9 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
+        private CommunityCardVoiceChatController communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
@@ -99,7 +102,8 @@ namespace DCL.Communities.CommunitiesCard
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             LambdasProfilesProvider lambdasProfilesProvider,
-            GalleryEventBus galleryEventBus)
+            GalleryEventBus galleryEventBus,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -120,6 +124,7 @@ namespace DCL.Communities.CommunitiesCard
             this.web3IdentityCache = web3IdentityCache;
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.galleryEventBus = galleryEventBus;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
@@ -247,6 +252,8 @@ namespace DCL.Communities.CommunitiesCard
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false, galleryEventBus);
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
+            communityCardVoiceChatController = new CommunityCardVoiceChatController(viewInstance.communityCardVoiceChatView, voiceChatOrchestrator);
+
             membersListController = new MembersListController(viewInstance.MembersListView,
                 profileRepositoryWrapper,
                 mvcManager,
@@ -322,6 +329,10 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.ResetToggle(true);
 
                 eventListController?.ShowEvents(communityData, ct);
+                communityCardVoiceChatController.SetPanelStatus(
+                    response.data.voiceChatStatus.isActive,
+                    response.data.role is CommunityMemberRole.moderator or CommunityMemberRole.owner,
+                    response.data.id);
             }
         }
 
