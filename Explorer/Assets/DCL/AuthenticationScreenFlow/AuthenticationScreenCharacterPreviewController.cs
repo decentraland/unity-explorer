@@ -36,7 +36,7 @@ namespace DCL.AuthenticationScreenFlow
             previewAvatarModel.Emotes = ShortenEmotes(avatar);
 
             base.Initialize(avatar, position);
-            previewController!.Value.AddHeadIK();
+            previewController!.Value.EnableHeadIK();
             PlayEmote(settings.IntroEmoteURN);
         }
 
