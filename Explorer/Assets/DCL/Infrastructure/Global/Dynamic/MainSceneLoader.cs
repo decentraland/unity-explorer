@@ -62,7 +62,7 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
-        [Header("Startup Config")] [SerializeField]
+        [Header("STARTUP CONFIG")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
 
         [Space]
@@ -74,7 +74,7 @@ namespace Global.Dynamic
         [Space]
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
-        [Header("References")]
+        [Header("REFERENCES")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;

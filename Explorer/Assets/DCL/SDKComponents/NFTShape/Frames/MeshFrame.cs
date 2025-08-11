@@ -10,7 +10,6 @@ namespace DCL.SDKComponents.NFTShape.Frames
         [SerializeField] private Material viewNftShapeMaterial = null!;
         [SerializeField] private Texture2D emptyTexture = null!;
         [SerializeField] private string albedoColorPropertyName = "_BaseMap";
-        [SerializeField] private string texScalePropertyName = "_BaseMap_ST";
 
         [SerializeField] private int placeIndex;
 
@@ -24,7 +23,6 @@ namespace DCL.SDKComponents.NFTShape.Frames
 
         private int albedoColorPropertyId;
         private int backplateColorPropertyId;
-        private int texScalePropertyId;
         private MaterialPropertyBlock backplateMaterialPropertyBlock = null!;
         private MaterialPropertyBlock viewNftMaterialPropertyBlock = null!;
 
@@ -43,7 +41,6 @@ namespace DCL.SDKComponents.NFTShape.Frames
             viewNftMaterialPropertyBlock = new MaterialPropertyBlock();
             backplateColorPropertyId = Shader.PropertyToID(backplateColorPropertyName);
             albedoColorPropertyId = Shader.PropertyToID(albedoColorPropertyName);
-            texScalePropertyId = Shader.PropertyToID(texScalePropertyName);
 
             ApplyCanvasMaterial(viewNftShapeMaterial);
             HideStatuses();
@@ -77,12 +74,6 @@ namespace DCL.SDKComponents.NFTShape.Frames
                           };
 
             current.SetActive(true);
-        }
-
-        public override void SetTextureScale(Vector2 texScale)
-        {
-            viewNftMaterialPropertyBlock.SetVector(texScalePropertyId, new Vector4(texScale.x, texScale.y, 0, 0));
-            renderer.SetPropertyBlock(viewNftMaterialPropertyBlock, placeIndex);
         }
 
         private void ApplyCanvasMaterial(Material material)
