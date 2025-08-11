@@ -21,7 +21,7 @@ namespace DCL.VoiceChat
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
         private bool isClickedOnce;
 
-        private CancellationTokenSource cts;
+        private CancellationTokenSource cts = new ();
 
         public CommunityStreamJoinButtonController(
             CallButtonView view,
@@ -31,17 +31,16 @@ namespace DCL.VoiceChat
             this.view = view;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.currentChannel = currentChannel;
-            this.view.CallButton.onClick.AddListener(OnJoinButtonClicked);
-            cts = new CancellationTokenSource();
 
+            this.view.CallButton.onClick.AddListener(OnJoinButtonClicked);
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
         }
 
         public void Dispose()
         {
-            currentChannelSubscription?.Dispose();
+            currentChannelSubscription.Dispose();
             view.CallButton.onClick.RemoveListener(OnJoinButtonClicked);
-            cts?.Dispose();
+            cts.Dispose();
         }
 
         private void Reset()
@@ -63,7 +62,7 @@ namespace DCL.VoiceChat
 
         private void OnJoinButtonClicked()
         {
-            cts = cts?.SafeRestart();
+            cts = cts.SafeRestart();
             HandleJoinButtonClickAsync(cts!.Token).Forget();
         }
 

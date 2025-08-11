@@ -145,7 +145,6 @@ namespace DCL.VoiceChat
 
         private void OnActiveVoiceChatStoppedInScene()
         {
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat stopped in scene");
             currentActiveCommunityData.Value = null;
         }
 

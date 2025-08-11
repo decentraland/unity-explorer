@@ -60,8 +60,8 @@ namespace DCL.VoiceChat
                 string? communityId = communities[0];
                 OnActiveVoiceChatDetectedInScene(communityId);
             }
-            else 
-            { 
+            else
+            {
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {playerParcelData.ParcelPosition} has no active community voice chat");
                 OnActiveVoiceChatStoppedInScene();
             }
@@ -377,6 +377,8 @@ namespace DCL.VoiceChat
                 return;
             }
 
+            ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Received community update for {communityUpdate.CommunityId} with status: {communityUpdate.Status.ToString()} with positions: {communityUpdate.Positions}");
+
             if (communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatEnded)
             {
                 activeCommunityVoiceChats.Remove(communityUpdate.CommunityId);
@@ -419,9 +421,10 @@ namespace DCL.VoiceChat
 
             if (communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted)
             {
-                notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
                 if (communityUpdate.Positions.Count > 0)
                     RegisterCommunityCallInScene(communityUpdate.CommunityId, communityUpdate.Positions);
+
+                notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
             }
         }
 
@@ -441,7 +444,7 @@ namespace DCL.VoiceChat
                     continue;
                 }
 
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Processing community {activeChat.communityId} - Name: {activeChat.communityName}, Participants: {activeChat.participantCount}, IsMember: {activeChat.isMember}");
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Processing community {activeChat.communityId} - Name: {activeChat.communityName}, Participants: {activeChat.participantCount}, IsMember: {activeChat.isMember}, Positions: {activeChat.positions}");
 
                 activeCommunityVoiceChats[activeChat.communityId] = activeChat;
 
