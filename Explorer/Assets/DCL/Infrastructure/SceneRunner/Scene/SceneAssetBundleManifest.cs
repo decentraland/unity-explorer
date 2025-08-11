@@ -8,9 +8,6 @@ namespace SceneRunner.Scene
 {
     public class SceneAssetBundleManifest
     {
-        //From v25 onwards, the asset bundle path contains the sceneID in the hash
-        //This was done to solve cache issues
-        private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
 
         private readonly string version;
         private readonly HashSet<string> convertedFiles;

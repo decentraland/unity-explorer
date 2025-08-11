@@ -10,6 +10,11 @@ namespace DCL.Ipfs
     [Serializable]
     public abstract class EntityDefinitionBase
     {
+        //From v25 onwards, the asset bundle path contains the sceneID in the hash
+        //This was done to solve cache issues
+        private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
+
+
         public string? id;
         public string type;
         public long timestamp;
@@ -20,7 +25,6 @@ namespace DCL.Ipfs
         // Asset bundle manifest properties
         public bool assetBundleManifestRequestFailed;
         public string assetBundleBuildDate;
-        private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
         public AssetBundleManifestVersion? versions;
         private bool? HasHashInPathValue;
 

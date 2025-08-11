@@ -26,6 +26,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 if (assetBundleManifest.Succeeded)
                     entityDefinition.versions = new AssetBundleManifestVersion(assetBundleManifest.Asset.GetVersion());
+                else
+                    entityDefinition.assetBundleManifestRequestFailed = true;
             }
         }
     }

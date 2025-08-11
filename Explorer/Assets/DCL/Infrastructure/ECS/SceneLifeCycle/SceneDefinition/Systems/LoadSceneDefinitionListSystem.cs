@@ -120,22 +120,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 new SceneDefinitions(intention.TargetCollection));
         }
 
-        private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string hash, ReportData reportCategory, CancellationToken ct)
-        {
-            urlBuilder!.Clear();
-
-            urlBuilder.AppendDomain(assetBundleURL)
-                      .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
-                      .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
-
-            SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), RetryPolicy.WithRetries(1)), ct, reportCategory)
-                                                              .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
-
-            AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
-
-            return new SceneAssetBundleManifest(sceneAbDto.Version, sceneAbDto.Date);
-        }
-
         private sealed class SceneMetadataConverter : JsonConverter
         {
             public override bool CanConvert(Type objectType) =>

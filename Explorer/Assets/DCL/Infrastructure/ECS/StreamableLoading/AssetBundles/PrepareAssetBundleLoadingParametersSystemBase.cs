@@ -52,7 +52,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (string.IsNullOrEmpty(assetBundleIntention.AssetBundleVersion))
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
+                        (GetReportCategory(), CreateException(new ArgumentException($"Manifest version must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
 
                     return;
                 }
