@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <DCL.DebugUtilities.Views.AverageFpsBannerElement>
+        <ui:VisualElement class="avg-fps-banner">
+            <ui:VisualElement class="avg-fps-banner__left">
+                <ui:Label name="AverageFpsLabel" class="avg-fps-banner__avg-fps-label" text="Average FPS:" />
+                <ui:Label name="FramesWindowLabel" class="avg-fps-banner__frames-window-label" text="(1000 frames)" />
+            </ui:VisualElement>
+            <ui:VisualElement class="avg-fps-banner__right">
+                <ui:Label name="FpsValue" class="avg-fps-banner__fps" text="collecting…" />
+                <ui:Label name="MsValue" class="avg-fps-banner__ms" text="" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </DCL.DebugUtilities.Views.AverageFpsBannerElement>
+</ui:UXML>
+
+

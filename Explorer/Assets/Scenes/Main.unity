@@ -442,6 +442,7 @@ MonoBehaviour:
   launchSettings:
     initialRealm: 0
     targetScene: {x: 0, y: 0}
+    EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
       parcels:
@@ -471,6 +472,7 @@ MonoBehaviour:
     <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
     <Vector3Field>k__BackingField: {fileID: 0}
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
+    <AverageFpsBanner>k__BackingField: {fileID: 9197481963319205126, guid: c0fc7eb8db0d547589adc7f8807c8687, type: 3}
   debugSettings:
     showSplash: 1
     showAuthentication: 1

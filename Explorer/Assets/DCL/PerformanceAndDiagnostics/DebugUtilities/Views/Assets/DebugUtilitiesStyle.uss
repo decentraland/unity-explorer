@@ -315,3 +315,76 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
 .unity-base-field__label {
     min-width: 12px;
 }
+
+/* Average FPS banner styles */
+.avg-fps-banner { 
+    display: flex;
+    flex-direction: row;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    background-color: #2c2c2c;
+    width: 200%;
+}
+
+.avg-fps-banner__left { 
+    display: flex; 
+    flex-direction: column;
+    flex: 0 0 auto;
+    width: 30%;
+}
+.avg-fps-banner__right {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    width: 70%; 
+}
+
+.avg-fps-banner__avg-fps-label { 
+    display: flex;
+    color: white;
+    font-size: 12px;
+    flex: 0 0 auto;
+    -unity-text-align: middle-center;
+}
+.avg-fps-banner__frames-window-label {
+    display: flex;
+    font-size: 12px;
+    color: #cccccc;
+    -unity-text-align: middle-center;
+    white-space: nowrap; 
+}
+
+.avg-fps-banner__fps { 
+    -unity-font-style: bold;
+    font-size: 16px;
+    color: #2ecc71; 
+    -unity-text-align: middle-left;
+    white-space: nowrap; 
+    display: flex;
+}
+.avg-fps-banner__ms { 
+    font-size: 12px;
+    color: #cccccc;
+    -unity-text-align: middle-left;
+    white-space: nowrap;
+    display: flex;
+}
+
+.avg-fps-banner--ok {
+    border-left-color: #2ecc71;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+
+.avg-fps-banner--warn {
+    border-left-color: #f1c40f;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+
+.avg-fps-banner--error {
+    border-left-color: #e74c3c;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
