@@ -16,28 +16,28 @@ using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
-    public class DebugMenuPlugin : IDCLGlobalPlugin<SceneDebugConsoleSettings>
+    public class DebugMenuPlugin : IDCLGlobalPlugin<DebugMenuSettings>
     {
-        private readonly DebugMenuLogEntryBus logEntriesBus;
+        private readonly DebugMenuConsoleLogEntryBus logEntriesBus;
         private readonly IInputBlock inputBlock;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly IRoomsStatus roomsStatus;
-        private DebugMenuController? sceneDebugConsoleController;
+        private DebugMenuController? debugMenuController;
 
-        public DebugMenuPlugin(DebugMenuLogEntryBus logEntriesBus, IInputBlock inputBlock, IAssetsProvisioner assetsProvisioner, ICurrentSceneInfo currentSceneInfo, IRoomsStatus roomsStatus)
+        public DebugMenuPlugin(DebugMenuConsoleLogEntryBus consoleLogEntryBus, IInputBlock inputBlock, IAssetsProvisioner assetsProvisioner, ICurrentSceneInfo currentSceneInfo, IRoomsStatus roomsStatus)
         {
-            this.logEntriesBus = logEntriesBus;
+            this.logEntriesBus = consoleLogEntryBus;
             this.inputBlock = inputBlock;
             this.assetsProvisioner = assetsProvisioner;
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
         }
 
-        public async UniTask InitializeAsync(SceneDebugConsoleSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(DebugMenuSettings settings, CancellationToken ct)
         {
-            sceneDebugConsoleController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<DebugMenuController>();
-            sceneDebugConsoleController.SetInputBlock(inputBlock);
+            debugMenuController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<DebugMenuController>();
+            debugMenuController.SetInputBlock(inputBlock);
 
             currentSceneInfo.SceneStatus.OnUpdate += OnSceneStatusUpdate;
             roomsStatus.ConnectionQualityScene.OnUpdate += OnSceneConnectionQualityUpdate;
@@ -50,12 +50,12 @@ namespace DCL.PluginSystem.Global
 
         private void OnIslandConnectionQualityUpdate(ConnectionQuality quality)
         {
-            sceneDebugConsoleController!.SetGlobalRoomStatus(GetConnectionStatus(quality));
+            debugMenuController!.SetGlobalRoomStatus(GetConnectionStatus(quality));
         }
 
         private void OnSceneConnectionQualityUpdate(ConnectionQuality quality)
         {
-            sceneDebugConsoleController!.SetSceneRoomStatus(GetConnectionStatus(quality));
+            debugMenuController!.SetSceneRoomStatus(GetConnectionStatus(quality));
         }
 
         private void OnSceneStatusUpdate(ICurrentSceneInfo.RunningStatus? status)
@@ -63,13 +63,13 @@ namespace DCL.PluginSystem.Global
             switch (status)
             {
                 case ICurrentSceneInfo.RunningStatus.Good:
-                    sceneDebugConsoleController!.SetSceneStatus(ConnectionStatus.Good);
+                    debugMenuController!.SetSceneStatus(ConnectionStatus.Good);
                     break;
                 case ICurrentSceneInfo.RunningStatus.Crashed:
-                    sceneDebugConsoleController!.SetSceneStatus(ConnectionStatus.Lost);
+                    debugMenuController!.SetSceneStatus(ConnectionStatus.Lost);
                     break;
                 case null:
-                    sceneDebugConsoleController!.SetSceneStatus(ConnectionStatus.None);
+                    debugMenuController!.SetSceneStatus(ConnectionStatus.None);
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(status), status, null);
             }
@@ -82,7 +82,7 @@ namespace DCL.PluginSystem.Global
 
         private void OnMessageAdded(DebugMenuConsoleLogEntry entry)
         {
-            sceneDebugConsoleController!.PushLog(entry);
+            debugMenuController!.PushLog(entry);
         }
 
         public void Dispose()
@@ -104,9 +104,9 @@ namespace DCL.PluginSystem.Global
     }
 
     [Serializable]
-    public class SceneDebugConsoleSettings : IDCLPluginSettings
+    public class DebugMenuSettings : IDCLPluginSettings
     {
-        [field: Header(nameof(DebugMenuPlugin) + "." + nameof(SceneDebugConsoleSettings))]
+        [field: Header(nameof(DebugMenuPlugin) + "." + nameof(DebugMenuSettings))]
         [field: Space]
         [field: SerializeField]
         public AssetReferenceGameObject UiDocumentPrefab;

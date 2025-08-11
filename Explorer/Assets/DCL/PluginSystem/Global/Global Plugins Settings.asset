@@ -52,7 +52,7 @@ MonoBehaviour:
   - rid: 3511243270148325472
   - rid: 6144113899072913496
   - rid: 648265872610426982
-  - rid: 657752084621295883
+  - rid: 657752310186246267
   references:
     version: 2
     RefIds:
@@ -65,8 +65,8 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 657752084621295883
-      type: {class: SceneDebugConsoleSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 657752310186246267
+      type: {class: DebugMenuSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         UiDocumentPrefab:
           m_AssetGUID: 8521b529ac852454480e3f6596bca3ba

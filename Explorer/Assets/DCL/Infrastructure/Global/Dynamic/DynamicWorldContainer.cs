@@ -21,6 +21,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -1039,7 +1040,7 @@ namespace Global.Dynamic
                 );
 
             if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
-                globalPlugins.Add(new DebugMenuPlugin(bootstrapContainer.SceneDebugConsoleMessageBus!, staticContainer.InputBlock, assetsProvisioner, currentSceneInfo, roomsStatus));
+                globalPlugins.Add(new DebugMenuPlugin(DiagnosticsContainer.SceneConsoleLogEntryBus!, staticContainer.InputBlock, assetsProvisioner, currentSceneInfo, roomsStatus));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
