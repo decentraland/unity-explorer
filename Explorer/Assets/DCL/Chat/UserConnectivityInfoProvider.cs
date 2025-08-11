@@ -64,16 +64,18 @@ namespace DCL.Chat
             this.chatHistory = chatHistory;
             this.communitiesEventBus = communitiesEventBus;
             this.realmNavigator = realmNavigator;
+
+            participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
         }
 
         public void Dispose()
         {
-            islandRoom.Participants.UpdatesFromParticipant -= OnIslandRoomUpdatesFromParticipant;
-            islandRoom.ConnectionStateChanged -= OnIslandRoomConnectionStateChanged;
+            islandRoom.Participants.UpdatesFromParticipant -= OnIslandRoomUpdatesFromParticipantAsync;
+            islandRoom.ConnectionStateChanged -= OnIslandRoomConnectionStateChangedAsync;
             chatRoom.Participants.UpdatesFromParticipant -= OnChatRoomUpdatesFromParticipantAsync;
-            chatRoom.ConnectionStateChanged -= OnChatRoomConnectionStateChanged;
+            chatRoom.ConnectionStateChanged -= OnChatRoomConnectionStateChangedAsync;
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
-            communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
+            communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedFromCommunity;
             realmNavigator.NavigationExecuted -= OnRealmNavigatorNavigationExecuted;
             initializationCts.SafeCancelAndDispose();
         }
@@ -85,16 +87,16 @@ namespace DCL.Chat
         /// <param name="communitiesDataProvider">A data source for obtaining the community conversations of the user.</param>
         public void Initialize(bool isCommunityEnabled, CommunitiesDataProvider communitiesDataProvider)
         {
-            islandRoom.Participants.UpdatesFromParticipant += OnIslandRoomUpdatesFromParticipant;
-            islandRoom.ConnectionStateChanged += OnIslandRoomConnectionStateChanged;
+            islandRoom.Participants.UpdatesFromParticipant += OnIslandRoomUpdatesFromParticipantAsync;
+            islandRoom.ConnectionStateChanged += OnIslandRoomConnectionStateChangedAsync;
             chatRoom.Participants.UpdatesFromParticipant += OnChatRoomUpdatesFromParticipantAsync;
-            chatRoom.ConnectionStateChanged += OnChatRoomConnectionStateChanged;
+            chatRoom.ConnectionStateChanged += OnChatRoomConnectionStateChangedAsync;
             realmNavigator.NavigationExecuted += OnRealmNavigatorNavigationExecuted;
 
             if (isCommunityEnabled)
             {
                 communitiesEventBus.UserConnectedToCommunity += OnCommunitiesEventBusUserConnectedToCommunity;
-                communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedToCommunity;
+                communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedFromCommunity;
 
                 foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channel in chatHistory.Channels)
                 {
@@ -106,10 +108,10 @@ namespace DCL.Chat
             // Livekit connection may happen before the chat loads, so they have to be initialized here;
             // otherwise they will be initialized later the event arrives
             if (islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
-                OnIslandRoomConnectionStateChanged(ConnectionState.ConnConnected);
+                OnIslandRoomConnectionStateChangedAsync(ConnectionState.ConnConnected);
 
             if (chatRoom.Info.ConnectionState == ConnectionState.ConnConnected)
-                OnChatRoomConnectionStateChanged(ConnectionState.ConnConnected);
+                OnChatRoomConnectionStateChangedAsync(ConnectionState.ConnConnected);
         }
 
         /// <summary>
@@ -205,7 +207,7 @@ namespace DCL.Chat
             UserConnected?.Invoke(userConnectivity.Member.Address, communityChannelId, ChatChannel.ChatChannelType.COMMUNITY);
         }
 
-        private void OnCommunitiesEventBusUserDisconnectedToCommunity(CommunityMemberConnectivityUpdate userConnectivity)
+        private void OnCommunitiesEventBusUserDisconnectedFromCommunity(CommunityMemberConnectivityUpdate userConnectivity)
         {
             ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {userConnectivity.Member.Address}, {userConnectivity.CommunityId}, {userConnectivity.Status}");
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId);;
@@ -215,11 +217,13 @@ namespace DCL.Chat
             UserDisconnected?.Invoke(userConnectivity.Member.Address, communityChannelId, ChatChannel.ChatChannelType.COMMUNITY);
         }
 
-        private void OnIslandRoomConnectionStateChanged(ConnectionState connectionState)
+        private async void OnIslandRoomConnectionStateChangedAsync(ConnectionState connectionState)
         {
+            await UniTask.SwitchToMainThread();
+
             if (connectionState == ConnectionState.ConnConnected)
             {
-                islandRoom.ConnectionStateChanged -= OnIslandRoomConnectionStateChanged;
+                islandRoom.ConnectionStateChanged -= OnIslandRoomConnectionStateChangedAsync;
 
                 IReadOnlyCollection<string> roomParticipants = islandRoom.Participants.RemoteParticipantIdentities();
                 ReportHub.Log(ReportCategory.DEBUG, "#PARTICIPANT: NEARBY CLEARED");
@@ -235,8 +239,10 @@ namespace DCL.Chat
             }
         }
 
-        private void OnIslandRoomUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private async void OnIslandRoomUpdatesFromParticipantAsync(Participant participant, UpdateFromParticipant update)
         {
+            await UniTask.SwitchToMainThread();
+
             if (update == UpdateFromParticipant.Connected)
             {
                 ReportHub.Log(ReportCategory.DEBUG, $"+PARTICIPANT: {participant.Identity}, {update}");
@@ -246,19 +252,20 @@ namespace DCL.Chat
             else if (update == UpdateFromParticipant.Disconnected)
             {
                 ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {participant.Identity}, {update}");
-                participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Remove(participant.Identity);
-                UserDisconnected?.Invoke(participant.Identity, ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+                // Hotfix: Due to a problem with Livekit connection messages, greying out nearby messages is not working properly (connected users look like disconnected)
+                //         So for now disconnections will be ignored in Nearby
+                // participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Remove(participant.Identity);
+                // UserDisconnected?.Invoke(participant.Identity, ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             }
         }
 
-        private void OnChatRoomConnectionStateChanged(ConnectionState connectionState)
+        private async void OnChatRoomConnectionStateChangedAsync(ConnectionState connectionState)
         {
+            await UniTask.SwitchToMainThread();
+
             if (connectionState == ConnectionState.ConnConnected)
             {
-                chatRoom.ConnectionStateChanged -= OnChatRoomConnectionStateChanged;
-
-                if(!participantsPerChannel.ContainsKey(privateConversationOnlineUserListId))
-                   participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
+                chatRoom.ConnectionStateChanged -= OnChatRoomConnectionStateChangedAsync;
 
                 IReadOnlyCollection<string> roomParticipants = chatRoom.Participants.RemoteParticipantIdentities();
                 participantsPerChannel[privateConversationOnlineUserListId].Clear();
@@ -309,7 +316,7 @@ namespace DCL.Chat
         // Called when the user teleports
         private void OnRealmNavigatorNavigationExecuted(Vector2Int obj)
         {
-            OnIslandRoomConnectionStateChanged(ConnectionState.ConnConnected);
+            OnIslandRoomConnectionStateChangedAsync(ConnectionState.ConnConnected);
         }
     }
 }
