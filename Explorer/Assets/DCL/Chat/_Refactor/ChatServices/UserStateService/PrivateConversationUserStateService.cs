@@ -201,7 +201,7 @@ namespace DCL.Chat.ChatServices
 
             return allFriends;
         }
-        
+
         private void OnPrivacySettingsSet(ChatPrivacySettings privacySettings)
         {
             rpcChatPrivacyService.UpsertSocialSettingsAsync(privacySettings == ChatPrivacySettings.ALL, cts.Token).Forget();
@@ -326,7 +326,7 @@ namespace DCL.Chat.ChatServices
         private void OnFriendRemoved(string userId)
         {
             lock (friendIds) { friendIds.Remove(userId); }
-            
+
             if (!UserIsConnectedToRoom(userId)) return;
 
             ChangeOnlineStatusAndNotify(userId, true, false);
@@ -335,7 +335,7 @@ namespace DCL.Chat.ChatServices
         private void OnNewFriendAdded(string userId)
         {
             lock (friendIds) { friendIds.Add(userId); }
-            
+
             if (!UserIsConnectedToRoom(userId)) return;
 
             ChangeOnlineStatusAndNotify(userId, true, true);

@@ -33,6 +33,9 @@ namespace DCL.Chat.ChatMessages
         private readonly List<ChatMessageViewModel> viewModels = new (500);
 
         private readonly ChatMessageViewModel separatorViewModel;
+
+        private IDisposable? onChannelSelectedSubscription;
+
         private CancellationTokenSource loadChannelCts = new ();
 
         // The index of the separator becomes fixed when
@@ -208,6 +211,9 @@ namespace DCL.Chat.ChatMessages
 
             RemoveNewMessagesSeparator();
 
+            // When the history the state is not final so the events should be ignored
+            Unsubscribe();
+
             LoadChannelHistoryAsync(loadChannelCts.Token).Forget();
 
             async UniTaskVoid LoadChannelHistoryAsync(CancellationToken ct)
@@ -216,6 +222,8 @@ namespace DCL.Chat.ChatMessages
                 {
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
                     TryAddNewMessagesSeparatorAfterPendingMessages();
+
+                    Subscribe();
 
                     view.SetUserConnectivityProvider(currentChannelService.UserStateService!.OnlineParticipants);
 
@@ -235,7 +243,7 @@ namespace DCL.Chat.ChatMessages
         private void MarkCurrentChannelAsRead()
         {
             if (currentChannelService.CurrentChannel == null) return;
-            
+
             markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
             scrollToBottomPresenter.OnScrolledToBottom();
         }
@@ -262,7 +270,6 @@ namespace DCL.Chat.ChatMessages
             view.OnScrollPositionChanged += OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
 
-            scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
             scope.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnUserStatusUpdated));
@@ -309,13 +316,17 @@ namespace DCL.Chat.ChatMessages
         protected override void Activate(ControllerNoData input)
         {
             view.Show();
-            Subscribe();
+
+            onChannelSelectedSubscription = eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected);
+
             UpdateChannelMessages();
         }
 
         protected override void Deactivate()
         {
             view.Hide();
+
+            onChannelSelectedSubscription?.Dispose();
             Unsubscribe();
 
             RemoveNewMessagesSeparator();
