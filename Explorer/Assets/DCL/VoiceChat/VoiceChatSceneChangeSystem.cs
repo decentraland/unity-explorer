@@ -15,20 +15,22 @@ namespace DCL.VoiceChat.Systems
     public partial class VoiceChatSceneChangeSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatService;
-        private readonly ISceneData sceneData;
+        private readonly ICurrentSceneInfo currentSceneInfo;
+        private ISceneFacade? currentScene;
 
         public VoiceChatSceneChangeSystem(
             World world,
             CommunityVoiceChatCallStatusService communityVoiceChatService,
-            ISceneData sceneData) : base(world)
+            ICurrentSceneInfo currentSceneInfo) : base(world)
         {
             this.communityVoiceChatService = communityVoiceChatService;
-            this.sceneData = sceneData;
+            this.currentSceneInfo = currentSceneInfo;
         }
 
         protected override void Update(float t)
         {
-            // This system only responds to scene change events, no per-frame updates needed
+            // Check if the current scene has changed by monitoring the currentSceneInfo
+            // This system will be notified via OnSceneIsCurrentChanged when scenes become current/not current
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)

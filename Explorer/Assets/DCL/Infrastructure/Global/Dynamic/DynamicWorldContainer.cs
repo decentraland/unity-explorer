@@ -895,7 +895,8 @@ namespace Global.Dynamic
                         globalWorld,
                         playerEntity,
                         communitiesDataProvider,
-                        staticContainer.WebRequestsContainer.WebRequestController
+                        staticContainer.WebRequestsContainer.WebRequestController,
+                        currentSceneInfo
                         )
                     );
 

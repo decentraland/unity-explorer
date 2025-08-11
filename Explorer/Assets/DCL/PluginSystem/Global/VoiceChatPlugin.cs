@@ -107,12 +107,9 @@ namespace DCL.PluginSystem.Global
             voiceChatPanelResizeController?.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) 
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            // Register the voice chat scene change system
-            // Note: We need to get ISceneData from the scene context
-            // For now, we'll create a placeholder system that will be properly initialized later
-            // builder.AddSystem(new VoiceChatSceneChangeSystem(world, communityVoiceChatCallStatusService, null));
+            VoiceChatSceneChangeSystem.InjectToWorld(ref builder, world, communityVoiceChatCallStatusService);
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
