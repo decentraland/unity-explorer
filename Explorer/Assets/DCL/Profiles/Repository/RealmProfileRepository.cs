@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Optimization.Pools;
 using DCL.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS;
@@ -15,6 +16,17 @@ using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfi
 
 namespace DCL.Profiles
 {
+    /// <summary>
+    ///     TODO: this class requires refactoring:
+    ///     <list type="bullet">
+    ///         <item>The requests should be batched as the endpoint supports an array of pointers</item>
+    ///         <item>Currently, loading nearby profiles and from chat cause an unnecessary spike of requests that can be combined into one</item>
+    ///         <item>It should be a part of the ECS to enable proper budgeting and deferring</item>
+    ///         <item>Failures should be cached (as in LoadSystemBase). Not caching failures leads to spam of the missing profiles or incorrect addresses. The catalyst they are requested from should be respected due to the replication time</item>
+    ///         <item>Concurrent requests to the same profile id should be properly handled</item>
+    ///         <item>LoadSystemBase already supports all cases needed</item>
+    ///     </list>
+    /// </summary>
     public partial class RealmProfileRepository : IProfileRepository
     {
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
@@ -24,6 +36,9 @@ namespace DCL.Profiles
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
+
+        private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
+
         // Catalyst servers requires a face thumbnail texture of 256x256
         // Otherwise it will fail when the profile is published
         private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
@@ -52,8 +67,8 @@ namespace DCL.Profiles
             string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
             string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
 
-            using var profileDto = NewProfileJsonRootDto(profile, bodyHash, faceHash);
-            var entity = NewPublishProfileEntity(profile, profileDto, bodyHash, faceHash);
+            using GetProfileJsonRootDto profileDto = NewProfileJsonRootDto(profile, bodyHash, faceHash);
+            IpfsProfileEntity entity = NewPublishProfileEntity(profile, profileDto, bodyHash, faceHash);
 
             files.Clear();
             files[bodyHash] = bodySnapshotTextureFile;
@@ -93,9 +108,18 @@ namespace DCL.Profiles
         public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(id)) return null;
+
+            // if there is an ongoing request wait for it, as it will override the value from the cache (return it to the pool)
+            // that makes the object empty (unusable)
+            if (ongoingRequests.TryGetValue(id, out UniTaskCompletionSource ongoingTask))
+                await ongoingTask.Task.AttachExternalCancellation(ct);
+
             if (TryProfileFromCache(id, version, out Profile? profileInCache)) return profileInCache;
 
             Assert.IsTrue(realm.Configured, "Can't get profile if the realm is not configured");
+
+            ongoingTask = new UniTaskCompletionSource();
+            ongoingRequests.Add(id, ongoingTask);
 
             try
             {
@@ -106,7 +130,7 @@ namespace DCL.Profiles
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
                     serializerSettings: SERIALIZER_SETTINGS);
 
-                var profileDto = root?.FirstProfileDto();
+                ProfileJsonDto? profileDto = root?.FirstProfileDto();
 
                 if (profileDto is null)
                     return null;
@@ -116,7 +140,7 @@ namespace DCL.Profiles
                 // For example the multiplayer system, whenever a remote profile update comes in,
                 // it compares the version of the profile to check if it has changed. By overriding the version here,
                 // the check always fails. So its necessary to get a new instance each time
-                Profile profile = Profile.Create();
+                var profile = Profile.Create();
                 profileDto.CopyTo(profile);
                 profile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
 
@@ -130,6 +154,11 @@ namespace DCL.Profiles
                     return null;
 
                 throw;
+            }
+            finally
+            {
+                ongoingRequests.Remove(id);
+                ongoingTask.TrySetResult();
             }
         }
 
