@@ -34,9 +34,9 @@ MonoBehaviour:
     <fieldOfViewEase>k__BackingField: 6
     <fieldOfViewEaseDuration>k__BackingField: 0.4
     <rotationEnabled>k__BackingField: 1
-    <rotationModifier>k__BackingField: 35
+    <rotationModifier>k__BackingField: 50
     <rotationEase>k__BackingField: 6
-    <rotationEaseDuration>k__BackingField: 0.75
+    <rotationEaseMaxDuration>k__BackingField: 1
   <cursorSettings>k__BackingField:
   - inputAction: 1
     cursorSprite: {fileID: 21300000, guid: d34aedda08e64344091b34deada8211e, type: 3}

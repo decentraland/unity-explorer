@@ -100,17 +100,21 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
-                    float delta = pointerEventData.delta.x * rotationModifier;
+                    // Normalize delta to make it resolution-independent
+                    float normalizedDelta = pointerEventData.delta.x / Screen.width;
+                    float baseRotationDelta = normalizedDelta * cameraSettings.rotationModifier;
+
+                    float rotationDelta = baseRotationDelta * Time.deltaTime * 1000f;
 
                     float currentValue = characterPreviewAvatarContainer.freeLookCamera.m_XAxis.Value;
-                    float targetValue = currentValue + delta;
+                    float targetValue = currentValue + rotationDelta;
 
                     float minDuration = 0.01f;
-                    float maxDuration = cameraSettings.rotationEaseDuration;
+                    float maxDuration = cameraSettings.rotationEaseMaxDuration;
+                    float maxDeltaForDuration = 1f; // delta that maps to maxDuration
 
-                    float deltaAbs = Mathf.Abs(delta);
-                    float duration = Mathf.Clamp(deltaAbs, minDuration, maxDuration);
+                    float t = Mathf.Clamp01(Mathf.Abs(baseRotationDelta) / maxDeltaForDuration);
+                    float duration = Mathf.Lerp(minDuration, maxDuration, t);
 
                     characterPreviewAvatarContainer.TweenXAxisTo(targetValue, duration, cameraSettings.rotationEase);
 
