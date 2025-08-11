@@ -31,6 +31,7 @@ namespace DCL.VoiceChat
 
         private readonly Dictionary<Vector2Int, List<string>> parcelToCommunityMap = new ();
         private readonly Dictionary<string, HashSet<Vector2Int>> communityToParcelMap = new ();
+        private readonly HashSet<Vector2Int> reusableParcelSet = new ();
 
         private CancellationTokenSource cts = new ();
 
@@ -67,36 +68,6 @@ namespace DCL.VoiceChat
             ActiveVoiceChatDetectedInScene?.Invoke(communityId);
         }
 
-        private void RegisterSceneCommunity(Vector2Int[] sceneParcels, string communityId)
-        {
-            if (communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? existingParcels))
-            {
-                foreach (Vector2Int parcel in sceneParcels)
-                {
-                    if (parcelToCommunityMap.TryGetValue(parcel, out List<string>? existingCommunities)) { existingCommunities.Add(communityId); }
-                    else { parcelToCommunityMap[parcel] = new List<string> { communityId }; }
-
-                    existingParcels.Add(parcel);
-                }
-            }
-            else
-            {
-                var newParcels = new HashSet<Vector2Int>();
-
-                foreach (Vector2Int parcel in sceneParcels)
-                {
-                    if (parcelToCommunityMap.TryGetValue(parcel, out List<string>? existingCommunities)) { existingCommunities.Add(communityId); }
-                    else { parcelToCommunityMap[parcel] = new List<string> { communityId }; }
-
-                    newParcels.Add(parcel);
-                }
-
-                communityToParcelMap[communityId] = newParcels;
-            }
-
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Registered {sceneParcels.Length} scene parcels with community {communityId}");
-        }
-
         private void UnregisterCommunityCallFromScene(string communityId)
         {
             if (communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? sceneParcels))
@@ -117,26 +88,54 @@ namespace DCL.VoiceChat
             }
         }
 
-        /// <summary>
-        ///     Register scene mapping for a voice chat when it starts
-        /// </summary>
-        private void RegisterCommunityCallInScene(string communityId, CommunityVoiceChatUpdate communityUpdate)
+        private bool TryParsePosition(string positionString, out Vector2Int parcel)
         {
-            Vector2Int[] positions = ParsePositions(communityUpdate.Positions);
-            RegisterSceneCommunity(positions, communityId);
+            parcel = default;
+            
+            if (string.IsNullOrWhiteSpace(positionString))
+                return false;
+
+            string[] coords = positionString.Split(',');
+            if (coords.Length != 2)
+                return false;
+
+            if (!int.TryParse(coords[0].Trim(), out int x) || !int.TryParse(coords[1].Trim(), out int y))
+                return false;
+
+            parcel = new Vector2Int(x, y);
+            return true;
         }
 
-        private Vector2Int[] ParsePositions(RepeatedField<string> positions)
+        private void RegisterCommunityCallInScene(string communityId, IEnumerable<string> positionStrings)
         {
-            var result = new Vector2Int[positions.Count];
+            bool isNewCommunity = !communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? existingParcels);
+            HashSet<Vector2Int> parcels = isNewCommunity ? reusableParcelSet : existingParcels;
 
-            for (var i = 0; i < positions.Count; i++)
+            if (isNewCommunity)
             {
-                string[] coords = positions[i].Split(',');
-                result[i] = new Vector2Int(int.Parse(coords[0]), int.Parse(coords[1]));
+                reusableParcelSet.Clear();
             }
 
-            return result;
+            foreach (string positionString in positionStrings)
+            {
+                if (!TryParsePosition(positionString, out Vector2Int parcel))
+                {
+                    ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Invalid position format: {positionString} for community {communityId}");
+                    continue;
+                }
+                
+                if (parcelToCommunityMap.TryGetValue(parcel, out List<string>? existingCommunities)) { existingCommunities.Add(communityId); }
+                else { parcelToCommunityMap[parcel] = new List<string> { communityId }; }
+
+                parcels.Add(parcel);
+            }
+
+            if (isNewCommunity)
+            {
+                communityToParcelMap[communityId] = new HashSet<Vector2Int>(reusableParcelSet);
+            }
+
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Registered community {communityId} in scene");
         }
 
         public override void StartCall(string communityId)
@@ -414,7 +413,7 @@ namespace DCL.VoiceChat
             if (communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted)
             {
                 notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
-                RegisterCommunityCallInScene(communityUpdate.CommunityId, communityUpdate);
+                RegisterCommunityCallInScene(communityUpdate.CommunityId, communityUpdate.Positions);
             }
         }
 
@@ -437,6 +436,8 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Processing community {activeChat.communityId} - Name: {activeChat.communityName}, Participants: {activeChat.participantCount}, IsMember: {activeChat.isMember}");
 
                 activeCommunityVoiceChats[activeChat.communityId] = activeChat;
+
+                RegisterCommunityCallInScene(activeChat.communityId, activeChat.positions);
 
                 // Ensure we have a reactive property for this community
                 if (!communityVoiceChatCalls.TryGetValue(activeChat.communityId, out ReactiveProperty<bool>? communityVoiceChatCall))

@@ -280,7 +280,7 @@ namespace Global.Dynamic
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
-            PlayerParcelTracker playerParcelTracker = new PlayerParcelTracker();
+            PlayerParcelTrackerService playerParcelTracker = new PlayerParcelTrackerService();
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
             MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
@@ -551,7 +551,7 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
-            var voiceChatContainer = new VoiceChatContainer(socialServiceContainer.socialServicesRPC, socialServiceEventBus, roomHub, identityCache, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController, playerParcelTrackerService);
+            var voiceChatContainer = new VoiceChatContainer(socialServiceContainer.socialServicesRPC, socialServiceEventBus, roomHub, identityCache, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController, playerParcelTracker);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -671,7 +671,7 @@ namespace Global.Dynamic
                     voiceChatRoom
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, playerParcelTrackerService,staticContainer.ScenesCache, staticContainer.RealmData),
+                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, playerParcelTracker,staticContainer.ScenesCache, staticContainer.RealmData),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
@@ -899,7 +899,7 @@ namespace Global.Dynamic
                         playerEntity,
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
-                        playerParcelTrackerService
+                        playerParcelTracker
                     )
                 );
 
@@ -1042,7 +1042,7 @@ namespace Global.Dynamic
                         debugBuilder,
                         cameraReelStorageService,
                         entityParticipantTable,
-                        playerParcelTrackerService
+                        playerParcelTracker
                     )
                 );
 
