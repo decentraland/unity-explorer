@@ -50,15 +50,14 @@ namespace DCL.Character.Components
         
         private void TrySetDirty(Vector3 newPosition)
         {
-            if (!IsDirty)
-            {
-                float distance = CheapDistance(oldPosition, newPosition);
-				
-                if(distance >= MINIMAL_DISTANCE_DIFFERENCE)
-                    IsDirty = true;
-            } 
-			
+            if (IsDirty) return;
+            
+            float distance = CheapDistance(oldPosition, newPosition);
+
+            if (!(distance >= MINIMAL_DISTANCE_DIFFERENCE)) return;
+            
             oldPosition = newPosition;
+            IsDirty = true;
         }
 
         private float CheapDistance(Vector3 positionA, Vector3 positionB)
