@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
@@ -24,7 +23,6 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
-using EmotesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -40,23 +38,24 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly CustomSkinning skinningStrategy;
-        private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IAttachmentsAssetsCache wearableAssetsCache;
         private readonly IPerformanceBudget memoryBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-        private readonly IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearable?[] fallbackBodyShape = new IWearable[1];
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
-
+        private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShape;
+        private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShapeCopy;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
-            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IDefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
-            IWearableStorage wearableStorage, AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob) : base(world)
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
+            IWearableStorage wearableStorage,
+            AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob,
+            FacialFeaturesTextures[] facialFeaturesTexturesByBodyShape) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -68,9 +67,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.avatarMaterialPoolHandler = avatarMaterialPoolHandler;
             computeShaderSkinningPool = computeShaderPool;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
-            this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
             this.wearableStorage = wearableStorage;
             this.avatarTransformMatrixBatchJob = avatarTransformMatrixBatchJob;
+            this.facialFeaturesTexturesByBodyShape = facialFeaturesTexturesByBodyShape;
+
+            facialFeaturesTexturesByBodyShapeCopy = new FacialFeaturesTextures[facialFeaturesTexturesByBodyShape.Length];
+
+            for (var i = 0; i < facialFeaturesTexturesByBodyShapeCopy.Length; i++)
+                facialFeaturesTexturesByBodyShapeCopy[i] = new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>());
         }
 
         protected override void OnDispose()
@@ -184,7 +188,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 visibleWearables = fallbackBodyShape!;
             }
 
-            var facialFeatureTexture = defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(avatarShapeComponent.BodyShape);
+            // Restore the original facial feature textures
+            facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape]
+               .CopyInto(ref facialFeaturesTexturesByBodyShapeCopy[avatarShapeComponent.BodyShape]);
+            // Use a copy of the textures so it can be modified during the skinned mesh setup
+            FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShapeCopy[avatarShapeComponent.BodyShape];
 
             var attachPoint = avatarBase.transform;
 
@@ -192,7 +200,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 IWearable resultWearable = visibleWearables[i];
 
-                GameObject instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTexture, ref avatarShapeComponent, attachPoint);
+                GameObject? instance = resultWearable.AppendToAvatar(wearableAssetsCache, usedCategories, ref facialFeatureTextures, ref avatarShapeComponent, attachPoint);
 
                 if (resultWearable.Type == WearableType.BodyShape)
                     bodyShape = instance;
@@ -202,7 +210,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             HashSetPool<string>.Release(usedCategories);
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
-                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTexture);
+                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTextures);
 
             if (!avatarShapeComponent.IsVisible)
                 foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
@@ -211,6 +219,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
+            avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds, wearableIntention); // Update cached head wearable offset for nametag positioning
 
             avatarShapeComponent.CreateOutlineCompatibilityList();
             wearableIntention.Dispose();

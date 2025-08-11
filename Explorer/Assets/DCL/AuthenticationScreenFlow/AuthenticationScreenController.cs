@@ -331,7 +331,7 @@ namespace DCL.AuthenticationScreenFlow
             profile.HasConnectedWeb3 = true;
 
             profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
-            characterPreviewController?.Initialize(profile.Avatar);
+            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
 
             return;
 
