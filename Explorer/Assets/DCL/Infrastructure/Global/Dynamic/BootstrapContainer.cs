@@ -58,7 +58,7 @@ namespace Global.Dynamic
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
-        public DebugMenuLogEntryBus? SceneDebugConsoleMessageBus { get; private set; }
+        public DebugMenuConsoleLogEntryBus? SceneDebugConsoleMessageBus { get; private set; }
 
         public DecentralandEnvironment Environment { get; private set; }
 
@@ -94,9 +94,6 @@ namespace Global.Dynamic
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
             var web3AccountFactory = new Web3AccountFactory();
 
-            bool enableSceneDebugConsole = realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
-            var sceneDebugConsoleMessageBus = enableSceneDebugConsole ? new DebugMenuLogEntryBus() : null;
-
             var bootstrapContainer = new BootstrapContainer
             {
                 IdentityCache = identityCache,
@@ -109,8 +106,7 @@ namespace Global.Dynamic
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
                 WorldVolumeMacBus = new WorldVolumeMacBus(),
-                Environment = decentralandEnvironment,
-                SceneDebugConsoleMessageBus = sceneDebugConsoleMessageBus
+                Environment = decentralandEnvironment
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
@@ -127,7 +123,10 @@ namespace Global.Dynamic
                     CrashDetector.Initialize(container.Analytics);
                 }
 
-                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, sceneDebugConsoleMessageBus);
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(
+                    container.ReportHandlingSettings,
+                    enableSceneDebugConsole: realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE)
+                    );
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
                 void AddIdentityToSentryScope(Scope scope)

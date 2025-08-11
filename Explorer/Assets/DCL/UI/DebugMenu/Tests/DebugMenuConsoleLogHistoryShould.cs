@@ -6,7 +6,7 @@ using System.Linq;
 namespace DCL.UI.DebugMenu.Tests
 {
     [TestFixture]
-    public class DebugMenuLogHistoryShould
+    public class DebugMenuConsoleLogHistoryShould
     {
         private DebugMenuConsoleLogHistory logHistory;
 

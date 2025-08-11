@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.UI.DebugMenu.MessageBus
 {
-    public class DebugMenuLogEntryBus
+    public class DebugMenuConsoleLogEntryBus
     {
         public event Action<DebugMenuConsoleLogEntry> MessageAdded;
 

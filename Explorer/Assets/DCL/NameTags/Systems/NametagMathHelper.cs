@@ -39,14 +39,6 @@ namespace DCL.Nametags
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [BurstCompile]
-        public static void CalculateTagPosition(in float3 characterPos, float maxHeight, float boundsMaxY, out float3 result)
-        {
-            result = characterPos;
-            result.y += math.min(boundsMaxY, maxHeight);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [BurstCompile]
         public static void CalculateTagScale(float distance, float fovScaleFactor, out float3 result)
         {
             result = ONE * (fovScaleFactor * distance);

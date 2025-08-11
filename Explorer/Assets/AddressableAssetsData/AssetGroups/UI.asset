@@ -126,7 +126,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8521b529ac852454480e3f6596bca3ba
-    m_Address: SceneDebugConsoleRootCanvas
+    m_Address: DebugMenuRootCanvas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
