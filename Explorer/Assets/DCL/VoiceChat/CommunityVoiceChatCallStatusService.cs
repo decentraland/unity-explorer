@@ -91,7 +91,7 @@ namespace DCL.VoiceChat
         private bool TryParsePosition(string positionString, out Vector2Int parcel)
         {
             parcel = default;
-            
+
             if (string.IsNullOrWhiteSpace(positionString))
                 return false;
 
@@ -109,12 +109,10 @@ namespace DCL.VoiceChat
         private void RegisterCommunityCallInScene(string communityId, IEnumerable<string> positionStrings)
         {
             bool isNewCommunity = !communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? existingParcels);
-            HashSet<Vector2Int> parcels = isNewCommunity ? reusableParcelSet : existingParcels;
+            HashSet<Vector2Int> parcels = isNewCommunity ? reusableParcelSet : existingParcels!;
 
             if (isNewCommunity)
-            {
                 reusableParcelSet.Clear();
-            }
 
             foreach (string positionString in positionStrings)
             {
@@ -123,7 +121,7 @@ namespace DCL.VoiceChat
                     ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Invalid position format: {positionString} for community {communityId}");
                     continue;
                 }
-                
+
                 if (parcelToCommunityMap.TryGetValue(parcel, out List<string>? existingCommunities)) { existingCommunities.Add(communityId); }
                 else { parcelToCommunityMap[parcel] = new List<string> { communityId }; }
 
@@ -135,7 +133,7 @@ namespace DCL.VoiceChat
                 communityToParcelMap[communityId] = new HashSet<Vector2Int>(reusableParcelSet);
             }
 
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Registered community {communityId} in scene");
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Registered community {communityId} in {parcels.Count} parcels");
         }
 
         public override void StartCall(string communityId)
@@ -413,7 +411,8 @@ namespace DCL.VoiceChat
             if (communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted)
             {
                 notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
-                RegisterCommunityCallInScene(communityUpdate.CommunityId, communityUpdate.Positions);
+                if (communityUpdate.Positions.Count > 0)
+                    RegisterCommunityCallInScene(communityUpdate.CommunityId, communityUpdate.Positions);
             }
         }
 
@@ -437,7 +436,8 @@ namespace DCL.VoiceChat
 
                 activeCommunityVoiceChats[activeChat.communityId] = activeChat;
 
-                RegisterCommunityCallInScene(activeChat.communityId, activeChat.positions);
+                if (activeChat.positions.Count > 0)
+                    RegisterCommunityCallInScene(activeChat.communityId, activeChat.positions);
 
                 // Ensure we have a reactive property for this community
                 if (!communityVoiceChatCalls.TryGetValue(activeChat.communityId, out ReactiveProperty<bool>? communityVoiceChatCall))
