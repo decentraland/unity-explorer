@@ -57,11 +57,17 @@ namespace DCL.CharacterPreview
                 new CharacterTransform(parent),
                 new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
-                new CharacterEmoteComponent());
+                new CharacterEmoteComponent(),
+                new HeadIKComponent { IsEnabled = false });
         }
 
-        public void AddHeadIK() =>
-            globalWorld.Add(characterPreviewEntity, new HeadIKComponent());
+        public void EnableHeadIK()
+        {
+            ref HeadIKComponent headIK = ref globalWorld.TryGetRef<HeadIKComponent>(characterPreviewEntity, out bool exists);
+
+            if (exists)
+                headIK.IsEnabled = true;
+        }
 
         public void Dispose()
         {
@@ -102,11 +108,12 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY
             );
 
-            Entity emotePromiseEntity = builderEmotesPreview ? Entity.Null
+            Entity emotePromiseEntity = builderEmotesPreview
+                ? Entity.Null
                 : globalWorld.Create(EmotePromise.Create(globalWorld,
-                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
-                    avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
-                PartitionComponent.TOP_PRIORITY));
+                    EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
+                        avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
+                    PartitionComponent.TOP_PRIORITY));
 
             avatarShape.IsDirty = true;
 
@@ -123,11 +130,12 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
-            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null  && !avatarBase.RigBuilder.enabled)
+            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null && !avatarBase.RigBuilder.enabled)
             {
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.HeadIKRig.weight = 1f;
             }
+
             return;
 
             bool IsEmoteLoaded() =>
