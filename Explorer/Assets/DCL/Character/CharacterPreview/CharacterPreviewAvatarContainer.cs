@@ -60,7 +60,7 @@ namespace DCL.CharacterPreview
 
             freeLookCamera.m_Orbits[1].m_Radius = preset.cameraMiddleRigRadius;
 
-            TweenFovTo(preset.cameraFieldOfView, preset.cameraFieldOfViewEaseDurationSeconds, preset.cameraFieldOfViewEase);
+            TweenFovTo(preset.cameraFieldOfView, preset.cameraFieldOfViewInertiaDuration, preset.cameraFieldOfViewInertiaCurve);
         }
 
         public void StopCameraTween()

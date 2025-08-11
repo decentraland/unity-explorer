@@ -16,8 +16,8 @@ MonoBehaviour:
     <cameraPositions>k__BackingField:
     - <verticalPosition>k__BackingField: {x: 0, y: -0.2, z: 0}
       <cameraFieldOfView>k__BackingField: 20
-      <cameraFieldOfViewEase>k__BackingField: 6
-      <cameraFieldOfViewEaseDurationSeconds>k__BackingField: 0.5
+      <cameraFieldOfViewInertiaCurve>k__BackingField: 6
+      <cameraFieldOfViewInertiaDuration>k__BackingField: 0.5
       <cameraMiddleRigRadius>k__BackingField: 8
       <cameraScreenX>k__BackingField: 0.7
       <cameraScreenY>k__BackingField: 0.55
@@ -31,12 +31,12 @@ MonoBehaviour:
     <fieldOfViewThresholdForPanning>k__BackingField: 32
     <fieldOfViewThresholdForReCentering>k__BackingField: 10
     <fieldOfViewLimits>k__BackingField: {x: 40, y: 16}
-    <fieldOfViewEase>k__BackingField: 6
-    <fieldOfViewEaseDurationSeconds>k__BackingField: 0.4
+    <fieldOfViewInertiaCurve>k__BackingField: 6
+    <fieldOfViewInertiaDuration>k__BackingField: 0.4
     <rotationEnabled>k__BackingField: 1
-    <degreesPerPixel>k__BackingField: 1.5
-    <rotationEase>k__BackingField: 6
-    <rotationEaseMaxDurationSeconds>k__BackingField: 1.5
+    <rotationSpeed>k__BackingField: 4.5
+    <rotationInertiaCurve>k__BackingField: 6
+    <rotationInertiaDuration>k__BackingField: 7
   <cursorSettings>k__BackingField:
   - inputAction: 1
     cursorSprite: {fileID: 21300000, guid: d34aedda08e64344091b34deada8211e, type: 3}
