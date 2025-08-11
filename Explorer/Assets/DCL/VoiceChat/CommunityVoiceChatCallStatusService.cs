@@ -118,7 +118,7 @@ namespace DCL.VoiceChat
 
         public void RequestToSpeakInCurrentCall()
         {
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || CallId.Value.IsNullOrEmpty()) return;
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || string.IsNullOrEmpty(CallId.Value)) return;
 
             cts = cts.SafeRestart();
             RequestToSpeakAsync(CallId.Value, cts.Token).Forget();
@@ -138,7 +138,7 @@ namespace DCL.VoiceChat
 
         public void PromoteToSpeakerInCurrentCall(string walletId)
         {
-            if (CallId.Value.IsNullOrEmpty()) return;
+            if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
@@ -159,7 +159,7 @@ namespace DCL.VoiceChat
 
         public void DenySpeakerInCurrentCall(string walletId)
         {
-            if (CallId.Value.IsNullOrEmpty()) return;
+            if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
@@ -185,7 +185,7 @@ namespace DCL.VoiceChat
 
         public void DemoteFromSpeakerInCurrentCall(string walletId)
         {
-            if (CallId.Value.IsNullOrEmpty()) return;
+            if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
@@ -206,7 +206,7 @@ namespace DCL.VoiceChat
 
         public void KickPlayerFromCurrentCall(string walletId)
         {
-            if (CallId.Value.IsNullOrEmpty()) return;
+            if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
@@ -227,7 +227,7 @@ namespace DCL.VoiceChat
 
         public void EndStreamInCurrentCall()
         {
-            if (CallId.Value.IsNullOrEmpty()) return;
+            if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
@@ -402,11 +402,5 @@ namespace DCL.VoiceChat
 
             return activeCommunityVoiceChats.TryGetValue(communityId, out activeCommunityVoiceChat);
         }
-    }
-
-    internal static class CommunityVoiceChatCallStatusServiceExtensions
-    {
-        public static bool IsNullOrEmpty(this string? value) =>
-            string.IsNullOrEmpty(value!);
     }
 }

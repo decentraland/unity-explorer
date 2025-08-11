@@ -11,10 +11,11 @@ using DCL.Profiling;
 using ECS.Abstract;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [UpdateAfter(typeof(NametagPlacementSystem))]
     [LogCategory(ReportCategory.DEBUG)]
     public partial class DebugThroughputRoomsSystem : BaseUnityLoopSystem
@@ -76,7 +77,7 @@ namespace DCL.Multiplayer.Connections.Systems
                 return;
 
 #if ENABLE_PROFILER
-            if (UnityEngine.Profiling.Profiler.enabled && UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
+            if (Profiler.enabled && Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
             {
                 (ulong incoming, ulong outgoing) = island.CollectFrame();
 

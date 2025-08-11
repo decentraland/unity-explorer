@@ -27,9 +27,9 @@ namespace DCL.CharacterPreview
             StopCameraTween();
         }
 
-        public void Initialize(RenderTexture targetTexture)
+        public void Initialize(RenderTexture targetTexture, Vector3 position)
         {
-            transform.position = new Vector3(0, 5000, 0);
+            transform.position = position;
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
 

@@ -39,7 +39,6 @@ using DCL.Web3;
 using Decentraland.SocialService.V2;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Realm;
-using LiveKit.Rooms;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -66,7 +65,6 @@ namespace DCL.Chat
         private readonly IChatHistory chatHistory;
         private readonly World world;
         private readonly IInputBlock inputBlock;
-        private readonly IRoom islandRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatSettingsAsset chatSettings;
@@ -78,7 +76,6 @@ namespace DCL.Chat
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
-        private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
         private CallButtonController callButtonController;
         private CommunityStreamButtonController communityStreamButtonController;
@@ -92,7 +89,6 @@ namespace DCL.Chat
         private readonly bool isCallEnabled;
 
         private readonly List<ChatUserData> membersBuffer = new ();
-        private readonly List<ChatUserData> participantProfileBuffer = new ();
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> userCommunities = new ();
         private readonly UserConnectivityInfoProvider userConnectivityInfoProvider;
 
@@ -112,10 +108,7 @@ namespace DCL.Chat
         private CancellationTokenSource isUserAllowedInInitializationCts;
         private CancellationTokenSource isUserAllowedInCommunitiesBusSubscriptionCts;
 
-        public string IslandRoomSid => islandRoom.Info.Sid;
-        public string PreviousRoomSid { get; set; } = string.Empty;
-
-        public ReactiveProperty<ChatChannel> CurrentChannel { get; } = new ReactiveProperty<ChatChannel>(ChatChannel.NEARBY_CHANNEL);
+        public ReactiveProperty<ChatChannel> CurrentChannel { get; } = new (ChatChannel.NEARBY_CHANNEL);
 
         public event ConversationOpenedDelegate? ConversationOpened;
         public event ConversationClosedDelegate? ConversationClosed;
@@ -161,7 +154,6 @@ namespace DCL.Chat
             this.nametagsData = nametagsData;
             this.world = world;
             this.inputBlock = inputBlock;
-            this.islandRoom = roomHub.IslandRoom();
             this.roomHub = roomHub;
             this.chatSettings = chatSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
@@ -201,16 +193,6 @@ namespace DCL.Chat
                 profileCache,
                 nametagsData,
                 chatSettings);
-
-            memberListHelper = new ChatControllerMemberListHelper(
-                roomHub,
-                membersBuffer,
-                GetChannelMembersAsync,
-                participantProfileBuffer,
-                this,
-                chatHistory,
-                userCommunities,
-                communitiesDataProvider);
 
             userConnectivityInfoProvider = new UserConnectivityInfoProvider(roomHub.IslandRoom(), roomHub.ChatRoom(), communitiesEventBus, chatHistory, realmNavigator);
         }
@@ -328,8 +310,6 @@ namespace DCL.Chat
             SubscribeToEvents();
 
             AddNearbyChannelAndSendWelcomeMessage();
-
-            memberListHelper.StartUpdating();
 
             IsUnfolded = inputData.Unfold;
             viewInstance.Blur();
@@ -483,7 +463,6 @@ namespace DCL.Chat
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            memberListHelper.SetView(viewInstance!);
             viewInstanceCreated = true;
         }
 
@@ -501,7 +480,6 @@ namespace DCL.Chat
             chatStorage?.UnloadAllFiles();
             chatUserStateUpdater.Dispose();
             chatHistory.DeleteAllChannels();
-            memberListHelper.Dispose();
             chatUsersUpdateCts.SafeCancelAndDispose();
             callButtonController?.Dispose();
             communityStreamButtonController?.Dispose();
@@ -655,7 +633,7 @@ namespace DCL.Chat
             }
             else
             {
-                HandleMessageAudioFeedback(addedMessage);
+                HandleMessageAudioFeedback(addedMessage, destinationChannel.Id);
 
                 if (IsViewReady)
                 {
@@ -680,12 +658,14 @@ namespace DCL.Chat
                 viewInstance?.MoveChannelToTop(destinationChannel.Id);
         }
 
-        private void HandleMessageAudioFeedback(ChatMessage message)
+        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId destinationChannelId)
         {
-            if (IsViewReady)
+            if (!IsViewReady)
                 return;
 
-            switch (chatSettings.chatAudioSettings)
+            ChatAudioSettings notificationPingValue = ChatUserSettings.GetNotificationPingValuePerChannel(destinationChannelId);
+
+            switch (notificationPingValue)
             {
                 case ChatAudioSettings.NONE:
                     return;
@@ -801,13 +781,17 @@ namespace DCL.Chat
             communityStreamSubTitleBarController?.OnMemberListVisibilityChanged(isVisible);
 
             if (isVisible && roomHub.HasAnyRoomConnected())
-                RefreshMemberList();
+            {
+                memberListCts = memberListCts.SafeRestart();
+                RefreshMemberListAsync(memberListCts.Token).Forget();
+            }
         }
 
-        private void RefreshMemberList()
+        private async UniTaskVoid RefreshMemberListAsync(CancellationToken ct)
         {
-            memberListCts = memberListCts.SafeRestart();
-            memberListHelper.RefreshMemberListAsync(memberListCts.Token).Forget();
+            membersBuffer.Clear();
+            await GetChannelMembersAsync(membersBuffer, ct);
+            viewInstance.SetMemberData(membersBuffer);
         }
 #endregion
 

@@ -48,7 +48,6 @@ namespace MVC
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
         private CommunityPlayerEntryContextMenu communityPlayerEntryContextMenu;
-        private ChatOptionsContextMenuController chatOptionsContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
@@ -118,7 +117,7 @@ namespace MVC
 
             if (profile == null) return;
 
-            await ShowCommunityPlayerEntryContextMenu(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint, isSpeaker);
+            await ShowCommunityPlayerEntryContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask, anchorPoint, isSpeaker);
         }
 
         public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
@@ -129,12 +128,6 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask);
         }
 
-        public async UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask)
-        {
-            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.DeleteChatHistoryIcon, data.DeleteChatHistoryText, onDeleteChatHistoryClicked);
-            await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
-        }
-
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
@@ -142,8 +135,8 @@ namespace MVC
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint));
         }
 
-        private async UniTask ShowCommunityPlayerEntryContextMenu(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false, bool isModeratorOrAdmin = false)
+        private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
                 friendServiceProxy, chatEventBus, mvcManager,
