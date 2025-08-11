@@ -180,10 +180,10 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            OnConnectionUpdatedInternal().Forget();
+            OnConnectionUpdatedInternalAsync().Forget();
             return;
 
-            async UniTaskVoid OnConnectionUpdatedInternal()
+            async UniTaskVoid OnConnectionUpdatedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
 
@@ -222,10 +222,10 @@ namespace DCL.VoiceChat
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            OnTrackSubscribedInternal().Forget();
+            OnTrackSubscribedInternalAsync().Forget();
             return;
 
-            async UniTaskVoid OnTrackSubscribedInternal()
+            async UniTaskVoid OnTrackSubscribedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
                 trackManager.HandleTrackSubscribed(track, publication, participant);
@@ -234,10 +234,10 @@ namespace DCL.VoiceChat
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            OnTrackUnsubscribedInternal().Forget();
+            OnTrackUnsubscribedInternalAsync().Forget();
             return;
 
-            async UniTaskVoid OnTrackUnsubscribedInternal()
+            async UniTaskVoid OnTrackUnsubscribedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
                 trackManager.HandleTrackUnsubscribed(track, publication, participant);
@@ -246,10 +246,10 @@ namespace DCL.VoiceChat
 
         private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
         {
-            OnLocalTrackPublishedInternal().Forget();
+            OnLocalTrackPublishedInternalAsync().Forget();
             return;
 
-            async UniTaskVoid OnLocalTrackPublishedInternal()
+            async UniTaskVoid OnLocalTrackPublishedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
                 trackManager.HandleLocalTrackPublished(publication, participant);
