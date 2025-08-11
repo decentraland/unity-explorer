@@ -1,4 +1,3 @@
-#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.NotificationsBusController.NotificationsBus;

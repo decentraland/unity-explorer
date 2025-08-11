@@ -1,3 +1,4 @@
+using LiveKit.Runtime.Scripts.Audio;
 using UnityEngine;
 
 namespace DCL.Settings.Settings
@@ -6,16 +7,15 @@ namespace DCL.Settings.Settings
     //    [CreateAssetMenu(fileName = "VoiceChatSettings", menuName = "DCL/Settings/Voice Chat Settings")]
     public class VoiceChatSettingsAsset : ScriptableObject
     {
-        public delegate void MicrophoneChangedDelegate(int newMicrophoneIndex);
+        public delegate void MicrophoneChangedDelegate(MicrophoneSelection newMicrophoneSelection);
         public event MicrophoneChangedDelegate MicrophoneChanged;
 
-        public int SelectedMicrophoneIndex;
+        public MicrophoneSelection? SelectedMicrophone;
 
-
-        public void OnMicrophoneChanged(int newMicrophoneIndex)
+        public void OnMicrophoneChanged(MicrophoneSelection microphoneSelection)
         {
-            SelectedMicrophoneIndex = newMicrophoneIndex;
-            MicrophoneChanged?.Invoke(newMicrophoneIndex);
+            SelectedMicrophone = microphoneSelection;
+            MicrophoneChanged?.Invoke(microphoneSelection);
         }
     }
 }

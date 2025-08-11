@@ -29,7 +29,10 @@ namespace DCL.Communities
         public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct, bool ignoreAllowedList = false, bool cacheResult = true)
         {
             //TODO REMOVE THIS!!!! HACK TO ENABLE COMMUNITIES ALL THE TIME
+            // P.s. it's safier to put defines here
+#if UNITY_EDITOR && !COMMUNITIES_FORCE_USER_WHITELIST
             return true;
+#endif
 
             if (!cacheResult)
                 storedResult = null;
