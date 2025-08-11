@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,5 +26,8 @@ namespace DCL.Communities.CommunitiesCard
 
         [field: SerializeField]
         public Button LeaveStreamButton;
+
+        [field: SerializeField]
+        public TMP_Text ListenersCount;
     }
 }

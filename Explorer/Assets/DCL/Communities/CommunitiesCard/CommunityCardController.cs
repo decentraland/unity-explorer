@@ -333,6 +333,8 @@ namespace DCL.Communities.CommunitiesCard
                     response.data.voiceChatStatus.isActive,
                     response.data.role is CommunityMemberRole.moderator or CommunityMemberRole.owner,
                     response.data.id);
+
+                communityCardVoiceChatController.SetListenersCount(response.data.voiceChatStatus.participantCount);
             }
         }
 

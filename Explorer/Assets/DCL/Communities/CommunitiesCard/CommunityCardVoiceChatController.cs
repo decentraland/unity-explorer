@@ -1,5 +1,6 @@
 using DCL.VoiceChat;
 using System;
+using System.Text;
 using System.Threading;
 
 namespace DCL.Communities.CommunitiesCard
@@ -8,9 +9,9 @@ namespace DCL.Communities.CommunitiesCard
     {
         private readonly CommunityCardVoiceChatView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly StringBuilder stringBuilder = new ();
 
         private string currentCommunityId;
-
         public CommunityCardVoiceChatController(CommunityCardVoiceChatView view, IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.view = view;
@@ -59,6 +60,14 @@ namespace DCL.Communities.CommunitiesCard
             view.JoinStreamButton.gameObject.SetActive(voiceChatOrchestrator.CurrentCommunityId.Value != currentCommunityId);
             view.StartStreamButton.gameObject.SetActive(!isStreamRunning);
             view.EndStreamButton.gameObject.SetActive(isStreamRunning);
+        }
+
+        public void SetListenersCount(int listenersCount)
+        {
+            stringBuilder.Clear();
+            stringBuilder.Append(listenersCount);
+            stringBuilder.Append(" Listening");
+            view.ListenersCount.text = stringBuilder.ToString();
         }
     }
 }

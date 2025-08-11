@@ -92,6 +92,7 @@ MonoBehaviour:
   EndStreamButton: {fileID: 2407090960709617291}
   JoinStreamButton: {fileID: 5513391528537599553}
   LeaveStreamButton: {fileID: 3903054376959747445}
+  ListenersCount: {fileID: 7481380362271094255}
 --- !u!1 &7857845159752150021
 GameObject:
   m_ObjectHideFlags: 0
@@ -317,6 +318,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7481380362271094255 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6865675239852314381, guid: 076d4d2c030d64f75b9920fd1d94590f, type: 3}
+  m_PrefabInstance: {fileID: 4077152445285268194}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &8771907335845830432
