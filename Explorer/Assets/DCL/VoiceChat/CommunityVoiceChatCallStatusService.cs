@@ -5,7 +5,6 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
-using Google.Protobuf.Collections;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -87,7 +86,26 @@ namespace DCL.VoiceChat
                     {
                         communities.Remove(communityId);
 
-                        if (communities.Count == 0) { parcelToCommunityMap.Remove(parcel); }
+                        if (communities.Count == 0)
+                        {
+                            parcelToCommunityMap.Remove(parcel);
+
+                            if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
+                            {
+                                OnActiveVoiceChatStoppedInScene();
+                            }
+                        }
+                        else
+                        {
+                            if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
+                            {
+                                string remainingCommunityId = communities[0];
+                                if (activeCommunityVoiceChats.TryGetValue(remainingCommunityId, out ActiveCommunityVoiceChat _))
+                                {
+                                    OnActiveVoiceChatDetectedInScene(remainingCommunityId);
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -135,6 +153,14 @@ namespace DCL.VoiceChat
                 else { parcelToCommunityMap[parcel] = new List<string> { communityId }; }
 
                 parcels.Add(parcel);
+
+                if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
+                {
+                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _))
+                    {
+                        OnActiveVoiceChatDetectedInScene(communityId);
+                    }
+                }
             }
 
             if (isNewCommunity)
