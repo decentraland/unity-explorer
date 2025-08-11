@@ -213,7 +213,8 @@ namespace DCL.Chat
             ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {userConnectivity.Member.Address}, {userConnectivity.CommunityId}, {userConnectivity.Status}");
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId);;
 
-            participantsPerChannel[communityChannelId].Remove(userConnectivity.Member.Address);
+            if(participantsPerChannel.TryGetValue(communityChannelId, out HashSet<string>? communityParticipants))
+                communityParticipants.Remove(userConnectivity.Member.Address);
 
             UserDisconnected?.Invoke(userConnectivity.Member.Address, communityChannelId, ChatChannel.ChatChannelType.COMMUNITY);
         }
@@ -253,8 +254,10 @@ namespace DCL.Chat
             else if (update == UpdateFromParticipant.Disconnected)
             {
                 ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {participant.Identity}, {update}");
-                participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Remove(participant.Identity);
-                UserDisconnected?.Invoke(participant.Identity, ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+                // Hotfix: Due to a problem with Livekit connection messages, greying out nearby messages is not working properly (connected users look like disconnected)
+                //         So for now disconnections will be ignored in Nearby
+                // participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Remove(participant.Identity);
+                // UserDisconnected?.Invoke(participant.Identity, ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             }
         }
 

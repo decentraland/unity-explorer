@@ -1,8 +1,9 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.CharacterPreview;
-using DCL.Profiles;
 using System.Collections.Generic;
+using UnityEngine;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Passport
 {
@@ -13,7 +14,7 @@ namespace DCL.Passport
         public PassportCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
             : base(view, previewFactory, world, false, characterPreviewEventBus) { }
 
-        public override void Initialize(Avatar avatar)
+        public override void Initialize(Avatar avatar, Vector3 position)
         {
             shortenedWearables.Clear();
 
@@ -22,7 +23,7 @@ namespace DCL.Passport
 
             previewAvatarModel.Wearables = shortenedWearables;
 
-            base.Initialize(avatar);
+            base.Initialize(avatar, position);
             PlayEmote("wave");
         }
     }
