@@ -65,6 +65,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; } = null!;
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
         [field: SerializeField] private Sprite deleteCommunityImage { get; set; } = null!;
+        [field: SerializeField] internal CommunityCardVoiceChatView communityCardVoiceChatView { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
 
         [field: Header("Community interactions")]
