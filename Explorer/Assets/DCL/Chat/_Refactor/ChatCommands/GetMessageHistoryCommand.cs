@@ -9,7 +9,7 @@ namespace DCL.Chat.ChatCommands
     public class GetMessageHistoryCommand
     {
         private const string NEW_CHAT_MESSAGE = "The chat starts here! Time to say hi! \\U0001F44B";
-        
+
         private readonly IChatHistory chatHistory;
         private readonly ChatHistoryStorage? chatHistoryStorage;
         private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
@@ -33,11 +33,12 @@ namespace DCL.Chat.ChatCommands
             if (chatHistoryStorage != null && !chatHistoryStorage.IsChannelInitialized(channelId))
             {
                 await chatHistoryStorage.InitializeChannelWithMessagesAsync(channelId);
-                chatHistory.Channels[channelId].MarkAllMessagesAsRead();
 
-                // if (chatHistory.Channels[channelId].Messages.Count == 0)
-                //     chatHistory.AddMessage(channelId, chatHistory.Channels[channelId].ChannelType,
-                //         ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+                if (chatHistory.Channels[channelId].Messages.Count == 0)
+                    chatHistory.AddMessage(channelId, chatHistory.Channels[channelId].ChannelType,
+                        ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+
+                chatHistory.Channels[channelId].MarkAllMessagesAsRead();
             }
 
             token.ThrowIfCancellationRequested();
