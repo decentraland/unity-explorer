@@ -28,18 +28,21 @@ namespace DCL.UI.ProfileElements
         private Color originalThumbnailBackgroundColor;
         private Color originalThumbnailFrameColor;
 
-        private bool initialized;
+        private bool isColorInitialized;
         private float greyOutOpacity;
 
         private void Awake()
         {
-            if(thumbnailImageView != null)
-                originalThumbnailImageColor = thumbnailImageView.ImageColor;
+            if (!isColorInitialized)
+            {
+                if (thumbnailImageView != null)
+                    originalThumbnailImageColor = thumbnailImageView.ImageColor;
 
-            if(thumbnailFrame != null)
-                originalThumbnailFrameColor = thumbnailFrame.color;
+                if(thumbnailFrame != null)
+                    originalThumbnailFrameColor = thumbnailFrame.color;
 
-            initialized = true;
+                isColorInitialized = true;
+            }
 
             GreyOut(greyOutOpacity);
         }
@@ -65,7 +68,19 @@ namespace DCL.UI.ProfileElements
 
         public void SetupOnlyColor(Color userColor)
         {
+            if (!isColorInitialized)
+            {
+                if (thumbnailImageView != null)
+                    originalThumbnailImageColor = thumbnailImageView.ImageColor;
+
+                if(thumbnailFrame != null)
+                    originalThumbnailFrameColor = thumbnailFrame.color;
+
+                isColorInitialized = true;
+            }
+
             originalThumbnailBackgroundColor = userColor;
+
             GreyOut(greyOutOpacity);
         }
 
@@ -140,7 +155,7 @@ namespace DCL.UI.ProfileElements
 
         public void GreyOut(float opacity)
         {
-            if (!initialized)
+            if (!isColorInitialized)
             {
                 // The method was called before Awake, it stores the value to be applied on Awake later
                 greyOutOpacity = opacity;
