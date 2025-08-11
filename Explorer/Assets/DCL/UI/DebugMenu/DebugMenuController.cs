@@ -31,8 +31,6 @@ namespace DCL.UI.DebugMenu
 
             var root = GetComponent<UIDocument>().rootVisualElement;
 
-            // TODO: Check chat: ChatCommandsBus.Instance.ConnectionStatusPanelVisibilityChanged -= VisibilityChanged;
-
             // Sidebar
             consoleButton = root.Q<Button>("ConsoleButton");
             settingsButton = root.Q<Button>("DebugButton");
