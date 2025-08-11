@@ -206,14 +206,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
-                    StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
-
-                    // the emote is still loading? don't remove the intent yet, wait for it
-                    //TODO (JUANI) : This will go away when the manifest request is out.
-                    if (streamableAsset == null)
-                        return;
-
-                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = streamableAsset.Value;
+                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
