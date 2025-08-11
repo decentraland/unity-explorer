@@ -91,7 +91,8 @@ namespace DCL.InWorldCamera.Systems
                     nametagsData.showNameTags = !nametagsData.showNameTags;
             }
 
-            if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
+            CameraComponent cameraComponent = camera.GetCameraComponent(World);
+            if (cameraComponent.Mode != CameraMode.SDKCamera && World.TryGet(camera, out ToggleInWorldCameraRequest request))
                 ToggleCamera(request.IsEnable, request.TargetCameraMode);
         }
 
@@ -126,7 +127,7 @@ namespace DCL.InWorldCamera.Systems
         {
             if(hudController.State == ControllerState.ViewHiding || hudController.State == ControllerState.ViewHidden)
                 return;
-            
+
             if (debugContainerBuilder?.Container != null)
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
