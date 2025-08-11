@@ -9,9 +9,9 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
-using DCL.VoiceChat.Systems;
 using DCL.WebRequests;
 using System;
 using System.Threading;
@@ -32,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly IWebRequestController webRequestController;
+        private readonly PlayerParcelTracker playerParcelTracker;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
@@ -64,7 +65,8 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
-            IWebRequestController webRequestController
+            IWebRequestController webRequestController,
+            PlayerParcelTracker playerParcelTracker
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -76,6 +78,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
+            this.playerParcelTracker = playerParcelTracker;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
             communityVoiceChatCallStatusService = voiceChatContainer.CommunityVoiceChatCallStatusService;
         }
@@ -108,9 +111,7 @@ namespace DCL.PluginSystem.Global
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            VoiceChatSceneChangeSystem.InjectToWorld(ref builder, world, communityVoiceChatCallStatusService);
-        }
+        { }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {

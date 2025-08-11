@@ -10,6 +10,8 @@ namespace DCL.VoiceChat
     /// </summary>
     public abstract class VoiceChatCallStatusServiceBase
     {
+        private const string TAG = nameof(VoiceChatCallStatusServiceBase);
+
         private readonly ReactiveProperty<VoiceChatStatus> status = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<string> callId = new (string.Empty);
 
@@ -32,7 +34,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid UpdateStatusAsync()
             {
                 await UniTask.SwitchToMainThread();
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"New status is {newStatus}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New status is {newStatus}");
                 status.Value = newStatus;
             }
         }

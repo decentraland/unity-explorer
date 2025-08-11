@@ -280,6 +280,8 @@ namespace Global.Dynamic
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
+            PlayerParcelTracker playerParcelTracker = new PlayerParcelTracker();
+
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
             MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
 
@@ -896,7 +898,7 @@ namespace Global.Dynamic
                         playerEntity,
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
-                        currentSceneInfo
+                        playerParcelTracker
                         )
                     );
 
@@ -1035,12 +1037,12 @@ namespace Global.Dynamic
                         staticContainer.Profiler,
                         staticContainer.LoadingStatus,
                         staticContainer.RealmData,
-                        staticContainer.ScenesCache,
                         staticContainer.MainPlayerAvatarBaseProxy,
                         identityCache,
                         debugBuilder,
                         cameraReelStorageService,
-                        entityParticipantTable
+                        entityParticipantTable,
+                        playerParcelTracker
                     )
                 );
 

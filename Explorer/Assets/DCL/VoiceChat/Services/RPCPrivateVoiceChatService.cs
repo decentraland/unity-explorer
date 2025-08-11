@@ -11,6 +11,8 @@ namespace DCL.VoiceChat.Services
 {
     public class RPCPrivateVoiceChatService : IVoiceService
     {
+        private const string TAG = nameof(RPCPrivateVoiceChatService);
+
         /// <summary>
         ///     Timeout used for foreground operations
         /// </summary>
@@ -202,7 +204,7 @@ namespace DCL.VoiceChat.Services
                             socialServiceRPC.Module()!.CallServerStream<PrivateVoiceChatUpdate>(SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, new Empty());
 
                         streamOpened = true;
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, "Successfully opened private voice chat updates stream");
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Successfully opened private voice chat updates stream");
 
                         await foreach (PrivateVoiceChatUpdate? response in stream)
                         {
@@ -225,18 +227,18 @@ namespace DCL.VoiceChat.Services
                     catch (Exception e)
                     {
                         retryAttempt++;
-                        ReportHub.LogError($"Failed to open private voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS} exception {e}", new ReportData(ReportCategory.VOICE_CHAT));
+                        ReportHub.LogError($"{TAG} Failed to open private voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS} exception {e}", new ReportData(ReportCategory.VOICE_CHAT));
 
                         if (retryAttempt >= MAX_STREAM_RETRY_ATTEMPTS)
                         {
-                            ReportHub.LogError($"Failed to open private voice chat updates stream after {MAX_STREAM_RETRY_ATTEMPTS} attempts. Disabling voice chat service.", new ReportData(ReportCategory.VOICE_CHAT));
+                            ReportHub.LogError($"{TAG} Failed to open private voice chat updates stream after {MAX_STREAM_RETRY_ATTEMPTS} attempts. Disabling voice chat service.", new ReportData(ReportCategory.VOICE_CHAT));
                             isServiceDisabled = true;
                             break;
                         }
 
                         // Calculate exponential backoff delay
                         int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"Retrying private voice chat updates stream connection in {delaySeconds} seconds...");
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Retrying private voice chat updates stream connection in {delaySeconds} seconds...");
 
                         try
                         {
@@ -252,7 +254,7 @@ namespace DCL.VoiceChat.Services
 
                 if (!streamOpened && !ct.IsCancellationRequested)
                 {
-                    ReportHub.LogError("Failed to establish private voice chat updates stream after all retry attempts", new ReportData(ReportCategory.VOICE_CHAT));
+                    ReportHub.LogError($"{TAG} Failed to establish private voice chat updates stream after all retry attempts", new ReportData(ReportCategory.VOICE_CHAT));
                 }
             }
         }

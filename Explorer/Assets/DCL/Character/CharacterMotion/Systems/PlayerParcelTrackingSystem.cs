@@ -18,13 +18,13 @@ namespace DCL.CharacterMotion.Systems
     public partial class PlayerParcelTrackingSystem : BaseUnityLoopSystem
     {
         private readonly Entity playerEntity;
-        private readonly PlayerParcelTracker parcelTracker;
+        private readonly PlayerParcelTrackerService parcelTracker;
         private readonly IScenesCache scenesCache;
         private readonly IRealmData realmData;
 
         private Vector2Int lastParcel;
 
-        public PlayerParcelTrackingSystem(World world, Entity playerEntity, PlayerParcelTracker parcelTracker, IScenesCache scenesCache, IRealmData realmData) : base(world)
+        public PlayerParcelTrackingSystem(World world, Entity playerEntity, PlayerParcelTrackerService parcelTracker, IScenesCache scenesCache, IRealmData realmData) : base(world)
         {
             this.playerEntity = playerEntity;
             this.parcelTracker = parcelTracker;

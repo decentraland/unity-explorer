@@ -8,6 +8,8 @@ namespace DCL.VoiceChat
     /// </summary>
     public static class VoiceChatMicrophoneHelper
     {
+        private const string TAG = nameof(VoiceChatMicrophoneHelper);
+
         // Voice chat sample rate constraints
         private const int MIN_ACCEPTABLE_SAMPLE_RATE = 8000;  // Below this is too low quality for voice
         private const int MAX_DESIRED_SAMPLE_RATE = 48000;    // Above this is unnecessary for voice chat
@@ -27,7 +29,7 @@ namespace DCL.VoiceChat
                 if (unityOutputRate >= minFreq && unityOutputRate <= maxFreq)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Selected sample rate {unityOutputRate}Hz for microphone '{deviceName}' (matches Unity output rate, no resampling needed)");
+                        $"{TAG} Selected sample rate {unityOutputRate}Hz for microphone '{deviceName}' (matches Unity output rate, no resampling needed)");
                     return unityOutputRate;
                 }
 
@@ -38,7 +40,7 @@ namespace DCL.VoiceChat
                 {
                     // Use the minimum rate within our acceptable range for efficiency
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Selected sample rate {effectiveMin}Hz for microphone '{deviceName}' (Unity rate {unityOutputRate}Hz not supported, using minimum viable from range: {minFreq}-{maxFreq}Hz)");
+                        $"{TAG} Selected sample rate {effectiveMin}Hz for microphone '{deviceName}' (Unity rate {unityOutputRate}Hz not supported, using minimum viable from range: {minFreq}-{maxFreq}Hz)");
                     return effectiveMin;
                 }
 
@@ -47,28 +49,28 @@ namespace DCL.VoiceChat
                 {
                     // Device max is too low, use it anyway
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Microphone '{deviceName}' maximum sample rate {maxFreq}Hz is below minimum acceptable {MIN_ACCEPTABLE_SAMPLE_RATE}Hz. Voice quality may be poor.");
+                        $"{TAG} Microphone '{deviceName}' maximum sample rate {maxFreq}Hz is below minimum acceptable {MIN_ACCEPTABLE_SAMPLE_RATE}Hz. Voice quality may be poor.");
                     return maxFreq;
                 }
                 else if (minFreq > MAX_DESIRED_SAMPLE_RATE)
                 {
                     // Device min is too high, use minimum available
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Microphone '{deviceName}' minimum sample rate {minFreq}Hz exceeds our maximum desired {MAX_DESIRED_SAMPLE_RATE}Hz. Using minimum available.");
+                        $"{TAG} Microphone '{deviceName}' minimum sample rate {minFreq}Hz exceeds our maximum desired {MAX_DESIRED_SAMPLE_RATE}Hz. Using minimum available.");
                     return minFreq;
                 }
                 else
                 {
                     // This shouldn't happen, but fallback to device minimum
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Unexpected microphone range for '{deviceName}' (range: {minFreq}-{maxFreq}Hz). Using device minimum.");
+                        $"{TAG} Unexpected microphone range for '{deviceName}' (range: {minFreq}-{maxFreq}Hz). Using device minimum.");
                     return minFreq;
                 }
             }
             catch (System.Exception ex)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
-                    $"Failed to query microphone capabilities for '{deviceName}': {ex.Message}. Using fallback rate {FALLBACK_SAMPLE_RATE}Hz.");
+                    $"{TAG} Failed to query microphone capabilities for '{deviceName}': {ex.Message}. Using fallback rate {FALLBACK_SAMPLE_RATE}Hz.");
                 return FALLBACK_SAMPLE_RATE;
             }
         }

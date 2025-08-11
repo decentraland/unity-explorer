@@ -11,7 +11,7 @@ namespace DCL.VoiceChat
 {
     public class CommunityStreamSubTitleBarController : IDisposable
     {
-        private const string TAG = "CommunityStreamSubTitleBarController";
+        private const string TAG = nameof(CommunityStreamSubTitleBarController);
 
         private readonly IDisposable statusSubscription;
         private readonly IDisposable currentChannelSubscription;

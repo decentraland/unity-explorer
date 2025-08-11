@@ -20,25 +20,29 @@ namespace DCL.VoiceChat
     /// </summary>
     public class CommunityVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, ICommunityVoiceChatCallStatusService
     {
-        private const string TAG = "CommunityVoiceChatCallStatusService";
+        private const string TAG = nameof(CommunityVoiceChatCallStatusService);
 
         private readonly ICommunityVoiceService voiceChatService;
         private readonly INotificationsBusController notificationBusController;
+        private readonly PlayerParcelTrackerService parcelTracker;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
 
-        // Scene-to-community mapping: maps scene coordinates to community IDs that have active voice chats
         private readonly Dictionary<Vector2Int, string> sceneToCommunityMap = new();
         private readonly Dictionary<string, Vector2Int> communityToSceneMap = new();
 
         private CancellationTokenSource cts = new ();
+        private IDisposable? parcelSubscription;
+        private Vector2Int currentParcel;
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
-            INotificationsBusController notificationBusController)
+            INotificationsBusController notificationBusController,
+            PlayerParcelTrackerService parcelTracker)
         {
             this.voiceChatService = voiceChatService;
             this.notificationBusController = notificationBusController;
+            this.parcelTracker = parcelTracker;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
             this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
         }
@@ -69,18 +73,6 @@ namespace DCL.VoiceChat
             }
         }
 
-        /// <summary>
-        /// Called when leaving a scene
-        /// </summary>
-        public void OnSceneLeft()
-        {
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Left scene - clearing any scene-specific voice chat UI");
-            // Clear any scene-specific voice chat UI or notifications
-        }
-
-        /// <summary>
-        /// Register a scene as having an active community voice chat
-        /// </summary>
         public void RegisterSceneCommunity(Vector2Int sceneParcel, string communityId)
         {
             sceneToCommunityMap[sceneParcel] = communityId;

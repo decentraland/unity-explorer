@@ -15,6 +15,7 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
+        private const string TAG = nameof(VoiceChatMicrophoneHandler);
         private const bool MICROPHONE_LOOP = true;
         private const int MICROPHONE_LENGTH_SECONDS = 1;
 
@@ -135,7 +136,7 @@ namespace DCL.VoiceChat
 
             isTalking = false;
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone handler reset for new call");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone handler reset for new call");
         }
 
         private void InitializeMicrophone()
@@ -147,13 +148,13 @@ namespace DCL.VoiceChat
             // On macOS, check if we have microphone permission
             if (Microphone.devices.Length == 0)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "No microphone devices found on macOS. This may indicate missing microphone permissions.");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} No microphone devices found on macOS. This may indicate missing microphone permissions.");
                 return;
             }
 #endif
             if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range. Using default microphone.");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range. Using default microphone.");
                 microphoneName = Microphone.devices[0];
             }
             else
@@ -169,7 +170,7 @@ namespace DCL.VoiceChat
             audioSource.volume = 0f;
 
             isMicrophoneInitialized = true;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone initialized with sample rate: {microphoneSampleRate}Hz");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone initialized with sample rate: {microphoneSampleRate}Hz");
 
             // If we're in a call, wait for fresh audio data before proceeding
             if (isInCall) { WaitAndReinitializeMicrophoneAsync(false, voiceChatSettings.SelectedMicrophoneIndex, microphoneChangeCts.Token).Forget(); }
@@ -188,7 +189,7 @@ namespace DCL.VoiceChat
             
             isMicrophoneEnabledProperty.Value = true;
             
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Enabled microphone");
         }
 
         private void DisableMicrophone()
@@ -225,26 +226,26 @@ namespace DCL.VoiceChat
 
             isMicrophoneEnabledProperty.Value = false;
             
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disabled microphone");
         }
 
         private void OnMicrophoneChanged(int newMicrophoneIndex)
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change dispatching to main thread (async)");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone change dispatching to main thread (async)");
                 OnMicrophoneChangedAsync(newMicrophoneIndex).Forget();
                 return;
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing on main thread (sync)");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone change executing on main thread (sync)");
             HandleMicrophoneChange(newMicrophoneIndex);
         }
 
         private async UniTaskVoid OnMicrophoneChangedAsync(int newMicrophoneIndex)
         {
             await UniTask.SwitchToMainThread();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone change executing after main thread dispatch (async)");
             HandleMicrophoneChange(newMicrophoneIndex);
         }
 
@@ -272,7 +273,7 @@ namespace DCL.VoiceChat
             if (isInCall)
                 WaitAndReinitializeMicrophoneAsync(wasTalking, newMicrophoneIndex, microphoneChangeCts.Token).Forget();
             else
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone change noted but not in call: {Microphone.devices[newMicrophoneIndex]}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone change noted but not in call: {Microphone.devices[newMicrophoneIndex]}");
         }
 
         private async UniTaskVoid WaitAndReinitializeMicrophoneAsync(bool wasTalking, int newMicrophoneIndex, CancellationToken ct)
@@ -284,7 +285,7 @@ namespace DCL.VoiceChat
 
                 if (ct.IsCancellationRequested || !isInCall)
                 {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change operation cancelled or no longer in call");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone change operation cancelled or no longer in call");
                     return;
                 }
 
@@ -292,12 +293,12 @@ namespace DCL.VoiceChat
 
                 //await WaitForFreshMicrophoneDataAsync(ct); //COMMENTED TO MATCH EXAMPLE
 
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone Initialized with new device after delay: {Microphone.devices[newMicrophoneIndex]}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone Initialized with new device after delay: {Microphone.devices[newMicrophoneIndex]}");
 
                 if (wasTalking && !ct.IsCancellationRequested)
                     EnableMicrophone();
             }
-            catch (OperationCanceledException) { ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change operation was cancelled"); }
+            catch (OperationCanceledException) { ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone change operation was cancelled"); }
         }
 
         private async UniTask WaitForFreshMicrophoneDataAsync(CancellationToken ct)
@@ -329,7 +330,7 @@ namespace DCL.VoiceChat
                 // Check if we've recorded enough fresh samples or if the recording has looped
                 if (currentPosition > targetSamples || currentPosition < initialPosition)
                 {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Fresh microphone data detected after {waitTime}ms");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Fresh microphone data detected after {waitTime}ms");
                     break;
                 }
             }
@@ -346,7 +347,7 @@ namespace DCL.VoiceChat
             isInCall = true;
             isTalking = true;
             EnableMicrophone();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone enabled for call (room connected)");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone enabled for call (room connected)");
         }
 
         public void DisableMicrophoneForCall()
@@ -355,7 +356,7 @@ namespace DCL.VoiceChat
             isInCall = false;
             isTalking = false;
             DisableMicrophone();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone disabled for call (room disconnected)");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone disabled for call (room disconnected)");
         }
     }
 }

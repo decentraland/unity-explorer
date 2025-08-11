@@ -7,6 +7,8 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneStateManager : IDisposable
     {
+        private const string TAG = nameof(VoiceChatMicrophoneStateManager);
+
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly IDisposable? statusSubscription;
         private readonly IDisposable? isSpeakerSubscription;
@@ -39,7 +41,7 @@ namespace DCL.VoiceChat
         {
             if (isRoomConnected == connected) return;
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Room connection changed: {isRoomConnected} -> {connected}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Room connection changed: {isRoomConnected} -> {connected}");
             isRoomConnected = connected;
 
             if (connected)
@@ -54,7 +56,7 @@ namespace DCL.VoiceChat
         {
             if (newStatus == currentCallStatus) return;
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Call status changed: {currentCallStatus} -> {newStatus}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Call status changed: {currentCallStatus} -> {newStatus}");
             currentCallStatus = newStatus;
 
             UpdateMicrophoneState();

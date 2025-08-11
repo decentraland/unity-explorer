@@ -9,6 +9,8 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
     {
+        private const string TAG = nameof(VoiceChatOrchestrator);
+
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
@@ -125,7 +127,7 @@ namespace DCL.VoiceChat
                 currentCallStatus.Value = status;
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Switched Orchestrator state to {currentVoiceChatType.Value}");
         }
 
         private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)
@@ -147,7 +149,7 @@ namespace DCL.VoiceChat
                 currentCallStatus.Value = status;
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Switched Orchestrator state to {currentVoiceChatType.Value}");
         }
 
         private void SetActiveCallService(VoiceChatType newType)

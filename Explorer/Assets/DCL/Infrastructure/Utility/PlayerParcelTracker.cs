@@ -3,13 +3,13 @@ using Utility;
 
 namespace DCL.Utilities
 {
-    public class PlayerParcelTracker
+    public class PlayerParcelTrackerService
     {
         private readonly ReactiveProperty<PlayerParcelData> currentParcelData;
 
         public IReadonlyReactiveProperty<PlayerParcelData> CurrentParcelData => currentParcelData;
 
-        public PlayerParcelTracker()
+        public PlayerParcelTrackerService()
         {
             currentParcelData = new ReactiveProperty<PlayerParcelData>(default);
         }
