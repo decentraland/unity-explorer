@@ -7,13 +7,19 @@ using DCL.Utilities;
 using Utility.Ownership;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
+using RichTypes;
+using UnityEngine;
 
 namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         private readonly VoiceChatSettingsAsset voiceChatSettings;
+        private readonly VoiceChatConfiguration voiceChatConfiguration;
+
         private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty;
+        private float buttonPressStartTime;
+        private bool hasIntentionToDisable;
 
         private Weak<MicrophoneRtcAudioSource> microphoneSource = Weak<MicrophoneRtcAudioSource>.Null;
 
@@ -22,9 +28,12 @@ namespace DCL.VoiceChat
         public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
 
         public VoiceChatMicrophoneHandler(
-            VoiceChatSettingsAsset voiceChatSettings)
+            VoiceChatSettingsAsset voiceChatSettings,
+            VoiceChatConfiguration voiceChatConfiguration
+        )
         {
             this.voiceChatSettings = voiceChatSettings;
+            this.voiceChatConfiguration = voiceChatConfiguration;
             isMicrophoneEnabledProperty = new ReactiveProperty<bool>(false);
 
             DCLInput.Instance.VoiceChat.Talk!.performed += OnPressed;
@@ -40,14 +49,40 @@ namespace DCL.VoiceChat
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
         }
 
+        /// <summary>
+        /// Don't keep reference.
+        /// Must be consumed in place without async operation.
+        /// Source is not guaranteed to be alive after the scope.
+        /// </summary>
+        private bool TryGetCurrentMicrophoneSourceIfInCall(out MicrophoneRtcAudioSource? microphoneRtcAudioSource)
+        {
+            Option<MicrophoneRtcAudioSource> resource = microphoneSource.Resource;
+            microphoneRtcAudioSource = resource.Has ? resource.Value : null;
+            return resource.Has;
+        }
+
         private void OnPressed(InputAction.CallbackContext obj)
         {
-            EnableMicrophone();
+            if (TryGetCurrentMicrophoneSourceIfInCall(out var source))
+            {
+                buttonPressStartTime = Time.time;
+                hasIntentionToDisable = source!.IsRecording; // Disable microphone on release if it was recording
+                EnableMicrophone();
+            }
         }
 
         private void OnReleased(InputAction.CallbackContext obj)
         {
-            DisableMicrophone();
+            if (TryGetCurrentMicrophoneSourceIfInCall(out _))
+            {
+                float pressDuration = Time.time - buttonPressStartTime;
+
+                // If the button was held for longer than the threshold, treat it as push-to-talk and stop communication on release
+                bool shouldDisableByThreshold = pressDuration >= voiceChatConfiguration.HoldThresholdInSeconds;
+
+                if (shouldDisableByThreshold || hasIntentionToDisable)
+                    DisableMicrophone();
+            }
         }
 
         public void ToggleMicrophone()

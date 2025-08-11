@@ -120,7 +120,7 @@ namespace DCL.PluginSystem.Global
 
             combinedAudioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
 
-            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings);
+            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
 
             trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, combinedAudioSource.Value, voiceChatHandler);
