@@ -20,7 +20,7 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal Vector3 verticalPosition { get; private set; }
         [field: SerializeField] internal float cameraFieldOfView { get; private set; }
         [field: SerializeField] public Ease cameraFieldOfViewEase { get; private set; }
-        [field: SerializeField] public float cameraFieldOfViewEaseDuration { get; private set; }
+        [field: SerializeField] public float cameraFieldOfViewEaseDurationSeconds { get; private set; }
         [field: SerializeField] internal float cameraMiddleRigRadius { get; private set; }
         [field: SerializeField, Range(-0.5f, 1.5f)] internal float cameraScreenX { get; private set; }
         [field: SerializeField, Range(-0.5f, 1.5f)] internal float cameraScreenY { get; private set; }
@@ -46,13 +46,13 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal float fieldOfViewThresholdForReCentering { get; private set; }
         [field: SerializeField] internal Vector2 fieldOfViewLimits { get; private set; }
         [field: SerializeField] public Ease fieldOfViewEase { get; private set; }
-        [field: SerializeField] public float fieldOfViewEaseDuration { get; private set; }
+        [field: SerializeField] public float fieldOfViewEaseDurationSeconds { get; private set; }
 
         [field: Header("Rotation Settings")]
         [field: SerializeField] public bool rotationEnabled { get; private set; }
-        [field: SerializeField, Min(0f)] public float rotationModifier { get; private set; }
+        [field: SerializeField, Min(0f)] public float degreesPerPixel { get; private set; }
         [field: SerializeField] public Ease rotationEase { get; private set; }
-        [field: SerializeField] public float rotationEaseMaxDuration { get; private set; }
+        [field: SerializeField] public float rotationEaseMaxDurationSeconds { get; private set; }
     }
 
     [Serializable]
