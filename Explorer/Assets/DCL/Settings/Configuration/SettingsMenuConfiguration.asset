@@ -236,10 +236,10 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 0
-          minValue: 1000
-          maxValue: 7000
+          minValue: 560
+          maxValue: 4800
           wholeNumbers: 1
-          defaultValue: 4000
+          defaultValue: 2400
         <Feature>k__BackingField: 1
     - rid: 5242998342527483917
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}

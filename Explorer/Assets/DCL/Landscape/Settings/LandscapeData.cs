@@ -30,7 +30,7 @@ namespace DCL.Landscape.Settings
                     return;
 
                 environmentDistance = value;
-                //terrainData.detailDistance = value;
+                terrainData.DetailDistance = value;
                 OnEnvironmentDistanceChanged?.Invoke(value);
             }
         }
