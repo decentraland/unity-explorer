@@ -123,46 +123,67 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             try
             {
-                var allDrives = driveInfoProvider.GetDrivesInfo();
+                const float BYTES_TO_MB = 1f / (1024f * 1024f);
+                const float BYTES_TO_GB = 1f / (1024f * 1024f * 1024f);
 
-                if (allDrives.Count > 0)
+                // 1) Prefer the direct probe of the volume we actually use
+                var primary = Utility.PlatformUtils.GetPrimaryStorageInfoUsingPersistentPath();
+
+                if (primary != null)
                 {
-                    string persistentPath = driveInfoProvider.GetPersistentDataPath();
-                    persistentPath = persistentPath.Replace('/', Path.DirectorySeparatorChar);
-                    Utility.PlatformUtils.DriveData targetDrive = null;
-                    int longestMatchLength = -1;
+                    float availableMB = primary.AvailableFreeSpace * BYTES_TO_MB;
+                    float availableGB = primary.AvailableFreeSpace * BYTES_TO_GB;
 
-                    // This loop finds the best match. On macOS, paths can be nested (e.g., "/" and "/System/Volumes/Data").
-                    // We need to find the longest mount point that is a prefix of our path. This works for both macOS and Windows.
-                    foreach (var drive in allDrives)
-                    {
-                        if (persistentPath.StartsWith(drive.Name, StringComparison.OrdinalIgnoreCase) && drive.Name.Length > longestMatchLength)
-                        {
-                            targetDrive = drive;
-                            longestMatchLength = drive.Name.Length;
-                        }
-                    }
-
-                    if (targetDrive != null)
-                    {
-                        float actualAvailableStorageMB = targetDrive.AvailableFreeSpace / (1024f * 1024f);
-                        float availableStorageGB = targetDrive.AvailableFreeSpace / (1024f * 1024f * 1024f);
-
-                        results.Add(new SpecResult(
-                            SpecCategory.Storage,
-                            actualAvailableStorageMB >= profile.MinStorageMB,
-                            profile.StorageRequirement,
-                            $"{availableStorageGB:F1} GB"
-                        ));
-                    }
-                    else
-                    {
-                        throw new Exception($"Could not find a mounted drive corresponding to the path: {persistentPath}");
-                    }
+                    results.Add(new SpecResult(
+                        SpecCategory.Storage,
+                        availableMB >= profile.MinStorageMB,
+                        profile.StorageRequirement,
+                        $"{availableGB:F1} GB"
+                    ));
                 }
                 else
                 {
-                    results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "No drives found"));
+                    var allDrives = driveInfoProvider.GetDrivesInfo();
+
+                    if (allDrives.Count > 0)
+                    {
+                        string persistentPath = driveInfoProvider.GetPersistentDataPath();
+                        persistentPath = persistentPath.Replace('/', Path.DirectorySeparatorChar);
+                        Utility.PlatformUtils.DriveData targetDrive = null;
+                        int longestMatchLength = -1;
+
+                        // This loop finds the best match. On macOS, paths can be nested (e.g., "/" and "/System/Volumes/Data").
+                        // We need to find the longest mount point that is a prefix of our path. This works for both macOS and Windows.
+                        foreach (var drive in allDrives)
+                        {
+                            if (persistentPath.StartsWith(drive.Name, StringComparison.OrdinalIgnoreCase) && drive.Name.Length > longestMatchLength)
+                            {
+                                targetDrive = drive;
+                                longestMatchLength = drive.Name.Length;
+                            }
+                        }
+
+                        if (targetDrive != null)
+                        {
+                            float actualAvailableStorageMB = targetDrive.AvailableFreeSpace / (1024f * 1024f);
+                            float availableStorageGB = targetDrive.AvailableFreeSpace / (1024f * 1024f * 1024f);
+
+                            results.Add(new SpecResult(
+                                SpecCategory.Storage,
+                                actualAvailableStorageMB >= profile.MinStorageMB,
+                                profile.StorageRequirement,
+                                $"{availableStorageGB:F1} GB"
+                            ));
+                        }
+                        else
+                        {
+                            throw new Exception($"Could not find a mounted drive corresponding to the path: {persistentPath}");
+                        }
+                    }
+                    else
+                    {
+                        results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "No drives found"));
+                    }
                 }
             }
             catch (Exception e)

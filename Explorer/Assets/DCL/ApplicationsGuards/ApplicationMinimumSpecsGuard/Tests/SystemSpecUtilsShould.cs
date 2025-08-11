@@ -2,11 +2,8 @@ using NUnit.Framework;
 
 namespace DCL.ApplicationMinimumSpecsGuard.Tests
 {
-    // The name of the class clearly states what is being tested.
     public class SystemSpecUtilsShould
     {
-        // --- Windows CPU Tests ---
-
         [Test]
         [TestCase("Intel(R) Core(TM) Ultra 9 185H", true, TestName = "Intel(R) Core(TM) Ultra 9 185H is accepted")]
         [TestCase("Intel Core Ultra 7 165H", true, TestName = "Intel Core Ultra 7 165H is accepted")]
@@ -41,8 +38,6 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             Assert.AreEqual(expectedResult, isAcceptable);
         }
 
-        // --- Windows GPU Tests ---
-
         [Test]
         [TestCase("NVIDIA GeForce RTX 2060", true, TestName = "NVIDIA RTX 2060 is accepted")]
         [TestCase("NVIDIA GeForce RTX 4070 Laptop GPU", true, TestName = "NVIDIA GeForce RTX 4070 Laptop GPU is accepted")]
@@ -69,8 +64,6 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             Assert.AreEqual(expectedResult, isAcceptable);
         }
 
-        // Mac Device Tests
-
         [Test]
         [TestCase("Apple M1", true, TestName = "Apple M1 is accepted")]
         [TestCase("Apple M1 Pro", true, TestName = "Apple M1 Pro is accepted")]
@@ -95,14 +88,13 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
         }
         
         [Test]
-        // --- Standard Cases (Originals) ---
         [TestCase(16280, 16384, true, TestName = "Memory Check - 15.9GB (reported) for 16GB (required) should PASS")]
         [TestCase(8100, 16384, false, TestName = "Memory Check - 7.9GB (reported) for 16GB (required) should FAIL")]
         [TestCase(8100, 8192, true, TestName = "Memory Check - 7.9GB (reported) for 8GB (required) should PASS")]
         [TestCase(4000, 4096, true, TestName = "Memory Check - 3.9GB (reported) for 4GB (required) should PASS")]
         [TestCase(16384, 16384, true, TestName = "Memory Check - Exact 16GB for 16GB (required) should PASS")]
 
-        // --- Rounding Edge Cases (Key to the fix) ---
+        // --- Rounding Edge Cases ---
         [TestCase(15871, 16384, false, TestName = "Rounding - 15.499GB (rounds down to 15) for 16GB should FAIL")]
         [TestCase(15872, 16384, true, TestName = "Rounding - 15.5GB (rounds up to 16) for 16GB should PASS")]
         [TestCase(16077, 16384, true, TestName = "Rounding - 15.7GB (rounds up to 16) for 16GB should PASS")]
