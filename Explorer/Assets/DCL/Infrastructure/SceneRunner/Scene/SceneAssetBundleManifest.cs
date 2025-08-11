@@ -29,8 +29,6 @@ namespace SceneRunner.Scene
         public string GetBuildDate() =>
             buildDate;
 
-        public bool HasHashInPathID() =>
-            int.Parse(version.AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
 
     }
 }

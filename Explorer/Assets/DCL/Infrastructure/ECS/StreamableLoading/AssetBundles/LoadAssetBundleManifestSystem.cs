@@ -33,26 +33,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetAssetBundleManifestIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            SceneAssetBundleManifest sceneAssetBundleManifest = null;
-            try
-            {
-                sceneAssetBundleManifest =
+            SceneAssetBundleManifest sceneAssetBundleManifest =
                     await LoadAssetBundleManifestAsync(
                         intention.Hash,
                         GetReportData(),
                         ct
                     );
 
-                //TODO (JUANI): When we have the manifest version embedded in the entity, we can delete all of this as the number will be already applied
-                intention.ApplyAssetBundleManifestResultTo.ApplyAssetBundleManifestResult(sceneAssetBundleManifest.GetVersion(), sceneAssetBundleManifest.HasHashInPathID());
-            }
-            catch (Exception e)
-            {
-                //On exception, we can apply a failed result
-                intention.ApplyAssetBundleManifestResultTo.ApplyFailedManifestResult();
-            }
-
-            //We do nothing with this result currently
             return new StreamableLoadingResult<SceneAssetBundleManifest>(sceneAssetBundleManifest);
         }
 

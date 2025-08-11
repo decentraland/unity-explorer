@@ -9,17 +9,13 @@ using DCL.Optimization.Pools;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using SceneRunner.Scene;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 
 namespace DCL.AvatarRendering.Thumbnails.Utils
 {
@@ -34,25 +30,6 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             while (avatarAttachment.ThumbnailAssetResult is not { IsInitialized: true });
 
             return avatarAttachment.ThumbnailAssetResult.Value.Asset;
-        }
-
-        private static async UniTask<bool> TryResolveAssetBundleManifestAsync(World world, IPartitionComponent partitionComponent, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
-        {
-            if (string.IsNullOrEmpty(attachment.DTO.assetBundleManifestVersion))
-                try
-                {
-                    AssetBundleManifestPromise promise = AssetBundleManifestPromise.Create(world,
-                        GetAssetBundleManifestIntention.Create(attachment.DTO.GetHash(), new CommonLoadingArguments(attachment.DTO.GetHash(), cancellationTokenSource: cancellationTokenSource), attachment.DTO),
-                        partitionComponent);
-
-                    AssetBundleManifestPromise awaitedPromise = await promise.ToUniTaskAsync(world, cancellationToken: cancellationTokenSource?.Token ?? CancellationToken.None);
-
-                    if (awaitedPromise.Result is { Succeeded: true, Asset: not null })
-                        attachment.UpdateManifest();
-                }
-                catch (Exception) { return false; }
-
-            return true;
         }
 
         private static void CreateWearableThumbnailTexturePromise(
@@ -105,7 +82,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
-            if (!await TryResolveAssetBundleManifestAsync(world, partitionComponent, attachment, cancellationTokenSource))
+            if (string.IsNullOrEmpty(attachment.DTO.versions.assets.mac))
             {
                 ReportHub.Log(
                     ReportCategory.THUMBNAILS,
@@ -123,8 +100,8 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                     typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
-                    assetBundleVersion: attachment.DTO.assetBundleManifestVersion,
-                    hasParentEntityIDPathInURL: attachment.DTO.hasSceneInPath,
+                    assetBundleVersion: attachment.DTO.GetAssetBundleManifestVersion(),
+                    hasParentEntityIDPathInURL: attachment.DTO.HasHashInPath(),
                     parentEntityID: attachment.DTO.id,
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),

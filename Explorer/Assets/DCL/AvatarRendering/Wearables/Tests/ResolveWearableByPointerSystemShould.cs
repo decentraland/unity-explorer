@@ -164,7 +164,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             //Assert
             mockUnisexWearable.WearableAssetResults[BodyShape.MALE] = mockedAB;
             mockUnisexWearable.WearableAssetResults[BodyShape.FEMALE] = mockedAB;
-            mockUnisexWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
+            //mockUnisexWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]
@@ -187,7 +187,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedDefaultAB;
-            mockWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
+            //mockWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]
@@ -211,7 +211,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedDefaultAB;
-            mockWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
+            //mockWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]

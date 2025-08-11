@@ -228,7 +228,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.DTO.assetBundleManifestVersion} should be >= 16");
+                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.DTO.GetAssetBundleManifestVersion()} should be >= 16");
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }

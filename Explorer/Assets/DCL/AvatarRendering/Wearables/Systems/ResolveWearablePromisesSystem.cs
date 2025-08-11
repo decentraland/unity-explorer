@@ -151,7 +151,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,
-                new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
+                new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
 
@@ -164,10 +164,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
             if (!dtoHasContentDownloadUrl && component.DTO.assetBundleManifestRequestFailed) return false;
-
-            if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) // Manifest is required for Web loading only
-                && !dtoHasContentDownloadUrl && string.IsNullOrEmpty(component.DTO.assetBundleManifestVersion))
-                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
             if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
             {

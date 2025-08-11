@@ -1,4 +1,4 @@
-using DCL.Infrastructure.ECS.StreamableLoading.AssetBundles.AssetBundleManifestHelper;
+using DCL.Platforms;
 using Newtonsoft.Json;
 using System;
 
@@ -8,7 +8,7 @@ namespace DCL.Ipfs
     /// Base class for entity definitions that provides common properties and asset bundle manifest functionality
     /// </summary>
     [Serializable]
-    public abstract class EntityDefinitionBase : IApplyAssetBundleManifestResult
+    public abstract class EntityDefinitionBase
     {
         public string? id;
         public string type;
@@ -18,10 +18,11 @@ namespace DCL.Ipfs
         public string[] pointers;
 
         // Asset bundle manifest properties
-        public string assetBundleManifestVersion;
-        public bool hasSceneInPath;
         public bool assetBundleManifestRequestFailed;
         public string assetBundleBuildDate;
+        private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
+        public AssetBundleManifestVersion? versions;
+        private bool? HasHashInPathValue;
 
         [JsonProperty("status")]
         public AssetBundleRegistryEnum assetBundleRegistryEnum;
@@ -33,15 +34,20 @@ namespace DCL.Ipfs
             this.id = id;
         }
 
-        public virtual void ApplyAssetBundleManifestResult(string assetBundleManifestVersion, bool hasSceneIDInPath)
+        public string GetAssetBundleManifestVersion()
         {
-            this.assetBundleManifestVersion = assetBundleManifestVersion;
-            this.hasSceneInPath = hasSceneIDInPath;
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+                return versions.assets.windows;
+            else
+                return versions.assets.mac;
         }
 
-        public virtual void ApplyFailedManifestResult()
+        public bool HasHashInPath()
         {
-            assetBundleManifestRequestFailed = true;
+            if (HasHashInPathValue == null)
+                HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+
+            return HasHashInPathValue.Value;
         }
 
         public override string ToString() => id ?? string.Empty;

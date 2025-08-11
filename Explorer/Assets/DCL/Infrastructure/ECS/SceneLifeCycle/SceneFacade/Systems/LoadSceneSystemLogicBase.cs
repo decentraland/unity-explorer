@@ -8,12 +8,8 @@ using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using SceneRunner;
 using SceneRunner.Scene;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
 {

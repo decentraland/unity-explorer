@@ -162,7 +162,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             var promise = EmotesFromRealmPromise.Create(
                 World!,
                 new GetEmotesByPointersFromRealmIntention(missingPointers.ToList(),
-                    new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)
+                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)
                 ),
                 partitionComponent
             );
@@ -210,16 +210,6 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            // Manifest is required for Web loading only
-            if (string.IsNullOrEmpty(component.DTO.assetBundleManifestVersion)
-                && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)
-
-                // Skip processing manifest for embedded emotes which do not start with 'urn'
-                && component.GetUrn().IsValid())
-
-                // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
-                return component.CreateAssetBundleManifestPromise(World!, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
-
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
                 return false;
 
@@ -234,9 +224,9 @@ namespace DCL.AvatarRendering.Emotes.Load
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         cancellationTokenSource: intention.CancellationTokenSource,
-                        assetBundleVersion: component.DTO.assetBundleManifestVersion,
+                        assetBundleVersion: component.DTO.GetAssetBundleManifestVersion(),
                         parentEntityID: component.DTO.id,
-                        hasParentEntityIDPathInURL : component.DTO.hasSceneInPath
+                        hasParentEntityIDPathInURL : component.DTO.HasHashInPath()
                     ),
                     partitionComponent
                 );

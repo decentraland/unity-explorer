@@ -14,14 +14,11 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using Utility;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
@@ -35,18 +32,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         public const int MAIN_ASSET_INDEX = 0;
         public const int MASK_ASSET_INDEX = 1;
-
-        public static bool CreateAssetBundleManifestPromise<T>(this T component, World world, BodyShape bodyShape, CancellationTokenSource cts, IPartitionComponent partitionComponent)
-            where T: IAvatarAttachment
-        {
-            var promise = AssetBundleManifestPromise.Create(world,
-                GetAssetBundleManifestIntention.Create(component.DTO.GetHash(), new CommonLoadingArguments(component.DTO.GetHash(), cancellationTokenSource: cts), component.DTO),
-                partitionComponent);
-
-            component.UpdateLoadingStatus(true);
-            world.Create(promise, component, bodyShape);
-            return true;
-        }
 
         /// <summary>
         ///     Create a certain number of Asset Promises based on the type of the wearable,
@@ -240,9 +225,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         hash + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        assetBundleVersion: wearable.DTO.assetBundleManifestVersion,
+                        assetBundleVersion: wearable.DTO.GetAssetBundleManifestVersion(),
                         parentEntityID: wearable.DTO.id,
-                        hasParentEntityIDPathInURL : wearable.DTO.hasSceneInPath,
+                        hasParentEntityIDPathInURL : wearable.DTO.HasHashInPath(),
                         cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);

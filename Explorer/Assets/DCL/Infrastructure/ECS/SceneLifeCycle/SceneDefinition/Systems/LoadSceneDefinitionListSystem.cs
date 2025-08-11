@@ -8,7 +8,9 @@ using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
@@ -109,23 +111,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
             {
-                try
-                {
-                    //TODO (JUANI) : Remove after it comes with the asset-bundle-registry
-                    SceneAssetBundleManifest sceneAssetBundleManifest =
-                        await LoadAssetBundleManifestAsync(
-                            sceneEntityDefinition.id,
-                            GetReportData(),
-                            ct
-                        );
-
-                    sceneEntityDefinition.assetBundleManifestVersion = sceneAssetBundleManifest.GetVersion();
-                    sceneEntityDefinition.hasSceneInPath = sceneAssetBundleManifest.HasHashInPathID();
-                }
-                catch (Exception e)
-                {
-                    sceneEntityDefinition.assetBundleManifestRequestFailed = true;
-                }
+                //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
+                //Could be removed once the asset bundle manifest registry has been battle tested
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, sceneEntityDefinition, partition, ct);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(
