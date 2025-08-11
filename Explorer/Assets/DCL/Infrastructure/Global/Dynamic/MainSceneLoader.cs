@@ -327,8 +327,7 @@ namespace Global.Dynamic
             {
                 bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
             });
-
-
+            
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
