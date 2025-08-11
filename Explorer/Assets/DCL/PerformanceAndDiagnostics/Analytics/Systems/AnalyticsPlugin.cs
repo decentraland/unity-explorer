@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             ICameraReelStorageService cameraReelStorageService,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            PlayerParcelTracker playerParcelTracker
+            PlayerParcelTrackerService playerParcelTracker
         )
         {
             this.analytics = analytics;
@@ -57,6 +57,12 @@ namespace DCL.PluginSystem.Global
             playerParcelChangedAnalytics = new PlayerParcelChangedAnalytics(analytics, playerParcelTracker);
         }
 
+        public void Dispose()
+        {
+            walkedDistanceAnalytics.Dispose();
+            playerParcelChangedAnalytics.Dispose();
+        }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             walkedDistanceAnalytics.Initialize();
@@ -67,12 +73,6 @@ namespace DCL.PluginSystem.Global
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
             ScreencaptureAnalyticsSystem.InjectToWorld(ref builder, analytics, cameraReelStorageService);
             DebugAnalyticsSystem.InjectToWorld(ref builder, analytics, debugContainerBuilder);
-        }
-
-        public void Dispose()
-        {
-            walkedDistanceAnalytics.Dispose();
-            playerParcelChangedAnalytics.Dispose();
         }
     }
 }

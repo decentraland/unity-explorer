@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Utilities;
+using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
@@ -24,7 +25,7 @@ namespace DCL.CharacterMotion.Systems
 
         private Vector2Int lastParcel;
 
-        public PlayerParcelTrackingSystem(World world, Entity playerEntity, PlayerParcelTrackerService parcelTracker, IScenesCache scenesCache, IRealmData realmData) : base(world)
+        internal PlayerParcelTrackingSystem(World world, Entity playerEntity, PlayerParcelTrackerService parcelTracker, IScenesCache scenesCache, IRealmData realmData) : base(world)
         {
             this.playerEntity = playerEntity;
             this.parcelTracker = parcelTracker;
@@ -40,18 +41,18 @@ namespace DCL.CharacterMotion.Systems
                 lastParcel = new Vector2Int(int.MinValue, int.MinValue);
                 return;
             }
-
             Vector2Int currentParcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
             if (currentParcel != lastParcel)
             {
                 bool sceneIsDefined = scenesCache.TryGetByParcel(currentParcel, out ISceneFacade? currentScene);
-                
-                PlayerParcelData parcelData = sceneIsDefined 
-                    ? PlayerParcelData.CreateWithScene(currentParcel, currentScene!)
-                    : PlayerParcelData.CreateUndefined(currentParcel);
+
+                PlayerParcelData parcelData = sceneIsDefined
+                    ? new PlayerParcelData(currentParcel, currentScene!.Info.Name, currentScene.IsEmpty, true)
+                    : new PlayerParcelData(currentParcel, string.Empty);
 
                 parcelTracker.UpdateParcelData(parcelData);
+
                 lastParcel = currentParcel;
             }
         }

@@ -46,6 +46,7 @@ namespace DCL.VoiceChat
             ParticipantsStateService = participantsStateService;
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
+            communityVoiceChatCallStatusService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
 
             privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
             communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
@@ -54,6 +55,7 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
+            communityVoiceChatCallStatusService.ActiveVoiceChatDetectedInScene -= OnActiveVoiceChatDetectedInScene;
 
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
@@ -128,6 +130,11 @@ namespace DCL.VoiceChat
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Switched Orchestrator state to {currentVoiceChatType.Value}");
+        }
+
+        private void OnActiveVoiceChatDetectedInScene(string communityId)
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat detected in scene for community: {communityId}");
         }
 
         private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)

@@ -32,7 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly PlayerParcelTracker playerParcelTracker;
+        private readonly PlayerParcelTrackerService playerParcelTracker;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
@@ -66,7 +66,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
-            PlayerParcelTracker playerParcelTracker
+            PlayerParcelTrackerService playerParcelTracker
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -110,8 +110,7 @@ namespace DCL.PluginSystem.Global
             voiceChatPanelResizeController?.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {

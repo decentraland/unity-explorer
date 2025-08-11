@@ -1,6 +1,7 @@
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.SocialService;
+using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -17,7 +18,7 @@ namespace DCL.VoiceChat
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly VoiceChatParticipantsStateService participantsStateService;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
-        
+
         // Expose the community voice chat service for scene change system
         public CommunityVoiceChatCallStatusService CommunityVoiceChatCallStatusService => communityVoiceChatCallStatusService;
 
@@ -27,12 +28,13 @@ namespace DCL.VoiceChat
             IRoomHub roomHub,
             IWeb3IdentityCache identityCache,
             INotificationsBusController notificationsBusController,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            PlayerParcelTrackerService parcelTrackerService)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController);
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
-            communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, notificationsBusController);
+            communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, notificationsBusController, parcelTrackerService);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
 
             VoiceChatOrchestrator = new VoiceChatOrchestrator(
