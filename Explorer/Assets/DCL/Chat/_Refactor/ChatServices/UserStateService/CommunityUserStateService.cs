@@ -30,7 +30,7 @@ namespace DCL.Chat.ChatServices
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly CommunitiesEventBus communitiesEventBus;
         private readonly IEventBus eventBus;
-        public readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly IChatHistory chatHistory;
 
@@ -96,12 +96,12 @@ namespace DCL.Chat.ChatServices
             GetCommunityMembersResponse response = result.Value;
 
             string? localPlayerAddress = web3IdentityCache.Identity?.Address;
-            
+
             foreach (GetCommunityMembersResponse.MemberData memberData in response.data.results)
             {
                 if (!string.IsNullOrEmpty(localPlayerAddress) && memberData.memberAddress == localPlayerAddress)
                     continue;
-                
+
                 onlineParticipants.Add(memberData.memberAddress);
             }
 
