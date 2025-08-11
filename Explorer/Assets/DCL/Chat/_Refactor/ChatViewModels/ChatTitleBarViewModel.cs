@@ -25,6 +25,16 @@ namespace DCL.Chat.ChatViewModels
                 IsOnline = false, ProfileColor = Color.gray
             };
         }
+
+        /// <summary>
+        ///     NOTE: instead of using this method we should follow the pattern like here in
+        ///     NOTE: ChatMessageViewModel
+        /// </summary>
+        /// <param name="thumbnail"></param>
+        public void SetThumbnail(ProfileThumbnailViewModel thumbnail)
+        {
+            (Thumbnail as ReactiveProperty<ProfileThumbnailViewModel>)!.Value = thumbnail;
+        }
     }
 
     public enum TitlebarViewMode { DirectMessage, Nearby, Community, MemberList }

@@ -79,7 +79,9 @@ namespace DCL.Chat.ChatConfig
 
         [Tooltip("Message when input is focused but empty.")]
         public string InputFocusedMessages = "Write a message";
-        
+
+        [Tooltip("Profile fetch error message.")]
+        public string ProfileFetchErrorMessage = "Couldn't fetch user profile. Please try again later.";
         
         
         [field: Header("Audio")]

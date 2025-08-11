@@ -136,7 +136,9 @@ namespace DCL.Chat.ChatCommands
                 viewModel.DisplayName = $"{userId.Substring(0, 6)}...{userId.Substring(userId.Length - 4)}";
                 viewModel.HasClaimedName = false;
 
-                viewModel.ProfilePicture.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true), ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
+                viewModel.ProfilePicture
+                    .UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true),
+                        ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
             }
 
             eventBus.Publish(new ChatEvents.ChannelUpdatedEvent

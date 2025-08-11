@@ -78,13 +78,18 @@ namespace DCL.Chat.ChatCommands
         {
             var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
             if (ct.IsCancellationRequested) return null; // TODO can't be null
-
+            
             if (profile == null)
             {
-                return new ChatTitlebarViewModel
+                var item = new ChatTitlebarViewModel
                 {
-                    ViewMode = TitlebarViewMode.DirectMessage, Username = "User not found"
+                    ViewMode = TitlebarViewMode.DirectMessage, Username = $"{channel.Id.Id.Substring(0, 6)}...{channel.Id.Id.Substring(channel.Id.Id.Length - 4)}", HasClaimedName = false, Id = channel.Id.Id,
+                    WalletId = channel.Id.Id, ProfileColor = ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR
                 };
+
+                item.SetThumbnail(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultCommunityThumbnail));
+                return item;
+
             }
 
             var userStatus = await getUserChatStatusCommand.ExecuteAsync(profile.UserId, ct);
