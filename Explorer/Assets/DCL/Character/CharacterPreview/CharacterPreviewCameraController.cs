@@ -104,10 +104,8 @@ namespace DCL.CharacterPreview
                     float normalizedDelta = pointerEventData.delta.x / Screen.width;
                     float baseRotationDelta = normalizedDelta * cameraSettings.rotationModifier;
 
-                    float rotationDelta = baseRotationDelta * Time.deltaTime * 1000f;
-
                     float currentValue = characterPreviewAvatarContainer.freeLookCamera.m_XAxis.Value;
-                    float targetValue = currentValue + rotationDelta;
+                    float targetValue = currentValue + baseRotationDelta;
 
                     float minDuration = 0.01f;
                     float maxDuration = cameraSettings.rotationEaseMaxDuration;
