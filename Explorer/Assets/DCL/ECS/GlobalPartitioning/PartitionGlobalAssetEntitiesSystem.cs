@@ -71,7 +71,8 @@ namespace DCL.Systems
             ref CharacterTransform transformComponent)
         {
             PartitionComponent partitionComponent = partitionComponentPool.Get();
-            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
+            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position,
+                ref transformComponent, ref partitionComponent);
             partitionComponent.IsDirty = true;
             World.Add(entity, partitionComponent);
         }
@@ -82,7 +83,8 @@ namespace DCL.Systems
         private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
             ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent)
         {
-            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
+            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, 
+                ref transformComponent, ref partitionComponent);
         }
 
         [Query]
@@ -93,11 +95,12 @@ namespace DCL.Systems
         {
             if (!transformComponent.IsDirty) return;
             
-            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
-            transformComponent.ClearDirty();
+            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position,
+                ref transformComponent, ref partitionComponent);
         }
 
-        private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, ref PartitionComponent partitionComponent)
+        private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, 
+            ref CharacterTransform transformComponent, ref PartitionComponent partitionComponent)
         {
             // TODO pure math logic can be jobified for much better performance
 
@@ -112,6 +115,8 @@ namespace DCL.Systems
                  sqrDistance, vectorToCamera);
 
             partitionComponent.IsDirty = bucket != partitionComponent.Bucket || isBehind != partitionComponent.IsBehind;
+            // There's no need to repartition transform if everything is repartitioning already.
+            transformComponent.ClearDirty();
         }
     }
 }
