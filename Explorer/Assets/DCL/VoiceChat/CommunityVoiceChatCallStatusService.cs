@@ -318,7 +318,9 @@ namespace DCL.VoiceChat
                 voiceChatSceneTrackerService.RegisterCommunityInScene(communityUpdate.CommunityId, communityUpdate.Positions, communityUpdate.Worlds);
                 voiceChatSceneTrackerService.SetActiveCommunityVoiceChat(communityUpdate.CommunityId, activeChat);
 
-                notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
+                // We only show notification if we are part of the community
+                if (communityUpdate.IsMember)
+                    notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
             }
         }
 
