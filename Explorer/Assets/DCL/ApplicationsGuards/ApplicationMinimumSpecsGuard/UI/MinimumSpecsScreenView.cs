@@ -7,9 +7,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
     public class MinimumSpecsScreenView : ViewBase, IView
     {
         [field: SerializeField]
-        public Button ExitButton { get; private set; } = null!;
-
-        [field: SerializeField]
         public Button ContinueButton { get; private set; } = null!;
 
         [field: SerializeField]

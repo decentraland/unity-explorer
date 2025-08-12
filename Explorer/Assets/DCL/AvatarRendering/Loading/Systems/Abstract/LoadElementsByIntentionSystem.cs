@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -60,6 +61,14 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                             new CommonArguments(url), string.Empty, ct)
                     );
 
+                //TODO (JUANI): Builder element DTO
+                /*foreach (IBuilderLambdaResponseElement<TAvatarElementDTO> lambdaResponseCollectionElement in lambdaResponse.CollectionElements)
+                {
+                    //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
+                    //Could be removed when the asset bundle manifest registry is battle tested
+                    await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, lambdaResponseCollectionElement., partition, ct);
+                }*/
+
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                     LoadBuilderItem(ref intention, lambdaResponse);
             }
@@ -73,6 +82,13 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                             GetReportCategory()
                         )
                     );
+
+                foreach (var element in lambdaResponse.Page)
+                {
+                    //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
+                    //Could be removed when the asset bundle manifest registry is battle tested
+                    await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, element.Entity, partition, ct);
+                }
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                     Load(ref intention, lambdaResponse);

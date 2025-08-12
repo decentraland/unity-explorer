@@ -35,7 +35,8 @@ namespace DCL.SkyBox
         public Material SkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
-        public bool IsUIControlled { get; set; } // Set by UI global system
+        public bool IsUIControlled { get; set; }
+        public float UIOverrideTimeOfDayNormalized { get; set; }
         public Vector2Int? CurrentSDKControlledScene { get; set; }
         public bool IsDayCycleEnabled
         {

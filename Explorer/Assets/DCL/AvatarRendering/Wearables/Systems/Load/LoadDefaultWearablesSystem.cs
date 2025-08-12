@@ -141,6 +141,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             },
                         },
                     },
+                    assetBundleManifestVersion = new AssetBundleManifestVersion("v16", "v15")
                 };
 
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);
@@ -213,6 +214,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             },
                         },
                     },
+                    assetBundleManifestVersion = new AssetBundleManifestVersion("v16", "v15")
                 };
 
                 IWearable wearable = wearableStorage.GetOrAddByDTO(dto, false);

@@ -73,6 +73,8 @@ namespace DCL.AvatarRendering.Loading.DTO
             public string code;
             public string text;
         }
+
+
     }
 
     public static class AvatarAttachmentDTOExtensions

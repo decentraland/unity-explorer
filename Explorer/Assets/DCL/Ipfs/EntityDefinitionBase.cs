@@ -1,4 +1,4 @@
-using DCL.Infrastructure.ECS.StreamableLoading.AssetBundles.AssetBundleManifestHelper;
+using DCL.Platforms;
 using Newtonsoft.Json;
 using System;
 
@@ -8,7 +8,7 @@ namespace DCL.Ipfs
     /// Base class for entity definitions that provides common properties and asset bundle manifest functionality
     /// </summary>
     [Serializable]
-    public abstract class EntityDefinitionBase : IApplyAssetBundleManifestResult
+    public abstract class EntityDefinitionBase
     {
         public string? id;
         public string type;
@@ -18,10 +18,8 @@ namespace DCL.Ipfs
         public string[] pointers;
 
         // Asset bundle manifest properties
-        public string assetBundleManifestVersion;
-        public bool hasSceneInPath;
-        public bool assetBundleManifestRequestFailed;
-        public string assetBundleBuildDate;
+        [JsonProperty("versions")]
+        public AssetBundleManifestVersion? assetBundleManifestVersion;
 
         [JsonProperty("status")]
         public AssetBundleRegistryEnum assetBundleRegistryEnum;
@@ -31,17 +29,6 @@ namespace DCL.Ipfs
         protected EntityDefinitionBase(string id)
         {
             this.id = id;
-        }
-
-        public virtual void ApplyAssetBundleManifestResult(string assetBundleManifestVersion, bool hasSceneIDInPath)
-        {
-            this.assetBundleManifestVersion = assetBundleManifestVersion;
-            this.hasSceneInPath = hasSceneIDInPath;
-        }
-
-        public virtual void ApplyFailedManifestResult()
-        {
-            assetBundleManifestRequestFailed = true;
         }
 
         public override string ToString() => id ?? string.Empty;

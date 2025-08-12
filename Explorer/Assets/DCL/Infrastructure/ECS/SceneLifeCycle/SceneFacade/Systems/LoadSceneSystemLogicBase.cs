@@ -8,7 +8,6 @@ using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.StreamableLoading.AssetBundles;
 using SceneRunner;
 using SceneRunner.Scene;
 

@@ -8,10 +8,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -34,30 +30,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             base.Update(t);
 
             // Asset Bundles can be Resolved with Embedded Data
-            FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
-        }
-
-        [Query]
-        private void FinalizeAssetBundleManifestLoading(Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
-        {
-            if (promise.IsCancellationRequested(World!))
-            {
-                wearable.ResetManifest();
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
-            {
-                if (result.Succeeded)
-                    wearable.UpdateManifest();
-                else
-                    SetAsFailed(wearable, in bodyShape);
-
-                wearable.UpdateLoadingStatus(false);
-                World.Destroy(entity);
-            }
         }
 
         [Query]

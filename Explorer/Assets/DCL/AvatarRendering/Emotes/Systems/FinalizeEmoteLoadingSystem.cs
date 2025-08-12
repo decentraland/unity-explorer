@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
@@ -37,33 +36,10 @@ namespace DCL.AvatarRendering.Emotes
         protected override void Update(float t)
         {
             FinalizeEmoteDTOQuery(World);
-            FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
             FinalizeGltfLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
             ConsumeAndDisposeFinishedEmotePromiseQuery(World);
-        }
-
-        [Query]
-        private void FinalizeAssetBundleManifestLoading(
-            Entity entity,
-            ref AssetBundleManifestPromise promise,
-            ref IEmote emote
-        )
-        {
-            if (promise.IsCancellationRequested(World))
-            {
-                emote.ResetManifest();
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
-            {
-                emote.UpdateManifest();
-
-                World.Destroy(entity);
-            }
         }
 
         [Query]

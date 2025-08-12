@@ -25,6 +25,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.UI.GenericContextMenu.Controllers
 {
@@ -129,14 +130,27 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             if (friendServiceProxy.Configured)
             {
-                FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
-                contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
-                blockButtonControlSettings.SetData(profile.UserId);
-                jumpInButtonControlSettings.SetData(profile.UserId);
-                contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+                Result<FriendshipStatus> friendshipStatusAsyncResult = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
-                                                  friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
+                if (!friendshipStatusAsyncResult.Success)
+                {
+                    contextMenuBlockUserButton.Enabled = false;
+                    contextMenuJumpInButton.Enabled = false;
+                }
+                else
+                {
+                    FriendshipStatus friendshipStatus = friendshipStatusAsyncResult.Value;
+
+                    contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
+
+                    blockButtonControlSettings.SetData(profile.UserId);
+                    jumpInButtonControlSettings.SetData(profile.UserId);
+
+                    contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+                    contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
+                                                      friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
+                }
             }
 
             userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
