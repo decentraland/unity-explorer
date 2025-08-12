@@ -4,6 +4,24 @@ namespace DCL.DebugUtilities.Views
 {
     public class AverageFpsBannerElement : DebugElementBase<AverageFpsBannerElement, AverageFpsBannerDef>, IBindable, INotifyValueChanged<AverageFpsBannerData>
     {
+        private const string USS_FPS_VALUE_LABEL_NAME = "FpsValue";
+        private const string USS_MS_VALUE_LABEL_NAME = "MsValue";
+
+        private const string COLLECTING_TEXT = "collecting…";
+        private const string MS_FORMAT = "({0} ms)";
+
+        private const string USS_BANNER_CLASS = "avg-fps-banner";
+        private const string USS_BANNER_SEVERITY_GOOD_CLASS = "avg-fps-banner--good";
+        private const string USS_BANNER_SEVERITY_NORMAL_CLASS = "avg-fps-banner--normal";
+        private const string USS_BANNER_SEVERITY_BAD_CLASS = "avg-fps-banner--bad";
+
+        private enum Severity
+        {
+            Good,
+            Normal,
+            Bad,
+        }
+
         private Label fpsValueLabel;
         private Label msLabel;
 
@@ -24,8 +42,8 @@ namespace DCL.DebugUtilities.Views
 
         protected override void ConnectBindings()
         {
-            fpsValueLabel = this.Q<Label>("FpsValue");
-            msLabel = this.Q<Label>("MsValue");
+            fpsValueLabel = this.Q<Label>(USS_FPS_VALUE_LABEL_NAME);
+            msLabel = this.Q<Label>(USS_MS_VALUE_LABEL_NAME);
 
             // Connect the mandatory precomputed display binding
             definition.AvgDisplayBinding.Connect(this);
@@ -45,44 +63,44 @@ namespace DCL.DebugUtilities.Views
         {
             if (data.Fps <= 0)
             {
-                fpsValueLabel.text = "collecting…";
+                fpsValueLabel.text = COLLECTING_TEXT;
                 msLabel.text = string.Empty;
-                SetSeverityClass("ok");
+                SetSeverityClass(Severity.Good);
                 return;
             }
 
             fpsValueLabel.style.display = DisplayStyle.Flex;
             fpsValueLabel.text = data.Fps.ToString("F1");
             msLabel.style.display = DisplayStyle.Flex;
-            msLabel.text = "(" + data.Ms.ToString("F1") + " ms)";
+            msLabel.text = string.Format(MS_FORMAT, data.Ms.ToString("F1"));
 
-            string severity = data.Fps < definition.BadFpsThreshold
-                ? "bad"
-                : data.Fps < definition.NormalFpsThreshold ? "normal" : "good";
+            Severity severity = data.Fps < definition.BadFpsThreshold
+                ? Severity.Bad
+                : data.Fps < definition.NormalFpsThreshold ? Severity.Normal : Severity.Good;
 
             SetSeverityClass(severity);
         }
 
-        private void SetSeverityClass(string id)
+        private void SetSeverityClass(Severity severity)
         {
-            RemoveFromClassList("avg-fps-banner--good");
-            RemoveFromClassList("avg-fps-banner--normal");
-            RemoveFromClassList("avg-fps-banner--bad");
+            RemoveFromClassList(USS_BANNER_SEVERITY_GOOD_CLASS);
+            RemoveFromClassList(USS_BANNER_SEVERITY_NORMAL_CLASS);
+            RemoveFromClassList(USS_BANNER_SEVERITY_BAD_CLASS);
 
-            AddToClassList("avg-fps-banner");
+            AddToClassList(USS_BANNER_CLASS);
 
-            switch (id)
+            switch (severity)
             {
-                case "bad":
-                    AddToClassList("avg-fps-banner--bad");
+                case Severity.Bad:
+                    AddToClassList(USS_BANNER_SEVERITY_BAD_CLASS);
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.905f, 0.298f, 0.235f));
                     break;
-                case "normal":
-                    AddToClassList("avg-fps-banner--normal");
+                case Severity.Normal:
+                    AddToClassList(USS_BANNER_SEVERITY_NORMAL_CLASS);
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.945f, 0.769f, 0.059f));
                     break;
                 default:
-                    AddToClassList("avg-fps-banner--good");
+                    AddToClassList(USS_BANNER_SEVERITY_GOOD_CLASS);
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.180f, 0.800f, 0.443f));
                     break;
             }
