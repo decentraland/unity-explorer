@@ -30,6 +30,8 @@ namespace DCL.Ipfs
             assets.windows = assetBundleManifestVersionWin;
         }
 
+        public bool IsEmpty() =>
+            assets.IsEmpty();
     }
 
     public class AssetBundleManifestVersionPerPlatform
@@ -44,6 +46,9 @@ namespace DCL.Ipfs
             else
                 mac = assetBundleManifestVersion;
         }
+
+        public bool IsEmpty() =>
+            string.IsNullOrEmpty(mac) &&  string.IsNullOrEmpty(windows);
     }
 
 }
