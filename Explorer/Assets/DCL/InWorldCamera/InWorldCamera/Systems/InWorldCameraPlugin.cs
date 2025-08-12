@@ -148,7 +148,7 @@ namespace DCL.PluginSystem.Global
         {
             this.settings = settings;
 
-            hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
+            hud = factory.CreateScreencaptureHud(await assetsProvisioner.ProvideMainAssetValueAsync(settings.ScreencaptureHud, ct: ct));
             followTarget = factory.CreateFollowTarget(settings.FollowTarget);
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
@@ -216,7 +216,7 @@ namespace DCL.PluginSystem.Global
         public class InWorldCameraSettings : IDCLPluginSettings
         {
             [field: Header(nameof(InWorldCameraSettings))]
-            [field: SerializeField] internal GameObject ScreencaptureHud { get; private set; }
+            [field: SerializeField] internal AssetReferenceGameObject ScreencaptureHud { get; private set; }
             [field: SerializeField] internal GameObject FollowTarget { get; private set; }
 
             [field: Header("Configs")]

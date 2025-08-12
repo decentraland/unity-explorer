@@ -65,11 +65,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b5fb13ac5db3bbb49a6e6aa3d2df0309
-    m_Address: BuildData
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b68ba436e63c39949b58b7aac96c291c
     m_Address: AdaptivePhysicsSettings
     m_ReadOnly: 0

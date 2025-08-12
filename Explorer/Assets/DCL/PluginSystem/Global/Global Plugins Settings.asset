@@ -142,7 +142,7 @@ MonoBehaviour:
             Icon: {fileID: 0}
           - PlayerInputAction: {fileID: 8119733991161362085, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
-            Icon: {fileID: 21300000, guid: 0c1f94bccfacc415f8b7916a4f3ae512, type: 3}
+            Icon: {fileID: 21300000, guid: 456cb20e54920408b8d7a753471c17cd, type: 3}
           - PlayerInputAction: {fileID: -273270698691252620, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: SPACE BAR
             Icon: {fileID: 0}
@@ -163,7 +163,7 @@ MonoBehaviour:
             Icon: {fileID: 0}
           - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
-            Icon: {fileID: 21300000, guid: 0c1f94bccfacc415f8b7916a4f3ae512, type: 3}
+            Icon: {fileID: 21300000, guid: 456cb20e54920408b8d7a753471c17cd, type: 3}
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -930,7 +930,12 @@ MonoBehaviour:
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ScreencaptureHud>k__BackingField: {fileID: 405257682719442044, guid: 73f988cecacd42e48920937e996e446d, type: 3}
+        <ScreencaptureHud>k__BackingField:
+          m_AssetGUID: 73f988cecacd42e48920937e996e446d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <FollowTarget>k__BackingField: {fileID: 9209778991738672599, guid: ace53bd2bc5e2b8439785bb3122b12e3, type: 3}
         <TransitionSettings>k__BackingField: {fileID: 11400000, guid: 230436585dd166a4e98f1c0953e3a5f6, type: 2}
         <MovementSettings>k__BackingField: {fileID: 11400000, guid: 9c104547ad3a8454baeb79e1bb45ce4c, type: 2}
