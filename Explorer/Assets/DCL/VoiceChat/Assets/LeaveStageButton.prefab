@@ -101,13 +101,13 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 0.101960786}
-    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.101960786}
-    m_PressedColor: {r: 1, g: 1, b: 1, a: 0.101960786}
-    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.101960786}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 0.03137255}
+    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.050980393}
+    m_PressedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
+    m_DisabledColor: {r: 1, g: 1, b: 1, a: 0.03137255}
     m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
+    m_FadeDuration: 0
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
     m_PressedSprite: {fileID: 0}
@@ -246,7 +246,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2257581928682676151, guid: c6d18456f6afb473d83ffea81329363e, type: 3}
       propertyPath: m_text
-      value: Leave stage
+      value: Leave Stage
       objectReference: {fileID: 0}
     - target: {fileID: 4036325993820496075, guid: c6d18456f6afb473d83ffea81329363e, type: 3}
       propertyPath: m_Pivot.x
