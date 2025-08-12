@@ -41,7 +41,7 @@ namespace DCL.Character.Tests
         {
             globalWorld = World.Create();
             
-            // Setting camera sampling as such it does not interfere in repartitioning.
+            // Default camera state - not dirty to avoid interference with repartitioning
             cameraSamplingData = Substitute.For<IReadOnlyCameraSamplingData>();
             cameraSamplingData.Position.Returns(Vector3.zero);
             cameraSamplingData.Forward.Returns(Vector3.forward);
@@ -151,7 +151,6 @@ namespace DCL.Character.Tests
             testGameObject.transform.position = new Vector3(10, 0, 10);
             var characterTransform = new CharacterTransform(testGameObject.transform);
             
-            // Create entity with PBAvatarShape (not PlayerComponent so it gets processed)
             Entity avatarEntity = globalWorld.Create(
                 characterTransform,
                 new PBAvatarShape(),
@@ -245,12 +244,7 @@ namespace DCL.Character.Tests
             cameraSamplingData.IsDirty.Returns(true);
             system.Update(0.1f);
             
-            // The system should process all entities when camera is dirty,
-            // regardless of their individual dirty state
-            //ref PartitionComponent partitionAfter = ref globalWorld.Get<PartitionComponent>(entity);
-            
-            // Assert - partition component might be marked dirty based on position change
-            // but CharacterTransform.IsDirty should remain unchanged since we didn't move
+            // Assert - CharacterTransform.IsDirty should remain unchanged since entity didn't move
             ref CharacterTransform afterTransform = ref globalWorld.Get<CharacterTransform>(entity);
             Assert.IsFalse(afterTransform.IsDirty, 
                 "CharacterTransform.IsDirty shouldn't change when camera moves");
@@ -263,14 +257,13 @@ namespace DCL.Character.Tests
             testGameObject = new GameObject("TestObject");
             testGameObject.transform.position = Vector3.zero;
             var characterTransform = new CharacterTransform(testGameObject.transform);
-            // The threshold is 0.01f, so we need combined distance >= 0.01f
+            
             Vector3 exactVector = new Vector3(MINIMAL_DISTANCE_DIFFERENCE * 0.4f, MINIMAL_DISTANCE_DIFFERENCE * 0.3f, 
                 MINIMAL_DISTANCE_DIFFERENCE * 0.3f);
             Vector3 bellowMinVector = new Vector3(MINIMAL_DISTANCE_DIFFERENCE * 0.3f, MINIMAL_DISTANCE_DIFFERENCE * 0.3f, 
                 MINIMAL_DISTANCE_DIFFERENCE * 0.3f);
             
             // Act & Assert - Test case 1: Each axis contributes to distance
-            // Test the threshold calculation uses Manhattan distance (sum of absolute differences)
             characterTransform.SetPositionWithDirtyCheck(exactVector);
             Assert.IsTrue(characterTransform.IsDirty, 
                 "Should be dirty when Manhattan distance = 0.01f");
@@ -279,7 +272,7 @@ namespace DCL.Character.Tests
             characterTransform.ClearDirty();
             
             // Test case 2: Below threshold
-            Vector3 movement2 = testGameObject.transform.position + bellowMinVector; // Total: 0.009f
+            Vector3 movement2 = testGameObject.transform.position + bellowMinVector;
             characterTransform.SetPositionWithDirtyCheck(movement2);
             Assert.IsFalse(characterTransform.IsDirty, 
                 "Should not be dirty when Manhattan distance < 0.01f");
@@ -290,7 +283,7 @@ namespace DCL.Character.Tests
             characterTransform.ClearDirty();
             
             // Test case 3: Single axis movement
-            Vector3 movement3 = testGameObject.transform.position + new Vector3(0.011f, 0, 0); // Total: 0.011f
+            Vector3 movement3 = testGameObject.transform.position + new Vector3(0.011f, 0, 0);
             characterTransform.SetPositionWithDirtyCheck(movement3);
             Assert.IsTrue(characterTransform.IsDirty, 
                 "Should be dirty when single axis movement > 0.01f");
@@ -299,15 +292,11 @@ namespace DCL.Character.Tests
         [Test]
         public void SetsDirtyCharacterTransformViaRemotePlayersMovementSystem()
         {
-            // This test verifies that RemotePlayersMovementSystem.SetPositionAndRotation
-            // properly uses CharacterTransform.SetPositionAndRotationWithDirtyCheck
-            
             // Arrange
             testGameObject = new GameObject("RemotePlayer");
             testGameObject.transform.position = Vector3.zero;
             var characterTransform = new CharacterTransform(testGameObject.transform);
             
-            // Create entity as remote player (no PlayerComponent)
             Entity remoteEntity = globalWorld.Create(
                 characterTransform,
                 new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false }
@@ -339,27 +328,24 @@ namespace DCL.Character.Tests
                 actionOnRelease: queue => queue.Clear()
             );
             
-            // Add component to globalWorld first
             globalWorld.Add(remoteEntity, new RemotePlayerMovementComponent(queuePoolFullMovementMessage));
             globalWorld.Add(remoteEntity, new InterpolationComponent());
             globalWorld.Add(remoteEntity, new ExtrapolationComponent());
             
-            // Then get ref and set properties
             ref RemotePlayerMovementComponent movementComponent = ref globalWorld.Get<RemotePlayerMovementComponent>(remoteEntity);
             movementComponent.Initialized = false;
-            movementComponent.InitialCooldownTime = 0.3f; // Skip cooldown
+            movementComponent.InitialCooldownTime = 0.3f;
             globalWorld.Set(remoteEntity, movementComponent);
-            
             
             // Verify clean state
             ref CharacterTransform beforeTransform = ref globalWorld.Get<CharacterTransform>(remoteEntity);
             Assert.IsFalse(beforeTransform.IsDirty, "Should start clean");
             
-            // Act - Process first movement message (which calls SetPositionAndRotation internally)
+            // Act - Process first movement message
             var firstMessage = new NetworkMovementMessage
             {
                 timestamp = 1f,
-                position = new Vector3(1f, 0f, 1f), // Significant movement
+                position = new Vector3(1f, 0f, 1f),
                 rotationY = 45f,
                 velocity = Vector3.zero,
                 velocitySqrMagnitude = 0f,
@@ -371,7 +357,7 @@ namespace DCL.Character.Tests
             globalWorld.Set(remoteEntity, movementComponent);
             movementSystem.Update(0.1f);
             
-            // Assert - Verify that dirty flag was set through CharacterTransform
+            // Assert
             ref CharacterTransform afterTransform = ref globalWorld.Get<CharacterTransform>(remoteEntity);
             Assert.IsTrue(afterTransform.IsDirty, 
                 "RemotePlayersMovementSystem should set IsDirty via CharacterTransform.SetPositionAndRotationWithDirtyCheck");
@@ -382,11 +368,7 @@ namespace DCL.Character.Tests
         [Test]
         public void CompleteFlow_RemoteMovementSetsDirty_PartitionSystemClearsIt()
         {
-            // This test verifies the complete flow:
-            // 1. RemotePlayersMovementSystem sets dirty via CharacterTransform
-            // 2. PartitionGlobalAssetEntitiesSystem clears it
-
-            // Arrange
+            // Arrange - Create local partition system with camera dirty for RePartitionExistingEntity
             var localCameraSamplingData = Substitute.For<IReadOnlyCameraSamplingData>();
             localCameraSamplingData.Position.Returns(Vector3.zero);
             localCameraSamplingData.Forward.Returns(Vector3.forward);
@@ -396,14 +378,13 @@ namespace DCL.Character.Tests
                 globalWorld, 
                 partitionComponentPool, 
                 partitionSettings, 
-                localCameraSamplingData  // Use local mock
+                localCameraSamplingData
             );
             
             testGameObject = new GameObject("CompleteFlowTest");
             testGameObject.transform.position = Vector3.zero;
             var characterTransform = new CharacterTransform(testGameObject.transform);
 
-            // Create entity with Profile instead of PBAvatarShape
             Entity entity = globalWorld.Create(
                 characterTransform,
                 Profile.Create("Ia4Ia5Cth0ulhu2Ftaghn2", "fake user", new DCL.Profiles.Avatar(
@@ -411,11 +392,12 @@ namespace DCL.Character.Tests
                     WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor())), new AvatarShapeComponent(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor())), 
+                new AvatarShapeComponent(),
                 new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false }
             );
 
-            // Setup both systems
+            // Setup movement system
             var movementSettings = Substitute.For<IMultiplayerMovementSettings>();
             movementSettings.MoveSendRate.Returns(0.1f);
             movementSettings.MinTeleportDistance.Returns(100f);
@@ -426,23 +408,20 @@ namespace DCL.Character.Tests
             var movementSystem = new RemotePlayersMovementSystem(
                 globalWorld, movementSettings, characterControllerSettings);
 
-            // Setup movement components
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),
                 actionOnRelease: queue => queue.Clear()
             );
 
-            // Add components to globalWorld
             globalWorld.Add(entity, new RemotePlayerMovementComponent(queuePoolFullMovementMessage));
             globalWorld.Add(entity, new InterpolationComponent());
             globalWorld.Add(entity, new ExtrapolationComponent());
 
-            // Get ref, set all properties, enqueue message, then set back
             ref RemotePlayerMovementComponent movementComponent = ref globalWorld.Get<RemotePlayerMovementComponent>(entity);
             movementComponent.Initialized = false;
-            movementComponent.InitialCooldownTime = 0.3f; // Skip the cooldown period
+            movementComponent.InitialCooldownTime = 0.3f;
 
-            // Assert
+            // Act & Assert
             // Step 1: Movement system sets dirty
             var message = new NetworkMovementMessage
             {
@@ -471,7 +450,6 @@ namespace DCL.Character.Tests
             Assert.IsFalse(afterPartition.IsDirty,
                 "Partition system should clear dirty flag");
 
-            // Verify position was maintained
             Assert.AreEqual(message.position, afterPartition.Position,
                 "Position should be maintained through the flow");
             
