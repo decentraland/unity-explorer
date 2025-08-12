@@ -1,4 +1,5 @@
-﻿using Unity.Burst;
+﻿using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -7,15 +8,12 @@ using UnityEngine;
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     [BurstCompile]
-    public struct BoneMatrixCalculationJob : IJobParallelFor
+    public struct BoneMatrixCalculationJob : IJobParallelFor, IDisposable
     {
         private readonly int BONE_COUNT;
         private int AvatarIndex;
 
-        /// <summary>
-        /// Job doesn't own the array
-        /// </summary>
-        private NativeArray<float4x4> BonesMatricesResult;
+        private NativeArray<float4x4> bonesMatricesResult;
         [NativeDisableParallelForRestriction]
         public NativeArray<Matrix4x4> AvatarTransform;
 
@@ -23,15 +21,22 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         [NativeDisableParallelForRestriction] public NativeArray<bool> UpdateAvatar;
 
+        public NativeArray<float4x4> BonesMatricesResult => bonesMatricesResult;
+
         public BoneMatrixCalculationJob(int boneCount, int bonesPerAvatarLength, NativeArray<Matrix4x4> boneWorldMatrixArray)
         {
             BONE_COUNT = boneCount;
-            BonesMatricesResult = new NativeArray<float4x4>(bonesPerAvatarLength, Allocator.Persistent);
+            bonesMatricesResult = new NativeArray<float4x4>(bonesPerAvatarLength, Allocator.Persistent);
             AvatarTransform = default;
             UpdateAvatar = default;
             AvatarIndex = 0;
 
             this.boneWorldMatrixArray = boneWorldMatrixArray;
+        }
+
+        public void Dispose()
+        {
+            bonesMatricesResult.Dispose();
         }
 
         public void Execute(int index)
@@ -43,7 +48,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             if (!UpdateAvatar[AvatarIndex])
                 return;
 
-            BonesMatricesResult[index] = AvatarTransform[AvatarIndex] * boneWorldMatrixArray[index];
+            bonesMatricesResult[index] = AvatarTransform[AvatarIndex] * boneWorldMatrixArray[index];
         }
     }
 }
