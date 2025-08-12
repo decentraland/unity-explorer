@@ -104,6 +104,7 @@ namespace DCL.DebugUtilities.Views
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.180f, 0.800f, 0.443f));
                     break;
             }
+            msLabel.style.color = fpsValueLabel.style.color;
         }
 
         public new class UxmlFactory : UxmlFactory<AverageFpsBannerElement> { }
