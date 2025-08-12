@@ -23,7 +23,7 @@ namespace DCL.Chat.ChatServices
 
         public IReadOnlyCollection<string> OnlineParticipants { get; private set; }
 
-        private readonly CancellationTokenSource lifeTimeCts = new ();
+        private CancellationTokenSource lifeTimeCts = new ();
 
         private ChatChannel.ChannelId currentChannelId;
 
@@ -46,13 +46,7 @@ namespace DCL.Chat.ChatServices
             this.web3IdentityCache = web3IdentityCache;
 
             OnlineParticipants = Array.Empty<string>();
-
-            // Channels will be added from InitializeChatSystemCommand
-            chatHistory.ChannelAdded += OnChannelAdded;
-            chatHistory.ChannelRemoved += OnChannelRemoved;
-
-            communitiesEventBus.UserConnectedToCommunity += UserConnectedToCommunity;
-            communitiesEventBus.UserDisconnectedFromCommunity += UserDisconnectedFromCommunity;
+            SubscribeToEvents();
         }
 
         private void OnChannelAdded(ChatChannel addedChannel)
@@ -120,10 +114,7 @@ namespace DCL.Chat.ChatServices
         {
             Deactivate();
 
-            chatHistory.ChannelAdded -= OnChannelAdded;
-            chatHistory.ChannelRemoved -= OnChannelRemoved;
-            communitiesEventBus.UserConnectedToCommunity -= UserConnectedToCommunity;
-            communitiesEventBus.UserDisconnectedFromCommunity -= UserDisconnectedFromCommunity;
+            UnsubscribeFromEvents();
 
             lifeTimeCts.SafeCancelAndDispose();
         }
@@ -158,6 +149,36 @@ namespace DCL.Chat.ChatServices
             // Notifications for non-current channel are not sent as it's not needed from the esign standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.Remove(userId) && currentChannelId.Equals(channelId))
                 eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, false));
+        }
+
+        public void Reset()
+        {
+            lifeTimeCts = lifeTimeCts.SafeRestart();
+            UnsubscribeFromEvents();
+
+            foreach (var onlineList in onlineParticipantsPerChannel.Values)
+            {
+                HASHSET_POOL.Release(onlineList);
+            }
+
+            onlineParticipantsPerChannel.Clear();
+            Deactivate();
+        }
+
+        public void SubscribeToEvents()
+        {
+            chatHistory.ChannelAdded += OnChannelAdded;
+            chatHistory.ChannelRemoved += OnChannelRemoved;
+            communitiesEventBus.UserConnectedToCommunity += UserConnectedToCommunity;
+            communitiesEventBus.UserDisconnectedFromCommunity += UserDisconnectedFromCommunity;
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            chatHistory.ChannelAdded -= OnChannelAdded;
+            chatHistory.ChannelRemoved -= OnChannelRemoved;
+            communitiesEventBus.UserConnectedToCommunity -= UserConnectedToCommunity;
+            communitiesEventBus.UserDisconnectedFromCommunity -= UserDisconnectedFromCommunity;
         }
     }
 }

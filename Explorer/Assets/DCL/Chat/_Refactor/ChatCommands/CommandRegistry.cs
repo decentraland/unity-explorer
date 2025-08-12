@@ -11,6 +11,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
+using DCL.Web3.Identities;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -35,12 +36,14 @@ namespace DCL.Chat.ChatCommands
         public GetParticipantProfilesCommand GetParticipantProfilesCommand { get; }
         public GetUserChatStatusCommand GetUserChatStatusCommand { get; }
         public ResetChatCommand ResetChat { get; }
+        public RestartChatServicesCommand RestartChatServices { get; }
         public ResolveInputStateCommand ResolveInputStateCommand { get; }
 
         public CommandRegistry(
             ChatConfig.ChatConfig chatConfig,
             ChatSettingsAsset chatSettings,
             IEventBus eventBus,
+            IWeb3IdentityCache identityCache,
             IChatEventBus chatEventBus,
             IChatMessagesBus chatMessageBus,
             IChatHistory chatHistory,
@@ -58,11 +61,23 @@ namespace DCL.Chat.ChatCommands
             AudioClipConfig sendMessageSound,
             GetParticipantProfilesCommand getParticipantProfilesCommand)
         {
-            ResetChat = new ResetChatCommand(eventBus);
+            RestartChatServices = new RestartChatServicesCommand(
+                privateConversationUserStateService,
+                communityUserStateService,
+                chatMemberListService);
+
+            ResetChat = new ResetChatCommand(eventBus,
+                chatHistory,
+                chatHistoryStorage,
+                currentChannelService,
+                privateConversationUserStateService,
+                communityUserStateService,
+                chatMemberListService);
             
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
 
             InitializeChat = new InitializeChatSystemCommand(eventBus,
+                identityCache,
                 chatHistory,
                 friendsServiceProxy,
                 chatHistoryStorage,
@@ -102,6 +117,7 @@ namespace DCL.Chat.ChatCommands
                 eventBus);
 
             OpenConversation = new OpenConversationCommand(eventBus,
+                identityCache,
                 chatHistory,
                 SelectChannel);
 
@@ -118,7 +134,8 @@ namespace DCL.Chat.ChatCommands
                 sendMessageSound,
                 chatSettings);
 
-            CloseChannel = new CloseChannelCommand(chatHistory);
+            CloseChannel = new CloseChannelCommand(chatHistory
+                , identityCache);
 
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
                 communityDataService,

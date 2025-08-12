@@ -85,11 +85,11 @@ namespace DCL.Chat.ChatServices
 
         public void Activate() { }
 
-        public async UniTask<HashSet<string>> InitializeAsync()
+        public async UniTask<HashSet<string>> InitializeAsync(CancellationToken ct)
         {
             SubscribeToEvents();
 
-            cts = cts.SafeRestart();
+            cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
             var conversationParticipants = new HashSet<string>();
 
@@ -479,6 +479,24 @@ namespace DCL.Chat.ChatServices
 
             public override string ToString() =>
                 $"(Private Messages Privacy: {private_messages_privacy}";
+        }
+
+        public void Reset()
+        {
+            cts.SafeCancelAndDispose();
+            UnsubscribeFromEvents();
+
+            lock (friendIds)
+            {
+                friendIds.Clear();
+            }
+
+            isFriendCacheInitialized = false;
+
+            lock (onlineParticipants)
+            {
+                onlineParticipants.Clear();
+            }
         }
     }
 }

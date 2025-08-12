@@ -105,7 +105,7 @@ namespace DCL.Chat.ChatServices
         /// <summary>
         ///     Stops the service, cancels all running tasks, and unsubscribes from events.
         /// </summary>
-        private void Stop()
+        public void Stop()
         {
             subscriptionToChannel?.Dispose();
             subscriptionToCounterUpdate.Dispose();

@@ -26,6 +26,13 @@ namespace DCL.Chat.ChatServices
         {
             CurrentChannel = null;
         }
+
+        public void Reset()
+        {
+            CurrentChannel = null;
+            UserStateService?.Deactivate();
+            UserStateService = null;
+        }
     }
 }
 

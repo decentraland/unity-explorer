@@ -1,5 +1,7 @@
 ﻿using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.Prefs;
+using DCL.Web3.Identities;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -9,10 +11,12 @@ namespace DCL.Chat.ChatCommands
     public class CloseChannelCommand
     {
         private readonly IChatHistory chatHistory;
+        private readonly IWeb3IdentityCache identityCache;
 
-        public CloseChannelCommand(IChatHistory chatHistory)
+        public CloseChannelCommand(IChatHistory chatHistory, IWeb3IdentityCache identityCache)
         {
             this.chatHistory = chatHistory;
+            this.identityCache = identityCache;
         }
 
         public void Execute(ChatChannel.ChannelId channelId)
@@ -31,11 +35,22 @@ namespace DCL.Chat.ChatCommands
 
         private void AddCommunityToClosedPrefs(string communityId)
         {
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            // 1. Ensure a user is logged in.
+            if (identityCache.Identity == null)
+            {
+                ReportHub.LogWarning(ReportCategory.COMMUNITIES, $"Cannot close community chat {communityId}: no user is logged in.");
+                return;
+            }
+
+            // 2. Generate the user-specific key.
+            string userSpecificKey = string.Format(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, identityCache.Identity.Address);
+
+            // 3. Read and write using the user-specific key.
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(userSpecificKey, string.Empty);
 
             if (!allClosedCommunityChats.Contains(communityId))
             {
-                DCLPlayerPrefs.SetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, $"{allClosedCommunityChats}{communityId},");
+                DCLPlayerPrefs.SetString(userSpecificKey, $"{allClosedCommunityChats}{communityId},");
                 DCLPlayerPrefs.Save();
             }
         }

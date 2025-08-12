@@ -65,7 +65,7 @@ namespace DCL.Profiles
                 profile.profession = jObject["profession"]?.Value<string>() ?? "";
                 profile.realName = jObject["realName"]?.Value<string>() ?? "";
                 profile.hobbies = jObject["hobbies"]?.Value<string>() ?? "";
-                profile.birthdate = jObject["birthdate"]?.Value<long>() ?? 0;
+                profile.birthdate = jObject["birthdate"]?.Value<long?>() ?? 0;
                 DeserializeLinks(jObject["links"]!, ref profile.links);
                 DeserializeArrayToList(jObject["blocked"], ref profile.blocked);
                 DeserializeArrayToList(jObject["interests"], ref profile.interests);

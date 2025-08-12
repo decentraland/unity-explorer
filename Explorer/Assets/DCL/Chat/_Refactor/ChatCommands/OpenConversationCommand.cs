@@ -1,6 +1,7 @@
 ﻿using DCL.Chat.History;
 using DCL.Prefs;
 using System.Threading;
+using DCL.Web3.Identities;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -12,11 +13,13 @@ namespace DCL.Chat.ChatCommands
     public class OpenConversationCommand
     {
         private readonly IEventBus eventBus;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly IChatHistory chatHistory;
         private readonly SelectChannelCommand selectChannelCommand;
 
         public OpenConversationCommand(
             IEventBus eventBus,
+            IWeb3IdentityCache identityCache,
             IChatHistory chatHistory,
             SelectChannelCommand selectChannelCommand)
         {
@@ -60,8 +63,12 @@ namespace DCL.Chat.ChatCommands
         /// </summary>
         private void OpenCommunityChat(string communityId)
         {
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
-            DCLPlayerPrefs.SetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, allClosedCommunityChats.Replace($"{communityId},", string.Empty));
+            if (identityCache.Identity == null) return;
+
+            string userSpecificKey = string.Format(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, identityCache.Identity.Address);
+
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(userSpecificKey, string.Empty);
+            DCLPlayerPrefs.SetString(userSpecificKey, allClosedCommunityChats.Replace($"{communityId},", string.Empty));
             DCLPlayerPrefs.Save();
         }
     }

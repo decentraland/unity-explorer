@@ -50,6 +50,16 @@ namespace DCL.Chat.ChatInput
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
+        }
+
+        private void OnChatReset(ChatEvents.ChatResetEvent obj)
+        {
+            cts.SafeCancelAndDispose();
+
+            view.ClearInput();
+
+            fsm.ChangeState<UnfocusedChatInputState>();
         }
 
         public void ShowUnfocused()

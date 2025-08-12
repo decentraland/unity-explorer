@@ -9,6 +9,7 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Web3.Identities;
 using Utility;
 using Utility.Types;
 
@@ -17,6 +18,7 @@ namespace DCL.Chat.ChatCommands
     public class InitializeChatSystemCommand
     {
         private readonly IEventBus eventBus;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly IChatHistory chatHistory;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ChatHistoryStorage? chatHistoryStorage;
@@ -29,6 +31,7 @@ namespace DCL.Chat.ChatCommands
 
         public InitializeChatSystemCommand(
             IEventBus eventBus,
+            IWeb3IdentityCache identityCache,
             IChatHistory chatHistory,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             ChatHistoryStorage? chatHistoryStorage,
@@ -40,6 +43,7 @@ namespace DCL.Chat.ChatCommands
             ChatMemberListService chatMemberListService)
         {
             this.eventBus = eventBus;
+            this.identityCache = identityCache;
             this.chatHistory = chatHistory;
             this.friendsServiceProxy = friendsServiceProxy;
             this.chatHistoryStorage = chatHistoryStorage;
@@ -51,7 +55,7 @@ namespace DCL.Chat.ChatCommands
             this.chatMemberListService = chatMemberListService;
         }
 
-        public async UniTaskVoid ExecuteAsync(CancellationToken ct)
+        public async UniTask ExecuteAsync(CancellationToken ct)
         {
             // Initialize Basic Channels and User Conversations
             await InitializeBaseChannelsAsync(ct);
@@ -68,7 +72,7 @@ namespace DCL.Chat.ChatCommands
             });
 
             // Finalize Initialization
-            await chatUserStateUpdater.InitializeAsync();
+            await chatUserStateUpdater.InitializeAsync(ct);
 
             // Set default channel after all channels are loaded
             if (chatHistory.Channels.TryGetValue(ChatChannel.NEARBY_CHANNEL_ID, out var nearbyChannel))
@@ -93,6 +97,10 @@ namespace DCL.Chat.ChatCommands
             if (!await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct))
                 return;
 
+            string closedCommunityChatsKey = string.Empty;
+            if (identityCache.Identity != null)
+                closedCommunityChatsKey = string.Format(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, identityCache.Identity.Address);
+            
             const int ALL_COMMUNITIES_OF_USER = 100;
             Result<GetUserCommunitiesResponse> result =
                 await communitiesDataProvider
@@ -112,7 +120,7 @@ namespace DCL.Chat.ChatCommands
                 // Filter out closed communities first
                 foreach (var community in response.data.results)
                 {
-                    if (!IsCommunityChatClosed(community.id))
+                    if (!IsCommunityChatClosed(community.id, closedCommunityChatsKey))
                         openCommunities.Add(community);
                 }
 
@@ -133,9 +141,12 @@ namespace DCL.Chat.ChatCommands
             }
         }
 
-        private static bool IsCommunityChatClosed(string communityId)
+        private static bool IsCommunityChatClosed(string communityId, string userSpecificKey)
         {
-            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            // If the key is empty (e.g., no user logged in), we can't check, so assume it's not closed.
+            if (string.IsNullOrEmpty(userSpecificKey)) return false;
+
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(userSpecificKey, string.Empty);
             return allClosedCommunityChats.Contains(communityId);
         }
 

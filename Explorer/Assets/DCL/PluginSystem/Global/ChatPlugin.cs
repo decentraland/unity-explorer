@@ -1,9 +1,9 @@
+using System;
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
-using DCL.Chat.Commands;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
         private readonly Transform chatViewRectTransform;
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
-
+        private readonly CancellationTokenSource pluginCts;
         private CommandRegistry commandRegistry;
 
         public ChatPlugin(
@@ -155,25 +155,32 @@ namespace DCL.PluginSystem.Global
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.isCallEnabled = isCallEnabled;
             this.chatViewRectTransform = chatViewRectTransform;
+
+            pluginCts = new CancellationTokenSource();
         }
 
         public void Dispose()
-        {
+        { 
             chatStorage?.Dispose();
             chatBusListenerService?.Dispose();
             chatUserStateService?.Dispose();
             communityUserStateService?.Dispose();
             pluginScope.Dispose();
+
+            pluginCts.Cancel();
+            pluginCts.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, pluginCts.Token);
+
+            var chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, linkedCts.Token);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
 
-            var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, ct);
+            var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
             var chatConfig = chatConfigAsset.Value;
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
@@ -236,6 +243,7 @@ namespace DCL.PluginSystem.Global
                 chatConfig,
                 chatSettingsAsset.Value,
                 eventBus,
+                web3IdentityCache,
                 chatEventBus,
                 chatMessagesBus,
                 chatHistory,
@@ -288,6 +296,8 @@ namespace DCL.PluginSystem.Global
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
+            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+            
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
         }
 
@@ -304,6 +314,40 @@ namespace DCL.PluginSystem.Global
             
             if (chatMainController.IsVisibleInSharedSpace)
                 chatMainController.HideViewAsync(CancellationToken.None).Forget();
+        }
+
+        private void OnIdentityChanged()
+        {
+            if (web3IdentityCache.Identity == null) return;
+
+            ReportHub.Log(ReportData.UNSPECIFIED, "ChatPlugin.OnIdentityChanged: Re-initializing chat system for new user.");
+
+            ReinitializeChatAsync(pluginCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ReinitializeChatAsync(CancellationToken ct)
+        {
+            try
+            {
+                // STEP 1: RE-CONFIGURE SESSION-SPECIFIC SERVICES
+                chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.EnsuredIdentity().Address);
+
+                // STEP 2: RESTART BACKGROUND SERVICES
+                await commandRegistry.RestartChatServices.ExecuteAsync(ct);
+                ct.ThrowIfCancellationRequested();
+
+                // STEP 3: RE-POPULATE DATA
+                // Run the original initialization command. This command is now critical.
+                // It will call chatStorage.LoadAllChannelsWithoutMessages(), which will now
+                // read from the correct user directory because we re-configured it in Step 1.
+                // It will also fetch friends and communities for the new user.
+                await commandRegistry.InitializeChat.ExecuteAsync(ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
+            }
         }
     }
 

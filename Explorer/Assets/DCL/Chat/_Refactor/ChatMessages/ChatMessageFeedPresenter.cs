@@ -72,8 +72,24 @@ namespace DCL.Chat.ChatMessages
                 currentChannelService);
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
-
+            scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
             view.Initialize(viewModels);
+        }
+
+        private void OnChatReset(ChatEvents.ChatResetEvent obj)
+        {
+            loadChannelCts.SafeCancelAndDispose();
+
+            viewModels.ForEach(ChatMessageViewModel.RELEASE);
+
+            viewModels.Clear();
+
+            view.Clear();
+
+            scrollToBottomPresenter.OnChannelChanged();
+            separatorFixedIndexFromBottom = -1;
+            messageCountWhenSeparatorViewed = null;
+            isFocused = false;
         }
 
         public void Dispose()

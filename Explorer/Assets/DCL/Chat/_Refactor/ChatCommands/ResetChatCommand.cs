@@ -8,20 +8,41 @@ namespace DCL.Chat.ChatCommands
     {
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
+        private readonly ChatHistoryStorage? chatHistoryStorage;
         private readonly CurrentChannelService currentChannelService;
+        private readonly PrivateConversationUserStateService privateConversationUserStateService;
+        private readonly CommunityUserStateService communityUserStateService;
+        private readonly ChatMemberListService chatMemberListService;
 
-        public ResetChatCommand(IEventBus eventBus)
+        public ResetChatCommand(
+            IEventBus eventBus,
+            IChatHistory chatHistory,
+            ChatHistoryStorage? chatHistoryStorage,
+            CurrentChannelService currentChannelService,
+            PrivateConversationUserStateService privateConversationUserStateService,
+            CommunityUserStateService communityUserStateService,
+            ChatMemberListService chatMemberListService)
         {
             this.eventBus = eventBus;
+            this.chatHistory = chatHistory;
+            this.chatHistoryStorage = chatHistoryStorage;
+            this.currentChannelService = currentChannelService;
+            this.privateConversationUserStateService = privateConversationUserStateService;
+            this.communityUserStateService = communityUserStateService;
+            this.chatMemberListService = chatMemberListService;
         }
 
         public void Execute()
         {
-            eventBus.Publish(new ChatEvents.ChatResetEvent());
-
+            chatMemberListService.Stop();
+            privateConversationUserStateService.Reset();
+            communityUserStateService.Reset();
             chatHistory.DeleteAllChannels();
-            currentChannelService.Dispose();
-            
+            currentChannelService.Reset();
+
+            chatHistoryStorage?.UnloadAllFiles();
+
+            eventBus.Publish(new ChatEvents.ChatResetEvent());
         }
     }
 }
