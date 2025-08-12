@@ -86,14 +86,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             Profiler.BeginSample("Calculate localToWorldMatrix");
 
+            int globalIndexOffset = transformMatrixComponent.IndexInGlobalJobArray * BONES_ARRAY_LENGTH;
+
             if (avatarIndex < WORLD_MATRIX_CALCULATION_STRATEGY_LIMIT)
             {
                 Profiler.BeginSample("Calculate localToWorldMatrix on MainThread");
 
                 //Add all bones to the bonesCombined array with the current available index
                 for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
-                    bonesCombined[(transformMatrixComponent.IndexInGlobalJobArray * BONES_ARRAY_LENGTH) + i]
-                        = transformMatrixComponent.bones[i].localToWorldMatrix;
+                    bonesCombined[globalIndexOffset + i] = transformMatrixComponent.bones[i].localToWorldMatrix;
 
                 Profiler.EndSample();
             }
@@ -102,7 +103,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 Profiler.BeginSample("Calculate localToWorldMatrix on Job");
 
                 copyBufferPerAvatar.SetTransforms(transformMatrixComponent.bones.Inner);
-                var worldMatrixJob = new WorldMatrixCalculationJob(bonesCombined, transformMatrixComponent.IndexInGlobalJobArray * BONES_ARRAY_LENGTH);
+                var worldMatrixJob = new WorldMatrixCalculationJob(bonesCombined, globalIndexOffset);
                 worldMatrixJob.Schedule(copyBufferPerAvatar).Complete();
 
                 Profiler.EndSample();
