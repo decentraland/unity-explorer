@@ -50,7 +50,7 @@ namespace DCL.Chat.ChatMessages
                 if (useAnimation && gameObject.activeInHierarchy)
                 {
                     canvasGroup.DOFade(0.0f, fadeOutDuration)
-                        .SetDelay(timeBeforeHiding)
+                        .SetDelay(timeBeforeHiding / 2f)
                         .OnComplete(() => gameObject.SetActive(false));
                 }
                 else
