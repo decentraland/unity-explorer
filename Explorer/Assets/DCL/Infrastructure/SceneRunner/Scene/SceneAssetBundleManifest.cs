@@ -1,18 +1,9 @@
-﻿using CommunicationData.URLHelpers;
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-using Utility;
-
-namespace SceneRunner.Scene
+﻿namespace SceneRunner.Scene
 {
     public class SceneAssetBundleManifest
     {
-
         private readonly string version;
-        private readonly HashSet<string> convertedFiles;
         private readonly string buildDate;
-        private readonly bool ignoreConvertedFiles;
 
         public SceneAssetBundleManifest(string version, string buildDate)
         {
@@ -25,7 +16,5 @@ namespace SceneRunner.Scene
 
         public string GetBuildDate() =>
             buildDate;
-
-
     }
 }

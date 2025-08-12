@@ -17,7 +17,6 @@ namespace ECS.StreamableLoading.AssetBundles
             //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
             if (entityDefinition.versions == null)
             {
-                await UniTask.SwitchToMainThread();
                 var promise = AssetBundleManifestPromise.Create(world,
                     GetAssetBundleManifestIntention.Create(entityDefinition.id, new CommonLoadingArguments(entityDefinition.id)),
                     partition);

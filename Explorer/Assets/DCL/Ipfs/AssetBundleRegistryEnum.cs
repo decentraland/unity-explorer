@@ -14,6 +14,8 @@ namespace DCL.Ipfs
     {
         public AssetBundleManifestVersionPerPlatform assets;
 
+        public AssetBundleManifestVersion() { }
+
         public AssetBundleManifestVersion(string assetBundleManifestVerison)
         {
             assets =  new AssetBundleManifestVersionPerPlatform();

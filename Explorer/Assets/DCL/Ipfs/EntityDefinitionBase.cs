@@ -25,7 +25,7 @@ namespace DCL.Ipfs
         // Asset bundle manifest properties
         public bool assetBundleManifestRequestFailed;
         public string assetBundleBuildDate;
-        public AssetBundleManifestVersion? versions;
+        public AssetBundleManifestVersion versions;
         private bool? HasHashInPathValue;
 
         [JsonProperty("status")]
@@ -38,13 +38,8 @@ namespace DCL.Ipfs
             this.id = id;
         }
 
-        public string GetAssetBundleManifestVersion()
-        {
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                return versions.assets.windows;
-            else
-                return versions.assets.mac;
-        }
+        public string GetAssetBundleManifestVersion() =>
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? versions.assets.windows : versions.assets.mac;
 
         public bool HasHashInPath()
         {

@@ -53,9 +53,9 @@ namespace ECS.StreamableLoading.AssetBundles
                       .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
 
             SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), RetryPolicy.WithRetries(1)), ct, reportCategory)
-                                                              .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
+                                                              .CreateFromJson<SceneAbDto>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchBackToMainThread);
 
-            AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
+            AssetValidation.ValidateSceneAbDto(sceneAbDto.Version, hash);
 
             return new SceneAssetBundleManifest(sceneAbDto.Version, sceneAbDto.Date);
         }
