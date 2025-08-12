@@ -24,6 +24,7 @@ namespace DCL.Chat.ChatCommands
             SelectChannelCommand selectChannelCommand)
         {
             this.eventBus = eventBus;
+            this.identityCache = identityCache;
             this.chatHistory = chatHistory;
             this.selectChannelCommand = selectChannelCommand;
         }
