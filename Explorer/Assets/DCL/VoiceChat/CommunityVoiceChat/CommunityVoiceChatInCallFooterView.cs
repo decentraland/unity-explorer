@@ -9,6 +9,5 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField] public Button EndCallButton  { get; private set; }
         [field: SerializeField] public Button LeaveStageButton  { get; private set; }
         [field: SerializeField] public Button RaiseHandButton  { get; private set; }
-        [field: SerializeField] public Button OpenListenersSectionButton  { get; private set; }
     }
 }

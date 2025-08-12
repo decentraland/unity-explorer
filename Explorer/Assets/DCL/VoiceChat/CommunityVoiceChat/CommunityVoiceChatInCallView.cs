@@ -47,6 +47,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public Button EndStreamButton { get; private set; }
 
+        [field: SerializeField]
+        public Button OpenListenersSectionButton  { get; private set; }
+
         public void SetCommunityName(string communityName)
         {
             CommunityName.text = communityName;
