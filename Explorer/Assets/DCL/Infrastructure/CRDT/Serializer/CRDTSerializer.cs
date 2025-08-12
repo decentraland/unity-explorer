@@ -18,6 +18,7 @@ namespace CRDT.Serializer
             switch (crdtMessage.Type)
             {
                 case CRDTMessageType.PUT_COMPONENT:
+                case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
                 case CRDTMessageType.APPEND_COMPONENT:
                     destination.Write(crdtMessage.ComponentId);
                     destination.Write(crdtMessage.Timestamp);

@@ -41,8 +41,13 @@ namespace CRDT.Deserializer
                 switch (messageType)
                 {
                     case CRDTMessageType.PUT_COMPONENT:
-                        if (TryDeserializePutComponent(ref memory, out CRDTMessage crdtMessage))
+                    case CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT:
+                        if (TryDeserializePutComponent(ref memory, messageType, out CRDTMessage crdtMessage))
+                        {
+                            if (messageType == CRDTMessageType.AUTHORITATIVE_PUT_COMPONENT)
+                                UnityEngine.Debug.Log($"[UNITY CRDT] Deserializing AUTHORITATIVE_PUT_COMPONENT - Entity: {crdtMessage.EntityId}, Component: {crdtMessage.ComponentId}, Timestamp: {crdtMessage.Timestamp}");
                             messages.Add(crdtMessage);
+                        }
 
                         break;
 
@@ -128,7 +133,7 @@ namespace CRDT.Deserializer
             return true;
         }
 
-        public bool TryDeserializePutComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
+        public bool TryDeserializePutComponent(ref ReadOnlyMemory<byte> memory, CRDTMessageType messageType, out CRDTMessage crdtMessage)
         {
             var shift = 0;
             ReadOnlySpan<byte> memorySpan = memory.Span;
@@ -147,8 +152,14 @@ namespace CRDT.Deserializer
             //Forwarding the memory to the next message
             memory = memory.Slice(shift + dataLength);
 
-            crdtMessage = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, timestamp, memoryOwner);
+            crdtMessage = new CRDTMessage(messageType, entityId, componentId, timestamp, memoryOwner);
             return true;
+        }
+
+        // Backward compatibility overload - defaults to PUT_COMPONENT
+        public bool TryDeserializePutComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
+        {
+            return TryDeserializePutComponent(ref memory, CRDTMessageType.PUT_COMPONENT, out crdtMessage);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

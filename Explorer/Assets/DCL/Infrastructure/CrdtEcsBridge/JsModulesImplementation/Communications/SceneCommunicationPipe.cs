@@ -40,7 +40,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 if (decodedMessage.Length == 0)
                     return;
 
-                if (!sceneRoom.IsSceneConnected(message.Payload.SceneId)) return;
+                if (!sceneRoom.IsSceneConnected(message.Payload.SceneId))
+                    return;
 
                 SubscriberKey key = new (message.Payload.SceneId, msgType);
 
@@ -83,8 +84,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
 
-            if (!string.IsNullOrEmpty(specialRecipient))
-                sceneMessage.AddSpecialRecipient(specialRecipient);
+            // Always send scene packages to authorative-server instead of broadcasting
+            sceneMessage.AddSpecialRecipient("authorative-server");
 
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;

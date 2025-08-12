@@ -164,9 +164,11 @@ namespace Global.Dynamic
                 splashScreen,
                 worldInfoTool
             );
-
+            Debug.Log($"GON - await gon 1");
             string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
+            Debug.Log($"GON - await gon 2");
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
+            Debug.Log($"GON - await gon 3");
 
 
 

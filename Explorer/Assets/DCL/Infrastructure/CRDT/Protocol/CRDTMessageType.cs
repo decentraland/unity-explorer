@@ -12,5 +12,13 @@ namespace CRDT.Protocol
 
         // All components are valid and must be processed
         APPEND_COMPONENT = 4,
+
+        // PUT_COMPONENT_NETWORK messages (used for network communication)
+        PUT_COMPONENT_NETWORK = 5,
+        DELETE_COMPONENT_NETWORK = 6,
+        DELETE_ENTITY_NETWORK = 7,
+
+        // Server authoritative message - forces component state regardless of timestamp
+        AUTHORITATIVE_PUT_COMPONENT = 8,
     }
 }
