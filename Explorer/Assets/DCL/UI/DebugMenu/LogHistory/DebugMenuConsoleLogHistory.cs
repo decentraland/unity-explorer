@@ -43,7 +43,7 @@ namespace DCL.UI.DebugMenu.LogHistory
             textFilter = targetText;
             FilteredLogMessages.Clear();
 
-            // Where() is used instead of List.FindAll() to avoid allocating a new List
+            // Where() is used instead of List.FindAll() to decrease allocations
             FilteredLogMessages.AddRange(allLogMessages.Where(KeepAfterFilter));
 
             LogsUpdated?.Invoke();

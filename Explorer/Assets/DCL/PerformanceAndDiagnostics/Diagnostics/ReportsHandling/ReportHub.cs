@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -19,18 +20,18 @@ namespace DCL.Diagnostics
         }
 
         public static ReportHubLogger Instance { get; private set; } =
-            new (new IReportHandler[]
+            new (new List<IReportHandler>()
             {
                 new DefaultReportLogger(),
             });
 
         [UsedImplicitly]
-        private static bool enforceUnconditionalVerboseLogs;
+        public static bool EnforceUnconditionalVerboseLogs;
 
         public static void Initialize(ReportHubLogger logger, bool logVerbose = false)
         {
             Instance = logger;
-            enforceUnconditionalVerboseLogs = logVerbose;
+            EnforceUnconditionalVerboseLogs = logVerbose;
         }
 
         /// <summary>
@@ -90,7 +91,7 @@ namespace DCL.Diagnostics
         public static void Verbose(ReportData reportData, string message, ReportHandler reportToHandlers = ReportHandler.All)
         {
 #if !UNITY_EDITOR && !VERBOSE_LOGS
-            if (!enforceUnconditionalVerboseLogs) return;
+            if (!EnforceUnconditionalVerboseLogs) return;
 #endif
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
         }
