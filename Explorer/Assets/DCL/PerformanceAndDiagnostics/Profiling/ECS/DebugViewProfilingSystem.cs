@@ -103,7 +103,7 @@ namespace DCL.Profiling.ECS
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
                            ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                            .AddControl(new AverageFpsBannerDef(avgFrameTimeNs = new ElementBinding<float>(0f), 30f, 20f), null)
+                            .AddControl(new AverageFpsBannerDef(avgFrameTimeNs = new ElementBinding<float>(0f)), null)
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))

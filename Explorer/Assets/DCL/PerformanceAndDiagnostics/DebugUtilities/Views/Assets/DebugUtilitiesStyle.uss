@@ -318,72 +318,56 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
 
 /* Average FPS banner styles */
 .avg-fps-banner { 
-    display: flex;
     flex-direction: row;
-    padding: 8px 10px;
-    margin-bottom: 6px;
     border-radius: 6px;
-    background-color: #2c2c2c;
-    width: 200%;
+    background-color: #ffffff;
+    padding: 5px;
+    width: 100%;
 }
 
-.avg-fps-banner__left { 
-    display: flex; 
+.avg-fps-banner__column { 
     flex-direction: column;
-    flex: 0 0 auto;
-    width: 30%;
-}
-.avg-fps-banner__right {
-    display: flex;
-    flex-direction: column;
-    flex: 0 0 auto;
-    width: 70%; 
+    width: 50%;
 }
 
-.avg-fps-banner__avg-fps-label { 
-    display: flex;
-    color: white;
-    font-size: 12px;
-    flex: 0 0 auto;
-    -unity-text-align: middle-center;
+.avg-fps-banner__avg-fps-label {
+    -unity-font-style: bold;
+    color: black;
+    font-size: 18px;
+    -unity-text-align: middle-left;
 }
 .avg-fps-banner__frames-window-label {
-    display: flex;
     font-size: 12px;
-    color: #cccccc;
-    -unity-text-align: middle-center;
-    white-space: nowrap; 
+    color: #807f7f;
+    -unity-text-align: middle-left;
 }
 
 .avg-fps-banner__fps { 
     -unity-font-style: bold;
-    font-size: 16px;
+    font-size: 18px;
     color: #2ecc71; 
-    -unity-text-align: middle-left;
-    white-space: nowrap; 
-    display: flex;
+    -unity-text-align: middle-right;
 }
 .avg-fps-banner__ms { 
-    font-size: 12px;
-    color: #cccccc;
-    -unity-text-align: middle-left;
+    font-size: 14px;
+    color: #2ecc71;
+    -unity-text-align: middle-right;
     white-space: nowrap;
-    display: flex;
 }
 
-.avg-fps-banner--ok {
+.avg-fps-banner--good {
     border-left-color: #2ecc71;
     border-left-width: 4px;
     border-left-style: solid;
 }
 
-.avg-fps-banner--warn {
+.avg-fps-banner--low {
     border-left-color: #f1c40f;
     border-left-width: 4px;
     border-left-style: solid;
 }
 
-.avg-fps-banner--error {
+.avg-fps-banner--bad {
     border-left-color: #e74c3c;
     border-left-width: 4px;
     border-left-style: solid;

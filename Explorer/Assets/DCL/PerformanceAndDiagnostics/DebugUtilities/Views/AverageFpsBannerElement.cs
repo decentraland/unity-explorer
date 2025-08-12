@@ -58,37 +58,37 @@ namespace DCL.DebugUtilities.Views
             float fps = 1f / (avgNs * NS_TO_SEC);
 
             fpsValueLabel.style.display = DisplayStyle.Flex;
-            fpsValueLabel.text = fps.ToString("F1") + " fps";
+            fpsValueLabel.text = fps.ToString("F1");
             msLabel.style.display = DisplayStyle.Flex;
             msLabel.text = "(" + ms.ToString("F1") + " ms)";
 
             string severity = fps < definition.ErrorFpsThreshold
-                ? "error"
-                : fps < definition.WarningFpsThreshold ? "warn" : "ok";
+                ? "bad"
+                : fps < definition.WarningFpsThreshold ? "low" : "good";
 
             SetSeverityClass(severity);
         }
 
         private void SetSeverityClass(string id)
         {
-            RemoveFromClassList("avg-fps-banner--ok");
-            RemoveFromClassList("avg-fps-banner--warn");
-            RemoveFromClassList("avg-fps-banner--error");
+            RemoveFromClassList("avg-fps-banner--good");
+            RemoveFromClassList("avg-fps-banner--low");
+            RemoveFromClassList("avg-fps-banner--bad");
 
             AddToClassList("avg-fps-banner");
 
             switch (id)
             {
                 case "error":
-                    AddToClassList("avg-fps-banner--error");
+                    AddToClassList("avg-fps-banner--bad");
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.905f, 0.298f, 0.235f));
                     break;
                 case "warn":
-                    AddToClassList("avg-fps-banner--warn");
+                    AddToClassList("avg-fps-banner--low");
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.945f, 0.769f, 0.059f));
                     break;
                 default:
-                    AddToClassList("avg-fps-banner--ok");
+                    AddToClassList("avg-fps-banner--good");
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.180f, 0.800f, 0.443f));
                     break;
             }
