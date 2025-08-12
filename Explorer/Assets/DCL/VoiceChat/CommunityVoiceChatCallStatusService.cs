@@ -5,6 +5,8 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,6 +25,8 @@ namespace DCL.VoiceChat
         private readonly ICommunityVoiceService voiceChatService;
         private readonly INotificationsBusController notificationBusController;
         private readonly PlayerParcelTrackerService parcelTrackerService;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IRealmData realmData;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
         private readonly IDisposable? parcelSubscription;
@@ -30,6 +34,10 @@ namespace DCL.VoiceChat
         private readonly Dictionary<Vector2Int, List<string>> parcelToCommunityMap = new ();
         private readonly Dictionary<string, HashSet<Vector2Int>> communityToParcelMap = new ();
         private readonly HashSet<Vector2Int> reusableParcelSet = new ();
+
+        private readonly Dictionary<string, List<string>> worldToCommunityMap = new ();
+        private readonly Dictionary<string, HashSet<string>> communityToWorldMap = new ();
+        private readonly HashSet<string> reusableWorldSet = new ();
 
         private CancellationTokenSource cts = new ();
 
@@ -39,19 +47,51 @@ namespace DCL.VoiceChat
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
             INotificationsBusController notificationBusController,
-            PlayerParcelTrackerService parcelTrackerService)
+            PlayerParcelTrackerService parcelTrackerService,
+            IRealmNavigator realmNavigator,
+            IRealmData realmData)
         {
             this.voiceChatService = voiceChatService;
             this.notificationBusController = notificationBusController;
             this.parcelTrackerService = parcelTrackerService;
+            this.realmNavigator = realmNavigator;
+            this.realmData = realmData;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
             this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
+            this.realmNavigator.NavigationExecuted += OnRealmNavigatorOperationExecuted;
 
             parcelSubscription = parcelTrackerService.CurrentParcelData.Subscribe(OnParcelChanged);
         }
 
+        private void OnRealmNavigatorOperationExecuted(Vector2Int _)
+        {
+            if (realmData.RealmType.Value == RealmKind.GenesisCity)
+            {
+                OnParcelChanged(parcelTrackerService.CurrentParcelData.Value);
+                return;
+            }
+
+            string currentRealm = realmData.RealmName;
+            if (string.IsNullOrEmpty(currentRealm)) return;
+
+            if (worldToCommunityMap.TryGetValue(currentRealm, out List<string>? communities))
+            {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} World {currentRealm} has {communities.Count} active community voice chats");
+
+                string? communityId = communities[0];
+                OnActiveVoiceChatDetectedInScene(communityId);
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} World {currentRealm} has no active community voice chat");
+                OnActiveVoiceChatStoppedInScene();
+            }
+        }
+
         private void OnParcelChanged(PlayerParcelData playerParcelData)
         {
+            if (realmData.RealmType.Value != RealmKind.GenesisCity) return;
+
             if (parcelToCommunityMap.TryGetValue(playerParcelData.ParcelPosition, out List<string>? communities))
             {
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {playerParcelData.ParcelPosition} has {communities.Count} active community voice chats");
@@ -115,6 +155,29 @@ namespace DCL.VoiceChat
             }
         }
 
+        private void UnregisterCommunityCallFromWorlds(string communityId)
+        {
+            if (communityToWorldMap.TryGetValue(communityId, out HashSet<string>? sceneWorlds))
+            {
+                foreach (string worldName in sceneWorlds)
+                {
+                    if (worldToCommunityMap.TryGetValue(worldName, out List<string>? communities))
+                    {
+                        communities.Remove(communityId);
+
+                        if (communities.Count == 0)
+                        {
+                            worldToCommunityMap.Remove(worldName);
+                        }
+                    }
+                }
+
+                communityToWorldMap.Remove(communityId);
+
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Unregistered {sceneWorlds.Count} worlds from community {communityId}");
+            }
+        }
+
         private bool TryParsePosition(string positionString, out Vector2Int parcel)
         {
             parcel = default;
@@ -169,6 +232,36 @@ namespace DCL.VoiceChat
             }
 
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Registered community {communityId} in {parcels.Count} parcels");
+        }
+
+        private void RegisterCommunityCallInWorlds(string communityId, IEnumerable<string> worldNames)
+        {
+            bool isNewCommunity = !communityToWorldMap.TryGetValue(communityId, out HashSet<string>? existingWorlds);
+            HashSet<string> worlds = isNewCommunity ? reusableWorldSet : existingWorlds!;
+
+            if (isNewCommunity)
+                reusableWorldSet.Clear();
+
+            foreach (string worldName in worldNames)
+            {
+                if (string.IsNullOrWhiteSpace(worldName))
+                {
+                    ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Invalid world name for community {communityId}");
+                    continue;
+                }
+
+                if (worldToCommunityMap.TryGetValue(worldName, out List<string>? existingCommunities)) { existingCommunities.Add(communityId); }
+                else { worldToCommunityMap[worldName] = new List<string> { communityId }; }
+
+                worlds.Add(worldName);
+            }
+
+            if (isNewCommunity)
+            {
+                communityToWorldMap[communityId] = new HashSet<string>(reusableWorldSet);
+            }
+
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Registered community {communityId} in {worlds.Count} worlds");
         }
 
         public override void StartCall(string communityId)
@@ -416,6 +509,7 @@ namespace DCL.VoiceChat
                 }
 
                 UnregisterCommunityCallFromScene(communityUpdate.CommunityId);
+                UnregisterCommunityCallFromWorlds(communityUpdate.CommunityId);
                 return;
             }
 
@@ -450,6 +544,9 @@ namespace DCL.VoiceChat
                 if (communityUpdate.Positions.Count > 0)
                     RegisterCommunityCallInScene(communityUpdate.CommunityId, communityUpdate.Positions);
 
+                if (communityUpdate.Worlds.Count > 0)
+                    RegisterCommunityCallInWorlds(communityUpdate.CommunityId, communityUpdate.Worlds);
+
                 notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
             }
         }
@@ -476,6 +573,9 @@ namespace DCL.VoiceChat
 
                 if (activeChat.positions.Count > 0)
                     RegisterCommunityCallInScene(activeChat.communityId, activeChat.positions);
+
+                if (activeChat.worlds.Count > 0)
+                    RegisterCommunityCallInWorlds(activeChat.communityId, activeChat.worlds);
 
                 // Ensure we have a reactive property for this community
                 if (!communityVoiceChatCalls.TryGetValue(activeChat.communityId, out ReactiveProperty<bool>? communityVoiceChatCall))
@@ -504,6 +604,8 @@ namespace DCL.VoiceChat
 
             communityVoiceChatCalls.Clear();
             activeCommunityVoiceChats.Clear();
+            worldToCommunityMap.Clear();
+            communityToWorldMap.Clear();
             parcelSubscription?.Dispose();
             cts.SafeCancelAndDispose();
             base.Dispose();
