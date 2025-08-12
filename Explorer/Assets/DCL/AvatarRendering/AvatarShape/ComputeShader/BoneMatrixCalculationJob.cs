@@ -12,7 +12,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private readonly int BONE_COUNT;
         private int AvatarIndex;
 
-        public NativeArray<float4x4> BonesMatricesResult;
+        /// <summary>
+        /// Job doesn't own the array
+        /// </summary>
+        private NativeArray<float4x4> BonesMatricesResult;
         [NativeDisableParallelForRestriction]
         public NativeArray<Matrix4x4> AvatarTransform;
 

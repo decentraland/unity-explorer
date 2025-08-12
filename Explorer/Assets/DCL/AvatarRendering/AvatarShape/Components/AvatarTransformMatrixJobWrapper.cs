@@ -124,7 +124,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             matrixFromAllAvatars.ReAlloc(AVATAR_ARRAY_SIZE * nextResizeValue);
             updateAvatar.ReAlloc(AVATAR_ARRAY_SIZE * nextResizeValue);
 
-            job.BonesMatricesResult.Dispose();
             job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH * nextResizeValue, bonesCombined.InnerNativeArray());
 
             currentAvatarAmountSupported = AVATAR_ARRAY_SIZE * nextResizeValue;
@@ -139,7 +138,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             handle.Complete();
             bonesCombined.Dispose();
             updateAvatar.Dispose();
-            job.BonesMatricesResult.Dispose();
         }
 
         public void ReleaseAvatar(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
