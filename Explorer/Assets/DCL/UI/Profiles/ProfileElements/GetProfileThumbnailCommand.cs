@@ -30,20 +30,22 @@ namespace DCL.UI.ProfileElements
         private async UniTask ExecuteAsync<T>(IReactiveProperty<T> property, Action<IReactiveProperty<T>, ProfileThumbnailViewModel> setProfile, Func<IReactiveProperty<T>, ProfileThumbnailViewModel> getProfile,
             Sprite? fallback, string userId, string faceSnapshotUrl, CancellationToken ct)
         {
-            // Wait until the property is bound
-            while (getProfile(property).ThumbnailState == ProfileThumbnailViewModel.State.NOT_BOUND)
-                await UniTask.Yield();
+            // We don't need to wait (and skip frames) until the property is bound if the data is already cached.
 
-            if (ct.IsCancellationRequested)
-                return;
-
-            Sprite? cachedSprite = profileRepository.GetProfileThumbnail(userId);
+            Sprite? cachedSprite = profileRepository.GetProfileThumbnail(faceSnapshotUrl);
 
             if (cachedSprite != null)
             {
                 setProfile(property, ProfileThumbnailViewModel.FromLoaded(cachedSprite, true));
                 return;
             }
+
+            // Wait until the property is bound
+            while (getProfile(property).ThumbnailState == ProfileThumbnailViewModel.State.NOT_BOUND)
+                await UniTask.Yield();
+
+            if (ct.IsCancellationRequested)
+                return;
 
             try
             {

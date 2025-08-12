@@ -66,7 +66,6 @@ namespace DCL.UI.ProfileElements
 
             viewModelProp.UpdateValue(viewModelProp.Value.TryBind());
 
-            thumbnailBackground.color = userNameColor;
             SetBaseBackgroundColor(userNameColor);
 
             OnThumbnailUpdated(viewModelProp.Value);
@@ -76,7 +75,6 @@ namespace DCL.UI.ProfileElements
         private void OnThumbnailWithColorUpdated(ProfileThumbnailViewModel.WithColor model)
         {
             SetBaseBackgroundColor(model.ProfileColor);
-            thumbnailBackground.color = model.ProfileColor;
             OnThumbnailUpdated(model.Thumbnail);
         }
 

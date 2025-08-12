@@ -1,10 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
+using System.Threading;
+using Utility.Types;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -44,16 +48,27 @@ namespace DCL.Chat.ChatCommands
             return viewModel;
         }
 
+        /// <summary>
+        ///     Function can be cancelled at any time as the view model is released back to the pool:
+        ///     switching between channels, closing the chat, etc.
+        /// </summary>
         private async UniTaskVoid FetchProfileAsync(string walletId, ChatMessageViewModel viewModel)
         {
-            Profile? profile = await profileRepository.GetProfileAsync(walletId, viewModel.cancellationToken);
+            CancellationToken cancellationToken = viewModel.cancellationToken;
+
+            Result<Profile?> profileResult = await profileRepository.GetProfileAsync(walletId, cancellationToken).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+
+            if (!profileResult.Success)
+                return;
+
+            Profile? profile = profileResult.Value;
 
             if (profile != null)
             {
                 viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(profile.UserNameColor));
 
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileData, chatConfig.DefaultProfileThumbnail,
-                    walletId, profile.Avatar.FaceSnapshotUrl, viewModel.cancellationToken);
+                    walletId, profile.Avatar.FaceSnapshotUrl, cancellationToken);
             }
             else
             {

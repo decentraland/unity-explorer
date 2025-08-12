@@ -19,11 +19,11 @@ namespace DCL.Utilities
 
     public static class ReactivePropertyExtensions
     {
-        public static void UseCurrentValueAndSubscribeToUpdate<T, TContext>(this IReadonlyReactiveProperty<T> property, TContext context, Action<T, TContext> onValueChanged, CancellationToken ct)
+        public static DisposableSubscription<T> UseCurrentValueAndSubscribeToUpdate<T, TContext>(this IReadonlyReactiveProperty<T> property, TContext context, Action<T, TContext> onValueChanged, CancellationToken ct)
         {
             onValueChanged(property.Value, context);
 
-            property.Subscribe(value =>
+            return property.Subscribe(value =>
             {
                 if (!ct.IsCancellationRequested)
                     onValueChanged(value, context);
