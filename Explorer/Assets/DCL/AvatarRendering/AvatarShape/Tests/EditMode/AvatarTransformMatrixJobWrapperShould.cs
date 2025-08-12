@@ -79,7 +79,7 @@ public class AvatarTransformMatrixJobWrapperShould : MonoBehaviour
         }
 
         // The matrices and bools should have been resized to double their initial size
-        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.MatrixFromAllAvatars.Length);
-        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.UpdateAvatarValue.Length);
+        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.matrixFromAllAvatars.Length);
+        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.updateAvatar.Length);
     }
 }
