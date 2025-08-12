@@ -42,9 +42,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
-using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
-using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -138,7 +136,6 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
-        private readonly bool isVoiceChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -194,7 +191,6 @@ namespace DCL.PluginSystem.Global
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
-            bool isVoiceChatEnabled,
             GalleryEventBus galleryEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -250,7 +246,6 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
-            this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.galleryEventBus = galleryEventBus;
         }
 
@@ -383,8 +378,7 @@ namespace DCL.PluginSystem.Global
                 sceneLoadingLimit,
                 voiceChatSettings.Value,
                 worldVolumeMacBus,
-                upscalingController,
-                isVoiceChatEnabled);
+                upscalingController);
 
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),

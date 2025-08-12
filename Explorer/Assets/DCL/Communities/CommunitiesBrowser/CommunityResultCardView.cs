@@ -4,6 +4,7 @@ using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -46,6 +47,8 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject joiningLoading = null!;
         [SerializeField] private MutualFriendsConfig mutualFriends;
         [SerializeField] private ListenersCountView listenersCountView;
+
+        private readonly StringBuilder stringBuilder = new ();
 
         [Serializable]
         internal struct MutualFriendsConfig
@@ -114,6 +117,15 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetDescription(string description) =>
             communityDescription.text = description;
+
+        public void ConfigureListenersCount(bool isActive, int listenersCount)
+        {
+            listenersCountView.gameObject.SetActive(isActive);
+
+            stringBuilder.Clear();
+            stringBuilder.Append(listenersCount);
+            listenersCountView.ParticipantCount.text = stringBuilder.ToString();
+        }
 
         public void SetPrivacy(CommunityPrivacy privacy)
         {

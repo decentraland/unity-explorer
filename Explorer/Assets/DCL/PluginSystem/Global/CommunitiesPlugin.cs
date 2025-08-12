@@ -22,6 +22,7 @@ using DCL.SocialService;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -57,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GalleryEventBus galleryEventBus;
 
         private CommunityCardController? communityCardController;
@@ -87,7 +89,8 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             LambdasProfilesProvider lambdasProfilesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -109,6 +112,7 @@ namespace DCL.PluginSystem.Global
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
             notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
@@ -150,7 +154,8 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 web3IdentityCache,
                 lambdasProfilesProvider,
-                galleryEventBus);
+                galleryEventBus,
+                voiceChatOrchestrator);
 
             mvcManager.RegisterController(communityCardController);
 
