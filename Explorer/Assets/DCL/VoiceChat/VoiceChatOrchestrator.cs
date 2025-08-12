@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
@@ -24,6 +25,7 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
 
         private VoiceChatCallStatusServiceBase activeCallStatusService;
+        private IVoiceChatOrchestrator voiceChatOrchestratorImplementation;
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
@@ -196,10 +198,21 @@ namespace DCL.VoiceChat
             currentVoiceChatPanelSize.Value = panelSize;
         }
 
-        public void JoinCommunityVoiceChat(string communityId, CancellationToken ct)
+        public void JoinCommunityVoiceChat(string communityId, CancellationToken ct, bool force = false)
         {
-            if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
+            if (!VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
                 communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
+            else if (force)
+                HangUpAndStartCallAsync().Forget();
+
+            return;
+
+            async UniTaskVoid HangUpAndStartCallAsync()
+            {
+                HangUp();
+                await UniTask.Delay(100, cancellationToken: ct);
+                communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
+            }
         }
 
         public void RequestToSpeakInCurrentCall()

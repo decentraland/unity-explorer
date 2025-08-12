@@ -35,7 +35,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             cts = cts.SafeRestart();
             if (voiceChatOrchestrator.CurrentSceneActiveCommunityVoiceChatData.Value != null)
-                voiceChatOrchestrator.JoinCommunityVoiceChat(voiceChatOrchestrator.CurrentSceneActiveCommunityVoiceChatData.Value.Value.communityId, cts.Token);
+                voiceChatOrchestrator.JoinCommunityVoiceChat(voiceChatOrchestrator.CurrentSceneActiveCommunityVoiceChatData.Value.Value.communityId, cts.Token, true);
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)

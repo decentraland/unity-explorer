@@ -39,7 +39,7 @@ namespace DCL.Communities.CommunitiesCard
 
         private void JoinStream()
         {
-            voiceChatOrchestrator.JoinCommunityVoiceChat(currentCommunityId, new CancellationToken());
+            voiceChatOrchestrator.JoinCommunityVoiceChat(currentCommunityId, new CancellationToken(), true);
             SetPanelStatus(true, false, currentCommunityId);
         }
 
