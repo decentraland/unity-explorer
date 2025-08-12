@@ -88,6 +88,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1550108083613389261, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_Type
       value: 1
@@ -170,13 +178,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c478f4e9e4847a4b9cac5c5c72e27a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thumbnailImageView: {fileID: 5866946252261905873}
+  thumbnailImageView: {fileID: 5752101683759274867}
   thumbnailBackground: {fileID: 7465909787489353167}
   defaultEmptyThumbnail: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
   fadingDuration: 0.5
---- !u!114 &5866946252261905873 stripped
+--- !u!114 &5752101683759274867 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2554876876778093011, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4453136935542798193, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8223338120684694530}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}

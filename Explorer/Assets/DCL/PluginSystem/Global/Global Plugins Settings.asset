@@ -722,6 +722,18 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        GenericContextMenuSimpleButtonPrefab:
+          m_AssetGUID: acb5d5500934645ac89935fe64d8bf01
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuButtonListPrefab:
+          m_AssetGUID: 03dabb815fc004f9581a9528b72c106f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -808,19 +820,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 5215741520409264129
       type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
-      data:
-        defaultWearablesDefinition:
-          m_AssetGUID: 81ea8febf47eb484986af220584361dc
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        defaultEmptyWearable:
-          m_AssetGUID: 2d002c6a594460f4cb42100b50e7e53a
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+      data: 
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:

@@ -2,9 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.SocialService;
-using DCL.Profiles.Helpers;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
@@ -12,7 +12,6 @@ using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Friends
 {
@@ -352,6 +351,9 @@ namespace DCL.Friends
 
         public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentException("GetFriendshipStatus called with empty userId", nameof(userId));
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetFriendshipStatusPayload
