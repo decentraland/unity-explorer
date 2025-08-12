@@ -257,7 +257,7 @@ namespace DCL.VoiceChat
         public bool TryGetActiveCommunityData(string communityId, out ActiveCommunityVoiceChat activeCommunityData) =>
             communityVoiceChatCallStatusService.TryGetActiveCommunityVoiceChat(communityId, out activeCommunityData);
 
-        public ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId) =>
+        public ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId) =>
             communityVoiceChatCallStatusService.SubscribeToCommunityUpdates(communityId);
     }
 }

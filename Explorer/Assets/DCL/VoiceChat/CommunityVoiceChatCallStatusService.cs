@@ -14,6 +14,7 @@ namespace DCL.VoiceChat
 {
     public class CommunityVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, ICommunityVoiceChatCallStatusService
     {
+        private static readonly ReactiveProperty<bool> DEFAULT_BOOL_REACTIVE_PROPERTY = new (false);
         private const string TAG = nameof(CommunityVoiceChatCallStatusService);
 
         private readonly ICommunityVoiceService voiceChatService;
@@ -386,14 +387,13 @@ namespace DCL.VoiceChat
             return communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? callData) && callData.Value;
         }
 
-        public ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId)
+        public ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId)
         {
             if (string.IsNullOrEmpty(communityId))
                 return null;
 
             if (communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? existingData))
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Returning existing subscription for community {communityId}");
                 return existingData;
             }
 
@@ -401,7 +401,6 @@ namespace DCL.VoiceChat
             var newCallData = new ReactiveProperty<bool>(false);
             communityVoiceChatCalls[communityId] = newCallData;
 
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Created new subscription for community {communityId}");
             return newCallData;
         }
 

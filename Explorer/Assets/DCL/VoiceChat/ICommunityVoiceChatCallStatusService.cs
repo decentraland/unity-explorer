@@ -14,7 +14,7 @@ namespace DCL.VoiceChat
         /// <summary>
         ///     Subscribes to updates for a specific community
         /// </summary>
-        ReactiveProperty<bool> SubscribeToCommunityUpdates(string communityId);
+        ReactiveProperty<bool>? SubscribeToCommunityUpdates(string communityId);
 
         bool TryGetActiveCommunityVoiceChat(string communityId, out ActiveCommunityVoiceChat activeCommunityVoiceChat);
 

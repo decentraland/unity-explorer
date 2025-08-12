@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities;
-using DCL.Diagnostics;
 using DCL.Utilities;
 using System;
 using System.Threading;
@@ -41,8 +40,6 @@ namespace DCL.VoiceChat
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
             statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
             view.JoinStreamButton.onClick.AddListener(OnJoinStreamButtonClicked);
-
-
         }
 
         private void OnJoinStreamButtonClicked()
@@ -61,114 +58,84 @@ namespace DCL.VoiceChat
             view.JoinStreamButton.onClick.RemoveListener(OnJoinStreamButtonClicked);
         }
 
-        private void OnCommunityCallStatusChanged(VoiceChatStatus status)
+       private void OnCurrentChannelChanged(ChatChannel newChannel)
         {
-            if (isMemberListVisible) return;
+            Reset();
 
-            switch (status)
-            {
-                // If we just ended a call, we need to re-check the call status, etc., in case we need to show the button.
-                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Call ended with status {status}, triggering channel change");
-                    OnCurrentChannelChanged(currentChannel.Value);
-                    break;
-                // When we join a call, if it is for THIS community, we need to hide the button. If it's another call, we keep it.
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL when
-                    communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase):
-                    view.gameObject.SetActive(false);
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Hiding subtitle bar, joined current call");
-                    break;
-            }
+            if (newChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+                HandleChangeToCommunityChannelAsync(ChatChannel.GetCommunityIdFromChannelId(newChannel.Id)).Forget();
         }
 
-        private void OnCurrentChannelChanged(ChatChannel newChannel)
+        private void Reset()
         {
-            //We hide it by default until we resolve if the user should see it.
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCurrentChannelChanged: Hiding subtitle bar by default for channel type {newChannel.ChannelType}");
             view.gameObject.SetActive(false);
-
-            // Reset member list visibility state since we're changing channels
             isMemberListVisible = false;
-
             currentCommunityCallStatusSubscription?.Dispose();
-
-            switch (newChannel.ChannelType)
-            {
-                case ChatChannel.ChatChannelType.COMMUNITY:
-                    HandleChangeToCommunityChannel(ChatChannel.GetCommunityIdFromChannelId(newChannel.Id));
-                    break;
-                case ChatChannel.ChatChannelType.NEARBY:
-                case ChatChannel.ChatChannelType.USER:
-                case ChatChannel.ChatChannelType.UNDEFINED:
-                    break;
-            }
+            currentCommunityCallStatusSubscription = null;
         }
 
-        private void HandleChangeToCommunityChannel(string communityId)
+        private async UniTaskVoid HandleChangeToCommunityChannelAsync(string communityId)
         {
-            if (isMemberListVisible) return;
+            currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
 
-            bool isVoiceChatActive = communityCallOrchestrator.HasActiveVoiceChatCall(communityId);
+            bool isOurCurrentConversation = communityCallOrchestrator.CurrentCommunityId.Value.Equals(communityId, StringComparison.InvariantCultureIgnoreCase);
+            if (isOurCurrentConversation) return;
 
-            currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId).Subscribe(OnCurrentCommunityCallStatusChanged);
+            communityCts = communityCts.SafeRestart();
+            GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
 
-            // If there is no voice chat active, we just don't show this.
-            if (!isVoiceChatActive)
-            {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: No voice chat active for community {communityId}, keeping subtitle bar hidden");
-                return;
-            }
+            var dataVoiceChatStatus = communityData.data.voiceChatStatus;
 
-            // If it's the current community call, we don't show the subtitle.
-            if (communityCallOrchestrator.CurrentCommunityId.Value.Equals(communityId, StringComparison.InvariantCultureIgnoreCase)) return;
+            bool isVoiceChatActive = dataVoiceChatStatus.isActive;
+            if (!isVoiceChatActive) return;
 
-
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: Showing subtitle bar for community {communityId} with active voice chat");
             view.gameObject.SetActive(true);
-            //If it's not the current call, we need to get the call information from the communities data
-            HandleCommunityCallAsync(communityId).Forget();
+            int participantsCount = dataVoiceChatStatus.participantCount;
+            view.ParticipantsAmount.SetText(participantsCount.ToString());
         }
 
         private void OnCurrentCommunityCallStatusChanged(bool hasActiveCall)
         {
             if (isMemberListVisible) return;
 
-            //We show the button if the current community has an active call
-            if (hasActiveCall)
+            if (communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase) || !hasActiveCall)
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCurrentCommunityCallStatusChanged: Showing subtitle bar - community has active call");
-                view.gameObject.SetActive(true);
+                view.gameObject.SetActive(false);
+                return;
             }
 
-            if (hasActiveCall && communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase))
-                HandleCurrentCommunityCall();
+            if (!hasActiveCall) return;
+
+            view.gameObject.SetActive(true);
+            int participantsCount = communityCallOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
+            view.ParticipantsAmount.SetText(participantsCount.ToString());
+
         }
 
-
-        private void HandleCurrentCommunityCall()
+        private void OnCommunityCallStatusChanged(VoiceChatStatus status)
         {
             if (isMemberListVisible) return;
 
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleCurrentCommunityCall: Setting up subtitle bar for current community call");
-            view.gameObject.SetActive(true);
-            SetParticipantsCount();
-            view.JoinStreamButton.gameObject.SetActive(false);
+            switch (status)
+            {
+                // If we just ended a call, we need to re-check the call status, etc., in case we need to show the button
+                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
+                    OnCallEndedAsync().Forget();
+                    break;
+                // When we join a call, if it is for THIS community, we need to hide the button. If it's another call, we keep it.
+                case VoiceChatStatus.VOICE_CHAT_IN_CALL when
+                    communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase):
+                    view.gameObject.SetActive(false);
+                    break;
+            }
         }
 
-        private void SetParticipantsCount()
+        private async UniTaskVoid OnCallEndedAsync()
         {
-            int participantsCount = communityCallOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
-            view.ParticipantsAmount.SetText(participantsCount.ToString());
-        }
-
-        private async UniTaskVoid HandleCommunityCallAsync(string communityId)
-        {
-            communityCts = communityCts.SafeRestart();
-            GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
-
-            int participantsCount = communityData.data.voiceChatStatus.participantCount;
-            view.ParticipantsAmount.SetText(participantsCount.ToString());
-            view.JoinStreamButton.gameObject.SetActive(true);
+            // We wait for a short time before getting the updated data just because BE might take some time to update the call status.
+            Reset();
+            await UniTask.Delay(500);
+            HandleChangeToCommunityChannelAsync(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)).Forget();
         }
 
         public void OnMemberListVisibilityChanged(bool isVisible)
@@ -177,12 +144,10 @@ namespace DCL.VoiceChat
 
             if (isVisible)
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnMemberListVisibilityChanged: Hiding subtitle bar - member list is visible");
                 view.gameObject.SetActive(false);
             }
             else
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnMemberListVisibilityChanged: Member list hidden, re-evaluating subtitle bar visibility");
                 // Re-setup subtitle bar when member list becomes hidden
                 // This will trigger the normal flow to determine if it should be shown or not
                 OnCurrentChannelChanged(currentChannel.Value);
