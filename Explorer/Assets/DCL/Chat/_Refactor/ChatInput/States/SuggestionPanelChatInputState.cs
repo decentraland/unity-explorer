@@ -43,6 +43,11 @@ namespace DCL.Chat.ChatInput
                 emojiSuggestionsDictionary.Add(pair.Key, new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName));
         }
 
+        public void Dispose()
+        {
+            suggestionPanelController.Dispose();
+        }
+
         internal bool TryFindMatch(string inputText)
         {
             //With this we are detecting only the last word (where the current caret position is) and checking for matches there.
@@ -56,14 +61,14 @@ namespace DCL.Chat.ChatInput
                 wordMatchIndex = wordMatch.Index;
                 lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
 
-                //If we don't find any emoji pattern only then we look for username patterns
-                if (!lastMatch.Success)
-                {
-                    UpdateProfileNameMap();
-                    lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary);
-                }
+                if (lastMatch.Success) return true;
 
-                return true;
+                //If we don't find any emoji pattern only then we look for username patterns
+
+                UpdateProfileNameMap();
+                lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary);
+
+                if (lastMatch.Success) return true;
             }
 
             lastMatch = Match.Empty;
@@ -137,11 +142,6 @@ namespace DCL.Chat.ChatInput
                     else { profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper)); }
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            suggestionPanelController.Dispose();
         }
     }
 }
