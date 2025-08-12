@@ -36,10 +36,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         public bool TrySpendBudget()
         {
             if (shouldIgnoreBudget != null && shouldIgnoreBudget())
-            {
-                Debug.Log("JUANI FRAME TIME BUDGET IS BEING IGNORED");
                 return true;
-            }
 
             return profiler.CurrentFrameTimeValueNs < totalBudgetAvailable;
         }

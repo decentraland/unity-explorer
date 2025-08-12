@@ -57,10 +57,7 @@ namespace ECS.SceneLifeCycle.Systems
                 staticSceneAssetBundle.AssetBundleData = Result;
                 if (Result.Succeeded)
                 {
-                    staticSceneAssetBundle.StaticSceneDescriptor =
-                        (StaticSceneDescriptor)JsonConvert.DeserializeObject<StaticSceneDescriptor>(((TextAsset)staticSceneAssetBundle.AssetBundleData.Asset.AssetDictionary["StaticSceneDescriptor"]).text);
-
-                    foreach (string assetHash in staticSceneAssetBundle.StaticSceneDescriptor.assetHash)
+                    foreach (string assetHash in staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash)
                         World.Create(new GetGltfContainerAssetIntention($"static_assset_{assetHash}", assetHash, new CancellationTokenSource()), Result);
                 }
             }

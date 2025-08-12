@@ -63,9 +63,9 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 if (staticSceneAssetBundle.IsSupported() && sceneLODInfo.HasLOD(0))
                 {
-                    for (var i = 0; i < staticSceneAssetBundle.StaticSceneDescriptor.assetHash.Count; i++)
+                    for (var i = 0; i < staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count; i++)
                     {
-                        string assetHash = staticSceneAssetBundle.StaticSceneDescriptor.assetHash[i];
+                        string assetHash = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash[i];
                         assetsCache.Dereference(assetHash, sceneLODInfo.GltfContainerAssets[i]);
                     }
 

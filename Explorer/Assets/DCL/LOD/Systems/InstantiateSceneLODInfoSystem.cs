@@ -77,16 +77,16 @@ namespace DCL.LOD.Systems
                 var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
                 sceneLODInfo.GltfContainerAssets = new List<GltfContainerAsset>();
 
-                for (var i = 0; i < staticSceneAssetBundle.StaticSceneDescriptor.assetHash.Count; i++)
+                for (var i = 0; i < staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count; i++)
                 {
-                    string assetHash = staticSceneAssetBundle.StaticSceneDescriptor.assetHash[i];
+                    string assetHash = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash[i];
                     if (assetsCache.TryGet(assetHash, out var asset))
                     {
                         asset.Root.SetActive(true);
                         asset.Root.transform.SetParent(instantiatedLOD.transform);
-                        asset.Root.transform.position = staticSceneAssetBundle.StaticSceneDescriptor.positions[i];
-                        asset.Root.transform.rotation = staticSceneAssetBundle.StaticSceneDescriptor.rotations[i];
-                        asset.Root.transform.localScale = staticSceneAssetBundle.StaticSceneDescriptor.scales[i];
+                        asset.Root.transform.position = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.positions[i];
+                        asset.Root.transform.rotation = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.rotations[i];
+                        asset.Root.transform.localScale = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.scales[i];
                         sceneLODInfo.GltfContainerAssets.Add(asset);
                     }
                 }

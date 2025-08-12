@@ -40,7 +40,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             try
             {
                 assetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), "", false, new AssetBundleLoadingMutex(), Array.Empty<AssetBundleData>(),
-                    ReportCategory.ASSET_BUNDLES, "", "", false, CancellationToken.None);
+                    ReportCategory.ASSET_BUNDLES, "", "", false, null, CancellationToken.None);
                 return assetBundleData;
             }
             catch (Exception e) { return new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, e); }

@@ -23,6 +23,7 @@ namespace ECS.StreamableLoading.AssetBundles
         internal AssetBundle AssetBundle => Asset;
 
         public readonly AssetBundleData[] Dependencies;
+        public StaticSceneDescriptor? StaticSceneDescriptor;
 
         public readonly AssetBundleMetrics? Metrics;
 
@@ -30,7 +31,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private bool unloaded;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object?[] assets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "", bool hasMultipleAssets = false)
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object?[] assets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "", bool hasMultipleAssets = false, StaticSceneDescriptor staticSceneDescriptor = null)
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
@@ -38,6 +39,7 @@ namespace ECS.StreamableLoading.AssetBundles
             this.assets = assets;
             Dependencies = dependencies;
             this.assetType = assetType;
+            StaticSceneDescriptor = staticSceneDescriptor;
 
             if (hasMultipleAssets)
             {

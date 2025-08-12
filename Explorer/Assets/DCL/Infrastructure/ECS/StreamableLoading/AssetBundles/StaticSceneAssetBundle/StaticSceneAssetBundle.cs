@@ -12,13 +12,11 @@ namespace ECS.StreamableLoading.AssetBundles
         public StreamableLoadingResult<AssetBundleData> AssetBundleData;
         public AssetBundlePromise AssetBundlePromise;
 
-        public StaticSceneDescriptor StaticSceneDescriptor;
         public World GlobalWorld;
         public string SceneID;
 
         public StaticSceneAssetBundle(World globalWorld, string sceneID)
         {
-            StaticSceneDescriptor = null;
             GlobalWorld = globalWorld;
             SceneID = sceneID;
             AssetBundlePromise = AssetBundlePromise.NULL;
