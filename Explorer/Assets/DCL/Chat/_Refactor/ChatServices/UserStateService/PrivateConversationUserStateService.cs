@@ -130,6 +130,7 @@ namespace DCL.Chat.ChatServices
         private void UnsubscribeFromEvents()
         {
             settingsAsset.PrivacySettingsSet -= OnPrivacySettingsSet;
+            chatRoom.ConnectionUpdated -= OnRoomConnectionStateChanged;
             chatRoom.Participants.UpdatesFromParticipant -= OnUpdatesFromParticipant;
             friendsEventBus.OnYouBlockedByUser -= OnYouBlockedByUser;
             friendsEventBus.OnYouUnblockedByUser -= OnUserUnblocked;
