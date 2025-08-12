@@ -16,8 +16,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 bones = bones,
             };
 
+#if UNITY_INCLUDE_TESTS
         public static AvatarTransformMatrixComponent NewDefault() =>
             Create(BoneArray.NewDefault());
+#endif
     }
 
     /// <summary>
