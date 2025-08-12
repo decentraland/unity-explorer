@@ -9,8 +9,11 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
     {
+        private const string TAG = nameof(VoiceChatOrchestrator);
+
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
+        private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
 
         private readonly IDisposable privateStatusSubscription;
         private readonly IDisposable communityStatusSubscription;
@@ -18,12 +21,14 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<VoiceChatType> currentVoiceChatType = new (VoiceChatType.NONE);
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.DEFAULT);
+        private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
 
         private VoiceChatCallStatusServiceBase activeCallStatusService;
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
+        public IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneActiveCommunityVoiceChatData => currentActiveCommunityData;
         public IReadonlyReactiveProperty<string> CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
         public string CurrentConnectionUrl => activeCallStatusService?.ConnectionUrl ?? string.Empty;
         public VoiceChatParticipantsStateService ParticipantsStateService { get; }
@@ -37,13 +42,17 @@ namespace DCL.VoiceChat
         public VoiceChatOrchestrator(
             PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
-            VoiceChatParticipantsStateService participantsStateService)
+            VoiceChatParticipantsStateService participantsStateService,
+            SceneVoiceChatTrackerService sceneVoiceChatTrackerService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
+            this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
             ParticipantsStateService = participantsStateService;
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
+            sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
+            sceneVoiceChatTrackerService.ActiveVoiceChatStoppedInScene += OnActiveVoiceChatStoppedInScene;
 
             privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
             communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
@@ -52,6 +61,8 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
+            sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene -= OnActiveVoiceChatDetectedInScene;
+            sceneVoiceChatTrackerService.ActiveVoiceChatStoppedInScene -= OnActiveVoiceChatStoppedInScene;
 
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
@@ -59,6 +70,7 @@ namespace DCL.VoiceChat
             currentVoiceChatType?.Dispose();
             currentCallStatus?.Dispose();
             currentVoiceChatPanelSize?.Dispose();
+            currentActiveCommunityData?.Dispose();
             ParticipantsStateService?.Dispose();
         }
 
@@ -125,7 +137,18 @@ namespace DCL.VoiceChat
                 currentCallStatus.Value = status;
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Switched Orchestrator state to {currentVoiceChatType.Value}");
+        }
+
+        private void OnActiveVoiceChatDetectedInScene(ActiveCommunityVoiceChat activeCommunityData)
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Active voice chat detected in scene for community: {activeCommunityData.communityName} ({activeCommunityData.communityId})");
+            currentActiveCommunityData.Value = activeCommunityData;
+        }
+
+        private void OnActiveVoiceChatStoppedInScene()
+        {
+            currentActiveCommunityData.Value = null;
         }
 
         private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)
@@ -147,7 +170,7 @@ namespace DCL.VoiceChat
                 currentCallStatus.Value = status;
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Switched Orchestrator state to {currentVoiceChatType.Value}");
         }
 
         private void SetActiveCallService(VoiceChatType newType)
@@ -165,7 +188,6 @@ namespace DCL.VoiceChat
                 case VoiceChatType.COMMUNITY:
                     activeCallStatusService = communityVoiceChatCallStatusService;
                     break;
-                default: throw new ArgumentOutOfRangeException(nameof(newType), newType, null);
             }
         }
 

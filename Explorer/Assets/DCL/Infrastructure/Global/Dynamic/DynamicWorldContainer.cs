@@ -280,6 +280,8 @@ namespace Global.Dynamic
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
+            PlayerParcelTrackerService playerParcelTracker = new PlayerParcelTrackerService();
+
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
             MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
 
@@ -422,8 +424,8 @@ namespace Global.Dynamic
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, globalWorld, roomHub, terrainContainer.Landscape, exposedGlobalDataContainer, loadingScreen);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
-                ? new IHealthCheck.AlwaysFails() :
-                  new StartLiveKitRooms(roomHub);
+                ? new IHealthCheck.AlwaysFails()
+                : new StartLiveKitRooms(roomHub);
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
@@ -526,7 +528,7 @@ namespace Global.Dynamic
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
-                new AppArgsCommand(appArgs)
+                new AppArgsCommand(appArgs),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -549,7 +551,16 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
-            VoiceChatContainer voiceChatContainer = new VoiceChatContainer(socialServiceContainer.socialServicesRPC, socialServiceEventBus, roomHub, identityCache, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController);
+            var voiceChatContainer = new VoiceChatContainer(
+                socialServiceContainer.socialServicesRPC,
+                socialServiceEventBus,
+                roomHub,
+                identityCache,
+                notificationsBusController,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                playerParcelTracker,
+                realmNavigator,
+                staticContainer.RealmData);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -669,7 +680,7 @@ namespace Global.Dynamic
                     voiceChatRoom
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
+                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, playerParcelTracker,staticContainer.ScenesCache, staticContainer.RealmData),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
@@ -738,7 +749,7 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
                     realmNavigator
-                    ),
+                ),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -883,6 +894,7 @@ namespace Global.Dynamic
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
             };
 
+            // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
                 globalPlugins.Add(
                     new VoiceChatPlugin(
@@ -895,10 +907,10 @@ namespace Global.Dynamic
                         globalWorld,
                         playerEntity,
                         communitiesDataProvider,
-                        staticContainer.WebRequestsContainer.WebRequestController
-                        )
-                    );
-
+                        staticContainer.WebRequestsContainer.WebRequestController,
+                        playerParcelTracker
+                    )
+                );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
@@ -1035,12 +1047,12 @@ namespace Global.Dynamic
                         staticContainer.Profiler,
                         staticContainer.LoadingStatus,
                         staticContainer.RealmData,
-                        staticContainer.ScenesCache,
                         staticContainer.MainPlayerAvatarBaseProxy,
                         identityCache,
                         debugBuilder,
                         cameraReelStorageService,
-                        entityParticipantTable
+                        entityParticipantTable,
+                        playerParcelTracker
                     )
                 );
 

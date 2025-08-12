@@ -12,11 +12,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly CommunityVoiceChatInCallView view;
         private readonly CommunityVoiceChatInCallFooterController footerController;
+        private readonly ImageController thumbnailController;
 
         public event Action EndStream;
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct;
-        private ImageController thumbnailController;
 
         public CommunityVoiceChatInCallController(
             CommunityVoiceChatInCallView view,

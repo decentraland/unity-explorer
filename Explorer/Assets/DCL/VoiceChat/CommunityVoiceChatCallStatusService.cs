@@ -12,15 +12,13 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    /// <summary>
-    ///     Implementation of voice chat call status service for community calls.
-    /// </summary>
     public class CommunityVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, ICommunityVoiceChatCallStatusService
     {
-        private const string TAG = "CommunityVoiceChatCallStatusService";
+        private const string TAG = nameof(CommunityVoiceChatCallStatusService);
 
         private readonly ICommunityVoiceService voiceChatService;
         private readonly INotificationsBusController notificationBusController;
+        private readonly SceneVoiceChatTrackerService voiceChatSceneTrackerService;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
 
@@ -28,10 +26,12 @@ namespace DCL.VoiceChat
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
-            INotificationsBusController notificationBusController)
+            INotificationsBusController notificationBusController,
+            SceneVoiceChatTrackerService voiceChatSceneTrackerService)
         {
             this.voiceChatService = voiceChatService;
             this.notificationBusController = notificationBusController;
+            this.voiceChatSceneTrackerService = voiceChatSceneTrackerService;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
             this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
         }
@@ -244,7 +244,6 @@ namespace DCL.VoiceChat
                 }
                 catch (Exception e) { }
             }
-
         }
 
         public override void HandleLivekitConnectionFailed()
@@ -269,9 +268,10 @@ namespace DCL.VoiceChat
                 return;
             }
 
+            ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Received community update for {communityUpdate.CommunityId} with status: {communityUpdate.Status.ToString()} with positions: {communityUpdate.Positions}");
+
             if (communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatEnded)
             {
-                // Remove from active community voice chats when the call ends
                 activeCommunityVoiceChats.Remove(communityUpdate.CommunityId);
 
                 if (communityVoiceChatCalls.TryGetValue(communityUpdate.CommunityId, out ReactiveProperty<bool>? existingData))
@@ -280,10 +280,12 @@ namespace DCL.VoiceChat
                     ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Community voice chat ended for {communityUpdate.CommunityId}");
                 }
 
+                // Delegate scene unregistration to the tracker
+                voiceChatSceneTrackerService.UnregisterCommunityFromScene(communityUpdate.CommunityId);
+                voiceChatSceneTrackerService.RemoveActiveCommunityVoiceChat(communityUpdate.CommunityId);
                 return;
             }
 
-            // Update or add the active community voice chat information from the update
             var activeChat = new ActiveCommunityVoiceChat
             {
                 communityId = communityUpdate.CommunityId,
@@ -310,8 +312,16 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Added community {communityUpdate.CommunityId}");
             }
 
-            if(communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted)
-                notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
+            if (communityUpdate.Status == CommunityVoiceChatStatus.CommunityVoiceChatStarted)
+            {
+                // Delegate scene registration to the tracker
+                voiceChatSceneTrackerService.RegisterCommunityInScene(communityUpdate.CommunityId, communityUpdate.Positions, communityUpdate.Worlds);
+                voiceChatSceneTrackerService.SetActiveCommunityVoiceChat(communityUpdate.CommunityId, activeChat);
+
+                // We only show notification if we are part of the community
+                if (communityUpdate.IsMember)
+                    notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
+            }
         }
 
         private void OnActiveCommunityVoiceChatsFetched(ActiveCommunityVoiceChatsResponse response)
@@ -330,9 +340,13 @@ namespace DCL.VoiceChat
                     continue;
                 }
 
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Processing community {activeChat.communityId} - Name: {activeChat.communityName}, Participants: {activeChat.participantCount}, IsMember: {activeChat.isMember}");
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Processing community {activeChat.communityId} - Name: {activeChat.communityName}, Participants: {activeChat.participantCount}, IsMember: {activeChat.isMember}, Positions: {activeChat.positions}");
 
                 activeCommunityVoiceChats[activeChat.communityId] = activeChat;
+
+                // Delegate scene registration to the tracker
+                voiceChatSceneTrackerService.RegisterCommunityInScene(activeChat.communityId, activeChat.positions, activeChat.worlds);
+                voiceChatSceneTrackerService.SetActiveCommunityVoiceChat(activeChat.communityId, activeChat);
 
                 // Ensure we have a reactive property for this community
                 if (!communityVoiceChatCalls.TryGetValue(activeChat.communityId, out ReactiveProperty<bool>? communityVoiceChatCall))
@@ -361,7 +375,6 @@ namespace DCL.VoiceChat
 
             communityVoiceChatCalls.Clear();
             activeCommunityVoiceChats.Clear();
-
             cts.SafeCancelAndDispose();
             base.Dispose();
         }

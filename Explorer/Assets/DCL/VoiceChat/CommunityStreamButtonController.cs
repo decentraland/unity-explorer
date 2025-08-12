@@ -12,7 +12,7 @@ namespace DCL.VoiceChat
 {
     public class CommunityStreamButtonController : IDisposable
     {
-        private const string TAG = "CommunityStreamButtonController";
+        private const string TAG = nameof(CommunityStreamButtonController);
 
         private readonly IDisposable currentChannelSubscription;
         private readonly IDisposable communityCallStateSubscription;

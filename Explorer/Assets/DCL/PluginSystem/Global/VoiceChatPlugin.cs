@@ -9,6 +9,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
@@ -31,7 +32,9 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly IWebRequestController webRequestController;
+        private readonly PlayerParcelTrackerService playerParcelTracker;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
@@ -61,7 +64,8 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
-            IWebRequestController webRequestController
+            IWebRequestController webRequestController,
+            PlayerParcelTrackerService playerParcelTracker
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -73,7 +77,9 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
+            this.playerParcelTracker = playerParcelTracker;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
+            communityVoiceChatCallStatusService = voiceChatContainer.CommunityVoiceChatCallStatusService;
         }
 
         public void Dispose()
