@@ -1,4 +1,5 @@
 using DCL.Input;
+using DCL.DebugUtilities;
 using DCL.UI.DebugMenu.LogHistory;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,10 +21,12 @@ namespace DCL.UI.DebugMenu
         private IInputBlock inputBlock;
 
         private Button consoleButton;
-        private Button settingsButton;
+        private Button debugPanelButton;
         private Button connectionButton;
 
         private bool shouldRefreshConsole;
+
+        private IDebugContainerBuilder debugContainerBuilder;
 
         private void OnEnable()
         {
@@ -33,17 +36,17 @@ namespace DCL.UI.DebugMenu
 
             // Sidebar
             consoleButton = root.Q<Button>("ConsoleButton");
-            settingsButton = root.Q<Button>("DebugButton");
+            debugPanelButton = root.Q<Button>("DebugButton");
             connectionButton = root.Q<Button>("ConnectionButton");
 
             consoleButton.clicked += OnConsoleButtonClicked;
-            settingsButton.clicked += OnSettingsButtonClicked;
+            debugPanelButton.clicked += OnDebugPanelButtonClicked;
             connectionButton.clicked += OnConnectionButtonClicked;
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
             consolePanelView.SetInputBlock(inputBlock);
-            settingsPanelView = new SettingsPanelView(root.Q("SettingsPanel"), settingsButton, OnSettingsButtonClicked);
+            settingsPanelView = new SettingsPanelView(root.Q("SettingsPanel"), debugPanelButton, OnDebugPanelButtonClicked);
             connectionPanelView = new ConnectionPanelView(root.Q("ConnectionPanel"), connectionButton, OnConnectionButtonClicked);
 
             // Shortcuts
@@ -66,6 +69,18 @@ namespace DCL.UI.DebugMenu
                         visiblePanel = connectionPanelView;
                         break;
                 }
+        }
+
+        public void SetDebugContainerBuilder(IDebugContainerBuilder builder)
+        {
+            debugContainerBuilder = builder;
+
+            if (debugPanelButton != null)
+            {
+                debugPanelButton.clicked -= OnDebugPanelButtonClicked;
+                debugPanelButton.clicked += OnDebugButtonClicked;
+                debugPanelButton.style.display = DisplayStyle.Flex;
+            }
         }
 
         public void SetInputBlock(IInputBlock block)
@@ -106,11 +121,17 @@ namespace DCL.UI.DebugMenu
         private void OnConsoleButtonClicked() =>
             TogglePanel(consolePanelView);
 
-        private void OnSettingsButtonClicked() =>
+        private void OnDebugPanelButtonClicked() =>
             TogglePanel(settingsPanelView);
 
         private void OnConnectionButtonClicked() =>
             TogglePanel(connectionPanelView);
+
+        private void OnDebugButtonClicked()
+        {
+            if (debugContainerBuilder == null) return;
+            debugContainerBuilder.Container.TogglePanelVisibility();
+        }
 
         private void TogglePanel(DebugPanelView panelView)
         {
