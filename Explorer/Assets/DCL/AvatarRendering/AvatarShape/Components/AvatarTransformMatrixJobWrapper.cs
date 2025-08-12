@@ -12,7 +12,7 @@ using UnityEngine.Profiling;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
-    public unsafe class AvatarTransformMatrixJobWrapper : IDisposable
+    public class AvatarTransformMatrixJobWrapper : IDisposable
     {
         private const int INNER_LOOP_BATCH_COUNT = 128; // Each iteration is lightweight. Reduces overhead from frequent job switching.
         private const int WORLD_MATRIX_CALCULATION_STRATEGY_LIMIT = 128; // There is no gain in performance to multithreading for less amount of avatars
@@ -157,7 +157,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// <summary>
         /// Implementation operates on NativeArray and mitigates runtime checks for elements access. Supports realloc
         /// </summary>
-        private struct QuickArray<T> : IDisposable where T: unmanaged
+        private unsafe struct QuickArray<T> : IDisposable where T: unmanaged
         {
             private const Allocator ALLOCATOR = Allocator.Persistent;
 
