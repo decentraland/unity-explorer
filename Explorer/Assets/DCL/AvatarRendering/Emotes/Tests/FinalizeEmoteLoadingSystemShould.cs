@@ -153,8 +153,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             Assert.IsFalse(world.IsAlive(entity)); // Check promise component removed
             Assert.IsFalse(world.IsAlive(promise.Entity));
-            Assert.IsTrue(!string.IsNullOrEmpty(mockEmote.DTO.GetAssetBundleManifestVersion()));
-            Assert.AreSame(manifest.GetVersion(), mockEmote.DTO.GetAssetBundleManifestVersion());
+            Assert.IsTrue(!string.IsNullOrEmpty(mockEmote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion()));
+            Assert.AreSame(manifest.GetVersion(), mockEmote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion());
         }
 
         [Test]

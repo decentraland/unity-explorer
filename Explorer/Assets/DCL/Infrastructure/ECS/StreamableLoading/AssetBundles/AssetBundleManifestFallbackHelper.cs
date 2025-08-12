@@ -15,8 +15,12 @@ namespace ECS.StreamableLoading.AssetBundles
         public static async UniTask CheckAssetBundleManifestFallback(World world, EntityDefinitionBase  entityDefinition, IPartitionComponent partition, CancellationToken ct)
         {
             //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
-            if (entityDefinition.versions.IsEmpty())
+            if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty())
             {
+                //Needed to use the Time.realtimeSinceStartup on the intention creation
+                if (StreamableLoadingDebug.ENABLED)
+                    await UniTask.SwitchToMainThread();
+
                 var promise = AssetBundleManifestPromise.Create(world,
                     GetAssetBundleManifestIntention.Create(entityDefinition.id, new CommonLoadingArguments(entityDefinition.id)),
                     partition);
@@ -24,9 +28,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
                 if (assetBundleManifest.Succeeded)
-                    entityDefinition.versions = new AssetBundleManifestVersion(assetBundleManifest.Asset.GetVersion());
+                    entityDefinition.assetBundleManifestVersion = new AssetBundleManifestVersion(assetBundleManifest.Asset.GetVersion());
                 else
-                    entityDefinition.assetBundleManifestRequestFailed = true;
+                    entityDefinition.assetBundleManifestVersion.assetBundleManifestRequestFailed = true;
             }
         }
     }

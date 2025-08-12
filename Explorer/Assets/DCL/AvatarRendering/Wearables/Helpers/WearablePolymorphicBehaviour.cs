@@ -225,9 +225,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         hash + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        assetBundleVersion: wearable.DTO.GetAssetBundleManifestVersion(),
+                        assetBundleVersion: wearable.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion(),
                         parentEntityID: wearable.DTO.id,
-                        hasParentEntityIDPathInURL : wearable.DTO.HasHashInPath(),
+                        hasParentEntityIDPathInURL : wearable.DTO.assetBundleManifestVersion.HasHashInPath(),
                         cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);

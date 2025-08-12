@@ -82,7 +82,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
-            if (attachment.DTO.assetBundleManifestRequestFailed)
+            if (attachment.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed)
             {
                 ReportHub.Log(
                     ReportCategory.THUMBNAILS,
@@ -100,8 +100,8 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                     typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
-                    assetBundleVersion: attachment.DTO.GetAssetBundleManifestVersion(),
-                    hasParentEntityIDPathInURL: attachment.DTO.HasHashInPath(),
+                    assetBundleVersion: attachment.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion(),
+                    hasParentEntityIDPathInURL: attachment.DTO.assetBundleManifestVersion.HasHashInPath(),
                     parentEntityID: attachment.DTO.id,
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),

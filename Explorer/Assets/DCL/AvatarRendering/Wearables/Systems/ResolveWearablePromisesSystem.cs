@@ -163,7 +163,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
 
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (!dtoHasContentDownloadUrl && component.DTO.assetBundleManifestRequestFailed) return false;
+            if (!dtoHasContentDownloadUrl && component.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed) return false;
 
             if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
             {

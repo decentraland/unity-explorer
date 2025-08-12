@@ -198,7 +198,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     // emote failed to load? remove intent
-                    if (emote.DTO.assetBundleManifestRequestFailed)
+                    if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
                     {
                         ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
@@ -221,7 +221,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.DTO.GetAssetBundleManifestVersion()} should be >= 16");
+                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion()} should be >= 16");
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }

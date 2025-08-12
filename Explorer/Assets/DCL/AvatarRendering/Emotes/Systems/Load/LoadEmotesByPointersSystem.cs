@@ -125,7 +125,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
-                if (emote.DTO.assetBundleManifestRequestFailed || emote.Model is { Exception: not null })
+                if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } || emote.Model is { Exception: not null })
                 {
                     emotesWithResponse++;
                     continue;
@@ -224,9 +224,9 @@ namespace DCL.AvatarRendering.Emotes.Load
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         cancellationTokenSource: intention.CancellationTokenSource,
-                        assetBundleVersion: component.DTO.GetAssetBundleManifestVersion(),
+                        assetBundleVersion: component.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion(),
                         parentEntityID: component.DTO.id,
-                        hasParentEntityIDPathInURL : component.DTO.HasHashInPath()
+                        hasParentEntityIDPathInURL : component.DTO.assetBundleManifestVersion.HasHashInPath()
                     ),
                     partitionComponent
                 );
