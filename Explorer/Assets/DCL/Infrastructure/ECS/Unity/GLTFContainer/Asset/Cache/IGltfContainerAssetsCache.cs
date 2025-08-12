@@ -13,6 +13,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
 
-        void Dereference(in string key, GltfContainerAsset asset);
+        void Dereference(in string key, GltfContainerAsset asset, bool bridgeLODSceneAsset = false);
+
+
     }
 }

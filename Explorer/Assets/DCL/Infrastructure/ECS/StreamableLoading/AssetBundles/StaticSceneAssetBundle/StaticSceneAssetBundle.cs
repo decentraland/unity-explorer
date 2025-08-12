@@ -14,6 +14,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public World GlobalWorld;
         public string SceneID;
+        public int AssetsInstantiated;
 
         public StaticSceneAssetBundle(World globalWorld, string sceneID)
         {
@@ -22,9 +23,8 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundlePromise = AssetBundlePromise.NULL;
             SceneID = sceneID;
 
-
             //TODO (JUANI): FOr now, we hardcoded it only for GP. We will later check it with manifest
-            if (!SceneID.Equals("bafkreifqcraqxctg4krbklm6jsbq2x5tueevhmvxx354obl4ogu5owkbqu"))
+            if (!SceneID.Equals("bafkreicboazl7vyrwx7xujne53e63di6khbcfoi4vabafomar4u5mznpzy"))
                 AssetBundleData = new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, new Exception($"Static Scene Asset Bundle not suported for {SceneID}"));
             else
                 AssetBundleData = new ();
@@ -36,7 +36,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 return true;
 
             if (AssetBundleData.IsInitialized)
-                return true;
+            {
+                if (AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count == AssetsInstantiated)
+                    return true;
+                return false;
+            }
 
             if (!AssetBundleData.IsInitialized && AssetBundlePromise == AssetBundlePromise.NULL)
             {

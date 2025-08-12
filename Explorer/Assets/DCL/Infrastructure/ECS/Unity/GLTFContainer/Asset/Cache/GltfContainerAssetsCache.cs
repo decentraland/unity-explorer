@@ -67,10 +67,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             return false;
         }
 
+
+
         /// <summary>
-        ///     Return to the pool
+        /// Return to the pool
         /// </summary>
-        public void Dereference(in string key, GltfContainerAsset asset)
+        /// <param name="key"></param>
+        /// <param name="asset"></param>
+        /// <param name="bridgeLODSceneAsset">Flag to indicate that the asset should stay visible and in position, since its transitioning from LOD to Scene or
+        /// viceversa</param>
+        public void Dereference(in string key, GltfContainerAsset asset, bool bridgeLODSceneAsset = false)
         {
             if (!cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
@@ -87,8 +93,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
-            asset.Root.SetActive(false);
-            asset.Root.transform.SetParent(parentContainer, true);
+            if (bridgeLODSceneAsset)
+                asset.Root.transform.SetParent(null);
+            else
+            {
+                asset.Root.SetActive(false);
+                asset.Root.transform.SetParent(parentContainer, true);
+            }
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)

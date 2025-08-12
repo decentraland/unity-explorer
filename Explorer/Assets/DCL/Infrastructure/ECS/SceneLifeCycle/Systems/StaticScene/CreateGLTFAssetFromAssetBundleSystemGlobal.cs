@@ -8,6 +8,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using System;
 using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
@@ -31,11 +32,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             ConvertFromStaticAssetBundleQuery(World);
         }
 
-        /// <summary>
-        ///     Called on a separate entity with a promise creates a result with <see cref="GltfContainerAsset" />
-        /// </summary>
         [Query]
-        private void ConvertFromStaticAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
+        private void ConvertFromStaticAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult, ref StaticSceneAssetBundle staticSceneAssetBundle)
         {
             if (!HasBudget())
                 return;
@@ -47,10 +45,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             AssetBundleData assetBundleData = assetBundleResult.Asset!;
 
-            gltfContainerAssetsCache.Dereference(assetIntention.Hash, CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash), "static"));
+            GltfContainerAsset asset = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash), "static");
+
+            gltfContainerAssetsCache.Dereference(assetIntention.Hash, asset);
+            staticSceneAssetBundle.AssetsInstantiated++;
 
             //It was just a auxiliary entity. It can be destroyed
             World.Destroy(entity);
         }
     }
+
 }

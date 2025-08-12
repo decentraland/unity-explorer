@@ -81,7 +81,6 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void Update(float t)
         {
             /*
-             TODO (JUANI) : How can we finalize sooner if we have the asset ready?
             bool shouldWait;
 
             if (staticSceneAssetBundle.IsSupported())
@@ -93,10 +92,9 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 // If not supported, run for frame count
                 shouldWait = sceneStateProvider.TickNumber < FRAMES_COUNT;
-            }
-            */
+            }*/
 
-            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
+            if (false)
                 eventsBuffer.ForEach(forEachEvent);
             else if (!concluded)
             {

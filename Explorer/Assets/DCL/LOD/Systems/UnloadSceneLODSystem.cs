@@ -66,7 +66,7 @@ namespace ECS.SceneLifeCycle.Systems
                     for (var i = 0; i < staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count; i++)
                     {
                         string assetHash = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash[i];
-                        assetsCache.Dereference(assetHash, sceneLODInfo.GltfContainerAssets[i]);
+                        assetsCache.Dereference(assetHash, sceneLODInfo.GltfContainerAssets[i], true);
                     }
 
                     sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);

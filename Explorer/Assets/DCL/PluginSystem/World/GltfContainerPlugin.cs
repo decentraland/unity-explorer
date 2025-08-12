@@ -101,7 +101,12 @@ namespace DCL.PluginSystem.World
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, buffer, sharedDependencies.EcsToCRDTWriter);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);
             GltfContainerVisibilitySystem.InjectToWorld(ref builder, buffer);
-            finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache));
+
+            //TODO (JUANI) : Feels a little bit hacky, but this needs to be cleaned up first for reparenting
+            finalizeWorldSystems.Insert(
+                0,
+                CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache)
+            );
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,

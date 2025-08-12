@@ -58,7 +58,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
-                    cache.Dereference(component.Hash, result.Asset);
+                    //TODO (JUANI): How will we know which assetss shoudl be dereferenced, and what should be cleaned?
+                    cache.Dereference(component.Hash, result.Asset, true);
                     entityCollidersSceneCache.Remove(result.Asset);
 
                     // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data

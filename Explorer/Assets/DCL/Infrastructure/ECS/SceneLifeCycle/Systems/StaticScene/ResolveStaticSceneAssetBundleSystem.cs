@@ -9,10 +9,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
-using ECS.Unity.GLTFContainer.Asset.Systems;
-using Newtonsoft.Json;
 using System.Threading;
-using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -58,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
                 if (Result.Succeeded)
                 {
                     foreach (string assetHash in staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash)
-                        World.Create(new GetGltfContainerAssetIntention($"static_assset_{assetHash}", assetHash, new CancellationTokenSource()), Result);
+                        World.Create(staticSceneAssetBundle, new GetGltfContainerAssetIntention($"static_assset_{assetHash}", assetHash, new CancellationTokenSource()), Result);
                 }
             }
         }
