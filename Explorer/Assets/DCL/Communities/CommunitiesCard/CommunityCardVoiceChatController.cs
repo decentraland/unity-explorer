@@ -33,12 +33,6 @@ namespace DCL.Communities.CommunitiesCard
             view.JoinStreamButton.gameObject.SetActive(communityId != currentCommunityId);
         }
 
-        private void EndStream()
-        {
-            voiceChatOrchestrator.EndStreamInCurrentCall();
-            SetPanelStatus(false, true, currentCommunityId);
-        }
-
         private void LeaveStream()
         {
             voiceChatOrchestrator.HangUp();

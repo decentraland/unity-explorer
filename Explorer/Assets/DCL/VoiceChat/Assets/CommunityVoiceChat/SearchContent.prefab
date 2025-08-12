@@ -589,8 +589,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 4312212762944095487}
   m_HandleRect: {fileID: 4903379226511969603}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 1
+  m_Value: 1.0000017
+  m_Size: 0.8433929
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -684,8 +684,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 139998211434044632, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
+      propertyPath: m_Spacing.x
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 139998211434044632, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
+      propertyPath: m_CellSize.x
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 139998211434044632, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
       propertyPath: m_CellSize.y
       value: 74
+      objectReference: {fileID: 0}
+    - target: {fileID: 139998211434044632, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
+      propertyPath: m_Padding.m_Left
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 225973233014465658, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
       propertyPath: m_SizeDelta.x
@@ -1302,8 +1314,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 139998211434044632, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
+      propertyPath: m_Spacing.x
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 139998211434044632, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
+      propertyPath: m_CellSize.x
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 139998211434044632, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
       propertyPath: m_CellSize.y
-      value: 100
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 139998211434044632, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
+      propertyPath: m_Padding.m_Left
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 225973233014465658, guid: 8f91b49ec69294554827f4fa4085a591, type: 3}
       propertyPath: m_SizeDelta.x
