@@ -38,6 +38,8 @@ namespace DCL.Chat
 
         [field: SerializeField] private CanvasGroup usernameElementCanvas;
 
+        private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel.WithColor>? profileSubscription;
+
         private ChatMessage chatMessage;
         private readonly Vector3[] cornersCache = new Vector3[4];
 
@@ -93,7 +95,8 @@ namespace DCL.Chat
             else
                 ProfilePictureView.SetImage(viewModel.ProfileData.Value.Thumbnail.Sprite!);
 
-            viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
+            profileSubscription?.Dispose();
+            profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
         }
 
         private void OnProfileButtonClicked()
