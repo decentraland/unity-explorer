@@ -2,23 +2,23 @@ using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
 {
-    public class AverageFpsBannerElement : DebugElementBase<AverageFpsBannerElement, AverageFpsBannerDef>, INotifyValueChanged<float>, IBindable
+    public class AverageFpsBannerElement : DebugElementBase<AverageFpsBannerElement, AverageFpsBannerDef>, IBindable, INotifyValueChanged<AverageFpsBannerData>
     {
         private Label fpsValueLabel;
         private Label msLabel;
 
-        private float currentAvgNs;
+        private AverageFpsBannerData currentDisplayData;
 
         public IBinding binding { get; set; }
         public string bindingPath { get; set; }
 
-        float INotifyValueChanged<float>.value
+        AverageFpsBannerData INotifyValueChanged<AverageFpsBannerData>.value
         {
-            get => currentAvgNs;
+            get => currentDisplayData;
             set
             {
-                currentAvgNs = value;
-                UpdateVisualsFromAvgNs(value);
+                currentDisplayData = value;
+                UpdateVisualsFromDisplayData(value);
             }
         }
 
@@ -27,26 +27,23 @@ namespace DCL.DebugUtilities.Views
             fpsValueLabel = this.Q<Label>("FpsValue");
             msLabel = this.Q<Label>("MsValue");
 
-            // The binding drives the avg frame time in ns
-            definition.AvgFrameTimeNsBinding.Connect(this);
+            // Connect the mandatory precomputed display binding
+            definition.AvgDisplayBinding.Connect(this);
 
             // Immediately push current value so UI shows something first frame
-            ((INotifyValueChanged<float>)this).SetValueWithoutNotify(definition.AvgFrameTimeNsBinding.Value);
+            ((INotifyValueChanged<AverageFpsBannerData>)this).SetValueWithoutNotify(definition.AvgDisplayBinding.Value);
         }
 
-        void INotifyValueChanged<float>.SetValueWithoutNotify(float newValue)
+        void INotifyValueChanged<AverageFpsBannerData>.SetValueWithoutNotify(AverageFpsBannerData newValue)
         {
-            currentAvgNs = newValue;
-            UpdateVisualsFromAvgNs(newValue);
+            currentDisplayData = newValue;
+            UpdateVisualsFromDisplayData(newValue);
         }
 
-        private void UpdateVisualsFromAvgNs(float avgNs)
-        {
-            // convert: ns -> ms -> fps
-            const float NS_TO_MS = 1e-6f;
-            const float NS_TO_SEC = 1e-9f;
 
-            if (avgNs <= 0)
+        private void UpdateVisualsFromDisplayData(AverageFpsBannerData data)
+        {
+            if (data.Fps <= 0)
             {
                 fpsValueLabel.text = "collecting…";
                 msLabel.text = string.Empty;
@@ -54,17 +51,14 @@ namespace DCL.DebugUtilities.Views
                 return;
             }
 
-            float ms = avgNs * NS_TO_MS;
-            float fps = 1f / (avgNs * NS_TO_SEC);
-
             fpsValueLabel.style.display = DisplayStyle.Flex;
-            fpsValueLabel.text = fps.ToString("F1");
+            fpsValueLabel.text = data.Fps.ToString("F1");
             msLabel.style.display = DisplayStyle.Flex;
-            msLabel.text = "(" + ms.ToString("F1") + " ms)";
+            msLabel.text = "(" + data.Ms.ToString("F1") + " ms)";
 
-            string severity = fps < definition.ErrorFpsThreshold
+            string severity = data.Fps < definition.BadFpsThreshold
                 ? "bad"
-                : fps < definition.WarningFpsThreshold ? "low" : "good";
+                : data.Fps < definition.NormalFpsThreshold ? "normal" : "good";
 
             SetSeverityClass(severity);
         }
@@ -72,19 +66,19 @@ namespace DCL.DebugUtilities.Views
         private void SetSeverityClass(string id)
         {
             RemoveFromClassList("avg-fps-banner--good");
-            RemoveFromClassList("avg-fps-banner--low");
+            RemoveFromClassList("avg-fps-banner--normal");
             RemoveFromClassList("avg-fps-banner--bad");
 
             AddToClassList("avg-fps-banner");
 
             switch (id)
             {
-                case "error":
+                case "bad":
                     AddToClassList("avg-fps-banner--bad");
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.905f, 0.298f, 0.235f));
                     break;
-                case "warn":
-                    AddToClassList("avg-fps-banner--low");
+                case "normal":
+                    AddToClassList("avg-fps-banner--normal");
                     fpsValueLabel.style.color = new StyleColor(new UnityEngine.Color(0.945f, 0.769f, 0.059f));
                     break;
                 default:

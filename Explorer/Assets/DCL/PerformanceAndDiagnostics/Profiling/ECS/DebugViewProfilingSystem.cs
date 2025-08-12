@@ -10,14 +10,11 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.Versioning;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Diagnostics;
-using UnityEngine.UIElements;
-using Utility.Types;
 using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
@@ -41,7 +38,7 @@ namespace DCL.Profiling.ECS
 
         private ElementBinding<string> hiccups;
         private ElementBinding<string> fps;
-        private ElementBinding<float> avgFrameTimeNs;
+        private ElementBinding<AverageFpsBannerData> avgDisplayData;
         private ElementBinding<string> minfps;
         private ElementBinding<string> maxfps;
 
@@ -75,7 +72,7 @@ namespace DCL.Profiling.ECS
         private int framesSinceMetricsUpdate;
 
         // Rolling window for average FPS over the last N frames
-        private const int AVG_WINDOW_FRAMES = 100;
+        private const int AVG_WINDOW_FRAMES = 1000;
         private readonly ulong[] avgFrameWindow = new ulong[AVG_WINDOW_FRAMES];
         private int avgFrameWindowIndex;
         private int avgFrameWindowCount;
@@ -102,8 +99,8 @@ namespace DCL.Profiling.ECS
                 var version = new ElementBinding<string>(dclVersion.Version);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
-                           ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                            .AddControl(new AverageFpsBannerDef(avgFrameTimeNs = new ElementBinding<float>(0f)), null)
+                            ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                            .AddControl(new AverageFpsBannerDef(avgDisplayData = new ElementBinding<AverageFpsBannerData>(default)), null)
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
@@ -195,25 +192,7 @@ namespace DCL.Profiling.ECS
         {
             if (!realmData.Configured) return;
 
-            // Always update average fps value regardless of UI expansion
-            ulong lastFrameNs = profiler.LastFrameTimeValueNs;
-            if (lastFrameNs > 0)
-            {
-                if (avgFrameWindowCount < AVG_WINDOW_FRAMES)
-                {
-                    avgFrameWindow[avgFrameWindowIndex] = lastFrameNs;
-                    avgFrameWindowSumNs += lastFrameNs;
-                    avgFrameWindowIndex = (avgFrameWindowIndex + 1) % AVG_WINDOW_FRAMES;
-                    avgFrameWindowCount++;
-                }
-                else
-                {
-                    ulong replaced = avgFrameWindow[avgFrameWindowIndex];
-                    avgFrameWindow[avgFrameWindowIndex] = lastFrameNs;
-                    avgFrameWindowSumNs = avgFrameWindowSumNs - replaced + lastFrameNs;
-                    avgFrameWindowIndex = (avgFrameWindowIndex + 1) % AVG_WINDOW_FRAMES;
-                }
-            }
+            UpdateAverageFPSValues();
 
             if (memoryVisibilityBinding.IsExpanded)
             {
@@ -240,16 +219,55 @@ namespace DCL.Profiling.ECS
                 {
                     framesSinceMetricsUpdate = 0;
                     UpdateFrameStatisticsView(profiler);
+                    UpdateAverageFpsDisplayData();
                 }
 
                 if (frameTimingsEnabled && bottleneckDetector.IsFrameTimingSupported && bottleneckDetector.TryCapture())
                     UpdateFrameTimings();
 
-                // Update Average based on the last 100 frames
-                float averageNs = avgFrameWindowCount > 0 ? (float)(avgFrameWindowSumNs / (double)avgFrameWindowCount) : 0f;
-                avgFrameTimeNs.SetAndUpdate(averageNs);
-
                 framesSinceMetricsUpdate++;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateAverageFPSValues()
+        {
+            ulong lastFrameNs = profiler.LastFrameTimeValueNs;
+            if (lastFrameNs > 0)
+            {
+                if (avgFrameWindowCount < AVG_WINDOW_FRAMES)
+                {
+                    avgFrameWindow[avgFrameWindowIndex] = lastFrameNs;
+                    avgFrameWindowSumNs += lastFrameNs;
+                    avgFrameWindowIndex = (avgFrameWindowIndex + 1) % AVG_WINDOW_FRAMES;
+                    avgFrameWindowCount++;
+                }
+                else
+                {
+                    ulong replaced = avgFrameWindow[avgFrameWindowIndex];
+                    avgFrameWindow[avgFrameWindowIndex] = lastFrameNs;
+                    avgFrameWindowSumNs = avgFrameWindowSumNs - replaced + lastFrameNs;
+                    avgFrameWindowIndex = (avgFrameWindowIndex + 1) % AVG_WINDOW_FRAMES;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateAverageFpsDisplayData()
+        {
+            // Update Average based on the last configured frames amount and push precomputed FPS/MS
+            float averageNs = avgFrameWindowCount > 0 ? (float)(avgFrameWindowSumNs / (double)avgFrameWindowCount) : 0f;
+            if (averageNs > 0f)
+            {
+                const float NS_TO_MS = 1e-6f;
+                const float NS_TO_SEC = 1e-9f;
+                float ms = averageNs * NS_TO_MS;
+                float fpsValue = 1f / (averageNs * NS_TO_SEC);
+                avgDisplayData.SetAndUpdate(new AverageFpsBannerData(fpsValue, ms));
+            }
+            else
+            {
+                avgDisplayData.SetAndUpdate(default);
             }
         }
 

@@ -361,7 +361,7 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
     border-left-style: solid;
 }
 
-.avg-fps-banner--low {
+.avg-fps-banner--normal {
     border-left-color: #f1c40f;
     border-left-width: 4px;
     border-left-style: solid;
