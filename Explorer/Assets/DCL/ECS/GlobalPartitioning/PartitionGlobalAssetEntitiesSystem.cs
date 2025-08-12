@@ -115,7 +115,6 @@ namespace DCL.Systems
                  sqrDistance, vectorToCamera);
 
             partitionComponent.IsDirty = bucket != partitionComponent.Bucket || isBehind != partitionComponent.IsBehind;
-            // There's no need to repartition transform if everything is repartitioning already.
             transformComponent.ClearDirty();
         }
     }
