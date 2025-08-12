@@ -11,7 +11,7 @@ using UnityEngine.Profiling;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
-    public unsafe class AvatarTransformMatrixJobWrapper : IDisposable
+    public class AvatarTransformMatrixJobWrapper : IDisposable
     {
         private const int INNER_LOOP_BATCH_COUNT = 128; // Each iteration is lightweight. Reduces overhead from frequent job switching.
         private const int WORLD_MATRIX_CALCULATION_STRATEGY_LIMIT = 128; // There is no gain in performance to multithreading for less amount of avatars
@@ -20,23 +20,27 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private static readonly int BONES_ARRAY_LENGTH = ComputeShaderConstants.BONE_COUNT;
         private static readonly int BONES_PER_AVATAR_LENGTH = AVATAR_ARRAY_SIZE * BONES_ARRAY_LENGTH;
 
-        internal NativeArray<Matrix4x4> matrixFromAllAvatars;
-        private Matrix4x4* matrixPtr;
+        private NativeArray<Matrix4x4> matrixFromAllAvatars;
+        private NativeArray<bool> updateAvatar;
 
-        internal NativeArray<bool> updateAvatar;
-        private bool* updateAvatarPtr;
         private TransformAccessArray copyBufferPerAvatar;
 
         private NativeArray<Matrix4x4> bonesCombined;
         public BoneMatrixCalculationJob job;
 
         private JobHandle handle;
+        private bool disposed;
 
         private readonly Stack<int> releasedIndexes;
 
         private int avatarIndex;
         private int nextResizeValue;
         internal int currentAvatarAmountSupported;
+
+#if UNITY_INCLUDE_TESTS
+        public NativeArray<Matrix4x4>.ReadOnly MatrixFromAllAvatars => matrixFromAllAvatars.AsReadOnly();
+        public NativeArray<bool>.ReadOnly UpdateAvatarValue => updateAvatar.AsReadOnly();
+#endif
 
         public AvatarTransformMatrixJobWrapper()
         {
@@ -45,13 +49,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH, bonesCombined);
 
-            matrixFromAllAvatars
-                = new NativeArray<Matrix4x4>(AVATAR_ARRAY_SIZE, Allocator.Persistent);
-
-            matrixPtr = (Matrix4x4*)matrixFromAllAvatars.GetUnsafePtr();
-
+            matrixFromAllAvatars = new NativeArray<Matrix4x4>(AVATAR_ARRAY_SIZE, Allocator.Persistent);
             updateAvatar = new NativeArray<bool>(AVATAR_ARRAY_SIZE, Allocator.Persistent);
-            updateAvatarPtr = (bool*)updateAvatar.GetUnsafePtr();
 
             currentAvatarAmountSupported = AVATAR_ARRAY_SIZE;
 
@@ -112,14 +111,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Profiler.EndSample();
 
             //Setup of data
-            matrixPtr[transformMatrixComponent.IndexInGlobalJobArray] = avatarBase.transform.worldToLocalMatrix;
-            updateAvatarPtr[transformMatrixComponent.IndexInGlobalJobArray] = true;
+            matrixFromAllAvatars[transformMatrixComponent.IndexInGlobalJobArray] = avatarBase.transform.worldToLocalMatrix;
+            updateAvatar[transformMatrixComponent.IndexInGlobalJobArray] = true;
 
             if (avatarIndex >= currentAvatarAmountSupported - 1)
                 ResizeArrays();
         }
 
-        private void ResizeArrays()
+        private unsafe void ResizeArrays()
         {
             var newBonesCombined
                 = new NativeArray<Matrix4x4>(BONES_PER_AVATAR_LENGTH * nextResizeValue, Allocator.Persistent);
@@ -144,7 +143,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             matrixFromAllAvatars.Dispose();
             matrixFromAllAvatars = newMatrixFromAllAvatars;
-            matrixPtr = (Matrix4x4*)matrixFromAllAvatars.GetUnsafePtr();
 
             var newUpdateAvatar
                 = new NativeArray<bool>(AVATAR_ARRAY_SIZE * nextResizeValue, Allocator.Persistent);
@@ -154,7 +152,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             updateAvatar.Dispose();
             updateAvatar = newUpdateAvatar;
-            updateAvatarPtr = (bool*)updateAvatar.GetUnsafePtr();
 
             job.BonesMatricesResult.Dispose();
             job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH * nextResizeValue, bonesCombined);
@@ -168,6 +165,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void Dispose()
         {
+            disposed = true;
+
             handle.Complete();
             bonesCombined.Dispose();
             updateAvatar.Dispose();
@@ -176,11 +175,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void ReleaseAvatar(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
         {
-            if (avatarTransformMatrixComponent.IndexInGlobalJobArray == -1)
-                return;
+            if (disposed) return;
+            if (avatarTransformMatrixComponent.IndexInGlobalJobArray == -1) return;
 
             //Dont update this index anymore until reset
-            updateAvatarPtr[avatarTransformMatrixComponent.IndexInGlobalJobArray] = false;
+            updateAvatar[avatarTransformMatrixComponent.IndexInGlobalJobArray] = false;
             releasedIndexes.Push(avatarTransformMatrixComponent.IndexInGlobalJobArray);
 
             avatarTransformMatrixComponent.IndexInGlobalJobArray = -1;
