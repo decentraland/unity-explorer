@@ -1374,9 +1374,9 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
-    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.050980393}
-    m_PressedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
-    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.050980393}
+    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
+    m_PressedColor: {r: 1, g: 1, b: 1, a: 0.011764706}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0}
     m_DisabledColor: {r: 1, g: 1, b: 1, a: 0}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -4505,7 +4505,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <background>k__BackingField: {fileID: 8349685385414429856}
   <normalColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.4}
-  <hoveredColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.03137255}
+  <hoveredColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.011764706}
   <mainButton>k__BackingField: {fileID: 4917909146555496661}
   <contextMenuButton>k__BackingField: {fileID: 5858251751813836860}
   <unbanButton>k__BackingField: {fileID: 2142470260955635812}
