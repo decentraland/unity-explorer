@@ -273,7 +273,41 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var mockedCommunities = await GetUserCommunitiesAsync(
+                "",
+                false,
+                1,
+                3,
+                ct);
+
+            var mockedInvitations = new List<GetUserInviteRequestData.UserInviteRequestData>();
+            foreach (GetUserCommunitiesData.CommunityData community in mockedCommunities.data.results)
+            {
+                mockedInvitations.Add(new GetUserInviteRequestData.UserInviteRequestData
+                {
+                    id = community.id,
+                    communityId = community.id,
+                    thumbnails = community.thumbnails,
+                    name = community.name,
+                    description = community.description,
+                    ownerAddress = community.ownerAddress,
+                    ownerName = community.ownerName,
+                    membersCount = community.membersCount,
+                    privacy = community.privacy,
+                    role = community.role,
+                    friends = community.friends,
+                    action = InviteRequestAction.invite,
+                });
+            }
+
+            return new GetUserInviteRequestResponse
+            {
+                data = new GetUserInviteRequestData
+                {
+                    results = mockedInvitations.ToArray(),
+                    total = 0,
+                }
+            };
         }
 
         public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
