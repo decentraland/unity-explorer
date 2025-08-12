@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.DebugMenu;
@@ -25,13 +26,15 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomsStatus roomsStatus;
         private DebugMenuController? debugMenuController;
 
-        public DebugMenuPlugin(DebugMenuConsoleLogEntryBus consoleLogEntryBus, IInputBlock inputBlock, IAssetsProvisioner assetsProvisioner, ICurrentSceneInfo currentSceneInfo, IRoomsStatus roomsStatus)
+        public DebugMenuPlugin(DiagnosticsContainer diagnostics, IInputBlock inputBlock, IAssetsProvisioner assetsProvisioner, ICurrentSceneInfo currentSceneInfo, IRoomsStatus roomsStatus)
         {
-            this.logEntriesBus = consoleLogEntryBus;
             this.inputBlock = inputBlock;
             this.assetsProvisioner = assetsProvisioner;
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
+
+            logEntriesBus = new DebugMenuConsoleLogEntryBus();
+            diagnostics.AddDebugConsoleHandler(logEntriesBus);
         }
 
         public async UniTask InitializeAsync(DebugMenuSettings settings, CancellationToken ct)
