@@ -18,7 +18,7 @@ using UnityEngine.Pool;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [UpdateAfter(typeof(NametagPlacementSystem))]
     [LogCategory(ReportCategory.DEBUG)]
     public partial class DebugRoomsSystem : BaseUnityLoopSystem
@@ -27,6 +27,7 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly RoomsStatus roomsStatus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ElementBinding<bool> debugAvatarsRooms;
+        private bool enabled;
 
         public DebugRoomsSystem(
             World world,
@@ -34,6 +35,7 @@ namespace DCL.Multiplayer.Connections.Systems
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IActivatableConnectiveRoom chatRoom,
+            IActivatableConnectiveRoom voiceChatRoom,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IRemoteMetadata remoteMetadata,
             IDebugContainerBuilder debugBuilder,
@@ -44,8 +46,8 @@ namespace DCL.Multiplayer.Connections.Systems
             this.roomIndicatorPool = roomIndicatorPool;
 
             DebugWidgetBuilder? infoWidget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ROOM_INFO);
-
-            if (infoWidget == null)
+            enabled = infoWidget != null;
+            if (!enabled)
             {
                 roomDisplay = new IRoomDisplay.Null();
                 return;
@@ -73,6 +75,13 @@ namespace DCL.Multiplayer.Connections.Systems
                 debugBuilder
             );
 
+            IRoomDisplay voiceChatRoomDisplay = DebugWidgetRoomDisplay.Create(
+                IDebugContainerBuilder.Categories.ROOM_VOICE_CHAT,
+                voiceChatRoom,
+                debugBuilder
+            );
+
+
             var avatarsRoomDisplay = new AvatarsRoomDisplay(
                 entityParticipantTable,
                 infoWidget
@@ -94,7 +103,7 @@ namespace DCL.Multiplayer.Connections.Systems
             );
 
             roomDisplay = new DebounceRoomDisplay(
-                new SeveralRoomDisplay(gateKeeperRoomDisplay, archipelagoRoomDisplay, infoRoomDisplay, chatRoomDisplay),
+                new SeveralRoomDisplay(gateKeeperRoomDisplay, archipelagoRoomDisplay, infoRoomDisplay, chatRoomDisplay, voiceChatRoomDisplay),
                 TimeSpan.FromSeconds(1)
             );
 
@@ -103,6 +112,8 @@ namespace DCL.Multiplayer.Connections.Systems
 
         protected override void Update(float t)
         {
+            if (!enabled) return;
+
             roomDisplay.Update();
             roomsStatus.Update();
 

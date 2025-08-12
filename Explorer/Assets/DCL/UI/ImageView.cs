@@ -1,22 +1,61 @@
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI
 {
+    [RequireComponent(typeof(Image))]
     public class ImageView : MonoBehaviour
     {
         [field: SerializeField]
         internal GameObject LoadingObject { get; private set; }
 
+        [field: SerializeField, Tooltip("Optional")]
+        private SkeletonLoadingView? skeletonLoadingView { get; set; }
+
         [field: SerializeField]
         internal Image Image { get; private set; }
+
+        [field: SerializeField]
+        internal float imageLoadingFadeDuration { get; private set; } = 0.3f;
+
+        public Sprite ImageSprite => Image.sprite;
+        
+        public Color ImageColor
+        {
+            get => Image.color;
+            set => Image.color = value;
+        }
+
+        [SerializeField] private AspectRatioFitter? aspectRatioFitter;
+        [SerializeField] private RectTransform? rectTransform;
+
+        private Vector2 originalPivot;
+        private bool originalPreserveAspect;
+        private readonly Vector2 centerPivot = new (0.5f, 0.5f);
+
+        private void Awake()
+        {
+            originalPreserveAspect = Image.preserveAspect;
+
+            if (rectTransform != null)
+                originalPivot = rectTransform.pivot;
+        }
 
         public bool IsLoading
         {
             get => LoadingObject.activeSelf;
-            set => LoadingObject.SetActive(value);
+            set
+            {
+                LoadingObject.SetActive(value);
+
+                if (value)
+                    skeletonLoadingView?.ShowLoading();
+                else
+                    skeletonLoadingView?.HideLoading();
+            }
         }
 
         public bool ImageEnabled
@@ -33,15 +72,23 @@ namespace DCL.UI
             }
         }
 
-        public void SetImage(Sprite sprite)
+        public void SetImage(Sprite sprite, bool fitAndCenterImage = false)
         {
             Image.enabled = true;
             Image.sprite = sprite;
-            LoadingObject.SetActive(false);
-        }
+            IsLoading = false;
 
-        public void SetColor(Color color) =>
-            Image.color = color;
+            //Cannot fit image if aspect ratio fitter or rect transform is not set
+            if (aspectRatioFitter == null || rectTransform == null)
+                return;
+
+            rectTransform.pivot = fitAndCenterImage ? centerPivot : originalPivot;
+            aspectRatioFitter.aspectMode = fitAndCenterImage ? AspectRatioFitter.AspectMode.EnvelopeParent : AspectRatioFitter.AspectMode.None;
+            Image.preserveAspect = !fitAndCenterImage && originalPreserveAspect;
+
+            if (sprite != null && sprite.texture != null)
+                aspectRatioFitter.aspectRatio = fitAndCenterImage ? sprite.texture.width * 1f / sprite.texture.height : 1f;
+        }
 
         public async UniTask FadeInAsync(float duration, CancellationToken ct)
         {
@@ -58,6 +105,11 @@ namespace DCL.UI
             }
 
             Alpha = 1f;
+        }
+
+        public void ShowImageAnimated()
+        {
+            Image.DOColor(Color.white, imageLoadingFadeDuration);
         }
     }
 }

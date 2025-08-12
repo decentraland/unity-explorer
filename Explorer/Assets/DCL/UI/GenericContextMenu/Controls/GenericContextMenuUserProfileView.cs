@@ -83,9 +83,16 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
+            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor);
 
-            ProfilePictureView.Setup(profileRepositoryWrapper, settings.userColor, settings.userThumbnailAddress, settings.userAddress);
+            if (settings.showProfilePicture)
+            {
+                ProfilePictureView.gameObject.SetActive(true);
+                ProfilePictureView.Setup(profileRepositoryWrapper, settings.userData.userColor, settings.userData.userThumbnailAddress);
+            }
+            else
+                ProfilePictureView.gameObject.SetActive(false);
+
             ConfigureFriendshipButton(settings);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
@@ -97,11 +104,11 @@ namespace DCL.UI.GenericContextMenu.Controls
         }
 
         private void InvokeSettingsAction(UserProfileContextMenuControlSettings settings) =>
-            settings.friendButtonClickAction(settings.userAddress, settings.friendshipStatus);
+            settings.friendButtonClickAction(settings.userData, settings.friendshipStatus);
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
+            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.userName : settings.userData.userAddress);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)
@@ -131,11 +138,13 @@ namespace DCL.UI.GenericContextMenu.Controls
         private float CalculateComponentHeight()
         {
             float totalHeight = Math.Max(userNameRectTransform.rect.height, USER_NAME_MIN_HEIGHT)
-                                + Math.Max(faceFrameRectTransform.rect.height, FACE_FRAME_MIN_HEIGHT)
                                 + Math.Max(userAddressRectTransform.rect.height, USER_NAME_MIN_HEIGHT)
                                 + HorizontalLayoutComponent.padding.bottom
                                 + HorizontalLayoutComponent.padding.top
                                 + (ContentVerticalLayout.spacing * 2);
+
+            if (ProfilePictureView.gameObject.activeSelf)
+                totalHeight += Math.Max(faceFrameRectTransform.rect.height, FACE_FRAME_MIN_HEIGHT);
 
             if (AddFriendButton.gameObject.activeSelf || AcceptFriendButton.gameObject.activeSelf || RemoveFriendButton.gameObject.activeSelf || CancelFriendButton.gameObject.activeSelf)
                 totalHeight += Math.Max(buttonContainerRectTransform.rect.height, FRIEND_BUTTON_MIN_HEIGHT) + ContentVerticalLayout.spacing;

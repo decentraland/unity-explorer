@@ -19,11 +19,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private readonly List<URN> shortenedWearables = new();
         private readonly HashSet<URN> shortenedEmotes = new();
-        private readonly HashSet<URN> previewEmotesSet = new ();
 
-        private URN[] previewEmotes;
-        private float emoteCooldown;
-        private int currentEmoteIndex;
         private CancellationTokenSource? playEmotesCts;
 
         public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view, AuthScreenEmotesSettings settings, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
@@ -32,18 +28,16 @@ namespace DCL.AuthenticationScreenFlow
             this.settings = settings;
         }
 
-        public override void Initialize(Avatar avatar)
+        public override void Initialize(Avatar avatar, Vector3 position)
         {
+            playEmotesCts = playEmotesCts.SafeRestart();
+
             previewAvatarModel.Wearables = ShortenWearables(avatar);
             previewAvatarModel.Emotes = ShortenEmotes(avatar);
 
-            previewEmotes = PreviewEmotes();
-            RandomizePreviewEmotes();
-
-            base.Initialize(avatar);
-
-            playEmotesCts = playEmotesCts.SafeRestart();
-            PlayPreviewEmotesSequentiallyAsync(playEmotesCts.Token).Forget();
+            base.Initialize(avatar, position);
+            previewController!.Value.EnableHeadIK();
+            PlayEmote(settings.IntroEmoteURN);
         }
 
         public new void OnHide(bool triggerOnHideBusEvent = true)
@@ -82,72 +76,17 @@ namespace DCL.AuthenticationScreenFlow
             return shortenedEmotes;
         }
 
-        private URN[] PreviewEmotes()
-        {
-            previewEmotesSet.Clear();
-
-            foreach (var emote in shortenedEmotes)
-                previewEmotesSet.Add(emote);
-
-            foreach (string funnyEmote in settings.FunnyEmotes)
-                previewEmotesSet.Add(funnyEmote);
-
-            return previewEmotesSet.ToArray();
-        }
-
-        private async UniTask PlayPreviewEmotesSequentiallyAsync(CancellationToken ct)
-        {
-            await PlayEmoteAndAwaitItAsync(settings.IntroEmoteURN, ct);
-
-            if (previewEmotes is { Length: <= 0 } || ct.IsCancellationRequested) return;
-
-            currentEmoteIndex = 0;
-            while (!ct.IsCancellationRequested)
-            {
-                await UniTask.Yield(PlayerLoopTiming.PreLateUpdate);
-                emoteCooldown += Time.deltaTime;
-
-                if (emoteCooldown > settings.TimeBetweenEmotes)
-                {
-                    await PlayEmoteAndAwaitItAsync(previewEmotes[currentEmoteIndex], ct);
-
-                    emoteCooldown = 0f;
-                    currentEmoteIndex++;
-
-                    if (currentEmoteIndex >= previewEmotes.Length)
-                    {
-                        RandomizePreviewEmotes();
-                        currentEmoteIndex = 0;
-                    }
-                }
-            }
-        }
-
         public async UniTask PlayJumpInEmoteAndAwaitItAsync()
         {
             playEmotesCts = playEmotesCts.SafeRestart();
             await PlayEmoteAndAwaitItAsync(settings.JumpInEmoteURN, playEmotesCts!.Token);
-        }
-
-        /// <summary>
-        /// Fisher-Yates shuffle algorithm
-        /// </summary>
-        private void RandomizePreviewEmotes()
-        {
-            for (int i = previewEmotes.Length - 1; i > 0; i--)
-            {
-                int randomIndex = Random.Range(0, i + 1);
-                (previewEmotes[i], previewEmotes[randomIndex]) = (previewEmotes[randomIndex], previewEmotes[i]);
-            }
         }
     }
 
     [Serializable]
     public class AuthScreenEmotesSettings
     {
-        [field: SerializeField] public float TimeBetweenEmotes { get; private set; }
         [field: SerializeField] public string IntroEmoteURN { get; private set; }
         [field: SerializeField] public string JumpInEmoteURN { get; private set; }
-        [field: SerializeField] public string[] FunnyEmotes { get; private set; }
     }
 }

@@ -15,5 +15,6 @@ namespace DCL.SDKComponents.NFTShape.Frames
         public abstract void Place(Texture2D picture);
 
         public abstract void UpdateStatus(Status status);
+
     }
 }

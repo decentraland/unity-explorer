@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     // Decide if we can repeat or not
                     --attemptCount;
 
-                    if (unityWebRequestException.IsIrrecoverableError(attemptCount))
+                    if (attemptCount <= 0 || unityWebRequestException.IsIrrecoverableError())
                     {
                         // no more sources left
                         ReportHub.Log(
@@ -74,7 +74,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // General exception
                     // conclude now, we can't do anything
-                    return new StreamableLoadingResult<TAsset>(reportData.WithSessionStatic(), e);
+                    return new StreamableLoadingResult<TAsset>(reportData.WithStaticDebounce(), e);
                 }
             }
         }

@@ -46,11 +46,13 @@ namespace DCL.ECS7
         public const int UI_INPUT_RESULT = 1095;
         public const int UI_DROPDOWN_RESULT = 1096;
         public const int MAP_PIN = 1097;
+        public const int GLTF_NODE_MODIFIERS = 1099;
         public const int TWEEN = 1102;
         public const int TWEEN_STATE = 1103;
         public const int TWEEN_SEQUENCE = 1104;
         public const int AUDIO_EVENT = 1105;
         public const int REALM_INFO = 1106;
         public const int PRIMARY_POINTER_INFO = 1209;
+        public const int SKYBOX_TIME = 1210;
     }
 }

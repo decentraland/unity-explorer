@@ -11,6 +11,8 @@ namespace ECS.StreamableLoading.Textures
     public struct GetTextureIntention : ILoadingIntention, IEquatable<GetTextureIntention>
     {
         public CommonLoadingArguments CommonArguments { get; set; }
+        public string ReportSource;
+        public bool IsAvatarTexture;
 
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
@@ -18,7 +20,6 @@ namespace ECS.StreamableLoading.Textures
 
         // OR
         public readonly bool IsVideoTexture;
-        public readonly bool IsAvatarTexture;
         public readonly CRDTEntity VideoPlayerEntity;
         public readonly string FileHash;
         public readonly string Src => CommonArguments.URL.Value;
@@ -29,6 +30,7 @@ namespace ECS.StreamableLoading.Textures
         private readonly string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash;
 
         public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
+            string reportSource,
             int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             bool isAvatarTexture = false)
         {
@@ -40,6 +42,7 @@ namespace ECS.StreamableLoading.Textures
             VideoPlayerEntity = -1;
             FileHash = fileHash;
             IsAvatarTexture = isAvatarTexture;
+            ReportSource = reportSource;
         }
 
         public GetTextureIntention(CRDTEntity videoPlayerEntity)
@@ -52,6 +55,7 @@ namespace ECS.StreamableLoading.Textures
             VideoPlayerEntity = videoPlayerEntity;
             TextureType = TextureType.Albedo; //Ignored
             IsAvatarTexture = false;
+            ReportSource = "Video Texture";
         }
 
         public bool Equals(GetTextureIntention other) =>
@@ -68,10 +72,16 @@ namespace ECS.StreamableLoading.Textures
             HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity);
 
         public readonly override string ToString() =>
-            $"Get Texture: {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
+            $"Get Texture by {ReportSource}, {(IsAvatarTexture ? "isAvatarTexture" : string.Empty)} : {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetTextureIntention>
         {
+            /// <summary>
+            /// Number added to the hash, to differentiate between incompatible serialize/deserialize types.
+            /// E.g. after adding WrapMode and Filtering mode to meta data, previously downloaded textures could not be
+            /// deserialized anymore.
+            /// </summary>
+            private const int ITERATION_NUMBER = 1;
             public static readonly DiskHashCompute INSTANCE = new ();
 
             private DiskHashCompute() { }
@@ -79,6 +89,7 @@ namespace ECS.StreamableLoading.Textures
             protected override void FillPayload(IHashKeyPayload keyPayload, in GetTextureIntention asset)
             {
                 keyPayload.Put(asset.cacheKey);
+                keyPayload.Put(ITERATION_NUMBER);
                 keyPayload.Put((int)asset.WrapMode);
                 keyPayload.Put((int)asset.FilterMode);
                 keyPayload.Put(asset.IsVideoTexture);

@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -122,7 +123,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewInstantiated();
 
-            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["profileName"];
+            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
@@ -142,7 +143,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
-            viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitApp);
+            viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
         }
 
@@ -169,6 +170,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             viewInstance!.FinalizeContainer.SetActive(false);
+            viewInstance!.JumpIntoWorldButton.interactable = true;
             web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
@@ -263,7 +265,7 @@ namespace DCL.AuthenticationScreenFlow
                     CurrentRequestID = string.Empty;
 
                     viewInstance!.ErrorPopupRoot.SetActive(false);
-                    viewInstance!.ConnectingToServerContainer.SetActive(true);
+                    viewInstance!.LoadingSpinner.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
@@ -327,8 +329,14 @@ namespace DCL.AuthenticationScreenFlow
             profile.IsDirty = true;
             // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
             profile.HasConnectedWeb3 = true;
-            profileNameLabel!.Value = profile.Name;
-            characterPreviewController?.Initialize(profile.Avatar);
+
+            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
+            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+
+            return;
+
+            bool IsNewUser() =>
+                profile.Version == 1;
         }
 
         private void ChangeAccount()
@@ -349,6 +357,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
+            viewInstance!.JumpIntoWorldButton.interactable = false;
             AnimateAndAwaitAsync().Forget();
             return;
 
@@ -373,53 +382,57 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Login:
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.Slides.SetActive(true);
+
                     viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.ProgressContainer.SetActive(false);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = true;
+
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
 
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
-                case ViewState.LoginInProgress:
-                    ResetAnimator(viewInstance!.VerificationAnimator);
-                    viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.Slides.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.ProgressContainer.SetActive(false);
+                case ViewState.Loading:
+                    viewInstance!.PendingAuthentication.SetActive(false);
+
+                    viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.LoadingSpinner.SetActive(true);
+                    viewInstance.LoginButton.interactable = true;
+
                     viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
-                case ViewState.Loading:
-                    viewInstance!.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.Slides.SetActive(true);
-                    viewInstance.ProgressContainer.SetActive(true);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                case ViewState.LoginInProgress:
+                    ResetAnimator(viewInstance!.VerificationAnimator);
+
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
+                    viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+
+                    viewInstance.PendingAuthentication.SetActive(true);
+                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
                     ResetAnimator(viewInstance!.FinalizeAnimator);
-                    viewInstance.Slides.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
+
                     viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.ProgressContainer.SetActive(false);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+
                     viewInstance.FinalizeContainer.SetActive(true);
                     viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+                    viewInstance.JumpIntoWorldButton.interactable = true;
                     characterPreviewController?.OnShow();
 
                     break;
@@ -428,7 +441,7 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void ResetAnimator(Animator animator)
+        private static void ResetAnimator(Animator animator)
         {
             animator.Rebind();
             animator.Update(0f);
@@ -458,14 +471,6 @@ namespace DCL.AuthenticationScreenFlow
         private void RequestAlphaAccess() =>
             webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
 
-        private void ExitApp()
-        {
-#if UNITY_EDITOR
-            EditorApplication.isPlaying = false;
-            return;
-#endif
-            Application.Quit();
-        }
 
         private void CloseErrorPopup() =>
             viewInstance!.ErrorPopupRoot.SetActive(false);

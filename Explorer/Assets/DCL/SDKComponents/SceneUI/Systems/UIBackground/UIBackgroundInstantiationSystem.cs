@@ -13,6 +13,7 @@ using DCL.SDKComponents.Utils;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
@@ -86,7 +87,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
             }
             else if (uiBackgroundComponent is { TexturePromise: not null, Status: LifeCycle.LoadingFinished })
-
                 // Ensure texture has latest data from model
                 uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, uiBackgroundComponent.Image.Texture);
 
@@ -115,7 +115,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 if (promiseResult.Succeeded)
                     uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, promiseResult.Asset);
                 else
-                    ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
+                    ReportHub.LogError(ReportCategory.SCENE_UI, $"Error consuming texture promise in {nameof(UIBackgroundInstantiationSystem)} for source {texturePromise.LoadingIntention.Src} | Scene {sceneData.SceneShortInfo.ToString()}");
 
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
                 uiBackgroundComponent.Image.IsHidden = false;
@@ -130,7 +130,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             if (textureComponent == null)
             {
                 // If component is being reuse forget the previous promise
-                TryAddAbortIntention(World, ref promise);
+                TryAddAbortIntention(ref promise);
                 return;
             }
 
@@ -142,18 +142,32 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 return;
 
             // If component is being reused forget the previous promise
-            TryAddAbortIntention(World, ref promise);
+            TryAddAbortIntention(ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.FileHash, textureComponentValue.WrapMode, textureComponentValue.FilterMode, textureComponentValue.TextureType, attemptsCount: ATTEMPTS_COUNT, isAvatarTexture: textureComponentValue.IsAvatarTexture), partitionComponent);
+            ReportHub.Log(ReportCategory.SCENE_UI, $"Start loading texture for UI background for source {textureComponentValue.Src} | Scene {sceneData.SceneShortInfo.ToString()}");
+
+            promise = Promise.Create(
+                World,
+                new GetTextureIntention(
+                    textureComponentValue.Src,
+                    textureComponentValue.FileHash,
+                    textureComponentValue.WrapMode,
+                    textureComponentValue.FilterMode,
+                    textureComponentValue.TextureType,
+                    attemptsCount: ATTEMPTS_COUNT,
+                    isAvatarTexture: textureComponentValue.IsAvatarTexture,
+                    reportSource: nameof(UIBackgroundInstantiationSystem)),
+                partitionComponent);
         }
 
-        private static void TryAddAbortIntention(World world, ref Promise? promise)
+        private void TryAddAbortIntention(ref Promise? promise)
         {
             if (promise == null)
                 return;
 
-            promise.Value.ForgetLoading(world);
-
+            Promise texturePromiseValue = promise.Value;
+            texturePromiseValue.TryDereference(World);
+            texturePromiseValue.ForgetLoading(World);
             // Nullify the entity reference
             promise = null;
         }

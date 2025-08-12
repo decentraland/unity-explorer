@@ -284,6 +284,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     {
                         // If cancellation token source was not provided a new one will be created
                         CommonArguments = new CommonLoadingArguments(URLAddress.FromString(wearable.DTO.ContentDownloadUrl+content.hash), cancellationTokenSource: intention.CancellationTokenSource),
+                        ReportSource = nameof(WearablePolymorphicBehaviour),
                     },
                     partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);
@@ -338,7 +339,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
         {
-            GameObject go = result.Asset!.containerGameObject;
+            GameObject go = result.Asset!.Root;
 
             // collect all renderers
             List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();

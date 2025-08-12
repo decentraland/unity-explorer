@@ -1,26 +1,40 @@
 using Cysharp.Threading.Tasks;
-using DCL.StylizedSkybox.Scripts;
+using DCL.SkyBox;
 using DCL.UI.SharedSpaceManager;
 using MVC;
+using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Skybox
 {
     public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IControllerInSharedSpace<SkyboxMenuView>
     {
-        private const int SECONDS_IN_DAY = 86400;
-
-        private readonly StylizedSkyboxSettingsAsset skyboxSettings;
+        private readonly SkyboxSettingsAsset skyboxSettings;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private CancellationTokenSource skyboxMenuCts = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
+        public SkyboxMenuController(ViewFactoryMethod viewFactory, SkyboxSettingsAsset skyboxSettings) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            skyboxMenuCts.SafeCancelAndDispose();
+
+            skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
+            skyboxSettings.DayCycleChanged -= OnDayCycleChanged;
+
+            if (!viewInstance) return;
+            viewInstance.CloseButton.onClick.RemoveAllListeners();
+            viewInstance.TimeSlider.onValueChanged.RemoveAllListeners();
+            viewInstance.TimeProgressionToggle.onValueChanged.RemoveAllListeners();
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
@@ -40,17 +54,41 @@ namespace DCL.UI.Skybox
         {
             base.OnViewInstantiated();
 
+            skyboxSettings.DayCycleChanged += OnDayCycleChanged;
+            skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
+
             viewInstance!.CloseButton.onClick.AddListener(OnClose);
 
-            viewInstance.TimeSlider.value = skyboxSettings.NormalizedTime;
-            skyboxSettings.NormalizedTimeChanged += OnNormalizedTimeChanged;
+            viewInstance.TimeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleChanged);
             viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
 
-            viewInstance.DynamicToggle.isOn = skyboxSettings.UseDynamicTime;
-            skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
-            viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
+            OnDayCycleChanged(skyboxSettings.IsDayCycleEnabled);
+            OnTimeOfDayChanged(skyboxSettings.TimeOfDayNormalized);
+        }
 
-            SetTimeEnabled(!skyboxSettings.UseDynamicTime);
+        private void OnDayCycleChanged(bool isEnabled)
+        {
+            viewInstance!.TimeProgressionToggle.isOn = isEnabled;
+            viewInstance.TopSliderGroup.enabled = isEnabled;
+            viewInstance.TextSliderGroup.enabled = isEnabled;
+        }
+
+        private void OnTimeSliderValueChanged(float sliderValue)
+        {
+            skyboxSettings.TimeOfDayNormalized = sliderValue;
+            skyboxSettings.TargetTimeOfDayNormalized = sliderValue;
+            skyboxSettings.UIOverrideTimeOfDayNormalized = sliderValue;
+        }
+
+        private void OnTimeProgressionToggleChanged(bool isOn)
+        {
+            skyboxSettings.IsUIControlled = !isOn;
+
+            if (skyboxSettings.IsUIControlled)
+                skyboxSettings.UIOverrideTimeOfDayNormalized = viewInstance!.TimeSlider.normalizedValue;
+
+            viewInstance!.TopSliderGroup.enabled = isOn;
+            viewInstance.TextSliderGroup.enabled = isOn;
         }
 
         protected override void OnBeforeViewShow()
@@ -59,56 +97,25 @@ namespace DCL.UI.Skybox
             skyboxMenuCts = skyboxMenuCts.SafeRestart();
         }
 
-        private void OnUseDynamicTimeChanged(bool dynamic)
-        {
-            SetTimeEnabled(!dynamic);
-            viewInstance!.DynamicToggle.isOn = dynamic;
-        }
-
-        private void OnDynamicToggleValueChanged(bool dynamic)
-        {
-            skyboxSettings.UseDynamicTime = dynamic;
-        }
-
-        private void OnNormalizedTimeChanged(float time)
+        private void OnTimeOfDayChanged(float time)
         {
             viewInstance!.TimeSlider.SetValueWithoutNotify(time);
-            viewInstance.TimeText.text = GetFormatedTime(time);
+            viewInstance!.TimeText.text = GetFormatedTime(time);
         }
 
-        private void OnTimeSliderValueChanged(float time)
+        private static string GetFormatedTime(float time)
         {
-            skyboxSettings.UseDynamicTime = false;
-            skyboxSettings.NormalizedTime = time;
-        }
+            int totalMinutes = (int)Mathf.Round(time * SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
 
-        private void SetTimeEnabled(bool enabled)
-        {
-            viewInstance!.TopSliderGroup.enabled = !enabled;
-            viewInstance!.TextSliderGroup.enabled = !enabled;
-        }
+            int hours = totalMinutes / 60;
+            int minutes = totalMinutes % 60;
 
-        private string GetFormatedTime(float time)
-        {
-            // We need to subtract 1 second to SECONDS_IN_DAY to make the slider range is between 00:00 and 23:59, instead of 00:00 and 24:00
-            var totalSec = (int)(time * (SECONDS_IN_DAY - 1));
-
-            int hours = totalSec / 3600;
-            int minutes = totalSec % 3600 / 60;
             return $"{hours:00}:{minutes:00}";
         }
 
         private void OnClose()
         {
             skyboxMenuCts.Cancel();
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-            skyboxMenuCts.SafeCancelAndDispose();
-            skyboxSettings.UseDynamicTimeChanged -= OnUseDynamicTimeChanged;
-            skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
         }
     }
 }

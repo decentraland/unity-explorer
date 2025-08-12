@@ -1,5 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,9 +8,10 @@ namespace ECS.SceneLifeCycle
 {
     public interface IScenesCache
     {
+        event Action<ISceneFacade?>? OnCurrentSceneChanged;
+        ISceneFacade? CurrentScene { get; }
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
         IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; }
-        ISceneFacade? CurrentScene { get; }
 
         void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
@@ -40,15 +42,26 @@ namespace ECS.SceneLifeCycle
 
     public class ScenesCache : IScenesCache
     {
+        private ISceneFacade? currentScene;
+
         private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT);
         private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT);
         private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.PORTABLE_EXPERIENCES_INITIAL_COUNT);
-
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
 
         public IReadOnlyCollection<ISceneFacade> Scenes => scenes;
         public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes => portableExperienceScenesByUrn.Values;
-        public ISceneFacade? CurrentScene { get; private set; }
+        public event Action<ISceneFacade?>? OnCurrentSceneChanged;
+        public ISceneFacade? CurrentScene
+        {
+            get => currentScene;
+            private set
+            {
+                if (currentScene == value) return;
+                currentScene = value;
+                OnCurrentSceneChanged?.Invoke(currentScene);
+            }
+        }
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
@@ -60,8 +73,8 @@ namespace ECS.SceneLifeCycle
 
         public void AddNonRealScene(IReadOnlyList<Vector2Int> parcels)
         {
-            foreach (Vector2Int parcel in parcels)
-                nonRealSceneByParcel.Add(parcel);
+            for (var i = 0; i < parcels.Count; i++)
+                nonRealSceneByParcel.Add(parcels[i]);
         }
 
         public void AddNonRealScene(Vector2Int parcel)
@@ -77,12 +90,12 @@ namespace ECS.SceneLifeCycle
 
         public void RemoveSceneFacade(IReadOnlyList<Vector2Int> parcels)
         {
-            for (var i = 0; i < parcels.Count; i++)
+            foreach (var parcel in parcels)
             {
-                if (scenesByParcels.TryGetValue(parcels[i], out ISceneFacade? sceneFacade))
+                if (scenesByParcels.TryGetValue(parcel, out ISceneFacade? sceneFacade))
                 {
                     scenes.Remove(sceneFacade);
-                    scenesByParcels.Remove(parcels[i]);
+                    scenesByParcels.Remove(parcel);
                 }
             }
         }
@@ -103,7 +116,7 @@ namespace ECS.SceneLifeCycle
             sceneFacade = null;
             foreach (ISceneFacade facade in scenes)
             {
-                if (facade.SceneData.SceneEntityDefinition.id!.Equals(sceneId))
+                if (facade is { SceneData: { SceneEntityDefinition: { id: { } id } } } && id.Equals(sceneId))
                 {
                     sceneFacade = facade;
                     return true;

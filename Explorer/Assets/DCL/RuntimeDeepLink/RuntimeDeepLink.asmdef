@@ -1,0 +1,25 @@
+{
+    "name": "RuntimeDeepLink",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:8baf705856414dad9a73b3f382f1bc8b",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:f3634757d00dab2429c6c11e69404e97",
+        "GUID:166b65e6dfc848bb9fb075f53c293a38",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:4d7a7b59acaf5954db4a5fa15a5b160c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

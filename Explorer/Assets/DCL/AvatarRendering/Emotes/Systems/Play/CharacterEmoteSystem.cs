@@ -6,6 +6,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Character.Components;
@@ -36,6 +37,7 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(AvatarGroup))]
     [UpdateAfter(typeof(RemoteEmotesSystem))]
+    [UpdateAfter(typeof(LoadEmotesByPointersSystem))]
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
     [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
@@ -184,10 +186,21 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
+                    if (emote.IsLoading)
+                        return;
+
                     // emote failed to load? remove intent
                     if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the manifest");
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
+
+                    // emote failed to load? remove intent
+                    if (emote.Model is { IsInitialized: true, Succeeded: false })
+                    {
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the DTO");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
@@ -196,6 +209,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
 
                     // the emote is still loading? don't remove the intent yet, wait for it
+                    //TODO (JUANI) : This will go away when the manifest request is out. 
                     if (streamableAsset == null)
                         return;
 
@@ -213,14 +227,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    if (!emotePlayer.Play(mainAsset, audioClip, emoteIntent.TriggerSource != TriggerSource.PREVIEW && emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
                 else
+                {
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
-                    LoadEmote(emoteId, avatarShapeComponent.BodyShape);
+                    World.Create(CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape));
+                }
+
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -252,21 +269,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
         {
             characterController.enabled = !emoteComponent.IsPlayingEmote;
-        }
-
-        private void LoadEmote(URN emoteId, BodyShape bodyShape)
-        {
-            var isLoadingThisEmote = false;
-
-            World.Query(in new QueryDescription().WithAll<EmotePromise>(), (Entity entity, ref EmotePromise promise) =>
-            {
-                if (!promise.IsConsumed && promise.LoadingIntention.Pointers.Contains(emoteId))
-                    isLoadingThisEmote = true;
-            });
-
-            if (isLoadingThisEmote) return;
-
-            World.Create(CreateEmotePromise(emoteId, bodyShape));
         }
 
         private EmotePromise CreateEmotePromise(URN urn, BodyShape bodyShape)

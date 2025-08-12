@@ -14,6 +14,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
 using System;
 using System.Threading;
 using UnityEngine.Pool;
@@ -30,13 +31,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
     public enum AttemptToConnectState
     {
-        None,
-        Success,
-        Error,
+        NONE,
+        SUCCESS,
+        ERROR,
         /// <summary>
         ///     Indicates that the loop was successfully launched but in the current context connection was not required
         /// </summary>
-        NoConnectionRequired,
+        NO_CONNECTION_REQUIRED,
     }
 
     /// <summary>
@@ -52,7 +53,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
 
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
 
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
 
@@ -64,22 +65,25 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
                 var audioRemixConveyor = new ThreadedAudioRemixConveyor();
                 var audioStreams = new AudioStreams(hub, audioRemixConveyor);
+                var tracksFactory = new TracksFactory();
 
-                return new LogRoom(
-                    new Room(
-                        new ArrayMemoryPool(),
-                        new DefaultActiveSpeakers(),
-                        hub,
-                        new TracksFactory(),
-                        new FfiHandleFactory(),
-                        new ParticipantFactory(),
-                        new TrackPublicationFactory(),
-                        new DataPipe(),
-                        new MemoryRoomInfo(),
-                        videoStreams,
-                        audioStreams
-                    )
+                // Pass null for AudioTracks - Room constructor will create it automatically
+                var room = new Room(
+                    new ArrayMemoryPool(),
+                    new DefaultActiveSpeakers(),
+                    hub,
+                    tracksFactory,
+                    new FfiHandleFactory(),
+                    new ParticipantFactory(),
+                    new TrackPublicationFactory(),
+                    new DataPipe(),
+                    new MemoryRoomInfo(),
+                    videoStreams,
+                    audioStreams,
+                    null
                 );
+
+                return new LogRoom(room);
             });
 
         private CancellationTokenSource? cancellationTokenSource;
@@ -112,11 +116,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
-            attemptToConnectState.Set(AttemptToConnectState.None);
+            attemptToConnectState.Set(AttemptToConnectState.NONE);
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
-            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
-            return attemptToConnectState.Value() is not AttemptToConnectState.Error;
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
+            return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
         }
 
         public virtual async UniTask StopAsync()
@@ -187,7 +191,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             roomState.Set(IConnectiveRoom.State.Stopped);
 
             if (connectionIsNoLongerRequired)
-                attemptToConnectState.Set(AttemptToConnectState.NoConnectionRequired);
+                attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
 
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -200,14 +204,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             var credentials = new ConnectionStringCredentials(connectionString);
 
-            (bool connectResult, RoomSelection roomSelection) = await ChangeRoomsAsync(roomPool, credentials, token);
+            (Result connectResult, RoomSelection roomSelection) = await ChangeRoomsAsync(roomPool, credentials, token);
 
-            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
+            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
-            if (connectResult == false)
+            if (connectResult.Success == false)
             {
-                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}, error: {connectResult.ErrorMessage}");
                 return roomSelection;
             }
 
@@ -232,13 +236,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         ///     This way the flow of events is preserved so room status will be propagated properly to the subscribers
         /// </summary>
         /// <returns>Previous room</returns>
-        private async UniTask<(bool connectResult, RoomSelection selection)> ChangeRoomsAsync<T>(IObjectPool<IRoom> roomsPool, T credentials, CancellationToken ct)
+        private async UniTask<(Result connectResult, RoomSelection selection)> ChangeRoomsAsync<T>(IObjectPool<IRoom> roomsPool, T credentials, CancellationToken ct)
             where T: ICredentials
         {
             IRoom? newRoom = roomsPool.Get();
             IRoom previous = room.assigned;
 
-            bool connectResult;
+            Result connectResult;
 
             try
             {
@@ -252,7 +256,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 throw;
             }
 
-            if (connectResult == false)
+            if (connectResult.Success == false)
             {
                 roomsPool.Release(newRoom);
                 return (connectResult, RoomSelection.PREVIOUS);

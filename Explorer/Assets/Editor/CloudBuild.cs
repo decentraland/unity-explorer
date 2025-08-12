@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using DCL.Rendering.Menus;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,6 +17,7 @@ namespace Editor
 
         private static string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
+        // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
         [UsedImplicitly]
         public static void PreExport()
         {
@@ -62,6 +63,7 @@ namespace Editor
 
         }
 
+        // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
         [UsedImplicitly]
         public static void PostExport()
         {

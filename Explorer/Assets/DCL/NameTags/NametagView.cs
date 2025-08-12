@@ -15,10 +15,13 @@ namespace DCL.Nametags
 {
     public class NametagView : MonoBehaviour
     {
+        private const float COMMUNITY_TEXT_MARGIN = 0.02f;
+
         private static NativeArray<Keyframe> alphaCurveKeysNative;
         private static AnimationCurveEvaluator curveEvaluator;
         private static float verifiedIconWidth;
         private static float privateMessageIconWidth;
+        private static float isSpeakingIconWidth;
         private static Material? opaqueMaterial;
         private static Material? transparentMaterial;
         private static Vector2 claimedNameInitialPosition;
@@ -57,7 +60,16 @@ namespace DCL.Nametags
         [field: SerializeField] internal AnimationCurve alphaOverDistanceCurve { get; private set; }
         [field: SerializeField] internal RectTransform privateMessageIcon { get; private set; }
         [field: SerializeField] internal SpriteRenderer privateMessageIconRenderer { get; private set; }
+        [field: SerializeField] internal RectTransform isSpeakingIcon { get; private set; }
+        [field: SerializeField] internal SpriteRenderer isSpeakingIconRenderer { get; private set; }
+        [field: SerializeField] internal SpriteRenderer isSpeakingIconOuterRenderer { get; private set; }
+        [field: SerializeField] internal RectTransform isSpeakingIconRect { get; private set; }
+        [field: SerializeField] internal RectTransform isSpeakingIconOuterRect { get; private set; }
+
         [field: SerializeField] internal TMP_Text privateMessageText { get; private set; }
+        [field: SerializeField] internal TMP_Text communityNameText { get; private set; }
+        [field: SerializeField] internal RectTransform communityNameTextBackground { get; private set; }
+        [field: SerializeField] internal SpriteRenderer communityNameTextBackgroundRenderer { get; private set; }
 
         private enum AnimationState
         {
@@ -68,11 +80,16 @@ namespace DCL.Nametags
         private AnimationState animationState = AnimationState.IDLE;
 
         private bool isClaimedName;
+        private bool isUsingVerifiedIcon;
         private bool isMention;
         private bool isTransparent;
         private bool isPrivateMessage;
+        private bool isCommunityMessage;
         private bool showPrivateMessageRecipient;
         private bool isInitialized;
+        private bool isSpeaking = true;
+        private Sequence? isSpeakingCurrentSequence;
+
 
         private float previousDistance;
         private Material sharedMaterial;
@@ -83,16 +100,22 @@ namespace DCL.Nametags
         private Vector2 usernamePos;
         private Vector2 verifiedIconFinalPosition;
         private Vector2 verifiedIconInitialPosition;
+        private Vector2 isSpeakingIconInitialPosition;
+        private Vector2 isSpeakingIconFinalPosition;
         private Vector2 backgroundFinalSize;
         private Vector2 privateMessageFinalPosition;
         private Vector2 privateMessageTextFinalPosition;
         private Vector2 tempSizeDelta;
         private CancellationTokenSource? cts;
         private Sequence? currentSequence;
+        private Sequence? isTalkingCurrentSequence;
         private Color currentSpritesColor = new (1, 1, 1,1 );
         private Color currentBubbleTailSpriteColor;
+        private Color currentIsTalkingSpriteColor;
         private Color currentRecipientNameColor;
         private Color currentUsernameColor;
+        private Color communityNameColor;
+        private Color communityNameBackgroundColor;
 
         private float cachedUsernameWidth;
 
@@ -116,8 +139,9 @@ namespace DCL.Nametags
 
             privateMessageIconWidth = privateMessageIcon.sizeDelta.x;
             verifiedIconWidth = verifiedIcon.sizeDelta.x;
+            isSpeakingIconWidth = isSpeakingIcon.sizeDelta.x;
 
-            claimedNameInitialPosition = new Vector2(-verifiedIconWidth / 2, 0);
+            claimedNameInitialPosition = new Vector2(-(verifiedIconWidth / 2) - (isSpeaking ? isSpeakingIconWidth : 0), 0);
             messageContentAnchoredPosition = new Vector2(0, bubbleMarginOffsetHeight / 3);
             opaqueMaterial = new Material(BackgroundSprite.sharedMaterial);
             transparentMaterial = new Material(BackgroundSprite.sharedMaterial);
@@ -137,6 +161,12 @@ namespace DCL.Nametags
             mentionBackgroundSprite.sharedMaterial = sharedMaterial;
             bubbleTailSprite.sharedMaterial = sharedMaterial;
             verifiedIconRenderer.sharedMaterial = sharedMaterial;
+            isSpeakingIconRenderer.sharedMaterial = sharedMaterial;
+            isSpeakingIconOuterRenderer.sharedMaterial = sharedMaterial;
+            SetIsSpeaking(false);
+            communityNameTextBackgroundRenderer.sharedMaterial = sharedMaterial;
+            communityNameColor = communityNameText.color;
+            communityNameBackgroundColor = communityNameTextBackgroundRenderer.color;
         }
 
         private void OnEnable()
@@ -202,6 +232,7 @@ namespace DCL.Nametags
             cts = new CancellationTokenSource();
 
             isClaimedName = hasClaimedName;
+            isUsingVerifiedIcon = useVerifiedIcon;
             verifiedIcon.gameObject.SetActive(useVerifiedIcon);
 
             privateMessageIcon.gameObject.SetActive(false);
@@ -214,12 +245,17 @@ namespace DCL.Nametags
             cachedUsernameWidth = usernameText.preferredWidth;
             messageContent.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
 
-            if (hasClaimedName && useVerifiedIcon)
+            SetInitialPositions(hasClaimedName);
+        }
+
+        private void SetInitialPositions(bool hasClaimedName)
+        {
+            if (hasClaimedName && isUsingVerifiedIcon)
             {
                 usernamePos.x = usernameText.rectTransform.anchoredPosition.x;
-                verifiedIconInitialPosition = CalculateVerifiedIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, nametagMarginOffsetHeight);
+                usernamePos = CalculateUsernamePosition(usernamePos.x, verifiedIconWidth, isSpeakingIconWidth, isSpeaking);
+                verifiedIconInitialPosition = CalculateVerifiedIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, isSpeakingIconWidth, nametagMarginOffsetHeight, isSpeaking);
                 verifiedIcon.anchoredPosition = verifiedIconInitialPosition;
-                usernamePos = CalculateUsernamePosition(usernamePos.x, verifiedIconWidth);
                 usernameText.rectTransform.anchoredPosition = usernamePos;
 
                 Vector2 backgroundSize = CalculateBackgroundSize(
@@ -228,9 +264,19 @@ namespace DCL.Nametags
                     verifiedIconWidth,
                     usernameText.preferredHeight,
                     nametagMarginOffsetHeight,
+                    isSpeakingIconWidth,
+                    isSpeaking,
                     true);
                 BackgroundSprite.size = backgroundSize;
                 mentionBackgroundSprite.size = backgroundSize;
+
+                if (isSpeaking)
+                {
+                    BackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth - verifiedIconWidth) / 2, 0, 0);
+                    mentionBackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth - verifiedIconWidth) / 2, 0, 0);
+                    isSpeakingIconInitialPosition = CalculateTalkingIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, hasClaimedName, bubbleMarginOffsetWidth);
+                    isSpeakingIcon.anchoredPosition = isSpeakingIconInitialPosition;
+                }
             }
             else
             {
@@ -242,9 +288,19 @@ namespace DCL.Nametags
                     0,
                     usernameText.preferredHeight,
                     nametagMarginOffsetHeight,
+                    isSpeakingIconWidth,
+                    isSpeaking,
                     false);
                 BackgroundSprite.size = backgroundSize;
                 mentionBackgroundSprite.size = backgroundSize;
+
+                if (isSpeaking)
+                {
+                    isSpeakingIconInitialPosition = CalculateTalkingIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, hasClaimedName, nametagMarginOffsetHeight);
+                    isSpeakingIcon.anchoredPosition = isSpeakingIconInitialPosition;
+                    BackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
+                    mentionBackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
+                }
             }
         }
 
@@ -269,6 +325,11 @@ namespace DCL.Nametags
             currentBubbleTailSpriteColor.a = NameTagAlpha;
             bubbleTailSprite.color = currentBubbleTailSpriteColor;
 
+            // Update the is talking sprite with its own color
+            currentIsTalkingSpriteColor = isSpeakingIconRenderer.color;
+            currentIsTalkingSpriteColor.a = NameTagAlpha;
+            isSpeakingIconRenderer.color = currentIsTalkingSpriteColor;
+
             // Update the rest of the sprites and text that share the same color
             currentSpritesColor.a = NameTagAlpha;
             messageContent.color = currentSpritesColor;
@@ -280,14 +341,18 @@ namespace DCL.Nametags
             UpdateMaterialState(NameTagAlpha < 1f);
         }
 
-        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string recipientValidatedName, string recipientWalletId, Color recipientNameColor)
+        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string recipientValidatedName, string recipientWalletId, Color recipientNameColor, bool isCommunityMessage, string communityName)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             this.isMention = isMention;
             this.isPrivateMessage = isPrivateMessage;
+            this.isCommunityMessage = isCommunityMessage;
             privateMessageIcon.gameObject.SetActive(isPrivateMessage);
             privateMessageText.gameObject.SetActive(false);
+            communityNameText.gameObject.SetActive(isCommunityMessage);
+            communityNameTextBackground.gameObject.SetActive(isCommunityMessage);
+
             if (isPrivateMessage)
             {
                 privateMessageIconRenderer.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
@@ -296,8 +361,46 @@ namespace DCL.Nametags
                 if (showPrivateMessageRecipient)
                     SetPrivateMessageText(recipientValidatedName, recipientWalletId, recipientNameColor);
             }
+            else if (isCommunityMessage)
+            {
+                communityNameText.text = communityName;
+            }
 
             StartChatBubbleFlowAsync(chatMessage, cts.Token).Forget();
+        }
+
+        public void SetIsSpeaking(bool isSpeaking)
+        {
+            this.isSpeaking = isSpeaking;
+
+            isSpeakingIcon.gameObject.SetActive(isSpeaking);
+
+            if (animationState == AnimationState.IDLE)
+            {
+                usernameText.rectTransform.anchoredPosition = Vector2.zero;
+                SetInitialPositions(isClaimedName);
+            }
+
+            if (isSpeaking)
+            {
+                isSpeakingCurrentSequence = DOTween.Sequence();
+                isSpeakingCurrentSequence.Append(isSpeakingIconRect.DOScaleY(0.2f, animationInDuration));
+                isSpeakingCurrentSequence.Join(isSpeakingIconOuterRect.DOScaleY(1, animationInDuration));
+                isSpeakingCurrentSequence.Append(isSpeakingIconOuterRect.DOScaleY(0.2f, animationInDuration));
+                isSpeakingCurrentSequence.Join(isSpeakingIconRect.DOScaleY(1, animationInDuration));
+                isSpeakingCurrentSequence.SetLoops(-1);
+                isSpeakingCurrentSequence.Play();
+
+                BackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
+                mentionBackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
+            }
+            else
+            {
+                isSpeakingCurrentSequence?.Kill();
+                isSpeakingCurrentSequence = null;
+                BackgroundSprite.transform.localPosition = Vector3.zero;
+                mentionBackgroundSprite.transform.localPosition = Vector3.zero;
+            }
         }
 
         private void ResetElement()
@@ -320,6 +423,15 @@ namespace DCL.Nametags
             privateMessageText.SetText(string.Empty);
             cachedUsernameWidth = 0;
             additionalHeight = 0;
+            isSpeaking = false;
+            isSpeakingIcon.gameObject.SetActive(false);
+            isSpeakingCurrentSequence?.Kill();
+            isSpeakingCurrentSequence = null;
+            BackgroundSprite.transform.localPosition = Vector3.zero;
+            mentionBackgroundSprite.transform.localPosition = Vector3.zero;
+            communityNameText.gameObject.SetActive(false);
+            communityNameText.rectTransform.anchoredPosition = NametagViewConstants.ZERO_VECTOR;
+            communityNameTextBackground.gameObject.SetActive(false);
         }
 
         private async UniTaskVoid StartChatBubbleFlowAsync(string messageText, CancellationToken ct)
@@ -331,10 +443,7 @@ namespace DCL.Nametags
                 await AnimateOutAsync(ct);
                 animationState = AnimationState.IDLE;
             }
-            catch (OperationCanceledException)
-            {
-                animationState = AnimationState.IDLE;
-            }
+            catch (OperationCanceledException) { animationState = AnimationState.IDLE; }
         }
 
         [BurstCompile]
@@ -381,10 +490,28 @@ namespace DCL.Nametags
 
             preferredSize = CalculatePreferredSize(out float availableWidthForPrivateMessage);
             messageContentRectTransform.sizeDelta = preferredSize;
+
             textContentInitialPosition = NametagViewConstants.ZERO_VECTOR;
+            BackgroundSprite.transform.localPosition = Vector3.zero;
 
             preferredSize.x += bubbleMarginOffsetWidth;
             preferredSize.y = messageContent.preferredHeight + bubbleMarginOffsetHeight;
+
+            Vector2 textBackgroundTargetSize = Vector2.zero;
+
+            if (isCommunityMessage)
+            {
+                // Size of the background of the community name
+                textBackgroundTargetSize = new Vector2((communityNameText.preferredWidth + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.x, (communityNameText.preferredHeight + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.y);
+
+                // Size of the bubble, its width cannot be lower than the width of the name of the community
+                preferredSize.x = textBackgroundTargetSize.x * communityNameTextBackgroundRenderer.transform.localScale.x + bubbleMarginOffsetWidth > preferredSize.x ? textBackgroundTargetSize.x * communityNameTextBackgroundRenderer.transform.localScale.x + bubbleMarginOffsetWidth : preferredSize.x;
+                preferredSize.x = Mathf.Min(NametagViewConstants.MAX_BUBBLE_WIDTH, preferredSize.x);
+                preferredSize.y += communityNameText.preferredHeight + communityNameText.preferredHeight * 1.5f + COMMUNITY_TEXT_MARGIN;
+
+                // The width of the message text is adapted according to the updated size of the bubble
+                messageContentRectTransform.sizeDelta = new Vector2(preferredSize.x - bubbleMarginOffsetWidth, preferredSize.y - bubbleMarginOffsetHeight);
+            }
 
             usernameFinalPosition = CalculateUsernameFinalPosition(preferredSize.x, usernameText.preferredWidth, bubbleMarginOffsetWidth);
             usernameFinalPosition.y = messageContent.preferredHeight + bubbleMarginOffsetHeightThird;
@@ -420,14 +547,9 @@ namespace DCL.Nametags
                     privateMessageText.gameObject.SetActive(true);
                     privateMessageText.ForceMeshUpdate();
 
-                    if (privateMessageText.preferredWidth > availableWidthForPrivateMessage)
-                    {
-                        tempSizeDelta.x = availableWidthForPrivateMessage;
-                    }
-                    else
-                    {
-                        tempSizeDelta.x = privateMessageText.preferredWidth;
-                    }
+                    if (privateMessageText.preferredWidth > availableWidthForPrivateMessage) { tempSizeDelta.x = availableWidthForPrivateMessage; }
+                    else { tempSizeDelta.x = privateMessageText.preferredWidth; }
+
                     tempSizeDelta.y = NametagViewConstants.DEFAULT_HEIGHT;
                     privateMessageText.rectTransform.sizeDelta = tempSizeDelta;
                     messageContent.ForceMeshUpdate();
@@ -441,6 +563,17 @@ namespace DCL.Nametags
                                    .Join(privateMessageText.DOColor(currentRecipientNameColor, animationInDurationQuarter));
                 }
             }
+            else if (isCommunityMessage)
+            {
+                Vector2 communityTextFinalPosition = usernameFinalPosition + new Vector2((communityNameText.preferredWidth - usernameText.preferredWidth) * 0.5f + COMMUNITY_TEXT_MARGIN, usernameText.preferredHeight + communityNameText.preferredHeight * 0.5f);
+
+                currentSequence.Join(communityNameText.rectTransform.DOAnchorPos(communityTextFinalPosition, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
+                                Join(communityNameText.DOColor(communityNameColor, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
+                                Join(DOTween.To(() => communityNameTextBackgroundRenderer.size, v => communityNameTextBackgroundRenderer.size = v, textBackgroundTargetSize, animationInDuration).SetEase(backgroundEaseAnimationCurve)).
+                                Join(communityNameTextBackground.DOAnchorPos(communityTextFinalPosition, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
+                                Join(communityNameTextBackgroundRenderer.DOColor(communityNameBackgroundColor, animationInDuration)).SetEase(backgroundEaseAnimationCurve);
+
+            }
 
             currentSequence.Join(usernameText.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
                            .Join(this.messageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
@@ -450,6 +583,10 @@ namespace DCL.Nametags
                 currentSequence.Join(DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve));
             else
                 currentSequence.Join(DOTween.To(() => BackgroundSprite.size, x => BackgroundSprite.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve));
+
+            isSpeakingIconFinalPosition = CalculateTalkingIconFinalPosition(usernameFinalPosition.x, cachedUsernameWidth, verifiedIconWidth, isSpeakingIconWidth, privateMessageIconWidth, isClaimedName, isPrivateMessage);
+            isSpeakingIconFinalPosition.y = usernameFinalPosition.y;
+            currentSequence.Join(isSpeakingIcon.DOAnchorPos(isSpeakingIconFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve));
 
             await currentSequence.Play().ToUniTask(cancellationToken: ct);
         }
@@ -483,6 +620,8 @@ namespace DCL.Nametags
                 verifiedIconWidth,
                 usernameText.preferredHeight,
                 nametagMarginOffsetHeight,
+                isSpeakingIconWidth,
+                isSpeaking,
                 isClaimedName
             );
 
@@ -491,6 +630,7 @@ namespace DCL.Nametags
 
             if (isClaimedName)
             {
+                claimedNameInitialPosition = new Vector2(-(verifiedIconWidth / 2), 0);
                 currentSequence.Join(usernameText.rectTransform.DOAnchorPos(claimedNameInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
                 currentSequence.Join(verifiedIcon.DOAnchorPos(verifiedIconInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
             }
@@ -506,14 +646,23 @@ namespace DCL.Nametags
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
                                    .Join(privateMessageText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth));
             }
+            else if (isCommunityMessage)
+            {
+                currentSequence.Join(communityNameText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
+                               .Join(communityNameText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve)
+                               .Join(communityNameTextBackground.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve)
+                               .Join(communityNameTextBackgroundRenderer.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve);
+            }
 
             currentSequence.Join(messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
                            .Join(messageContent.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth));
 
             if (isMention)
                 currentSequence.Join(DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, backgroundFinalSize, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
-            else
-                currentSequence.Join(DOTween.To(() => BackgroundSprite.size, x => BackgroundSprite.size = x, backgroundFinalSize, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
+
+            currentSequence.Join(DOTween.To(() => BackgroundSprite.size, x => BackgroundSprite.size = x, backgroundFinalSize, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
+
+            currentSequence.Join(isSpeakingIcon.DOAnchorPos(isSpeakingIconInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE));
 
             await currentSequence.Play().ToUniTask(cancellationToken: ct);
 
@@ -522,18 +671,26 @@ namespace DCL.Nametags
             messageContent.gameObject.SetActive(false);
             BackgroundSprite.gameObject.SetActive(true);
             mentionBackgroundSprite.gameObject.SetActive(false);
+
+            if (isSpeaking)
+            {
+                BackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth) / 2, 0, 0);
+                mentionBackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth) / 2, 0, 0);
+            }
+            communityNameText.gameObject.SetActive(false);
+            communityNameTextBackground.gameObject.SetActive(false);
         }
 
         private Vector2 CalculatePreferredSize(out float availableWidthForPrivateMessage) =>
-            CalculatePreferredSize(preferredSize, cachedUsernameWidth, nametagMarginOffsetWidth, verifiedIconWidth, messageContent.preferredWidth, NametagViewConstants.MAX_BUBBLE_WIDTH,
+            CalculatePreferredSize(preferredSize, cachedUsernameWidth, nametagMarginOffsetWidth, verifiedIconWidth, isSpeakingIconWidth, isSpeaking, messageContent.preferredWidth, NametagViewConstants.MAX_BUBBLE_WIDTH,
                 additionalHeight, messageContent.preferredHeight, isClaimedName, isPrivateMessage,
                 privateMessageText.preferredWidth, privateMessageIconWidth, out availableWidthForPrivateMessage);
 
         [BurstCompile]
-        private static float2 CalculatePreferredSize(float2 preferredSize, float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float messageWidth, float maxWidth,
+        private static float2 CalculatePreferredSize(float2 preferredSize, float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float isTalkingIconWidth, bool isTalking, float messageWidth, float maxWidth,
             float additionalHeight, float preferredHeight, bool isClaimedName, bool hasPrivateMessageIcon, float privateMessageTextWidth, float privateMessageIconWidth, out float availableWidthForPrivateMessage)
         {
-            float baseWidth = usernameWidth + (isClaimedName ? verifiedIconWidth : 0) + (hasPrivateMessageIcon ? privateMessageIconWidth : 0);
+            float baseWidth = usernameWidth + (isClaimedName ? verifiedIconWidth : 0) + (hasPrivateMessageIcon ? privateMessageIconWidth : 0) + (isTalking ? isTalkingIconWidth/2 : 0);
 
             availableWidthForPrivateMessage = maxWidth - baseWidth;
             float adjustedPrivateMessageWidth = hasPrivateMessageIcon ? Mathf.Min(privateMessageTextWidth, availableWidthForPrivateMessage) : 0;
@@ -567,23 +724,45 @@ namespace DCL.Nametags
         }
 
         [BurstCompile]
-        private static float2 CalculateBackgroundSize(float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float usernameHeight, float nametagMarginHeight,
+        private static float2 CalculateBackgroundSize(
+            float usernameWidth,
+            float nametagMarginWidth,
+            float verifiedIconWidth,
+            float usernameHeight,
+            float nametagMarginHeight,
+            float isTalkingIconWidth,
+            bool isTalking,
             bool isClaimedName)
         {
-            float width = usernameWidth + nametagMarginWidth + (isClaimedName ? verifiedIconWidth : 0);
+            float width = usernameWidth + nametagMarginWidth + (isClaimedName ? verifiedIconWidth : 0) + (isTalking ? isTalkingIconWidth : 0);
             float height = usernameHeight + nametagMarginHeight;
             return new float2(width, height);
         }
 
         [BurstCompile]
-        private static float2 CalculateVerifiedIconPosition(float usernamePositionX, float usernameWidth, float verifiedIconWidth, float nametagMarginHeight) =>
+        private static float2 CalculateVerifiedIconPosition(
+            float usernamePositionX,
+            float usernameWidth,
+            float verifiedIconWidth,
+            float isTalkingIconWidth,
+            float nametagMarginHeight,
+            bool isTalking) =>
             new float2(
-                usernamePositionX + (usernameWidth / 2) + (verifiedIconWidth / 2) - (nametagMarginHeight / 2),
+                usernamePositionX + (usernameWidth / 2) + (verifiedIconWidth / 2),
                 0
             );
 
         [BurstCompile]
-        private static float2 CalculateUsernamePosition(float usernamePositionX, float verifiedIconWidth) =>
+        private static float2 CalculateTalkingIconPosition(
+            float usernamePositionX,
+            float usernameWidth,
+            float verifiedIconWidth,
+            bool isClaimedName,
+            float nametagMarginHeight) =>
+            new float2( usernamePositionX + (usernameWidth / 2) + (isClaimedName ? verifiedIconWidth : 0), 0);
+
+        [BurstCompile]
+        private static float2 CalculateUsernamePosition(float usernamePositionX, float verifiedIconWidth, float isTalkingIconWidth, bool isTalking) =>
             new float2(usernamePositionX - (verifiedIconWidth / 2), 0);
 
         [BurstCompile]
@@ -593,6 +772,17 @@ namespace DCL.Nametags
         [BurstCompile]
         private static float2 CalculateVerifiedIconFinalPosition(float usernameFinalPositionX, float usernameWidth, float verifiedIconWidth) =>
             new (usernameFinalPositionX + (usernameWidth / 2) + (verifiedIconWidth / 2), 0);
+
+        [BurstCompile]
+        private static float2 CalculateTalkingIconFinalPosition(
+            float usernameFinalPositionX,
+            float usernameWidth,
+            float verifiedIconWidth,
+            float isTalkingIconWidth,
+            float privateMessageIconWidth,
+            bool isClaimedName,
+            bool isPrivateMessage) =>
+            new (usernameFinalPositionX + (usernameWidth / 2) + (isClaimedName ? verifiedIconWidth : 0), 0);
 
         [BurstCompile]
         private static float2 CalculatePrivateMessageIconPosition(float usernameFinalPositionX, float usernameWidth, float verifiedIconWidth, bool isClaimedName) =>

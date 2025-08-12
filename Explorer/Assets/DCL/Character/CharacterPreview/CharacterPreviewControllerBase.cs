@@ -15,27 +15,28 @@ namespace DCL.CharacterPreview
 {
     public abstract class CharacterPreviewControllerBase : IDisposable
     {
-        private static readonly float AVATAR_FADE_ANIMATION = 0.5f;
+        private const float AVATAR_FADE_ANIMATION = 0.5f;
+
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly CharacterPreviewCursorController cursorController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-
         private readonly World world;
         private readonly bool isPreviewPlatformActive;
+        private readonly Func<bool> isPlayingEmoteDelegate;
 
-        private CharacterPreviewController? previewController;
         private bool initialized;
-        private CancellationTokenSource updateModelCancellationToken;
+        private CancellationTokenSource? updateModelCancellationToken;
         private Color profileColor;
+        private Vector3 avatarPosition;
 
+        protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
         protected bool zoomEnabled = true;
         protected bool panEnabled = true;
         protected bool rotateEnabled = true;
-        private readonly Func<bool> isPlayingEmoteDelegate;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
@@ -67,7 +68,7 @@ namespace DCL.CharacterPreview
             isPlayingEmoteDelegate = () => previewController!.Value.IsPlayingEmote();
         }
 
-        public virtual void Initialize(Avatar avatar)
+        public virtual void Initialize(Avatar avatar, Vector3 position)
         {
             previewAvatarModel.BodyShape = avatar.BodyShape;
             previewAvatarModel.HairColor = avatar.HairColor;
@@ -75,6 +76,8 @@ namespace DCL.CharacterPreview
             previewAvatarModel.EyesColor = avatar.EyesColor;
             previewAvatarModel.ForceRenderCategories = new HashSet<string>(avatar.ForceRender);
             previewAvatarModel.Initialized = true;
+
+            avatarPosition = position;
 
             Initialize();
         }
@@ -97,7 +100,8 @@ namespace DCL.CharacterPreview
 
             view.RawImage.texture = newTexture;
 
-            previewController = previewFactory.Create(world, view.RawImage.rectTransform, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
+            previewController = previewFactory.Create(world, view.RawImage.rectTransform, newTexture,
+                inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
 
             OnModelUpdated();
@@ -177,7 +181,8 @@ namespace DCL.CharacterPreview
                 inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
                 OnModelUpdated();
             }
-            else if (previewAvatarModel.Initialized) { Initialize(); }
+            else if (previewAvatarModel.Initialized)
+                Initialize();
 
             previewController?.SetPreviewPlatformActive(isPreviewPlatformActive);
 
@@ -273,7 +278,7 @@ namespace DCL.CharacterPreview
 
         protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
         {
-            if (previewController == null) return;
+            if (previewController == null || !previewController.Value.IsAvatarLoaded()) return;
 
             PlayEmote(emoteURN);
 

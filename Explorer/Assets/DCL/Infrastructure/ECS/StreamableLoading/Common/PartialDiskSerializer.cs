@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Common
 {
@@ -55,6 +56,7 @@ namespace ECS.StreamableLoading.Common
 
                 var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
                 partialLoadingState.AppendData(fileData);
+                
                 return UniTask.FromResult(partialLoadingState);
             }
         }

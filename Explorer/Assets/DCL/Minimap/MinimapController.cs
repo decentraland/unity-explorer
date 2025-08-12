@@ -21,6 +21,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DG.Tweening;
 using ECS;
@@ -146,7 +147,7 @@ namespace DCL.Minimap
             contextMenu = new GenericContextMenu()
                           // Add title control to prevent incorrect layout height when the context menu has a single control
                           // May be removed if a new control is added
-                         .AddControl(new TextContextMenuControlSettings("Minimap"))
+                         .AddControl(new TextContextMenuControlSettings("Scene's Options"))
                          .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 

@@ -75,18 +75,18 @@ namespace DCL.CharacterMotion.Systems
         {
             UpdateDebugValues();
             UpdatePreviewAvatarIKQuery(World, t);
-            if (!World.Has<InWorldCameraComponent>(camera))
-                UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
+
+            UpdateIKQuery(World, t, in camera.GetCameraComponent(World), World.Has<InWorldCameraComponent>(camera));
         }
 
         [Query]
         private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
             ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
         {
-            headIK.IsDisabled = emoteComponent.CurrentEmoteReference != null || !this.headIKIsEnabled;
-            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, headIK.IsDisabled ? 0 : 1, settings.HeadIKWeightChangeSpeed * dt);
+            bool isEnabled = emoteComponent.CurrentEmoteReference == null && headIKIsEnabled && headIK.IsEnabled;
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
-            if (headIK.IsDisabled) return;
+            if (!isEnabled) return;
 
             (Vector3 bottomLeft, Vector3 topRight) = GetImageScreenCorners(previewComponent.RenderImageRect);
             Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
@@ -94,7 +94,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 objectScreenPos = new Vector3(
                 Mathf.Lerp(bottomLeft.x, topRight.x, viewportPos.x),
                 Mathf.Lerp(bottomLeft.y, topRight.y, viewportPos.y),
-                previewComponent.Settings.AvatarDepth);
+                previewComponent.Settings.MinAvatarDepth);
 
             if(!dclInput.UI.Point.enabled)
                 dclInput.UI.Point.Enable();
@@ -104,8 +104,20 @@ namespace DCL.CharacterMotion.Systems
 
             var screenVector = objectScreenPos - mouseScreenPos;
             screenVector.y = -screenVector.y;
+            screenVector.z = LerpAvatarDepth(previewComponent, screenVector);
 
             ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt * previewComponent.Settings.HeadMoveSpeed, settings, useFrontalReset: false);
+        }
+
+        private static float LerpAvatarDepth(CharacterPreviewComponent previewComponent, Vector3 screenVector)
+        {
+            float screenVector2DMagnitude = new Vector2(screenVector.x, screenVector.y).magnitude;
+            float screenHalfDiagonal = new Vector2(Screen.width, Screen.height).magnitude / 2;
+            float normalizedMagnitude = Mathf.Clamp01(screenVector2DMagnitude / screenHalfDiagonal);
+            float minZ = previewComponent.Settings.MinAvatarDepth;
+            float maxZ = previewComponent.Settings.MaxAvatarDepth;
+
+            return Mathf.Lerp(minZ, maxZ, normalizedMagnitude);
         }
 
         private static (Vector3 bottomLeft, Vector3 topRight) GetImageScreenCorners(RectTransform imageRect)
@@ -139,6 +151,7 @@ namespace DCL.CharacterMotion.Systems
         private void UpdateIK(
             [Data] float dt,
             [Data] in CameraComponent cameraComponent,
+            [Data] bool inWorldCameraActive,
             ref HeadIKComponent headIK,
             ref AvatarBase avatarBase,
             in ICharacterControllerSettings settings,
@@ -148,20 +161,20 @@ namespace DCL.CharacterMotion.Systems
             in CharacterPlatformComponent platformComponent
         )
         {
-            headIK.IsDisabled = !this.headIKIsEnabled;
+            bool isFeatureAndComponentEnabled = headIKIsEnabled && headIK.IsEnabled;
 
             bool isEnabled = !stunComponent.IsStunned
                              && rigidTransform.IsGrounded
                              && !rigidTransform.IsOnASteepSlope
-                             && !headIK.IsDisabled
+                             && isFeatureAndComponentEnabled
                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
-                             && emoteComponent.CurrentEmoteReference == null
+                             && !emoteComponent.IsPlayingEmote
                              && !platformComponent.IsMovingPlatform;
 
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
-            if (headIK.IsDisabled) return;
+            if (!isEnabled || inWorldCameraActive) return;
 
             // TODO: Tie this to a proper look-at system to decide what to look at
             Vector3 targetDirection = cameraComponent.Camera.transform.forward;

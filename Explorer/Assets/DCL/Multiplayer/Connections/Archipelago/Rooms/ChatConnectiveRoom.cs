@@ -18,6 +18,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -36,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly URLAddress adapterAddress;
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IRoom roomInstance;
 
@@ -58,20 +59,23 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             var audioRemixConveyor = new ThreadedAudioRemixConveyor();
             var audioStreams = new AudioStreams(hub, audioRemixConveyor);
+            var tracksFactory = new TracksFactory();
 
+            // Pass null for AudioTracks - Room constructor will create it automatically
             roomInstance = new LogRoom(
                 new Room(
                     new ArrayMemoryPool(),
                     new DefaultActiveSpeakers(),
                     hub,
-                    new TracksFactory(),
+                    tracksFactory,
                     new FfiHandleFactory(),
                     new ParticipantFactory(),
                     new TrackPublicationFactory(),
                     new DataPipe(),
                     new MemoryRoomInfo(),
                     videoStreams,
-                    audioStreams
+                    audioStreams,
+                    null
                 )
             );
         }
@@ -110,14 +114,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 throw new InvalidOperationException("Room is already running");
 
             cts = cts.SafeRestart();
-            attemptToConnectState.Set(AttemptToConnectState.None);
+            attemptToConnectState.Set(AttemptToConnectState.NONE);
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
-            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
-            return attemptToConnectState.Value() is not AttemptToConnectState.Error;
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
+            return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
         }
 
-        public virtual async UniTask StopAsync()
+        public async UniTask StopAsync()
         {
             if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
                 throw new InvalidOperationException("Room is already stopped");
@@ -197,18 +201,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             var credentials = new ConnectionStringCredentials(connectionString);
 
-            bool connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
+            Result connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
 
-            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
+            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
-            if (connectResult)
+            if (connectResult.Success)
             {
                 room.Assign(roomInstance, out IRoom _);
                 roomState.Set(IConnectiveRoom.State.Running);
             }
 
-            return connectResult;
+            return connectResult.Success;
         }
 
         [Serializable]

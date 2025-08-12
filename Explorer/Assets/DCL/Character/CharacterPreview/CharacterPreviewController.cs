@@ -55,10 +55,18 @@ namespace DCL.CharacterPreview
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
-                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME),
-                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings},
-                new HeadIKComponent(),
-                new CharacterEmoteComponent());
+                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
+                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
+                new CharacterEmoteComponent(),
+                new HeadIKComponent { IsEnabled = false });
+        }
+
+        public void EnableHeadIK()
+        {
+            ref HeadIKComponent headIK = ref globalWorld.TryGetRef<HeadIKComponent>(characterPreviewEntity, out bool exists);
+
+            if (exists)
+                headIK.IsEnabled = true;
         }
 
         public void Dispose()
@@ -100,11 +108,12 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY
             );
 
-            Entity emotePromiseEntity = builderEmotesPreview ? Entity.Null
+            Entity emotePromiseEntity = builderEmotesPreview
+                ? Entity.Null
                 : globalWorld.Create(EmotePromise.Create(globalWorld,
-                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
-                    avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
-                PartitionComponent.TOP_PRIORITY));
+                    EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
+                        avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
+                    PartitionComponent.TOP_PRIORITY));
 
             avatarShape.IsDirty = true;
 
@@ -121,23 +130,22 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
-            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null  && !avatarBase.RigBuilder.enabled)
+            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null && !avatarBase.RigBuilder.enabled)
             {
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.HeadIKRig.weight = 1f;
             }
-            return;
 
-            bool IsAvatarLoaded()
-            {
-                return !world.Get<AvatarShapeComponent>(avatarEntity).IsDirty;
-            }
+            return;
 
             bool IsEmoteLoaded() =>
                 emotePromiseEntity == Entity.Null
                 || !world.IsAlive(emotePromiseEntity)
                 || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
         }
+
+        public bool IsAvatarLoaded() =>
+            !globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty;
 
         public void PlayEmote(string emoteId)
         {

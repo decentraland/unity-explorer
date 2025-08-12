@@ -16,7 +16,7 @@ namespace DCL.SkyBox.Rendering
         private const string k_ShaderName_Draw = "DCL/DCL_SkyBox_Procedural_Draw";
 
         // Debug
-        private static readonly ReportData m_ReportData = new ("DCL_RenderFeature_ProceduralSkyBox", ReportHint.SessionStatic);
+        private static readonly ReportData m_ReportData = new ("DCL_RenderFeature_ProceduralSkyBox", ReportDebounce.AssemblyStatic);
 
         // Pass Settings
         [SerializeField] private ProceduralSkyBoxSettings_Generate m_SettingsGenerate;

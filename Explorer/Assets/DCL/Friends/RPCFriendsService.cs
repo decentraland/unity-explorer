@@ -2,10 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.SocialService;
-using DCL.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
@@ -18,6 +17,16 @@ namespace DCL.Friends
 {
     public class RPCFriendsService : IFriendsService
     {
+        internal class ServerStreamReportsDebouncer : FrameDebouncer
+        {
+            public ServerStreamReportsDebouncer() : base(1)
+            {
+                // Tasks can be distributed across 2 frames so the threshold distance is 1 frame
+            }
+
+            public override ReportHandler AppliedTo => ReportHandler.Sentry;
+        }
+
         /// <summary>
         ///     Timeout used for foreground operations, such as fetching the list of friends
         /// </summary>
@@ -37,7 +46,7 @@ namespace DCL.Friends
         private const string BLOCK_USER = "BlockUser";
         private const string UNBLOCK_USER = "UnblockUser";
 
-        private const int RETRY_STREAM_THROTTLE_MS = 5000;
+        private readonly ServerStreamReportsDebouncer serverStreamReportsDebouncer = new ();
 
         private readonly IFriendsEventBus eventBus;
         private readonly FriendsCache friendsCache;
@@ -78,7 +87,7 @@ namespace DCL.Friends
                     await openStreamFunc().AttachExternalCancellation(ct);
                 }
                 catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
+                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS, new ReportDebounce(serverStreamReportsDebouncer))); }
             }
         }
 
@@ -342,6 +351,9 @@ namespace DCL.Friends
 
         public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentException("GetFriendshipStatus called with empty userId", nameof(userId));
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
             var payload = new GetFriendshipStatusPayload

@@ -17,5 +17,6 @@ namespace DCL.SDKComponents.NFTShape.Renderer
         void Hide();
 
         void Show();
+
     }
 }

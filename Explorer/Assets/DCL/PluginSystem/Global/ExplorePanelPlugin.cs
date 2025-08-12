@@ -40,8 +40,13 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities;
+using DCL.Communities.CommunitiesBrowser;
+using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
+using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -115,9 +120,11 @@ namespace DCL.PluginSystem.Global
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly INftNamesProvider nftNamesProvider;
+
         private readonly bool includeCameraReel;
 
-        private ExplorePanelInputHandler? inputHandler;
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -130,6 +137,9 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
+        private CommunitiesBrowserController? communitiesBrowserController;
+        private readonly bool isVoiceChatEnabled;
+        private readonly GalleryEventBus galleryEventBus;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -181,7 +191,11 @@ namespace DCL.PluginSystem.Global
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
-            UpscalingController upscalingController)
+            UpscalingController upscalingController,
+            CommunitiesDataProvider communitiesDataProvider,
+            INftNamesProvider nftNamesProvider,
+            bool isVoiceChatEnabled,
+            GalleryEventBus galleryEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -234,6 +248,10 @@ namespace DCL.PluginSystem.Global
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
             this.upscalingController = upscalingController;
+            this.communitiesDataProvider = communitiesDataProvider;
+            this.nftNamesProvider = nftNamesProvider;
+            this.isVoiceChatEnabled = isVoiceChatEnabled;
+            this.galleryEventBus = galleryEventBus;
         }
 
         public void Dispose()
@@ -242,8 +260,9 @@ namespace DCL.PluginSystem.Global
             navmapController?.Dispose();
             settingsController?.Dispose();
             backpackSubPlugin?.Dispose();
-            inputHandler?.Dispose();
             placeInfoPanelController?.Dispose();
+            communitiesBrowserController?.Dispose();
+            upscalingController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -289,6 +308,7 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<SettingsMenuConfiguration> settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
             ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
+            ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatSettings, ct);
             ProvidedAsset<VideoPrioritizationSettings> videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct);
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
@@ -320,7 +340,14 @@ namespace DCL.PluginSystem.Global
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, cameraReelStorageService, cameraReelScreenshotsStorage,
-                new ReelGalleryConfigParams(settings.PlaceGridLayoutFixedColumnCount, settings.PlaceThumbnailHeight, settings.PlaceThumbnailWidth, false, false), false);
+                new ReelGalleryConfigParams(
+                    settings.PlaceGridLayoutFixedColumnCount,
+                    settings.PlaceThumbnailHeight,
+                    settings.PlaceThumbnailWidth,
+                    false,
+                    false),
+                false,
+                galleryEventBus: galleryEventBus);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
@@ -338,7 +365,7 @@ namespace DCL.PluginSystem.Global
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser, mvcManager),
+                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
             settingsController = new SettingsController(
@@ -354,8 +381,11 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 userBlockingCacheProxy,
                 sceneLoadingLimit,
+                voiceChatSettings.Value,
                 worldVolumeMacBus,
-                upscalingController);
+                upscalingController,
+                isVoiceChatEnabled);
+
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,
@@ -374,26 +404,43 @@ namespace DCL.PluginSystem.Global
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            inputHandler = new ExplorePanelInputHandler();
-
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
-                new CameraReelGalleryController(cameraReelView.CameraReelGalleryView, this.cameraReelStorageService,
+                new CameraReelGalleryController(
+                    cameraReelView.CameraReelGalleryView,
+                    this.cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
+                    galleryEventBus,
                     cameraReelView.CameraReelOptionsButton,
-                    webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
+                    webBrowser, decentralandUrlsSource, systemClipboard,
                     new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
                     mvcManager),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
+                cursor,
+                galleryEventBus,
                 settings.StorageProgressBarText);
+
+            CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
+            communitiesBrowserController = new CommunitiesBrowserController(
+                communitiesBrowserView,
+                cursor,
+                communitiesDataProvider,
+                webRequestController,
+                inputBlock,
+                explorePanelView.WarningNotificationView,
+                mvcManager,
+                profileRepositoryWrapper,
+                selfProfile,
+                nftNamesProvider);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper), inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
+                    communitiesBrowserController, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);
@@ -488,6 +535,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.VoiceChatSettingsRef VoiceChatSettings { get; private set; }
 
             [field: SerializeField]
             public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings { get; private set; }

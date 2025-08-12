@@ -25,13 +25,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
-    m_Address: LogoDCL154x154SpriteAtlas.spriteatlas
+  - m_GUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
+    m_Address: MapRendererSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
-    m_Address: MapRendererSettings
+  - m_GUID: 24aec0b5ead4ec44081cf47744a7a268
+    m_Address: CommunityCreationWizard
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -57,6 +57,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 37b740e9dd5ba324c91cd05632ea002c
     m_Address: TeleportPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44b3d3fa43f2d2247b3784803389bbb1
+    m_Address: Authentication.spriteatlas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -162,11 +167,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7887090193b1ec4c994ad22169b86db
     m_Address: MainUIContainer
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d2b6974d311b52d418b15738f4ef38dc
-    m_Address: Authentication.spriteatlas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

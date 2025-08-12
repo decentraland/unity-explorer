@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using MVC;
 using UnityEngine;
 
@@ -66,10 +67,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         private void ContextMenuClicked(BlockedProfile friendProfile, Vector2 buttonPosition, BlockedUserView elementView)
         {
             lastClickedProfileCtx = friendProfile;
-            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                friendProfile.UserNameColor,
-                UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
-                friendProfile.FacePictureUrl);
+            userProfileContextMenuControlSettings.SetInitialData(friendProfile.ToUserData(),
+                UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,

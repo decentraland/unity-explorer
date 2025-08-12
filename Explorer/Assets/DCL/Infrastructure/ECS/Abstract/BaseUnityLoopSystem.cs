@@ -28,6 +28,8 @@ namespace ECS.Abstract
 
         private bool isDisposed;
 
+        private readonly string debounceHint;
+
         protected BaseUnityLoopSystem(World world) : base(world)
         {
             updateSampler = CustomSampler.Create($"{GetType().Name}.Update");
@@ -37,6 +39,8 @@ namespace ECS.Abstract
 
             if (entity != Entity.Null)
                 sceneInfo = world.Get<SceneShortInfo>(entity);
+
+            debounceHint = $"{GetType().Name}.{nameof(BaseUnityLoopSystem)}.Update";
         }
 
         private CustomSampler? CreateGenericSamplerIfRequired()
@@ -62,7 +66,7 @@ namespace ECS.Abstract
             catch (Exception e)
             {
                 // enrich and propagate exception to the system group handler
-                throw CreateException(e, ReportHint.None, true);
+                throw CreateException(e, true);
             }
         }
 
@@ -106,10 +110,10 @@ namespace ECS.Abstract
         /// <summary>
         ///     Enriches exception with additional system-wise data
         /// </summary>
-        protected EcsSystemException CreateException(Exception inner, ReportHint hint = ReportHint.None) =>
-            CreateException(inner, hint, false);
+        protected EcsSystemException CreateException(Exception inner) =>
+            CreateException(inner, false);
 
-        private EcsSystemException CreateException(Exception inner, ReportHint hint, bool unhandled) =>
-            new (this, inner, new ReportData(GetReportCategory(), hint, sceneInfo), unhandled);
+        private EcsSystemException CreateException(Exception inner, bool unhandled) =>
+            new (this, inner, new ReportData(GetReportCategory(), new ReportDebounce(ECSExceptionsDebouncer.INSTANCE).WithCallstack(debounceHint), sceneInfo), unhandled);
     }
 }

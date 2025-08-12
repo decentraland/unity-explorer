@@ -28,8 +28,9 @@ namespace DCL.Settings.ModuleControllers
 
             LoadGraphicsQualityOptions();
 
-            view.DropdownView.Dropdown.value = settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY) ?
-                settingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY) :
+            view.DropdownView.Dropdown.value = DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY)
+                ? DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY)
+                :
                 DEFAULT_QUALITY_LEVEL_INDEX;
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetGraphicsQualitySettings);
@@ -52,7 +53,7 @@ namespace DCL.Settings.ModuleControllers
             if (index < view.DropdownView.Dropdown.options.Count - 1)
                 ForceSetQualityLevel(index);
 
-            settingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, index, save: true);
         }
 
         private void ForceSetQualityLevel(int index)

@@ -22,6 +22,15 @@ namespace DCL.UI.ProfileElements
         [SerializeField] private Button openProfileButton;
         [SerializeField] private SimpleUserNameElement userNameElement;
 
+        [Header("Connection indicator")]
+        [SerializeField] private Image connectionStatusIndicator;
+        [SerializeField] private GameObject connectionStatusIndicatorContainer;
+        [SerializeField] private OnlineStatusConfiguration onlineStatusConfiguration;
+
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float offlineThumbnailGreyOutOpacity = 0.6f;
+
         private Web3Address currentWalledId;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
@@ -31,7 +40,9 @@ namespace DCL.UI.ProfileElements
         {
             this.profileRepositoryWrapper = profileDataProvider;
             currentWalledId = new Web3Address("");
-            Profile profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct);
+            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct);
+
+            connectionStatusIndicatorContainer.gameObject.SetActive(profile != null);
 
             if (profile == null) return;
 
@@ -43,6 +54,17 @@ namespace DCL.UI.ProfileElements
         private void Awake()
         {
             openProfileButton.onClick.AddListener(OnOpenProfileClicked);
+        }
+
+        /// <summary>
+        /// Changes the visual aspect of the connection status indicator.
+        /// </summary>
+        /// <param name="connectionStatus">The current connection status.</param>
+        public void SetConnectionStatus(OnlineStatus connectionStatus)
+        {
+            connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
+            profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
         }
 
         private void OnOpenProfileClicked()

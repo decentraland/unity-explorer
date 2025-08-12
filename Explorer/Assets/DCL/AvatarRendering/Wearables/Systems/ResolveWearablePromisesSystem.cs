@@ -30,7 +30,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWearableStorage wearableStorage;
         private readonly IRealmData realmData;
-        private SingleInstanceEntity defaultWearablesState;
 
         public ResolveWearablePromisesSystem(
             World world,
@@ -46,30 +45,22 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         public override void Initialize()
         {
-            defaultWearablesState = World!.CacheDefaultWearablesState();
         }
 
         protected override void Update(float t)
         {
-            bool defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
-
-            ResolveWearablePromiseQuery(World, defaultWearablesResolved);
+            ResolveWearablePromiseQuery(World);
         }
 
         [Query]
         [None(typeof(StreamableResult))]
-        private void ResolveWearablePromise([Data] bool defaultWearablesResolved, in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
+        private void ResolveWearablePromise(in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
                 World!.Add(entity, new StreamableResult(GetReportCategory(), new OperationCanceledException("Pointer request cancelled")));
                 return;
             }
-
-            // Instead of checking particular resolution, for simplicity just check if the default wearables are resolved
-            // if it is required
-            if (wearablesByPointersIntention.FallbackToDefaultWearables && !defaultWearablesResolved)
-                return; // Wait for default wearables to be resolved
 
             List<URN> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get()!;
             List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get()!;
@@ -125,7 +116,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (finishedDTOs == wearablesByPointersIntention.Pointers.Count)
             {
                 if (hideWearablesResolution.VisibleWearables == null)
-                    WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, resolvedDTOs.Count, ref hideWearablesResolution);
+                    WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, ref hideWearablesResolution);
 
                 successfulResults += wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count;
 

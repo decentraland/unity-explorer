@@ -28,7 +28,9 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly float audioFadeSpeed;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly ObjectProxy<IRoomHub> roomHub;
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
         private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
+#endif
 
         public MediaPlayerPluginWrapper(IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
@@ -60,13 +62,15 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, roomHub, sceneData, mediaPlayerCustomPool, sceneStateProvider, frameTimeBudget);
+            CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, roomHub, sceneData, mediaPlayerCustomPool, sceneStateProvider, frameTimeBudget, worldVolumeMacBus);
             UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget, worldVolumeMacBus, audioFadeSpeed);
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.VIDEO_PRIORITIZATION))
                 UpdateMediaPlayerPrioritizationSystem.InjectToWorld(ref builder, exposedCameraData, videoPrioritizationSettings);
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
+
+            UpdateVideoMaterialTextureScaleSystem.InjectToWorld(ref builder);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
 #endif

@@ -8,6 +8,8 @@ using DCL.WebRequests;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using Utility.Times;
@@ -46,7 +48,8 @@ namespace DCL.PlacesAPIService
             bool? onlyFavorites = null,
             bool? addRealmDetails = null,
             IReadOnlyList<string>? positions = null,
-            List<PlacesData.PlaceInfo>? resultBuffer = null)
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            string? ownerAddress = null)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
@@ -79,6 +82,9 @@ namespace DCL.PlacesAPIService
                 foreach (string xy in positions)
                     urlBuilder.AppendParameter(new URLParameter("positions", xy));
 
+            if (!string.IsNullOrEmpty(ownerAddress))
+                urlBuilder.AppendParameter(new URLParameter("owner", ownerAddress));
+
             URLAddress url = urlBuilder.Build();
 
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
@@ -97,6 +103,75 @@ namespace DCL.PlacesAPIService
 
             if (response.data == null)
                 throw new PlacesAPIException($"No place info retrieved:\n{searchString}");
+
+            resultBuffer?.AddRange(response.data);
+
+            return response;
+        }
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldsAsync(CancellationToken ct,
+            string? searchString = null,
+            (int pageNumber, int pageSize)? pagination = null,
+            string? sortBy = null, string? sortDirection = null,
+            string? category = null,
+            bool? onlyFavorites = null,
+            IReadOnlyList<string>? names = null,
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            bool? showDisabled = null,
+            string? ownerAddress = null)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(baseWorldsURL));
+
+            if (!string.IsNullOrEmpty(searchString))
+                urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
+
+            if (pagination != null)
+            {
+                urlBuilder.AppendParameter(new URLParameter("offset", (pagination?.pageNumber * pagination?.pageSize).ToString()!));
+                urlBuilder.AppendParameter(new URLParameter("limit", pagination?.pageSize.ToString()!));
+            }
+
+            if (!string.IsNullOrEmpty(sortBy))
+                urlBuilder.AppendParameter(new URLParameter("order_by", sortBy));
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                urlBuilder.AppendParameter(new URLParameter("order", sortDirection));
+
+            if (!string.IsNullOrEmpty(category))
+                urlBuilder.AppendParameter(new URLParameter("categories", category.ToLower()));
+
+            if (onlyFavorites != null)
+                urlBuilder.AppendParameter(ONLY_FAVORITES);
+
+            if (names != null)
+                foreach (string name in names)
+                    urlBuilder.AppendParameter(new URLParameter("names", name));
+
+            if (showDisabled != null)
+                urlBuilder.AppendParameter(new URLParameter("disabled", showDisabled.ToString()));
+
+            if (!string.IsNullOrEmpty(ownerAddress))
+                urlBuilder.AppendParameter(new URLParameter("owner", ownerAddress));
+
+            URLAddress url = urlBuilder.Build();
+
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
+                url, ct,
+                ReportCategory.UI,
+                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
+
+            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
+
+            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
+                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
+                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
+
+            if (response.data == null)
+                throw new PlacesAPIException($"No world info retrieved:\n{searchString}");
 
             resultBuffer?.AddRange(response.data);
 
@@ -126,6 +201,36 @@ namespace DCL.PlacesAPIService
                 throw new NotAPlaceException(placeId);
 
             // At this moment WR is already disposed
+            return response;
+        }
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
+        {
+            var placeIdsList = placeIds.ToList();
+
+            if (placeIdsList.Count == 0)
+                return new PlacesData.PlacesAPIResponse()
+                {
+                    ok = true,
+                    data = new List<PlacesData.PlaceInfo>(),
+                    total = 0
+                };
+
+            StringBuilder jsonBody = new StringBuilder("[");
+            for (var i = 0; i < placeIdsList.Count; i++)
+            {
+                jsonBody.Append($"\"{placeIdsList[i]}\"");
+                if (i < placeIdsList.Count - 1)
+                    jsonBody.Append(", ");
+            }
+            jsonBody.Append("]");
+
+            if (placeIdsList.Count == 0)
+                jsonBody.Clear();
+
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(basePlacesURL, GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+                                                                              .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
+
             return response;
         }
 
