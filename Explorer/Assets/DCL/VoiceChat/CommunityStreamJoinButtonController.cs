@@ -4,6 +4,7 @@ using DCL.Utilities;
 using DG.Tweening;
 using System;
 using System.Threading;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.VoiceChat
@@ -24,11 +25,10 @@ namespace DCL.VoiceChat
         private CancellationTokenSource cts = new ();
 
         public CommunityStreamJoinButtonController(
-            CallButtonView view,
+            Button view,
             ICommunityCallOrchestrator communityCallOrchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel)
         {
-            this.view = view;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.currentChannel = currentChannel;
 
@@ -91,8 +91,6 @@ namespace DCL.VoiceChat
             else
             {
                 // Join the call for the current community channel
-                string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
-                communityCallOrchestrator.JoinCommunityVoiceChat(communityId, ct);
             }
         }
 

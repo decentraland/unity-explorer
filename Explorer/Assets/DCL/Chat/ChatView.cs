@@ -121,8 +121,9 @@ namespace DCL.Chat
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio {get; private set;}
 
+        [field: FormerlySerializedAs("<CommunityStreamSubTitleBar>k__BackingField")]
         [field: Header("Voice Chat")]
-        [field: SerializeField] public CommunityStreamSubTitleBarView CommunityStreamSubTitleBar { get; private set; }
+        [field: SerializeField] public CommunityStreamSubTitleButtonView CommunityStreamSubTitleButton { get; private set; }
 
         [field: SerializeField] public CanvasGroup CommunitySubTitleBarCanvasGroup { get; private set; }
 

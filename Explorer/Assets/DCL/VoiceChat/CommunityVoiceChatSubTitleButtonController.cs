@@ -9,26 +9,27 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class CommunityStreamSubTitleBarController : IDisposable
+    public class CommunityVoiceChatSubTitleButtonController : IDisposable
     {
-        private const string TAG = nameof(CommunityStreamSubTitleBarController);
+        private const string TAG = nameof(CommunityVoiceChatSubTitleButtonController);
 
         private readonly IDisposable statusSubscription;
         private readonly IDisposable currentChannelSubscription;
 
         private readonly CommunitiesDataProvider communityDataProvider;
-        private readonly CommunityStreamSubTitleBarView view;
+        private readonly CommunityStreamSubTitleButtonView view;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
 
         private readonly CommunityStreamJoinButtonController joinButtonController;
         private CancellationTokenSource communityCts = new ();
-        private IDisposable currentCommunityCallStatusSubscription;
+        private IDisposable? currentCommunityCallStatusSubscription;
+
         private bool isCurrentCall;
         private bool isMemberListVisible;
 
-        public CommunityStreamSubTitleBarController(
-            CommunityStreamSubTitleBarView view,
+        public CommunityVoiceChatSubTitleButtonController(
+            CommunityStreamSubTitleButtonView view,
             ICommunityCallOrchestrator communityCallOrchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,
             CommunitiesDataProvider communityDataProvider)
@@ -43,8 +44,14 @@ namespace DCL.VoiceChat
                 communityCallOrchestrator,
                 currentChannel);
 
+
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
             statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
+
+
+            //string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
+            //communityCallOrchestrator.JoinCommunityVoiceChat(communityId, ct);
+
         }
 
         private void ParticipantsStateServiceOnParticipantLeft(string _)
@@ -76,25 +83,19 @@ namespace DCL.VoiceChat
         {
             if (isMemberListVisible) return;
 
-            if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            switch (status)
             {
-                if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
-                {
+                // If we just ended a call, we need to re-check the call status, etc., in case we need to show the button.
+                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Call ended with status {status}, triggering channel change");
                     OnCurrentChannelChanged(currentChannel.Value);
                     return;
-                }
-            }
-
-            if (communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase))
-            {
-                //If it's the current call, we can get the call information directly from the orchestrator
-                HandleCurrentCommunityCall();
-            }
-            else
-            {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Hiding subtitle bar - not current community call {ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)} - orchestrator communityID: {communityCallOrchestrator.CurrentCommunityId.Value}");
-                view.gameObject.SetActive(false);
+                // When we join a call, if its for THIS community, we need to hide the button. If it's another call, we keep it.
+                case VoiceChatStatus.VOICE_CHAT_IN_CALL when
+                    communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase):
+                    view.gameObject.SetActive(false);
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnCommunityCallStatusChanged: Hiding subtitle bar, joined current call");
+                    break;
             }
         }
 
@@ -142,15 +143,10 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} HandleChangeToCommunityChannelAsync: Showing subtitle bar for community {communityId} with active voice chat");
             view.gameObject.SetActive(true);
 
-            if (communityCallOrchestrator.CurrentCommunityId.Value.Equals(communityId, StringComparison.InvariantCultureIgnoreCase))
-            {
-                //If it's the current call, we can get the call information directly from the orchestrator
-                HandleCurrentCommunityCall();
-            }
-            else
+            if (!communityCallOrchestrator.CurrentCommunityId.Value.Equals(communityId, StringComparison.InvariantCultureIgnoreCase))
             {
                 //If it's not the current call, we need to get the call information from the communities data
-                HandleOtherCommunityCallAsync(communityId).Forget();
+                HandleCommunityCallAsync(communityId).Forget();
             }
         }
 
@@ -179,7 +175,6 @@ namespace DCL.VoiceChat
             view.gameObject.SetActive(true);
             SetParticipantsCount();
             view.JoinStreamButton.gameObject.SetActive(false);
-            view.InStreamSign.SetActive(true);
 
             communityCallOrchestrator.ParticipantsStateService.ParticipantJoined += ParticipantsStateServiceOnParticipantJoined;
             communityCallOrchestrator.ParticipantsStateService.ParticipantLeft += ParticipantsStateServiceOnParticipantLeft;
@@ -191,15 +186,13 @@ namespace DCL.VoiceChat
             view.ParticipantsAmount.SetText(participantsCount.ToString());
         }
 
-        private async UniTaskVoid HandleOtherCommunityCallAsync(string communityId)
+        private async UniTaskVoid HandleCommunityCallAsync(string communityId)
         {
             communityCts = communityCts.SafeRestart();
             GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
 
             int participantsCount = communityData.data.voiceChatStatus.participantCount;
             view.ParticipantsAmount.SetText(participantsCount.ToString());
-
-            view.InStreamSign.SetActive(false);
             view.JoinStreamButton.gameObject.SetActive(true);
         }
 
@@ -216,7 +209,7 @@ namespace DCL.VoiceChat
             {
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} OnMemberListVisibilityChanged: Member list hidden, re-evaluating subtitle bar visibility");
                 // Re-setup subtitle bar when member list becomes hidden
-                // This will trigger the normal flow to determine if it should be shown
+                // This will trigger the normal flow to determine if it should be shown or not
                 OnCurrentChannelChanged(currentChannel.Value);
             }
         }

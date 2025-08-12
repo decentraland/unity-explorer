@@ -11,10 +11,10 @@ namespace DCL.VoiceChat
     {
         [field: SerializeField] private AudioSource audioSource;
         [field: SerializeField] private VoiceChatCombinedStreamsAudioFilter audioFilter;
+
         private readonly Dictionary<IAudioStream, LivekitAudioSource> sourcesMap = new ();
 
-        private bool isPlaying;
-        private int sampleRate = 48000;
+        private int sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
 
         public void Reset()
         {
@@ -23,7 +23,6 @@ namespace DCL.VoiceChat
             foreach (LivekitAudioSource audioSource in sourcesMap.Values) { audioSource.SelfDestroy(); }
 
             sourcesMap.Clear();
-            isPlaying = false;
         }
 
         private void OnEnable()
@@ -36,8 +35,7 @@ namespace DCL.VoiceChat
         {
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
             audioFilter.Clear();
-            isPlaying = false;
-            sampleRate = 48000;
+            sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
         }
 
         private void OnDestroy()
@@ -52,16 +50,6 @@ namespace DCL.VoiceChat
 
         public void AddStream(WeakReference<IAudioStream> weakStream)
         {
-            /*if (weakStream.TryGetTarget(out var audioStream))
-            {
-                if (sourcesMap.ContainsKey(audioStream) == false)
-                {
-                    var livekitAudioSource = LivekitAudioSource.New(true);
-                    livekitAudioSource.Construct(weakStream);
-                    livekitAudioSource.Play();
-                    sourcesMap[audioStream] = livekitAudioSource;
-                }
-            }*/
             audioFilter.AddStream(weakStream);
         }
 
@@ -82,8 +70,6 @@ namespace DCL.VoiceChat
 
         public void Play()
         {
-            isPlaying = true;
-
             if (!PlayerLoopHelper.IsMainThread)
             {
                 PlayAsync().Forget();
@@ -109,8 +95,6 @@ namespace DCL.VoiceChat
 
         public void Stop()
         {
-            isPlaying = false;
-
             if (!PlayerLoopHelper.IsMainThread)
             {
                 StopAsync().Forget();

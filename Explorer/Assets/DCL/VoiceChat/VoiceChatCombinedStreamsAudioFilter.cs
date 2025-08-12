@@ -15,14 +15,10 @@ namespace DCL.VoiceChat
     {
         private const int STEREO_CHANNELS = 2;
 
-        private readonly HashSet<WeakReference<IAudioStream>> streams;
-        private int sampleRate = 48000;
-        private float[] tempBuffer;
+        private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
 
-        public VoiceChatCombinedStreamsAudioFilter()
-        {
-            streams = new HashSet<WeakReference<IAudioStream>>();
-        }
+        private int sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
+        private float[]? tempBuffer;
 
         public void Reset()
         {
@@ -33,7 +29,6 @@ namespace DCL.VoiceChat
         }
 
         public bool IsValid { get; private set; } = true;
-
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
         public void Dispose()
@@ -77,9 +72,10 @@ namespace DCL.VoiceChat
             }
 
             // Normalize only if multiple streams
-            if (activeStreams > 1) 
-            { 
+            if (activeStreams > 1)
+            {
                 float norm = 1f / activeStreams;
+
                 for (var i = 0; i < data.Length; i++)
                     data[i] *= norm;
             }
@@ -106,10 +102,7 @@ namespace DCL.VoiceChat
 
         private void EnsureTempBufferSize(int dataLength)
         {
-            if (tempBuffer == null || tempBuffer.Length != dataLength) 
-            { 
-                tempBuffer = new float[dataLength]; 
-            }
+            if (tempBuffer == null || tempBuffer.Length != dataLength) { tempBuffer = new float[dataLength]; }
         }
 
         public void AddStream(WeakReference<IAudioStream> weakStream)
