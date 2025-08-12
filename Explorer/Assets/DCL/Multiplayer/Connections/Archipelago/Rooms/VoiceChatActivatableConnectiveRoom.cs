@@ -92,6 +92,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - No connection string specified");
                 return false;
             }
+#if UNITY_EDITOR
+            var credentials = new ConnectionStringCredentials(connectionString);
+            ReportHub.Log(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - Connect with credentials\nUrl - {credentials.Url}\nToken - {credentials.AuthToken}");
+#endif
 
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
@@ -127,7 +131,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
-            SendConnectionStatusAsync(ct).Forget();
+            //SendConnectionStatusAsync(ct).Forget();
 
             while (ct.IsCancellationRequested == false)
             {
@@ -194,6 +198,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             {
                 room.Assign(freshRoom, out IRoom _);
                 roomState.Set(IConnectiveRoom.State.Running);
+                room.SimulateConnectionStateChanged();
             }
 
             return connectResult.Success;

@@ -518,6 +518,20 @@ MonoBehaviour:
       Severity: 4
     - Category: COMMUNITIES
       Severity: 1
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 3
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 2
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 0
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 4
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 1
+    - Category: VOICE_CHAT
+      Severity: 1
+    - Category: VOICE_CHAT
+      Severity: 4
   sentryMatrix:
     entries: []
   debounceEnabled: 1
