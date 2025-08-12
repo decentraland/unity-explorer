@@ -214,7 +214,8 @@ namespace DCL.Chat
             ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {userConnectivity.Member.Address}, {userConnectivity.CommunityId}, {userConnectivity.Status}");
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId);;
 
-            participantsPerChannel[communityChannelId].Remove(userConnectivity.Member.Address);
+            if(participantsPerChannel.TryGetValue(communityChannelId, out HashSet<string>? communityParticipants))
+                communityParticipants.Remove(userConnectivity.Member.Address);
 
             UserDisconnected?.Invoke(userConnectivity.Member.Address, communityChannelId, ChatChannel.ChatChannelType.COMMUNITY);
         }

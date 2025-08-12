@@ -701,40 +701,52 @@ namespace DCL.Passport
 
             async UniTaskVoid FetchFriendshipStatusAndShowInteractionAsync(CancellationToken ct)
             {
-                // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                // Dont show any interaction for our own user
-                if (ownProfile?.UserId == inputData.UserId) return;
-
-                FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
-
-                switch (friendshipStatus)
+                try
                 {
-                    case FriendshipStatus.NONE:
-                        viewInstance!.AddFriendButton.gameObject.SetActive(true);
-                        break;
-                    case FriendshipStatus.FRIEND:
-                        viewInstance!.RemoveFriendButton.gameObject.SetActive(true);
-                        break;
-                    case FriendshipStatus.REQUEST_SENT:
-                        viewInstance!.CancelFriendButton.gameObject.SetActive(true);
-                        break;
-                    case FriendshipStatus.REQUEST_RECEIVED:
-                        viewInstance!.AcceptFriendButton.gameObject.SetActive(true);
-                        break;
-                    case FriendshipStatus.BLOCKED:
-                        viewInstance!.UnblockFriendButton.gameObject.SetActive(true);
-                        break;
+                    // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                    // Dont show any interaction for our own user
+                    if (ownProfile?.UserId == inputData.UserId) return;
+
+                    FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
+
+                    switch (friendshipStatus)
+                    {
+                        case FriendshipStatus.NONE:
+                            viewInstance!.AddFriendButton.gameObject.SetActive(true);
+                            break;
+                        case FriendshipStatus.FRIEND:
+                            viewInstance!.RemoveFriendButton.gameObject.SetActive(true);
+                            break;
+                        case FriendshipStatus.REQUEST_SENT:
+                            viewInstance!.CancelFriendButton.gameObject.SetActive(true);
+                            break;
+                        case FriendshipStatus.REQUEST_RECEIVED:
+                            viewInstance!.AcceptFriendButton.gameObject.SetActive(true);
+                            break;
+                        case FriendshipStatus.BLOCKED:
+                            viewInstance!.UnblockFriendButton.gameObject.SetActive(true);
+                            break;
+                    }
+
+                    bool friendOnlineStatus = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
+                    viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
+
+                    //TODO FRAN: We need to add here the other reasons why this button could be disabled. For now, only if blocked or blocked by.
+                    viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY);
+
+                    await SetupContextMenuAsync(friendshipStatus, ct);
                 }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.PROFILE);
 
-                bool friendOnlineStatus = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
-                viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
-
-                //TODO FRAN: We need to add here the other reasons why this button could be disabled. For now, only if blocked or blocked by.
-                viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY);
-
-                await SetupContextMenuAsync(friendshipStatus, ct);
+                    viewInstance!.ChatButton.gameObject.SetActive(false);
+                    viewInstance!.JumpInButton.gameObject.SetActive(false);
+                    viewInstance!.ContextMenuButton.gameObject.SetActive(false);
+                }
             }
         }
 
