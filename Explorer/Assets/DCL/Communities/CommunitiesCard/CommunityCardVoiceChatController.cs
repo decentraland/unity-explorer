@@ -5,13 +5,14 @@ using System.Threading;
 
 namespace DCL.Communities.CommunitiesCard
 {
-    public class CommunityCardVoiceChatController
+    public class CommunityCardVoiceChatController : IDisposable
     {
         private readonly CommunityCardVoiceChatView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly StringBuilder stringBuilder = new ();
 
         private string currentCommunityId;
+
         public CommunityCardVoiceChatController(CommunityCardVoiceChatView view, IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.view = view;
@@ -20,9 +21,16 @@ namespace DCL.Communities.CommunitiesCard
             currentCommunityId = string.Empty;
 
             view.StartStreamButton.onClick.AddListener(StartStream);
-            view.EndStreamButton.onClick.AddListener(EndStream);
             view.JoinStreamButton.onClick.AddListener(JoinStream);
             view.LeaveStreamButton.onClick.AddListener(LeaveStream);
+
+            voiceChatOrchestrator.CurrentCommunityId.OnUpdate += UpdateJoinLeaveButtonState;
+        }
+
+        private void UpdateJoinLeaveButtonState(string communityId)
+        {
+            view.LeaveStreamButton.gameObject.SetActive(communityId == currentCommunityId);
+            view.JoinStreamButton.gameObject.SetActive(communityId != currentCommunityId);
         }
 
         private void EndStream()
@@ -58,8 +66,6 @@ namespace DCL.Communities.CommunitiesCard
 
             view.LeaveStreamButton.gameObject.SetActive(voiceChatOrchestrator.CurrentCommunityId.Value == currentCommunityId);
             view.JoinStreamButton.gameObject.SetActive(voiceChatOrchestrator.CurrentCommunityId.Value != currentCommunityId);
-            view.StartStreamButton.gameObject.SetActive(!isStreamRunning);
-            view.EndStreamButton.gameObject.SetActive(isStreamRunning);
         }
 
         public void SetListenersCount(int listenersCount)
@@ -68,6 +74,11 @@ namespace DCL.Communities.CommunitiesCard
             stringBuilder.Append(listenersCount);
             stringBuilder.Append(" Listening");
             view.ListenersCount.text = stringBuilder.ToString();
+        }
+
+        public void Dispose()
+        {
+            voiceChatOrchestrator.CurrentCommunityId.OnUpdate -= UpdateJoinLeaveButtonState;
         }
     }
 }

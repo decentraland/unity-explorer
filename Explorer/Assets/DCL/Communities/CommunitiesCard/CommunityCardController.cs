@@ -164,6 +164,7 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
+            communityCardVoiceChatController.Dispose();
         }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
