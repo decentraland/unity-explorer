@@ -113,15 +113,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 30
+    m_Left: 12
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 100, y: 91}
-  m_Spacing: {x: 20, y: 0}
+  m_CellSize: {x: 90, y: 90}
+  m_Spacing: {x: 5, y: 0}
   m_Constraint: 0
   m_ConstraintCount: 2
 --- !u!1 &1760567067741536678
@@ -373,7 +373,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 15}
+  m_SizeDelta: {x: 200, y: 3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7306288499481350917
 CanvasRenderer:
