@@ -89,7 +89,6 @@ MonoBehaviour:
   ModeratorControlPanel: {fileID: 2759937683997625039}
   LiveStreamPanel: {fileID: 5366491999501799099}
   StartStreamButton: {fileID: 8714722930696158199}
-  EndStreamButton: {fileID: 2407090960709617291}
   JoinStreamButton: {fileID: 5513391528537599553}
   LeaveStreamButton: {fileID: 3903054376959747445}
   ListenersCount: {fileID: 7481380362271094255}
@@ -148,20 +147,20 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7857845159752150021}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.11915197, g: 0.5, b: 0.0023584962, a: 1}
+  m_Color: {r: 0.42745098, g: 0.047058824, b: 0.8235294, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0777b27ffb579410cbb9d7bd29774538, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 12dd1efc4e826764f9b02be515a9a033, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -428,7 +427,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 3247320781420965089, guid: dfab61ee7078845f28ed58cf19eb1f72, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dfab61ee7078845f28ed58cf19eb1f72, type: 3}
@@ -437,17 +437,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7208412289321226793, guid: dfab61ee7078845f28ed58cf19eb1f72, type: 3}
   m_PrefabInstance: {fileID: 8771907335845830432}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2407090960709617291 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6402895217088616875, guid: dfab61ee7078845f28ed58cf19eb1f72, type: 3}
-  m_PrefabInstance: {fileID: 8771907335845830432}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2759937683997625039 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6913403163867305455, guid: dfab61ee7078845f28ed58cf19eb1f72, type: 3}

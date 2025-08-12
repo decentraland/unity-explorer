@@ -19,9 +19,6 @@ namespace DCL.Communities.CommunitiesCard
         public Button StartStreamButton;
 
         [field: SerializeField]
-        public Button EndStreamButton;
-
-        [field: SerializeField]
         public Button JoinStreamButton;
 
         [field: SerializeField]
