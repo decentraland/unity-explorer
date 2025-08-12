@@ -7,22 +7,8 @@ using System.Threading;
 
 namespace DCL.VoiceChat
 {
-    /// <summary>
-    ///     Interface for community voice chat call status service that exposes community calls specific properties
-    /// </summary>
     public interface ICommunityVoiceChatCallStatusService
     {
-        /// <summary>
-        ///     Event fired when active voice chat is detected in the current scene
-        /// </summary>
-        event Action<ActiveCommunityVoiceChat>? ActiveVoiceChatDetectedInScene;
-
-        event Action? ActiveVoiceChatStoppedInScene;
-
-        /// <summary>
-        ///     Checks if a community has an active voice chat call
-        /// </summary>
-        /// <param name="communityId">The community ID to check</param>
         bool HasActiveVoiceChatCall(string communityId);
 
         /// <summary>

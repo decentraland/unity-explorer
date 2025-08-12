@@ -13,6 +13,7 @@ namespace DCL.VoiceChat
 
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
+        private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
 
         private readonly IDisposable privateStatusSubscription;
         private readonly IDisposable communityStatusSubscription;
@@ -41,15 +42,17 @@ namespace DCL.VoiceChat
         public VoiceChatOrchestrator(
             PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
-            VoiceChatParticipantsStateService participantsStateService)
+            VoiceChatParticipantsStateService participantsStateService,
+            SceneVoiceChatTrackerService sceneVoiceChatTrackerService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
+            this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
             ParticipantsStateService = participantsStateService;
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
-            communityVoiceChatCallStatusService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
-            communityVoiceChatCallStatusService.ActiveVoiceChatStoppedInScene += OnActiveVoiceChatStoppedInScene;
+            sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
+            sceneVoiceChatTrackerService.ActiveVoiceChatStoppedInScene += OnActiveVoiceChatStoppedInScene;
 
             privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
             communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
@@ -58,8 +61,8 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
-            communityVoiceChatCallStatusService.ActiveVoiceChatDetectedInScene -= OnActiveVoiceChatDetectedInScene;
-            communityVoiceChatCallStatusService.ActiveVoiceChatStoppedInScene -= OnActiveVoiceChatStoppedInScene;
+            sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene -= OnActiveVoiceChatDetectedInScene;
+            sceneVoiceChatTrackerService.ActiveVoiceChatStoppedInScene -= OnActiveVoiceChatStoppedInScene;
 
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
