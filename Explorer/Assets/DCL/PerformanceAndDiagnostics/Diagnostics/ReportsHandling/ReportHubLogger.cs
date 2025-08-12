@@ -12,11 +12,16 @@ namespace DCL.Diagnostics
     public class ReportHubLogger : ILogHandler
     {
         private readonly Action<Exception> emergencyLog = Debug.LogWarning;
-        private readonly IReadOnlyList<IReportHandler> reportHandlers;
+        private List<IReportHandler> reportHandlers;
 
-        public ReportHubLogger(IReadOnlyList<IReportHandler> reportHandlers)
+        public ReportHubLogger(List<IReportHandler> reportHandlers)
         {
             this.reportHandlers = reportHandlers;
+        }
+
+        public void AddHandler(IReportHandler handler)
+        {
+            reportHandlers.Add(handler);
         }
 
         /// <summary>

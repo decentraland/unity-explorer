@@ -58,8 +58,6 @@ namespace Global.Dynamic
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
-        public DebugMenuLogEntryBus? SceneDebugConsoleMessageBus { get; private set; }
-
         public DecentralandEnvironment Environment { get; private set; }
 
         public override void Dispose()
@@ -94,9 +92,6 @@ namespace Global.Dynamic
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
             var web3AccountFactory = new Web3AccountFactory();
 
-            bool enableSceneDebugConsole = realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
-            var sceneDebugConsoleMessageBus = enableSceneDebugConsole ? new DebugMenuLogEntryBus() : null;
-
             var bootstrapContainer = new BootstrapContainer
             {
                 IdentityCache = identityCache,
@@ -110,7 +105,6 @@ namespace Global.Dynamic
                 DebugSettings = debugSettings,
                 WorldVolumeMacBus = new WorldVolumeMacBus(),
                 Environment = decentralandEnvironment,
-                SceneDebugConsoleMessageBus = sceneDebugConsoleMessageBus
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
@@ -127,7 +121,7 @@ namespace Global.Dynamic
                     CrashDetector.Initialize(container.Analytics);
                 }
 
-                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, sceneDebugConsoleMessageBus);
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
                 void AddIdentityToSentryScope(Scope scope)

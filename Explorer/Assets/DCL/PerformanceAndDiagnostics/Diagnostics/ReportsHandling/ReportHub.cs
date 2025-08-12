@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -19,13 +20,13 @@ namespace DCL.Diagnostics
         }
 
         public static ReportHubLogger Instance { get; private set; } =
-            new (new IReportHandler[]
-            {
-                new DefaultReportLogger(),
-            });
+            new (new List<IReportHandler>()
+                {
+                    new DefaultReportLogger(),
+                });
 
         [UsedImplicitly]
-        private static bool enforceUnconditionalVerboseLogs;
+        public static bool enforceUnconditionalVerboseLogs;
 
         public static void Initialize(ReportHubLogger logger, bool logVerbose = false)
         {
