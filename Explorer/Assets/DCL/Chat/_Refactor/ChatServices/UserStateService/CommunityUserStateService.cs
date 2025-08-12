@@ -53,8 +53,10 @@ namespace DCL.Chat.ChatServices
         {
             if (addedChannel.ChannelType != ChatChannel.ChatChannelType.COMMUNITY) return;
 
+            if (onlineParticipantsPerChannel.ContainsKey(addedChannel.Id))
+                return;
+            
             onlineParticipantsPerChannel.SyncAdd(addedChannel.Id, HASHSET_POOL.Get());
-
             InitializeOnlineMembersAsync(addedChannel.Id, lifeTimeCts.Token).Forget();
         }
 
