@@ -1489,7 +1489,7 @@ MonoBehaviour:
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
   <CommunityStreamSubTitleButton>k__BackingField: {fileID: 3563079646576786156}
-  <CommunitySubTitleBarCanvasGroup>k__BackingField: {fileID: 0}
+  <CommunitySubTitleBarCanvasGroup>k__BackingField: {fileID: 3508538727864959267}
   IsMaskActive: 0
 --- !u!1001 &565260970276897274
 PrefabInstance:
@@ -3447,6 +3447,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
+--- !u!225 &3508538727864959267 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 8595719604114115994, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
+  m_PrefabInstance: {fileID: 5186726280409828537}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3563079646576786156 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8541197767691794005, guid: fd63a464148a7c241a952a43c67f42d6, type: 3}
