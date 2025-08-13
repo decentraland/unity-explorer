@@ -34,7 +34,8 @@ namespace DCL.Chat.ChatCommands
             {
                 await chatHistoryStorage.InitializeChannelWithMessagesAsync(channelId);
 
-                if (chatHistory.Channels[channelId].Messages.Count == 0)
+                if (chatHistory.Channels[channelId].Messages.Count == 0 &&
+                    chatHistory.Channels[channelId].ChannelType != ChatChannel.ChatChannelType.COMMUNITY)
                     chatHistory.AddMessage(channelId, chatHistory.Channels[channelId].ChannelType,
                         ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
 
