@@ -75,7 +75,6 @@ namespace DCL.LOD.Systems
                     return;
 
                 var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
-                sceneLODInfo.GltfContainerAssets = new List<GltfContainerAsset>();
 
                 for (var i = 0; i < staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count; i++)
                 {
@@ -87,7 +86,6 @@ namespace DCL.LOD.Systems
                         asset.Root.transform.position = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.positions[i];
                         asset.Root.transform.rotation = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.rotations[i];
                         asset.Root.transform.localScale = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.scales[i];
-                        sceneLODInfo.GltfContainerAssets.Add(asset);
                     }
                 }
                 instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;

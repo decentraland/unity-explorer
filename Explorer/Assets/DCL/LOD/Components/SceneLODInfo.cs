@@ -24,8 +24,6 @@ namespace DCL.LOD.Components
 
         public bool RequestSingleSceneAssetBundleInstantiation;
 
-        public List<GltfContainerAsset> GltfContainerAssets;
-
         public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);

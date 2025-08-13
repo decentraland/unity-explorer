@@ -58,8 +58,8 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 if (sceneDefinitionComponent.Definition.SupportsStaticScene())
                 {
-                    foreach (GltfContainerAsset gltfContainerAsset in staticSceneAssetBundle.AssetsInstantiated)
-                        gltfContainerAsset.Scene_LOD_Bridge_Asset = true;
+                    foreach ((string, GltfContainerAsset) gltfContainerAsset in staticSceneAssetBundle.AssetsInstantiated)
+                        gltfContainerAsset.Item2.Scene_LOD_Bridge_Asset = true;
                 }
 
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,

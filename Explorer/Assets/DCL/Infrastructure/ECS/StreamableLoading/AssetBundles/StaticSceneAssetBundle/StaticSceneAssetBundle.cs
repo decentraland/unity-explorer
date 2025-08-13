@@ -5,7 +5,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Lumin;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -14,7 +13,7 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public StreamableLoadingResult<AssetBundleData> AssetBundleData;
         public AssetBundlePromise AssetBundlePromise;
-        public List<GltfContainerAsset> AssetsInstantiated;
+        public List<(string, GltfContainerAsset)> AssetsInstantiated;
 
         private World GlobalWorld;
         private string SceneID;
@@ -46,9 +45,9 @@ namespace ECS.StreamableLoading.AssetBundles
         private bool IsSupported() =>
             AssetBundleData.Exception == null;
 
-        public void AddInstantiatedAsset(GltfContainerAsset asset)
+        public void AddInstantiatedAsset(string hash, GltfContainerAsset asset)
         {
-            AssetsInstantiated.Add(asset);
+            AssetsInstantiated.Add((hash, asset));
             AllAssetsInstantiated = AssetsInstantiated.Count == AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count;
         }
 
@@ -63,7 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             StaticSceneAssetBundle suportedStaticSceneAB = new StaticSceneAssetBundle();
             suportedStaticSceneAB.AssetBundlePromise = AssetBundlePromise.NULL;
-            suportedStaticSceneAB.AssetsInstantiated = new List<GltfContainerAsset>();
+            suportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
             suportedStaticSceneAB.AssetBundleData = new ();
             suportedStaticSceneAB.GlobalWorld = world;
             return suportedStaticSceneAB;

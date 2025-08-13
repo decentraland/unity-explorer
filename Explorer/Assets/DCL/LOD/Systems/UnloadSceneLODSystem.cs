@@ -63,13 +63,10 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 if (sceneDefinitionComponent.Definition.SupportsStaticScene() && sceneLODInfo.HasLOD(0))
                 {
-                    foreach (GltfContainerAsset gltfContainerAsset in staticSceneAssetBundle.AssetsInstantiated)
-                        gltfContainerAsset.Scene_LOD_Bridge_Asset = true;
-
-                    for (var i = 0; i < staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count; i++)
+                    foreach (var valueTuple in staticSceneAssetBundle.AssetsInstantiated)
                     {
-                        string assetHash = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash[i];
-                        assetsCache.Dereference(assetHash, sceneLODInfo.GltfContainerAssets[i]);
+                        valueTuple.Item2.Scene_LOD_Bridge_Asset = true;
+                        assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
                     }
 
                     sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
