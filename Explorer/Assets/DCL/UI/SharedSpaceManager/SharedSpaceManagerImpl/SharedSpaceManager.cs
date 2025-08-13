@@ -38,10 +38,14 @@ namespace DCL.UI.SharedSpaceManager
         private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
+        private bool isCameraReelPanelVisible { get; set; }
 
         public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
         {
             this.mvcManager = mvcManager;
+            mvcManager.OnViewShowed += OnMvcViewShowed;
+            mvcManager.OnViewClosed += OnMvcViewClosed;
+            
             dclInput = DCLInput.Instance;
             isFriendsFeatureEnabled = isFriendsEnabled;
             isCameraReelFeatureEnabled = isCameraReelEnabled;
@@ -96,8 +100,21 @@ namespace DCL.UI.SharedSpaceManager
             if (isCameraReelFeatureEnabled)
                 dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
 
+            mvcManager.OnViewShowed -= OnMvcViewShowed;
+            mvcManager.OnViewClosed -= OnMvcViewClosed;
+            
             cts.SafeCancelAndDispose();
             configureShortcutsCts.SafeCancelAndDispose();
+        }
+
+        private void OnMvcViewShowed(IController controller)
+        {
+            if (controller is IBlocksChat) isCameraReelPanelVisible = true;
+        }
+
+        private void OnMvcViewClosed(IController controller)
+        {
+            if (controller is IBlocksChat) isCameraReelPanelVisible = false;
         }
 
         public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
@@ -296,7 +313,7 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnUISubmitPerformedAsync(InputAction.CallbackContext obj)
         {
-            if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible)
+            if (IsRegistered(PanelsSharingSpace.Chat) && !isExplorePanelVisible && !isCameraReelPanelVisible)
                 await ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
         }
 

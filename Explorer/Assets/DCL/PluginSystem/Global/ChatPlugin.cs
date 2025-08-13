@@ -273,6 +273,7 @@ namespace DCL.PluginSystem.Global
                 },
                 chatConfig,
                 eventBus,
+                mvcManager,
                 chatMessagesBus,
                 chatEventBus,
                 currentChannelService,

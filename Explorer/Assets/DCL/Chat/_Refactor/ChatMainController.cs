@@ -15,9 +15,7 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
-using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -37,6 +35,7 @@ namespace DCL.Chat
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IMVCManager mvcManager;
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
@@ -55,6 +54,7 @@ namespace DCL.Chat
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
+            IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
             IChatEventBus chatEventBus,
             CurrentChannelService currentChannelService,
@@ -69,6 +69,7 @@ namespace DCL.Chat
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
+            this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
             this.chatEventBus = chatEventBus;
             this.currentChannelService = currentChannelService;
@@ -91,6 +92,8 @@ namespace DCL.Chat
 
             uiScope = new EventSubscriptionScope();
 
+            mvcManager.OnViewShowed += OnMvcViewShowed;
+            mvcManager.OnViewClosed += OnMvcViewClosed;
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
@@ -252,6 +255,8 @@ namespace DCL.Chat
         {
             if (viewInstance != null)
             {
+                mvcManager.OnViewShowed -= OnMvcViewShowed;
+                mvcManager.OnViewClosed -= OnMvcViewClosed;
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
                 DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
@@ -270,6 +275,18 @@ namespace DCL.Chat
             uiScope?.Dispose();
 
             chatMemberListService.Dispose();
+        }
+
+        private void OnMvcViewShowed(IController controller)
+        {
+            if (controller is IBlocksChat)
+                chatStateMachine?.Minimize();
+        }
+
+        private void OnMvcViewClosed(IController controller)
+        {
+            if (controller is IBlocksChat)
+                chatStateMachine?.PopState();
         }
     }
 }
