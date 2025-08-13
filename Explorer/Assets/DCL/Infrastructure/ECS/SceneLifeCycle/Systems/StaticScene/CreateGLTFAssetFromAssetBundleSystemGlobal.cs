@@ -20,9 +20,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGLTFAssetFromAssetBundleSystemGlobal : CreateGLTFAssetFromAssetBundleSystemBase
     {
-        private GltfContainerAssetsCache gltfContainerAssetsCache;
+        private IGltfContainerAssetsCache gltfContainerAssetsCache;
 
-        internal CreateGLTFAssetFromAssetBundleSystemGlobal(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget, GltfContainerAssetsCache gltfContainerAssetsCache) : base(world, instantiationFrameTimeBudget, memoryBudget)
+        internal CreateGLTFAssetFromAssetBundleSystemGlobal(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget, IGltfContainerAssetsCache gltfContainerAssetsCache) : base(world, instantiationFrameTimeBudget, memoryBudget)
         {
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
         }

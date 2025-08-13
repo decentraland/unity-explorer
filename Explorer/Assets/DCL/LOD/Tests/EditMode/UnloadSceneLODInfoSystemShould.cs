@@ -58,7 +58,7 @@ namespace DCL.LOD.Tests
             };
             sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
-            system = new UnloadSceneLODSystem(world, scenesCache, lodCache, Substitute.For<IGltfContainerAssetsCache>());
+            system = new UnloadSceneLODSystem(world, scenesCache, lodCache);
         }
 
         [Test]

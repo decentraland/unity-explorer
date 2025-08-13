@@ -83,7 +83,7 @@ namespace DCL.LOD.Tests
                 textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new[]
                 {
                     new TextureArrayResolutionDescriptor(256, 500, 1)
-                }, TextureFormat.BC7, 20, 1), Substitute.For<IRealmPartitionSettings>(), Substitute.For<IGltfContainerAssetsCache>());
+                }, TextureFormat.BC7, 20, 1), Substitute.For<IRealmPartitionSettings>());
         }
 
         [Test]

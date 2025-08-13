@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.World
             EntityEventBuffer<GltfContainerComponent>.Register(1000);
         }
 
-        private readonly GltfContainerAssetsCache assetsCache;
+        private readonly IGltfContainerAssetsCache assetsCache;
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILaunchMode launchMode;
@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.World
         private readonly ILoadingStatus loadingStatus;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, ILaunchMode launchMode, bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus,
-            GltfContainerAssetsCache assetsCache)
+            IGltfContainerAssetsCache assetsCache)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;

@@ -13,7 +13,6 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -56,11 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
-                if (sceneDefinitionComponent.Definition.SupportsStaticScene())
-                {
-                    foreach ((string, GltfContainerAsset) gltfContainerAsset in staticSceneAssetBundle.AssetsInstantiated)
-                        gltfContainerAsset.Item2.Scene_LOD_Bridge_Asset = true;
-                }
+                staticSceneAssetBundle.MarkAssetToMoveToBridge();
 
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
                     sceneDefinitionComponent.Parcels);

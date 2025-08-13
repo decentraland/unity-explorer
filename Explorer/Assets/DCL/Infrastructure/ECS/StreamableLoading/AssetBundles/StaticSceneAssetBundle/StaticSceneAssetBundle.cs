@@ -2,9 +2,11 @@ using Arch.Core;
 using DCL.Diagnostics;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -17,6 +19,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private World GlobalWorld;
         private string SceneID;
+        private IGltfContainerAssetsCache assetsCache;
 
         private bool AllAssetsInstantiated;
 
@@ -58,16 +61,49 @@ namespace ECS.StreamableLoading.AssetBundles
             return unsuportedStaticSceneAB;
         }
 
-        public static StaticSceneAssetBundle CreateSupported(World world)
+        public static StaticSceneAssetBundle CreateSupported(World world, IGltfContainerAssetsCache assetsCache)
         {
             StaticSceneAssetBundle suportedStaticSceneAB = new StaticSceneAssetBundle();
             suportedStaticSceneAB.AssetBundlePromise = AssetBundlePromise.NULL;
             suportedStaticSceneAB.AssetsInstantiated = new List<(string,GltfContainerAsset)>();
             suportedStaticSceneAB.AssetBundleData = new ();
             suportedStaticSceneAB.GlobalWorld = world;
+            suportedStaticSceneAB.assetsCache = assetsCache;
             return suportedStaticSceneAB;
         }
 
+        public void RepositionStaticAssets(GameObject instantiatedLOD)
+        {
+            for (var i = 0; i < AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count; i++)
+            {
+                string assetHash = AssetBundleData.Asset.StaticSceneDescriptor.assetHash[i];
+                if (assetsCache.TryGet(assetHash, out var asset))
+                {
+                    asset.Root.SetActive(true);
+                    asset.Root.transform.SetParent(instantiatedLOD.transform);
+                    asset.Root.transform.position = AssetBundleData.Asset.StaticSceneDescriptor.positions[i];
+                    asset.Root.transform.rotation = AssetBundleData.Asset.StaticSceneDescriptor.rotations[i];
+                    asset.Root.transform.localScale = AssetBundleData.Asset.StaticSceneDescriptor.scales[i];
+                }
+            }
+        }
 
+        public void MoveToCache()
+        {
+            foreach (var valueTuple in AssetsInstantiated)
+            {
+                valueTuple.Item2.Scene_LOD_Bridge_Asset = true;
+                assetsCache.Dereference(valueTuple.Item1, valueTuple.Item2);
+            }
+        }
+
+        public void MarkAssetToMoveToBridge()
+        {
+            if (!IsSupported())
+                return;
+
+            foreach ((string, GltfContainerAsset) gltfContainerAsset in AssetsInstantiated)
+                gltfContainerAsset.Item2.Scene_LOD_Bridge_Asset = true;
+        }
     }
 }

@@ -1,13 +1,14 @@
 ﻿using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using System;
 
 namespace ECS.Unity.GLTFContainer.Asset.Cache
 {
     /// <summary>
     /// Has nothing to do with hierarchy of <see cref="IStreamableCache{TAsset,TLoadingIntention}"/>
     /// </summary>
-    public interface IGltfContainerAssetsCache
+    public interface IGltfContainerAssetsCache : IDisposable
     {
         bool TryGet(in string key, out GltfContainerAsset? asset);
 

@@ -38,11 +38,9 @@ namespace DCL.LOD.Systems
         private float defaultLodBias;
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
-        private readonly IGltfContainerAssetsCache assetsCache;
 
 
-        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, IRealmPartitionSettings realmPartitionSettings,
-            IGltfContainerAssetsCache assetsCache) : base(world)
+        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
@@ -50,7 +48,6 @@ namespace DCL.LOD.Systems
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
             this.realmPartitionSettings = realmPartitionSettings;
-            this.assetsCache = assetsCache;
         }
 
         public override void Initialize()
@@ -75,19 +72,7 @@ namespace DCL.LOD.Systems
                     return;
 
                 var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
-
-                for (var i = 0; i < staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count; i++)
-                {
-                    string assetHash = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash[i];
-                    if (assetsCache.TryGet(assetHash, out var asset))
-                    {
-                        asset.Root.SetActive(true);
-                        asset.Root.transform.SetParent(instantiatedLOD.transform);
-                        asset.Root.transform.position = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.positions[i];
-                        asset.Root.transform.rotation = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.rotations[i];
-                        asset.Root.transform.localScale = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.scales[i];
-                    }
-                }
+                staticSceneAssetBundle.RepositionStaticAssets(instantiatedLOD);
                 instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
                 var newLod = new LODAsset(instantiatedLOD, staticSceneAssetBundle.AssetBundleData.Asset,
                     GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
@@ -96,6 +81,7 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.RequestSingleSceneAssetBundleInstantiation = false;
             }
         }
+
 
         [Query]
         [None(typeof(DeleteEntityIntention))]

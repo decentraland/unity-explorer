@@ -23,9 +23,11 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class ResolveStaticSceneAssetBundleSystem : BaseUnityLoopSystem
     {
 
+        private readonly IGltfContainerAssetsCache assetsCache;
 
-        public ResolveStaticSceneAssetBundleSystem(World world) : base(world)
+        public ResolveStaticSceneAssetBundleSystem(World world, IGltfContainerAssetsCache assetsCache) : base(world)
         {
+            this.assetsCache = assetsCache;
         }
 
         protected override void Update(float t)
@@ -40,7 +42,7 @@ namespace ECS.SceneLifeCycle.Systems
         public void InitializeStaticSceneAssetBundle(Entity entity, in SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (sceneDefinitionComponent.Definition.SupportsStaticScene())
-                World.Add(entity, StaticSceneAssetBundle.CreateSupported(World));
+                World.Add(entity, StaticSceneAssetBundle.CreateSupported(World, assetsCache));
             else
                 World.Add(entity, StaticSceneAssetBundle.CreateUnsupported(sceneDefinitionComponent.Definition.id));
         }

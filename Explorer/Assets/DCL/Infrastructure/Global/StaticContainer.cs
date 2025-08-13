@@ -117,9 +117,6 @@ namespace Global
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
 
-        public GltfContainerAssetsCache  GltfContainerAssetsCache;
-
-
         public void Dispose()
         {
             realmPartitionSettings.Dispose();
@@ -227,9 +224,9 @@ namespace Global
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
 
 
-            container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
+            IGltfContainerAssetsCache gltfAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
             var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
-            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), container.GltfContainerAssetsCache);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), gltfAssetsCache);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, profileRepository);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
@@ -258,7 +255,7 @@ namespace Global
                 ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
 
 
-            var gltfContainerPlugin =  new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache);
+            var gltfContainerPlugin =  new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, gltfAssetsCache);
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 
