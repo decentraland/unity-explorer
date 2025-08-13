@@ -50,6 +50,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0bbeb665cb8b4bb4cbea314581e50bab
+    m_Address: Assets/DCL/InWorldCamera/InWorldCamera/UI/Textures/RuleOf3rd.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0eecf14978c1aa74381023946dde5c78
     m_Address: Character Object
     m_ReadOnly: 0

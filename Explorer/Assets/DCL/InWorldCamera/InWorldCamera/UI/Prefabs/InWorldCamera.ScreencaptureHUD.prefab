@@ -216,6 +216,14 @@ MonoBehaviour:
   whiteSplashImage: {fileID: 2926745434062198778}
   cameraReelIcon: {fileID: 592682626191998567}
   animatedImage: {fileID: 4429869035757732807}
+  gridImage: {fileID: 4913311366325189895}
+  gridSprite:
+    m_AssetGUID: 0bbeb665cb8b4bb4cbea314581e50bab
+    m_SubObjectName: RuleOf3rd
+    m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
   <NoStorageNotification>k__BackingField: {fileID: 8266421467152206612}
   <ShortcutsInfoPanel>k__BackingField: {fileID: 6937741378551344804}
   <SFXScreenshotCapture>k__BackingField: {fileID: 11400000, guid: 7f53a7b2e8dca514c9c8f3114f3da727, type: 2}
@@ -487,7 +495,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0071e477d02b34317b64d4eb2f3a927f, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -698,7 +706,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0bbeb665cb8b4bb4cbea314581e50bab, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1780,11 +1788,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4986538752391755247, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -35.799988
+      value: -35.80005
       objectReference: {fileID: 0}
     - target: {fileID: 4986538752391755247, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 69.99997
+      value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 4986538752391755247, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

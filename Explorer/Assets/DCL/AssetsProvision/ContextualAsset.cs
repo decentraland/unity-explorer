@@ -2,55 +2,48 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using Utility.Ownership;
 using Object = UnityEngine.Object;
 
 namespace DCL.AssetsProvision
 {
-    public struct ContextualAsset<T> : IDisposable where T: Object
+    public class ContextualAsset<T> : IDisposable where T: Object
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly AssetReferenceT<T> reference;
-        private readonly CancellationTokenSource cancellationTokenSource;
-        private (ProvidedAsset<T> provided, Owned<T> owned)? asset;
+        private Owned<T>? asset;
 
-        public ContextualAsset(IAssetsProvisioner assetsProvisioner, AssetReferenceT<T> reference) : this()
+        public ContextualAsset(AssetReferenceT<T> reference)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.reference = reference;
-            cancellationTokenSource = new CancellationTokenSource();
             asset = null;
         }
 
-        public async UniTask<Weak<T>> AssetAsync()
+        public async UniTask<Weak<T>> AssetAsync(CancellationToken token)
         {
-            if (asset.HasValue == false)
+            if (asset == null)
             {
-                ProvidedAsset<T> providedAsset = await assetsProvisioner.ProvideMainAssetAsync(reference, cancellationTokenSource.Token);
-                T value = providedAsset.Value;
-                Owned<T> ownedAsset = new Owned<T>(value);
-                asset = (providedAsset, ownedAsset);
+                var handle = reference.LoadAssetAsync();
+                await handle.Task!.AsUniTask().AttachExternalCancellation(token);
+                if (handle.Status != AsyncOperationStatus.Succeeded) throw new Exception($"Load failed: {reference.RuntimeKey}");
+                T value = handle.Result!;
+                asset = new Owned<T>(value);
             }
 
-            return asset!.Value.owned!.Downgrade();
+            return asset!.Downgrade();
         }
 
         public void Release()
         {
-            if (asset.HasValue)
-            {
-                (ProvidedAsset<T> provided, Owned<T> owned) = asset!.Value;
-                provided.Dispose();
-                owned!.Dispose(out _);
-                asset = null;
-            }
+            if (asset == null) return;
+            reference.ReleaseAsset();
+            asset.Dispose(out _);
+            asset = null;
         }
 
         public void Dispose()
         {
             Release();
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
         }
     }
 }
