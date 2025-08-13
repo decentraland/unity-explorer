@@ -71,7 +71,6 @@ namespace DCL.Landscape
         public IReadOnlyList<Transform> Cliffs { get; private set; }
 
         public IReadOnlyList<Terrain> Terrains => terrains;
-        public IReadOnlyList<ChunkModel> ChunkModels => terrainModel.ChunkModels;
 
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
@@ -159,9 +158,6 @@ namespace DCL.Landscape
 
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
-
-        public int GetParcelSize() =>
-            parcelSize;
 
         public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport)
         {

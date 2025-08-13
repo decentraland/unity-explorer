@@ -15,15 +15,6 @@ namespace DCL.Landscape
         public IReadOnlyList<int2> OutOfTerrainParcels => outOfTerrainParcels;
         public IReadOnlyList<int2> OccupiedParcels => occupiedParcels;
 
-        public bool IsOccupied(int2 parcel) =>
-            occupiedParcels.Contains(parcel);
-
-        public float2 GetCenterInWorldUnits(int parcelSize)
-        {
-            var centerParcel = new float2(MinParcel.x + ((MaxParcel.x - MinParcel.x) * 0.5f), MinParcel.y + ((MaxParcel.y - MinParcel.y) * 0.5f));
-            return centerParcel * parcelSize;
-        }
-
         public TerrainData TerrainData { get; set; }
         public Terrain terrain;
 
