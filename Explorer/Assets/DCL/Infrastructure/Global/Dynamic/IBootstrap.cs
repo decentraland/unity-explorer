@@ -11,6 +11,7 @@ using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
+using DCL.UI;
 using DCL.Utilities;
 using Global.Versioning;
 using UnityEngine.UIElements;
@@ -48,6 +49,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
+            WarningNotificationView showUINotificationView,
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
