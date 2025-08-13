@@ -1,4 +1,5 @@
 using DCL.CharacterMotion.Components;
+using DCL.Landscape.Settings;
 using DCL.Multiplayer.Movement.Settings;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -14,7 +15,6 @@ namespace DCL.Multiplayer.Movement.Tests
         private NetworkMessageEncoder encoder;
 
         private static MessageEncodingSettings settings;
-
         private static MessageEncodingSettings Settings
         {
             get
@@ -24,12 +24,23 @@ namespace DCL.Multiplayer.Movement.Tests
             }
         }
 
-        private static ParcelEncoder parcelEncoder => new (Settings.landscapeData.terrainData);
+        private static LandscapeData landscapeData;
+
+        private static LandscapeData LandscapeData
+        {
+            get
+            {
+                landscapeData ??= LoadLandscapeData();
+                return landscapeData;
+            }
+        }
+
+        private static ParcelEncoder parcelEncoder => new (LandscapeData.terrainData);
 
         [SetUp]
         public void SetUp()
         {
-            encoder = new NetworkMessageEncoder(Settings);
+            encoder = new NetworkMessageEncoder(Settings, LandscapeData);
         }
 
         private static MessageEncodingSettings LoadSettings()
@@ -37,6 +48,13 @@ namespace DCL.Multiplayer.Movement.Tests
             string[] guids = AssetDatabase.FindAssets("t:MessageEncodingSettings");
             string path = AssetDatabase.GUIDToAssetPath(guids[0]);
             return AssetDatabase.LoadAssetAtPath<MessageEncodingSettings>(path);
+        }
+
+        private static LandscapeData LoadLandscapeData()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:LandscapeData");
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            return AssetDatabase.LoadAssetAtPath<LandscapeData>(path);
         }
 
         [TestCase(0f, 0f)]

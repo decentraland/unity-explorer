@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Emotes
         private const float LATENCY = 0f;
 
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly ProvidedAsset<MultiplayerDebugSettings> settings;
+        private readonly MultiplayerDebugSettings settings;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.Emotes
         private readonly MutexSync sync = new();
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub,
-            ProvidedAsset<MultiplayerDebugSettings> settings,
+            MultiplayerDebugSettings settings,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             this.messagePipesHub = messagePipesHub;
@@ -66,7 +66,7 @@ namespace DCL.Multiplayer.Emotes
             SendTo(emote, timestamp, messagePipesHub.IslandPipe());
             SendTo(emote, timestamp, messagePipesHub.ScenePipe());
 
-            if (settings.Value.SelfSending)
+            if (settings.SelfSending)
                 SelfSendWithDelayAsync(emote, timestamp).Forget();
         }
 

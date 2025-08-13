@@ -144,14 +144,13 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
-            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, settings.ChatSettingsAsset);
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
-                string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
+                string walletAddress = web3IdentityCache.Identity?.Address ?? string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
@@ -170,7 +169,7 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 inputBlock,
                 roomHub,
-                chatSettingsAsset.Value,
+                settings.ChatSettingsAsset,
                 hyperlinkTextFormatter,
                 profileCache,
                 chatEventBus,
@@ -199,6 +198,8 @@ namespace DCL.PluginSystem.Global
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
+
+            return UniTask.CompletedTask;
         }
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
@@ -216,6 +217,6 @@ namespace DCL.PluginSystem.Global
 
     public class ChatPluginSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
+        [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; }
     }
 }

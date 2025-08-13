@@ -47,7 +47,7 @@ namespace DCL.SkyBox
         {
             try
             {
-                skyboxSettings = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.SettingsRef, ct)).Value;
+                skyboxSettings = pluginSettings.Settings;
                 skyboxSettings.Reset();
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
@@ -74,15 +74,7 @@ namespace DCL.SkyBox
         public class SkyboxTimeSettings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public SkyboxSettingsAssetRef SettingsRef { get; private set; }
-        }
-
-        [Serializable]
-        public class SkyboxSettingsAssetRef : AssetReferenceT<SkyboxSettingsAsset>
-        {
-            public SkyboxSettingsAssetRef(string guid) : base(guid)
-            {
-            }
+            public SkyboxSettingsAsset Settings { get; private set; }
         }
     }
 }

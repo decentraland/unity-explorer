@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
@@ -49,11 +50,13 @@ namespace DCL.Settings
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
         private readonly bool isVoiceChatEnabled;
+        private readonly SettingsGroupView settingsGroupPrefab;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
         public SettingsController(
             SettingsView view,
+            SettingsGroupView settingsGroupPrefab,
             SettingsMenuConfiguration settingsMenuConfiguration,
             AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
@@ -70,6 +73,7 @@ namespace DCL.Settings
             UpscalingController upscalingController, bool isVoiceChatEnabled)
         {
             this.view = view;
+            this.settingsGroupPrefab = settingsGroupPrefab;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
             this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
@@ -156,7 +160,7 @@ namespace DCL.Settings
                 if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
                     return;
 
-                SettingsGroupView generalGroupView = Object.Instantiate(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer);
+                SettingsGroupView generalGroupView = Object.Instantiate(settingsGroupPrefab, sectionContainer);
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;

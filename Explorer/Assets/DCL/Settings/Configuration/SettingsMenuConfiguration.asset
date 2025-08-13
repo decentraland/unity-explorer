@@ -12,7 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87ac801ee21e47668f593a1d5e2272ee, type: 3}
   m_Name: SettingsMenuConfiguration
   m_EditorClassIdentifier: 
-  <SettingsGroupPrefab>k__BackingField: {fileID: 3020791554913712716, guid: 204157b950b45f240819f044fb624b0d, type: 3}
+  <SettingsGroupPrefab>k__BackingField:
+    m_AssetGUID: 204157b950b45f240819f044fb624b0d
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
   <GeneralSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField: []
   <GraphicsSectionConfig>k__BackingField:

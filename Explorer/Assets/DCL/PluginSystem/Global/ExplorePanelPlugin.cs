@@ -305,16 +305,11 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            ProvidedAsset<SettingsMenuConfiguration> settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
-            ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
-            ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatSettings, ct);
-            ProvidedAsset<VideoPrioritizationSettings> videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct);
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
-            ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
 
@@ -368,20 +363,22 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
+            var settingsGroupPrefab = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration.SettingsGroupPrefab, ct);
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),
-                settingsMenuConfiguration.Value,
+                settingsGroupPrefab.Value.GetComponent<SettingsGroupView>(),
+                settings.SettingsMenuConfiguration,
                 generalAudioMixer.Value,
-                realmPartitionSettings.Value,
-                videoPrioritizationSettings.Value,
+                settings.RealmPartitionSettings,
+                settings.VideoPrioritizationSettings,
                 landscapeData.Value,
                 qualitySettingsAsset.Value,
                 controlsSettingsAsset.Value,
                 systemMemoryCap,
-                chatSettingsAsset.Value,
+                settings.ChatSettingsAsset,
                 userBlockingCacheProxy,
                 sceneLoadingLimit,
-                voiceChatSettings.Value,
+                settings.VoiceChatSettings,
                 worldVolumeMacBus,
                 upscalingController,
                 isVoiceChatEnabled);
@@ -528,22 +525,22 @@ namespace DCL.PluginSystem.Global
             public string[] EmbeddedEmotes { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceT<SettingsMenuConfiguration> SettingsMenuConfiguration { get; private set; }
+            public SettingsMenuConfiguration SettingsMenuConfiguration { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
 
             [field: SerializeField]
-            public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+            public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; }
 
             [field: SerializeField]
-            public StaticSettings.VoiceChatSettingsRef VoiceChatSettings { get; private set; }
+            public VoiceChatSettingsAsset VoiceChatSettings { get; private set; }
 
             [field: SerializeField]
-            public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings { get; private set; }
+            public VideoPrioritizationSettings VideoPrioritizationSettings { get; private set; }
 
             [field: SerializeField]
-            public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
+            public LandscapeDataRef LandscapeData { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceT<QualitySettingsAsset> QualitySettingsAsset { get; private set; }
@@ -552,7 +549,7 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<ControlsSettingsAsset> ControlsSettingsAsset { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
+            public ChatSettingsAsset ChatSettingsAsset { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; }

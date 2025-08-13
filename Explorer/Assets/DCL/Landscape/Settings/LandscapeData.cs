@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.Landscape.Settings
 {
@@ -32,5 +33,11 @@ namespace DCL.Landscape.Settings
                 OnDetailDistanceChanged?.Invoke(value);
             }
         }
+    }
+
+    [Serializable]
+    public class LandscapeDataRef : AssetReferenceT<LandscapeData>
+    {
+        public LandscapeDataRef(string guid) : base(guid) { }
     }
 }
