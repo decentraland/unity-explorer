@@ -32,6 +32,8 @@ namespace DCL.CharacterPreview
         private Color profileColor;
         private Vector3 avatarPosition;
 
+        private RenderTexture? currentRenderTexture;
+
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
         protected bool zoomEnabled = true;
@@ -89,18 +91,18 @@ namespace DCL.CharacterPreview
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
-            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
+            currentRenderTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
                 antiAliasing = 4,
                 useDynamicScale = true,
             };
 
-            newTexture.Create();
+            currentRenderTexture.Create();
 
-            view.RawImage.texture = newTexture;
+            view.RawImage.texture = currentRenderTexture;
 
-            previewController = previewFactory.Create(world, view.RawImage.rectTransform, newTexture,
+            previewController = previewFactory.Create(world, view.RawImage.rectTransform, currentRenderTexture,
                 inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
 
@@ -202,6 +204,12 @@ namespace DCL.CharacterPreview
                 previewController?.Dispose();
                 previewController = null;
                 initialized = false;
+
+                if (currentRenderTexture)
+                {
+                    currentRenderTexture.Release();
+                    UnityEngine.Object.Destroy(currentRenderTexture);
+                }
             }
 
             if (triggerOnHideBusEvent)
