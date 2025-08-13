@@ -14,6 +14,7 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -238,7 +239,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 await UniTask.Delay(ANIMATION_DELAY);
                 if (reelToDelete is not null)
                     DeleteScreenshotsAsync(new ReelToDeleteInfo(reelToDelete.id, reelToDelete.dateTime), deleteScreenshotCts.Token).Forget();
-
+                
                 reelToDelete = null;
                 HideDeleteModal();
             }
@@ -251,7 +252,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             try
             {
                 CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(reelToDeleteInfo.Id, ct);
-
+                galleryEventBus.ReelDeleted(reelToDeleteInfo.Id);
                 RemoveThumbnailFromList(reelToDeleteInfo.Id, reelToDeleteInfo.Datetime);
 
                 ScreenshotDeleted?.Invoke();
@@ -288,6 +289,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 }
             }
 
+            if (indexToRemove < 0)
+                return;
+
             thumbnailImages[currentSize - 1] = null;
             currentSize--;
             ResetThumbnailsVisibility();
@@ -309,13 +313,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void OnReelPublicStateChange(string reelId, bool isPublic)
         {
-            foreach (var thumbnail in pagedCameraReelManager.AllOrderedResponses)
-            {
-                if(thumbnail.id != reelId) continue;
+            var reel = pagedCameraReelManager.AllOrderedResponses.First(thumbnail => thumbnail.id == reelId);
+            reel.isPublic = isPublic;
+        }
 
-                thumbnail.isPublic = isPublic;
-                return;
-            }
+        private void OnReelDeletionSignal(string reelId)
+        {
+            var reel = pagedCameraReelManager.AllOrderedResponses.First(thumbnail => thumbnail.id == reelId);
+            if(reel != null)
+                HideReelFromList(reel);
         }
 
         private void PrepareShowGallery(CancellationToken ct)
@@ -335,6 +341,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             view.loadingSpinner.SetActive(false);
             galleryEventBus.ReelPublicStateChangeEvent += OnReelPublicStateChange;
+            galleryEventBus.ReelDeletedEvent += OnReelDeletionSignal;
         }
 
         public async UniTask ShowWalletGalleryAsync(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
@@ -595,6 +602,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             optionButtonController?.HideControl();
 
             galleryEventBus.ReelPublicStateChangeEvent -= OnReelPublicStateChange;
+            galleryEventBus.ReelDeletedEvent -= OnReelDeletionSignal;
         }
 
         public void Dispose()
