@@ -1,35 +1,37 @@
-﻿using System;
+﻿using Decentraland.Terrain;
+using System;
 using UnityEngine;
 
 namespace DCL.Landscape.Settings
 {
     public class LandscapeData : ScriptableObject
     {
-        public Action<float> OnDetailDistanceChanged;
+        public Action<float> OnEnvironmentDistanceChanged;
 
         public bool showSatelliteView;
-        public bool drawTerrain;
-        public bool drawTerrainDetails;
         public Transform mapChunk;
-        public TerrainGenerationData terrainData;
-        public TerrainGenerationData worldsTerrainData;
+        public TerrainGenerationData genesisCityData;
+        public TerrainGenerationData worldData;
+        public TerrainData terrainData;
+        public GrassIndirectRenderer grassIndirectRenderer;
 
-#if GPUI_PRO_PRESENT
-        public GPUIAssets gpuiAssets;
-#endif
+        // This is the source of truth for the "environment distance" slider in the graphics settings of
+        // the game. This controls the distance up to which grass, streets, cliffs, and water are
+        // rendered.
+        [SerializeField] private float environmentDistance = 200;
 
-        [SerializeField] private float detailDistanceValue = 200;
-        public float DetailDistance
+        public float EnvironmentDistance
         {
-            get => detailDistanceValue;
+            get => environmentDistance;
 
             set
             {
-                if (Mathf.Approximately(detailDistanceValue, value))
+                if (Mathf.Approximately(environmentDistance, value))
                     return;
 
-                detailDistanceValue = value;
-                OnDetailDistanceChanged?.Invoke(value);
+                environmentDistance = value;
+                terrainData.DetailDistance = value;
+                OnEnvironmentDistanceChanged?.Invoke(value);
             }
         }
     }

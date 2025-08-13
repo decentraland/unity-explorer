@@ -19,7 +19,7 @@ namespace DCL.Quality.Runtime
         private PersistentSetting<float> terrainLODBias;
         private PersistentSetting<float> detailDensity;
         private PersistentSetting<float> grassDistance;
-        private PersistentSetting<float> chunkCullDistance;
+        private PersistentSetting<float> environmentDistance;
 
         private readonly RealmPartitionSettingsAsset? realmPartitionSettings;
         private readonly VideoPrioritizationSettings? videoPrioritizationSettings;
@@ -68,8 +68,8 @@ namespace DCL.Quality.Runtime
             SetGrassDistance(preset.environmentSettings.grassDistance);
             this.grassDistance.Value = preset.environmentSettings.grassDistance;
 
-            SetChunkCullDistance(preset.environmentSettings.chunkCullDistance);
-            this.chunkCullDistance.Value = preset.environmentSettings.chunkCullDistance;
+            SetEnvironmentDistance(preset.environmentSettings.chunkCullDistance);
+            this.environmentDistance.Value = preset.environmentSettings.chunkCullDistance;
 
             SetMaxSimultaneousVideos(preset.environmentSettings.maxSimultaneousVideos);
             this.maxSimultaneousVideos.Value = preset.environmentSettings.maxSimultaneousVideos;
@@ -82,7 +82,7 @@ namespace DCL.Quality.Runtime
             terrainLODBias = PersistentSetting.CreateFloat(DCLPrefKeys.PS_TERRAIN_LOD_BIAS, currentPreset.environmentSettings.terrainLODBias).WithSetForceDefaultValue();
             detailDensity = PersistentSetting.CreateFloat(DCLPrefKeys.PS_DETAIL_DENSITY, currentPreset.environmentSettings.detailDensity).WithSetForceDefaultValue();
             grassDistance = PersistentSetting.CreateFloat(DCLPrefKeys.PS_GRASS_DISTANCE, currentPreset.environmentSettings.grassDistance).WithSetForceDefaultValue();
-            chunkCullDistance = PersistentSetting.CreateFloat(DCLPrefKeys.PS_CHUNK_CULL_DISTANCE, currentPreset.environmentSettings.chunkCullDistance).WithSetForceDefaultValue();
+            environmentDistance = PersistentSetting.CreateFloat(DCLPrefKeys.PS_CHUNK_CULL_DISTANCE, currentPreset.environmentSettings.chunkCullDistance).WithSetForceDefaultValue();
             maxSimultaneousVideos = PersistentSetting.CreateInt(DCLPrefKeys.PS_MAX_SIMULTANEOUS_VIDEOS, currentPreset.environmentSettings.lod1Threshold).WithSetForceDefaultValue();
 
             // Apply settings
@@ -91,7 +91,7 @@ namespace DCL.Quality.Runtime
             SetTerrainLodBias(terrainLODBias.Value);
             SetDetailDensity(detailDensity.Value);
             SetGrassDistance(grassDistance.Value);
-            SetChunkCullDistance(chunkCullDistance.Value);
+            SetEnvironmentDistance(environmentDistance.Value);
             SetMaxSimultaneousVideos(maxSimultaneousVideos.Value);
         }
 
@@ -145,12 +145,12 @@ namespace DCL.Quality.Runtime
             QualitySettings.terrainDetailDistance = distance;
         }
 
-        private void SetChunkCullDistance(float distance)
+        private void SetEnvironmentDistance(float distance)
         {
             if (landscapeData == null)
                 return;
 
-            landscapeData.DetailDistance = distance;
+            landscapeData.EnvironmentDistance = distance;
         }
     }
 }

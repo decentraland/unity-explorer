@@ -1,122 +1,184 @@
-﻿using Unity.Mathematics;
+﻿using System;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
+using static Unity.Mathematics.math;
 
 namespace DCL.Landscape
 {
     public class TerrainModel
     {
-        // Note: [units] = Unity units (1 unit = 1 meter)
+        private readonly int parcelSize;
+        private readonly int2 minParcel;
+        private readonly int2 maxParcel;
+        private readonly Texture2D occupancyMap;
 
-        private const int MAX_CHUNK_SIZE = 1024; // Maximum size of a chunk in Unity [units]
-        private const int MIN_CHUNKS_PER_SIDE = 2; // Minimum number of chunks along one side of terrain, ensuring at least a 2x2 grid
+        public int2 MinParcel => minParcel;
+        public int2 MaxParcel => maxParcel;
+        public int2 SizeInParcels => MaxParcel - MinParcel + 1;
+        public int2 SizeInUnits => SizeInParcels * parcelSize;
+        public int2 MinInUnits => MinParcel * parcelSize;
+        public int2 MaxInUnits => MinInUnits + SizeInUnits;
 
-        public readonly int2 MinParcel;
-        public readonly int2 MaxParcel;
-
-        public readonly int2 SizeInUnits;
-        public readonly int2 MinInUnits;
-        public readonly int2 MaxInUnits;
-
-        public readonly ChunkModel[] ChunkModels;
-
-        private readonly int parcelSize; // Size of a [parcel] in Unity [units]
-
-        public int ChunkSizeInUnits; //  in [units]
-
-        public readonly int ChunkSizeInParcels; //  in [parcels]
-        public readonly int SizeInChunks; // Number of chunks along one side of the square terrain
-
-        public TerrainModel(int parcelSize, WorldModel world, int paddingInParcels)
+        public TerrainModel(int2[] roads, int2[] occupied, int2[] empty, int parcelSize, int padding,
+            float extraPadding = 0f)
         {
             this.parcelSize = parcelSize;
 
-            ChunkSizeInUnits = 0;
-            ChunkSizeInParcels = 0;
+            CalculateMinMaxParcels(roads, ref minParcel, ref maxParcel);
+            CalculateMinMaxParcels(occupied, ref minParcel, ref maxParcel);
+            CalculateMinMaxParcels(empty, ref minParcel, ref maxParcel);
 
-            int2 sizeInParcels = world.SizeInParcels + (2 * paddingInParcels);
-            int2 centerInParcels = world.CenterInParcels;
-            MinParcel = centerInParcels - (sizeInParcels / 2);
-            MaxParcel = MinParcel + (sizeInParcels - 1); // last parcel is inclusive
+            int2 citySize = maxParcel - minParcel + 1;
+            int totalPadding = padding + (int)math.round((citySize.x + citySize.y) * extraPadding);
+            minParcel -= totalPadding;
+            maxParcel += totalPadding;
+            int2 terrainSize = citySize + totalPadding * 2;
+            int textureSize = ceilpow2(cmax(terrainSize) + 2);
 
-            SizeInUnits = sizeInParcels * parcelSize;
-            MinInUnits = MinParcel * parcelSize;
-            MaxInUnits = MinInUnits + SizeInUnits;
+            occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false, true);
+            NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
 
-            (SizeInChunks, ChunkSizeInParcels) = CalculateChunkSizeAndCount();
-
-            // Generate chunk models
+            // A square of red pixels surrounded by a border of black pixels totalPadding pixels wide
+            // surrounded by red pixels to fill out the power of two texture, but at least one. World
+            // origin (parcel 0,0) corresponds to uv of 0.5 plus half a pixel. The outer border is there
+            // so that terrain height blends to zero at its edges.
             {
-                ChunkModels = new ChunkModel[SizeInChunks * SizeInChunks];
+                int i = 0;
 
-                for (var x = 0; x < SizeInChunks; x++)
-                for (var y = 0; y < SizeInChunks; y++)
+                // First section: rows of red pixels from the top edge of the texture to minParcel.y.
+                int endY = (textureSize / 2 + minParcel.y) * textureSize;
+
+                while (i < endY)
+                    data[i++] = 255;
+
+                // Second section: totalPadding rows of: one or more red pixels (enough to pad the
+                // texture out to a power of two), terrainSize.x black pixels, one or more red pixels
+                // again for padding.
+                endY = i + totalPadding * textureSize;
+
+                while (i < endY)
                 {
-                    int2 minChunkParcel = MinParcel + new int2(x * ChunkSizeInParcels, y * ChunkSizeInParcels);
-                    int2 maxParcelPosition = minChunkParcel + new int2(ChunkSizeInParcels, ChunkSizeInParcels) - new int2(1, 1);
-                    var model = new ChunkModel(minChunkParcel, maxParcelPosition);
+                    int endX = i + textureSize / 2 + minParcel.x;
 
-                    if (TryOverlap(model, out int2 overlap))
-                        model.ProcessOverlap(overlap);
+                    while (i < endX)
+                        data[i++] = 255;
 
-                    ChunkModels[x + (y * SizeInChunks)] = model;
+                    endX = i + terrainSize.x;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
+
+                    while (i < endX)
+                        data[i++] = 255;
                 }
 
-                foreach (int2 parcel in world.OwnedParcels)
-                foreach (ChunkModel chunk in ChunkModels)
-                    if (ChunkContains(chunk, parcel))
-                    {
-                        chunk.AddOccupiedParcel(parcel);
-                        break;
-                    }
+                // Third, innermost section: citySize.y rows of: one or more red pixels, totalPadding
+                // black pixels, citySize.x red pixels, totalPadding black pixels, one or more red
+                // pixels.
+                endY = i + citySize.y * textureSize;
+
+                while (i < endY)
+                {
+                    int endX = i + textureSize / 2 + minParcel.x;
+
+                    while (i < endX)
+                        data[i++] = 255;
+
+                    endX = i + totalPadding;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + citySize.x;
+
+                    while (i < endX)
+                        data[i++] = 255;
+
+                    endX = i + totalPadding;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
+
+                    while (i < endX)
+                        data[i++] = 255;
+                }
+
+                // Fourth section, same as second section.
+                endY = i + totalPadding * textureSize;
+
+                while (i < endY)
+                {
+                    int endX = i + textureSize / 2 + minParcel.x;
+
+                    while (i < endX)
+                        data[i++] = 255;
+
+                    endX = i + terrainSize.x;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
+
+                    while (i < endX)
+                        data[i++] = 255;
+                }
+
+                // Fifth section, same as first section.
+                endY = i + (textureSize / 2 - maxParcel.y - 1) * textureSize;
+
+                while (i < endY)
+                    data[i++] = 255;
+            }
+
+            for (int i = 0; i < empty.Length; i++)
+            {
+                int2 parcel = empty[i] + textureSize / 2;
+                data[parcel.y * textureSize + parcel.x] = 0;
+            }
+
+            occupancyMap.Apply(false, false);
+        }
+
+        private static void CalculateMinMaxParcels(int2[] parcels, ref int2 minParcel,
+            ref int2 maxParcel)
+        {
+            foreach (int2 parcel in parcels)
+            {
+                if (parcel.x < minParcel.x)
+                    minParcel.x = parcel.x;
+
+                if (parcel.x > maxParcel.x)
+                    maxParcel.x = parcel.x;
+
+                if (parcel.y < minParcel.y)
+                    minParcel.y = parcel.y;
+
+                if (parcel.y > maxParcel.y)
+                    maxParcel.y = parcel.y;
             }
         }
 
         public bool IsInsideBounds(Vector2Int parcel) =>
             parcel.x >= MinParcel.x && parcel.x <= MaxParcel.x && parcel.y >= MinParcel.y && parcel.y <= MaxParcel.y;
 
-        private (int size, int count) CalculateChunkSizeAndCount()
+        private static Vector2Int ToVector2Int(int2 value) =>
+            new Vector2Int(value.x, value.y);
+
+        public void UpdateTerrainData(TerrainData terrainData)
         {
-            int maxSideLengthInUnits = Mathf.Max(SizeInUnits.x, SizeInUnits.y);
+            terrainData.Bounds = new RectInt(ToVector2Int(MinParcel), ToVector2Int(SizeInParcels));
+            terrainData.OccupancyMap = occupancyMap;
 
-            // Determine the number of chunks needed along one side to cover the largest dimension of the terrain
-            int sizeInChunks = Mathf.Max(MIN_CHUNKS_PER_SIDE, Mathf.CeilToInt((float)maxSideLengthInUnits / MAX_CHUNK_SIZE));
-
-            ChunkSizeInUnits = Mathf.ClosestPowerOfTwo(maxSideLengthInUnits / sizeInChunks);
-            ChunkSizeInUnits = Mathf.Min(ChunkSizeInUnits, MAX_CHUNK_SIZE); // Ensure it doesn't exceed the max size
-            int chunkSizeInParcels = ChunkSizeInUnits / parcelSize;
-
-            if (maxSideLengthInUnits > ChunkSizeInUnits * sizeInChunks)
-                sizeInChunks = Mathf.CeilToInt((float)maxSideLengthInUnits / ChunkSizeInUnits);
-
-            return (sizeInChunks, chunkSizeInParcels);
-        }
-
-        private bool ChunkContains(ChunkModel chunk, int2 parcel) =>
-            parcel.x >= chunk.MinParcel.x &&
-            parcel.x < chunk.MinParcel.x + ChunkSizeInParcels &&
-            parcel.y >= chunk.MinParcel.y &&
-            parcel.y < chunk.MinParcel.y + ChunkSizeInParcels;
-
-        private bool TryOverlap(in ChunkModel chunk, out int2 overlap)
-        {
-            var horizontalOverlap = 0;
-            var verticalOverlap = 0;
-
-            // Horizontal overlap
-            if (chunk.MinParcel.x < MinParcel.x)
-                horizontalOverlap = MinParcel.x - chunk.MinParcel.x; // Left overlap
-            else if (chunk.MaxParcel.x > MaxParcel.x)
-                horizontalOverlap = MaxParcel.x - chunk.MaxParcel.x; // Right overlap
-
-            // Vertical overlap
-            if (chunk.MinParcel.y < MinParcel.y)
-                verticalOverlap = MinParcel.y - chunk.MaxParcel.y; // Bottom overlap
-            else if (chunk.MaxParcel.y > MaxParcel.y)
-                verticalOverlap = MaxParcel.y - chunk.MaxParcel.y; // Top overlap
-
-            overlap = new int2(horizontalOverlap, verticalOverlap);
-
-            return overlap.x != 0 || overlap.y != 0;
+            // TODO: Remove before merging to dev.
+            /*terrainData.GroundMaterial.mainTexture = occupancyMap;
+            terrainData.GroundMaterial.mainTextureOffset = (float2)(-(minParcel - 1) / (SizeInParcels + 2));
+            terrainData.GroundMaterial.mainTextureScale = (float2)1f / ((SizeInParcels + 2) * parcelSize);*/
         }
     }
 }

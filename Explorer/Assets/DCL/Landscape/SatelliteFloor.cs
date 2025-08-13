@@ -1,7 +1,5 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
-using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.Triggers;
 using ECS;
 using UnityEngine;
 using Utility;
@@ -15,11 +13,8 @@ namespace DCL.Landscape
         private const int CHUNK_SIZE = 40;
         private const int GENESIS_HALF_PARCEL_WIDTH = 150;
         private const int SATELLITE_MAP_RESOLUTION = 8;
-        private const float Z_FIGHT_THRESHOLD = 0.005f;
 
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
-
-        private readonly IRealmData realmData;
 
         private Renderer[] satelliteRenderers;
 
@@ -33,8 +28,6 @@ namespace DCL.Landscape
 
         public SatelliteFloor(IRealmData realmData, LandscapeData config)
         {
-            this.realmData = realmData;
-
             landscapeData = config;
 
             landscapeParentObject = new GameObject("Satellite View").transform;
@@ -57,7 +50,6 @@ namespace DCL.Landscape
             var mapTextureMargins = new Vector3(-2 * PARCEL_SIZE, 0, -(20 * PARCEL_SIZE) + 50 - 1.7f);
 
             var quadCenter = new Vector3(textureSize * 0.5f, 0, textureSize * 0.5f);
-            Vector3 zFightPrevention = Vector3.down * Z_FIGHT_THRESHOLD;
 
             for (var x = 0; x < SATELLITE_MAP_RESOLUTION; x++)
             for (var y = 0; y < SATELLITE_MAP_RESOLUTION; y++)
@@ -65,7 +57,7 @@ namespace DCL.Landscape
                 int posX = x * textureSize;
                 int posZ = y * textureSize;
 
-                Vector3 coord = new Vector3(posX, 0, posZ) - genesisCityOffset + quadCenter + mapTextureMargins + zFightPrevention;
+                Vector3 coord = new Vector3(posX, 0, posZ) - genesisCityOffset + quadCenter + mapTextureMargins;
 
                 Transform groundTile = Object.Instantiate(landscapeData.mapChunk, landscapeParentObject, true);
                 groundTile.name = $"SatelliteView {x},{y}";

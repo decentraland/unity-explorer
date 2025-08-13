@@ -1,5 +1,4 @@
 ﻿using DCL.Landscape.Jobs;
-using DCL.Landscape.NoiseGeneration;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,8 +28,5 @@ namespace DCL.Landscape.Config
         public List<SimpleOperation> simpleOperations;
 
         public float finalCutOff;
-
-        public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache) =>
-            new CompositeNoiseGenerator(this, baseSeed, variantSeed, cache);
     }
 }

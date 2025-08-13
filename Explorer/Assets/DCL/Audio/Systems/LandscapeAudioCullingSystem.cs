@@ -14,8 +14,8 @@ using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
 using DCL.Audio.Jobs;
 using DCL.Landscape;
-using DCL.Landscape.Systems;
 using Random = UnityEngine.Random;
+using TerrainData = UnityEngine.TerrainData;
 
 namespace DCL.Audio.Systems
 {
@@ -25,7 +25,6 @@ namespace DCL.Audio.Systems
     /// </summary>
     [LogCategory(ReportCategory.AUDIO)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(LandscapeTerrainCullingSystem))]
     public partial class LandscapeAudioCullingSystem : BaseUnityLoopSystem
     {
         private readonly TerrainGenerator terrainGenerator;

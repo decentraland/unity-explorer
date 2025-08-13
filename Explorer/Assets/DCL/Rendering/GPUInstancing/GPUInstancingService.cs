@@ -145,7 +145,9 @@ namespace DCL.Rendering.GPUInstancing
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
             {
-                groupDataArray[0].Set(renderCamera, Settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate, (uint)buffers.PerInstanceMatrices.count);
+                groupDataArray[0].Set(renderCamera,
+                    Settings.RoadsSceneDistance(LandscapeData.EnvironmentDistance), candidate,
+                    (uint)buffers.PerInstanceMatrices.count);
 
                 buffers.GroupData.SetData(groupDataArray, 0, 0, 1);
                 FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);

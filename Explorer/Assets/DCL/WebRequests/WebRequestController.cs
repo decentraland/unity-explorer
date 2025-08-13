@@ -69,7 +69,7 @@ namespace DCL.WebRequests
                     if (!envelope.SuppressErrors)
 
                         // Print verbose
-                        ReportHub.LogError(
+                        ReportHub.LogWarning(
                             envelope.ReportData,
                             $"Exception (code {exception.ResponseCode}) occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
                             + $"Attempt: {attemptNumber}/{retryPolicy.maxRetriesCount + 1}"

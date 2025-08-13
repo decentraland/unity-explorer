@@ -1,16 +1,11 @@
 ﻿using DCL.Landscape.Settings;
-using StylizedGrass;
-using System.Linq;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Utility;
 
 namespace DCL.Landscape
 {
     public class TerrainFactory
     {
-        private const string TERRAIN_LAYER = "Default";
         private const string BORDERS_LAYER = "InvisibleColliders";
 
         private readonly TerrainGenerationData terrainGenData;
@@ -81,105 +76,6 @@ namespace DCL.Landscape
             collider.transform.SetPositionAndRotation(position, Quaternion.Euler(0, yRotation, 0));
 
             return collider;
-        }
-
-        public (Terrain, Collider) CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material, bool enableColliders = false)
-        {
-            Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)
-                                     .GetComponent<Terrain>();
-
-            terrain.treeBillboardDistance = 0; //setting to zero as we use LODGroups from speedtree
-            terrain.shadowCastingMode = ShadowCastingMode.Off;
-            terrain.materialTemplate = material;
-            terrain.detailObjectDistance = 200;
-            terrain.enableHeightmapRayTracing = false;
-            terrain.drawHeightmap = true; // forced to true for the color map renderer
-            terrain.drawTreesAndFoliage = true;
-
-            terrain.transform.position = new Vector3(at.x, -terrainGenData.minHeight, at.y);
-            terrain.transform.SetParent(parent, false);
-
-            terrain.gameObject.layer = LayerMask.NameToLayer(TERRAIN_LAYER);
-
-            var collider = terrain.GetComponent<Collider>();
-            collider.enabled = enableColliders;
-
-            return (terrain, collider);
-        }
-
-        public TerrainData CreateTerrainData(int terrainChunkSize, float maxHeight) =>
-            CreateTerrainData(terrainChunkSize, terrainChunkSize, terrainChunkSize, maxHeight);
-
-        private TerrainData CreateTerrainData(int heightmapResolution, int alphamapResolution, int terrainChunkSize, float maxHeight)
-        {
-            var terrainData = new TerrainData
-            {
-                heightmapResolution = heightmapResolution + 1,
-                alphamapResolution = alphamapResolution,
-                size = new Vector3(terrainChunkSize, Mathf.Max(maxHeight, 0.1f), terrainChunkSize),
-                terrainLayers = terrainGenData.terrainLayers,
-                treePrototypes = GetTreePrototypes(),
-                detailPrototypes = GetDetailPrototypes(),
-            };
-
-            terrainData.SetDetailResolution(terrainChunkSize, 32);
-
-            return terrainData;
-        }
-
-        public (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) CreateColorMapRenderer(Transform parent)
-        {
-            GrassColorMapRenderer colorMapRenderer = Object.Instantiate(terrainGenData.grassRenderer, parent)
-                                                           .GetComponent<GrassColorMapRenderer>();
-
-            GrassColorMap grassColorMap = ScriptableObject.CreateInstance<GrassColorMap>();
-
-            colorMapRenderer.colorMap = grassColorMap;
-            colorMapRenderer.resolution = 2048;
-
-            return (colorMapRenderer, grassColorMap);
-        }
-
-        private TreePrototype[] GetTreePrototypes()
-        {
-            if (treePrototypes != null)
-                return treePrototypes;
-
-            treePrototypes = terrainGenData.treeAssets.Select(t => new TreePrototype
-                                            {
-                                                prefab = t.asset,
-                                            })
-                                           .ToArray();
-
-            return treePrototypes;
-        }
-
-        private DetailPrototype[] GetDetailPrototypes()
-        {
-            return terrainGenData.detailAssets.Select(a =>
-                                  {
-                                      var detailPrototype = new DetailPrototype
-                                      {
-                                          usePrototypeMesh = true,
-                                          prototype = a.asset,
-                                          useInstancing = true,
-                                          renderMode = DetailRenderMode.VertexLit,
-                                          density = a.TerrainDetailSettings.detailDensity,
-                                          alignToGround = a.TerrainDetailSettings.alignToGround / 100f,
-                                          holeEdgePadding = a.TerrainDetailSettings.holeEdgePadding / 100f,
-                                          minWidth = a.TerrainDetailSettings.minWidth,
-                                          maxWidth = a.TerrainDetailSettings.maxWidth,
-                                          minHeight = a.TerrainDetailSettings.minHeight,
-                                          maxHeight = a.TerrainDetailSettings.maxHeight,
-                                          noiseSeed = a.TerrainDetailSettings.noiseSeed,
-                                          noiseSpread = a.TerrainDetailSettings.noiseSpread,
-                                          useDensityScaling = a.TerrainDetailSettings.affectedByGlobalDensityScale,
-                                          positionJitter = a.TerrainDetailSettings.positionJitter / 100f,
-                                      };
-
-                                      return detailPrototype;
-                                  })
-                                 .ToArray();
         }
     }
 }
