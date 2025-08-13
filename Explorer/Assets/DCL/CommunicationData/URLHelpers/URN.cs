@@ -52,6 +52,9 @@ namespace CommunicationData.URLHelpers
         public override string ToString() =>
             originalUrn;
 
+        public string LowerCaseUrn() =>
+            lowercaseUrn;
+
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
             string currentUrn = originalUrn;
@@ -165,7 +168,7 @@ namespace CommunicationData.URLHelpers
             urn.ToString();
 
         public static implicit operator string(URN urn) =>
-            urn.lowercaseUrn;
+            urn.originalUrn;
 
         public static implicit operator URN(string urn) =>
             new (urn);

@@ -74,7 +74,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             {
                 // String Builder has overloads for int to prevent allocations
                 bodyBuilder.Append('\"');
-                bodyBuilder.Append(wearablesToRequest[i]);
+                //Asset-bundle-registry pointer content is case sensitive
+                bodyBuilder.Append(wearablesToRequest[i].LowerCaseUrn());
                 bodyBuilder.Append('\"');
 
                 if (i != wearablesToRequest.Count - 1)

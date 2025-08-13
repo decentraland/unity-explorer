@@ -65,6 +65,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 assetBundleIntention.CommonArguments = ca;
                 assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleBuildDate);
             }
+
+
         }
 
         private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
