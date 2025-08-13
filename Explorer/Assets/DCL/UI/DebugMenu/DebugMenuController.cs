@@ -1,6 +1,7 @@
 using DCL.Input;
 using DCL.DebugUtilities;
 using DCL.UI.DebugMenu.LogHistory;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -25,6 +26,7 @@ namespace DCL.UI.DebugMenu
         private Button connectionButton;
 
         private bool shouldRefreshConsole;
+        private bool shouldHideDebugPanelOwnToggle;
 
         private IDebugContainerBuilder? debugContainerBuilder;
 
@@ -73,6 +75,10 @@ namespace DCL.UI.DebugMenu
             debugPanelButton.clicked -= OnDebugPanelButtonClicked;
             debugPanelButton.clicked += OnDebugPanelButtonClicked;
             debugPanelButton.style.display = DisplayStyle.Flex;
+
+            // DebugPanel has its own separate toggle button (that must still be used when the
+            // DebugMenu is not enabled), so we must hide that one.
+            shouldHideDebugPanelOwnToggle = true;
         }
 
         public void SetInputBlock(IInputBlock block)
@@ -98,10 +104,31 @@ namespace DCL.UI.DebugMenu
 
         private void Update()
         {
+            if (shouldHideDebugPanelOwnToggle)
+            {
+                // Hide DebugPanel own toggle button when DebugMenu is available
+                // Cannot be done at SetDebugContainerBuilder() due to Container being built
+                // only AFTER all the Plugins are initialized...
+                HideDebugPanelOwnToggle();
+            }
+
             if (shouldRefreshConsole)
             {
                 shouldRefreshConsole = false;
                 consolePanelView.Refresh();
+            }
+        }
+
+        private void HideDebugPanelOwnToggle()
+        {
+            try
+            {
+                debugContainerBuilder?.Container.HideToggleButton();
+                shouldHideDebugPanelOwnToggle = false;
+            }
+            catch (Exception)
+            {
+                // If Container hasn't been built yet, it will be retried on the next frame
             }
         }
 

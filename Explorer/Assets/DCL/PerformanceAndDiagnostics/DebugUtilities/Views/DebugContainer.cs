@@ -9,11 +9,12 @@ namespace DCL.DebugUtilities.Views
     public class DebugContainer : VisualElement
     {
         internal VisualElement containerRoot => this.Q<VisualElement>("Parent");
-        private VisualElement? mainPanel;
+        private VisualElement mainPanel;
+        private Button toolButton;
 
         internal void Initialize()
         {
-            Button toolButton = this.Q<Button>("OpenPanelButton");
+            toolButton = this.Q<Button>("OpenPanelButton");
             mainPanel = this.Q("Panel");
 
             Button closeButton = this.Q<Button>("CloseButton");
@@ -22,10 +23,13 @@ namespace DCL.DebugUtilities.Views
         }
 
         public void TogglePanelVisibility() =>
-            mainPanel?.SetDisplayed(!IsPanelVisible());
+            mainPanel.SetDisplayed(!IsPanelVisible());
 
         public bool IsPanelVisible() =>
-            mainPanel?.style.display == DisplayStyle.Flex;
+            mainPanel.style.display == DisplayStyle.Flex;
+
+        public void HideToggleButton() =>
+            toolButton.style.display = DisplayStyle.None;
 
         public new class UxmlFactory : UxmlFactory<DebugContainer> { }
     }
