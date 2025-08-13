@@ -296,7 +296,7 @@ namespace DCL.Communities.CommunitiesDataProvider
                     privacy = community.privacy,
                     role = community.role,
                     friends = community.friends,
-                    action = InviteRequestAction.invite,
+                    type = InviteRequestAction.invite,
                 });
             }
 
