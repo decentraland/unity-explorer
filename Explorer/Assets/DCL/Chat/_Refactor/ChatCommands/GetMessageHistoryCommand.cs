@@ -23,30 +23,53 @@ namespace DCL.Chat.ChatCommands
             this.chatHistoryStorage = chatHistoryStorage;
             this.createMessageViewModelCommand = createMessageViewModelCommand;
         }
-
+        
         public async UniTask ExecuteAsync(List<ChatMessageViewModel> targetList, ChatChannel.ChannelId channelId, CancellationToken token)
         {
             // Return all elements from the list to the pool
             targetList.ForEach(ChatMessageViewModel.RELEASE);
             targetList.Clear();
 
-            if (chatHistoryStorage != null && !chatHistoryStorage.IsChannelInitialized(channelId))
-            {
-                await chatHistoryStorage.InitializeChannelWithMessagesAsync(channelId);
-
-                if (chatHistory.Channels[channelId].Messages.Count == 0 &&
-                    chatHistory.Channels[channelId].ChannelType != ChatChannel.ChatChannelType.COMMUNITY)
-                    chatHistory.AddMessage(channelId, chatHistory.Channels[channelId].ChannelType,
-                        ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
-
-                chatHistory.Channels[channelId].MarkAllMessagesAsRead();
-            }
-
             token.ThrowIfCancellationRequested();
 
             if (!chatHistory.Channels.TryGetValue(channelId, out var channel))
                 return;
 
+            // Handle channel initialization based on its type
+            switch (channel.ChannelType)
+            {
+                case ChatChannel.ChatChannelType.USER:
+                    // User channels are persisted and need to be loaded from storage
+                    if (chatHistoryStorage != null && !chatHistoryStorage.IsChannelInitialized(channelId))
+                    {
+                        // NOTE: doesn't use cancellation token for loading messages it should though
+                        await chatHistoryStorage.InitializeChannelWithMessagesAsync(channelId);
+                        token.ThrowIfCancellationRequested();
+
+                        // For a brand new conversation that has just been loaded, add a system message
+                        if (channel.Messages.Count == 0)
+                        {
+                            chatHistory.AddMessage(channelId, channel.ChannelType, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+                        }
+
+                        // When loading history for the first time, mark all messages as read
+                        channel.MarkAllMessagesAsRead();
+                    }
+
+                    break;
+
+                case ChatChannel.ChatChannelType.NEARBY:
+                case ChatChannel.ChatChannelType.COMMUNITY:
+                    // Nearby and Community channels are session-based and already initialized in memory.
+                    // The initial system message for Nearby is added in InitializeChatSystemCommand.
+                    // No special action is needed here.
+                    break;
+            }
+
+            token.ThrowIfCancellationRequested();
+
+            // Populate the view model list from the in-memory chat history for the channel
+            // This part is common for all channel types after they have been initialized
             for (var index = 0; index < channel.Messages.Count; index++)
             {
                 ChatMessage channelMessage = channel.Messages[index];
