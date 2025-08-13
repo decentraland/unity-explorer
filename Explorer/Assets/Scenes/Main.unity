@@ -442,7 +442,6 @@ MonoBehaviour:
   launchSettings:
     initialRealm: 0
     targetScene: {x: 0, y: 0}
-    EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
       parcels:
@@ -454,7 +453,7 @@ MonoBehaviour:
     useRemoteAssetsBundles: 0
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
-  decentralandEnvironment: 1
+  decentralandEnvironment: 0
   debugViewsCatalog:
     <Widget>k__BackingField: {fileID: 9197481963319205126, guid: f3bf08b2b62097d4aa0574f7bafa4a86, type: 3}
     <ControlContainer>k__BackingField: {fileID: 9197481963319205126, guid: 6da3ff28c8a87e0428fa07019c15fa2f, type: 3}
