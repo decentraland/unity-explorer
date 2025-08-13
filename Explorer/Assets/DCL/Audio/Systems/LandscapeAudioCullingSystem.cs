@@ -107,23 +107,45 @@ namespace DCL.Audio.Systems
             ChunkModel[] terrainChunks = terrainGenerator.TerrainModel.ChunkModels;
             landscapeAudioStates = new NativeArray<LandscapeAudioState>(terrainChunks.Length, Allocator.Persistent);
             landscapeAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrainChunks.Length, Allocator.Persistent);
-            int halfTerrainChunkSize = terrainGenerator.GetChunkSize() / 2;
+            int chunkSize = terrainGenerator.GetChunkSize();
+            int halfTerrainChunkSize = chunkSize / 2;
             audioListeningDistanceThreshold = math.pow(halfTerrainChunkSize + landscapeAudioSystemSettings.ListeningDistanceThreshold, 2);
             audioMutingDistanceThreshold = math.pow(halfTerrainChunkSize + landscapeAudioSystemSettings.MutingDistanceThreshold, 2);
 
             for (var i = 0; i < terrainChunks.Length; i++)
             {
                 ChunkModel chunk = terrainChunks[i];
-                int2 size = (chunk.MaxParcel - chunk.MinParcel) * parcelSize;
-                int2 center = (chunk.MinParcel + ((chunk.MaxParcel - chunk.MinParcel) / 2)) * parcelSize;
+                int2 center = (chunk.MinParcel * parcelSize) + halfTerrainChunkSize;
 
                 landscapeAudioStates[i] = new LandscapeAudioState
                 {
                     CenterOfTerrain = new float2(center.x, center.y),
                 };
 
-                landscapeAudioSourcesPositions[i] = CalculateAudioSourcesPositions(chunk, size, parcelSize);
+                landscapeAudioSourcesPositions[i] = CalculateAudioSourcesPositions(chunk, chunkSize, parcelSize);
             }
+        }
+
+        private void InitializeOceanAudioStates()
+        {
+            //To calculate the ocean audio, we will use the cliffs positions as the ocean grid does not match correctly with the world grid.
+            IReadOnlyList<Transform> cliffs = terrainGenerator.Cliffs;
+
+            oceanAudioStates = new NativeArray<LandscapeAudioState>(cliffs.Count, Allocator.Persistent);
+
+            for (var i = 0; i < cliffs.Count; i++)
+            {
+                Transform cliff = cliffs[i];
+
+                Vector3 position = cliff.transform.position;
+
+                oceanAudioStates[i] = new LandscapeAudioState
+                {
+                    CenterOfTerrain = new float2(position.x, position.z),
+                };
+            }
+
+            oceanListeningDistanceThreshold = math.pow(landscapeAudioSystemSettings.OceanDistanceThreshold, 2);
         }
 
         private NativeArray<int2> CalculateAudioSourcesPositions(ChunkModel terrain, int2 chunkSize, int parcelSize)
@@ -157,28 +179,6 @@ namespace DCL.Audio.Systems
             }
 
             return positions.AsArray();
-        }
-
-        private void InitializeOceanAudioStates()
-        {
-            //To calculate the ocean audio, we will use the cliffs positions as the ocean grid does not match correctly with the world grid.
-            IReadOnlyList<Transform> cliffs = terrainGenerator.Cliffs;
-
-            oceanAudioStates = new NativeArray<LandscapeAudioState>(cliffs.Count, Allocator.Persistent);
-
-            for (var i = 0; i < cliffs.Count; i++)
-            {
-                Transform cliff = cliffs[i];
-
-                Vector3 position = cliff.transform.position;
-
-                oceanAudioStates[i] = new LandscapeAudioState
-                {
-                    CenterOfTerrain = new float2(position.x, position.z),
-                };
-            }
-
-            oceanListeningDistanceThreshold = math.pow(landscapeAudioSystemSettings.OceanDistanceThreshold, 2);
         }
 
         [Query]
