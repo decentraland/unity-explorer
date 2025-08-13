@@ -11,7 +11,9 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -50,12 +52,16 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [All(typeof(SceneLODInfo))]
         private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
+            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref StaticSceneAssetBundle staticSceneAssetBundle)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
-                //TODO: Wait until LOD is Ready
-                //Dispose scene
+                if (sceneDefinitionComponent.Definition.SupportsStaticScene())
+                {
+                    foreach (GltfContainerAsset gltfContainerAsset in staticSceneAssetBundle.AssetsInstantiated)
+                        gltfContainerAsset.Scene_LOD_Bridge_Asset = true;
+                }
+
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
                     sceneDefinitionComponent.Parcels);
 

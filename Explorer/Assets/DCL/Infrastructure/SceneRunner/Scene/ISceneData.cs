@@ -73,8 +73,6 @@ namespace SceneRunner.Scene
                 set { }
             }
 
-            public Dictionary<string, GameObject> StaticSceneAssetBundle  = new Dictionary<string, GameObject>();
-
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
 

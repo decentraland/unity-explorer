@@ -48,7 +48,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             GltfContainerAsset asset = CreateGltfObject(assetBundleData, assetBundleData.GetAsset<GameObject>(assetIntention.Hash), "static");
 
             gltfContainerAssetsCache.Dereference(assetIntention.Hash, asset);
-            staticSceneAssetBundle.AssetsInstantiated++;
+            staticSceneAssetBundle.AddInstantiatedAsset(asset);
 
             //It was just a auxiliary entity. It can be destroyed
             World.Destroy(entity);

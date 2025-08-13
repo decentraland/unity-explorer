@@ -23,7 +23,9 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
-        private int FRAMES_COUNT = 90;
+        //TODO (JUANI) : Whats a healthy number here? Arent all of the GLTF requests set on a first frame?
+        //So, shouldnt 5 be enough? Or we want a nice big threshold for scene loading stuff? (Anything that's not GLTF)
+        private int FRAMES_COUNT = 30;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
@@ -80,21 +82,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            /*
-            bool shouldWait;
-
-            if (staticSceneAssetBundle.IsSupported())
-            {
-                // If supported but not initialized, and no entities under observation, wait
-                shouldWait = !staticSceneAssetBundle.IsReady() || entitiesUnderObservation.Count == 0;
-            }
-            else
-            {
-                // If not supported, run for frame count
-                shouldWait = sceneStateProvider.TickNumber < FRAMES_COUNT;
-            }*/
-
-            if (false)
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
                 eventsBuffer.ForEach(forEachEvent);
             else if (!concluded)
             {

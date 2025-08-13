@@ -61,12 +61,15 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
             {
-                if (staticSceneAssetBundle.IsSupported() && sceneLODInfo.HasLOD(0))
+                if (sceneDefinitionComponent.Definition.SupportsStaticScene() && sceneLODInfo.HasLOD(0))
                 {
+                    foreach (GltfContainerAsset gltfContainerAsset in staticSceneAssetBundle.AssetsInstantiated)
+                        gltfContainerAsset.Scene_LOD_Bridge_Asset = true;
+
                     for (var i = 0; i < staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count; i++)
                     {
                         string assetHash = staticSceneAssetBundle.AssetBundleData.Asset.StaticSceneDescriptor.assetHash[i];
-                        assetsCache.Dereference(assetHash, sceneLODInfo.GltfContainerAssets[i], true);
+                        assetsCache.Dereference(assetHash, sceneLODInfo.GltfContainerAssets[i]);
                     }
 
                     sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);

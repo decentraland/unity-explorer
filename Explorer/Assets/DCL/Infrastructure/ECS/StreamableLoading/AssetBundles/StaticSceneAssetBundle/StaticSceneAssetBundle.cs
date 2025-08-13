@@ -2,7 +2,10 @@ using Arch.Core;
 using DCL.Diagnostics;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
+using System.Collections.Generic;
+using UnityEngine.Lumin;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -11,36 +14,23 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public StreamableLoadingResult<AssetBundleData> AssetBundleData;
         public AssetBundlePromise AssetBundlePromise;
+        public List<GltfContainerAsset> AssetsInstantiated;
 
-        public World GlobalWorld;
-        public string SceneID;
-        public int AssetsInstantiated;
+        private World GlobalWorld;
+        private string SceneID;
 
-        public StaticSceneAssetBundle(World globalWorld, string sceneID)
-        {
-            GlobalWorld = globalWorld;
-            SceneID = sceneID;
-            AssetBundlePromise = AssetBundlePromise.NULL;
-            SceneID = sceneID;
+        private bool AllAssetsInstantiated;
 
-            //TODO (JUANI): FOr now, we hardcoded it only for GP. We will later check it with manifest
-            if (!SceneID.Equals("bafkreicboazl7vyrwx7xujne53e63di6khbcfoi4vabafomar4u5mznpzy"))
-                AssetBundleData = new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, new Exception($"Static Scene Asset Bundle not suported for {SceneID}"));
-            else
-                AssetBundleData = new ();
-        }
+        private StaticSceneAssetBundle() { }
+
 
         public bool IsReady()
         {
             if (!IsSupported())
                 return true;
 
-            if (AssetBundleData.IsInitialized)
-            {
-                if (AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count == AssetsInstantiated)
-                    return true;
-                return false;
-            }
+            if (AssetBundleData.IsInitialized && AllAssetsInstantiated)
+                return true;
 
             if (!AssetBundleData.IsInitialized && AssetBundlePromise == AssetBundlePromise.NULL)
             {
@@ -53,7 +43,32 @@ namespace ECS.StreamableLoading.AssetBundles
             return false;
         }
 
-        public bool IsSupported() =>
+        private bool IsSupported() =>
             AssetBundleData.Exception == null;
+
+        public void AddInstantiatedAsset(GltfContainerAsset asset)
+        {
+            AssetsInstantiated.Add(asset);
+            AllAssetsInstantiated = AssetsInstantiated.Count == AssetBundleData.Asset.StaticSceneDescriptor.assetHash.Count;
+        }
+
+        public static StaticSceneAssetBundle CreateUnsupported(string sceneID)
+        {
+            StaticSceneAssetBundle unsuportedStaticSceneAB = new StaticSceneAssetBundle();
+            unsuportedStaticSceneAB.AssetBundleData = new StreamableLoadingResult<AssetBundleData>(ReportCategory.ASSET_BUNDLES, new Exception($"Static Scene Asset Bundle not suported for {sceneID}"));
+            return unsuportedStaticSceneAB;
+        }
+
+        public static StaticSceneAssetBundle CreateSupported(World world)
+        {
+            StaticSceneAssetBundle suportedStaticSceneAB = new StaticSceneAssetBundle();
+            suportedStaticSceneAB.AssetBundlePromise = AssetBundlePromise.NULL;
+            suportedStaticSceneAB.AssetsInstantiated = new List<GltfContainerAsset>();
+            suportedStaticSceneAB.AssetBundleData = new ();
+            suportedStaticSceneAB.GlobalWorld = world;
+            return suportedStaticSceneAB;
+        }
+
+
     }
 }

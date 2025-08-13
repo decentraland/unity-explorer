@@ -20,13 +20,13 @@ namespace SceneRunner.Scene
             false;
 #endif
 
-
         public ISceneContent SceneContent { get; }
 
         public SceneEntityDefinition SceneEntityDefinition { get; }
 
         public StaticSceneMessages StaticSceneMessages { get; }
         public bool SceneLoadingConcluded { get; set; }
+        public bool IsStaticSceneSupported { get; set; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }

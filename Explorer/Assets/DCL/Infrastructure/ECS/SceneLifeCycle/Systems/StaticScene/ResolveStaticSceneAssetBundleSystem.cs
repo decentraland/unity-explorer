@@ -39,8 +39,10 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(SceneDefinitionComponent))]
         public void InitializeStaticSceneAssetBundle(Entity entity, in SceneDefinitionComponent sceneDefinitionComponent)
         {
-            StaticSceneAssetBundle staticScene = new StaticSceneAssetBundle(World, sceneDefinitionComponent.Definition.id);
-            World.Add(entity, staticScene);
+            if (sceneDefinitionComponent.Definition.SupportsStaticScene())
+                World.Add(entity, StaticSceneAssetBundle.CreateSupported(World));
+            else
+                World.Add(entity, StaticSceneAssetBundle.CreateUnsupported(sceneDefinitionComponent.Definition.id));
         }
 
         [Query]

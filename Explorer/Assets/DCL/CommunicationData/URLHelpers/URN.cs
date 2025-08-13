@@ -165,7 +165,7 @@ namespace CommunicationData.URLHelpers
             urn.ToString();
 
         public static implicit operator string(URN urn) =>
-            urn.originalUrn;
+            urn.lowercaseUrn;
 
         public static implicit operator URN(string urn) =>
             new (urn);

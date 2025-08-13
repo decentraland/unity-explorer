@@ -242,7 +242,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
         private class MockSceneData : ISceneData
         {
-            public Dictionary<string, GameObject> StaticSceneAssetBundle { get; } = new Dictionary<string, GameObject>();
             public bool SceneLoadingConcluded { get; set; } = true;
             public SceneShortInfo SceneShortInfo { get; set; } = new (Vector2Int.zero, "mockScene");
             public IReadOnlyList<Vector2Int> Parcels { get; set; } = new List<Vector2Int>();

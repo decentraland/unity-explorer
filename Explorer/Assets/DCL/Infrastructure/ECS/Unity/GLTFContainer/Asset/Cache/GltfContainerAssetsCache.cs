@@ -76,7 +76,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         /// <param name="asset"></param>
         /// <param name="bridgeLODSceneAsset">Flag to indicate that the asset should stay visible and in position, since its transitioning from LOD to Scene or
         /// viceversa</param>
-        public void Dereference(in string key, GltfContainerAsset asset, bool bridgeLODSceneAsset = false)
+        public void Dereference(in string key, GltfContainerAsset asset)
         {
             if (!cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
@@ -93,8 +93,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
-            if (bridgeLODSceneAsset)
+            if (asset.Scene_LOD_Bridge_Asset)
+            {
                 asset.Root.transform.SetParent(null);
+                asset.Root.SetActive(true);
+                asset.Scene_LOD_Bridge_Asset = false;
+            }
             else
             {
                 asset.Root.SetActive(false);
