@@ -237,18 +237,17 @@ namespace DCL.Profiling.ECS
             {
                 if (avgFrameWindowCount < AVG_WINDOW_FRAMES)
                 {
-                    avgFrameWindow[avgFrameWindowIndex] = lastFrameNs;
                     avgFrameWindowSumNs += lastFrameNs;
-                    avgFrameWindowIndex = (avgFrameWindowIndex + 1) % AVG_WINDOW_FRAMES;
                     avgFrameWindowCount++;
                 }
                 else
                 {
                     ulong replaced = avgFrameWindow[avgFrameWindowIndex];
-                    avgFrameWindow[avgFrameWindowIndex] = lastFrameNs;
                     avgFrameWindowSumNs = avgFrameWindowSumNs - replaced + lastFrameNs;
-                    avgFrameWindowIndex = (avgFrameWindowIndex + 1) % AVG_WINDOW_FRAMES;
                 }
+
+                avgFrameWindow[avgFrameWindowIndex] = lastFrameNs;
+                avgFrameWindowIndex = (avgFrameWindowIndex + 1) % AVG_WINDOW_FRAMES;
             }
         }
 
@@ -259,8 +258,6 @@ namespace DCL.Profiling.ECS
             float averageNs = avgFrameWindowCount > 0 ? (float)(avgFrameWindowSumNs / (double)avgFrameWindowCount) : 0f;
             if (averageNs > 0f)
             {
-                const float NS_TO_MS = 1e-6f;
-                const float NS_TO_SEC = 1e-9f;
                 float ms = averageNs * NS_TO_MS;
                 float fpsValue = 1f / (averageNs * NS_TO_SEC);
                 avgDisplayData.SetAndUpdate(new AverageFpsBannerData(fpsValue, ms));
