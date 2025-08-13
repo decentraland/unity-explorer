@@ -22,6 +22,9 @@ namespace DCL.AssetsProvision
 
         private void Awake()
         {
+            if (image.sprite != null)
+                ReportHub.LogError(ReportCategory.UI, "Image must not have a sprite to avoid hard linking the sprite into memory, when sprite is linked directly the contextual load won't apply optimization effect");
+
             asset = new ContextualAsset<Sprite>(spriteAsset.EnsureNotNull("reference != null"));
         }
 

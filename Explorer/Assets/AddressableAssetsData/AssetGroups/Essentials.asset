@@ -70,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1979326266a1bec44bc70519850f7a5a
+    m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/PadlockImg.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1b149c5240fcd49309285605ce2e8067
     m_Address: CategoryMarkerObject
     m_ReadOnly: 0
