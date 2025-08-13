@@ -810,8 +810,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 1236686479799256487}
+  <skeletonLoadingView>k__BackingField: {fileID: 0}
   <Image>k__BackingField: {fileID: 316658480285067737}
   <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 0}
+  rectTransform: {fileID: 0}
 --- !u!114 &7601560527852012496
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1074,7 +1077,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 3003121663
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.69803923}
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1474,7 +1477,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 122.18, y: 17}
+  m_SizeDelta: {x: 122.18, y: 16}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &7324692115177643209
 CanvasRenderer:
@@ -1875,6 +1878,7 @@ MonoBehaviour:
   thumbnailImageView: {fileID: 1625883442667654077}
   thumbnailBackground: {fileID: 2335087325776602019}
   defaultEmptyThumbnail: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
+  thumbnailFrame: {fileID: 0}
 --- !u!114 &6928536791831140492
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1930,7 +1934,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 8, y: 8}
+  m_SizeDelta: {x: 8, y: 7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4534228414436690764
 CanvasRenderer:
@@ -2072,7 +2076,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.07058824, g: 0.8901961, b: 0.3019608, a: 1}
+  m_Color: {r: 0.1882353, g: 0.8039216, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2283,7 +2287,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.07058824, g: 0.8901961, b: 0.3019608, a: 1}
+  m_Color: {r: 0.1882353, g: 0.8039216, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2581,6 +2585,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 9019317410555700535}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &7611447867145990388
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2599,6 +2606,7 @@ MonoBehaviour:
   connectionStatusIndicator: {fileID: 2609725914356582569}
   connectionStatusIndicatorContainer: {fileID: 1392361439679960403}
   onlineStatusConfiguration: {fileID: 11400000, guid: bbca3b81bc8c54e1fb00e0cc1fa3f195, type: 2}
+  offlineThumbnailGreyOutOpacity: 0.6
 --- !u!114 &2016645818798965898
 MonoBehaviour:
   m_ObjectHideFlags: 0
