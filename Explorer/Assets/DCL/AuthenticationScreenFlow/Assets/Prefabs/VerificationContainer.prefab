@@ -1075,7 +1075,7 @@ GameObject:
   - component: {fileID: 7128006657025016999}
   - component: {fileID: 8478992858286646769}
   m_Layer: 0
-  m_Name: Image
+  m_Name: PadLock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
