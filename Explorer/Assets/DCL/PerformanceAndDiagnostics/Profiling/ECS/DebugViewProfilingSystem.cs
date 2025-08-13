@@ -348,9 +348,8 @@ namespace DCL.Profiling.ECS
 
             string fpsColor = frameRate switch
                               {
-                                  < 20 => "red",
-                                  < 30 => "orange",
-                                  < 40 => "yellow",
+                                  < 30 => "red",
+                                  < 45 => "yellow",
                                   _ => "green",
                               };
 
