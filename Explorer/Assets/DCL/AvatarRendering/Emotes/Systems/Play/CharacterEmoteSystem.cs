@@ -206,6 +206,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
+
+                    //Loading not complete
+                    if (emote.AssetResults[bodyShape] == null)
+                        return;
+
                     StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
                     GameObject? mainAsset;
 
