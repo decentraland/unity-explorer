@@ -110,6 +110,8 @@ namespace DCL.Communities.CommunityCreation
                         worlds);
             });
             creationPanelPlacesDropdown.OptionClicked += OnPlacesDropdownOptionSelected;
+            creationPanelPlacesDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
+            creationPanelPlacesDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
         }
 
         private void OnDestroy()
@@ -125,6 +127,8 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityDescriptionInputField.onSelect.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onDeselect.RemoveAllListeners();
             creationPanelPlacesDropdown.OptionClicked -= OnPlacesDropdownOptionSelected;
+            creationPanelPlacesDropdown.OptionsPanelOpened -= OnPlacesPanelOpened;
+            creationPanelPlacesDropdown.OptionsPanelClosed -= OnPlacesPanelClosed;
 
             updateScrollPositionCts.SafeCancelAndDispose();
             thumbnailLoadingCts.SafeCancelAndDispose();
@@ -217,6 +221,12 @@ namespace DCL.Communities.CommunityCreation
         private void OnPlacesDropdownOptionSelected(int index) =>
             AddPlaceButtonClicked?.Invoke(index);
 
+        private void OnPlacesPanelOpened() =>
+            creationPanelScrollRect.vertical = false;
+
+        private void OnPlacesPanelClosed() =>
+            creationPanelScrollRect.vertical = true;
+
         public void AddPlaceTag(string id, bool isWorld, string placeName, string ownerName, bool isRemovalAllowed, bool updateScrollPosition = true)
         {
             CommunityPlaceTag placeTag = Instantiate(placeTagPrefab, placeTagsContainer);
@@ -277,6 +287,7 @@ namespace DCL.Communities.CommunityCreation
             foreach (CommunityPlaceTag placeTag in currentPlaceTags)
                 Destroy(placeTag.gameObject);
             currentPlaceTags.Clear();
+            creationPanelScrollRect.vertical = true;
         }
 
         private async UniTaskVoid SetScrollPositionToBottomAsync(CancellationToken ct)

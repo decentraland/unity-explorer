@@ -65,7 +65,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 view.SetEmptyStateActive(membersData.TotalToFetch == 0);
 
-                view.RefreshGrid(currentSectionFetchData, count == membersData.Items.Count);
+                view.RefreshGrid(currentSectionFetchData, true);
             }
             finally { isFetching = false; }
         }
