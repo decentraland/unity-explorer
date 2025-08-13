@@ -170,6 +170,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4974685691c134a35bcea75af1936381
+    m_Address: Assets/DCL/UI/Controls/Textures/Controls.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4a2a7b610414b45c1b576946ce094877
     m_Address: NftCategoryIcons
     m_ReadOnly: 0
