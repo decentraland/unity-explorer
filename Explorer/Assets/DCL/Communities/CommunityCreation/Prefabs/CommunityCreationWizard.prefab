@@ -619,10 +619,39 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 501863313904385406, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_text
+      value: <b>Private</b> <size="12">Membership by request/invite; only Community
+        description visible to non-members</size>
+      objectReference: {fileID: 0}
+    - target: {fileID: 501863313904385406, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontSize
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 501863313904385406, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    - target: {fileID: 501863313904385406, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 501863313904385406, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    - target: {fileID: 501863313904385406, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 609967523698490458, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1185456049467696351, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1199133257728187779, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -684,8 +713,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2096463222538666977, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2096463222538666977, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273892385912538990, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2448521439946456097, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_SizeDelta.y
@@ -726,6 +763,18 @@ PrefabInstance:
     - target: {fileID: 2962840711457732269, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3389732522336231031, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_Spacing
+      value: 46
+      objectReference: {fileID: 0}
+    - target: {fileID: 3713129333112432813, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.a
+      value: 0.69803923
+      objectReference: {fileID: 0}
+    - target: {fileID: 3713129333112432813, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3003121663
       objectReference: {fileID: 0}
     - target: {fileID: 4309115723449902765, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_Name
@@ -799,6 +848,36 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5879054375279620688, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_text
+      value: Community owners and moderators may link Places they own to a Community.
+        <b>Note:</b> Public photos taken at linked Places will appear in your Community's
+        profile.
+      objectReference: {fileID: 0}
+    - target: {fileID: 5879054375279620688, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.a
+      value: 0.69803923
+      objectReference: {fileID: 0}
+    - target: {fileID: 5879054375279620688, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5879054375279620688, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5879054375279620688, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5879054375279620688, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3003121663
+      objectReference: {fileID: 0}
+    - target: {fileID: 6026946347563408872, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_MinHeight
+      value: 106
+      objectReference: {fileID: 0}
     - target: {fileID: 6135224288403869516, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -822,6 +901,30 @@ PrefabInstance:
     - target: {fileID: 6135224288403869516, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241693685523764821, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_text
+      value: The dropdown closes automatically after selecting an option.
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241693685523764821, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.a
+      value: 0.69803923
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241693685523764821, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241693685523764821, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241693685523764821, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241693685523764821, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3003121663
       objectReference: {fileID: 0}
     - target: {fileID: 6970276788350834772, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_Pivot.x
@@ -903,6 +1006,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7708223543890932324, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_MinHeight
+      value: 58
+      objectReference: {fileID: 0}
+    - target: {fileID: 7891702222690418044, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_Size
+      value: 0.5688915
+      objectReference: {fileID: 0}
     - target: {fileID: 7967967512744906413, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -914,6 +1025,47 @@ PrefabInstance:
     - target: {fileID: 7967967512744906413, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7967967512744906413, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7979494877393073502, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_text
+      value: <b>Public</b> <size="12">Anyone can become a member, view Community
+        details, and join your Voice Streams</size>
+      objectReference: {fileID: 0}
+    - target: {fileID: 7979494877393073502, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontSize
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 7979494877393073502, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    - target: {fileID: 7979494877393073502, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 7979494877393073502, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    - target: {fileID: 7979494877393073502, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8365070469246229444, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9221096071574374615, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor.a
+      value: 0.69803923
+      objectReference: {fileID: 0}
+    - target: {fileID: 9221096071574374615, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3003121663
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
