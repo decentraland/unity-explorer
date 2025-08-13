@@ -1,8 +1,10 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using Utility.Ownership;
 
 namespace DCL.CharacterPreview
 {
@@ -11,12 +13,14 @@ namespace DCL.CharacterPreview
         private readonly CharacterPreviewCursorContainer cursorContainer;
         private readonly CharacterPreviewInputEventBus inputEventBus;
         private readonly Dictionary<CharacterPreviewInputAction, Sprite> cursorReplacementSprites;
+        private readonly Box<bool> disposed;
 
         public CharacterPreviewCursorController(CharacterPreviewCursorContainer cursorContainer, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewInputCursorSetting[] cursorSettings)
         {
             this.cursorContainer = cursorContainer;
             this.inputEventBus = inputEventBus;
             cursorReplacementSprites = DictionaryPool<CharacterPreviewInputAction, Sprite>.Get();
+            disposed = new Box<bool>(false);
 
             for (var index = 0; index < cursorSettings.Length; index++)
             {
@@ -89,6 +93,14 @@ namespace DCL.CharacterPreview
 
         public void Dispose()
         {
+            if (disposed.Value)
+            {
+                ReportHub.LogError(ReportCategory.UI, "Attempt to double dispose");
+                return;
+            }
+
+            disposed.Value = true;
+
             inputEventBus.OnPointerUpEvent -= OnPointerUp;
             inputEventBus.OnPointerDownEvent -= OnPointerDown;
             inputEventBus.OnDraggingEvent -= OnDrag;
