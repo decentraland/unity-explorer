@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -25,6 +26,14 @@ namespace DCL.Landscape
             occupiedParcels = new List<int2>();
             outOfTerrainParcels = new List<int2>();
             TerrainData = null;
+        }
+
+        public bool IsOutsideOrOccupied(int2 parcel)
+        {
+            if (parcel.x < MinParcel.x || parcel.x > MaxParcel.x) return true;
+            if (parcel.y < MinParcel.y || parcel.y > MaxParcel.y) return true;
+
+            return OccupiedParcels.Contains(parcel);
         }
 
         public void AddOccupiedParcel(int2 parcel)
