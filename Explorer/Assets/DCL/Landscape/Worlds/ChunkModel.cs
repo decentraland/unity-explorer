@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -33,7 +32,15 @@ namespace DCL.Landscape
             if (parcel.x < MinParcel.x || parcel.x > MaxParcel.x) return true;
             if (parcel.y < MinParcel.y || parcel.y > MaxParcel.y) return true;
 
-            return OccupiedParcels.Contains(parcel);
+            for (var i = 0; i < OccupiedParcels.Count; i++)
+            {
+                int2 occupiedParcel = OccupiedParcels[i];
+
+                if (occupiedParcel.x == parcel.x && occupiedParcel.y == parcel.y)
+                    return true;
+            }
+
+            return false;
         }
 
         public void AddOccupiedParcel(int2 parcel)
