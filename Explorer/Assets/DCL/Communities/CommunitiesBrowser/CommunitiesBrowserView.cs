@@ -244,22 +244,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void AddInvitesItems(GetUserInviteRequestData.UserInviteRequestData[] communities)
         {
             foreach (GetUserInviteRequestData.UserInviteRequestData community in communities)
-            {
-                // TODO (Santi): Create a pool!
-                CommunityResultCardView invitedCommunity = Instantiate(invitedCommunityCardPrefab, invitesGridContainer);
-
-                // TODO (Santi): Move it to its corresponding method
-                invitedCommunity.SetCommunityId(community.communityId);
-                invitedCommunity.SetTitle(community.name);
-                invitedCommunity.SetOwner(community.ownerName);
-                invitedCommunity.SetDescription(community.description);
-                invitedCommunity.SetPrivacy(community.privacy);
-                invitedCommunity.SetMembersCount(community.membersCount);
-                invitedCommunity.SetOwnership(community.role != CommunityMemberRole.none);
-                thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunity.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
-                invitedCommunity.SetJoiningLoadingActive(false);
-                currentInvites.Add(invitedCommunity);
-            }
+                SetupInviteCard(community);
 
             SetInvitesAsEmpty(communities.Length == 0);
         }
@@ -398,6 +383,36 @@ namespace DCL.Communities.CommunitiesBrowser
                 cardView.SetupMutualFriends(profileRepositoryWrapper, communityData);
 
             return gridItem;
+        }
+
+        private void SetupInviteCard(GetUserInviteRequestData.UserInviteRequestData community)
+        {
+            // TODO (Santi): Create a pool!
+            CommunityResultCardView invitedCommunityCardView = Instantiate(invitedCommunityCardPrefab, invitesGridContainer);
+
+            // Setup card data
+            invitedCommunityCardView.SetCommunityId(community.communityId);
+            invitedCommunityCardView.SetTitle(community.name);
+            invitedCommunityCardView.SetOwner(community.ownerName);
+            invitedCommunityCardView.SetDescription(community.description);
+            invitedCommunityCardView.SetPrivacy(community.privacy);
+            invitedCommunityCardView.SetMembersCount(community.membersCount);
+            invitedCommunityCardView.SetOwnership(community.role != CommunityMemberRole.none);
+            thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
+            invitedCommunityCardView.SetJoiningLoadingActive(false);
+            currentInvites.Add(invitedCommunityCardView);
+
+            // Setup card events
+            invitedCommunityCardView.MainButtonClicked -= CommunityProfileOpened;
+            invitedCommunityCardView.MainButtonClicked += CommunityProfileOpened;
+            invitedCommunityCardView.ViewCommunityButtonClicked -= CommunityProfileOpened;
+            invitedCommunityCardView.ViewCommunityButtonClicked += CommunityProfileOpened;
+            invitedCommunityCardView.JoinCommunityButtonClicked -= OnCommunityJoined;
+            invitedCommunityCardView.JoinCommunityButtonClicked += OnCommunityJoined;
+
+            // Setup mutual friends
+            //if (profileRepositoryWrapper != null)
+            //    invitedCommunityCardView.SetupMutualFriends(profileRepositoryWrapper, communityData);
         }
 
         private void SetMyCommunitiesAsEmpty(bool isEmpty)
