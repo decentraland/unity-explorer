@@ -42,7 +42,6 @@ namespace DCL.Landscape
         private readonly List<Terrain> terrains;
         private readonly List<Collider> terrainChunkColliders;
 
-        private int parcelSize;
         private TerrainGenerationData terrainGenData;
         private TerrainGeneratorLocalCache localCache;
         private TerrainChunkDataGenerator chunkDataGenerator;
@@ -66,6 +65,7 @@ namespace DCL.Landscape
         private bool isInitialized;
         private int activeChunk = -1;
 
+        public int ParcelSize { get; private set; }
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
@@ -75,7 +75,7 @@ namespace DCL.Landscape
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
-        private TerrainModel terrainModel;
+        public TerrainModel TerrainModel { get; private set; }
 
         private ITerrainDetailSetter terrainDetailSetter;
         private IGPUIWrapper gpuiWrapper;
@@ -98,15 +98,15 @@ namespace DCL.Landscape
         // TODO : pre-calculate once and re-use
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
         {
-            if(terrainModel == null) return;
+            if (TerrainModel == null) return;
 
-            int offsetX = parcel.x - terrainModel.MinParcel.x;
-            int offsetY = parcel.y - terrainModel.MinParcel.y;
+            int offsetX = parcel.x - TerrainModel.MinParcel.x;
+            int offsetY = parcel.y - TerrainModel.MinParcel.y;
 
-            int chunkX = offsetX / terrainModel.ChunkSizeInParcels;
-            int chunkY = offsetY / terrainModel.ChunkSizeInParcels;
+            int chunkX = offsetX / TerrainModel.ChunkSizeInParcels;
+            int chunkY = offsetY / TerrainModel.ChunkSizeInParcels;
 
-            int chunkIndex = chunkX + (chunkY * terrainModel.SizeInChunks);
+            int chunkIndex = chunkX + (chunkY * TerrainModel.SizeInChunks);
 
             if (chunkIndex < 0 || chunkIndex >= terrainChunkColliders.Count)
                 return;
@@ -125,13 +125,13 @@ namespace DCL.Landscape
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
 
-            parcelSize = terrainGenData.parcelSize;
+            ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
             localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize,
                 CACHE_VERSION, parcelChecksum, isZone);
 
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
-            boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
+            boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
 
             this.terrainDetailSetter = terrainDetailSetter;
             this.gpuiWrapper = gpuiWrapper;
@@ -143,7 +143,7 @@ namespace DCL.Landscape
         public bool Contains(Vector2Int parcel)
         {
             if (IsTerrainGenerated)
-                return terrainModel.IsInsideBounds(parcel);
+                return TerrainModel.IsInsideBounds(parcel);
 
             return true;
         }
@@ -209,7 +209,7 @@ namespace DCL.Landscape
             this.withHoles = withHoles;
 
             var worldModel = new WorldModel(ownedParcels);
-            terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
+            TerrainModel = new TerrainModel(ParcelSize, worldModel, terrainGenData.borderPadding);
 
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
@@ -225,8 +225,8 @@ namespace DCL.Landscape
                         Ocean = factory.CreateOcean(rootGo);
                         Wind = factory.CreateWind();
 
-                        Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
-                        boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
+                        Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
+                        boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
                     }
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Load Local Cache")))
@@ -234,8 +234,8 @@ namespace DCL.Landscape
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
                     {
-                        TerrainGenerationUtils.ExtractEmptyParcels(terrainModel, ref emptyParcels, ref ownedParcels);
-                        await SetupEmptyParcelDataAsync(terrainModel, cancellationToken);
+                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel, ref emptyParcels, ref ownedParcels);
+                        await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
                     }
 
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
@@ -247,11 +247,11 @@ namespace DCL.Landscape
                     // GenerateTerrainDataAsync is Sequential on purpose [ Looks nicer at the loading screen ]
                     // Each TerrainData generation uses 100% of the CPU anyway so it makes no difference running it in parallel
                     /////////////////////////
-                    chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
+                    chunkDataGenerator.Prepare((int)worldSeed, ParcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
 
-                    foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
+                    foreach (ChunkModel chunkModel in TerrainModel.ChunkModels)
                     {
-                        await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
+                        await GenerateTerrainDataAsync(chunkModel, TerrainModel, worldSeed, cancellationToken, processReport);
                         await UniTask.Yield(cancellationToken);
                         noiseGenCache.ResetNoiseNativeArrayProvider();
                     }
@@ -259,7 +259,7 @@ namespace DCL.Landscape
                     processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
-                        await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
+                        await SpawnTerrainObjectsAsync(TerrainModel, processReport, cancellationToken);
 
                     grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
 
@@ -296,7 +296,7 @@ namespace DCL.Landscape
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
 
-            gpuiWrapper.TerrainsInstantiatedAsync(terrainModel.ChunkModels);
+            gpuiWrapper.TerrainsInstantiatedAsync(TerrainModel.ChunkModels);
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -361,7 +361,7 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial);
+                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * ParcelSize, terrainGenData.terrainMaterial);
 
                 chunkModel.terrain = terrain;
                 terrains.Add(terrain);
@@ -383,14 +383,14 @@ namespace DCL.Landscape
 
                 var tasks = new List<UniTask>
                 {
-                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize,
+                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, ParcelSize,
                         chunkModel.TerrainData, worldSeed, cancellationToken),
-                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize,
-                        chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
+                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * ParcelSize,
+                        chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
                         worldSeed, cancellationToken),
                     !hideDetails
-                        ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize,
-                            chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
+                        ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * ParcelSize,
+                            chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
                             worldSeed, cancellationToken, true, chunkModel.MinParcel, terrainDetailSetter, chunkModel.OccupiedParcels)
                         : UniTask.CompletedTask,
                     !hideTrees
@@ -420,7 +420,7 @@ namespace DCL.Landscape
                         {
                             if (chunkModel.OutOfTerrainParcels.Count != 0)
                             {
-                                bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
+                                bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, ParcelSize, withOwned: false);
                                 chunkModel.TerrainData.SetHoles(0, 0, holes);
                                 localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
                             }
