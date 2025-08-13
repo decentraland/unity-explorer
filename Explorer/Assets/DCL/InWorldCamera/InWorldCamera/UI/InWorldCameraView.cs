@@ -24,10 +24,7 @@ namespace DCL.InWorldCamera.UI
         [SerializeField] private RectTransform cameraReelIcon;
         [SerializeField] private Image animatedImage;
         [Space]
-        [SerializeField] private Image gridImage;
-        [SerializeField] private AssetReferenceT<Sprite> gridSprite;
-
-        private ContextualAsset<Sprite>? gridAsset;
+        [SerializeField] private ContextualImage gridImage;
 
         private Sequence currentVfxSequence;
 
@@ -49,20 +46,8 @@ namespace DCL.InWorldCamera.UI
 
         public override async UniTask ShowAsync(CancellationToken ct)
         {
-            gridAsset ??= new ContextualAsset<Sprite>(gridSprite);
-            Weak<Sprite> asset = await gridAsset.AssetAsync(ct);
-
-            if (asset.Resource.Has) gridImage.sprite = asset.Resource.Value;
-            else ReportHub.LogError(ReportCategory.UI, "Cannot load grid asset");
-
+            await gridImage.TriggerOrWaitReadyAsync(ct);
             await base.ShowAsync(ct);
-        }
-
-        public override async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
-        {
-            await base.HideAsync(ct, isInstant);
-            gridImage.sprite = null!;
-            gridAsset?.Release();
         }
 
         public void ScreenshotCaptureAnimation(Texture2D screenshotImage, float splashDuration, float afterSplashPause, float transitionDuration)
