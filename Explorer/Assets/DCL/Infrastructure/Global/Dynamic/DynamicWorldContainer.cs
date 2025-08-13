@@ -22,6 +22,7 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -511,8 +512,6 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder);
-
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
             var chatCommands = new List<IChatCommand>
@@ -706,7 +705,6 @@ namespace Global.Dynamic
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
-                connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
                     mvcManager,
@@ -1041,6 +1039,9 @@ namespace Global.Dynamic
                         entityParticipantTable
                     )
                 );
+
+            if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
+                globalPlugins.Add(new DebugMenuPlugin(bootstrapContainer.DiagnosticsContainer, staticContainer.InputBlock, assetsProvisioner, currentSceneInfo, roomsStatus));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
