@@ -31,7 +31,6 @@ namespace DCL.Chat
         private readonly ChatTitlebarView2 view;
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly IEventBus eventBus;
-        private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly CommunityDataService communityDataService;
         private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
         private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
@@ -43,10 +42,10 @@ namespace DCL.Chat
         private CancellationTokenSource profileLoadCts = new ();
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
-        private ChatTitlebarViewModel? currentViewModel { get; set; }
+        private ChatTitlebarViewModel? currentViewModel;
         private GenericContextMenu? contextMenuInstance;
         private readonly GenericContextMenu contextMenuConfiguration;
-        private ToggleWithCheckContextMenuControlSettings[] notificationPingToggles;
+        private ToggleWithCheckContextMenuControlSettings[]? notificationPingToggles;
 
         public ChatTitlebarPresenter(
             ChatTitlebarView2 view,
@@ -127,7 +126,7 @@ namespace DCL.Chat
 
             if (contextMenuToggleGroup != null)
                 Object.Destroy(contextMenuToggleGroup);
-            
+
             lifeCts.SafeCancelAndDispose();
             profileLoadCts.SafeCancelAndDispose();
             scope.Dispose();
@@ -144,15 +143,15 @@ namespace DCL.Chat
             currentViewModel.IsOnline = @event.OnlineUsers.Contains(currentViewModel.Id);
             view.defaultTitlebarView.Setup(currentViewModel);
         }
-        
+
         private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
         {
             if (userStatusUpdatedEvent.ChannelType != ChatChannel.ChatChannelType.USER) return;
-            
+
             if (currentViewModel == null ||
                 currentViewModel?.Id == null ||
                 currentViewModel.ViewMode != TitlebarViewMode.DirectMessage) return;
-            
+
             if (currentViewModel.Id.Equals(userStatusUpdatedEvent.UserId, StringComparison.OrdinalIgnoreCase))
             {
                 currentViewModel.IsOnline = userStatusUpdatedEvent.IsOnline;

@@ -227,11 +227,11 @@ namespace DCL.Chat
             {
                 islandRoom.ConnectionStateChanged -= OnIslandRoomConnectionStateChangedAsync;
 
-                IReadOnlyCollection<string> roomParticipants = islandRoom.Participants.RemoteParticipantIdentities();
+                IReadOnlyDictionary<string, Participant> roomParticipants = islandRoom.Participants.RemoteParticipantIdentities();
                 ReportHub.Log(ReportCategory.DEBUG, "#PARTICIPANT: NEARBY CLEARED");
                 participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Clear();
 
-                foreach (string roomParticipant in roomParticipants)
+                foreach ((string roomParticipant, _) in roomParticipants)
                 {
                     ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {roomParticipant}");
                     participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Add(roomParticipant);
@@ -269,13 +269,13 @@ namespace DCL.Chat
             {
                 chatRoom.ConnectionStateChanged -= OnChatRoomConnectionStateChangedAsync;
 
-                IReadOnlyCollection<string> roomParticipants = chatRoom.Participants.RemoteParticipantIdentities();
+                IReadOnlyDictionary<string, Participant> roomParticipants = chatRoom.Participants.RemoteParticipantIdentities();
                 participantsPerChannel[privateConversationOnlineUserListId].Clear();
 
                 // Checks that the participants have an open conversation with the local user
                 foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> chatChannel in chatHistory.Channels)
                 {
-                    foreach (string roomParticipant in roomParticipants)
+                    foreach ((string roomParticipant, _) in roomParticipants)
                     {
                         if (chatChannel.Value.ChannelType == ChatChannel.ChatChannelType.USER && chatChannel.Key.Id == roomParticipant)
                         {

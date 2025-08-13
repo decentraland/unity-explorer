@@ -104,7 +104,7 @@ namespace DCL.Chat.ChatServices
                     chatRoom.Info.ConnectionState == ConnectionState.ConnConnected &&
                     userBlockingCacheProxy.Configured, cancellationToken: cts.Token);
 
-                foreach (string remoteParticipantIdentity in chatRoom.Participants.RemoteParticipantIdentities().Where(rp => UserIsConsideredAsOnline(rp, true)))
+                foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities().Where(rp => UserIsConsideredAsOnline(rp.Key, true)))
                     onlineParticipants.Add(remoteParticipantIdentity);
             }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Error during initialization: {e.Message}"); }
@@ -254,7 +254,7 @@ namespace DCL.Chat.ChatServices
                     case ConnectionUpdate.Connected:
                         onlineParticipants.Clear();
 
-                        foreach (string remoteParticipantIdentity in chatRoom.Participants.RemoteParticipantIdentities())
+                        foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities())
                         {
                             if (UserIsConsideredAsOnline(remoteParticipantIdentity, true))
                                 onlineParticipants.Add(remoteParticipantIdentity);
