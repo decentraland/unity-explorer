@@ -158,22 +158,24 @@ namespace DCL.Audio.Systems
             var positions = new NativeList<int2>(rowsPerChunk * rowsPerChunk, Allocator.Persistent);
 
             for (var row = 0; row < rowsPerChunk; row++)
-            for (var col = 0; col < rowsPerChunk; col++)
             {
-                var localCellCenter = new int2(
-                    (col * cellWidth) + (cellWidth / 2),
-                    (row * cellLength) + (cellLength / 2)
-                );
-
-                for (var retry = 0; retry < retryAttempts; retry++)
+                for (var col = 0; col < rowsPerChunk; col++)
                 {
-                    var randomOffset = new int2(Random.Range(-cellWidth / 2, cellWidth / 2), Random.Range(-cellLength / 2, cellLength / 2));
-                    int2 randomPosition = localCellCenter + randomOffset;
+                    var localCellCenter = new int2(
+                        (col * cellWidth) + (cellWidth / 2),
+                        (row * cellLength) + (cellLength / 2)
+                    );
 
-                    if (!terrain.IsOutsideOrOccupied(terrain.MinParcel + (randomPosition / parcelSize)))
+                    for (var retry = 0; retry < retryAttempts; retry++)
                     {
-                        positions.Add((terrain.MinParcel * parcelSize) + randomPosition);
-                        break;
+                        var randomOffset = new int2(Random.Range(-cellWidth / 2, cellWidth / 2), Random.Range(-cellLength / 2, cellLength / 2));
+                        int2 randomPosition = localCellCenter + randomOffset;
+
+                        if (!terrain.IsOutsideOrOccupied(terrain.MinParcel + (randomPosition / parcelSize)))
+                        {
+                            positions.Add((terrain.MinParcel * parcelSize) + randomPosition);
+                            break;
+                        }
                     }
                 }
             }
