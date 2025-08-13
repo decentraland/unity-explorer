@@ -22,7 +22,10 @@ namespace DCL.DebugUtilities.Views
         }
 
         public void TogglePanelVisibility() =>
-            mainPanel?.SetDisplayed(mainPanel.style.display == DisplayStyle.None);
+            mainPanel?.SetDisplayed(!IsPanelVisible());
+
+        public bool IsPanelVisible() =>
+            mainPanel?.style.display == DisplayStyle.Flex;
 
         public new class UxmlFactory : UxmlFactory<DebugContainer> { }
     }

@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/DCL/UI/SceneDebugConsole/UI/SceneDebugConsole.uss?fileID=7433441132597879392&amp;guid=a5a1f1d60c81f4e8682ffccca6ea7ac9&amp;type=3#SceneDebugConsole" />
+    <Style src="project://database/Assets/DCL/UI/DebugMenu/UI/DebugMenu.uss?fileID=7433441132597879392&amp;guid=a5a1f1d60c81f4e8682ffccca6ea7ac9&amp;type=3#DebugMenu" />
     <ui:VisualElement name="ConsolePanel" usage-hints="DynamicTransform" class="scene-debug-console debug-panel debug-panel--hidden">
         <ui:ListView name="ConsoleList" virtualization-method="DynamicHeight" show-alternating-row-backgrounds="ContentOnly" allow-add="false" allow-remove="false" show-bound-collection-size="false" class="scene-debug-console__list" />
         <ui:VisualElement name="CopyToast" class="copy-success-toast">
@@ -21,16 +21,6 @@
             <ui:Button name="CloseButton" class="dcl-clickable debug-panel__close-button" />
         </ui:VisualElement>
     </ui:VisualElement>
-    <ui:VisualElement name="SettingsPanel" usage-hints="DynamicTransform" class="debug-panel settings-panel debug-panel--hidden">
-        <ui:VisualElement name="Header" class="debug-panel__header" style="flex-grow: 1;">
-            <ui:Label text="DEBUG PANEL" name="TitleLabel" class="debug-panel__title" />
-            <ui:VisualElement name="Spacer" class="debug-panel__header-spacer" />
-            <ui:Button name="CloseButton" class="dcl-clickable debug-panel__close-button" />
-        </ui:VisualElement>
-        <ui:VisualElement name="Body" style="flex-grow: 1;">
-            <ui:Button text="Button" />
-        </ui:VisualElement>
-    </ui:VisualElement>
     <ui:VisualElement name="ConnectionPanel" usage-hints="DynamicTransform" class="debug-panel connection-panel debug-panel--hidden">
         <ui:VisualElement name="Header" class="debug-panel__header">
             <ui:Label text="CONNECTION STATUS" name="TitleLabel" class="debug-panel__title" />
@@ -45,7 +35,7 @@
     </ui:VisualElement>
     <ui:VisualElement name="Sidebar" class="sidebar">
         <ui:Button name="ConsoleButton" class="sidebar__button sidebar__button--console dcl-clickable" />
-        <ui:Button name="DebugButton" class="sidebar__button sidebar__button--debug dcl-clickable" style="display: none" />
+        <ui:Button name="DebugPanelButton" class="sidebar__button sidebar__button--debug dcl-clickable" style="display: none;" />
         <ui:Button name="ConnectionButton" class="sidebar__button sidebar__button--connection dcl-clickable" />
     </ui:VisualElement>
 </ui:UXML>

@@ -10,10 +10,10 @@ namespace DCL.UI.DebugMenu
     [RequireComponent(typeof(UIDocument))]
     public class DebugMenuController : MonoBehaviour
     {
+        private const string USS_SIDEBAR_BUTTON_SELECTED = "sidebar__button--selected";
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
         private ConsolePanelView consolePanelView;
-        private SettingsPanelView settingsPanelView;
         private ConnectionPanelView connectionPanelView;
 
         private DebugPanelView visiblePanel;
@@ -26,7 +26,7 @@ namespace DCL.UI.DebugMenu
 
         private bool shouldRefreshConsole;
 
-        private IDebugContainerBuilder debugContainerBuilder;
+        private IDebugContainerBuilder? debugContainerBuilder;
 
         private void OnEnable()
         {
@@ -36,17 +36,15 @@ namespace DCL.UI.DebugMenu
 
             // Sidebar
             consoleButton = root.Q<Button>("ConsoleButton");
-            debugPanelButton = root.Q<Button>("DebugButton");
             connectionButton = root.Q<Button>("ConnectionButton");
+            debugPanelButton = root.Q<Button>("DebugPanelButton");
 
             consoleButton.clicked += OnConsoleButtonClicked;
-            debugPanelButton.clicked += OnDebugPanelButtonClicked;
             connectionButton.clicked += OnConnectionButtonClicked;
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
             consolePanelView.SetInputBlock(inputBlock);
-            settingsPanelView = new SettingsPanelView(root.Q("SettingsPanel"), debugPanelButton, OnDebugPanelButtonClicked);
             connectionPanelView = new ConnectionPanelView(root.Q("ConnectionPanel"), connectionButton, OnConnectionButtonClicked);
 
             // Shortcuts
@@ -60,10 +58,6 @@ namespace DCL.UI.DebugMenu
                         consolePanelView.Toggle();
                         visiblePanel = consolePanelView;
                         break;
-                    case SettingsPanelView:
-                        settingsPanelView.Toggle();
-                        visiblePanel = settingsPanelView;
-                        break;
                     case ConnectionPanelView:
                         connectionPanelView.Toggle();
                         visiblePanel = connectionPanelView;
@@ -75,12 +69,10 @@ namespace DCL.UI.DebugMenu
         {
             debugContainerBuilder = builder;
 
-            if (debugPanelButton != null)
-            {
-                debugPanelButton.clicked -= OnDebugPanelButtonClicked;
-                debugPanelButton.clicked += OnDebugButtonClicked;
-                debugPanelButton.style.display = DisplayStyle.Flex;
-            }
+            // Panel handled at DebugContainerBuilder
+            debugPanelButton.clicked -= OnDebugPanelButtonClicked;
+            debugPanelButton.clicked += OnDebugPanelButtonClicked;
+            debugPanelButton.style.display = DisplayStyle.Flex;
         }
 
         public void SetInputBlock(IInputBlock block)
@@ -121,17 +113,17 @@ namespace DCL.UI.DebugMenu
         private void OnConsoleButtonClicked() =>
             TogglePanel(consolePanelView);
 
-        private void OnDebugPanelButtonClicked() =>
-            TogglePanel(settingsPanelView);
+        private void OnDebugPanelButtonClicked()
+        {
+            if (debugContainerBuilder == null) return;
+
+            debugContainerBuilder.Container.TogglePanelVisibility();
+
+            debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
+        }
 
         private void OnConnectionButtonClicked() =>
             TogglePanel(connectionPanelView);
-
-        private void OnDebugButtonClicked()
-        {
-            if (debugContainerBuilder == null) return;
-            debugContainerBuilder.Container.TogglePanelVisibility();
-        }
 
         private void TogglePanel(DebugPanelView panelView)
         {
