@@ -91,15 +91,18 @@ namespace DCL.InWorldCamera.Systems
                     nametagsData.showNameTags = !nametagsData.showNameTags;
             }
 
-            CameraComponent cameraComponent = camera.GetCameraComponent(World);
-            if (cameraComponent.Mode != CameraMode.SDKCamera && World.TryGet(camera, out ToggleInWorldCameraRequest request))
+            if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
                 ToggleCamera(request.IsEnable, request.TargetCameraMode);
         }
 
         private void ToggleCamera(bool enable, CameraMode? targetMode)
         {
             if (enable)
-                EnableCamera();
+            {
+                CameraComponent cameraComponent = camera.GetCameraComponent(World);
+                bool sceneControlsCamera = cameraComponent.Mode == CameraMode.SDKCamera;
+                if (!sceneControlsCamera) EnableCamera();
+            }
             else
                 DisableCamera(targetMode);
         }

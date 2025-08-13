@@ -424,6 +424,9 @@ namespace DCL.UI.SharedSpaceManager
 
             Entity camera = ecsWorld.CacheCamera();
 
+            if (!ecsWorld.Get<CameraComponent>(camera).CameraInputChangeEnabled)
+                return;
+
             if (!ecsWorld.Has<InWorldCameraComponent>(camera))
                 await HideAllAsync(PanelsSharingSpace.Chat);
 
