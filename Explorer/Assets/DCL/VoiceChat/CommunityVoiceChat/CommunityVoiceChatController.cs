@@ -7,6 +7,7 @@ using DCL.Utilities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine.Pool;
 using Utility;
@@ -28,6 +29,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly CommunityVoiceChatInCallController inCallController;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly IDisposable? voiceChatTypeSubscription;
+
+        private readonly Dictionary<string, string> currentlySpeakingUsers = new();
 
         private bool isPanelCollapsed;
 
@@ -288,6 +291,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             var subscriptions = new List<IDisposable>
             {
+                participantState.IsSpeaking.Subscribe(isSpeaking => PlayerEntryIsSpeaking(isSpeaking, participantState.Name, participantState.WalletId)),
                 participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView)),
                 participantState.IsSpeaker.Subscribe(isSpeaker => SetUserEntryParent(isSpeaker, entryView)),
                 participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name))
@@ -295,6 +299,16 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             participantSubscriptions[participantState.WalletId] = subscriptions;
             return entryView;
+        }
+
+        private void PlayerEntryIsSpeaking(bool isSpeaking, ReactiveProperty<string?> participantStateName, string walletId)
+        {
+            if (isSpeaking)
+                currentlySpeakingUsers.Add(walletId, participantStateName.Value);
+            else
+                currentlySpeakingUsers.Remove(walletId);
+
+            inCallController.SetTalkingStatus(currentlySpeakingUsers.Count, currentlySpeakingUsers.Count == 1 ? currentlySpeakingUsers.First().Value : String.Empty);
         }
 
         private void SetUserRequestingToSpeak(bool isRequestingToSpeak, PlayerEntryView entryView, string playerName)
