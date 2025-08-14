@@ -52,6 +52,7 @@ MonoBehaviour:
   - rid: 3511243270148325472
   - rid: 6144113899072913496
   - rid: 648265872610426982
+  - rid: 657752310186246267
   references:
     version: 2
     RefIds:
@@ -60,6 +61,15 @@ MonoBehaviour:
       data:
         <ConfirmationDialogPrefab>k__BackingField:
           m_AssetGUID: 7b075576ea612439bb40436f7c0fdff0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 657752310186246267
+      type: {class: DebugMenuSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        UiDocumentPrefab:
+          m_AssetGUID: 8521b529ac852454480e3f6596bca3ba
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -996,13 +1006,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <ChatConfig>k__BackingField:
-          m_AssetGUID: 4359e32789e7f914c8e7e12d16286b76
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
     - rid: 7621844642437005315
       type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
