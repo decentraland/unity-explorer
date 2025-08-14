@@ -144,7 +144,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.SetPrivacy(community.privacy);
             invitedCommunityCardView.SetMembersCount(community.membersCount);
             invitedCommunityCardView.SetOwnership(community.role != CommunityMemberRole.none);
-            invitedCommunityCardView.SetJoiningLoadingActive(false);
+            invitedCommunityCardView.SetActonLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events
@@ -175,7 +175,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.SetPrivacy(community.privacy);
             requestedCommunityCardView.SetMembersCount(community.membersCount);
             requestedCommunityCardView.SetOwnership(community.role != CommunityMemberRole.none);
-            requestedCommunityCardView.SetJoiningLoadingActive(false);
+            requestedCommunityCardView.SetActonLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events
@@ -198,7 +198,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnJoinCommunity(string communityId, CommunityResultCardView cardView)
         {
-            cardView.SetJoiningLoadingActive(true);
+            cardView.SetActonLoadingActive(true);
             CommunityJoined?.Invoke(communityId);
         }
     }

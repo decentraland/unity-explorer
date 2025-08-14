@@ -331,7 +331,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
-            cardView.SetJoiningLoadingActive(false);
+            cardView.SetActonLoadingActive(false);
 
                 // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
@@ -362,7 +362,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityJoined(string communityId, CommunityResultCardView cardView)
         {
-            cardView.SetJoiningLoadingActive(true);
+            cardView.SetActonLoadingActive(true);
 
             CommunityData? communityData = GetResultCommunityById(communityId);
             if (communityData == null)

@@ -42,9 +42,17 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text communityMembersCountText = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private GameObject buttonsContainer = null!;
+        [SerializeField] private GameObject joinOrViewButtonsContainer = null!;
         [SerializeField] private Button viewCommunityButton = null!;
         [SerializeField] private Button joinCommunityButton = null!;
-        [SerializeField] private GameObject joiningLoading = null!;
+        [SerializeField] private GameObject requestOrCancelToJoinButtonsContainer = null!;
+        [SerializeField] private Button requestToJoinButton = null!;
+        [SerializeField] private Button cancelJoinRequestButton = null!;
+        [SerializeField] private GameObject acceptOrRejectInvitationButtonsContainer = null!;
+        [SerializeField] private Button acceptInvitationButton = null!;
+        [SerializeField] private Button rejectInvitationButton = null!;
+
+        [SerializeField] private GameObject actionLoadingSpinner = null!;
         [SerializeField] private MutualFriendsConfig mutualFriends;
         [SerializeField] private ListenersCountView listenersCountView;
 
@@ -137,9 +145,9 @@ namespace DCL.Communities.CommunitiesBrowser
             viewCommunityButton.gameObject.SetActive(isMember);
         }
 
-        public void SetJoiningLoadingActive(bool isActive)
+        public void SetActonLoadingActive(bool isActive)
         {
-            joiningLoading.SetActive(isActive);
+            actionLoadingSpinner.SetActive(isActive);
             buttonsContainer.SetActive(!isActive);
         }
 
