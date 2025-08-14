@@ -308,8 +308,6 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
-            ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
-            ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
 
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
 
@@ -370,8 +368,8 @@ namespace DCL.PluginSystem.Global
                 settings.RealmPartitionSettings,
                 settings.VideoPrioritizationSettings,
                 landscapeData.Value,
-                qualitySettingsAsset.Value,
-                controlsSettingsAsset.Value,
+                settings.QualitySettingsAsset,
+                settings.ControlsSettingsAsset,
                 systemMemoryCap,
                 settings.ChatSettingsAsset,
                 userBlockingCacheProxy,
@@ -544,10 +542,10 @@ namespace DCL.PluginSystem.Global
             public LandscapeDataRef LandscapeData { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceT<QualitySettingsAsset> QualitySettingsAsset { get; private set; }
+            public QualitySettingsAsset QualitySettingsAsset { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceT<ControlsSettingsAsset> ControlsSettingsAsset { get; private set; }
+            public ControlsSettingsAsset ControlsSettingsAsset { get; private set; }
 
             [field: SerializeField]
             public ChatSettingsAsset ChatSettingsAsset { get; private set; }

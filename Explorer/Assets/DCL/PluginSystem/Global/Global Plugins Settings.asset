@@ -266,18 +266,8 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <QualitySettingsAsset>k__BackingField:
-          m_AssetGUID: 58ab8549017bacb42b310dbb452a2f6e
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ControlsSettingsAsset>k__BackingField:
-          m_AssetGUID: 26489687fb2f3419886df8e49f34b006
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <QualitySettingsAsset>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
+        <ControlsSettingsAsset>k__BackingField: {fileID: 11400000, guid: 26489687fb2f3419886df8e49f34b006, type: 2}
         <ChatSettingsAsset>k__BackingField: {fileID: 11400000, guid: a358ab6eb8d31ca488364e13b54f5f9c, type: 2}
         <CategoryMappingSO>k__BackingField:
           m_AssetGUID: bda7566751d4243fb842e1a272cb9f83
@@ -846,12 +836,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <controlsSettingsAsset>k__BackingField:
-          m_AssetGUID: 26489687fb2f3419886df8e49f34b006
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <controlsSettingsAsset>k__BackingField: {fileID: 11400000, guid: 26489687fb2f3419886df8e49f34b006, type: 2}
     - rid: 6784895265412481027
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
