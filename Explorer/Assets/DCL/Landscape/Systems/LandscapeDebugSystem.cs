@@ -53,6 +53,7 @@ namespace DCL.Landscape.Systems
         private void OnTerrainToggle(ChangeEvent<bool> evt)
         {
             landscapeData.drawTerrain = evt.newValue;
+            floor.OnTerrainVisibilityChanged(evt.newValue);
         }
 
         private void OnDetailToggle(ChangeEvent<bool> evt)
