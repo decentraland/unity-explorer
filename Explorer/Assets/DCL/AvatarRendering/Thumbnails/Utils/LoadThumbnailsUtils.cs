@@ -100,8 +100,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                     typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
-                    assetBundleVersion: attachment.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    hasParentEntityIDPathInURL: attachment.DTO.assetBundleManifestVersion.HasHashInPath(),
+                    assetBundleManifestVersion: attachment.DTO.assetBundleManifestVersion,
                     parentEntityID: attachment.DTO.id,
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),
