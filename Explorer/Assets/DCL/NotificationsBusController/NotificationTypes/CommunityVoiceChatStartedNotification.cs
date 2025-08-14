@@ -15,7 +15,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
             "Community Voice Stream Started";
 
         public override string GetTitle() =>
-            string.Format("Join from {0}'s chat to listen in.", CommunityName);
+            string.Format("The {0} is streaming! Click here to join the stream.", CommunityName);
 
         public override string GetThumbnail() =>
             Thumbnail;

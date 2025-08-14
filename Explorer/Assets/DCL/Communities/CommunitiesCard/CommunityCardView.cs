@@ -102,7 +102,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; } = null!;
         [field: SerializeField] public EventListView EventListView { get; private set; } = null!;
 
-        private readonly UniTask[] closingTasks = new UniTask[3];
+        private readonly UniTask[] closingTasks = new UniTask[4];
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
@@ -202,6 +202,7 @@ namespace DCL.Communities.CommunitiesCard
             closingTasks[0] = closeButton.OnClickAsync(ct);
             closingTasks[1] = backgroundCloseButton.OnClickAsync(ct);
             closingTasks[2] = controllerTask;
+            closingTasks[3] = communityCardVoiceChatView.StartStreamButton.OnClickAsync(ct);
 
             return closingTasks;
         }
