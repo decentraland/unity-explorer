@@ -22,7 +22,6 @@ namespace DCL.Chat
     /// It notifies when a user is connected or disconnected in a conversation, which does not mean to be connected or disconnected from DCL.
     /// For example, leaving a community will mark a user as disconnected.
     /// </summary>
-    [Obsolete("Super-seeded by PrivateConversationUserStateService")]
     internal class UserConnectivityInfoProvider : IDisposable
     {
         public delegate void UserConnectedDelegate(string userAddress, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType);
@@ -56,7 +55,7 @@ namespace DCL.Chat
         private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> participantsPerChannel = new Dictionary<ChatChannel.ChannelId, HashSet<string>>();
         private readonly ChatChannel.ChannelId privateConversationOnlineUserListId = new ChatChannel.ChannelId("OnlinePrivateConversations");
 
-        private readonly CancellationTokenSource initializationCts = new CancellationTokenSource();
+        private CancellationTokenSource initializationCts;
 
         public UserConnectivityInfoProvider(IRoom islandRoom, IRoom chatRoom, CommunitiesEventBus communitiesEventBus, IChatHistory chatHistory, IRealmNavigator realmNavigator)
         {
@@ -65,7 +64,6 @@ namespace DCL.Chat
             this.chatHistory = chatHistory;
             this.communitiesEventBus = communitiesEventBus;
             this.realmNavigator = realmNavigator;
-
             participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
         }
 
@@ -78,6 +76,7 @@ namespace DCL.Chat
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedFromCommunity;
             realmNavigator.NavigationExecuted -= OnRealmNavigatorNavigationExecuted;
+            participantsPerChannel.Clear();
             initializationCts.SafeCancelAndDispose();
         }
 
@@ -102,7 +101,10 @@ namespace DCL.Chat
                 foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channel in chatHistory.Channels)
                 {
                     if (channel.Value.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+                    {
+                        initializationCts = initializationCts.SafeRestart();
                         InitializeOnlineChannelParticipantsInCommunitiesAsync(channel.Key, communitiesDataProvider, initializationCts.Token).Forget();
+                    }
                 }
             }
 
@@ -124,6 +126,9 @@ namespace DCL.Chat
         {
             if (channelType == ChatChannel.ChatChannelType.USER)
             {
+                if (!participantsPerChannel.ContainsKey(privateConversationOnlineUserListId))
+                    participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
+
                 if(chatRoom.Participants.RemoteParticipant(addedChannelId.Id) != null)
                     participantsPerChannel[privateConversationOnlineUserListId].Add(addedChannelId.Id);
             }
@@ -227,11 +232,11 @@ namespace DCL.Chat
             {
                 islandRoom.ConnectionStateChanged -= OnIslandRoomConnectionStateChangedAsync;
 
-                IReadOnlyDictionary<string, Participant> roomParticipants = islandRoom.Participants.RemoteParticipantIdentities();
+                IReadOnlyCollection<string> roomParticipants = islandRoom.Participants.RemoteParticipantIdentities();
                 ReportHub.Log(ReportCategory.DEBUG, "#PARTICIPANT: NEARBY CLEARED");
                 participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Clear();
 
-                foreach ((string roomParticipant, _) in roomParticipants)
+                foreach (string roomParticipant in roomParticipants)
                 {
                     ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {roomParticipant}");
                     participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Add(roomParticipant);
@@ -269,13 +274,16 @@ namespace DCL.Chat
             {
                 chatRoom.ConnectionStateChanged -= OnChatRoomConnectionStateChangedAsync;
 
-                IReadOnlyDictionary<string, Participant> roomParticipants = chatRoom.Participants.RemoteParticipantIdentities();
+                if (!participantsPerChannel.ContainsKey(privateConversationOnlineUserListId))
+                    participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
+
+                IReadOnlyCollection<string> roomParticipants = chatRoom.Participants.RemoteParticipantIdentities();
                 participantsPerChannel[privateConversationOnlineUserListId].Clear();
 
                 // Checks that the participants have an open conversation with the local user
                 foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> chatChannel in chatHistory.Channels)
                 {
-                    foreach ((string roomParticipant, _) in roomParticipants)
+                    foreach (string roomParticipant in roomParticipants)
                     {
                         if (chatChannel.Value.ChannelType == ChatChannel.ChatChannelType.USER && chatChannel.Key.Id == roomParticipant)
                         {
