@@ -14,6 +14,7 @@ using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -54,6 +55,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource? searchCancellationCts;
         private CancellationTokenSource? showErrorCts;
         private CancellationTokenSource? openCommunityCreationCts;
+        private CancellationTokenSource? updateInvitesCounterCts;
 
         private bool isSectionActivated;
         private string currentNameFilter;
@@ -64,6 +66,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private string currentSearchText = string.Empty;
         private bool currentOnlyMemberOf;
         private bool isGridResultsLoadingItems;
+        private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentJoinRequests = new ();
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
@@ -95,7 +98,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
-            view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
+            view.ResultsBackButtonClicked += OnResultsBackButtonClicked;
             view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked += LoadInvitesAndRequestsResults;
             view.SearchBarSelected += DisableShortcutsInput;
             view.SearchBarDeselected += RestoreInput;
@@ -129,6 +132,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
+            updateInvitesCounterCts?.SafeCancelAndDispose();
             spriteCache.Clear();
 
             UnsubscribeDataProviderEvents();
@@ -148,7 +152,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.ResultsLoopGridScrollChanged -= LoadMoreResults;
             view.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
             view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked -= LoadInvitesAndRequestsResults;
-            view.ResultsBackButtonClicked -= LoadAllCommunitiesResults;
+            view.ResultsBackButtonClicked -= OnResultsBackButtonClicked;
             view.SearchBarSelected -= DisableShortcutsInput;
             view.SearchBarDeselected -= RestoreInput;
             view.SearchBarValueChanged -= SearchBarValueChanged;
@@ -165,6 +169,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
+            updateInvitesCounterCts?.SafeCancelAndDispose();
             spriteCache.Clear();
         }
 
@@ -172,10 +177,12 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
-            LoadAllCommunitiesResults();
+            LoadAllCommunitiesResults(updateInvitations: true);
 
+            // Get the current invites to update the invite counter on the main page
             view.InvitesAndRequestsView.SetInvitesCounter(0);
-            LoadInvitesAsync(updateInvitesGrid: false, CancellationToken.None).Forget();
+            updateInvitesCounterCts = updateInvitesCounterCts.SafeRestart();
+            LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token).Forget();
         }
 
         private void ConfigureMyCommunitiesList() =>
@@ -229,11 +236,15 @@ namespace DCL.Communities.CommunitiesBrowser
                 onlyMemberOf: true,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
+                updateJoinRequests: false,
                 ct: loadResultsCts.Token).Forget();
 
         }
 
-        private void LoadAllCommunitiesResults()
+        private void OnResultsBackButtonClicked() =>
+            LoadAllCommunitiesResults();
+
+        private void LoadAllCommunitiesResults(bool updateInvitations = false)
         {
             ClearSearchBar();
             loadResultsCts = loadResultsCts.SafeRestart();
@@ -242,6 +253,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 onlyMemberOf: false,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
+                updateInvitations,
                 ct: loadResultsCts.Token).Forget();
 
             view.SetResultsBackButtonVisible(false);
@@ -264,11 +276,15 @@ namespace DCL.Communities.CommunitiesBrowser
                 currentOnlyMemberOf,
                 pageNumber: currentPageNumberFilter + 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
+                updateJoinRequests: false,
                 ct: loadResultsCts.Token).Forget();
         }
 
-        private async UniTaskVoid LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
+        private async UniTaskVoid LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, bool updateJoinRequests, CancellationToken ct)
         {
+            if (updateJoinRequests)
+                await LoadRequestsAsync(ct);
+
             isGridResultsLoadingItems = true;
 
             if (pageNumber == 1)
@@ -299,6 +315,21 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (result.Value.data.results.Length > 0)
             {
+                // Match the current join requests with the results to know what communities have been requested to join
+                foreach (GetUserCommunitiesData.CommunityData communityData in result.Value.data.results)
+                {
+                    communityData.type = null;
+
+                    foreach (GetUserInviteRequestData.UserInviteRequestData joinRequest in currentJoinRequests)
+                    {
+                        if (communityData.id == joinRequest.communityId)
+                        {
+                            communityData.type = InviteRequestAction.request_to_join;
+                            break;
+                        }
+                    }
+                }
+
                 currentPageNumberFilter = pageNumber;
                 view.AddResultsItems(result.Value.data.results, pageNumber == 1);
             }
@@ -372,6 +403,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTask<int> LoadRequestsAsync(CancellationToken ct)
         {
             view.InvitesAndRequestsView.ClearRequestsItems();
+            currentJoinRequests.Clear();
 
             var requestsResult = await dataProvider.GetUserInviteRequestAsync(
                 InviteRequestAction.request_to_join,
@@ -389,7 +421,10 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             if (requestsResult.Value.data.results.Length > 0)
+            {
                 view.InvitesAndRequestsView.SetRequestsItems(requestsResult.Value.data.results);
+                currentJoinRequests.AddRange(requestsResult.Value.data.results);
+            }
 
             return requestsResult.Value.data.results.Length;
         }
@@ -436,6 +471,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     onlyMemberOf: false,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
+                    updateJoinRequests: false,
                     ct: loadResultsCts.Token).Forget();
             }
 

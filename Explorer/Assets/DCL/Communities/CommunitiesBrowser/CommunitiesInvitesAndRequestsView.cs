@@ -143,7 +143,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.SetDescription(community.description);
             invitedCommunityCardView.SetPrivacy(community.privacy);
             invitedCommunityCardView.SetMembersCount(community.membersCount);
-            invitedCommunityCardView.SetOwnership(community.role != CommunityMemberRole.none);
+            invitedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
             invitedCommunityCardView.SetActonLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
@@ -174,7 +174,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.SetDescription(community.description);
             requestedCommunityCardView.SetPrivacy(community.privacy);
             requestedCommunityCardView.SetMembersCount(community.membersCount);
-            requestedCommunityCardView.SetOwnership(community.role != CommunityMemberRole.none);
+            requestedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
             requestedCommunityCardView.SetActonLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 

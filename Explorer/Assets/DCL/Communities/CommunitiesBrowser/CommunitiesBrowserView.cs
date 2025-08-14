@@ -329,7 +329,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
-            cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
+            cardView.SetActionButtonsType(communityData.privacy, communityData.type, communityData.role != CommunityMemberRole.none);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
             cardView.SetActonLoadingActive(false);
 

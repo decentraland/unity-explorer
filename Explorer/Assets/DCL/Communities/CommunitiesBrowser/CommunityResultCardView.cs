@@ -139,10 +139,22 @@ namespace DCL.Communities.CommunitiesBrowser
                 communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
         }
 
-        public void SetOwnership(bool isMember)
+        public void SetActionButtonsType(CommunityPrivacy privacy, InviteRequestAction? type, bool isMember)
         {
+            // Join/View
+            joinOrViewButtonsContainer.SetActive(privacy == CommunityPrivacy.@public && type != InviteRequestAction.invite);
             joinCommunityButton.gameObject.SetActive(!isMember);
             viewCommunityButton.gameObject.SetActive(isMember);
+
+            // Request/Cancel to join
+            requestOrCancelToJoinButtonsContainer.SetActive(privacy == CommunityPrivacy.@private && type != InviteRequestAction.invite);
+            requestToJoinButton.gameObject.SetActive(type != InviteRequestAction.request_to_join);
+            cancelJoinRequestButton.gameObject.SetActive(type == InviteRequestAction.request_to_join);
+
+            // Accept/Reject invitation
+            acceptOrRejectInvitationButtonsContainer.SetActive(type == InviteRequestAction.invite);
+            rejectInvitationButton.gameObject.SetActive(true);
+            acceptInvitationButton.gameObject.SetActive(true);
         }
 
         public void SetActonLoadingActive(bool isActive)
