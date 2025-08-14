@@ -54,7 +54,7 @@ namespace DCL.Character.Components
             
             float distance = CheapDistance(oldPosition, newPosition);
 
-            if (!(distance >= MINIMAL_DISTANCE_DIFFERENCE)) return;
+            if (distance < MINIMAL_DISTANCE_DIFFERENCE) return;
             
             oldPosition = newPosition;
             IsDirty = true;

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
@@ -31,10 +32,10 @@ namespace DCL.Character.Tests
 
         private World globalWorld;
         
-        private IReadOnlyCameraSamplingData cameraSamplingData;
+        private IReadOnlyCameraSamplingData camSampling;
         private IPartitionSettings partitionSettings;
         private IComponentPool<PartitionComponent> partitionComponentPool;
-        private GameObject testGameObject;
+        private List<GameObject> testGameObjects;
 
         [SetUp]
         public void Setup()
@@ -42,10 +43,10 @@ namespace DCL.Character.Tests
             globalWorld = World.Create();
             
             // Default camera state - not dirty to avoid interference with repartitioning
-            cameraSamplingData = Substitute.For<IReadOnlyCameraSamplingData>();
-            cameraSamplingData.Position.Returns(Vector3.zero);
-            cameraSamplingData.Forward.Returns(Vector3.forward);
-            cameraSamplingData.IsDirty.Returns(false);
+            camSampling = Substitute.For<IReadOnlyCameraSamplingData>();
+            camSampling.Position.Returns(Vector3.zero);
+            camSampling.Forward.Returns(Vector3.forward);
+            camSampling.IsDirty.Returns(false);
             
             partitionSettings = Substitute.For<IPartitionSettings>();
             
@@ -56,15 +57,24 @@ namespace DCL.Character.Tests
                 globalWorld, 
                 partitionComponentPool, 
                 partitionSettings, 
-                cameraSamplingData
+                camSampling
             );
+            
+            testGameObjects = new List<GameObject>();
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (testGameObject != null)
-                Object.DestroyImmediate(testGameObject);
+            camSampling = null!;
+            partitionSettings = null!;
+            partitionComponentPool = null!;
+            
+            for (int i = 0; i < testGameObjects?.Count; i++)
+            {
+                Object.DestroyImmediate(testGameObjects[i]);
+            }
+            testGameObjects = null!;
             
             globalWorld.Dispose();
         }
@@ -73,13 +83,13 @@ namespace DCL.Character.Tests
         public void SetDirtyWhenPositionChangesAboveThreshold()
         {
             // Arrange
-            testGameObject = new GameObject("TestEntity");
-            var characterTransform = new CharacterTransform(testGameObject.transform);
+            testGameObjects.Add(new GameObject("TestEntity"));
+            var characterTransform = new CharacterTransform(testGameObjects[0].transform);
             
             Assert.IsFalse(characterTransform.IsDirty, "IsDirty should be false initially");
             
             // Act - Move above threshold (0.01f)
-            Vector3 newPosition = testGameObject.transform.position + Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
             characterTransform.SetPositionWithDirtyCheck(newPosition);
             
             // Assert
@@ -92,7 +102,8 @@ namespace DCL.Character.Tests
         public void NotSetDirtyWhenPositionChangeBelowThreshold()
         {
             // Arrange
-            testGameObject = new GameObject("TestObject");
+            testGameObjects.Add(new GameObject("TestEntity"));
+            GameObject testGameObject = testGameObjects[0];
             var characterTransform = new CharacterTransform(testGameObject.transform);
             
             Assert.IsFalse(characterTransform.IsDirty, "IsDirty should be false initially");
@@ -110,11 +121,11 @@ namespace DCL.Character.Tests
         public void SetDirtyWithSetPositionAndRotation()
         {
             // Arrange
-            testGameObject = new GameObject("TestObject");
-            var characterTransform = new CharacterTransform(testGameObject.transform);
+            testGameObjects.Add(new GameObject("TestEntity"));
+            var characterTransform = new CharacterTransform(testGameObjects[0].transform);
             
             // Act
-            Vector3 newPosition = testGameObject.transform.position + Vector3.forward * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.forward * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
             Quaternion newRotation = Quaternion.Euler(0, 90, 0);
             characterTransform.SetPositionAndRotationWithDirtyCheck(newPosition, newRotation);
             
@@ -129,8 +140,8 @@ namespace DCL.Character.Tests
         public void ClearDirtyResetsFlag()
         {
             // Arrange
-            testGameObject = new GameObject("TestObject");
-            var characterTransform = new CharacterTransform(testGameObject.transform);
+            testGameObjects.Add(new GameObject("TestEntity"));
+            var characterTransform = new CharacterTransform(testGameObjects[0].transform);
             
             // Set dirty first
             characterTransform.SetPositionWithDirtyCheck(Vector3.one);
@@ -147,9 +158,9 @@ namespace DCL.Character.Tests
         public void ClearDirtyForAvatarShapeEntities()
         {
             // Arrange
-            testGameObject = new GameObject("AvatarObject");
-            testGameObject.transform.position = new Vector3(10, 0, 10);
-            var characterTransform = new CharacterTransform(testGameObject.transform);
+            testGameObjects.Add(new GameObject("TestEntity"));
+            testGameObjects[0].transform.position = new Vector3(10, 0, 10);
+            var characterTransform = new CharacterTransform(testGameObjects[0].transform);
             
             Entity avatarEntity = globalWorld.Create(
                 characterTransform,
@@ -158,19 +169,19 @@ namespace DCL.Character.Tests
             );
             
             // Make transform dirty
-            Vector3 newPosition = testGameObject.transform.position + Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
+            Vector3 newPosition = testGameObjects[0].transform.position + Vector3.one * ABOVE_MINIMAL_DISTANCE_DIFFERENCE;
             characterTransform.SetPositionWithDirtyCheck(newPosition);
             globalWorld.Set(avatarEntity, characterTransform);
             
             // Verify it's dirty
-            ref CharacterTransform dirtyTransform = ref globalWorld.Get<CharacterTransform>(avatarEntity);
+            ref var dirtyTransform = ref globalWorld.Get<CharacterTransform>(avatarEntity);
             Assert.IsTrue(dirtyTransform.IsDirty, "Transform should be dirty before system update");
             
             // Act - Run partition system
             system.Update(0.1f);
             
             // Assert - Dirty flag should be cleared
-            ref CharacterTransform clearedTransform = ref globalWorld.Get<CharacterTransform>(avatarEntity);
+            ref var clearedTransform = ref globalWorld.Get<CharacterTransform>(avatarEntity);
             Assert.IsFalse(clearedTransform.IsDirty, 
                 "PartitionSystem should clear IsDirty for avatar entities");
         }
@@ -179,11 +190,12 @@ namespace DCL.Character.Tests
         public void OnlyProcessDirtyEntitiesWhenCameraNotDirty()
         {
             // Arrange
-            testGameObject = new GameObject("TestObject");
-            var dirtyTransform = new CharacterTransform(testGameObject.transform);
+            testGameObjects.Add(new GameObject("TestEntity"));
+            var dirtyTransform = new CharacterTransform(testGameObjects[0].transform);
             
-            GameObject cleanGameObject = new GameObject("CleanObject");
-            var cleanTransform = new CharacterTransform(cleanGameObject.transform);
+            testGameObjects.Add(new GameObject("CleanObject"));
+            var clearGameObject = testGameObjects[1];
+            var cleanTransform = new CharacterTransform(clearGameObject.transform);
             
             // Create two entities - one dirty, one clean
             Entity dirtyEntity = globalWorld.Create(
@@ -209,7 +221,7 @@ namespace DCL.Character.Tests
             Assert.IsFalse(cleanCheck.IsDirty, "Second entity should be clean");
             
             // Act - Update with camera not dirty (should only process dirty entities)
-            cameraSamplingData.IsDirty.Returns(false);
+            camSampling.IsDirty.Returns(false);
             system.Update(0.1f);
             
             // Assert
@@ -218,17 +230,14 @@ namespace DCL.Character.Tests
             
             Assert.IsFalse(dirtyAfter.IsDirty, "Dirty entity should be cleared");
             Assert.IsFalse(cleanAfter.IsDirty, "Clean entity should remain clean");
-            
-            // Cleanup
-            Object.DestroyImmediate(cleanGameObject);
         }
 
         [Test]
         public void RepartitionAllWhenCameraIsDirtyClearsTransformFlag()
         {
             // Arrange
-            testGameObject = new GameObject("TestObject");
-            var characterTransform = new CharacterTransform(testGameObject.transform);
+            testGameObjects.Add(new GameObject("TestEntity"));
+            var characterTransform = new CharacterTransform(testGameObjects[0].transform);
             
             Entity entity = globalWorld.Create(
                 characterTransform,
@@ -241,7 +250,7 @@ namespace DCL.Character.Tests
             Assert.IsFalse(initialTransform.IsDirty, "Transform should start clean");
             
             // Act - Update with camera dirty (triggers RePartitionExistingEntityQuery)
-            cameraSamplingData.IsDirty.Returns(true);
+            camSampling.IsDirty.Returns(true);
             system.Update(0.1f);
             
             // Assert - CharacterTransform.IsDirty should remain unchanged since entity didn't move
@@ -254,7 +263,8 @@ namespace DCL.Character.Tests
         public void UseCheapDistanceCalculation()
         {
             // Arrange
-            testGameObject = new GameObject("TestObject");
+            testGameObjects.Add(new GameObject("TestEntity"));
+            GameObject testGameObject = testGameObjects[0];
             testGameObject.transform.position = Vector3.zero;
             var characterTransform = new CharacterTransform(testGameObject.transform);
             
@@ -293,9 +303,9 @@ namespace DCL.Character.Tests
         public void SetsDirtyCharacterTransformViaRemotePlayersMovementSystem()
         {
             // Arrange
-            testGameObject = new GameObject("RemotePlayer");
-            testGameObject.transform.position = Vector3.zero;
-            var characterTransform = new CharacterTransform(testGameObject.transform);
+            testGameObjects.Add(new GameObject("TestEntity"));
+            testGameObjects[0].transform.position = Vector3.zero;
+            var characterTransform = new CharacterTransform(testGameObjects[0].transform);
             
             Entity remoteEntity = globalWorld.Create(
                 characterTransform,
@@ -309,6 +319,7 @@ namespace DCL.Character.Tests
             movementSettings.MinPositionDelta.Returns(0.01f);
             movementSettings.MinRotationDelta.Returns(0.01f);
             
+            // ReSharper disable once Unity.IncorrectScriptableObjectInstantiation
             var interpolationSettings = new RemotePlayerInterpolationSettings
             {
                 UseSpeedUp = false,
@@ -338,7 +349,7 @@ namespace DCL.Character.Tests
             globalWorld.Set(remoteEntity, movementComponent);
             
             // Verify clean state
-            ref CharacterTransform beforeTransform = ref globalWorld.Get<CharacterTransform>(remoteEntity);
+            ref var beforeTransform = ref globalWorld.Get<CharacterTransform>(remoteEntity);
             Assert.IsFalse(beforeTransform.IsDirty, "Should start clean");
             
             // Act - Process first movement message
@@ -358,7 +369,7 @@ namespace DCL.Character.Tests
             movementSystem.Update(0.1f);
             
             // Assert
-            ref CharacterTransform afterTransform = ref globalWorld.Get<CharacterTransform>(remoteEntity);
+            ref var afterTransform = ref globalWorld.Get<CharacterTransform>(remoteEntity);
             Assert.IsTrue(afterTransform.IsDirty, 
                 "RemotePlayersMovementSystem should set IsDirty via CharacterTransform.SetPositionAndRotationWithDirtyCheck");
             Assert.AreEqual(firstMessage.position, afterTransform.Position, 
@@ -369,21 +380,9 @@ namespace DCL.Character.Tests
         public void CompleteFlow_RemoteMovementSetsDirty_PartitionSystemClearsIt()
         {
             // Arrange - Create local partition system with camera dirty for RePartitionExistingEntity
-            var localCameraSamplingData = Substitute.For<IReadOnlyCameraSamplingData>();
-            localCameraSamplingData.Position.Returns(Vector3.zero);
-            localCameraSamplingData.Forward.Returns(Vector3.forward);
-            localCameraSamplingData.IsDirty.Returns(true);
-            
-            var localPartitionSystem = new PartitionGlobalAssetEntitiesSystem(
-                globalWorld, 
-                partitionComponentPool, 
-                partitionSettings, 
-                localCameraSamplingData
-            );
-            
-            testGameObject = new GameObject("CompleteFlowTest");
-            testGameObject.transform.position = Vector3.zero;
-            var characterTransform = new CharacterTransform(testGameObject.transform);
+            testGameObjects.Add(new GameObject("CompleteFlowTest"));
+            testGameObjects[0].transform.position = Vector3.zero;
+            var characterTransform = new CharacterTransform(testGameObjects[0].transform);
 
             Entity entity = globalWorld.Create(
                 characterTransform,
@@ -401,6 +400,7 @@ namespace DCL.Character.Tests
             var movementSettings = Substitute.For<IMultiplayerMovementSettings>();
             movementSettings.MoveSendRate.Returns(0.1f);
             movementSettings.MinTeleportDistance.Returns(100f);
+            // ReSharper disable once Unity.IncorrectScriptableObjectInstantiation
             movementSettings.InterpolationSettings.Returns(new RemotePlayerInterpolationSettings());
 
             var characterControllerSettings = Substitute.For<ICharacterControllerSettings>();
@@ -417,7 +417,7 @@ namespace DCL.Character.Tests
             globalWorld.Add(entity, new InterpolationComponent());
             globalWorld.Add(entity, new ExtrapolationComponent());
 
-            ref RemotePlayerMovementComponent movementComponent = ref globalWorld.Get<RemotePlayerMovementComponent>(entity);
+            ref var movementComponent = ref globalWorld.Get<RemotePlayerMovementComponent>(entity);
             movementComponent.Initialized = false;
             movementComponent.InitialCooldownTime = 0.3f;
 
@@ -439,21 +439,21 @@ namespace DCL.Character.Tests
 
             movementSystem.Update(0.1f);
 
-            ref CharacterTransform afterMovement = ref globalWorld.Get<CharacterTransform>(entity);
+            ref var afterMovement = ref globalWorld.Get<CharacterTransform>(entity);
             Assert.IsTrue(afterMovement.IsDirty,
                 "Movement system should set dirty flag");
 
             // Step 2: Partition system clears dirty
-            localPartitionSystem.Update(0.1f);
+            camSampling.IsDirty.Returns(true);
+            system!.Update(0.1f);
 
-            ref CharacterTransform afterPartition = ref globalWorld.Get<CharacterTransform>(entity);
+            ref var afterPartition = ref globalWorld.Get<CharacterTransform>(entity);
+            system.Dispose();
             Assert.IsFalse(afterPartition.IsDirty,
                 "Partition system should clear dirty flag");
 
             Assert.AreEqual(message.position, afterPartition.Position,
                 "Position should be maintained through the flow");
-            
-            localPartitionSystem.Dispose();
         }
     }
 }
