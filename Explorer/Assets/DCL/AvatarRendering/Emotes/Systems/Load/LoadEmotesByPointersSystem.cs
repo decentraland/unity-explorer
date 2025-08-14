@@ -224,9 +224,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         cancellationTokenSource: intention.CancellationTokenSource,
-                        assetBundleVersion: component.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                        parentEntityID: component.DTO.id,
-                        hasParentEntityIDPathInURL : component.DTO.assetBundleManifestVersion.HasHashInPath()
+                        assetBundleManifestVersion: component.DTO.assetBundleManifestVersion,
+                        parentEntityID: component.DTO.id
                     ),
                     partitionComponent
                 );

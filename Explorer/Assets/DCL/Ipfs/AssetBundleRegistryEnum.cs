@@ -20,14 +20,13 @@ namespace DCL.Ipfs
 
         public AssetBundleManifestVersionPerPlatform assets;
         public bool assetBundleManifestRequestFailed;
-        public string assetBundleBuildDate;
 
         public AssetBundleManifestVersion() { }
 
-        public AssetBundleManifestVersion(string assetBundleManifestVerison)
+        public AssetBundleManifestVersion(string assetBundleManifestVerison, string buildDate)
         {
             assets =  new AssetBundleManifestVersionPerPlatform();
-            assets.SetVersion(assetBundleManifestVerison);
+            assets.SetVersion(assetBundleManifestVerison, buildDate);
             HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
         }
 
@@ -40,14 +39,17 @@ namespace DCL.Ipfs
         }
 
         public string GetAssetBundleManifestVersion() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets.windows : assets.mac;
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets.windows.version : assets.mac.version;
+
+        public string GetAssetBundleManifestBuildDate() =>
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets.windows.buildDate : assets.mac.buildDate;
 
         //Used only for manual creation
-        public AssetBundleManifestVersion(string assetBundleManifestVersionMac, string assetBundleManifestVersionWin)
+        public AssetBundleManifestVersion(string assetBundleManifestVersionMac, string assetBundleManifestVersionWin, string buildDate)
         {
             assets =  new AssetBundleManifestVersionPerPlatform();
-            assets.mac = assetBundleManifestVersionMac;
-            assets.windows = assetBundleManifestVersionWin;
+            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDate);;
+            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDate);;
             HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
         }
 
@@ -57,19 +59,31 @@ namespace DCL.Ipfs
 
     public class AssetBundleManifestVersionPerPlatform
     {
-        public string mac;
-        public string windows;
+        public PlatformInfo? mac;
+        public PlatformInfo? windows;
 
-        public void SetVersion(string assetBundleManifestVersion)
+        public void SetVersion(string assetBundleManifestVersion, string buildDate)
         {
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                windows = assetBundleManifestVersion;
+                windows = new PlatformInfo(assetBundleManifestVersion, buildDate);
             else
-                mac = assetBundleManifestVersion;
+                mac = new PlatformInfo(assetBundleManifestVersion, buildDate);
         }
 
         public bool IsEmpty() =>
-            string.IsNullOrEmpty(mac) &&  string.IsNullOrEmpty(windows);
+            mac == null &&  windows == null;
+    }
+
+    public class PlatformInfo
+    {
+        public string version;
+        public string buildDate;
+
+        public PlatformInfo(string version, string buildDate)
+        {
+            this.version = version;
+            this.buildDate = buildDate;
+        }
     }
 
 }

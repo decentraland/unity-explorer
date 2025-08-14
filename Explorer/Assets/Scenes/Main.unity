@@ -454,7 +454,7 @@ MonoBehaviour:
     useRemoteAssetsBundles: 0
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
-  decentralandEnvironment: 1
+  decentralandEnvironment: 0
   debugViewsCatalog:
     <Widget>k__BackingField: {fileID: 9197481963319205126, guid: f3bf08b2b62097d4aa0574f7bafa4a86, type: 3}
     <ControlContainer>k__BackingField: {fileID: 9197481963319205126, guid: 6da3ff28c8a87e0428fa07019c15fa2f, type: 3}
@@ -472,6 +472,7 @@ MonoBehaviour:
     <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
     <Vector3Field>k__BackingField: {fileID: 0}
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
+    <AverageFpsBanner>k__BackingField: {fileID: 9197481963319205126, guid: c0fc7eb8db0d547589adc7f8807c8687, type: 3}
   debugSettings:
     showSplash: 1
     showAuthentication: 1

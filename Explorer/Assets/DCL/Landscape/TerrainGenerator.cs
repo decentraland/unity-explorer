@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
 using DCL.Landscape.Settings;
@@ -11,6 +12,10 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
+using GPUInstancerPro;
+using System.IO;
+using System.Linq;
+using System.Text;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -42,7 +47,6 @@ namespace DCL.Landscape
         private readonly List<Terrain> terrains;
         private readonly List<Collider> terrainChunkColliders;
 
-        private int parcelSize;
         private TerrainGenerationData terrainGenData;
         private TerrainGeneratorLocalCache localCache;
         private TerrainChunkDataGenerator chunkDataGenerator;
@@ -66,6 +70,7 @@ namespace DCL.Landscape
         private bool isInitialized;
         private int activeChunk = -1;
 
+        public int ParcelSize { get; private set; }
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
@@ -75,7 +80,7 @@ namespace DCL.Landscape
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
-        private TerrainModel terrainModel;
+        public TerrainModel TerrainModel { get; private set; }
 
         private ITerrainDetailSetter terrainDetailSetter;
         private IGPUIWrapper gpuiWrapper;
@@ -98,15 +103,15 @@ namespace DCL.Landscape
         // TODO : pre-calculate once and re-use
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
         {
-            if(terrainModel == null) return;
+            if (TerrainModel == null) return;
 
-            int offsetX = parcel.x - terrainModel.MinParcel.x;
-            int offsetY = parcel.y - terrainModel.MinParcel.y;
+            int offsetX = parcel.x - TerrainModel.MinParcel.x;
+            int offsetY = parcel.y - TerrainModel.MinParcel.y;
 
-            int chunkX = offsetX / terrainModel.ChunkSizeInParcels;
-            int chunkY = offsetY / terrainModel.ChunkSizeInParcels;
+            int chunkX = offsetX / TerrainModel.ChunkSizeInParcels;
+            int chunkY = offsetY / TerrainModel.ChunkSizeInParcels;
 
-            int chunkIndex = chunkX + (chunkY * terrainModel.SizeInChunks);
+            int chunkIndex = chunkX + (chunkY * TerrainModel.SizeInChunks);
 
             if (chunkIndex < 0 || chunkIndex >= terrainChunkColliders.Count)
                 return;
@@ -125,13 +130,13 @@ namespace DCL.Landscape
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
 
-            parcelSize = terrainGenData.parcelSize;
+            ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
             localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize,
                 CACHE_VERSION, parcelChecksum, isZone);
 
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
-            boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
+            boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
 
             this.terrainDetailSetter = terrainDetailSetter;
             this.gpuiWrapper = gpuiWrapper;
@@ -143,7 +148,7 @@ namespace DCL.Landscape
         public bool Contains(Vector2Int parcel)
         {
             if (IsTerrainGenerated)
-                return terrainModel.IsInsideBounds(parcel);
+                return TerrainModel.IsInsideBounds(parcel);
 
             return true;
         }
@@ -209,7 +214,7 @@ namespace DCL.Landscape
             this.withHoles = withHoles;
 
             var worldModel = new WorldModel(ownedParcels);
-            terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
+            TerrainModel = new TerrainModel(ParcelSize, worldModel, terrainGenData.borderPadding);
 
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
@@ -222,11 +227,14 @@ namespace DCL.Landscape
                         rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
                         rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
+                        if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
+                            await LoadTreesAsync(terrainGenData.treeAssets, rootGo);
+
                         Ocean = factory.CreateOcean(rootGo);
                         Wind = factory.CreateWind();
 
-                        Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
-                        boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
+                        Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
+                        boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
                     }
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Load Local Cache")))
@@ -234,8 +242,8 @@ namespace DCL.Landscape
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
                     {
-                        TerrainGenerationUtils.ExtractEmptyParcels(terrainModel, ref emptyParcels, ref ownedParcels);
-                        await SetupEmptyParcelDataAsync(terrainModel, cancellationToken);
+                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel, ref emptyParcels, ref ownedParcels);
+                        await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
                     }
 
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
@@ -247,11 +255,11 @@ namespace DCL.Landscape
                     // GenerateTerrainDataAsync is Sequential on purpose [ Looks nicer at the loading screen ]
                     // Each TerrainData generation uses 100% of the CPU anyway so it makes no difference running it in parallel
                     /////////////////////////
-                    chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
+                    chunkDataGenerator.Prepare((int)worldSeed, ParcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
 
-                    foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
+                    foreach (ChunkModel chunkModel in TerrainModel.ChunkModels)
                     {
-                        await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
+                        await GenerateTerrainDataAsync(chunkModel, TerrainModel, worldSeed, cancellationToken, processReport);
                         await UniTask.Yield(cancellationToken);
                         noiseGenCache.ResetNoiseNativeArrayProvider();
                     }
@@ -259,7 +267,7 @@ namespace DCL.Landscape
                     processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
-                        await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
+                        await SpawnTerrainObjectsAsync(TerrainModel, processReport, cancellationToken);
 
                     grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
 
@@ -296,7 +304,7 @@ namespace DCL.Landscape
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
 
-            gpuiWrapper.TerrainsInstantiatedAsync(terrainModel.ChunkModels);
+            gpuiWrapper.TerrainsInstantiatedAsync(TerrainModel.ChunkModels);
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -361,7 +369,7 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial);
+                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * ParcelSize, terrainGenData.terrainMaterial);
 
                 chunkModel.terrain = terrain;
                 terrains.Add(terrain);
@@ -383,14 +391,14 @@ namespace DCL.Landscape
 
                 var tasks = new List<UniTask>
                 {
-                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize,
+                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, ParcelSize,
                         chunkModel.TerrainData, worldSeed, cancellationToken),
-                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize,
-                        chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
+                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * ParcelSize,
+                        chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
                         worldSeed, cancellationToken),
                     !hideDetails
-                        ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize,
-                            chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
+                        ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * ParcelSize,
+                            chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
                             worldSeed, cancellationToken, true, chunkModel.MinParcel, terrainDetailSetter, chunkModel.OccupiedParcels)
                         : UniTask.CompletedTask,
                     !hideTrees
@@ -420,7 +428,7 @@ namespace DCL.Landscape
                         {
                             if (chunkModel.OutOfTerrainParcels.Count != 0)
                             {
-                                bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
+                                bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, ParcelSize, withOwned: false);
                                 chunkModel.TerrainData.SetHoles(0, 0, holes);
                                 localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
                             }
@@ -564,5 +572,99 @@ namespace DCL.Landscape
 
             noiseGenCache.Dispose();
         }
+
+        private static string TreeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
+
+        private static void SaveTrees(ChunkModel[] chunks)
+        {
+            TreePrototype[] treePrototypes = chunks[0].TerrainData.treePrototypes;
+            var treeTransforms = new List<Matrix4x4>[treePrototypes.Length];
+
+            for (int i = 0; i < treeTransforms.Length; i++)
+                treeTransforms[i] = new List<Matrix4x4>();
+
+            foreach (ChunkModel chunk in chunks)
+            {
+                Vector3 terrainPosition = chunk.terrain.GetPosition();
+                Vector3 terrainSize = chunk.TerrainData.size;
+
+                foreach (TreeInstance tree in chunk.TerrainData.treeInstances)
+                {
+                    Vector3 position = Vector3.Scale(tree.position, terrainSize) + terrainPosition;
+                    Quaternion rotation = Quaternion.Euler(0f, tree.rotation * Mathf.Rad2Deg, 0f);
+                    Vector3 scale = new Vector3(tree.widthScale, tree.heightScale, tree.widthScale);
+                    treeTransforms[tree.prototypeIndex].Add(Matrix4x4.TRS(position, rotation, scale));
+                }
+            }
+
+            using var stream = new FileStream(TreeFilePath, FileMode.Create, FileAccess.Write);
+            using var writer = new BinaryWriter(stream, new UTF8Encoding(false));
+
+            // To help us allocate the correct size buffer when loading.
+            writer.Write(treeTransforms.Max(i => i.Count));
+
+            foreach (List<Matrix4x4> transforms in treeTransforms)
+            {
+                writer.Write(transforms.Count);
+
+                foreach (Matrix4x4 transform in transforms)
+                    for (int i = 0; i < 16; i++)
+                        writer.Write(transform[i]);
+            }
+        }
+
+#if GPUI_PRO_PRESENT
+        private static async UniTask LoadTreesAsync(LandscapeAsset[] treePrototypes, Transform terrainRoot)
+        {
+            const int SIZE_OF_MATRIX = 64;
+
+            unsafe
+            {
+                if (SIZE_OF_MATRIX != sizeof(Matrix4x4))
+                    throw new Exception("The size of the Matrix4x4 struct is wrong");
+            }
+
+            var rendererKeys = new int[treePrototypes.Length];
+
+            for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
+                GPUICoreAPI.RegisterRenderer(terrainRoot, treePrototypes[prototypeIndex].asset,
+                    out rendererKeys[prototypeIndex]);
+
+            await using var stream = new FileStream(TreeFilePath, FileMode.Open, FileAccess.Read,
+                FileShare.Read);
+
+            using var reader = new BinaryReader(stream, new UTF8Encoding(false));
+
+            int maxInstanceCount = reader.ReadInt32();
+            var buffer = new Matrix4x4[maxInstanceCount];
+
+            for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
+            {
+                int instanceCount = reader.ReadInt32();
+
+                unsafe
+                {
+                    fixed (Matrix4x4* bufferPtr = buffer)
+                        ReadReliably(reader, new Span<byte>(bufferPtr, instanceCount * SIZE_OF_MATRIX));
+                }
+
+                GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex], buffer,
+                    count: instanceCount);
+            }
+        }
+
+        private static void ReadReliably(BinaryReader reader, Span<byte> buffer)
+        {
+            while (buffer.Length > 0)
+            {
+                int read = reader.Read(buffer);
+
+                if (read <= 0)
+                    throw new EndOfStreamException("Read zero bytes");
+
+                buffer = buffer.Slice(read);
+            }
+        }
+#endif
     }
 }

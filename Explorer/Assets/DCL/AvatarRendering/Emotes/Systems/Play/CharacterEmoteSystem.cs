@@ -207,7 +207,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
 
-                    //Loading still not completed
+                    //Loading not complete
                     if (emote.AssetResults[bodyShape] == null)
                         return;
 

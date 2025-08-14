@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -19,7 +20,7 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetAssetBundleManifestIntention>
     {
-        private readonly URLBuilder urlBuilder = new ();
+        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
 
@@ -46,6 +47,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string hash, ReportData reportCategory, CancellationToken ct)
         {
+            using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
             urlBuilder!.Clear();
 
             urlBuilder.AppendDomain(assetBundleURL)

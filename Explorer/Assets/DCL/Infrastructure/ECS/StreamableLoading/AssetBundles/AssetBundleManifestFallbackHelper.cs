@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
                 if (assetBundleManifest.Succeeded)
-                    entityDefinition.assetBundleManifestVersion = new AssetBundleManifestVersion(assetBundleManifest.Asset.GetVersion());
+                    entityDefinition.assetBundleManifestVersion = new AssetBundleManifestVersion(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
                 else
                     entityDefinition.assetBundleManifestVersion.assetBundleManifestRequestFailed = true;
             }
