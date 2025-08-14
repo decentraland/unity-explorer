@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81b5d5a304d44b63bc9f33518163c755, type: 3}
   m_Name: CommunityVoiceChatContextMenuSettings
   m_EditorClassIdentifier: 
-  <ContextMenuWidth>k__BackingField: 250
+  <ContextMenuWidth>k__BackingField: 240
   <ElementsSpacing>k__BackingField: 5
-  <SeparatorHeight>k__BackingField: 20
+  <SeparatorHeight>k__BackingField: 10
   <VerticalPadding>k__BackingField:
     m_Left: 10
     m_Right: 10
