@@ -62,9 +62,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
+                assetBundleIntention.Hash = CheckCapitalizationFix(assetBundleIntention.Hash);
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.Hash = CheckCapitalizationFix(assetBundleIntention.Hash);
                 assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate());
             }
         }
