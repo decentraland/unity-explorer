@@ -474,6 +474,7 @@ namespace DCL.Chat
             memberListCts.SafeCancelAndDispose();
             isUserAllowedInInitializationCts.SafeCancelAndDispose();
             isUserAllowedInCommunitiesBusSubscriptionCts.SafeCancelAndDispose();
+            userConnectivityInfoProvider.Dispose();
         }
 #endregion
 
