@@ -1,4 +1,5 @@
 using DCL.Diagnostics.Sentry;
+using DCL.UI.DebugMenu.MessageBus;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,7 +15,6 @@ namespace DCL.Diagnostics
 
         private ILogHandler defaultLogHandler;
         public ReportHubLogger ReportHubLogger { get; private set; }
-
         public SentryReportHandler? Sentry { get; private set; }
 
         public void Dispose()
@@ -28,11 +28,11 @@ namespace DCL.Diagnostics
             Sentry?.AddScopeConfigurator(configureScope);
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool enableSceneDebugConsole = false, params IReportHandler[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params IReportHandler[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
 
-            int handlersCount = DEFAULT_REPORT_HANDLERS_COUNT + additionalHandlers.Length + (enableSceneDebugConsole ? 1 : 0);
+            int handlersCount = DEFAULT_REPORT_HANDLERS_COUNT + additionalHandlers.Length;
             List<IReportHandler> handlers = new (handlersCount);
             handlers.AddRange(additionalHandlers);
 
@@ -44,9 +44,6 @@ namespace DCL.Diagnostics
             if (settings.IsEnabled(ReportHandler.Sentry))
                 handlers.Add(sentryReportHandler = new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled));
 
-            if (enableSceneDebugConsole)
-                AddSceneDebugConsoleReportHandler(handlers);
-
             var logger = new ReportHubLogger(handlers);
 
             ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
@@ -55,12 +52,19 @@ namespace DCL.Diagnostics
             Debug.unityLogger.logHandler = logger;
 
             // Enable Hub static accessors
-            ReportHub.Initialize(logger, enableSceneDebugConsole);
+            ReportHub.Initialize(logger);
 
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler };
         }
 
-        private static void AddSceneDebugConsoleReportHandler(List<IReportHandler> handlers)
+        public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
+        {
+            SceneDebugConsoleReportHandler reportHandler = AddDebugConsoleReportHandler(sceneDebugConsoleMessageBus);
+            ReportHub.EnforceUnconditionalVerboseLogs = true;
+            ReportHubLogger.AddHandler(reportHandler);
+        }
+
+        private static SceneDebugConsoleReportHandler AddDebugConsoleReportHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
         {
             var jsOnlyMatrix = new CategorySeverityMatrix();
 
@@ -102,7 +106,7 @@ namespace DCL.Diagnostics
             entries.Add(new () { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
 
             jsOnlyMatrix.entries = entries;
-            handlers.Add(new SceneDebugConsoleReportHandler(jsOnlyMatrix, false));
+            return (new SceneDebugConsoleReportHandler(jsOnlyMatrix, sceneDebugConsoleMessageBus, false));
         }
 
         private static List<CategorySeverityMatrix.Entry> GetMatrixEntriesList(string[] reportCategories, bool errorType = true, bool exceptionType = true, bool logType = true)
