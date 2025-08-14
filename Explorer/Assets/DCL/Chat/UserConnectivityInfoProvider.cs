@@ -232,14 +232,14 @@ namespace DCL.Chat
             {
                 islandRoom.ConnectionStateChanged -= OnIslandRoomConnectionStateChangedAsync;
 
-                IReadOnlyCollection<string> roomParticipants = islandRoom.Participants.RemoteParticipantIdentities();
+                var roomParticipants = islandRoom.Participants.RemoteParticipantIdentities();
                 ReportHub.Log(ReportCategory.DEBUG, "#PARTICIPANT: NEARBY CLEARED");
                 participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Clear();
 
-                foreach (string roomParticipant in roomParticipants)
+                foreach (var kvp in roomParticipants)
                 {
-                    ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {roomParticipant}");
-                    participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Add(roomParticipant);
+                    ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {kvp.Key}");
+                    participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Add(kvp.Key);
                 }
 
                 ConversationInitialized?.Invoke(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
@@ -277,18 +277,18 @@ namespace DCL.Chat
                 if (!participantsPerChannel.ContainsKey(privateConversationOnlineUserListId))
                     participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
 
-                IReadOnlyCollection<string> roomParticipants = chatRoom.Participants.RemoteParticipantIdentities();
+                var roomParticipants = chatRoom.Participants.RemoteParticipantIdentities();
                 participantsPerChannel[privateConversationOnlineUserListId].Clear();
 
                 // Checks that the participants have an open conversation with the local user
                 foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> chatChannel in chatHistory.Channels)
                 {
-                    foreach (string roomParticipant in roomParticipants)
+                    foreach (var kvp in roomParticipants)
                     {
-                        if (chatChannel.Value.ChannelType == ChatChannel.ChatChannelType.USER && chatChannel.Key.Id == roomParticipant)
+                        if (chatChannel.Value.ChannelType == ChatChannel.ChatChannelType.USER && chatChannel.Key.Id == kvp.Key)
                         {
-                            ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {roomParticipant}");
-                            participantsPerChannel[privateConversationOnlineUserListId].Add(roomParticipant);
+                            ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {kvp.Key}");
+                            participantsPerChannel[privateConversationOnlineUserListId].Add(kvp.Key);
                             ConversationInitialized?.Invoke(chatChannel.Key, ChatChannel.ChatChannelType.USER);
                         }
                     }
