@@ -120,6 +120,7 @@ namespace DCL.UI.GenericContextMenu
                 return;
 
             isConfiguringSubmenu = true;
+            queuedDeferredConfig.ParentComponent.container.SetLoadingAnimationVisibility(true);
 
             try
             {
@@ -148,6 +149,7 @@ namespace DCL.UI.GenericContextMenu
             finally
             {
                 isConfiguringSubmenu = false;
+                queuedDeferredConfig.ParentComponent.container.SetLoadingAnimationVisibility(false);
             }
         }
 
