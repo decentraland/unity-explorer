@@ -1,0 +1,8 @@
+<linker>
+	<assembly fullname="Unity.RenderPipelines.Universal.Runtime" preserve="all" />
+	<assembly fullname="Unity.RenderPipelines.Core.Runtime" preserve="all" />
+	<assembly fullname="UnityEngine.UIElementsModule" preserve="all" />
+    
+    <assembly fullname="SceneRuntime" preserve="all" />
+    <assembly fullname="Decentraland.ClearScript" preserve="all" />
+</linker>

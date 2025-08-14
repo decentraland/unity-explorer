@@ -3,9 +3,11 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace DCL.Multiplayer.Connectivity
 {
+    [Preserve]
     public class OnlinePlayersJsonDtoConverter : JsonConverter<List<OnlineUserData>>
     {
         public override void WriteJson(JsonWriter writer, List<OnlineUserData>? value, JsonSerializer serializer)
@@ -39,6 +41,7 @@ namespace DCL.Multiplayer.Connectivity
         private static Vector3 ToVector3(float x, float z) =>
             new (Convert.ToInt32(x), 0, Convert.ToInt32(z));
 
+        [Preserve]
         private class RootObject
         {
             public List<DataObject> peers { get; set; }

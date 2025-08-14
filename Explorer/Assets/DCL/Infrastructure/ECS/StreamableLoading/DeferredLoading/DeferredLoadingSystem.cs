@@ -8,10 +8,12 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Profiling;
 using UnityEngine.Pool;
+using UnityEngine.Scripting;
 using static ECS.StreamableLoading.Common.Components.StreamableLoadingState;
 
 namespace ECS.StreamableLoading.DeferredLoading
 {
+    [Preserve]
     public abstract class DeferredLoadingSystem : BaseUnityLoopSystem
     {
         // There is suspicion that one of these operations take too long
@@ -100,7 +102,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             ListPool<IntentionData>.Release(loadingIntentions);
         }
 
-        internal struct IntentionData
+        private struct IntentionData
         {
             public IPartitionComponent PartitionComponent;
             public StreamableLoadingState State;
