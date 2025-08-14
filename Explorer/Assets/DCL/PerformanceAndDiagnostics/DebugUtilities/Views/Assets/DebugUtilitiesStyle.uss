@@ -315,3 +315,60 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
 .unity-base-field__label {
     min-width: 12px;
 }
+
+/* Average FPS banner styles */
+.avg-fps-banner { 
+    flex-direction: row;
+    border-radius: 6px;
+    background-color: #ffffff;
+    padding: 5px;
+    width: 100%;
+}
+
+.avg-fps-banner__column { 
+    flex-direction: column;
+    width: 50%;
+}
+
+.avg-fps-banner__avg-fps-label {
+    -unity-font-style: bold;
+    color: black;
+    font-size: 18px;
+    -unity-text-align: middle-left;
+}
+.avg-fps-banner__frames-window-label {
+    font-size: 12px;
+    color: #807f7f;
+    -unity-text-align: middle-left;
+}
+
+.avg-fps-banner__fps { 
+    -unity-font-style: bold;
+    font-size: 18px;
+    color: #2ecc71; 
+    -unity-text-align: middle-right;
+}
+.avg-fps-banner__ms { 
+    font-size: 14px;
+    color: #2ecc71;
+    -unity-text-align: middle-right;
+    white-space: nowrap;
+}
+
+.avg-fps-banner--good {
+    border-left-color: #2ecc71;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+
+.avg-fps-banner--normal {
+    border-left-color: #f1c40f;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+
+.avg-fps-banner--bad {
+    border-left-color: #e74c3c;
+    border-left-width: 4px;
+    border-left-style: solid;
+}

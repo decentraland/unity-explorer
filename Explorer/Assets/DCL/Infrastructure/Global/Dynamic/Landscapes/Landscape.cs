@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Landscape;
+using DCL.Landscape.Settings;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using ECS;
@@ -48,7 +49,7 @@ namespace Global.Dynamic.Landscapes
 
                 if (!genesisTerrain.IsTerrainGenerated)
                     await genesisTerrain.GenerateGenesisTerrainAndShowAsync(processReport: landscapeLoadReport,
-                        cancellationToken: ct);
+                        cancellationToken: ct, hideTrees: LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS);
                 else
                     await genesisTerrain.ShowAsync(landscapeLoadReport);
             }
@@ -119,6 +120,5 @@ namespace Global.Dynamic.Landscapes
                 await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
             }
         }
-
     }
 }

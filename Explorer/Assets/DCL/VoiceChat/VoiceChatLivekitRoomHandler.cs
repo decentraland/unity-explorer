@@ -219,7 +219,7 @@ namespace DCL.VoiceChat
         {
             combinedStreamsAudioSource.Reset();
 
-            foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
+            foreach ((string remoteParticipantIdentity, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
                 Participant participant = voiceChatRoom.Participants.RemoteParticipant(remoteParticipantIdentity);
                 if (participant == null) continue;
