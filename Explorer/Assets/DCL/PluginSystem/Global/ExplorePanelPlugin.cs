@@ -363,10 +363,8 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
-            var settingsGroupPrefab = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration.SettingsGroupPrefab, ct);
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),
-                settingsGroupPrefab.Value.GetComponent<SettingsGroupView>(),
                 settings.SettingsMenuConfiguration,
                 generalAudioMixer.Value,
                 settings.RealmPartitionSettings,
@@ -381,7 +379,10 @@ namespace DCL.PluginSystem.Global
                 settings.VoiceChatSettings,
                 worldVolumeMacBus,
                 upscalingController,
-                isVoiceChatEnabled);
+                isVoiceChatEnabled,
+                assetsProvisioner);
+
+            await settingsController.InitializeAsync();
 
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),

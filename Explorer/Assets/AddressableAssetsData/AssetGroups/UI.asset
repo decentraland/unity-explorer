@@ -60,6 +60,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
+    m_Address: Nametag
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 204157b950b45f240819f044fb624b0d
     m_Address: Assets/DCL/Settings/Prefabs/SettingsGroup.prefab
     m_ReadOnly: 0
@@ -95,6 +100,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 27c8bedb89b5739458399a3bd3d255ac
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Slider.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 295cf8ad8d171d849863eccaf581c9e7
     m_Address: ScenesUIStyleSheet
     m_ReadOnly: 0
@@ -117,6 +127,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 37fc70977aa8e4023aadf578a73db58b
     m_Address: PageButton
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 39458b71e0ed84549b1b280c4fb1f105
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Toggle.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -252,11 +267,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
     m_Address: NftRarityColors
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7575a56449e4af444b9c13267319c95d
-    m_Address: Assets/DCL/PluginSystem/Global/Global Plugins Settings.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -432,6 +442,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f74fa2421d947f4439553458ae5fbd93
     m_Address: Assets/DCL/UI/Assets/ChatEntryMenuPopupView.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f999deca82ccdc14ebae40250c8eb0c9
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
