@@ -68,7 +68,6 @@ namespace DCL.MarketplaceCredits
         private CancellationTokenSource sidebarButtonStateCts;
 
         private bool haveJustClaimedCredits;
-        private SeasonsData? seasonsData;
 
         public MarketplaceCreditsMenuController(
             ViewFactoryMethod viewFactory,
@@ -371,14 +370,16 @@ namespace DCL.MarketplaceCredits
             }
 
             bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
-            SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() 
-                                             || !creditsProgramProgressResponse.IsUserEmailVerified() 
-                                             || (thereIsSomethingToClaim 
-                                                 && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
-            SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() 
-                                             && creditsProgramProgressResponse.IsUserEmailVerified() 
-                                             && thereIsSomethingToClaim 
-                                             && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
+            SetSidebarButtonAnimationAsAlert(
+                !creditsProgramProgressResponse.HasUserStartedProgram() 
+                || !creditsProgramProgressResponse.IsUserEmailVerified() 
+                || (thereIsSomethingToClaim 
+                && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
+            SetSidebarButtonAsClaimIndicator(
+                creditsProgramProgressResponse.HasUserStartedProgram() 
+                && creditsProgramProgressResponse.IsUserEmailVerified() 
+                && thereIsSomethingToClaim 
+                && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
         }
     }
 }
