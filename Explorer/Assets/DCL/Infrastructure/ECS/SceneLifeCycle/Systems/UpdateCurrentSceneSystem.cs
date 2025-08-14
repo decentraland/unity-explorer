@@ -81,6 +81,9 @@ namespace ECS.SceneLifeCycle.Systems
                     currentActiveScene = currentScene;
                     currentActiveScene.SetIsCurrent(true);
                     UpdateCurrentScene();
+
+                    if (realmData.IsLocalSceneDevelopment)
+                        UpdateLocalDevScene();
                 }
             }
             else
@@ -90,6 +93,10 @@ namespace ECS.SceneLifeCycle.Systems
                     currentActiveScene.SetIsCurrent(false);
                     currentActiveScene = null;
                     UpdateCurrentScene();
+
+                    // reset cached local scene only if player has left it
+                    if (realmData.IsLocalSceneDevelopment && !IsParcelInLocalDevScene(parcel))
+                        UpdateLocalDevScene();
                 }
             }
         }
@@ -98,6 +105,22 @@ namespace ECS.SceneLifeCycle.Systems
         {
             currentSceneInfo.Update(currentActiveScene);
             scenesCache.SetCurrentScene(currentActiveScene);
+        }
+
+        private void UpdateLocalDevScene()
+        {
+            scenesCache.SetLocalDevScene(currentActiveScene);
+        }
+
+        private bool IsParcelInLocalDevScene(Vector2Int parcel)
+        {
+            var parcels = scenesCache.LocalDevScene?.SceneData.Parcels;
+            for (int i = 0; i < parcels.Count; i++)
+            {
+                if (parcels[i] == parcel)
+                    return true;
+            }
+            return false;
         }
 
         protected override void OnDispose()

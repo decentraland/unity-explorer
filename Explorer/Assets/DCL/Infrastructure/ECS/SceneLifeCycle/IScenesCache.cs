@@ -10,6 +10,7 @@ namespace ECS.SceneLifeCycle
     {
         event Action<ISceneFacade?>? OnCurrentSceneChanged;
         ISceneFacade? CurrentScene { get; }
+        ISceneFacade? LocalDevScene { get; }
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
         IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; }
 
@@ -38,11 +39,13 @@ namespace ECS.SceneLifeCycle
         void ClearScenes(bool clearPortableExperiences = false);
 
         void SetCurrentScene(ISceneFacade? sceneFacade);
+        void SetLocalDevScene(ISceneFacade? sceneFacade);
     }
 
     public class ScenesCache : IScenesCache
     {
         private ISceneFacade? currentScene;
+        private ISceneFacade? localDevScene;
 
         private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT);
         private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT);
@@ -60,6 +63,15 @@ namespace ECS.SceneLifeCycle
                 if (currentScene == value) return;
                 currentScene = value;
                 OnCurrentSceneChanged?.Invoke(currentScene);
+            }
+        }
+        public ISceneFacade? LocalDevScene
+        {
+            get => localDevScene;
+            private set
+            {
+                if (localDevScene == value) return;
+                localDevScene = value;
             }
         }
 
@@ -146,6 +158,12 @@ namespace ECS.SceneLifeCycle
         {
             if (CurrentScene != sceneFacade)
                 CurrentScene = sceneFacade;
+        }
+
+        public void SetLocalDevScene(ISceneFacade? sceneFacade)
+        {
+            if (LocalDevScene != sceneFacade)
+                LocalDevScene = sceneFacade;
         }
     }
 }

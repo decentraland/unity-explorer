@@ -25,7 +25,8 @@ namespace DCL.SkyBox
 
         public bool Applies()
         {
-            SceneMetadata? metadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+            SceneMetadata? metadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata
+                ?? scenes.LocalDevScene?.SceneData.SceneEntityDefinition.metadata;
 
             if (metadata == null) return false;
 
