@@ -36,21 +36,25 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             AllLocalRoomsRemoteParticipantIdentities();
         }
 
-        public IRoom IslandRoom() => archipelagoIslandRoom.Room();
+        public IRoom IslandRoom() =>
+            archipelagoIslandRoom.Room();
 
-        public IGateKeeperSceneRoom SceneRoom() => gateKeeperSceneRoom;
+        public IGateKeeperSceneRoom SceneRoom() =>
+            gateKeeperSceneRoom;
 
-        public IRoom ChatRoom() => chatRoom.Room();
+        public IRoom ChatRoom() =>
+            chatRoom.Room();
 
-        public VoiceChatActivatableConnectiveRoom VoiceChatRoom() => voiceChatRoom;
+        public VoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
+            voiceChatRoom;
 
         /// <summary>
-        /// Starts all rooms except the Voice Chat, as this one only starts when there is a live voice chat going
+        ///     Starts all rooms except the Voice Chat, as this one only starts when there is a live voice chat going
         /// </summary>
         /// <returns>True if all rooms connected correctly</returns>
         public async UniTask<bool> StartAsync()
         {
-            var result = await UniTask.WhenAll(
+            (bool, bool, bool) result = await UniTask.WhenAll(
                 archipelagoIslandRoom.StartIfNotAsync(),
                 gateKeeperSceneRoom.StartIfNotAsync(),
                 chatRoom.StartIfNotAsync());
@@ -59,7 +63,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         }
 
         /// <summary>
-        /// We stop all rooms when logging out as we need to change profiles.
+        ///     We stop all rooms when logging out as we need to change profiles.
         /// </summary>
         public UniTask StopAsync() =>
             UniTask.WhenAll(
@@ -70,14 +74,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             );
 
         /// <summary>
-        /// Stops only local rooms, that is, only the Island Room and Scene Room, as the other rooms are needed for the chat and voice chat
+        ///     Stops only local rooms, that is, only the Island Room and Scene Room, as the other rooms are needed for the chat and voice chat
         /// </summary>
         public UniTask StopLocalRoomsAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
                 gateKeeperSceneRoom.StopIfNotAsync()
             );
-
 
         public IReadOnlyCollection<string> AllLocalRoomsRemoteParticipantIdentities()
         {
@@ -86,24 +89,16 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
             identityHashCache.Clear();
 
-            IReadOnlyCollection<string> islandIdentities = islandParticipantsHub.RemoteParticipantIdentities();
-            IReadOnlyCollection<string> sceneIdentities = sceneParticipantsHub.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, Participant> islandIdentities = islandParticipantsHub.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, Participant> sceneIdentities = sceneParticipantsHub.RemoteParticipantIdentities();
 
             identityHashCache.EnsureCapacity(islandIdentities.Count + sceneIdentities.Count);
 
-            // See: https://github.com/decentraland/unity-explorer/issues/3796
-            lock (islandIdentities)
-            {
-                foreach (string? id in islandIdentities)
-                    identityHashCache.Add(id);
-            }
+            foreach ((string? id, _) in islandIdentities)
+                identityHashCache.Add(id);
 
-            // See: https://github.com/decentraland/unity-explorer/issues/3796
-            lock (sceneIdentities)
-            {
-                foreach (string? id in sceneIdentities)
-                    identityHashCache.Add(id);
-            }
+            foreach ((string? id, _) in sceneIdentities)
+                identityHashCache.Add(id);
 
             participantsUpdateLastFrame = MultithreadingUtility.FrameCount;
 

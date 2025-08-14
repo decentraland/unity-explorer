@@ -114,6 +114,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.Chat.Services;
+using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -424,8 +426,8 @@ namespace Global.Dynamic
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, globalWorld, roomHub, terrainContainer.Landscape, exposedGlobalDataContainer, loadingScreen);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
-                ? new IHealthCheck.AlwaysFails() :
-                  new StartLiveKitRooms(roomHub);
+                ? new IHealthCheck.AlwaysFails()
+                : new StartLiveKitRooms(roomHub);
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
@@ -525,8 +527,7 @@ namespace Global.Dynamic
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
-                new LogsChatCommand(),
-                new AppArgsCommand(appArgs)
+                new LogsChatCommand(), new AppArgsCommand(appArgs)
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -598,17 +599,23 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            ProfileRepositoryWrapper profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
+            GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
-            CommunitiesEventBus communitiesEventBus = new CommunitiesEventBus();
+            var communitiesEventBus = new CommunitiesEventBus();
 
             var profileChangesBus = new ProfileChangesBus();
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+            var communitiesDataService = new CommunityDataService(chatHistory,
+                mvcManager,
+                communitiesEventBus,
+                communitiesDataProvider,
+                identityCache);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -709,6 +716,7 @@ namespace Global.Dynamic
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
                     mvcManager,
+                    menusAccessFacade,
                     chatMessagesBus,
                     chatHistory,
                     entityParticipantTable,
@@ -732,12 +740,14 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     friendServiceProxy,
                     communitiesDataProvider,
+                    communitiesDataService,
                     thumbnailCache,
                     mainUIView.WarningNotification,
                     communitiesEventBus,
                     voiceChatCallStatusService,
                     includeVoiceChat,
-                    realmNavigator),
+                    realmNavigator,
+                    mainUIView.SidebarView.unreadMessagesButton.transform),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
