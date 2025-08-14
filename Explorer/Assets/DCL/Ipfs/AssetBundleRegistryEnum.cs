@@ -70,6 +70,23 @@ namespace DCL.Ipfs
             assets.IsEmpty();
     }
 
+    public class AssetBundleManifestVersionPerPlatform
+    {
+        public PlatformInfo? mac;
+        public PlatformInfo? windows;
+
+        public void SetVersion(string assetBundleManifestVersion, string buildDate)
+        {
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+                windows = new PlatformInfo(assetBundleManifestVersion, buildDate);
+            else
+                mac = new PlatformInfo(assetBundleManifestVersion, buildDate);
+        }
+
+        public bool IsEmpty() =>
+            mac == null &&  windows == null;
+    }
+
     public class PlatformInfo
     {
         public string version;
