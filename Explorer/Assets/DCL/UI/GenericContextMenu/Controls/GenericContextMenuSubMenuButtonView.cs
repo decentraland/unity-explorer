@@ -23,14 +23,11 @@ namespace DCL.UI.GenericContextMenu.Controls
         private bool isHovering;
         private CancellationTokenSource hoverCts;
 
-        private CreateContextMenuDelegate createContainerDelegate;
-        private CancellationTokenSource containerCreationCts;
+        private Action containerConfigurationDelegate;
 
-        public delegate void CreateContextMenuDelegate();
-
-        public void SetContainerCreationMethod(CreateContextMenuDelegate createContainerDelegate)
+        public void SetContainerCreationMethod(Action containerConfigurationDelegate)
         {
-            this.createContainerDelegate = createContainerDelegate;
+            this.containerConfigurationDelegate = containerConfigurationDelegate;
         }
 
         public void SetContainer(ControlsContainerView container)
@@ -50,10 +47,9 @@ namespace DCL.UI.GenericContextMenu.Controls
             UnregisterListeners();
             container.gameObject.SetActive(false);
         }
-SubMenuContextMenuButtonSettings settings2;
+
         public void Configure(SubMenuContextMenuButtonSettings settings)
         {
-            settings2 = settings;
             TextComponent.SetText(settings.buttonText);
             TextComponent.color = settings.textColor;
             ImageComponent.sprite = settings.buttonIcon;
@@ -91,16 +87,9 @@ SubMenuContextMenuButtonSettings settings2;
 
             container.gameObject.SetActive(show);
 
-            if (show)
-            {
-                containerCreationCts = containerCreationCts.SafeRestart();
-                createContainerDelegate(/*settings2.subMenu /*containerCreationCts.Token*/);
-            }
-            else
-            {
-                containerCreationCts.SafeCancelAndDispose();
-            }
-
+            // Asynchronous submenus are configured when shown
+            if (show && containerConfigurationDelegate != null)
+                containerConfigurationDelegate();
         }
 
         private async UniTaskVoid WaitAndTriggerExitAsync(CancellationToken token)

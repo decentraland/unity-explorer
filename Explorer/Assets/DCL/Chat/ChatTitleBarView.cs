@@ -259,7 +259,7 @@ namespace DCL.Chat
             currentChannelId = channelId;
         }
 
-        private async UniTask AddButtonsAsync(GenericContextMenu contextMenu, CancellationToken ct)
+        private async UniTask AddButtonsToSubmenuAsync(GenericContextMenu contextMenu, CancellationToken ct)
         {
             await UniTask.Delay(2000, DelayType.DeltaTime, PlayerLoopTiming.Update, ct);
 
@@ -287,7 +287,7 @@ namespace DCL.Chat
                                              verticalLayoutPadding: chatContextMenuSettings.VerticalPadding,
                                              elementsSpacing: chatContextMenuSettings.ElementsSpacing,
                                              offsetFromTarget: chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget),
-                addButtonsDelegate: AddButtonsAsync);
+                asyncSettingsFillingDelegate: AddButtonsToSubmenuAsync);
 
             contextMenuInstance = new UI.GenericContextMenuParameter.GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
                .AddControl(subMenuSettings)

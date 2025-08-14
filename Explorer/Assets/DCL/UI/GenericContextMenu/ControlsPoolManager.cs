@@ -4,8 +4,6 @@ using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.Emit;
 using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
@@ -265,13 +263,14 @@ namespace DCL.UI.GenericContextMenu
                     break;
             }
 
-      //      poolRegistry[control.GetType()].ReleaseAction.Invoke(control);
+            control.UnregisterListeners();
+            currentControls.Remove(control);
         }
 
         public void ReleaseAllCurrentControls()
         {
-            foreach (GenericContextMenuComponentBase control in currentControls)
-                ReleaseControl(control);
+            while(currentControls.Count > 0)
+                ReleaseControl(currentControls[0]);
 
             foreach (var containerView in currentContainers)
                 poolRegistry[typeof(ControlsContainerView)].ReleaseAction.Invoke(containerView);

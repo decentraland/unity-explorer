@@ -19,9 +19,9 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly GenericContextMenuParameter.GenericContextMenu subMenu;
         internal readonly float anchorPadding;
 
-        public delegate UniTask AddButtonsDelegate(GenericContextMenuParameter.GenericContextMenu contextMenu, CancellationToken ct);
+        public delegate UniTask SettingsFillingDelegate(GenericContextMenuParameter.GenericContextMenu contextMenu, CancellationToken ct);
 
-        internal readonly AddButtonsDelegate addButtonsDelegate;
+        internal readonly SettingsFillingDelegate asyncSettingsFillingDelegate;
 
         /// <summary>
         ///     Button component settings for the context menu.
@@ -36,7 +36,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             bool horizontalLayoutReverseArrangement = false,
             Color textColor = default,
             Color iconColor = default,
-            AddButtonsDelegate addButtonsDelegate = null)
+            SettingsFillingDelegate asyncSettingsFillingDelegate = null)
         {
             this.buttonText = buttonText;
             this.buttonIcon = buttonIcon;
@@ -47,7 +47,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             this.horizontalLayoutReverseArrangement = horizontalLayoutReverseArrangement;
             this.textColor = textColor == default(Color) ? WHITE_COLOR : textColor;
             this.iconColor = iconColor == default(Color) ? WHITE_COLOR : iconColor;
-            this.addButtonsDelegate = addButtonsDelegate;
+            this.asyncSettingsFillingDelegate = asyncSettingsFillingDelegate;
         }
     }
 }
