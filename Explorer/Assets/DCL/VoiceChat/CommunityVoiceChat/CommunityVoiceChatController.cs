@@ -286,7 +286,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             var nameColor = ProfileNameColorHelper.GetNameColor(participantState.Name.Value);
 
             entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, nameColor, participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
-            entryView.nameElement.Setup(participantState.Name.Value, participantState.WalletId, participantState.HasClaimedName.Value ?? false, ProfileNameColorHelper.GetNameColor(participantState.Name.Value));
+            entryView.nameElement.text = participantState.Name.Value;
+            entryView.nameElement.color = ProfileNameColorHelper.GetNameColor(participantState.Name.Value);
             view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
 
             var subscriptions = new List<IDisposable>

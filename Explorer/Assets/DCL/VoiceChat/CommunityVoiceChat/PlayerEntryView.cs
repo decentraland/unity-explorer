@@ -1,6 +1,7 @@
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -17,7 +18,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [SerializeField] private Button contextMenuButton;
 
         [SerializeField] public ProfilePictureView ProfilePictureView;
-        [SerializeField] public SimpleUserNameElement nameElement;
+        [SerializeField] public TMP_Text nameElement;
 
         [field: SerializeField]
         internal RectTransform isSpeakingIcon { get; private set; }
