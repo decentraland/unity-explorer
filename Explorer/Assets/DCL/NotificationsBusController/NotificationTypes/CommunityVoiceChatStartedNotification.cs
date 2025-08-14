@@ -4,11 +4,13 @@ namespace DCL.NotificationsBusController.NotificationTypes
     {
         public readonly string CommunityName;
         public readonly string Thumbnail;
+        public readonly string CommunityId;
 
-        public CommunityVoiceChatStartedNotification(string communityName, string thumbnail)
+        public CommunityVoiceChatStartedNotification(string communityName, string thumbnail, string communityId)
         {
             CommunityName = communityName;
             Thumbnail = thumbnail;
+            CommunityId = communityId;
         }
 
         public override string GetHeader() =>

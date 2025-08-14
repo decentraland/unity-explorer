@@ -64,6 +64,7 @@ namespace DCL.Notifications.NewNotification
             marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
             communityThumbnailImageController = new ImageController(viewInstance.CommunityNotificationView.NotificationImage, webRequestController);
+            viewInstance.CommunityNotificationView.NotificationClicked += ClickedNotification;
         }
 
         private void StopAnimation()

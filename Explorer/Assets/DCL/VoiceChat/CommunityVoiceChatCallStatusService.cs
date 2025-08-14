@@ -321,7 +321,7 @@ namespace DCL.VoiceChat
 
                 // We only show notification if we are part of the community
                 if (communityUpdate.IsMember)
-                    notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage));
+                    notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage,communityUpdate.CommunityId));
             }
         }
 

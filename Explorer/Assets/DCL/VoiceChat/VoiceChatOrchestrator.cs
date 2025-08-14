@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
@@ -15,6 +17,7 @@ namespace DCL.VoiceChat
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
+        private readonly INotificationsBusController notificationBusController;
 
         private readonly IDisposable privateStatusSubscription;
         private readonly IDisposable communityStatusSubscription;
@@ -45,12 +48,16 @@ namespace DCL.VoiceChat
             PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             VoiceChatParticipantsStateService participantsStateService,
-            SceneVoiceChatTrackerService sceneVoiceChatTrackerService)
+            SceneVoiceChatTrackerService sceneVoiceChatTrackerService,
+            INotificationsBusController notificationBusController)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
+            this.notificationBusController = notificationBusController;
             ParticipantsStateService = participantsStateService;
+
+            this.notificationBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_VOICE_CHAT_STARTED, OnClickedNotification);
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
@@ -74,6 +81,15 @@ namespace DCL.VoiceChat
             currentVoiceChatPanelSize?.Dispose();
             currentActiveCommunityData?.Dispose();
             ParticipantsStateService?.Dispose();
+        }
+
+        private void OnClickedNotification(object[] parameters)
+        {
+            if (parameters.Length == 0 || parameters[0] is not CommunityVoiceChatStartedNotification)
+                return;
+
+            CommunityVoiceChatStartedNotification notification = (CommunityVoiceChatStartedNotification)parameters[0];
+            JoinCommunityVoiceChat(notification.CommunityId, default);
         }
 
         public void StartCall(string callId, VoiceChatType callType)

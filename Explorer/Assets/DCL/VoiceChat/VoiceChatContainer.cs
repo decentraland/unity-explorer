@@ -41,7 +41,7 @@ namespace DCL.VoiceChat
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController);
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(parcelTrackerService, realmNavigator, realmData);
             CommunityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, notificationsBusController, sceneVoiceChatTrackerService);
-            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService);
+            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService, notificationsBusController);
         }
 
         public void Dispose()
