@@ -29,10 +29,12 @@ namespace DCL.Communities.CommunitiesBrowser
         [Header("Invites")]
         [SerializeField] private Transform invitesGridContainer = null!;
         [SerializeField] private GameObject invitesEmptyContainer = null!;
+        [SerializeField] private TMP_Text invitesTitleText = null!;
 
         [Header("Requests")]
         [SerializeField] private Transform requestsGridContainer = null!;
         [SerializeField] private GameObject requestsEmptyContainer = null!;
+        [SerializeField] private TMP_Text requestsTitleText = null!;
 
         private readonly List<CommunityResultCardView> currentInvites = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
@@ -71,6 +73,23 @@ namespace DCL.Communities.CommunitiesBrowser
             SetInvitesAsEmpty(true);
         }
 
+        public void SetInvitesItems(GetUserInviteRequestData.UserInviteRequestData[] communities)
+        {
+            foreach (var community in communities)
+                CreateAndSetupInviteCard(community);
+
+            SetInvitesAsEmpty(communities.Length == 0);
+        }
+
+        public void SetInvitesTitle(string text) =>
+            invitesTitleText.text = text;
+
+        public void SetInvitesCounter(int count)
+        {
+            invitesCounterContainer.SetActive(count > 0);
+            invitesCounterText.text = count.ToString();
+        }
+
         public void ClearRequestsItems()
         {
             foreach (var requestedCommunity in currentRequests)
@@ -80,21 +99,16 @@ namespace DCL.Communities.CommunitiesBrowser
             SetRequestsAsEmpty(true);
         }
 
-        public void AddInvitesItems(GetUserInviteRequestData.UserInviteRequestData[] communities)
-        {
-            foreach (var community in communities)
-                CreateAndSetupInviteCard(community);
-
-            SetInvitesAsEmpty(communities.Length == 0);
-        }
-
-        public void AddRequestsItems(GetUserInviteRequestData.UserInviteRequestData[] communities)
+        public void SetRequestsItems(GetUserInviteRequestData.UserInviteRequestData[] communities)
         {
             foreach (var community in communities)
                 CreateAndSetupRequestCard(community);
 
             SetRequestsAsEmpty(communities.Length == 0);
         }
+
+        public void SetRequestsTitle(string text) =>
+            requestsTitleText.text = text;
 
         public void SetThumbnailLoader(ThumbnailLoader loader) =>
             thumbnailLoader = loader;

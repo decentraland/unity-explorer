@@ -25,6 +25,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private const int COMMUNITIES_PER_PAGE = 20;
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
         private const string MY_GENERAL_RESULTS_TITLE = "Browse Communities";
+        private const string INVITES_RESULTS_TITLE = "Invites";
+        private const string REQUESTS_RESULTS_TITLE = "Requests";
         private const string INVITES_AND_REQUESTS_RESULTS_TITLE = "Invites & Requests";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
@@ -171,6 +173,9 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
             LoadAllCommunitiesResults();
+
+            view.InvitesAndRequestsView.SetInvitesCounter(0);
+            LoadInvitesAsync(updateInvitesGrid: false, CancellationToken.None).Forget();
         }
 
         private void ConfigureMyCommunitiesList() =>
@@ -327,14 +332,16 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTaskVoid LoadInvitesAndRequestsAsync(CancellationToken ct)
         {
             view.InvitesAndRequestsView.SetAsLoading(true);
-            int invitesCount = await LoadInvitesAsync(ct);
+            int invitesCount = await LoadInvitesAsync(updateInvitesGrid: true, ct);
+            view.InvitesAndRequestsView.SetInvitesTitle($"{INVITES_RESULTS_TITLE} ({invitesCount})");
             if (ct.IsCancellationRequested) return;
             int requestsCount = await LoadRequestsAsync(ct);
+            view.InvitesAndRequestsView.SetRequestsTitle($"{REQUESTS_RESULTS_TITLE} ({requestsCount})");
             view.InvitesAndRequestsView.SetAsLoading(false);
             view.InvitesAndRequestsView.SetInvitesAndRequestsAsEmpty(invitesCount == 0 && requestsCount == 0);
         }
 
-        private async UniTask<int> LoadInvitesAsync(CancellationToken ct)
+        private async UniTask<int> LoadInvitesAsync(bool updateInvitesGrid, CancellationToken ct)
         {
             view.InvitesAndRequestsView.ClearInvitesItems();
 
@@ -355,10 +362,13 @@ namespace DCL.Communities.CommunitiesBrowser
                 return 0;
             }
 
-            if (invitesResult.Value.data.results.Length > 0)
-                view.InvitesAndRequestsView.AddInvitesItems(invitesResult.Value.data.results);
+            int invitesCount = invitesResult.Value.data.results.Length;
+            if (updateInvitesGrid && invitesCount > 0)
+                view.InvitesAndRequestsView.SetInvitesItems(invitesResult.Value.data.results);
 
-            return invitesResult.Value.data.results.Length;
+            view.InvitesAndRequestsView.SetInvitesCounter(invitesCount);
+
+            return invitesCount;
         }
 
         private async UniTask<int> LoadRequestsAsync(CancellationToken ct)
@@ -383,7 +393,7 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             if (requestsResult.Value.data.results.Length > 0)
-                view.InvitesAndRequestsView.AddRequestsItems(requestsResult.Value.data.results);
+                view.InvitesAndRequestsView.SetRequestsItems(requestsResult.Value.data.results);
 
             return requestsResult.Value.data.results.Length;
         }

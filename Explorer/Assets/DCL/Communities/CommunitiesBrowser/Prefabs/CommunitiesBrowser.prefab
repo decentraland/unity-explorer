@@ -207,8 +207,10 @@ MonoBehaviour:
   defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
   invitesGridContainer: {fileID: 7206591658017702998}
   invitesEmptyContainer: {fileID: 6447134269332471940}
+  invitesTitleText: {fileID: 3237596296284011330}
   requestsGridContainer: {fileID: 4740268607108573288}
   requestsEmptyContainer: {fileID: 5081065994305565372}
+  requestsTitleText: {fileID: 5028914248588117342}
 --- !u!1001 &213486784167413645
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1066,6 +1068,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 9094362301477994229, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
   m_PrefabInstance: {fileID: 6978498198927082243}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3237596296284011330 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5491818202497316929, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
+  m_PrefabInstance: {fileID: 6978498198927082243}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &4740268607108573288 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2382485624828783467, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
@@ -1102,6 +1115,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0d4738770ed4c8593def980de78d738, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5028914248588117342 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2671428417907213917, guid: 74d886253a3fd874f9f02f1c057f1580, type: 3}
+  m_PrefabInstance: {fileID: 6978498198927082243}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &5081065994305565372 stripped
