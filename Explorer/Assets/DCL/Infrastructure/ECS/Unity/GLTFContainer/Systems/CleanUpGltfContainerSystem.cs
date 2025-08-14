@@ -58,6 +58,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
+                    //TODO (JUANI): How will we know which assetss shoudl be dereferenced, and what should be cleaned?
                     cache.Dereference(component.Hash, result.Asset);
                     entityCollidersSceneCache.Remove(result.Asset);
 

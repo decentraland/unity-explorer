@@ -7,6 +7,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -22,7 +23,9 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
-        private const int FRAMES_COUNT = 90;
+        //TODO (JUANI) : Whats a healthy number here? Arent all of the GLTF requests set on a first frame?
+        //So, shouldnt 5 be enough? Or we want a nice big threshold for scene loading stuff? (Anything that's not GLTF)
+        private int FRAMES_COUNT = 30;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
@@ -42,6 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly MemoryBudget memoryBudget;
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
+
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
@@ -79,9 +83,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void Update(float t)
         {
             if (sceneStateProvider.TickNumber < FRAMES_COUNT)
-            {
                 eventsBuffer.ForEach(forEachEvent);
-            }
             else if (!concluded)
             {
                 if (totalAssetsToResolve == -1)

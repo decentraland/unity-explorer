@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;

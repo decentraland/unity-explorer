@@ -31,6 +31,7 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private const string METADATA_FILENAME = "metadata.json";
         private const string METRICS_FILENAME = "metrics.json";
+        private const string STATIC_SCENE_DESCRIPTOR_FILENAME = "StaticSceneDescriptor.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
@@ -82,11 +83,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 string? metricsJSON;
                 string? metadataJSON;
+                string staticSceneDescriptorJSON;
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 {
                     metricsJSON = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME)?.text;
                     metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
+                    staticSceneDescriptorJSON = assetBundle.LoadAsset<TextAsset>(STATIC_SCENE_DESCRIPTOR_FILENAME)?.text;
                 }
 
                 // Switch to thread pool to parse JSONs
@@ -97,6 +100,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 AssetBundleMetrics? metrics = !string.IsNullOrEmpty(metricsJSON) ? JsonUtility.FromJson<AssetBundleMetrics>(metricsJSON) : null;
                 AssetBundleData[] dependencies;
                 var mainAsset = "";
+                StaticSceneDescriptor? sceneDescriptor = null;
+
+                if (!string.IsNullOrEmpty(staticSceneDescriptorJSON))
+                    sceneDescriptor = JsonUtility.FromJson<StaticSceneDescriptor>(staticSceneDescriptorJSON);
 
                 if (!string.IsNullOrEmpty(metadataJSON))
                 {
@@ -115,9 +122,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, intention.HasMultipleAssets, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    source, intention.LookForShaderAssets, ct);
+                    source, intention.LookForShaderAssets, sceneDescriptor, ct);
             }
             catch (Exception e)
             {
@@ -134,13 +142,14 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
-            AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset,
+            AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset, bool hasMultipleAssets,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
             ReportData reportCategory,
             string version,
             string source,
             bool lookForShaderAssets,
+            StaticSceneDescriptor? sceneDescriptor,
             CancellationToken ct)
         {
             // if the type was not specified don't load any assets
@@ -156,21 +165,32 @@ namespace ECS.StreamableLoading.AssetBundles
                     throw new AssetBundleContainsShaderException(assetBundle.name);
             }
 
-            Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
+            Object?[] asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, hasMultipleAssets, loadingMutex, reportCategory, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,
-                source: source));
+                source: source,
+                hasMultipleAssets: hasMultipleAssets,
+                staticSceneDescriptor : sceneDescriptor));
         }
 
-        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
+        private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, bool hasMultipleAssets, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
             CancellationToken ct)
         {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
-            AssetBundleRequest? asyncOp = !string.IsNullOrEmpty(mainAsset)
-                ? assetBundle.LoadAssetAsync(mainAsset)
-                : assetBundle.LoadAllAssetsAsync(objectType);
+
+            AssetBundleRequest? asyncOp = null;
+            if (hasMultipleAssets)
+            {
+                asyncOp = assetBundle.LoadAllAssetsAsync();
+            }
+            else
+            {
+                asyncOp = string.IsNullOrEmpty(mainAsset)
+                    ? assetBundle.LoadAllAssetsAsync(objectType)
+                    : assetBundle.LoadAssetAsync(mainAsset);
+            }
 
             await asyncOp.WithCancellation(ct);
 
@@ -181,11 +201,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 case 0:
                     throw new AssetBundleMissingMainAssetException(assetBundle.name, objectType);
                 case > 1:
-                    ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
+                    if (!hasMultipleAssets)
+                        ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
                     break;
             }
 
-            return assets[0];
+            return assets;
         }
 
         private async UniTask<AssetBundleData> WaitForDependencyAsync(

@@ -12,6 +12,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.Systems;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using UnityEngine;
 using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArrayConstants;
 
@@ -39,6 +40,8 @@ namespace DCL.PluginSystem.Global
         private readonly bool lodEnabled;
         private readonly int lodLevels;
         private readonly Transform lodCacheParent;
+
+        private readonly GltfContainerAssetsCache gltfContainerAssetsCache;
 
         public LODPlugin(IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,

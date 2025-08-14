@@ -17,6 +17,9 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Components;
+using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -56,7 +59,29 @@ namespace DCL.LOD.Systems
         protected override void Update(float t)
         {
             ResolveCurrentLODPromiseQuery(World);
+            InstantiateSingleSceneLODPromiseQuery(World);
         }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void InstantiateSingleSceneLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref StaticSceneAssetBundle staticSceneAssetBundle)
+        {
+            if (sceneLODInfo.RequestSingleSceneAssetBundleInstantiation)
+            {
+                if (!staticSceneAssetBundle.IsReady())
+                    return;
+
+                var instantiatedLOD = new GameObject($"Static_LOD_{sceneDefinitionComponent.Definition.id}");
+                staticSceneAssetBundle.RepositionStaticAssets(instantiatedLOD);
+                instantiatedLOD.transform.position = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition;
+                var newLod = new LODAsset(instantiatedLOD, staticSceneAssetBundle.AssetBundleData.Asset,
+                    GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
+
+                sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
+                sceneLODInfo.RequestSingleSceneAssetBundleInstantiation = false;
+            }
+        }
+
 
         [Query]
         [None(typeof(DeleteEntityIntention))]

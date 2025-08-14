@@ -5,6 +5,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Cache.InMemory;
 using System.Threading;
+using UnityEngine;
 using Utility.Types;
 
 namespace ECS.StreamableLoading.Cache.Generic
@@ -37,6 +38,7 @@ namespace ECS.StreamableLoading.Cache.Generic
 
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(TKey key, bool qualifiedForDiskCache, CancellationToken token)
         {
+
             if (memoryCache.TryGet(key, out T result))
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(result));
 

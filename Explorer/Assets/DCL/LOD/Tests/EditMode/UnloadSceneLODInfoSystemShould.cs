@@ -10,6 +10,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using NSubstitute;
 using NSubstitute.Exceptions;
 using NUnit.Framework;

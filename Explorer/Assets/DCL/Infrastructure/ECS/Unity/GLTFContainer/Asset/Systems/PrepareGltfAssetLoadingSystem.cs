@@ -9,6 +9,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 
@@ -53,7 +54,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (localSceneDevelopment && !useRemoteAssetBundles)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
-                // If not in cache, try load from asset bundle
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
         }
     }

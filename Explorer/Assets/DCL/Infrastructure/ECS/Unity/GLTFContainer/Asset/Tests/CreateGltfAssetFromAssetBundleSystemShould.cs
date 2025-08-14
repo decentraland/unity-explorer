@@ -16,14 +16,14 @@ using UnityEngine.TestTools;
 namespace ECS.Unity.GLTFContainer.Asset.Tests
 {
     [TestFixture]
-    public class CreateGltfAssetFromAssetBundleSystemShould : UnitySystemTestBase<CreateGltfAssetFromAssetBundleSystem>
+    public class CreateGltfAssetFromAssetBundleSystemShould : UnitySystemTestBase<CreateGltfAssetFromAssetBundleSystemWorld>
     {
         [SetUp]
         public void SetUp()
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            system = new CreateGltfAssetFromAssetBundleSystemWorld(world, budget, budget);
         }
 
         [TearDown]
