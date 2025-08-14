@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.Profiles.Helpers;
@@ -8,7 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {

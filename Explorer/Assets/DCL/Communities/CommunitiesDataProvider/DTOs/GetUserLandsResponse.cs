@@ -1,7 +1,7 @@
 
 using System;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
     public class GetUserLandsResponse

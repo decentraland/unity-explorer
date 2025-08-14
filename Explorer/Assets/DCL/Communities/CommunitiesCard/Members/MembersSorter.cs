@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
+using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {

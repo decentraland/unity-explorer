@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
@@ -10,7 +11,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider
 {
     public class CommunitiesDataProvider
     {
@@ -57,33 +58,44 @@ namespace DCL.Communities
             return response;
         }
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CancellationToken ct)
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CancellationToken ct)
         {
             CreateOrUpdateCommunityResponse response;
 
-            var formData = new List<IMultipartFormSection>
-            {
-                new MultipartFormDataSection("name", name),
-                new MultipartFormDataSection("description", description),
-            };
+            var formData = new List<IMultipartFormSection>();
 
-            StringBuilder placeIdsJsonString = new StringBuilder("[");
-            for (var i = 0; i < lands.Count; i++)
+            if (name != null)
+                formData.Add(new MultipartFormDataSection("name", name));
+
+            if (description != null)
+                formData.Add(new MultipartFormDataSection("description", description));
+
+            if (privacy != null)
+                formData.Add(new MultipartFormDataSection("privacy", privacy.ToString()));
+
+            if (lands != null || worlds != null)
             {
-                placeIdsJsonString.Append($"\"{lands[i]}\"");
-                if (i < lands.Count - 1)
+                lands ??= new List<string>();
+                worlds ??= new List<string>();
+
+                StringBuilder placeIdsJsonString = new StringBuilder("[");
+                for (var i = 0; i < lands.Count; i++)
+                {
+                    placeIdsJsonString.Append($"\"{lands[i]}\"");
+                    if (i < lands.Count - 1)
+                        placeIdsJsonString.Append(", ");
+                }
+                if (lands.Count > 0 && worlds.Count > 0)
                     placeIdsJsonString.Append(", ");
+                for (var i = 0; i < worlds.Count; i++)
+                {
+                    placeIdsJsonString.Append($"\"{worlds[i]}\"");
+                    if (i < worlds.Count - 1)
+                        placeIdsJsonString.Append(", ");
+                }
+                placeIdsJsonString.Append("]");
+                formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
             }
-            if (lands.Count > 0 && worlds.Count > 0)
-                placeIdsJsonString.Append(", ");
-            for (var i = 0; i < worlds.Count; i++)
-            {
-                placeIdsJsonString.Append($"\"{worlds[i]}\"");
-                if (i < worlds.Count - 1)
-                    placeIdsJsonString.Append(", ");
-            }
-            placeIdsJsonString.Append("]");
-            formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
 
             if (thumbnail != null)
                 formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/png"));
@@ -257,6 +269,36 @@ namespace DCL.Communities
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
+        }
+
+        public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> ManageRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> ManageInviteToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityList(string userAddress, CancellationToken ct)
+        {
+            throw new NotImplementedException();
         }
 
         // TODO: Pending to implement these methods:

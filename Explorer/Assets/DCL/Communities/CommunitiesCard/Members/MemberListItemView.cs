@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using System;
@@ -6,7 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
+using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {

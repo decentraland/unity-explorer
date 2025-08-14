@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.SelectorButton;
 using DCL.UI.Utilities;
@@ -23,8 +24,8 @@ namespace DCL.Communities.CommunityCreation
         public Action? CancelButtonClicked;
         public Action? GetNameButtonClicked;
         public Action? SelectProfilePictureButtonClicked;
-        public Action<string, string, List<string>, List<string>>? CreateCommunityButtonClicked;
-        public Action<string, string, List<string>, List<string>>? SaveCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>, CommunityPrivacy>? CreateCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>, CommunityPrivacy>? SaveCommunityButtonClicked;
         public Action<int>? AddPlaceButtonClicked;
         public Action<int>? RemovePlaceButtonClicked;
 
@@ -53,6 +54,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_InputField creationPanelCommunityDescriptionInputField = null!;
         [SerializeField] private GameObject creationPanelCommunityDescriptionInputFieldOutline = null!;
         [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter = null!;
+        [SerializeField] private ToggleGroupView creationPanelMembershipToggleGroup = null!;
         [SerializeField] private SelectorButtonView creationPanelPlacesDropdown = null!;
         [SerializeField] private Transform placeTagsContainer = null!;
         [SerializeField] private CommunityPlaceTag placeTagPrefab = null!;
@@ -101,13 +103,15 @@ namespace DCL.Communities.CommunityCreation
                         creationPanelCommunityNameInputField.text,
                         creationPanelCommunityDescriptionInputField.text,
                         lands,
-                        worlds);
+                        worlds,
+                        creationPanelMembershipToggleGroup.SelectedToggleIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
                 else
                     SaveCommunityButtonClicked?.Invoke(
                         creationPanelCommunityNameInputField.text,
                         creationPanelCommunityDescriptionInputField.text,
                         lands,
-                        worlds);
+                        worlds,
+                        creationPanelMembershipToggleGroup.SelectedToggleIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
             });
             creationPanelPlacesDropdown.OptionClicked += OnPlacesDropdownOptionSelected;
             creationPanelPlacesDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
@@ -212,6 +216,12 @@ namespace DCL.Communities.CommunityCreation
             UpdateCreateButtonAvailability();
         }
 
+        public void SetCommunityPrivacy(CommunityPrivacy privacy, bool isInteractable)
+        {
+            creationPanelMembershipToggleGroup.SelectedToggleIndex = (int)privacy;
+            creationPanelMembershipToggleGroup.SetAsInteractable(isInteractable);
+        }
+
         public void SetPlacesSelector(List<string> options)
         {
             creationPanelPlacesDropdown.SetMainButtonText(PLACES_DROPDOWN_TITLE);
@@ -280,6 +290,7 @@ namespace DCL.Communities.CommunityCreation
             SetProfileSelectedImage(sprite: null);
             SetCommunityName(string.Empty, true);
             SetCommunityDescription(string.Empty);
+            SetCommunityPrivacy(CommunityPrivacy.@public, true);
             SetPlacesSelector(new List<string>());
             CreationPanelCommunityNameInputDeselected(null);
             CreationPanelCommunityDescriptionInputDeselected(null);
