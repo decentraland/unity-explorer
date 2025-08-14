@@ -56,11 +56,8 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
                 // See: https://github.com/decentraland/unity-explorer/issues/3796
                 lock (room.Participants)
                 {
-                    foreach (string identity in room.Participants.RemoteParticipantIdentities())
-                    {
-                        Participant participant = room.Participants.RemoteParticipant(identity).EnsureNotNull();
-                        list.Add(new RemoveIntention(participant.Identity, roomSource));
-                    }
+                    foreach (KeyValuePair<string, Participant> participant in room.Participants.RemoteParticipantIdentities())
+                        list.Add(new RemoveIntention(participant.Value.Identity, roomSource));
                 }
             }
         }
