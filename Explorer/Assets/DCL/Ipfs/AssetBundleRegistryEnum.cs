@@ -23,17 +23,29 @@ namespace DCL.Ipfs
 
         public AssetBundleManifestVersion() { }
 
+        public AssetBundleManifestVersion(string assetBundleManifestVerison, string buildDate, bool hasHashInPath)
+        {
+            assets =  new AssetBundleManifestVersionPerPlatform();
+            assets.SetVersion(assetBundleManifestVerison, buildDate);
+            HasHashInPathValue = hasHashInPath;
+        }
+
+
         public AssetBundleManifestVersion(string assetBundleManifestVerison, string buildDate)
         {
             assets =  new AssetBundleManifestVersionPerPlatform();
             assets.SetVersion(assetBundleManifestVerison, buildDate);
-            HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
         }
 
         public bool HasHashInPath()
         {
             if (HasHashInPathValue == null)
-                HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            {
+                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
+                    HasHashInPathValue = false;
+                else
+                    HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            }
 
             return HasHashInPathValue.Value;
         }

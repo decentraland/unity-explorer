@@ -75,7 +75,7 @@ namespace DCL.LOD.Systems
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                 lookForShaderAsset: true,
-                assetBundleManifestVersion: new AssetBundleManifestVersion($"LOD/{level.ToString()}", "dummyDate")
+                assetBundleManifestVersion: new AssetBundleManifestVersion($"LOD/{level.ToString()}", "dummyDate", false)
                 );
 
             sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
