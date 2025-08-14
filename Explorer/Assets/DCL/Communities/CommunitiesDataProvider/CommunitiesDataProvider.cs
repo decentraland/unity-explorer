@@ -276,8 +276,8 @@ namespace DCL.Communities.CommunitiesDataProvider
             var mockedCommunities = await GetUserCommunitiesAsync(
                 "",
                 false,
-                1,
-                3,
+                action == InviteRequestAction.invite ? 1 : 2,
+                action == InviteRequestAction.invite ? 2 : 4,
                 ct);
 
             var mockedInvitations = new List<GetUserInviteRequestData.UserInviteRequestData>();
@@ -296,7 +296,7 @@ namespace DCL.Communities.CommunitiesDataProvider
                     privacy = community.privacy,
                     role = community.role,
                     friends = community.friends,
-                    type = InviteRequestAction.invite,
+                    type = action,
                 });
             }
 
@@ -305,7 +305,7 @@ namespace DCL.Communities.CommunitiesDataProvider
                 data = new GetUserInviteRequestData
                 {
                     results = mockedInvitations.ToArray(),
-                    total = 0,
+                    total = mockedInvitations.Count,
                 }
             };
         }

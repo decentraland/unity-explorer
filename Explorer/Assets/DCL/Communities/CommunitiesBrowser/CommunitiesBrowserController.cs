@@ -30,7 +30,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
-        private const string INVITATIONS_AND_REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading invites and requests. Please try again.";
+        private const string INVITATIONS_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading invites. Please try again.";
+        private const string REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading requests. Please try again.";
         private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
@@ -93,7 +94,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
-            view.InvitesAndRequestsButtonClicked += LoadInvitesAndRequestsResults;
+            view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked += LoadInvitesAndRequestsResults;
             view.SearchBarSelected += DisableShortcutsInput;
             view.SearchBarDeselected += RestoreInput;
             view.SearchBarValueChanged += SearchBarValueChanged;
@@ -144,7 +145,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             view.ResultsLoopGridScrollChanged -= LoadMoreResults;
             view.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
-            view.InvitesAndRequestsButtonClicked -= LoadInvitesAndRequestsResults;
+            view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked -= LoadInvitesAndRequestsResults;
             view.ResultsBackButtonClicked -= LoadAllCommunitiesResults;
             view.SearchBarSelected -= DisableShortcutsInput;
             view.SearchBarDeselected -= RestoreInput;
@@ -167,7 +168,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ReloadBrowser()
         {
-            // Each time we open the Communities section, we load both my communities and Decentraland communities
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
             LoadAllCommunitiesResults();
@@ -216,7 +216,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
             view.SetResultsCountTextActive(true);
             view.SetResultsSectionActive(true);
-            view.SetInvitesAndRequestsSectionActive(false);
+            view.InvitesAndRequestsView.SetSectionActive(false);
 
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
@@ -243,7 +243,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetResultsTitleText(MY_GENERAL_RESULTS_TITLE);
             view.SetResultsCountTextActive(true);
             view.SetResultsSectionActive(true);
-            view.SetInvitesAndRequestsSectionActive(false);
+            view.InvitesAndRequestsView.SetSectionActive(false);
         }
 
         private void LoadMoreResults(Vector2 _)
@@ -318,7 +318,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetResultsTitleText(INVITES_AND_REQUESTS_RESULTS_TITLE);
             view.SetResultsCountTextActive(false);
             view.SetResultsSectionActive(false);
-            view.SetInvitesAndRequestsSectionActive(true);
+            view.InvitesAndRequestsView.SetSectionActive(true);
 
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadInvitesAndRequestsAsync(loadResultsCts.Token).Forget();
@@ -326,10 +326,18 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid LoadInvitesAndRequestsAsync(CancellationToken ct)
         {
-            view.ClearInvitesAndRequestsItems();
-            view.SetInvitesAndRequestsAsLoading(true);
+            view.InvitesAndRequestsView.SetAsLoading(true);
+            await LoadInvitesAsync(ct);
+            if (ct.IsCancellationRequested) return;
+            await LoadRequestsAsync(ct);
+            view.InvitesAndRequestsView.SetAsLoading(false);
+        }
 
-            var result = await dataProvider.GetUserInviteRequestAsync(
+        private async UniTask LoadInvitesAsync(CancellationToken ct)
+        {
+            view.InvitesAndRequestsView.ClearInvitesItems();
+
+            var invitesResult = await dataProvider.GetUserInviteRequestAsync(
                 InviteRequestAction.invite,
                 1,
                 1000,
@@ -338,18 +346,41 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ct.IsCancellationRequested)
                 return;
 
-            if (!result.Success)
+            if (!invitesResult.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(INVITATIONS_AND_REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                await warningNotificationView.AnimatedShowAsync(INVITATIONS_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 return;
             }
 
-            if (result.Value.data.results.Length > 0)
-                view.AddInvitesItems(result.Value.data.results);
+            if (invitesResult.Value.data.results.Length > 0)
+                view.InvitesAndRequestsView.AddInvitesItems(invitesResult.Value.data.results);
+        }
 
-            view.SetInvitesAndRequestsAsLoading(false);
+        private async UniTask LoadRequestsAsync(CancellationToken ct)
+        {
+            view.InvitesAndRequestsView.ClearRequestsItems();
+
+            var requestsResult = await dataProvider.GetUserInviteRequestAsync(
+                InviteRequestAction.request,
+                1,
+                1000,
+                ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!requestsResult.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                return;
+            }
+
+            if (requestsResult.Value.data.results.Length > 0)
+                view.InvitesAndRequestsView.AddRequestsItems(requestsResult.Value.data.results);
         }
 
         private void DisableShortcutsInput(string text) =>
@@ -386,7 +417,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 view.SetResultsTitleText(string.Format(SEARCH_RESULTS_TITLE_FORMAT, searchText));
                 view.SetResultsCountTextActive(true);
                 view.SetResultsSectionActive(true);
-                view.SetInvitesAndRequestsSectionActive(false);
+                view.InvitesAndRequestsView.SetSectionActive(false);
 
                 loadResultsCts = loadResultsCts.SafeRestart();
                 LoadResultsAsync(
