@@ -24,6 +24,8 @@ namespace DCL.UI.GenericContextMenu
             public readonly SubMenuContextMenuButtonSettings.SettingsFillingDelegate SettingsFillingDelegate;
             public readonly Rect? OverlapRect;
 
+            public bool IsAsynchronous => SettingsFillingDelegate != null;
+
             public DeferredConfig(GenericContextMenuParameter.GenericContextMenu config, GenericContextMenuSubMenuButtonView parentComponent, SubMenuContextMenuButtonSettings.SettingsFillingDelegate settingsFillingDelegate, Rect? overlapRect)
             {
                 Config = config;
@@ -166,7 +168,10 @@ namespace DCL.UI.GenericContextMenu
                 {
                     DeferredConfig deferredConfig = new DeferredConfig(subMenuButtonSettings.subMenu, subMenuButtonView, subMenuButtonSettings.asyncSettingsFillingDelegate, overlapRect);
                     deferredConfigs.Enqueue(deferredConfig);
-                    subMenuButtonView.SetContainerCreationMethod(() => { ConfigureContextMenuAsync(deferredConfig).Forget(); }); // TODO: improve this
+
+                    if (subMenuButtonSettings.IsAsynchronous)
+                        subMenuButtonView.SetContainerCreationMethod(() => { ConfigureContextMenuAsync(deferredConfig).Forget(); }); // TODO: improve this
+
                     needsLayoutRebuild = true;
                 }
 
@@ -205,7 +210,7 @@ namespace DCL.UI.GenericContextMenu
                 queuedDeferredConfig.ParentComponent.SetContainer(subContainer);
 
                 // If it is not an asynchronous submenu...
-                if (queuedDeferredConfig.SettingsFillingDelegate == null)
+                if (!queuedDeferredConfig.IsAsynchronous)
                 {
                     // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
                     ConfigureContextMenu(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.Config, Vector2.zero, queuedDeferredConfig.OverlapRect);

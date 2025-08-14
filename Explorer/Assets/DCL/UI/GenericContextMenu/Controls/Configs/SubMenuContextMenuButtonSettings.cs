@@ -23,6 +23,8 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
 
         internal readonly SettingsFillingDelegate asyncSettingsFillingDelegate;
 
+        public bool IsAsynchronous => asyncSettingsFillingDelegate != null;
+
         /// <summary>
         ///     Button component settings for the context menu.
         ///     horizontalLayoutPadding has the default value of (8, 8, 0, 0).
