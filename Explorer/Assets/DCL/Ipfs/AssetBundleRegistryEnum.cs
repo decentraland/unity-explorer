@@ -11,7 +11,7 @@ namespace DCL.Ipfs
         pending
     }
 
-    public class AssetBundleManifestVersion
+   public class AssetBundleManifestVersion
     {
         //From v25 onwards, the asset bundle path contains the sceneID in the hash
         //This was done to solve cache issues
@@ -24,24 +24,18 @@ namespace DCL.Ipfs
 
         public AssetBundleManifestVersion() { }
 
+        public AssetBundleManifestVersion(string assetBundleManifestVerison, string buildDate, bool hasHashInPath)
+        {
+            assets =  new AssetBundleManifestVersionPerPlatform();
+            assets.SetVersion(assetBundleManifestVerison, buildDate);
+            HasHashInPathValue = hasHashInPath;
+        }
 
 
         public AssetBundleManifestVersion(string assetBundleManifestVerison, string buildDate)
         {
             assets =  new AssetBundleManifestVersionPerPlatform();
             assets.SetVersion(assetBundleManifestVerison, buildDate);
-            HasHashInPath();
-            if (HasHashInPathValue == null)
-            {
-                try {
-                    HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
-                }
-                catch (Exception e)
-                {
-                    Debug.Log($"JUANI EXCEPTION {GetAssetBundleManifestVersion()}");
-                    HasHashInPathValue = false;
-                }
-            }
         }
 
         public bool HasHashInPath()
@@ -74,23 +68,6 @@ namespace DCL.Ipfs
 
         public bool IsEmpty() =>
             assets.IsEmpty();
-    }
-
-    public class AssetBundleManifestVersionPerPlatform
-    {
-        public PlatformInfo? mac;
-        public PlatformInfo? windows;
-
-        public void SetVersion(string assetBundleManifestVersion, string buildDate)
-        {
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                windows = new PlatformInfo(assetBundleManifestVersion, buildDate);
-            else
-                mac = new PlatformInfo(assetBundleManifestVersion, buildDate);
-        }
-
-        public bool IsEmpty() =>
-            mac == null &&  windows == null;
     }
 
     public class PlatformInfo
