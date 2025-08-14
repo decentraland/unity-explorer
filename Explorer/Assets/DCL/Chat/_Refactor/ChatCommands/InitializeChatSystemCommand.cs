@@ -88,6 +88,8 @@ namespace DCL.Chat.ChatCommands
             if (nearbyChannel.Messages.Count == 0)
                 chatHistory.AddMessage(nearbyChannel.Id, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem("Type /help for available commands."));
 
+            nearbyChannel.MarkAllMessagesAsRead();
+            
             if (friendsServiceProxy.Configured)
                 chatHistoryStorage?.LoadAllChannelsWithoutMessages();
         }
