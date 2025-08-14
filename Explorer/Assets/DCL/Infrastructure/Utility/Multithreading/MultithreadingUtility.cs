@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
@@ -54,6 +55,14 @@ namespace Utility.Multithreading
         {
             if (PlayerLoopHelper.IsMainThread != isMainThread)
                 throw new ThreadStateException($"Execution after calling {funcName} must be {(isMainThread ? "on" : "off")} the main thread");
+        }
+
+        public static void InvokeOnMainThread(this Action action, PlayerLoopTiming timing = PlayerLoopTiming.Update)
+        {
+            if (PlayerLoopHelper.IsMainThread)
+                action();
+            else
+                PlayerLoopHelper.AddContinuation(timing, action);
         }
 
         private class FrameCounter : IPlayerLoopItem
