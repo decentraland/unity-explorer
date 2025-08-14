@@ -61,14 +61,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                             new CommonArguments(url), string.Empty, ct)
                     );
 
-                //TODO (JUANI): Builder element DTO
-                /*foreach (IBuilderLambdaResponseElement<TAvatarElementDTO> lambdaResponseCollectionElement in lambdaResponse.CollectionElements)
-                {
-                    //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
-                    //Could be removed when the asset bundle manifest registry is battle tested
-                    await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, lambdaResponseCollectionElement., partition, ct);
-                }*/
-
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                     LoadBuilderItem(ref intention, lambdaResponse);
             }
