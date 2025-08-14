@@ -347,8 +347,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
             var invitesResult = await dataProvider.GetUserInviteRequestAsync(
                 InviteRequestAction.invite,
-                1,
-                1000,
                 ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -376,9 +374,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.InvitesAndRequestsView.ClearRequestsItems();
 
             var requestsResult = await dataProvider.GetUserInviteRequestAsync(
-                InviteRequestAction.request,
-                1,
-                1000,
+                InviteRequestAction.request_to_join,
                 ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)

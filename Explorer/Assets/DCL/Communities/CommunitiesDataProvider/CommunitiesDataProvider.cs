@@ -28,6 +28,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
+        private string membersBaseUrl => urlsSource.Url(DecentralandUrl.Members);
 
         public CommunitiesDataProvider(
             IWebRequestController webRequestController,
@@ -271,48 +272,14 @@ namespace DCL.Communities.CommunitiesDataProvider
             return result.Success;
         }
 
-        public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, CancellationToken ct)
         {
-            var mockedCommunities = await GetUserCommunitiesAsync(
-                "",
-                false,
-                action == InviteRequestAction.invite ? 1 : 2,
-                action == InviteRequestAction.invite ? 2 : 4,
-                ct);
+            var url = $"{membersBaseUrl}/{web3IdentityCache.Identity?.Address}/requests?type={action.ToString()}";
 
-            var mockedData = new List<GetUserInviteRequestData.UserInviteRequestData>();
+            GetUserInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                              .CreateFromJson<GetUserInviteRequestResponse>(WRJsonParser.Newtonsoft);
 
-            bool returnData = UnityEngine.Random.Range(0, 2) == 0;
-            if (returnData)
-            {
-                foreach (GetUserCommunitiesData.CommunityData community in mockedCommunities.data.results)
-                {
-                    mockedData.Add(new GetUserInviteRequestData.UserInviteRequestData
-                    {
-                        id = community.id,
-                        communityId = community.id,
-                        thumbnails = community.thumbnails,
-                        name = community.name,
-                        description = community.description,
-                        ownerAddress = community.ownerAddress,
-                        ownerName = community.ownerName,
-                        membersCount = community.membersCount,
-                        privacy = community.privacy,
-                        role = community.role,
-                        friends = community.friends,
-                        type = action,
-                    });
-                }
-            }
-
-            return new GetUserInviteRequestResponse
-            {
-                data = new GetUserInviteRequestData
-                {
-                    results = mockedData.ToArray(),
-                    total = mockedData.Count,
-                }
-            };
+            return response;
         }
 
         public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
