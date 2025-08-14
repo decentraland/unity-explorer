@@ -70,6 +70,8 @@ namespace ECS.StreamableLoading.AssetBundles
             LookForShaderAssets = lookForShaderAssets;
 
             ParentEntityID = parentEntityID;
+            HasMultipleAssets = hasMultipleAssets;
+            SingleAssetBundleHack = singleAssetBundleHack;
             AssetBundleManifestVersion = assetBundleVersion;
         }
 

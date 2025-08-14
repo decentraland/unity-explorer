@@ -123,9 +123,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 // if the type was not specified don't load any assets
 
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, intention.HasMultipleAssets, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                    source, intention.LookForShaderAssets, ct);
+                    source, intention.LookForShaderAssets, sceneDescriptor, ct);
             }
             catch (Exception e)
             {
