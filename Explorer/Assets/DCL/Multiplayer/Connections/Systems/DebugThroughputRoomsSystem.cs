@@ -118,7 +118,7 @@ namespace DCL.Multiplayer.Connections.Systems
             var participants = participantsHub.RemoteParticipantIdentities();
             mutableList.Clear();
 
-            foreach (string sid in participants)
+            foreach ((string sid, _) in participants)
             {
                 var participant = participantsHub.RemoteParticipant(sid);
                 if (participant == null) continue;
