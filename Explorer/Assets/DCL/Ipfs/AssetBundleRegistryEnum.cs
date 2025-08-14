@@ -1,5 +1,6 @@
 ﻿using DCL.Platforms;
 using System;
+using UnityEngine;
 
 namespace DCL.Ipfs
 {
@@ -23,17 +24,35 @@ namespace DCL.Ipfs
 
         public AssetBundleManifestVersion() { }
 
+
+
         public AssetBundleManifestVersion(string assetBundleManifestVerison, string buildDate)
         {
             assets =  new AssetBundleManifestVersionPerPlatform();
             assets.SetVersion(assetBundleManifestVerison, buildDate);
-            HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            HasHashInPath();
+            if (HasHashInPathValue == null)
+            {
+                try {
+                    HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+                }
+                catch (Exception e)
+                {
+                    Debug.Log($"JUANI EXCEPTION {GetAssetBundleManifestVersion()}");
+                    HasHashInPathValue = false;
+                }
+            }
         }
 
         public bool HasHashInPath()
         {
             if (HasHashInPathValue == null)
-                HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            {
+                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
+                    HasHashInPathValue = false;
+                else
+                    HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            }
 
             return HasHashInPathValue.Value;
         }
