@@ -81,7 +81,7 @@ namespace DCL.SkyBox
 
         private void ApplyFixedTime(float time)
         {
-            // settings.TransitionMode = TransitionMode.FORWARD;
+            settings.TransitionMode = TransitionMode.FORWARD;
             settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time);
         }
     }
