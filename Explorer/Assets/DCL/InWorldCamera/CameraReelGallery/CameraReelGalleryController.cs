@@ -277,6 +277,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void RemoveThumbnailFromList(string reelId, string dateTime)
         {
             int indexToRemove = -1;
+            // This loop finds removed item index and moves all following elements by -1 index to avoid holes in the array.
             for (int i = 0; i < currentSize; i++)
             {
                 if (indexToRemove >= 0)
@@ -289,9 +290,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 }
             }
 
+            // Return if reel was not present in the array (it can happen when it's called multiple times, e.g. when more
+            // than one gallery is open at the time.
             if (indexToRemove < 0)
                 return;
 
+            // Finally: clear repeated element
             thumbnailImages[currentSize - 1] = null;
             currentSize--;
             ResetThumbnailsVisibility();
@@ -313,15 +317,23 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void OnReelPublicStateChange(string reelId, bool isPublic)
         {
-            var reel = pagedCameraReelManager.AllOrderedResponses.First(thumbnail => thumbnail.id == reelId);
-            reel.isPublic = isPublic;
+            foreach (var thumbnail in pagedCameraReelManager.AllOrderedResponses)
+            {
+                if(thumbnail.id != reelId) continue;
+                
+                thumbnail.isPublic = isPublic;
+            }
         }
 
         private void OnReelDeletionSignal(string reelId)
         {
-            var reel = pagedCameraReelManager.AllOrderedResponses.First(thumbnail => thumbnail.id == reelId);
-            if(reel != null)
-                HideReelFromList(reel);
+            for (int i = pagedCameraReelManager.AllOrderedResponses.Count - 1; i >= 0; i--)
+            {
+                var thumbnail = pagedCameraReelManager.AllOrderedResponses[i];
+                if (thumbnail.id != reelId) continue;
+
+                HideReelFromList(thumbnail);
+            }
         }
 
         private void PrepareShowGallery(CancellationToken ct)
