@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54a5db1db376eff428325cc2bd97066f, type: 3}
+  m_Name: ChatConfig
+  m_EditorClassIdentifier: 
+  DCL_SYSTEM_SENDER: DCL System
+  communityChatConversationContextMenuSettings: {fileID: 11400000, guid: f0417a22b41fa694aa86da5a95090393, type: 2}
+  chatContextMenuSettings: {fileID: 11400000, guid: b821cf7d577b9af40ba1bdf2b51e451d, type: 2}
+  <DefaultProfileThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
+  <DefaultCommunityThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
+  <ClearChatHistoryContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 1fd5346f8c379443886cb2219a95d139, type: 3}
+  <ItemPrefab>k__BackingField: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+  <NearbyConversationIcon>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
+  <NearbyConversationName>k__BackingField: Nearby
+  <PanelsFadeDuration>k__BackingField: 0.4
+  <chatEntriesWaitBeforeFading>k__BackingField: 10
+  <chatEntriesFadeTime>k__BackingField: 3
+  <PanelsFadeEase>k__BackingField: 6
+  DeleteChatHistoryContextMenuText: Delete Chat History
+  UserOfflineMessage: The user you are trying to message is offline.
+  OnlyFriendsMessage: The user you are trying to message only accepts DMs from friends.
+  BlockedByOwnUserMessage: To message this user you must first unblock them.
+  OnlyFriendsOwnUserMessage: Add this user as a friend to chat, or update your <b><u>DM
+    settings</b></u> to connect with everyone.
+  CheckingUserStatusMessage: Checking user status...
+  InputUnfocusedMessages: Press Enter to chat
+  InputFocusedMessages: Write a message
+  <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
+  <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
