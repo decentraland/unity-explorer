@@ -9,9 +9,12 @@ namespace DCL.PluginSystem.Global
         /// </summary>
         public readonly Entity PlayerEntity;
 
-        public GlobalPluginArguments(Entity playerEntity)
+        public readonly Entity SkyboxEntity;
+
+        public GlobalPluginArguments(Entity playerEntity, Entity skyboxEntity)
         {
             PlayerEntity = playerEntity;
+            SkyboxEntity = skyboxEntity;
         }
     }
 }

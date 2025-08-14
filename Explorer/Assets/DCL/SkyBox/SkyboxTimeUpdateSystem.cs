@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -13,12 +14,15 @@ namespace DCL.SkyBox
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly SkyboxRenderController skyboxRenderController;
         private readonly SkyboxStateMachine stateMachine;
+        private Entity skyboxEntity;
+        private bool enabled = true;
 
         private SkyboxTimeUpdateSystem(World world,
             SkyboxSettingsAsset skyboxSettings,
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
-            SkyboxRenderController skyboxRenderController) : base(world)
+            SkyboxRenderController skyboxRenderController,
+            Entity skyboxEntity) : base(world)
         {
             var transition = new InterpolateTimeOfDayState(skyboxSettings);
 
@@ -32,12 +36,34 @@ namespace DCL.SkyBox
 
             this.skyboxSettings = skyboxSettings;
             this.skyboxRenderController = skyboxRenderController;
+            this.skyboxEntity = skyboxEntity;
         }
 
         protected override void Update(float deltaTime)
         {
+            // World.Has<PauseSkyboxTimeUpdate>(skyboxEntity)
+            if (!enabled) return;
+
             stateMachine.Update(deltaTime);
             skyboxRenderController.UpdateSkybox(skyboxSettings.TimeOfDayNormalized);
+
+            HandleSkyboxTimeUpdatePauseQuery(World);
+            HandleSkyboxTimeUpdateUnpauseQuery(World);
+        }
+
+        [Query]
+        [All(typeof(SkyboxComponent), typeof(PauseSkyboxTimeUpdate))]
+        private void HandleSkyboxTimeUpdatePause()
+        {
+            enabled = false;
+        }
+
+        [Query]
+        [All(typeof(SkyboxComponent))]
+        [None(typeof(PauseSkyboxTimeUpdate))]
+        private void HandleSkyboxTimeUpdateUnpause()
+        {
+            enabled = true;
         }
     }
 }
