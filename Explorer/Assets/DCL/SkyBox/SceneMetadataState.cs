@@ -2,6 +2,7 @@ using DCL.Ipfs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using ECS.SceneLifeCycle;
+using System;
 
 namespace DCL.SkyBox
 {
@@ -11,6 +12,8 @@ namespace DCL.SkyBox
         private readonly SkyboxSettingsAsset settings;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly InterpolateTimeOfDayState transition;
+
+        private bool needsFixedTimeUpdate = false;
 
         public SceneMetadataState(IScenesCache scenes,
             SkyboxSettingsAsset settings,
@@ -39,11 +42,8 @@ namespace DCL.SkyBox
 
             SceneMetadata? sceneMetadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
 
-            if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTime: var worldTime } } })
-                ApplyFixedTime(worldTime);
-
-            if (sceneMetadata is { skyboxConfig: { fixedTime: var sceneTime } })
-                ApplyFixedTime(sceneTime);
+            if (sceneMetadata != null)
+                UpdateFixedTime(sceneMetadata);
 
             sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
         }
@@ -56,12 +56,32 @@ namespace DCL.SkyBox
 
         public void Update(float dt)
         {
+            SceneMetadata? sceneMetadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+
+            if (!needsFixedTimeUpdate && sceneMetadata == null)
+                needsFixedTimeUpdate = true;
+
+            if (needsFixedTimeUpdate && sceneMetadata != null)
+            {
+                needsFixedTimeUpdate = false;
+                UpdateFixedTime(sceneMetadata);
+            }
+
             transition.Update(dt);
+        }
+
+        private void UpdateFixedTime(SceneMetadata sceneMetadata)
+        {
+            if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTime: var worldTime } } })
+                ApplyFixedTime(worldTime);
+
+            if (sceneMetadata is { skyboxConfig: { fixedTime: var sceneTime } })
+                ApplyFixedTime(sceneTime);
         }
 
         private void ApplyFixedTime(float time)
         {
-            settings.TransitionMode = TransitionMode.FORWARD;
+            // settings.TransitionMode = TransitionMode.FORWARD;
             settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time);
         }
     }
