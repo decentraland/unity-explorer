@@ -280,32 +280,37 @@ namespace DCL.Communities.CommunitiesDataProvider
                 action == InviteRequestAction.invite ? 2 : 4,
                 ct);
 
-            var mockedInvitations = new List<GetUserInviteRequestData.UserInviteRequestData>();
-            foreach (GetUserCommunitiesData.CommunityData community in mockedCommunities.data.results)
+            var mockedData = new List<GetUserInviteRequestData.UserInviteRequestData>();
+
+            bool returnData = UnityEngine.Random.Range(0, 2) == 0;
+            if (returnData)
             {
-                mockedInvitations.Add(new GetUserInviteRequestData.UserInviteRequestData
+                foreach (GetUserCommunitiesData.CommunityData community in mockedCommunities.data.results)
                 {
-                    id = community.id,
-                    communityId = community.id,
-                    thumbnails = community.thumbnails,
-                    name = community.name,
-                    description = community.description,
-                    ownerAddress = community.ownerAddress,
-                    ownerName = community.ownerName,
-                    membersCount = community.membersCount,
-                    privacy = community.privacy,
-                    role = community.role,
-                    friends = community.friends,
-                    type = action,
-                });
+                    mockedData.Add(new GetUserInviteRequestData.UserInviteRequestData
+                    {
+                        id = community.id,
+                        communityId = community.id,
+                        thumbnails = community.thumbnails,
+                        name = community.name,
+                        description = community.description,
+                        ownerAddress = community.ownerAddress,
+                        ownerName = community.ownerName,
+                        membersCount = community.membersCount,
+                        privacy = community.privacy,
+                        role = community.role,
+                        friends = community.friends,
+                        type = action,
+                    });
+                }
             }
 
             return new GetUserInviteRequestResponse
             {
                 data = new GetUserInviteRequestData
                 {
-                    results = mockedInvitations.ToArray(),
-                    total = mockedInvitations.Count,
+                    results = mockedData.ToArray(),
+                    total = mockedData.Count,
                 }
             };
         }

@@ -327,13 +327,14 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTaskVoid LoadInvitesAndRequestsAsync(CancellationToken ct)
         {
             view.InvitesAndRequestsView.SetAsLoading(true);
-            await LoadInvitesAsync(ct);
+            int invitesCount = await LoadInvitesAsync(ct);
             if (ct.IsCancellationRequested) return;
-            await LoadRequestsAsync(ct);
+            int requestsCount = await LoadRequestsAsync(ct);
             view.InvitesAndRequestsView.SetAsLoading(false);
+            view.InvitesAndRequestsView.SetInvitesAndRequestsAsEmpty(invitesCount == 0 && requestsCount == 0);
         }
 
-        private async UniTask LoadInvitesAsync(CancellationToken ct)
+        private async UniTask<int> LoadInvitesAsync(CancellationToken ct)
         {
             view.InvitesAndRequestsView.ClearInvitesItems();
 
@@ -344,21 +345,23 @@ namespace DCL.Communities.CommunitiesBrowser
                 ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
-                return;
+                return 0;
 
             if (!invitesResult.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
                 await warningNotificationView.AnimatedShowAsync(INVITATIONS_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                return;
+                return 0;
             }
 
             if (invitesResult.Value.data.results.Length > 0)
                 view.InvitesAndRequestsView.AddInvitesItems(invitesResult.Value.data.results);
+
+            return invitesResult.Value.data.results.Length;
         }
 
-        private async UniTask LoadRequestsAsync(CancellationToken ct)
+        private async UniTask<int> LoadRequestsAsync(CancellationToken ct)
         {
             view.InvitesAndRequestsView.ClearRequestsItems();
 
@@ -369,18 +372,20 @@ namespace DCL.Communities.CommunitiesBrowser
                 ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
-                return;
+                return 0;
 
             if (!requestsResult.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
                 await warningNotificationView.AnimatedShowAsync(REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                return;
+                return 0;
             }
 
             if (requestsResult.Value.data.results.Length > 0)
                 view.InvitesAndRequestsView.AddRequestsItems(requestsResult.Value.data.results);
+
+            return requestsResult.Value.data.results.Length;
         }
 
         private void DisableShortcutsInput(string text) =>

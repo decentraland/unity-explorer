@@ -20,6 +20,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject invitesCounterContainer = null!;
         [SerializeField] private TMP_Text invitesCounterText = null!;
         [SerializeField] private GameObject invitesAndRequestsSection = null!;
+        [SerializeField] private GameObject invitesAndRequestsDataContainer = null!;
         [SerializeField] private GameObject invitesAndRequestsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView invitesAndRequestsLoadingSpinner = null!;
         [SerializeField] private CommunityResultCardView communityCardPrefab = null!;
@@ -98,12 +99,10 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetThumbnailLoader(ThumbnailLoader loader) =>
             thumbnailLoader = loader;
 
-        public void SetInvitesCounter(int count)
+        public void SetInvitesAndRequestsAsEmpty(bool isEmpty)
         {
-            bool hasCount = count > 0;
-            invitesCounterContainer.SetActive(hasCount);
-            if (hasCount)
-                invitesCounterText.text = count.ToString();
+            invitesAndRequestsEmptyContainer.SetActive(isEmpty);
+            invitesAndRequestsDataContainer.SetActive(!isEmpty);
         }
 
         private void SetInvitesAsEmpty(bool isEmpty)
