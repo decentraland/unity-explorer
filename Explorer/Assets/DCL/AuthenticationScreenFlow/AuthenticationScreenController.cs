@@ -292,6 +292,8 @@ namespace DCL.AuthenticationScreenFlow
                 }
                 catch (OperationCanceledException) { SwitchState(ViewState.Login); }
                 catch (SignatureExpiredException) { SwitchState(ViewState.Login); }
+                catch (Web3SignatureException) { SwitchState(ViewState.Login); }
+                catch (CodeVerificationException) { SwitchState(ViewState.Login); }
                 catch (ProfileNotFoundException) { SwitchState(ViewState.Login); }
                 catch (Exception e)
                 {

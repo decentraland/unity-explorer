@@ -103,23 +103,26 @@ namespace DCL.Audio.Systems
 
         private void InitializeTerrainAudioStates()
         {
-            IReadOnlyList<Terrain> terrains = terrainGenerator.Terrains;
-            landscapeAudioStates = new NativeArray<LandscapeAudioState>(terrains.Count, Allocator.Persistent);
-            landscapeAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrains.Count, Allocator.Persistent);
-            int halfTerrainChunkSize = terrainGenerator.GetChunkSize() / 2;
+            int parcelSize = terrainGenerator.ParcelSize;
+            ChunkModel[] terrainChunks = terrainGenerator.TerrainModel.ChunkModels;
+            landscapeAudioStates = new NativeArray<LandscapeAudioState>(terrainChunks.Length, Allocator.Persistent);
+            landscapeAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrainChunks.Length, Allocator.Persistent);
+            int chunkSize = terrainGenerator.GetChunkSize();
+            int halfTerrainChunkSize = chunkSize / 2;
             audioListeningDistanceThreshold = math.pow(halfTerrainChunkSize + landscapeAudioSystemSettings.ListeningDistanceThreshold, 2);
             audioMutingDistanceThreshold = math.pow(halfTerrainChunkSize + landscapeAudioSystemSettings.MutingDistanceThreshold, 2);
 
-            for (var i = 0; i < terrains.Count; i++)
+            for (var i = 0; i < terrainChunks.Length; i++)
             {
-                Terrain terrain = terrains[i];
-                Bounds bounds = GetTerrainBoundsInWorldSpace(terrain);
-                landscapeAudioSourcesPositions[i] = CalculateAudioSourcesPositions(terrain.terrainData, bounds);
+                ChunkModel chunk = terrainChunks[i];
+                int2 center = (chunk.MinParcel * parcelSize) + halfTerrainChunkSize;
 
                 landscapeAudioStates[i] = new LandscapeAudioState
                 {
-                    CenterOfTerrain = new float2(bounds.center.x, bounds.center.z),
+                    CenterOfTerrain = new float2(center.x, center.y),
                 };
+
+                landscapeAudioSourcesPositions[i] = CalculateAudioSourcesPositions(chunk, chunkSize, parcelSize);
             }
         }
 
@@ -145,16 +148,14 @@ namespace DCL.Audio.Systems
             oceanListeningDistanceThreshold = math.pow(landscapeAudioSystemSettings.OceanDistanceThreshold, 2);
         }
 
-        private NativeArray<int2> CalculateAudioSourcesPositions(TerrainData terrainData, Bounds worldBounds)
+        private NativeArray<int2> CalculateAudioSourcesPositions(ChunkModel terrain, int2 chunkSize, int parcelSize)
         {
             int rowsPerChunk = landscapeAudioSystemSettings.RowsPerChunk;
             int retryAttempts = landscapeAudioSystemSettings.AudioSourcePositioningRetryAttempts;
-            Vector3 terrainSize = terrainData.size;
-            int cellWidth = (int)terrainSize.x / rowsPerChunk;
-            int cellLength = (int)terrainSize.z / rowsPerChunk;
+            int cellWidth = chunkSize.x / rowsPerChunk;
+            int cellLength = chunkSize.y / rowsPerChunk;
 
             var positions = new NativeList<int2>(rowsPerChunk * rowsPerChunk, Allocator.Persistent);
-            var worldCellMin = new int2((int)worldBounds.min.x, (int)worldBounds.min.z);
 
             for (var row = 0; row < rowsPerChunk; row++)
             {
@@ -170,9 +171,9 @@ namespace DCL.Audio.Systems
                         var randomOffset = new int2(Random.Range(-cellWidth / 2, cellWidth / 2), Random.Range(-cellLength / 2, cellLength / 2));
                         int2 randomPosition = localCellCenter + randomOffset;
 
-                        if (!terrainData.IsHole(randomPosition.x, randomPosition.y))
+                        if (!terrain.IsOutsideOrOccupied(terrain.MinParcel + (randomPosition / parcelSize)))
                         {
-                            positions.Add(worldCellMin + randomPosition);
+                            positions.Add((terrain.MinParcel * parcelSize) + randomPosition);
                             break;
                         }
                     }
@@ -276,14 +277,6 @@ namespace DCL.Audio.Systems
                 oceanJobHandle = job.Schedule(oceanAudioStates.Length, 32, oceanJobHandle);
                 Profiler.EndSample();
             }
-        }
-
-        private Bounds GetTerrainBoundsInWorldSpace(Terrain terrain)
-        {
-            Bounds localBounds = terrain.terrainData.bounds;
-            Vector3 terrainPosition = terrain.transform.position;
-            var worldBounds = new Bounds(localBounds.center + terrainPosition, localBounds.size);
-            return worldBounds;
         }
     }
 
