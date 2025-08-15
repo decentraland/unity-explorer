@@ -22,7 +22,7 @@ namespace DCL.InWorldCamera.UI
     /// <summary>
     ///     Handles Logic for the InWorldCamera HUD that appears when user enables InWorldCamera.
     /// </summary>
-    public class InWorldCameraController : ControllerBase<InWorldCameraView>
+    public class InWorldCameraController : ControllerBase<InWorldCameraView>, IBlocksChat
     {
         private const string SOURCE_BUTTON = "Button";
 

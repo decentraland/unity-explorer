@@ -30,6 +30,7 @@ namespace DCL.VoiceChat
             ProfileRepositoryWrapper profileDataProvider,
             IRoom voiceChatRoom)
         {
+            return;
             this.view = view;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.profileDataProvider = profileDataProvider;
@@ -130,6 +131,7 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
+            return;
             statusSubscription?.Dispose();
             this.voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
