@@ -17,6 +17,9 @@ namespace DCL.Landscape.Settings
 
 #if GPUI_PRO_PRESENT
         public GPUIAssets gpuiAssets;
+        public const bool LOAD_TREES_FROM_STREAMINGASSETS = false;
+#else
+        public const bool LOAD_TREES_FROM_STREAMINGASSETS = false;
 #endif
 
         [SerializeField] private float detailDistanceValue = 200;
