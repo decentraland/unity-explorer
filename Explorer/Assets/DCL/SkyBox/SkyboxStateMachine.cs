@@ -18,21 +18,21 @@ namespace DCL.SkyBox
             {
                 if (!state.Applies()) continue;
 
-                if (CurrentState == state)
+                if (currentState == state)
                     state.Update(dt);
                 else
                 {
-                    CurrentState?.Exit();
-                    CurrentState = state;
-                    CurrentState.Enter();
+                    currentState?.Exit();
+                    currentState = state;
+                    currentState.Enter();
                 }
 
                 return;
             }
 
             // If we reach here, no state applies, including current
-            CurrentState?.Exit();
-            CurrentState = null;
+            currentState?.Exit();
+            currentState = null;
         }
     }
 }
