@@ -85,5 +85,26 @@ namespace DCL.UI.Communities
             thumbnailImageView.ImageEnabled = true;
             await thumbnailImageView.FadeInAsync(fadingDuration, ct);
         }
+
+        /// <summary>
+        ///     NEW METHOD: Directly sets the thumbnail image from a pre-loaded sprite.
+        /// </summary>
+        /// <param name="sprite">The sprite to display.</param>
+        public void SetImage(Sprite sprite)
+        {
+            // Cancel any async loading operations that might be in progress.
+            cts.SafeCancelAndDispose();
+            currentCommunityUrl = null;
+
+            // Ensure the loading UI is turned off.
+            SetLoadingState(false);
+
+            // Use the provided sprite, or fall back to the default if the sprite is null.
+            var imageToSet = sprite != null ? sprite : defaultEmptyThumbnail;
+            thumbnailImageView.SetImage(imageToSet, true);
+
+            // Make sure the image is instantly visible without any fading.
+            thumbnailImageView.Alpha = 1f;
+        }
     }
 }

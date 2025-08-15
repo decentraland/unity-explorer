@@ -586,17 +586,14 @@ namespace DCL.Passport
                 return;
 
             photoLoadingCts = photoLoadingCts.SafeRestart();
+            characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
 
             cameraReelGalleryController!.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
 
             currentSection = PassportSection.PHOTOS;
             viewInstance!.OpenSection(currentSection);
 
-            if (!viewInstance.CharacterPreviewView.gameObject.activeSelf)
-            {
-                viewInstance.CharacterPreviewView.gameObject.SetActive(true);
-                characterPreviewController?.OnShow();
-            }
+            SetCharacterPreviewVisible(true);
         }
 
         private void OpenOverviewSection()
@@ -610,7 +607,7 @@ namespace DCL.Passport
             currentSection = PassportSection.OVERVIEW;
             viewInstance!.OpenSection(currentSection);
 
-            characterPreviewController?.OnShow();
+            SetCharacterPreviewVisible(true);
         }
 
         private void OpenBadgesSection(string? badgeIdSelected = null)
@@ -624,9 +621,25 @@ namespace DCL.Passport
             currentSection = PassportSection.BADGES;
             viewInstance!.OpenSection(currentSection);
 
-            characterPreviewController?.OnHide(false);
+            SetCharacterPreviewVisible(false, false);
+
             bool isOwnPassport = ownProfile?.UserId == currentUserId;
             BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, OpenBadgeSectionOrigin.BUTTON.ToString());
+        }
+
+        private void SetCharacterPreviewVisible(bool visible, bool triggerOnShowBusEvent = true)
+        {
+            GameObject previewGO = viewInstance.CharacterPreviewView.gameObject;
+
+            if (previewGO.activeSelf == visible)
+                return;
+
+            previewGO.SetActive(visible);
+
+            if (visible)
+                characterPreviewController?.OnShow(triggerOnShowBusEvent);
+            else
+                characterPreviewController?.OnHide(triggerOnShowBusEvent);
         }
 
         private void OnBadgeNotificationReceived(INotification notification) =>
