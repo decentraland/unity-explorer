@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ae66608be2735a4f96e0f1aa9b3a75b
+    m_Address: PlayerMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0fce4c1a785b1495bbf861787a9a3224
     m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopup.prefab
     m_ReadOnly: 0
@@ -60,8 +65,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b149c5240fcd49309285605ce2e8067
+    m_Address: CategoryMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
     m_Address: Nametag
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f557ed079be146f9aeb090104c115c9
+    m_Address: Assets/DCL/MapRenderer/Addressables/SceneOfInterest.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -110,6 +125,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2eac55a1aa3034858a71ab0e06baf5de
+    m_Address: ClusterMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 33891647b85dc47319f39490bb24594d
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithCheck.prefab
     m_ReadOnly: 0
@@ -137,6 +157,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3c3c8d365c6ef4acfa3665168b5737a9
     m_Address: ButtonWithTextAndIcon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d761805ce62940dbafaa7bb64be222c
+    m_Address: ClusterMarkerObjectForSearchResults
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3efe8a48fc3905f47a0648abd6859394
+    m_Address: MapCameraObject
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -180,6 +210,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53b70d09c4a814878a30c68582ad4523
+    m_Address: Assets/DCL/MapRenderer/Addressables/HotUserMarkerObject.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 542424588a68b46f688ef5c667aa0c68
     m_Address: ControlsPanel
     m_ReadOnly: 0
@@ -210,6 +245,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5f2c1af519efc4b82b87b887f93077fc
+    m_Address: Assets/DCL/MapRenderer/Addressables/Favorite.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 605506dac7ec04ed09953980478e93d4
     m_Address: SceneLoadingScreen
     m_ReadOnly: 0
@@ -222,6 +262,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 624d527621f514c5999533539668c4d3
     m_Address: Assets/DCL/Navmap/Assets/EventEntry.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65104014709704f75838386ed5173c45
+    m_Address: Assets/DCL/MapRenderer/Addressables/SearchResultMarkerObject.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -260,6 +305,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73e736ffedc4d4e1c9acc6461c55248b
+    m_Address: MapLayerCategoryIconMapping
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73f988cecacd42e48920937e996e446d
     m_Address: ScreencaptureCameraHUD
     m_ReadOnly: 0
@@ -295,6 +345,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e150ada146ad0749b39e65968780157
+    m_Address: MapParcelHighlightMarker
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 809b68e5ce75da1429e55ffcc44fa23b
     m_Address: ExternalUrlPrompt
     m_ReadOnly: 0
@@ -302,6 +357,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8521b529ac852454480e3f6596bca3ba
     m_Address: DebugMenuRootCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86a5a8acd91f6994788c37e301d06c56
+    m_Address: CinemachineCameraAudioSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -365,6 +425,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b54d9d4189903c2438fa811308f14ceb
+    m_Address: MapConfiguration
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b5efcea1481b64193ae5b5029f0c673f
     m_Address: UntrustedRealmConfirmationPopup.prefab
     m_ReadOnly: 0
@@ -395,6 +460,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cbb820cf51b7a714e88a7c873eb5de9c
+    m_Address: InteractionsAudioConfigs
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d20747763091b4fc5a2d5b6d1ba0ea7d
     m_Address: HideCategory
     m_ReadOnly: 0
@@ -420,8 +490,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e052984ad30813240bd28c945f4cab60
+    m_Address: DottedLineRenderer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e0f5a4ab5d8f74640ae94adb6824bd45
     m_Address: ScenesUIRootCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e7d14406516774d91886b6b4d1a26a58
+    m_Address: MapPin
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -445,8 +525,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f80a8f4fcad2b4246b66c94221314244
+    m_Address: AtlasChunk
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f999deca82ccdc14ebae40250c8eb0c9
     m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdd9de2cf51974e4f9be30ab72d8eabd
+    m_Address: MapLayerIconMapping
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
