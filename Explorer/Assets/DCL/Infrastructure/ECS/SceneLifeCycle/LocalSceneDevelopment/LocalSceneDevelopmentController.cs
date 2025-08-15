@@ -2,12 +2,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.SkyBox;
+using DCL.SkyBox.Components;
 using Decentraland.Sdk.Development;
 using Google.Protobuf;
 using System;
 using System.Net.WebSockets;
 using System.Threading;
-using Utility;
 
 namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 {
@@ -17,15 +18,18 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
         private readonly IReloadScene reloadScene;
         private readonly Entity playerEntity;
+        private readonly Entity skyboxEntity;
         private readonly World globalWorld;
         private ClientWebSocket? webSocket;
 
         public LocalSceneDevelopmentController(IReloadScene reloadScene,
             Entity playerEntity,
+            Entity skyboxEntity,
             World globalWorld)
         {
             this.reloadScene = reloadScene;
             this.playerEntity = playerEntity;
+            this.skyboxEntity = skyboxEntity;
             this.globalWorld = globalWorld;
         }
 
@@ -78,12 +82,19 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                         // We need to freeze the character movement until the scene is reloaded
                         globalWorld.AddOrGet(playerEntity, new StopCharacterMotion());
 
+                        // And pause the skybox update while loading to avoid transitions
+                        globalWorld.AddOrGet(skyboxEntity, new PauseSkyboxTimeUpdate());
+
                         await reloadScene.TryReloadSceneAsync(ct,
                                               wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateScene ? wsSceneMessage.UpdateScene.SceneId : wsSceneMessage.UpdateModel.SceneId)
                                          .Timeout(TimeSpan.FromSeconds(RELOAD_SCENE_TIMEOUT_SECS));
                     }
                     catch (TimeoutException) { }
-                    finally { globalWorld.Remove<StopCharacterMotion>(playerEntity); }
+                    finally
+                    {
+                        globalWorld.Remove<StopCharacterMotion>(playerEntity);
+                        globalWorld.Remove<PauseSkyboxTimeUpdate>(skyboxEntity);
+                    }
                 }
                 else if (receiveResult.MessageType == WebSocketMessageType.Close)
                 {

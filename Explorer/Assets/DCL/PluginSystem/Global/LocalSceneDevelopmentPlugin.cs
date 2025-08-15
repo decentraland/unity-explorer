@@ -38,15 +38,16 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             lifeCycleCancellationTokenSource = lifeCycleCancellationTokenSource.SafeRestart();
-            ConnectToServerAsync(arguments.PlayerEntity, builder.World, lifeCycleCancellationTokenSource.Token).Forget();
+            ConnectToServerAsync(arguments.PlayerEntity, arguments.SkyboxEntity, builder.World, lifeCycleCancellationTokenSource.Token).Forget();
         }
 
-        private async UniTaskVoid ConnectToServerAsync(Entity playerEntity, Arch.Core.World world, CancellationToken ct)
+        private async UniTaskVoid ConnectToServerAsync(Entity playerEntity, Entity skyboxEntity, Arch.Core.World world, CancellationToken ct)
         {
             string realm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct) ?? string.Empty;
 
             localSceneDevelopmentController = new LocalSceneDevelopmentController(reloadSceneController,
                 playerEntity,
+                skyboxEntity,
                 world);
 
             while (!ct.IsCancellationRequested)

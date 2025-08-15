@@ -40,7 +40,7 @@ namespace DCL.SkyBox
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController);
+            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, arguments.SkyboxEntity);
         }
 
         public async UniTask InitializeAsync(SkyboxTimeSettings pluginSettings, CancellationToken ct)
