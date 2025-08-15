@@ -10,7 +10,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
-using Object = System.Object;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -28,6 +27,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<Vector2>? ResultsLoopGridScrollChanged;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
+        public event Action<string>? CommunityRequestedToJoin;
         public event Action? CreateCommunityButtonClicked;
 
         public bool IsResultsScrollPositionAtBottom =>
@@ -64,6 +64,11 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
 
+        [Header("Invites & Requests Section")]
+        [SerializeField] private CommunitiesInvitesAndRequestsView invitesAndRequestsView = null!;
+
+        public CommunitiesInvitesAndRequestsView InvitesAndRequestsView => invitesAndRequestsView;
+
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
@@ -83,6 +88,8 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.inputField.onSubmit.AddListener(text => SearchBarSubmit?.Invoke(text));
             searchBar.clearSearchButton.onClick.AddListener(() => SearchBarClearButtonClicked?.Invoke());
             createCommunityButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke());
+
+            invitesAndRequestsView.CommunityProfileOpened += OnInviteSubViewCommunityProfileOpened;
         }
 
         private void Start() =>
@@ -99,6 +106,8 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.clearSearchButton.onClick.RemoveAllListeners();
             resultLoopGrid.ScrollRect.onValueChanged.RemoveAllListeners();
             createCommunityButton.onClick.RemoveAllListeners();
+
+            invitesAndRequestsView.CommunityProfileOpened -= OnInviteSubViewCommunityProfileOpened;
         }
 
         public void SetViewActive(bool isActive) =>
@@ -142,6 +151,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetResultsTitleText(string text) =>
             resultsTitleText.text = text;
+
+        public void SetResultsCountTextActive(bool isActive) =>
+            resultsCountText.gameObject.SetActive(isActive);
 
         public void SetResultsCountText(int count) =>
             resultsCountText.text = $"({count})";
@@ -216,12 +228,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 resultCommunityData?.SetAsJoined(isJoined);
 
                 CommunityData? myCommunityData = GetMyCommunityById(communityId);
-                //Since we are updating currentMyCommunities with the resultCommunityData, we need to check if they are the same instance
-                //so we avoid updating the same instance twice
                 if (!ReferenceEquals(myCommunityData, resultCommunityData))
                     myCommunityData?.SetAsJoined(isJoined);
 
-                // Add/remove the joined/left community to/from My Communities
                 if (resultCommunityData != null && isJoined)
                     currentMyCommunities.Add(resultCommunityData);
                 else if (myCommunityData != null)
@@ -231,7 +240,17 @@ namespace DCL.Communities.CommunitiesBrowser
                 SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
             }
 
-            // Refresh the community card (if exists) in the results' grid
+            RefreshCommunityCardInGrid(communityId);
+        }
+
+        public void UpdateRequestedToJoinCommunity(string communityId, bool isRequestedToJoin, bool isSuccess)
+        {
+            if (isSuccess)
+            {
+                CommunityData? resultCommunityData = GetResultCommunityById(communityId);
+                resultCommunityData?.SetPendingActionType(isRequestedToJoin ? InviteRequestAction.request_to_join : InviteRequestAction.none);
+            }
+
             RefreshCommunityCardInGrid(communityId);
         }
 
@@ -241,13 +260,14 @@ namespace DCL.Communities.CommunitiesBrowser
             resultCommunityData?.DecreaseMembersCount();
 
             CommunityData? myCommunityData = GetMyCommunityById(communityId);
-            //Since we are updating currentMyCommunities with the resultCommunityData, we need to check if they are the same instance
-            //so we avoid updating the same instance twice
             if (!ReferenceEquals(myCommunityData, resultCommunityData))
                 myCommunityData?.DecreaseMembersCount();
 
             RefreshCommunityCardInGrid(communityId);
         }
+
+        public void SetResultsSectionActive(bool isActive) =>
+            resultsSection.SetActive(isActive);
 
         private void RefreshCommunityCardInGrid(string communityId)
         {
@@ -285,7 +305,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void SetSearchBarClearButtonActive(bool isActive) =>
             searchBar.clearSearchButton.gameObject.SetActive(isActive);
 
-        private CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
+        private readonly CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
 
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
@@ -319,17 +339,19 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
-            cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
+            cardView.SetActionButtonsType(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
-            cardView.SetJoiningLoadingActive(false);
+            cardView.SetActonLoadingActive(false);
 
-            // Setup card events
+                // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
             cardView.MainButtonClicked += CommunityProfileOpened;
             cardView.ViewCommunityButtonClicked -= CommunityProfileOpened;
             cardView.ViewCommunityButtonClicked += CommunityProfileOpened;
             cardView.JoinCommunityButtonClicked -= OnCommunityJoined;
             cardView.JoinCommunityButtonClicked += OnCommunityJoined;
+            cardView.RequestToJoinCommunityButtonClicked -= OnCommunityRequestedToJoin;
+            cardView.RequestToJoinCommunityButtonClicked += OnCommunityRequestedToJoin;
 
             // Setup mutual friends
             if (profileRepositoryWrapper != null)
@@ -352,18 +374,23 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityJoined(string communityId, CommunityResultCardView cardView)
         {
-            cardView.SetJoiningLoadingActive(true);
-
-            CommunityData? communityData = GetResultCommunityById(communityId);
-            if (communityData == null)
-                return;
-
-            CommunityJoined?.Invoke(communityData.id);
+            cardView.SetActonLoadingActive(true);
+            CommunityJoined?.Invoke(communityId);
         }
+
+        private void OnCommunityRequestedToJoin(string communityId, CommunityResultCardView cardView)
+        {
+            cardView.SetActonLoadingActive(true);
+            CommunityRequestedToJoin?.Invoke(communityId);
+        }
+
+        private void OnInviteSubViewCommunityProfileOpened(string communityId) =>
+            CommunityProfileOpened?.Invoke(communityId);
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
             this.thumbnailLoader = newThumbnailLoader;
+            invitesAndRequestsView.SetThumbnailLoader(newThumbnailLoader);
         }
     }
 }
