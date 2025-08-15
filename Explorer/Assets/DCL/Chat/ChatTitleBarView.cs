@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.UI;
 using DCL.Chat.History;
 using DCL.Prefs;
@@ -195,8 +194,8 @@ namespace DCL.Chat
                 InitializeChannelContextMenu();
 
             // Initializes the value of the toggles inside the submenu of the Notification Ping
-    //        for (int i = 0; i < notificationPingToggles.Length; ++i)
-   //             notificationPingToggles[i].SetInitialValue(i == (int)ChatUserSettings.GetNotificationPingValuePerChannel(currentChannelId));
+            for (int i = 0; i < notificationPingToggles.Length; ++i)
+                notificationPingToggles[i].SetInitialValue(i == (int)ChatUserSettings.GetNotificationPingValuePerChannel(currentChannelId));
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenuInstance,
                                                                                              openContextMenuButton.transform.position,
@@ -259,25 +258,9 @@ namespace DCL.Chat
             currentChannelId = channelId;
         }
 
-        private async UniTask AddButtonsToSubmenuAsync(GenericContextMenu contextMenu, CancellationToken ct)
-        {
-            await UniTask.Delay(2000, DelayType.DeltaTime, PlayerLoopTiming.Update, ct);
-
-            if(ct.IsCancellationRequested)
-                return;
-
-            if (!gameObject.TryGetComponent(out ToggleGroup toggleGroup))
-                toggleGroup = gameObject.AddComponent<ToggleGroup>();
-
-            contextMenu.AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] = new ToggleWithCheckContextMenuControlSettings("All Messages", x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
-                        .AddControl(notificationPingToggles[(int)ChatAudioSettings.MENTIONS_ONLY] = new ToggleWithCheckContextMenuControlSettings("Mentions Only", x => OnNotificationPingOptionSelected(ChatAudioSettings.MENTIONS_ONLY), toggleGroup))
-                        .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] = new ToggleWithCheckContextMenuControlSettings("None", x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup));
-
-
-        }
-
         private void InitializeChannelContextMenu()
         {
+            ToggleGroup toggleGroup = gameObject.AddComponent<ToggleGroup>();
             notificationPingToggles = new ToggleWithCheckContextMenuControlSettings[3];
             ButtonContextMenuControlSettings deleteChatHistoryButton = new ButtonContextMenuControlSettings(chatContextMenuSettings.DeleteChatHistoryText, chatContextMenuSettings.DeleteChatHistorySprite, OnDeleteChatHistoryButtonClicked);
             SubMenuContextMenuButtonSettings subMenuSettings = new SubMenuContextMenuButtonSettings(
@@ -286,9 +269,10 @@ namespace DCL.Chat
                 new GenericContextMenu(chatContextMenuSettings.ContextMenuWidth,
                                              verticalLayoutPadding: chatContextMenuSettings.VerticalPadding,
                                              elementsSpacing: chatContextMenuSettings.ElementsSpacing,
-                                             offsetFromTarget: chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget),
-                asyncSettingsFillingDelegate: AddButtonsToSubmenuAsync);
-
+                                             offsetFromTarget: chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget)
+                                        .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] = new ToggleWithCheckContextMenuControlSettings("All Messages", x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
+                                        .AddControl(notificationPingToggles[(int)ChatAudioSettings.MENTIONS_ONLY] = new ToggleWithCheckContextMenuControlSettings("Mentions Only", x => OnNotificationPingOptionSelected(ChatAudioSettings.MENTIONS_ONLY), toggleGroup))
+                                        .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] = new ToggleWithCheckContextMenuControlSettings("None", x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
             contextMenuInstance = new UI.GenericContextMenuParameter.GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
                .AddControl(subMenuSettings)
                .AddControl(deleteChatHistoryButton);
