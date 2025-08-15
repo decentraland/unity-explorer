@@ -1,5 +1,6 @@
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -42,6 +43,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
         private readonly List<CommunityResultCardView> currentInvites = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
         private CancellationTokenSource thumbnailsCts = new ();
 
@@ -68,6 +70,9 @@ namespace DCL.Communities.CommunitiesBrowser
             thumbnailsCts.Cancel();
             thumbnailsCts.Dispose();
         }
+
+        public void Initialize(ProfileRepositoryWrapper profileDataProvider) =>
+            profileRepositoryWrapper = profileDataProvider;
 
         public void SetAsLoading(bool isLoading)
         {
@@ -175,8 +180,8 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.ViewCommunityButtonClicked += OnOpenCommunityProfile;
 
             // Setup mutual friends
-            // if (profileRepositoryWrapper != null)
-            //     invitedCommunityCardView.SetupMutualFriends(profileRepositoryWrapper, ...);
+            if (profileRepositoryWrapper != null)
+                invitedCommunityCardView.SetupMutualFriends(profileRepositoryWrapper, community);
 
             currentInvites.Add(invitedCommunityCardView);
         }
@@ -210,8 +215,8 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.ViewCommunityButtonClicked += OnOpenCommunityProfile;
 
             // Setup mutual friends
-            // if (profileRepositoryWrapper != null)
-            //     invitedCommunityCardView.SetupMutualFriends(profileRepositoryWrapper, ...);
+            if (profileRepositoryWrapper != null)
+                requestedCommunityCardView.SetupMutualFriends(profileRepositoryWrapper, community);
 
             currentRequests.Add(requestedCommunityCardView);
         }

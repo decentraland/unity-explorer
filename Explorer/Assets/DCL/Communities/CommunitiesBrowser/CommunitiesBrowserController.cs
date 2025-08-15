@@ -98,6 +98,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
+            view.InvitesAndRequestsView.Initialize(profileRepositoryWrapper);
             view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;

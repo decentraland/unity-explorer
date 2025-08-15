@@ -197,6 +197,26 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
+        public void SetupMutualFriends(ProfileRepositoryWrapper profileDataProvider, GetUserInviteRequestData.UserInviteRequestData userInviteRequestData)
+        {
+            CommunityData communityFromInviteRequestData = new CommunityData
+            {
+                id = userInviteRequestData.communityId,
+                thumbnails = userInviteRequestData.thumbnails,
+                name = userInviteRequestData.name,
+                description = userInviteRequestData.description,
+                ownerAddress = userInviteRequestData.ownerAddress,
+                ownerName = userInviteRequestData.ownerName,
+                membersCount = userInviteRequestData.membersCount,
+                privacy = userInviteRequestData.privacy,
+                role = userInviteRequestData.role,
+                friends = userInviteRequestData.friends,
+                pendingActionType = userInviteRequestData.type,
+            };
+
+            SetupMutualFriends(profileDataProvider, communityFromInviteRequestData);
+        }
+
         public void OnPointerEnter(PointerEventData eventData) =>
             PlayHoverAnimation();
 
