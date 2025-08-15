@@ -1,12 +1,16 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.InWorldCamera;
+using DCL.UI;
 using ECS.Abstract;
 using MVC;
+using System.Threading;
 using UnityEngine.UIElements;
+using Utility;
 
 namespace DCL.Input.Systems
 {
@@ -14,14 +18,18 @@ namespace DCL.Input.Systems
     [UpdateBefore(typeof(InputGroup))]
     public partial class UpdateShowHideUIInputSystem : BaseUnityLoopSystem
     {
+        private const int TOAST_DURATION_MS = 3000;
+
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument sceneUIDocument;
         private readonly UIDocument cursorUIDocument;
+        private readonly WarningNotificationView warningNotificationView;
 
         private SingleInstanceEntity camera;
+        private CancellationTokenSource? toastCt;
 
         private bool currentUIVisibilityState = true;
 
@@ -31,7 +39,8 @@ namespace DCL.Input.Systems
             IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
             UIDocument sceneUIDocument,
-            UIDocument cursorUIDocument) : base(world)
+            UIDocument cursorUIDocument,
+            WarningNotificationView warningNotificationView) : base(world)
         {
             dclInput = DCLInput.Instance;
             this.mvcManager = mvcManager;
@@ -39,6 +48,7 @@ namespace DCL.Input.Systems
             this.rootUIDocument = rootUIDocument;
             this.sceneUIDocument = sceneUIDocument;
             this.cursorUIDocument = cursorUIDocument;
+            this.warningNotificationView = warningNotificationView;
         }
 
         public override void Initialize()
@@ -56,6 +66,8 @@ namespace DCL.Input.Systems
 
                 // Common UIs
                 mvcManager.SetAllViewsCanvasActive(currentUIVisibilityState);
+
+                ShowOrHideToast();
             }
             else if (World.TryGet(camera, out ToggleUIRequest request))
             {
@@ -65,6 +77,8 @@ namespace DCL.Input.Systems
                 mvcManager.SetAllViewsCanvasActive(request.Except, currentUIVisibilityState);
 
                 World.Remove<ToggleUIRequest>(camera);
+
+                ShowOrHideToast();
             }
 
             // Debug Panel UI
@@ -78,6 +92,23 @@ namespace DCL.Input.Systems
 
             // Cursor UI
             cursorUIDocument.rootVisualElement.parent.style.display = currentUIVisibilityState ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void ShowOrHideToast()
+        {
+            if (!currentUIVisibilityState)
+            {
+                toastCt = toastCt.SafeRestart();
+
+                warningNotificationView.AnimatedShowAsync(TOAST_DURATION_MS, toastCt.Token)
+                                       .SuppressCancellationThrow()
+                                       .Forget();
+            }
+            else
+            {
+                toastCt.SafeCancelAndDispose();
+                warningNotificationView.Hide();
+            }
         }
     }
 }

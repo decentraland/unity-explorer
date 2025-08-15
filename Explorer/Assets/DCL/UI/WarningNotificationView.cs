@@ -43,6 +43,13 @@ namespace DCL.UI
             CanvasGroup.blocksRaycasts = false;
         }
 
+        public async UniTask AnimatedShowAsync(int showDurationMs, CancellationToken ct = default)
+        {
+            Show(ct);
+            await UniTask.Delay(showDurationMs, cancellationToken: ct);
+            Hide(ct: ct);
+        }
+
         public async UniTask AnimatedShowAsync(string text, int showDurationMs, CancellationToken ct = default)
         {
             SetText(text);
@@ -50,6 +57,5 @@ namespace DCL.UI
             await UniTask.Delay(showDurationMs, cancellationToken: ct);
             Hide(ct: ct);
         }
-
     }
 }
