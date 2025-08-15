@@ -22,6 +22,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string>? MainButtonClicked;
         public event Action<string>? ViewCommunityButtonClicked;
         public event Action<string, CommunityResultCardView>? JoinCommunityButtonClicked;
+        public event Action<string, CommunityResultCardView>? RequestToJoinCommunityButtonClicked;
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
@@ -98,6 +99,12 @@ namespace DCL.Communities.CommunitiesBrowser
                     JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
             });
 
+            requestToJoinButton.onClick.AddListener(() =>
+            {
+                if (currentCommunityId != null)
+                    RequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
+            });
+
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
         }
@@ -139,15 +146,15 @@ namespace DCL.Communities.CommunitiesBrowser
                 communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
         }
 
-        public void SetActionButtonsType(CommunityPrivacy privacy, InviteRequestAction? type, bool isMember)
+        public void SetActionButtonsType(CommunityPrivacy privacy, InviteRequestAction type, bool isMember)
         {
             // Join/View
-            joinOrViewButtonsContainer.SetActive(privacy == CommunityPrivacy.@public && type != InviteRequestAction.invite);
+            joinOrViewButtonsContainer.SetActive((privacy == CommunityPrivacy.@public || isMember) && type == InviteRequestAction.none);
             joinCommunityButton.gameObject.SetActive(!isMember);
             viewCommunityButton.gameObject.SetActive(isMember);
 
             // Request/Cancel to join
-            requestOrCancelToJoinButtonsContainer.SetActive(privacy == CommunityPrivacy.@private && type != InviteRequestAction.invite);
+            requestOrCancelToJoinButtonsContainer.SetActive(privacy == CommunityPrivacy.@private && !isMember && type != InviteRequestAction.invite);
             requestToJoinButton.gameObject.SetActive(type != InviteRequestAction.request_to_join);
             cancelJoinRequestButton.gameObject.SetActive(type == InviteRequestAction.request_to_join);
 

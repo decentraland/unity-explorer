@@ -13,7 +13,6 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         public event Action? InvitesAndRequestsButtonClicked;
         public event Action<string>? CommunityProfileOpened;
-        public event Action<string>? CommunityJoined;
 
         [Header("Invites & Requests Section")]
         [SerializeField] private Button invitesAndRequestsButton = null!;
@@ -152,8 +151,6 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.MainButtonClicked += OnOpenCommunityProfile;
             invitedCommunityCardView.ViewCommunityButtonClicked -= OnOpenCommunityProfile;
             invitedCommunityCardView.ViewCommunityButtonClicked += OnOpenCommunityProfile;
-            invitedCommunityCardView.JoinCommunityButtonClicked -= OnJoinCommunity;
-            invitedCommunityCardView.JoinCommunityButtonClicked += OnJoinCommunity;
 
             // Setup mutual friends
             // if (profileRepositoryWrapper != null)
@@ -183,8 +180,6 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.MainButtonClicked += OnOpenCommunityProfile;
             requestedCommunityCardView.ViewCommunityButtonClicked -= OnOpenCommunityProfile;
             requestedCommunityCardView.ViewCommunityButtonClicked += OnOpenCommunityProfile;
-            requestedCommunityCardView.JoinCommunityButtonClicked -= OnJoinCommunity;
-            requestedCommunityCardView.JoinCommunityButtonClicked += OnJoinCommunity;
 
             // Setup mutual friends
             // if (profileRepositoryWrapper != null)
@@ -195,11 +190,5 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnOpenCommunityProfile(string communityId) =>
             CommunityProfileOpened?.Invoke(communityId);
-
-        private void OnJoinCommunity(string communityId, CommunityResultCardView cardView)
-        {
-            cardView.SetActonLoadingActive(true);
-            CommunityJoined?.Invoke(communityId);
-        }
     }
 }

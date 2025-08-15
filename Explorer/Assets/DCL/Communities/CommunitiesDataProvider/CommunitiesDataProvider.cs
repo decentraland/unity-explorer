@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.Communities.CommunitiesDataProvider
@@ -22,6 +23,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string, bool> CommunityLeft;
         public event Action<string> CommunityUserRemoved;
         public event Action<string, string> CommunityUserBanned;
+        public event Action<string, bool> CommunityRequestedToJoin;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -297,9 +299,22 @@ namespace DCL.Communities.CommunitiesDataProvider
             throw new NotImplementedException();
         }
 
-        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, CancellationToken ct)
+        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var url = $"{communitiesBaseUrl}/{communityId}/requests";
+            string jsonBody = JsonUtility.ToJson(new SendInviteOrRequestToJoinBody
+            {
+                targetedAddress = targetedUserAddress,
+                type = action.ToString(),
+            });
+
+            var result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            CommunityRequestedToJoin?.Invoke(communityId, result.Success);
+
+            return result.Success;
         }
 
         public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityList(string userAddress, CancellationToken ct)

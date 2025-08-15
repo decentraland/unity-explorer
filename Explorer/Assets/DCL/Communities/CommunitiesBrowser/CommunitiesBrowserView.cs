@@ -27,6 +27,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<Vector2>? ResultsLoopGridScrollChanged;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
+        public event Action<string>? CommunityRequestedToJoin;
         public event Action? CreateCommunityButtonClicked;
 
         public bool IsResultsScrollPositionAtBottom =>
@@ -89,7 +90,6 @@ namespace DCL.Communities.CommunitiesBrowser
             createCommunityButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke());
 
             invitesAndRequestsView.CommunityProfileOpened += OnInviteSubViewCommunityProfileOpened;
-            invitesAndRequestsView.CommunityJoined += OnInviteSubViewCommunityJoined;
         }
 
         private void Start() =>
@@ -108,7 +108,6 @@ namespace DCL.Communities.CommunitiesBrowser
             createCommunityButton.onClick.RemoveAllListeners();
 
             invitesAndRequestsView.CommunityProfileOpened -= OnInviteSubViewCommunityProfileOpened;
-            invitesAndRequestsView.CommunityJoined -= OnInviteSubViewCommunityJoined;
         }
 
         public void SetViewActive(bool isActive) =>
@@ -244,6 +243,17 @@ namespace DCL.Communities.CommunitiesBrowser
             RefreshCommunityCardInGrid(communityId);
         }
 
+        public void UpdateRequestedToJoinCommunity(string communityId, bool isRequestedToJoin, bool isSuccess)
+        {
+            if (isSuccess)
+            {
+                CommunityData? resultCommunityData = GetResultCommunityById(communityId);
+                resultCommunityData?.SetPendingActionType(isRequestedToJoin ? InviteRequestAction.request_to_join : InviteRequestAction.none);
+            }
+
+            RefreshCommunityCardInGrid(communityId);
+        }
+
         public void RemoveOneMemberFromCounter(string communityId)
         {
             CommunityData? resultCommunityData = GetResultCommunityById(communityId);
@@ -329,7 +339,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
-            cardView.SetActionButtonsType(communityData.privacy, communityData.type, communityData.role != CommunityMemberRole.none);
+            cardView.SetActionButtonsType(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
             cardView.SetActonLoadingActive(false);
 
@@ -340,6 +350,8 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.ViewCommunityButtonClicked += CommunityProfileOpened;
             cardView.JoinCommunityButtonClicked -= OnCommunityJoined;
             cardView.JoinCommunityButtonClicked += OnCommunityJoined;
+            cardView.RequestToJoinCommunityButtonClicked -= OnCommunityRequestedToJoin;
+            cardView.RequestToJoinCommunityButtonClicked += OnCommunityRequestedToJoin;
 
             // Setup mutual friends
             if (profileRepositoryWrapper != null)
@@ -363,19 +375,17 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityJoined(string communityId, CommunityResultCardView cardView)
         {
             cardView.SetActonLoadingActive(true);
+            CommunityJoined?.Invoke(communityId);
+        }
 
-            CommunityData? communityData = GetResultCommunityById(communityId);
-            if (communityData == null)
-                return;
-
-            CommunityJoined?.Invoke(communityData.id);
+        private void OnCommunityRequestedToJoin(string communityId, CommunityResultCardView cardView)
+        {
+            cardView.SetActonLoadingActive(true);
+            CommunityRequestedToJoin?.Invoke(communityId);
         }
 
         private void OnInviteSubViewCommunityProfileOpened(string communityId) =>
             CommunityProfileOpened?.Invoke(communityId);
-
-        private void OnInviteSubViewCommunityJoined(string communityId) =>
-            CommunityJoined?.Invoke(communityId);
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
