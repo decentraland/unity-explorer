@@ -100,14 +100,43 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
                     float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
 
-                    rotation.y -= pointerEventData.delta.x * rotationModifier;
-                    var quaternion = Quaternion.Euler(rotation);
+                    // Inertia value: 0 = no smoothing, higher = more smoothing
+                    float inertia = cameraSettings.rotationInertia;
 
-                    characterPreviewAvatarContainer.rotationTarget.rotation = quaternion;
+                    if (inertia <= 0f)
+                    {
+                        // No inertia, apply raw mouse delta
+                        characterPreviewAvatarContainer.SetSmoothedDeltaX(-pointerEventData.delta.x);
+                    }
+                    else
+                    {
+                        // Smoothly interpolate from previous value to new delta
+                        float smoothed = Mathf.Lerp(
+                            characterPreviewAvatarContainer.SmoothedDeltaX,
+                            -pointerEventData.delta.x,
+                            Time.deltaTime * inertia
+                        );
+                        characterPreviewAvatarContainer.SetSmoothedDeltaX(smoothed);
+                    }
+
+                    Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
+                    rotation.y += characterPreviewAvatarContainer.SmoothedDeltaX * rotationModifier;
+                    characterPreviewAvatarContainer.rotationTarget.rotation = Quaternion.Euler(rotation);
+
                     break;
+
+                    // if (!cameraSettings.rotationEnabled) return;
+                    //
+                    // Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
+                    // float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
+                    //
+                    // rotation.y -= pointerEventData.delta.x * rotationModifier;
+                    // var quaternion = Quaternion.Euler(rotation);
+                    //
+                    // characterPreviewAvatarContainer.rotationTarget.rotation = quaternion;
+                    // break;
                 }
             }
         }

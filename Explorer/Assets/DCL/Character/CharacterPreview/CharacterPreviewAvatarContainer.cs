@@ -22,6 +22,10 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
         [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
 
+        private float smoothedDeltaX = 0f;
+
+        public float SmoothedDeltaX => smoothedDeltaX;
+
         public void Dispose()
         {
             StopCameraTween();
@@ -58,6 +62,11 @@ namespace DCL.CharacterPreview
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
+
+        public void SetSmoothedDeltaX(float newDelta)
+        {
+            smoothedDeltaX = newDelta;
+        }
     }
 
     [Serializable]

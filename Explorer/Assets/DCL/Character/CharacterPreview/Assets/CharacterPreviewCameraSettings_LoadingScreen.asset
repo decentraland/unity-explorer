@@ -28,6 +28,7 @@ MonoBehaviour:
     <fieldOfViewLimits>k__BackingField: {x: 40, y: 16}
     <rotationEnabled>k__BackingField: 1
     <rotationModifier>k__BackingField: 10
+    <rotationInertia>k__BackingField: 5
   <cursorSettings>k__BackingField:
   - inputAction: 1
     cursorSprite: {fileID: 21300000, guid: d34aedda08e64344091b34deada8211e, type: 3}
