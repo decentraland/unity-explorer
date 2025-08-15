@@ -10,7 +10,11 @@ namespace DCL.SkyBox
             this.states = states;
         }
 
-        public ISkyboxState? CurrentState { get; set; }
+        public ISkyboxState? CurrentState
+        {
+            get => currentState;
+            set => currentState = value;
+        }
 
         public void Update(float dt)
         {
