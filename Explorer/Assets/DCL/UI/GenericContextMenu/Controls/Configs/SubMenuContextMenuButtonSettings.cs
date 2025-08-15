@@ -19,7 +19,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly GenericContextMenuParameter.GenericContextMenu subMenu;
         internal readonly float anchorPadding;
 
-        public delegate UniTask SettingsFillingDelegate(GenericContextMenuParameter.GenericContextMenu contextMenu, CancellationToken ct);
+        public delegate UniTask SettingsFillingDelegate(GenericContextMenuParameter.GenericContextMenu contextSubMenu, CancellationToken ct);
 
         internal readonly SettingsFillingDelegate asyncSettingsFillingDelegate;
 

@@ -624,7 +624,9 @@ namespace Global.Dynamic
                 friendOnlineStatusCacheProxy,
                 profileRepository,
                 sharedSpaceManager,
-                includeVoiceChat);
+                includeVoiceChat,
+                includeCommunities,
+                communitiesDataProvider);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,

@@ -42,7 +42,6 @@ namespace DCL.UI.GenericContextMenu
         private readonly ControlsPoolManager controlsPoolManager;
         private NativeArray<float3> worldRectCorners;
         private readonly ContextMenuOpenDirection[] openDirections = EnumUtils.Values<ContextMenuOpenDirection>();
-        private readonly Queue<DeferredConfig> deferredConfigs = new ();
 
         private NativeArray<ContextMenuOpenDirection> fallbackDirectionsCache;
         private int fallbackDirectionsCount;
@@ -126,6 +125,7 @@ namespace DCL.UI.GenericContextMenu
             {
                 if (queuedDeferredConfig.SettingsFillingDelegate != null)
                 {
+                    // First it removes all the previous items of the submenu
                     queuedDeferredConfig.Config.ClearControls();
 
                     for(int i = 0; i < queuedDeferredConfig.ParentComponent.container.transform.childCount; ++i)
@@ -139,6 +139,7 @@ namespace DCL.UI.GenericContextMenu
                         }
                     }
 
+                    // Calls the function to add the new items to the submenu, which is implemented by the caller
                     settingsFillingCts = settingsFillingCts.SafeRestart();
                     await queuedDeferredConfig.SettingsFillingDelegate(queuedDeferredConfig.Config, settingsFillingCts.Token);
                 }
@@ -157,6 +158,8 @@ namespace DCL.UI.GenericContextMenu
         {
             float totalHeight = 0;
             bool needsLayoutRebuild = false;
+
+            Queue<DeferredConfig> deferredConfigs = new ();
 
             for (var i = 0; i < contextMenuConfig.contextMenuSettings.Count; i++)
             {
@@ -199,7 +202,7 @@ namespace DCL.UI.GenericContextMenu
             if (needsLayoutRebuild)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(container.controlsContainer);
 
-            if (deferredConfigs.Count > 0)
+            while(deferredConfigs.Count > 0)
             {
                 DeferredConfig queuedDeferredConfig = deferredConfigs.Dequeue();
 

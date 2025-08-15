@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -22,10 +25,12 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using Segment.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Types;
+using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
 namespace DCL.UI.GenericContextMenu.Controllers
 {
@@ -63,6 +68,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
@@ -79,7 +85,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
-            bool includeVoiceChat)
+            bool includeVoiceChat,
+            bool includeCommunities,
+            CommunitiesDataProvider communitiesDataProvider)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -94,6 +102,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.communitiesDataProvider = communitiesDataProvider;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -116,6 +125,54 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(contextMenuCallButton)
                          .AddControl(contextMenuJumpInButton)
                          .AddControl(contextMenuBlockUserButton);
+
+            if (includeCommunities)
+                contextMenu.AddControl(new SubMenuContextMenuButtonSettings(contextMenuSettings.InviteToCommunityConfig.Text,
+                                                              contextMenuSettings.InviteToCommunityConfig.Sprite,
+                                                              new GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH,
+                                                                                         verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING,
+                                                                                         elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING,
+                                                                                         offsetFromTarget: CONTEXT_MENU_OFFSET),
+                                                              asyncSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync));
+        }
+
+        private async UniTask CreateInvitationSubmenuItemsAsync(GenericContextMenuParameter.GenericContextMenu contextSubMenu, CancellationToken ct)
+        {
+            await UniTask.Delay(2000, DelayType.DeltaTime, PlayerLoopTiming.Update, ct);
+
+            if(ct.IsCancellationRequested)
+                return;
+
+            var scroll = new ScrollableButtonListControlSettings(CONTEXT_MENU_ELEMENTS_SPACING, 600, OnScrollviewItemClicked, verticalLayoutPadding:CONTEXT_MENU_VERTICAL_LAYOUT_PADDING);
+            contextSubMenu.AddControl(scroll);
+
+            Result<GetUserCommunitiesResponse> response = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, 99, ct).SuppressToResultAsync();
+
+            List<string> items = new List<string>();
+
+            if (response.Success)
+            {
+                foreach (GetUserCommunitiesData.CommunityData community in response.Value.data.results)
+                    items.Add(community.name);
+             //       contextSubMenu.AddControl(new SimpleButtonContextMenuControlSettings(community.name, () => OnInviteToCommunityButtonClicked(community.id)));
+                scroll.SetData(items);
+            }
+            else
+            {
+                // TODO
+            }
+        }
+
+        private void OnScrollviewItemClicked(int itemIndex)
+        {
+            Debug.Log(itemIndex);
+        }
+
+        private void OnInviteToCommunityButtonClicked(string communityId)
+        {
+            Debug.Log("INVITING TO: " + communityId);
+
+            // communitiesDataProvider.SendInvitation
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
