@@ -24,7 +24,7 @@ namespace DCL.Interaction.HoverCanvas
             /// </summary>
             public string Key;
 
-            public Sprite Icon;
+            public string IconClass;
         }
     }
 }
