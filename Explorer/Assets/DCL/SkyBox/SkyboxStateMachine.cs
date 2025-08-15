@@ -10,7 +10,7 @@ namespace DCL.SkyBox
             this.states = states;
         }
 
-        public ISkyboxState? CurrentState => currentState;
+        public ISkyboxState? CurrentState { get; set; }
 
         public void Update(float dt)
         {
@@ -18,21 +18,21 @@ namespace DCL.SkyBox
             {
                 if (!state.Applies()) continue;
 
-                if (currentState == state)
+                if (CurrentState == state)
                     state.Update(dt);
                 else
                 {
-                    currentState?.Exit();
-                    currentState = state;
-                    currentState.Enter();
+                    CurrentState?.Exit();
+                    CurrentState = state;
+                    CurrentState.Enter();
                 }
 
                 return;
             }
 
             // If we reach here, no state applies, including current
-            currentState?.Exit();
-            currentState = null;
+            CurrentState?.Exit();
+            CurrentState = null;
         }
     }
 }

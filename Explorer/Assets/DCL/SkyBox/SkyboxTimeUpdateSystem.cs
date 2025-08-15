@@ -18,7 +18,7 @@ namespace DCL.SkyBox
         private readonly SkyboxStateMachine stateMachine;
         private readonly Entity skyboxEntity;
 
-        private bool needsTransitionReset;
+        private ISkyboxState globalTimeState;
 
         private SkyboxTimeUpdateSystem(World world,
             SkyboxSettingsAsset skyboxSettings,
@@ -29,33 +29,29 @@ namespace DCL.SkyBox
         {
             var transition = new InterpolateTimeOfDayState(skyboxSettings);
 
+            globalTimeState = new GlobalTimeState(skyboxSettings, transition);
+
             stateMachine = new SkyboxStateMachine(new ISkyboxState[]
             {
                 new SDKComponentState(skyboxSettings, sceneRestrictionController, transition, scenesCache),
                 new SceneMetadataState(scenesCache, skyboxSettings, sceneRestrictionController, transition),
                 new UIOverrideState(skyboxSettings, transition),
-                new GlobalTimeState(skyboxSettings, transition),
+                globalTimeState,
             });
 
             this.skyboxSettings = skyboxSettings;
             this.skyboxRenderController = skyboxRenderController;
             this.skyboxEntity = skyboxEntity;
-
-            this.needsTransitionReset = false;
         }
 
         protected override void Update(float deltaTime)
         {
             if (World.Has<PauseSkyboxTimeUpdate>(skyboxEntity))
             {
-                needsTransitionReset = true;
+                // In case a transition is needed after the time update is resumed,
+                // we set the global time state
+                stateMachine.CurrentState = globalTimeState;
                 return;
-            }
-
-            if (needsTransitionReset)
-            {
-                needsTransitionReset = false;
-                stateMachine.CurrentState?.Enter();
             }
 
             stateMachine.Update(deltaTime);
