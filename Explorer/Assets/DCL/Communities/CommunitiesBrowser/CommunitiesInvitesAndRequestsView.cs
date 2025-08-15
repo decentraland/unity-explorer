@@ -5,12 +5,15 @@ using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesInvitesAndRequestsView : MonoBehaviour
     {
+        private const int INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY = 5;
+
         public event Action? InvitesAndRequestsButtonClicked;
         public event Action<string>? CommunityProfileOpened;
 
@@ -35,6 +38,8 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject requestsEmptyContainer = null!;
         [SerializeField] private TMP_Text requestsTitleText = null!;
 
+        private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
+        private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
         private readonly List<CommunityResultCardView> currentInvites = new ();
         private readonly List<CommunityResultCardView> currentRequests = new ();
         private ThumbnailLoader? thumbnailLoader;
@@ -43,6 +48,18 @@ namespace DCL.Communities.CommunitiesBrowser
         private void Awake()
         {
             invitesAndRequestsButton.onClick.AddListener(() => InvitesAndRequestsButtonClicked?.Invoke());
+
+            invitedCommunityCardsPool = new ObjectPool<CommunityResultCardView>(
+                InstantiateInvitedCommunityCardPrefab,
+                defaultCapacity: INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY,
+                actionOnGet: invitedCommunityCardView => invitedCommunityCardView.gameObject.SetActive(true),
+                actionOnRelease: invitedCommunityCardView => invitedCommunityCardView.gameObject.SetActive(false));
+
+            requestedToJoinCommunityCardsPool = new ObjectPool<CommunityResultCardView>(
+                InstantiateRequestedToJoinCommunityCardPrefab,
+                defaultCapacity: INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY,
+                actionOnGet: requestedToJoinCommunityCardView => requestedToJoinCommunityCardView.gameObject.SetActive(true),
+                actionOnRelease: requestedToJoinCommunityCardView => requestedToJoinCommunityCardView.gameObject.SetActive(false));
         }
 
         private void OnDestroy()
@@ -66,7 +83,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void ClearInvitesItems()
         {
             foreach (var invitedCommunity in currentInvites)
-                Destroy(invitedCommunity.gameObject);
+                invitedCommunityCardsPool.Release(invitedCommunity);
 
             currentInvites.Clear();
             SetInvitesAsEmpty(true);
@@ -92,7 +109,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void ClearRequestsItems()
         {
             foreach (var requestedCommunity in currentRequests)
-                Destroy(requestedCommunity.gameObject);
+                requestedToJoinCommunityCardsPool.Release(requestedCommunity);
 
             currentRequests.Clear();
             SetRequestsAsEmpty(true);
@@ -130,10 +147,15 @@ namespace DCL.Communities.CommunitiesBrowser
             requestsGridContainer.gameObject.SetActive(!isEmpty);
         }
 
+        private CommunityResultCardView InstantiateInvitedCommunityCardPrefab()
+        {
+            CommunityResultCardView invitedCommunityCardView = Instantiate(communityCardPrefab, invitesGridContainer);
+            return invitedCommunityCardView;
+        }
+
         private void CreateAndSetupInviteCard(GetUserInviteRequestData.UserInviteRequestData community)
         {
-            // TODO (Santi): Create a pool!
-            CommunityResultCardView invitedCommunityCardView = Instantiate(communityCardPrefab, invitesGridContainer);
+            CommunityResultCardView invitedCommunityCardView = invitedCommunityCardsPool.Get();
 
             // Setup card data
             invitedCommunityCardView.SetCommunityId(community.communityId);
@@ -159,10 +181,16 @@ namespace DCL.Communities.CommunitiesBrowser
             currentInvites.Add(invitedCommunityCardView);
         }
 
+        private CommunityResultCardView InstantiateRequestedToJoinCommunityCardPrefab()
+        {
+            CommunityResultCardView requestedToJoinCommunityCardView = Instantiate(communityCardPrefab, requestsGridContainer);
+            return requestedToJoinCommunityCardView;
+        }
+
         private void CreateAndSetupRequestCard(GetUserInviteRequestData.UserInviteRequestData community)
         {
             // TODO (Santi): Create a pool!
-            CommunityResultCardView requestedCommunityCardView = Instantiate(communityCardPrefab, requestsGridContainer);
+            CommunityResultCardView requestedCommunityCardView = requestedToJoinCommunityCardsPool.Get();
 
             // Setup card data
             requestedCommunityCardView.SetCommunityId(community.communityId);
