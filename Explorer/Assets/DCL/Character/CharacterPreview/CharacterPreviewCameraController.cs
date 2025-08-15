@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -17,6 +18,7 @@ namespace DCL.CharacterPreview
             this.cameraSettings = cameraSettings;
 
             characterPreviewInputEventBus.OnDraggingEvent += OnDrag;
+            characterPreviewInputEventBus.OnDragReleaseEvent += OnDragRelease;
             characterPreviewInputEventBus.OnScrollEvent += OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
 
@@ -141,9 +143,39 @@ namespace DCL.CharacterPreview
             }
         }
 
+        private void OnDragRelease(PointerEventData pointerEventData)
+        {
+            if (pointerEventData.button == PointerEventData.InputButton.Left)
+            {
+                float currentDelta = characterPreviewAvatarContainer.SmoothedDeltaX;
+
+                if (Mathf.Abs(currentDelta) < 0.001f)
+                    return;
+
+                // Duration proportional to angular velocity
+                float duration = Mathf.Abs(currentDelta) * cameraSettings.rotationInertia;
+
+                // Tween velocity to 0
+                characterPreviewAvatarContainer.TweenRotationTo(0f, duration, Ease.OutQuad);
+            }
+        }
+
+        private void TweenRotationTo(float targetValue, float duration, Ease ease)
+        {
+            characterPreviewAvatarContainer.StopRotationTween();
+
+            characterPreviewAvatarContainer.RotationTween = DOTween.To(() => smoothedDeltaX,
+                                                                        x => smoothedDeltaX = x,
+                                                                        targetValue,
+                                                                        duration)
+                                                                   .SetEase(ease)
+                                                                   .OnComplete(() => rotationTween = null);
+        }
+
         public void Dispose()
         {
             characterPreviewInputEventBus.OnDraggingEvent -= OnDrag;
+            characterPreviewInputEventBus.OnDragReleaseEvent -= OnDragRelease;
             characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
             characterPreviewAvatarContainer.Dispose();
