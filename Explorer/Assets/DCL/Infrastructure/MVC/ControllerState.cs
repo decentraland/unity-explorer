@@ -21,5 +21,10 @@
         ///     View is being hidden.
         /// </summary>
         ViewHiding = 3,
+
+        /// <summary>
+        ///     View is becoming visible.
+        /// </summary>
+        ViewShowing = 4
     }
 }

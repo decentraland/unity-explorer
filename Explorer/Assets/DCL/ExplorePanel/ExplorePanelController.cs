@@ -53,6 +53,8 @@ namespace DCL.ExplorePanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
+        public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
+
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
