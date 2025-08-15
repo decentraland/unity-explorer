@@ -1,15 +1,14 @@
-﻿using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities
 {
-    /// <summary>
-    ///     Catalog with assets' references
-    /// </summary>
-    [Serializable]
-    public class DebugViewsCatalog
+    [CreateAssetMenu(fileName = "DebugViewsCatalogSO", menuName = "DebugViewsCatalogSO")]
+    public class DebugViewsCatalogSO: ScriptableObject
     {
+        [field: SerializeField]
+        public UIDocument RootDocumentPrefab { get; private set; }
+
         [field: SerializeField]
         public VisualTreeAsset Widget { get; private set; }
 

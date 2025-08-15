@@ -81,13 +81,9 @@ namespace Global.Dynamic
             this.world = world;
         }
 
-        public async UniTask PreInitializeSetupAsync(UIDocument cursorRoot,
-            UIDocument debugUiRoot,
-            CancellationToken token)
+        public async UniTask PreInitializeSetupAsync(CancellationToken token)
         {
             splashScreen.Show();
-
-            cursorRoot.EnsureNotNull();
 
             string realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
@@ -103,7 +99,6 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            UIDocument sceneUIRoot,
             bool hasDebugFlag,
             CancellationToken ct
         ) =>
@@ -127,7 +122,6 @@ namespace Global.Dynamic
                 bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
-                sceneUIRoot,
                 profileRepositoryProxy,
                 ct,
                 hasDebugFlag
@@ -139,9 +133,6 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot,
-            UIDocument scenesUIRoot,
-            UIDocument cursorRoot,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
@@ -157,9 +148,6 @@ namespace Global.Dynamic
                 bootstrapContainer.AssetsProvisioner,
                 staticContainer,
                 scenePluginSettingsContainer,
-                uiToolkitRoot,
-                scenesUIRoot,
-                cursorRoot,
                 dynamicSettings,
                 bootstrapContainer.Web3Authenticator,
                 bootstrapContainer.IdentityCache,

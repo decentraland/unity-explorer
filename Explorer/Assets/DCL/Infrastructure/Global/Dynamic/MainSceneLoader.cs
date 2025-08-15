@@ -7,6 +7,7 @@ using DCL.ApplicationBlocklistGuard;
 using DCL.ApplicationGuards;
 using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
+using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
@@ -68,18 +69,11 @@ namespace Global.Dynamic
         [SerializeField] private DecentralandEnvironment decentralandEnvironment;
 
         [Space]
-        [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
-
-        [Space]
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
         [Header("REFERENCES")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
-        [SerializeField] private UIDocument uiToolkitRoot = null!;
-        [SerializeField] private UIDocument scenesUIRoot = null!;
-        [SerializeField] private UIDocument cursorRoot = null!;
-        [SerializeField] private UIDocument debugUiRoot = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private SplashScreen splashScreen = null!;
@@ -167,17 +161,20 @@ namespace Global.Dynamic
             var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
+            var assetsProvisioner = new AddressablesProvisioner();
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
-            var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE)).Builder;
+            var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
+            var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainerBuilder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
+                assetsProvisioner,
                 debugSettings,
                 sceneLoaderSettings: settings,
                 decentralandUrlsSource,
@@ -200,12 +197,12 @@ namespace Global.Dynamic
 
             try
             {
-                await bootstrap.PreInitializeSetupAsync(cursorRoot, debugUiRoot, destroyCancellationToken);
+                await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
                 bool hasDebugFlag = applicationParametersParser.HasDebugFlag();
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, hasDebugFlag, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, hasDebugFlag, ct);
 
                 if (!isLoaded)
                 {
@@ -227,9 +224,6 @@ namespace Global.Dynamic
                     scenePluginSettingsContainer,
                     settings,
                     dynamicSettings,
-                    uiToolkitRoot,
-                    scenesUIRoot,
-                    cursorRoot,
                     backgroundMusic,
                     worldInfoTool.EnsureNotNull(),
                     playerEntity,
@@ -270,7 +264,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
+                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 

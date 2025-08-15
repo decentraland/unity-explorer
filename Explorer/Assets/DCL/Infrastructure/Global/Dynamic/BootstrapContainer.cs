@@ -69,6 +69,7 @@ namespace Global.Dynamic
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(
+            IAssetsProvisioner assetsProvisioner,
             DebugSettings.DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -93,7 +94,7 @@ namespace Global.Dynamic
             {
                 IdentityCache = identityCache,
                 Web3AccountFactory = web3AccountFactory,
-                AssetsProvisioner = new AddressablesProvisioner(),
+                AssetsProvisioner = assetsProvisioner,
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
                 LaunchMode = realmLaunchSettings,

@@ -9,7 +9,7 @@ namespace DCL.Interaction.HoverCanvas
     public struct HoverCanvasSettings
     {
         [field: SerializeField]
-        public AssetReferenceVisualTreeAsset HoverCanvasAsset { get; private set; }
+        public UIDocumentRef HoverUIDocument { get; private set; }
 
         [field: SerializeField]
         public InputButtonSettings[] InputButtons { get; private set; }

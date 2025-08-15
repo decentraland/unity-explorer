@@ -112,8 +112,8 @@ MonoBehaviour:
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <hoverCanvasSettings>k__BackingField:
-          <HoverCanvasAsset>k__BackingField:
-            m_AssetGUID: 8fd0fd0188702304689c461c6aacc7c5
+          <HoverUIDocument>k__BackingField:
+            m_AssetGUID: 6cfe7986a3d81484d96b5962ae4f300f
             m_SubObjectName: 
             m_SubObjectType: 
             m_SubObjectGUID: 
@@ -572,8 +572,8 @@ MonoBehaviour:
     - rid: 4132209997426458630
       type: {class: InputSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <CrosshairCanvasAsset>k__BackingField:
-          m_AssetGUID: bf82184de91c3944b8de02d57d7dd151
+        <CrosshairUIDocument>k__BackingField:
+          m_AssetGUID: fb7327249a7554d50afaf729d15aa697
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
