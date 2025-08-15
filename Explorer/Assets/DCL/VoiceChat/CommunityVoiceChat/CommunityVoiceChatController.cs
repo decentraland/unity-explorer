@@ -328,6 +328,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void SetUserEntryParent(bool isSpeaker, PlayerEntryView entryView)
         {
+            entryView.isSpeakingIcon.gameObject.SetActive(isSpeaker);
             entryView.transform.parent = isSpeaker ? inCallController.SpeakersParent : view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
             RefreshCounters();
