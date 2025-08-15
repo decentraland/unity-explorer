@@ -19,9 +19,16 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public RectTransform RightAnchor { get; private set; }
         [field: SerializeField] public RectTransform LeftAnchor { get; private set; }
 
-        private ControlsContainerView container;
+        internal ControlsContainerView container;
         private bool isHovering;
         private CancellationTokenSource hoverCts;
+
+        private Action containerConfigurationDelegate;
+
+        public void SetContainerCreationMethod(Action containerConfigurationDelegate)
+        {
+            this.containerConfigurationDelegate = containerConfigurationDelegate;
+        }
 
         public void SetContainer(ControlsContainerView container)
         {
@@ -31,7 +38,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private void OnEnable()
         {
-            ButtonComponent.onClick.AddListener(() => container.gameObject.SetActive(!container.gameObject.activeSelf));
+            ButtonComponent.onClick.AddListener(() => Show(!container.gameObject.activeSelf));
         }
 
         private void OnDisable()
@@ -63,7 +70,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             isHovering = true;
             hoverCts.SafeCancelAndDispose();
-            container.gameObject.SetActive(true);
+            Show(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -73,6 +80,18 @@ namespace DCL.UI.GenericContextMenu.Controls
             WaitAndTriggerExitAsync(hoverCts.Token).Forget();
         }
 
+        private void Show(bool show)
+        {
+            if(show == container.gameObject.activeSelf)
+                return;
+
+            container.gameObject.SetActive(show);
+
+            // Asynchronous submenus are configured when shown
+            if (show && containerConfigurationDelegate != null)
+                containerConfigurationDelegate();
+        }
+
         private async UniTaskVoid WaitAndTriggerExitAsync(CancellationToken token)
         {
             try
@@ -80,7 +99,7 @@ namespace DCL.UI.GenericContextMenu.Controls
                 await UniTask.Delay(UnHoverDebounceDurationMs, cancellationToken: token);
 
                 if (!isHovering)
-                    container.gameObject.SetActive(false);
+                    Show(false);
             }
             catch (Exception) { }
         }
