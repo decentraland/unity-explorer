@@ -136,6 +136,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
                                                               asyncSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync));
         }
 
+        private GetUserCommunitiesData.CommunityData[] lastCommunityData;
+        private CancellationTokenSource invitationActionCts;
+
         private async UniTask CreateInvitationSubmenuItemsAsync(GenericContextMenuParameter.GenericContextMenu contextSubMenu, CancellationToken ct)
         {
             await UniTask.Delay(2000, DelayType.DeltaTime, PlayerLoopTiming.Update, ct);
@@ -143,18 +146,23 @@ namespace DCL.UI.GenericContextMenu.Controllers
             if(ct.IsCancellationRequested)
                 return;
 
-            var scroll = new ScrollableButtonListControlSettings(CONTEXT_MENU_ELEMENTS_SPACING, 600, OnScrollviewItemClicked, verticalLayoutPadding:CONTEXT_MENU_VERTICAL_LAYOUT_PADDING);
+            // Adds the scroll view
+            var scroll = new ScrollableButtonListControlSettings(CONTEXT_MENU_ELEMENTS_SPACING, 600, OnInviteToCommunitySubmenuScrollViewItemClicked, verticalLayoutPadding:CONTEXT_MENU_VERTICAL_LAYOUT_PADDING);
             contextSubMenu.AddControl(scroll);
 
+            // Asks the server for the data of the communities to which the user can be invited
             Result<GetUserCommunitiesResponse> response = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, 99, ct).SuppressToResultAsync();
 
             List<string> items = new List<string>();
 
             if (response.Success)
             {
-                foreach (GetUserCommunitiesData.CommunityData community in response.Value.data.results)
-                    items.Add(community.name);
-             //       contextSubMenu.AddControl(new SimpleButtonContextMenuControlSettings(community.name, () => OnInviteToCommunityButtonClicked(community.id)));
+                lastCommunityData = response.Value.data.results;
+
+                foreach (GetUserCommunitiesData.CommunityData community in lastCommunityData)
+                    if (community.role == CommunityMemberRole.moderator || community.role == CommunityMemberRole.owner) // TODO: remove this once the endpoint is implemented
+                        items.Add(community.name);
+
                 scroll.SetData(items);
             }
             else
@@ -163,16 +171,22 @@ namespace DCL.UI.GenericContextMenu.Controllers
             }
         }
 
-        private void OnScrollviewItemClicked(int itemIndex)
+        private async void OnInviteToCommunitySubmenuScrollViewItemClicked(int itemIndex)
         {
             Debug.Log(itemIndex);
-        }
 
-        private void OnInviteToCommunityButtonClicked(string communityId)
-        {
-            Debug.Log("INVITING TO: " + communityId);
+            invitationActionCts = invitationActionCts.SafeRestart();
+            Result<bool> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(lastCommunityData[itemIndex].id, targetProfile.UserId, InviteRequestAction.invite, invitationActionCts.Token).SuppressToResultAsync();
 
-            // communitiesDataProvider.SendInvitation
+            if (result.Success && result.Value)
+            {
+                Debug.Log($"INVITED! {targetProfile.DisplayName} ({targetProfile.UserId}) to {lastCommunityData[itemIndex].name} ({lastCommunityData[itemIndex].id})");
+            }
+            else
+            {
+                Debug.LogError($"NOT INVITED! {targetProfile.DisplayName} ({targetProfile.UserId}) to {lastCommunityData[itemIndex].name} ({lastCommunityData[itemIndex].id})");
+                // TODO
+            }
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
