@@ -1074,8 +1074,9 @@ GameObject:
   - component: {fileID: 8128219955958824478}
   - component: {fileID: 7128006657025016999}
   - component: {fileID: 8478992858286646769}
+  - component: {fileID: 4407985999973896273}
   m_Layer: 0
-  m_Name: Image
+  m_Name: PadLock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1128,7 +1129,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 1979326266a1bec44bc70519850f7a5a, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1138,6 +1139,26 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4407985999973896273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4861453223584964866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9688e6de611b437aaa1cbd8dd2bcd932, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 8478992858286646769}
+  spriteAsset:
+    m_AssetGUID: 1979326266a1bec44bc70519850f7a5a
+    m_SubObjectName: PadlockImg
+    m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
 --- !u!1 &5312144585228980273
 GameObject:
   m_ObjectHideFlags: 0

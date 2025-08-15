@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -42,7 +43,7 @@ namespace DCL.SceneLoadingScreens
 
             ct.ThrowIfCancellationRequested();
 
-            fallbackTips = await GetAsync(tipsTable, imagesTable, ct);
+            fallbackTips = Get(tipsTable, imagesTable, ct);
         }
 
         public async UniTask<SceneTips> GetAsync(CancellationToken ct) =>
@@ -61,24 +62,24 @@ namespace DCL.SceneLoadingScreens
             return await Get(tipsTable, imagesTable, ct);*/
             fallbackTips;
 
-        private async UniTask<SceneTips> GetAsync(StringTable tipsTable, AssetTable? imagesTable, CancellationToken ct)
+        private SceneTips Get(StringTable tipsTable, AssetTable? imagesTable, CancellationToken ct)
         {
             int tipCount = tipsTable.Count / 2;
             var tips = new SceneTips.Tip[tipCount];
 
             for (var i = 0; i < tipCount; i++)
             {
-                Sprite? sprite = null;
+                ContextualLocalizedAsset<Sprite>? sprite = null;
 
                 if (imagesTable != null)
-                {
-                    sprite = await new LocalizedAsset<Sprite>
+                    sprite = new ContextualLocalizedAsset<Sprite>(
+                        new LocalizedAsset<Sprite>
                         {
                             TableReference = imagesTable.TableCollectionName,
                             TableEntryReference = $"IMAGE-{i}",
-                        }.LoadAssetAsync()
-                         .Task;
-                }
+                        },
+                        imagesTable
+                    );
 
                 ct.ThrowIfCancellationRequested();
 

@@ -1,8 +1,10 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using Utility.Ownership;
 
 namespace DCL.CharacterPreview
 {
@@ -11,12 +13,14 @@ namespace DCL.CharacterPreview
         private readonly CharacterPreviewCursorContainer cursorContainer;
         private readonly CharacterPreviewInputEventBus inputEventBus;
         private readonly Dictionary<CharacterPreviewInputAction, Sprite> cursorReplacementSprites;
+        private readonly Box<bool> disposed;
 
         public CharacterPreviewCursorController(CharacterPreviewCursorContainer cursorContainer, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewInputCursorSetting[] cursorSettings)
         {
             this.cursorContainer = cursorContainer;
             this.inputEventBus = inputEventBus;
             cursorReplacementSprites = DictionaryPool<CharacterPreviewInputAction, Sprite>.Get();
+            disposed = new Box<bool>(false);
 
             for (var index = 0; index < cursorSettings.Length; index++)
             {
@@ -57,38 +61,35 @@ namespace DCL.CharacterPreview
 
         private void ReplaceCursor(PointerEventData pointerEventData)
         {
-            if (pointerEventData.button != PointerEventData.InputButton.Middle)
+            static CharacterPreviewInputAction? FromInputButton(PointerEventData.InputButton inputButton) =>
+                inputButton switch
+                {
+                    PointerEventData.InputButton.Right => CharacterPreviewInputAction.VerticalPan,
+                    PointerEventData.InputButton.Left => CharacterPreviewInputAction.Rotate,
+                    _ => null,
+                };
+
+            CharacterPreviewInputAction? action = FromInputButton(pointerEventData.button);
+            if (action.HasValue && cursorReplacementSprites.TryGetValue(action.Value, out Sprite sprite))
             {
-                var cursorOverridePresent = false;
-
-                switch (pointerEventData.button)
-                {
-                    case PointerEventData.InputButton.Right:
-                        cursorOverridePresent = cursorReplacementSprites.TryGetValue(CharacterPreviewInputAction.VerticalPan, out Sprite panSprite);
-
-                        if (cursorOverridePresent) { cursorContainer.CursorOverrideImage.sprite = panSprite; }
-
-                        break;
-                    case PointerEventData.InputButton.Left:
-                        cursorOverridePresent = cursorReplacementSprites.TryGetValue(CharacterPreviewInputAction.Rotate, out Sprite rotateSprite);
-
-                        if (cursorOverridePresent) { cursorContainer.CursorOverrideImage.sprite = rotateSprite; }
-
-                        break;
-                }
-
-                if (cursorOverridePresent)
-                {
-                    MoveCursor(pointerEventData.position);
-                    cursorContainer.CursorOverrideImage.gameObject.SetActive(true);
-                    Cursor.visible = false;
-                    cursorContainer.CursorOverrideImage.SetNativeSize();
-                }
+                cursorContainer.CursorOverrideImage.sprite = sprite!;
+                MoveCursor(pointerEventData.position);
+                cursorContainer.CursorOverrideImage.gameObject.SetActive(true);
+                Cursor.visible = false;
+                cursorContainer.CursorOverrideImage.SetNativeSize();
             }
         }
 
         public void Dispose()
         {
+            if (disposed.Value)
+            {
+                ReportHub.LogError(ReportCategory.UI, "Attempt to double dispose");
+                return;
+            }
+
+            disposed.Value = true;
+
             inputEventBus.OnPointerUpEvent -= OnPointerUp;
             inputEventBus.OnPointerDownEvent -= OnPointerDown;
             inputEventBus.OnDraggingEvent -= OnDrag;
