@@ -1,17 +1,12 @@
 ﻿using DG.Tweening;
 using System;
-using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Debug = UnityEngine.Debug;
 
 namespace DCL.CharacterPreview
 {
     public readonly struct CharacterPreviewCameraController : IDisposable
     {
-        private const float FULL_SCREEN_DRAG_DEGREES = 360f;     // Degrees rotated for a full screen drag
-        private const float MIN_ROTATION_TWEEN_DURATION = 0.01f; // Seconds for smallest rotation input
-
         private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
         private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly CharacterPreviewCameraSettings cameraSettings;
@@ -71,7 +66,7 @@ namespace DCL.CharacterPreview
                 characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
 
-            characterPreviewAvatarContainer.TweenFovTo(newFieldOfView, cameraSettings.fieldOfViewInertiaDuration, cameraSettings.fieldOfViewInertiaCurve);
+            characterPreviewAvatarContainer.TweenFovTo(newFieldOfView, cameraSettings.fieldOfViewEaseDurationSeconds, cameraSettings.fieldOfViewEase);
         }
 
         private void OnDrag(PointerEventData pointerEventData)
@@ -105,20 +100,23 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    // Normalize delta so it is resolution-independent
-                    float normalizedDelta = pointerEventData.delta.x / Screen.width;
-                    float rotationDelta = normalizedDelta * FULL_SCREEN_DRAG_DEGREES * cameraSettings.rotationSpeed;
+                    float rotationDelta = pointerEventData.delta.x * cameraSettings.degreesPerPixel;
+
+                    // TODO remove after tests
+                    Debug.Log($"rotationDelta: {rotationDelta}");
 
                     float currentValue = characterPreviewAvatarContainer.freeLookCamera.m_XAxis.Value;
                     float targetValue = currentValue + rotationDelta;
 
-                    float minDuration = MIN_ROTATION_TWEEN_DURATION;
-                    float maxDuration = cameraSettings.rotationInertiaDuration;
+                    float minDuration = 0.01f;
+                    float maxDuration = cameraSettings.rotationEaseMaxDurationSeconds;
+                    // Max rotation delta capped with this formula so that over a certain speed it just slows down in maxDuration seconds
+                    float maxDeltaForDuration = Screen.width / 30 * cameraSettings.degreesPerPixel;
 
-                    float speedFactor = Mathf.Clamp01(Mathf.Abs(normalizedDelta));
-                    float duration = Mathf.Lerp(minDuration, maxDuration, speedFactor);
+                    float t = Mathf.Clamp01(Mathf.Abs(rotationDelta) / maxDeltaForDuration);
+                    float duration = Mathf.Lerp(minDuration, maxDuration, t);
 
-                    characterPreviewAvatarContainer.TweenXAxisTo(targetValue, duration, cameraSettings.rotationInertiaCurve);
+                    characterPreviewAvatarContainer.TweenXAxisTo(targetValue, duration, cameraSettings.rotationEase);
 
                     break;
                 }
