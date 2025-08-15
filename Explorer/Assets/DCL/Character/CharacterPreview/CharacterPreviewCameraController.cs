@@ -66,7 +66,7 @@ namespace DCL.CharacterPreview
                 characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
 
-            characterPreviewAvatarContainer.TweenFovTo(newFieldOfView, cameraSettings.fieldOfViewEaseDurationSeconds, cameraSettings.fieldOfViewEase);
+            characterPreviewAvatarContainer.TweenFovTo(newFieldOfView, cameraSettings.fieldOfViewEaseDuration, cameraSettings.fieldOfViewEase);
         }
 
         private void OnDrag(PointerEventData pointerEventData)
@@ -100,20 +100,18 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    float rotationDelta = pointerEventData.delta.x * cameraSettings.degreesPerPixel;
-
-                    // TODO remove after tests
-                    Debug.Log($"rotationDelta: {rotationDelta}");
+                    // Normalize delta to make it resolution-independent
+                    float normalizedDelta = pointerEventData.delta.x / Screen.width;
+                    float baseRotationDelta = normalizedDelta * cameraSettings.rotationModifier;
 
                     float currentValue = characterPreviewAvatarContainer.freeLookCamera.m_XAxis.Value;
-                    float targetValue = currentValue + rotationDelta;
+                    float targetValue = currentValue + baseRotationDelta;
 
                     float minDuration = 0.01f;
-                    float maxDuration = cameraSettings.rotationEaseMaxDurationSeconds;
-                    // Max rotation delta capped with this formula so that over a certain speed it just slows down in maxDuration seconds
-                    float maxDeltaForDuration = Screen.width / 30 * cameraSettings.degreesPerPixel;
+                    float maxDuration = cameraSettings.rotationEaseMaxDuration;
+                    float maxDeltaForDuration = 1f; // delta that maps to maxDuration
 
-                    float t = Mathf.Clamp01(Mathf.Abs(rotationDelta) / maxDeltaForDuration);
+                    float t = Mathf.Clamp01(Mathf.Abs(baseRotationDelta) / maxDeltaForDuration);
                     float duration = Mathf.Lerp(minDuration, maxDuration, t);
 
                     characterPreviewAvatarContainer.TweenXAxisTo(targetValue, duration, cameraSettings.rotationEase);
