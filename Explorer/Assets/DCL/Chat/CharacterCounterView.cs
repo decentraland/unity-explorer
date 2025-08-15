@@ -30,7 +30,10 @@ namespace DCL.Chat
             float fillAmount = (float)currentCount / maxCharacterCount;
             fillerImage.fillAmount = fillAmount;
 
-            fillerImage.color = fillAmount < 0.5f ? lowCountColor : fillAmount < 0.8f ? halfCountColor : fullCountColor;
+            fillerImage.color = fillAmount < 0.5f ? lowCountColor :
+                fillAmount < 0.8f ? halfCountColor : fullCountColor;
+
+            gameObject.SetActive(currentCount > 0);
         }
     }
 }

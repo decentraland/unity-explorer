@@ -58,14 +58,14 @@ namespace SceneRuntime.Apis.Modules.Players
 
             public PlayerListResponse(IParticipantsHub participantsHub)
             {
-                IReadOnlyCollection<string> identities = participantsHub.RemoteParticipantIdentities();
+                IReadOnlyDictionary<string, Participant> identities = participantsHub.RemoteParticipantIdentities();
 
                 using PooledObject<List<Player>> pooledObj = ListPool<Player>.Get(out List<Player>? players);
 
                 // See: https://github.com/decentraland/unity-explorer/issues/3796
                 lock (identities)
                 {
-                    foreach (string identity in identities)
+                    foreach ((string identity, _) in identities)
                     {
                         Participant remote = participantsHub.RemoteParticipant(identity)!;
                         players!.Add(new Player(remote));

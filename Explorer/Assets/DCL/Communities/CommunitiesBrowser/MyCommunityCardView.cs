@@ -15,6 +15,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text userRole = null!;
         [field: SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private Button mainButton = null!;
+        [SerializeField] private ListenersCountView listenersCountView;
 
         private string currentCommunityId;
 

@@ -292,6 +292,8 @@ namespace DCL.AuthenticationScreenFlow
                 }
                 catch (OperationCanceledException) { SwitchState(ViewState.Login); }
                 catch (SignatureExpiredException) { SwitchState(ViewState.Login); }
+                catch (Web3SignatureException) { SwitchState(ViewState.Login); }
+                catch (CodeVerificationException) { SwitchState(ViewState.Login); }
                 catch (ProfileNotFoundException) { SwitchState(ViewState.Login); }
                 catch (Exception e)
                 {
@@ -331,7 +333,7 @@ namespace DCL.AuthenticationScreenFlow
             profile.HasConnectedWeb3 = true;
 
             profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
-            characterPreviewController?.Initialize(profile.Avatar);
+            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
 
             return;
 

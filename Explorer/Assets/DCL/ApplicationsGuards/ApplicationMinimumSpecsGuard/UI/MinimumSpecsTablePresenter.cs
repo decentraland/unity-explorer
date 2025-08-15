@@ -1,44 +1,57 @@
 using System.Collections.Generic;
-using DCL.Diagnostics;
+using System.Linq;
+using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
     public class MinimumSpecsTablePresenter
     {
-        private const string PASS_ICON_SPRITE_TAG = "<sprite name=\"2705\">";
-        private const string FAIL_ICON_SPRITE_TAG = "<sprite name=\"274c\">";
-        
-        private readonly Dictionary<SpecCategory, MinimumSpecsRowView> rowMap;
+        private readonly MinimumSpecsTableView tableView;
+        private readonly List<MinimumSpecsRowView> spawnedRows = new ();
 
         public MinimumSpecsTablePresenter(MinimumSpecsTableView view)
         {
-            rowMap = new Dictionary<SpecCategory, MinimumSpecsRowView>();
-
-            foreach (var row in view.Rows)
-            {
-                if (rowMap.ContainsKey(row.Category))
-                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Duplicate SpecCategory in table: {row.Category}");
-
-                rowMap[row.Category] = row;
-            }
+            tableView = view;
         }
 
         public void Populate(IEnumerable<SpecResult> results)
         {
-            foreach (var result in results)
-            {
-                if (rowMap.TryGetValue(result.Category, out var row))
-                {
-                    string icon = result.IsMet ? PASS_ICON_SPRITE_TAG : FAIL_ICON_SPRITE_TAG;
-                    string formattedActualText = $"{icon} {result.Actual}";
+            ClearSpawnedRows();
 
-                    row.SetTitle(result.Category.ToString());
-                    row.SetRequiredText(result.Required);
-                    row.SetActualText(formattedActualText);
-                }
-                else
-                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"No UI row defined for category: {result.Category}");
+            var unmetResults = results
+                              .Where(r => !r.IsMet)
+                              .ToList();
+
+            if (unmetResults.Count == 0)
+                return;
+
+            PopulateRow(tableView.LastRow, unmetResults[^1]);
+
+            for (var i = 0; i < unmetResults.Count - 1; i++)
+            {
+                MinimumSpecsRowView newRow = Object.Instantiate(tableView.RowTemplate, tableView.RowTemplate.transform.parent);
+
+                PopulateRow(newRow, unmetResults[i]);
+
+                newRow.transform.SetSiblingIndex(tableView.RowTemplate.transform.GetSiblingIndex());
+                newRow.gameObject.SetActive(true);
+                spawnedRows.Add(newRow);
             }
+        }
+
+        private static void PopulateRow(MinimumSpecsRowView row, SpecResult result)
+        {
+            row.SetTitle(result.Category.ToString());
+            row.SetRequiredText(result.Required);
+            row.SetActualText(result.Actual);
+        }
+
+        private void ClearSpawnedRows()
+        {
+            foreach (MinimumSpecsRowView row in spawnedRows)
+                Object.Destroy(row.gameObject);
+
+            spawnedRows.Clear();
         }
     }
 }
