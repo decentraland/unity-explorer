@@ -6,6 +6,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
+using UnityEngine;
 
 namespace DCL.SkyBox
 {
@@ -16,7 +17,8 @@ namespace DCL.SkyBox
         private readonly SkyboxRenderController skyboxRenderController;
         private readonly SkyboxStateMachine stateMachine;
         private readonly Entity skyboxEntity;
-        private bool needsTransitionReload;
+
+        private bool needsTransitionReset;
 
         private SkyboxTimeUpdateSystem(World world,
             SkyboxSettingsAsset skyboxSettings,
@@ -38,21 +40,22 @@ namespace DCL.SkyBox
             this.skyboxSettings = skyboxSettings;
             this.skyboxRenderController = skyboxRenderController;
             this.skyboxEntity = skyboxEntity;
-            this.needsTransitionReload = false;
+
+            this.needsTransitionReset = false;
         }
 
         protected override void Update(float deltaTime)
         {
             if (World.Has<PauseSkyboxTimeUpdate>(skyboxEntity))
             {
-                needsTransitionReload = true;
+                needsTransitionReset = true;
                 return;
             }
 
-            if (needsTransitionReload)
+            if (needsTransitionReset)
             {
+                needsTransitionReset = false;
                 stateMachine.CurrentState?.Enter();
-                needsTransitionReload = false;
             }
 
             stateMachine.Update(deltaTime);

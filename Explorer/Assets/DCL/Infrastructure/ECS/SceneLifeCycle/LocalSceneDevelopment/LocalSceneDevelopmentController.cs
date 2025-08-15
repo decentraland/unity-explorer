@@ -93,7 +93,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                     finally
                     {
                         globalWorld.Remove<StopCharacterMotion>(playerEntity);
-                        globalWorld.Remove<PauseSkyboxTimeUpdate>(playerEntity);
+                        globalWorld.Remove<PauseSkyboxTimeUpdate>(skyboxEntity);
                     }
                 }
                 else if (receiveResult.MessageType == WebSocketMessageType.Close)
