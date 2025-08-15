@@ -1,4 +1,5 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility.Types;
 
@@ -43,10 +44,23 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 ? Result<BoneArray>.ErrorResult($"Cannot map bone array, mismatch count: real {bones.Length}, expected: {COUNT}")
                 : Result<BoneArray>.SuccessResult(new BoneArray(bones));
 
+        public static BoneArray FromOrDefault(Transform[] bones, ReportData reportData)
+        {
+            var boneArrayResult = From(bones);
+
+            if (boneArrayResult.Success == false)
+            {
+                ReportHub.LogError(reportData, $"Cannot instantiate avatar, fallback to default bone array: {boneArrayResult.ErrorMessage}");
+                return NewDefault();
+            }
+
+            return boneArrayResult.Value;
+        }
+
         public static BoneArray NewDefault()
         {
             var inner = new Transform[COUNT];
-            for (int i = 0; i < COUNT; i++) inner[i] = new GameObject().transform;
+            for (int i = 0; i < COUNT; i++) inner[i] = new GameObject("BoneDefault").transform;
             return new BoneArray(inner);
         }
     }

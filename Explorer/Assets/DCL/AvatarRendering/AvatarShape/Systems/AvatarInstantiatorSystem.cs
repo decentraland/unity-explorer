@@ -118,15 +118,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             avatarTransform.ResetLocalTRS();
 
-            var boneArrayResult = BoneArray.From(avatarBase.AvatarSkinnedMeshRenderer.bones!);
-
-            if (boneArrayResult.Success == false)
-            {
-                ReportHub.LogError(GetReportCategory(), $"Cannot instantiate avatar: {boneArrayResult.ErrorMessage}");
-                return null;
-            }
-
-            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArrayResult.Value);
+            var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
+            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
@@ -198,6 +191,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             // Restore the original facial feature textures
             facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape]
                .CopyInto(ref facialFeaturesTexturesByBodyShapeCopy[avatarShapeComponent.BodyShape]);
+
             // Use a copy of the textures so it can be modified during the skinned mesh setup
             FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShapeCopy[avatarShapeComponent.BodyShape];
 
