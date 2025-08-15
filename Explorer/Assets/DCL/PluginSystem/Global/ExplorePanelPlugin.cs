@@ -57,6 +57,7 @@ using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
 using UnityEngine;
@@ -137,6 +138,7 @@ namespace DCL.PluginSystem.Global
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -191,7 +193,8 @@ namespace DCL.PluginSystem.Global
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
-            GalleryEventBus galleryEventBus)
+            GalleryEventBus galleryEventBus,
+            ICommunityCallOrchestrator communityCallOrchestrator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -247,6 +250,7 @@ namespace DCL.PluginSystem.Global
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
             this.galleryEventBus = galleryEventBus;
+            this.communityCallOrchestrator = communityCallOrchestrator;
         }
 
         public void Dispose()
@@ -428,7 +432,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 profileRepositoryWrapper,
                 selfProfile,
-                nftNamesProvider);
+                nftNamesProvider,
+                communityCallOrchestrator);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

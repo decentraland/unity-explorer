@@ -9,7 +9,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
-using Object = System.Object;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -28,6 +27,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
         public event Action? CreateCommunityButtonClicked;
+        public event Action<string>? JoinStream;
+
 
         public bool IsResultsScrollPositionAtBottom =>
             resultLoopGrid.ScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
@@ -63,8 +64,17 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
 
+
+        [Header("Streaming Section")]
+        [SerializeField] private GameObject streamingSection = null!;
+        [SerializeField] private LoopGridView streamingLoopGrid = null!;
+        [SerializeField] private GameObject streamingEmptyContainer = null!;
+        [SerializeField] private SkeletonLoadingView streamingLoadingSpinner = null!;
+
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
+        private readonly List<CommunityData> currentStreamingResults = new ();
+
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
 
@@ -366,6 +376,64 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
             this.thumbnailLoader = newThumbnailLoader;
+        }
+
+        public void InitializeStreamingResultsGrid(int itemTotalCount)
+        {
+            streamingLoopGrid.InitGridView(itemTotalCount, SetupCommunityStreamingResultCardByIndex);
+            streamingLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+        }
+
+
+        public void AddStreamingResultsItems(CommunityData[] dataResults)
+        {
+            currentStreamingResults.AddRange(dataResults);
+            streamingLoopGrid.SetListItemCount(currentResults.Count, true);
+            bool isEmpty = currentResults.Count == 0;
+            streamingEmptyContainer.SetActive(isEmpty);
+            streamingLoopGrid.gameObject.SetActive(!isEmpty);
+            streamingLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
+        }
+
+        public void ClearStreamingResultsItems()
+        {
+            currentStreamingResults.Clear();
+            streamingLoopGrid.SetListItemCount(0, false);
+            streamingEmptyContainer.SetActive(true);
+            streamingLoopGrid.gameObject.SetActive(true);
+        }
+
+        public void SetStreamingResultsAsLoading(bool isLoading)
+        {
+            if (isLoading)
+            {
+                streamingLoadingSpinner.ShowLoading();
+            }
+            else
+                streamingLoadingSpinner.HideLoading();
+        }
+
+        private LoopGridViewItem SetupCommunityStreamingResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
+        {
+            CommunityData communityData = currentResults[index];
+            LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
+            CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
+
+            // Setup card data
+            cardView.SetCommunityId(communityData.id);
+            cardView.SetTitle(communityData.name);
+            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
+
+            cardView.MainButtonClicked -= JoinStreamClicked;
+            cardView.MainButtonClicked += JoinStreamClicked;
+
+            return gridItem;
+        }
+
+        private void JoinStreamClicked(string communityId)
+        {
+            JoinStream?.Invoke(communityId);
         }
     }
 }

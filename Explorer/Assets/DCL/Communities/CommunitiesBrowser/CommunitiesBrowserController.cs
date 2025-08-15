@@ -8,8 +8,8 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
@@ -29,6 +29,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
+        private const string STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Streaming Communities. Please try again.";
+
         private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
@@ -42,6 +44,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly ICommunityCallOrchestrator orchestrator;
         private readonly ISpriteCache spriteCache;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
@@ -70,7 +73,8 @@ namespace DCL.Communities.CommunitiesBrowser
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileDataProvider,
             ISelfProfile selfProfile,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider,
+            ICommunityCallOrchestrator orchestrator)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -82,11 +86,15 @@ namespace DCL.Communities.CommunitiesBrowser
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
+            this.orchestrator = orchestrator;
 
             spriteCache = new SpriteCache(webRequestController);
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
+
+            view.InitializeStreamingResultsGrid(0);
+
             view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
@@ -99,6 +107,12 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened += OpenCommunityProfile;
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
+            view.JoinStream += JoinStream;
+        }
+
+        private void JoinStream(string communityId)
+        {
+            orchestrator.JoinCommunityVoiceChat(communityId, CancellationToken.None, true);
         }
 
         public void Activate()
@@ -234,6 +248,40 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.SetResultsBackButtonVisible(false);
             view.SetResultsTitleText(MY_GENERAL_RESULTS_TITLE);
+            LoadStreamingCommunitiesAsync(loadResultsCts.Token).Forget();
+        }
+
+        private async UniTaskVoid LoadStreamingCommunitiesAsync(CancellationToken ct)
+        {
+            view.ClearStreamingResultsItems();
+            view.SetStreamingResultsAsLoading(true);
+
+            var result = await dataProvider.GetUserCommunitiesAsync(
+                string.Empty,
+                false,
+                1,
+                7,
+                ct,
+                true
+                ).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                return;
+            }
+
+            if (result.Value.data.results.Length > 0)
+            {
+                view.AddStreamingResultsItems(result.Value.data.results);
+            }
+
+            view.SetResultsAsLoading(false);
         }
 
         private void LoadMoreResults(Vector2 _)
