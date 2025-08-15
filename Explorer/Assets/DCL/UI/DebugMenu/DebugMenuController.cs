@@ -123,12 +123,14 @@ namespace DCL.UI.DebugMenu
         {
             try
             {
+                // DebugContainerBuilder may throw InvalidOperationException during initialization
                 debugContainerBuilder?.Container.HideToggleButton();
                 shouldHideDebugPanelOwnToggle = false;
             }
             catch (Exception)
             {
-                // If Container hasn't been built yet, it will be retried on the next frame
+                // If Container hasn't been built yet, it will be retried on the next frame because
+                // shouldHideDebugPanelOwnToggle doesn't get reset when that happens
             }
         }
 
