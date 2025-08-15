@@ -14,22 +14,22 @@ using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesBrowserController : ISection, IDisposable
     {
-        private const int COMMUNITIES_PER_PAGE = 20;
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
         private const string MY_GENERAL_RESULTS_TITLE = "Browse Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
-        private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly CommunitiesBrowserView view;
@@ -43,6 +43,11 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ISpriteCache spriteCache;
+        private readonly CommunitiesBrowserOrchestrator browserOrchestrator;
+        private readonly ThumbnailLoader thumbnailLoader;
+        private readonly IDisposable sectionTypeChangedSubscription;
+
+        private readonly CommunitiesBrowserRightSectionController rightSectionController;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
         private CancellationTokenSource? loadResultsCts;
@@ -51,14 +56,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource? openCommunityCreationCts;
 
         private bool isSectionActivated;
-        private string currentNameFilter;
-        private bool currentIsOwnerFilter;
-        private bool currentIsMemberFilter;
-        private int currentPageNumberFilter = 1;
-        private int currentResultsTotalAmount;
         private string currentSearchText = string.Empty;
-        private bool currentOnlyMemberOf;
-        private bool isGridResultsLoadingItems;
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
@@ -83,22 +81,35 @@ namespace DCL.Communities.CommunitiesBrowser
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
 
+            this.rightSectionController = new CommunitiesBrowserRightSectionController(view.RightSectionView);
+
             spriteCache = new SpriteCache(webRequestController);
+            browserOrchestrator = new CommunitiesBrowserOrchestrator();
+            thumbnailLoader = new ThumbnailLoader(spriteCache);
 
             ConfigureMyCommunitiesList();
-            ConfigureResultsGrid();
-            view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
+            view.Initialize(browserOrchestrator, thumbnailLoader);
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
-            view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
             view.SearchBarSelected += DisableShortcutsInput;
             view.SearchBarDeselected += RestoreInput;
             view.SearchBarValueChanged += SearchBarValueChanged;
             view.SearchBarSubmit += SearchBarSubmit;
             view.SearchBarClearButtonClicked += SearchBarCleared;
             view.CommunityProfileOpened += OpenCommunityProfile;
-            view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
+
+            //view.CommunityJoined += JoinCommunity;
+
+            sectionTypeChangedSubscription = browserOrchestrator.CurrentBrowserSectionType.Subscribe(OnBrowserSectionTypeChanged);
+            browserOrchestrator.CommunityRefreshRequested += RefreshCommunityCardInGrid;
+        }
+
+        private void OnBrowserSectionTypeChanged(BrowserSectionType type)
+        {
+            //EQUIVALENT TO -> view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
+            if (type == BrowserSectionType.BROWSE_ALL_SECTION)
+                LoadAllCommunitiesResults();
         }
 
         public void Activate()
@@ -139,20 +150,18 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Dispose()
         {
-            view.ResultsLoopGridScrollChanged -= LoadMoreResults;
             view.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
-            view.ResultsBackButtonClicked -= LoadAllCommunitiesResults;
             view.SearchBarSelected -= DisableShortcutsInput;
             view.SearchBarDeselected -= RestoreInput;
             view.SearchBarValueChanged -= SearchBarValueChanged;
             view.SearchBarSubmit -= SearchBarSubmit;
             view.SearchBarClearButtonClicked -= SearchBarCleared;
             view.CommunityProfileOpened -= OpenCommunityProfile;
-            view.CommunityJoined -= JoinCommunity;
             view.CreateCommunityButtonClicked -= CreateCommunity;
 
             UnsubscribeDataProviderEvents();
 
+            rightSectionController.Dispose();
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
@@ -172,14 +181,10 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ConfigureMyCommunitiesList() =>
             view.InitializeMyCommunitiesList(0, spriteCache);
 
-        private void ConfigureResultsGrid()
-        {
-            view.InitializeResultsGrid(0, profileRepositoryWrapper, spriteCache);
-            view.ResultsLoopGridScrollChanged += LoadMoreResults;
-        }
 
         private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
         {
+            browserOrchestrator.ClearMyCommunities();
             view.ClearMyCommunitiesItems();
             view.SetMyCommunitiesAsLoading(true);
 
@@ -201,13 +206,21 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
             }
 
-            view.AddMyCommunitiesItems(result.Value.data.results, true);
+            foreach (CommunityData communityData in result.Value.data.results)
+            {
+                browserOrchestrator.AddMyCommunity(communityData);
+            }
+
+            view.AddMyCommunitiesItems(true);
             view.SetMyCommunitiesAsLoading(false);
         }
 
         private void ViewAllMyCommunitiesResults()
         {
             ClearSearchBar();
+            //Setup results view with my communities data!
+            // we need to update the orchestrator onlyMemberOf value, make the name empty, and page number = 1.
+            // then call to re-setup the
             view.SetResultsBackButtonVisible(true);
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
 
@@ -224,6 +237,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void LoadAllCommunitiesResults()
         {
             ClearSearchBar();
+            // SWITCH ORCHESTRATOR VIEW TYPE SO IT TRIGGERS CHANGE OF VIEWS?
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
                 name: string.Empty,
@@ -239,7 +253,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void LoadMoreResults(Vector2 _)
         {
             if (isGridResultsLoadingItems ||
-                view.CurrentResultsCount >= currentResultsTotalAmount ||
+                browserOrchestrator.GetCommunitiesCount() >= currentResultsTotalAmount ||
                 !view.IsResultsScrollPositionAtBottom)
                 return;
 
@@ -258,6 +272,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (pageNumber == 1)
             {
+                browserOrchestrator.ClearResults();
                 view.ClearResultsItems();
                 view.SetResultsAsLoading(true);
             }
@@ -285,7 +300,12 @@ namespace DCL.Communities.CommunitiesBrowser
             if (result.Value.data.results.Length > 0)
             {
                 currentPageNumberFilter = pageNumber;
-                view.AddResultsItems(result.Value.data.results, pageNumber == 1);
+                foreach (CommunityData communityData in result.Value.data.results)
+                {
+                    browserOrchestrator.AddResultCommunity(communityData);
+                }
+
+                view.AddResultsItems(pageNumber == 1);
             }
 
             currentResultsTotalAmount = result.Value.data.total;
@@ -331,6 +351,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 LoadAllCommunitiesResults();
             else
             {
+                //SETUP FILTERED RESULTS VIEW USING THE SEARCH TEXT AS NAME
                 view.SetResultsBackButtonVisible(true);
                 view.SetResultsTitleText(string.Format(SEARCH_RESULTS_TITLE_FORMAT, searchText));
 
@@ -356,24 +377,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             currentSearchText = string.Empty;
             view.CleanSearchBar(raiseOnChangeEvent: false);
-        }
-
-        private void JoinCommunity(string communityId) =>
-            JoinCommunityAsync(communityId, CancellationToken.None).Forget();
-
-        private async UniTaskVoid JoinCommunityAsync(string communityId, CancellationToken ct)
-        {
-            var result = await dataProvider.JoinCommunityAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-            if (ct.IsCancellationRequested)
-                return;
-
-            if (!result.Success || !result.Value)
-            {
-                showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-            }
         }
 
         private void OpenCommunityProfile(string communityId) =>
@@ -406,11 +409,28 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityUpdated(string _) =>
             ReloadBrowser();
 
-        private void OnCommunityJoined(string communityId, bool success) =>
-            view.UpdateJoinedCommunity(communityId, true, success);
+        private void OnCommunityJoined(string communityId, bool success)
+        {
+            UpdateJoinedCommunity(communityId, true, success);
+            // Refresh the community card (if exists) in the results' grid
+            RefreshCommunityCardInGrid(communityId);
 
-        private void OnCommunityLeft(string communityId, bool success) =>
-            view.UpdateJoinedCommunity(communityId, false, success);
+            view.UpdateJoinedCommunity(success);
+        }
+
+        private void OnCommunityLeft(string communityId, bool success)
+        {
+            UpdateJoinedCommunity(communityId, false, success);
+            view.UpdateJoinedCommunity(success);
+        }
+
+        private void UpdateJoinedCommunity(string communityId, bool isJoined, bool isSuccess)
+        {
+            if (!isSuccess) return;
+
+            browserOrchestrator.UpdateJoinedCommunity(communityId, isJoined);
+
+        }
 
         private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity) =>
             ReloadBrowser();
@@ -418,8 +438,13 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityDeleted(string communityId) =>
             ReloadBrowser();
 
-        private void OnUserRemovedFromCommunity(string communityId) =>
-            view.RemoveOneMemberFromCounter(communityId);
+        private void OnUserRemovedFromCommunity(string communityId)
+        {
+            browserOrchestrator.DecreaseMembersCount(communityId);
+
+            // Refresh the community card (if exists) in the results' grid
+            RefreshCommunityCardInGrid(communityId);
+        }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
             OnUserRemovedFromCommunity(communityId);
