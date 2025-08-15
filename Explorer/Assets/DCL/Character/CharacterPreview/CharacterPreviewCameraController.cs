@@ -1,5 +1,4 @@
-﻿using DG.Tweening;
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -32,7 +31,7 @@ namespace DCL.CharacterPreview
             {
                 if (cameraSettings.cameraPositions[i].wearableCategoryEnum == categoryEnum)
                 {
-                    characterPreviewAvatarContainer.SetCamera(cameraSettings.cameraPositions[i]);
+                    characterPreviewAvatarContainer.SetCameraPosition(cameraSettings.cameraPositions[i]);
                     break;
                 }
             }
@@ -66,20 +65,21 @@ namespace DCL.CharacterPreview
                 characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
 
-            characterPreviewAvatarContainer.TweenFovTo(newFieldOfView, cameraSettings.fieldOfViewEaseDuration, cameraSettings.fieldOfViewEase);
+            characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView = newFieldOfView;
+            characterPreviewAvatarContainer.StopCameraTween();
         }
 
         private void OnDrag(PointerEventData pointerEventData)
         {
             if (pointerEventData.button == PointerEventData.InputButton.Middle) return;
 
+            characterPreviewAvatarContainer.StopCameraTween();
+
             switch (pointerEventData.button)
             {
                 case PointerEventData.InputButton.Right:
                 {
                     if (!cameraSettings.dragEnabled) return;
-
-                    characterPreviewAvatarContainer.StopCameraTween();
 
                     if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
                     {
@@ -100,20 +100,13 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
+                    Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
                     float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
-                    float delta = pointerEventData.delta.x * rotationModifier;
 
-                    float currentValue = characterPreviewAvatarContainer.freeLookCamera.m_XAxis.Value;
-                    float targetValue = currentValue + delta;
+                    rotation.y -= pointerEventData.delta.x * rotationModifier;
+                    var quaternion = Quaternion.Euler(rotation);
 
-                    float minDuration = 0.01f;
-                    float maxDuration = cameraSettings.rotationEaseDuration;
-
-                    float deltaAbs = Mathf.Abs(delta);
-                    float duration = Mathf.Clamp(deltaAbs, minDuration, maxDuration);
-
-                    characterPreviewAvatarContainer.TweenXAxisTo(targetValue, duration, cameraSettings.rotationEase);
-
+                    characterPreviewAvatarContainer.rotationTarget.rotation = quaternion;
                     break;
                 }
             }
