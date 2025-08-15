@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -16,6 +17,7 @@ using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Font = DCL.ECSComponents.Font;
 
 namespace DCL.PluginSystem.World
@@ -24,6 +26,7 @@ namespace DCL.PluginSystem.World
     {
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly MaterialPropertyBlock materialPropertyBlock = new ();
         private readonly IComponentPool<TextMeshPro> textMeshProPool;
@@ -35,10 +38,11 @@ namespace DCL.PluginSystem.World
             EntityEventBuffer<TextShapeComponent>.Register(1000);
         }
 
-        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, CacheCleaner cacheCleaner, IComponentPoolsRegistry componentPoolsRegistry)
+        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, CacheCleaner cacheCleaner, IComponentPoolsRegistry componentPoolsRegistry, IAssetsProvisioner assetsProvisioner)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
+            this.assetsProvisioner = assetsProvisioner;
 
             textMeshProPool = componentPoolsRegistry.AddGameObjectPool<TextMeshPro>();
             cacheCleaner.Register(textMeshProPool);
@@ -49,10 +53,9 @@ namespace DCL.PluginSystem.World
             //ignore
         }
 
-        public UniTask InitializeAsync(FontsSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(FontsSettings settings, CancellationToken ct)
         {
-            fontsStorage = settings;
-            return new UniTask();
+            fontsStorage = (await assetsProvisioner.ProvideMainAssetAsync(settings.FontList, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -67,13 +70,10 @@ namespace DCL.PluginSystem.World
         }
 
         [Serializable]
-        public class FontsSettings : IDCLPluginSettings, IFontsStorage
+        public class FontsSettings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public SoFontList FontList { get; private set; }
-
-            public TMP_FontAsset Font(Font font) =>
-                FontList!.Font(font);
+            public AssetReferenceT<SoFontList> FontList { get; private set; }
         }
     }
 }

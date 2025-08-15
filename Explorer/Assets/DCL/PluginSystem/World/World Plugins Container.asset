@@ -64,7 +64,12 @@ MonoBehaviour:
     - rid: 857448815798779906
       type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        <FontList>k__BackingField: {fileID: 11400000, guid: 353f2294734a94b57b061c9b83eb275d, type: 2}
+        <FontList>k__BackingField:
+          m_AssetGUID: 353f2294734a94b57b061c9b83eb275d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 892605770607624195
       type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

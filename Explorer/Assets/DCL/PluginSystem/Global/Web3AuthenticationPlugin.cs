@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly ISplashScreen splashScreen;
+        private readonly SplashScreen splashScreen;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly Arch.Core.World world;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             AudioMixerVolumesController audioMixerVolumesController,
             CharacterPreviewEventBus characterPreviewEventBus,
             Arch.Core.World world

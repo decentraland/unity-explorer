@@ -45,7 +45,7 @@ namespace Global.Dynamic
         private readonly DebugSettings.DebugSettings debugSettings;
         private readonly RealmUrls realmUrls;
         private readonly IAppArgs appArgs;
-        private readonly ISplashScreen splashScreen;
+        private readonly SplashScreen splashScreen;
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
@@ -62,7 +62,7 @@ namespace Global.Dynamic
         public Bootstrap(
             DebugSettings.DebugSettings debugSettings,
             IAppArgs appArgs,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             RealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,

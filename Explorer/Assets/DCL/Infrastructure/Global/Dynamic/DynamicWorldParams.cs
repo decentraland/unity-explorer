@@ -28,7 +28,7 @@ namespace Global.Dynamic
         public readonly DynamicSettings DynamicSettings;
         public readonly IWeb3VerifiedAuthenticator Web3Authenticator;
         public readonly IWeb3IdentityCache Web3IdentityCache;
-        public readonly ISplashScreen SplashScreen;
+        public readonly SplashScreen SplashScreen;
         public readonly WorldInfoTool WorldInfoTool;
 
         public DynamicWorldDependencies(
@@ -43,7 +43,7 @@ namespace Global.Dynamic
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
             IWeb3IdentityCache web3IdentityCache,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             WorldInfoTool worldInfoTool
         )
         {

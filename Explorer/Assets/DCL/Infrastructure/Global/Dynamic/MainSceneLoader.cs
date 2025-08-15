@@ -82,9 +82,7 @@ namespace Global.Dynamic
         [SerializeField] private UIDocument debugUiRoot = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
-        [SerializeField] private GameObject splashRoot = null!;
-        [SerializeField] private TMP_Text splashScreenText = null!;
-        [SerializeField] private Animator splashScreenAnimation = null!;
+        [SerializeField] private SplashScreen splashScreen = null!;
         [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
@@ -166,7 +164,6 @@ namespace Global.Dynamic
 
             World world = World.Create();
 
-            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
             var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 

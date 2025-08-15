@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_PanelSettings: {fileID: 11400000, guid: ae435ee6f79e27540b009f2a921abe7d, type: 2}
+  m_PanelSettings: {fileID: 11400000, guid: 9645cc8f2ac3e45d39cb56adaf3c85c0, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 0}
   m_SortingOrder: 0
@@ -582,9 +582,7 @@ MonoBehaviour:
     - {r: 0.60784316, g: 0.6527446, b: 1, a: 1}
     - {r: 0.48584908, g: 0.7057166, b: 1, a: 1}
     - {r: 0.2783019, g: 0.7820757, b: 1, a: 1}
-  splashRoot: {fileID: 7722564697705550552}
-  splashScreenText: {fileID: 614279045}
-  splashScreenAnimation: {fileID: 7722564697705550553}
+  splashScreen: {fileID: 7722564697705550559}
   logoAnimation: {fileID: 214014219}
   backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
   worldInfoTool: {fileID: 1929393545}
@@ -594,17 +592,6 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
---- !u!114 &614279045 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8273374857345574935, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
-  m_PrefabInstance: {fileID: 5050490996342943587}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &946305962
 GameObject:
   m_ObjectHideFlags: 0
@@ -634,10 +621,10 @@ MonoBehaviour:
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_PanelSettings: {fileID: 11400000, guid: 45c1f1517231a0d4aaa851c5466f3bbf, type: 2}
+  m_PanelSettings: {fileID: 11400000, guid: 9645cc8f2ac3e45d39cb56adaf3c85c0, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 2a0aec8d6f95bf34ba66a7d0b5f1f158, type: 3}
-  m_SortingOrder: 0
+  m_SortingOrder: 1000
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
@@ -1077,20 +1064,22 @@ PrefabInstance:
       value: Splash
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 7156295526383273219, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
---- !u!1 &7722564697705550552 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8550087806236620490, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
+--- !u!114 &7722564697705550559 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8639993604981852590, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
   m_PrefabInstance: {fileID: 5050490996342943587}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &7722564697705550553 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 3206007547471193755, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
-  m_PrefabInstance: {fileID: 5050490996342943587}
-  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 385407f6eb5b4675bb270ed762ffbcd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

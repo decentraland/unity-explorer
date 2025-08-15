@@ -1,49 +1,23 @@
-using TMPro;
 using UnityEngine;
 using Utility.Animations;
 
 namespace DCL.SceneLoadingScreens.SplashScreen
 {
-    public class SplashScreen : ISplashScreen
+    public class SplashScreen: MonoBehaviour
     {
-        private readonly Animator splashScreenAnimation;
-        private readonly GameObject splashRoot;
-        private readonly TMP_Text text;
-        private readonly bool showSplash;
+        [SerializeField] private Animator splashScreenAnimation;
 
-        public SplashScreen(Animator splashScreenAnimation, GameObject splashRoot, bool showSplash, TMP_Text text)
+        public void Show()
         {
-            this.splashScreenAnimation = splashScreenAnimation;
-            this.splashRoot = splashRoot;
-            this.showSplash = showSplash;
-            this.text = text;
-            RemoveText();
-        }
-
-        public void Show(string? message = null)
-        {
-            splashRoot.SetActive(showSplash);
+            gameObject.SetActive(true);
             splashScreenAnimation.transform.SetSiblingIndex(1);
             splashScreenAnimation.SetBool(AnimationHashes.ENABLE, true);
-
-            if (message == null) RemoveText();
-            else PutText(message);
         }
 
         public void Hide()
         {
+            gameObject.SetActive(false);
             splashScreenAnimation.SetBool(AnimationHashes.ENABLE, false);
-            RemoveText();
-        }
-
-        private void PutText(string message)
-        {
-            text.text = message;
-        }
-
-        private void RemoveText()
-        {
-            text.text = string.Empty;
         }
     }
 }

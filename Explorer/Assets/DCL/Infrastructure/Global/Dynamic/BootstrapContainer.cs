@@ -77,7 +77,7 @@ namespace Global.Dynamic
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
             IAppArgs applicationParametersParser,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             RealmUrls realmUrls,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
@@ -108,7 +108,7 @@ namespace Global.Dynamic
             {
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings);
 
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser);
 
                 if (container.enableAnalytics)
@@ -131,10 +131,10 @@ namespace Global.Dynamic
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(
+        private static (IBootstrap, IAnalyticsController) CreateBootstrapperAsync(
             DebugSettings.DebugSettings debugSettings,
             IAppArgs appArgs,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             RealmUrls realmUrls,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
