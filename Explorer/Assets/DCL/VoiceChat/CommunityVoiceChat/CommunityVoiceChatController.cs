@@ -268,12 +268,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void AddSpeaker(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
             PlayerEntryView entryView = GetAndConfigurePlayerEntry(participantState);
+            entryView.isSpeakingIcon.gameObject.SetActive(true);
             inCallController.AddSpeaker(entryView);
         }
 
         private void AddListener(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
             PlayerEntryView entryView = GetAndConfigurePlayerEntry(participantState);
+            entryView.isSpeakingIcon.gameObject.SetActive(false);
             entryView.transform.parent = view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
         }

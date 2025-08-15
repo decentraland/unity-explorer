@@ -10,7 +10,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class PlayerEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        internal const float ANIMATION_DURATION = 0.5f;
+        private const float ANIMATION_DURATION = 0.5f;
+        private static readonly Vector3 IDLE_SCALE = new (1, 0.2f, 1);
+
         public event Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
 
         [SerializeField] private RectTransform hoverElement;
@@ -54,7 +56,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void Start()
         {
             hoverElement.gameObject.SetActive(false);
-            isSpeakingIcon.gameObject.SetActive(false);
             contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, contextMenuButton.transform.position, this));
         }
 
@@ -77,8 +78,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             userProfile.IsRequestingToSpeak.OnUpdate -= SetRequestingToSpeakSection;
             userProfile.IsRequestingToSpeak.OnUpdate += SetRequestingToSpeakSection;
 
+            approveButton.onClick.RemoveAllListeners();
             approveButton.onClick.AddListener(() => ApproveSpeaker?.Invoke(userProfile.WalletId));
+            denyButton.onClick.RemoveAllListeners();
             denyButton.onClick.AddListener(() => DenySpeaker?.Invoke(userProfile.WalletId));
+
+            SetSpeakingIconIdleScale();
         }
 
         private void SetRequestingToSpeakSection(bool isRequestingToSpeak) =>
@@ -88,7 +93,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnChangeIsSpeaking(bool isSpeaking)
         {
-            isSpeakingIcon.gameObject.SetActive(isSpeaking);
             if (isSpeaking)
             {
                 isSpeakingCurrentSequence = DOTween.Sequence();
@@ -103,7 +107,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             {
                 isSpeakingCurrentSequence?.Kill();
                 isSpeakingCurrentSequence = null;
+                SetSpeakingIconIdleScale();
             }
+        }
+
+        private void SetSpeakingIconIdleScale()
+        {
+            isSpeakingIconRect.localScale = IDLE_SCALE;
+            isSpeakingIconOuterRect.localScale = IDLE_SCALE;
         }
 
         public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu, Action<string> approveSpeaker, Action<string> denySpeaker)
