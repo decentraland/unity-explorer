@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace DCL.Clipboard
 {
@@ -31,6 +32,7 @@ namespace DCL.Clipboard
         /// <param name="text"> The text to copy</param>
         public void Copy(object sender, string text)
         {
+            Debug.Log("ClipboardManager.Copy was called. Text: " + text); 
             systemClipboard.Set(text);
             OnCopy?.Invoke(sender, text);
         }
@@ -42,6 +44,7 @@ namespace DCL.Clipboard
         /// <param name="text"> The text to sanitize and copy </param>
         public void CopyAndSanitize(object sender, string text)
         {
+            Debug.Log("ClipboardManager.CopyAndSanitize was called. Original Text: " + text); 
             string sanitizedString = TAG_REGEX.Replace(text, "");
             Copy(sender, sanitizedString);
         }

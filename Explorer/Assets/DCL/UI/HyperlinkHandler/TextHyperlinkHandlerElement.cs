@@ -164,26 +164,29 @@ namespace DCL.UI.HyperlinkHandler
             await ViewDependencies.GlobalUIViews.ShowChangeRealmPromptAsync(message, realm, ct);
         }
 
-        private void HighlightCurrentLink(int linkIndex)
+        private void  HighlightCurrentLink(int linkIndex)
         {
             lastHighlightedIndex = linkIndex;
             isHighlighting = true;
             ViewDependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
-
+        
             TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
-
+        
             int startIndex = linkInfo.linkIdFirstCharacterIndex + linkInfo.linkIdLength + 1;
-            int endIndex = startIndex + linkInfo.linkTextLength;
 
+            // Now, we find the corresponding closing </link> tag starting from our position.
+            // This is more robust as it doesn't rely on text length and handles nested tags.
+            int endIndex = textComponent.text.IndexOf("</link>", startIndex, StringComparison.OrdinalIgnoreCase);
+        
             originalText = textComponent.text;
             stringBuilder.Clear();
-
+        
             stringBuilder.Append(originalText.AsSpan(0, startIndex))
                          .Append(LINK_SELECTED_OPENING_STYLE)
                          .Append(originalText.AsSpan(startIndex, linkInfo.linkTextLength))
                          .Append(LINK_SELECTED_CLOSING_STYLE)
                          .Append(originalText.AsSpan(endIndex));
-
+        
             textComponent.text = stringBuilder.ToString();
         }
 
