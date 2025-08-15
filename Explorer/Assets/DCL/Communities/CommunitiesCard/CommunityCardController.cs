@@ -254,7 +254,7 @@ namespace DCL.Communities.CommunitiesCard
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
             communityCardVoiceChatController = new CommunityCardVoiceChatController(viewInstance.communityCardVoiceChatView, voiceChatOrchestrator);
-
+            communityCardVoiceChatController.ClosePanel += OnClosePanel;
             membersListController = new MembersListController(viewInstance.MembersListView,
                 profileRepositoryWrapper,
                 mvcManager,
@@ -290,6 +290,11 @@ namespace DCL.Communities.CommunitiesCard
                 decentralandUrlsSource);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
+        }
+
+        private async void OnClosePanel()
+        {
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
         }
 
         protected override void OnViewShow() =>

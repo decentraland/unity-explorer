@@ -7,6 +7,7 @@ namespace DCL.Communities.CommunitiesCard
 {
     public class CommunityCardVoiceChatController : IDisposable
     {
+        public event Action ClosePanel;
         private readonly CommunityCardVoiceChatView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly StringBuilder stringBuilder = new ();
@@ -22,31 +23,33 @@ namespace DCL.Communities.CommunitiesCard
 
             view.StartStreamButton.onClick.AddListener(StartStream);
             view.JoinStreamButton.onClick.AddListener(JoinStream);
-            view.LeaveStreamButton.onClick.AddListener(LeaveStream);
+            view.ListeningButton.onClick.AddListener(GoToStream);
 
             voiceChatOrchestrator.CurrentCommunityId.OnUpdate += UpdateJoinLeaveButtonState;
         }
 
         private void UpdateJoinLeaveButtonState(string communityId)
         {
-            view.LeaveStreamButton.gameObject.SetActive(communityId == currentCommunityId);
+            view.ListeningButton.gameObject.SetActive(communityId == currentCommunityId);
             view.JoinStreamButton.gameObject.SetActive(communityId != currentCommunityId);
+            view.HandleListeningAnimation(communityId == currentCommunityId);
         }
 
-        private void LeaveStream()
+        private void GoToStream()
         {
-            voiceChatOrchestrator.HangUp();
-            SetPanelStatus(true, false, currentCommunityId);
+            ClosePanel?.Invoke();
         }
 
         private void JoinStream()
         {
+            ClosePanel?.Invoke();
             voiceChatOrchestrator.JoinCommunityVoiceChat(currentCommunityId, new CancellationToken(), true);
             SetPanelStatus(true, false, currentCommunityId);
         }
 
         private void StartStream()
         {
+            ClosePanel?.Invoke();
             voiceChatOrchestrator.StartCall(currentCommunityId, VoiceChatType.COMMUNITY);
             SetPanelStatus(true, true, currentCommunityId);
         }
@@ -58,8 +61,7 @@ namespace DCL.Communities.CommunitiesCard
             view.ModeratorControlPanel.SetActive(!isStreamRunning && isModOrAdmin);
             view.LiveStreamPanel.SetActive(isStreamRunning);
 
-            view.LeaveStreamButton.gameObject.SetActive(voiceChatOrchestrator.CurrentCommunityId.Value == currentCommunityId);
-            view.JoinStreamButton.gameObject.SetActive(voiceChatOrchestrator.CurrentCommunityId.Value != currentCommunityId);
+            UpdateJoinLeaveButtonState(currentCommunityId);
         }
 
         public void SetListenersCount(int listenersCount)

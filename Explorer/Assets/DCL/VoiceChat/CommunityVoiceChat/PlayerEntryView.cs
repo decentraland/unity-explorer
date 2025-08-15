@@ -26,12 +26,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         internal RectTransform isSpeakingIcon { get; private set; }
 
         [field: SerializeField]
-        internal Image isSpeakingIconRenderer { get; private set; }
-
-        [field: SerializeField]
-        internal Image isSpeakingIconOuterRenderer { get; private set; }
-
-        [field: SerializeField]
         internal RectTransform isSpeakingIconRect { get; private set; }
 
         [field: SerializeField]
