@@ -43,6 +43,7 @@ namespace DCL.CharacterPreview
         [field: Header("Rotation Settings")]
         [field: SerializeField] public bool rotationEnabled { get; private set; }
         [field: SerializeField] public float rotationModifier { get; private set; }
+        [field: SerializeField, Min(0f)] public float rotationInertia { get; private set; }
     }
 
     [Serializable]

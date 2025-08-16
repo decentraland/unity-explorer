@@ -13,6 +13,8 @@ namespace DCL.CharacterPreview
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
         private Tween fovTween;
+        private Tween? rotationTween;
+
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
         [field: SerializeField] internal Camera camera { get; private set; }
@@ -21,6 +23,11 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
         [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
+
+        private float smoothedDeltaX = 0f;
+
+        public float SmoothedDeltaX => smoothedDeltaX;
+        public Tween? RotationTween { get; set; }
 
         public void Dispose()
         {
@@ -58,6 +65,14 @@ namespace DCL.CharacterPreview
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
+
+        public void SetSmoothedDeltaX(float newDelta)
+        {
+            smoothedDeltaX = newDelta;
+        }
+
+        public void StopRotationTween() =>
+            rotationTween?.Kill();
     }
 
     [Serializable]
