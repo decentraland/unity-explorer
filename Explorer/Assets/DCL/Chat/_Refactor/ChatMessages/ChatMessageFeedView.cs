@@ -230,7 +230,10 @@ namespace DCL.Chat.ChatMessages
 
                 // Online connectivity could be integrated to the view model, but it's more efficient and simpler to do it here
                 // for shown elements only
-                itemScript.GreyOut(prefabIndex == ChatItemPrefabIndex.ChatEntry && !onlineParticipants.Contains(chatMessage.SenderWalletAddress) ? entryGreyOutOpacity : 0.0f);
+                itemScript.GreyOut(prefabIndex == ChatItemPrefabIndex.ChatEntry &&
+                                   !onlineParticipants.Contains(chatMessage.SenderWalletAddress)
+                    ? entryGreyOutOpacity
+                    : 0.0f);
 
                 if (viewModel.PendingToAnimate)
                 {
