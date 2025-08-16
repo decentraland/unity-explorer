@@ -157,7 +157,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 for (var i = 0; i < definitions.Count; i++)
                 {
                     SceneEntityDefinition scene = definitions[i];
-                    if (scene.pointers.Count == 0) continue;
+                    if (scene.pointers.Length == 0) continue;
 
                     TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value);
                 }

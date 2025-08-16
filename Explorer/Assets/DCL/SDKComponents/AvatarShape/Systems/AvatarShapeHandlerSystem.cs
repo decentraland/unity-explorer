@@ -141,7 +141,6 @@ namespace ECS.Unity.AvatarShape.Systems
                 sdkAvatarShapeComponent.RealmSceneEmotePromise = RealmSceneEmotePromise.Create(globalWorld,
                     new GetSceneEmoteFromRealmIntention(
                         sceneData.SceneEntityDefinition.id!,
-                        sceneData.AssetBundleManifest,
                         hash,
                         loop: false, // looping scene emotes on SDK AvatarShapes is not supported yet
                         bodyShape), PartitionComponent.TOP_PRIORITY);

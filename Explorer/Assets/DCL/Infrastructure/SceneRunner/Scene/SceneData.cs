@@ -34,7 +34,6 @@ namespace SceneRunner.Scene
         public SceneData(
             ISceneContent sceneContent,
             SceneEntityDefinition sceneDefinition,
-            SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
@@ -42,7 +41,6 @@ namespace SceneRunner.Scene
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;
-            AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);

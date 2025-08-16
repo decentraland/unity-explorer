@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
@@ -28,7 +29,7 @@ using UnityEngine.TestTools;
 // Define Promise types as aliases for clarity, similar to the system file
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>; // Corrected alias
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using EmoteResolutionPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
@@ -142,8 +143,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
             IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
             Entity entity = world.Create(mockEmote); // Entity holding the IEmote component
 
-            var manifest = new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", Array.Empty<string>(), "hash", "date");
-            var intention = new GetWearableAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
+            var manifest = new SceneAssetBundleManifest("v1", "3/3");
+            var intention = new GetAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
             var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
             world.Add(entity, promise); // Promise is on the same entity as IEmote
             world.Add(promise.Entity, new StreamableLoadingResult<SceneAssetBundleManifest>(manifest)); // Result on promise's entity
@@ -152,8 +153,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             Assert.IsFalse(world.IsAlive(entity)); // Check promise component removed
             Assert.IsFalse(world.IsAlive(promise.Entity));
-            Assert.IsTrue(mockEmote.ManifestResult.HasValue && mockEmote.ManifestResult.Value.Succeeded);
-            Assert.AreSame(manifest, mockEmote.ManifestResult.Value.Asset);
+            Assert.IsTrue(!string.IsNullOrEmpty(mockEmote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion()));
+            Assert.AreSame(manifest.GetVersion(), mockEmote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion());
         }
 
         [Test]
@@ -163,7 +164,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
             Entity entity = world.Create(mockEmote); // Carrier entity
 
-            var intention = new GetWearableAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
+            var intention = new GetAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
             var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY); // promise.Entity is result-holder
             world.Add(entity, promise); // Add promise component to carrier
 
@@ -549,7 +550,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                             : new[] { AvatarAttachmentDTO.Representation.NewFakeRepresentation() },
                     },
                 },
-                content = Array.Empty<AvatarAttachmentDTO.Content>(),
+                content = Array.Empty<ContentDefinition>(),
             };
 
         public class MockStreamableDataWithURN : IStreamableRefCountData
