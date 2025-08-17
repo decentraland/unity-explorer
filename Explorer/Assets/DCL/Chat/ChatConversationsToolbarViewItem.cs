@@ -1,3 +1,4 @@
+using System;
 using DCL.Chat.History;
 using DCL.UI;
 using DCL.UI.Buttons;
@@ -269,6 +270,29 @@ namespace DCL.Chat
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);
             profilePictureView.Bind(viewModel);
+        }
+
+        private IDisposable? profileColorBinding;
+
+        public virtual void BindProfileColor(IReactiveProperty<Color> colorProperty)
+        {
+            profileColorBinding?.Dispose();
+
+            SetColor(colorProperty.Value);
+
+            profileColorBinding = colorProperty.Subscribe(SetColor);
+        }
+
+        private void OnDestroy()
+        {
+            profileColorBinding?.Dispose();
+        }
+
+
+        public void SetUsernameColor(Color color)
+        {
+            if (tooltip != null)
+                tooltipText.color = color;
         }
     }
 }
