@@ -176,6 +176,8 @@ namespace DCL.UI.GenericContextMenu
 
                     if (subMenuButtonSettings.IsAsynchronous)
                         subMenuButtonView.SetContainerCreationMethod(() => { ConfigureContextMenuAsync(deferredConfig).Forget(); }); // TODO: improve this
+                    else
+                        subMenuButtonView.SetContainerCreationMethod(null);
 
                     needsLayoutRebuild = true;
                 }
