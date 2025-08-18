@@ -205,8 +205,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ReloadBrowser()
         {
-            loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
-            LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
+            LoadMyCommunities();
             LoadAllCommunitiesResults(updateInvitations: true);
             RefreshInvitesCounter();
         }
@@ -218,6 +217,12 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             view.InitializeResultsGrid(0, profileRepositoryWrapper, spriteCache);
             view.ResultsLoopGridScrollChanged += LoadMoreResults;
+        }
+
+        private void LoadMyCommunities()
+        {
+            loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
+            LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
         }
 
         private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
@@ -711,6 +716,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
+            LoadMyCommunities();
         }
 
         private void OnCommunityInvitationRejected(string communityId, bool success)
