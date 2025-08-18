@@ -1,5 +1,7 @@
-﻿using DG.Tweening;
+﻿using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -18,11 +20,18 @@ namespace DCL.CharacterPreview
             this.cameraSettings = cameraSettings;
 
             characterPreviewInputEventBus.OnDraggingEvent += OnDrag;
-            characterPreviewInputEventBus.OnDragReleaseEvent += OnDragRelease;
             characterPreviewInputEventBus.OnScrollEvent += OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
 
             OnChangePreviewCategory(AvatarWearableCategoryEnum.Body);
+        }
+
+        public void Dispose()
+        {
+            characterPreviewInputEventBus.OnDraggingEvent -= OnDrag;
+            characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
+            characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
+            characterPreviewAvatarContainer.Dispose();
         }
 
         private void OnChangePreviewCategory(AvatarWearableCategoryEnum categoryEnum)
@@ -67,20 +76,20 @@ namespace DCL.CharacterPreview
                 characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
 
-            characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView = newFieldOfView;
-            characterPreviewAvatarContainer.StopCameraTween();
+            characterPreviewAvatarContainer.StopCameraTweens();
+            characterPreviewAvatarContainer.SetFOVTween(newFieldOfView, cameraSettings.fieldOfViewDuration, cameraSettings.fieldOfViewCurve);
         }
 
         private void OnDrag(PointerEventData pointerEventData)
         {
             if (pointerEventData.button == PointerEventData.InputButton.Middle) return;
 
-            characterPreviewAvatarContainer.StopCameraTween();
-
             switch (pointerEventData.button)
             {
                 case PointerEventData.InputButton.Right:
                 {
+                    characterPreviewAvatarContainer.StopCameraTweens();
+
                     if (!cameraSettings.dragEnabled) return;
 
                     if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
@@ -103,82 +112,28 @@ namespace DCL.CharacterPreview
                     if (!cameraSettings.rotationEnabled) return;
 
                     float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
-
-                    // Inertia value: 0 = no smoothing, higher = more smoothing
                     float inertia = cameraSettings.rotationInertia;
+                    Ease curve = cameraSettings.rotationInertiaCurve;
+                    float angularVelocity;
 
                     if (inertia <= 0f)
                     {
-                        // No inertia, apply raw mouse delta
-                        characterPreviewAvatarContainer.SetSmoothedDeltaX(-pointerEventData.delta.x);
+                        angularVelocity = -pointerEventData.delta.x;
                     }
                     else
                     {
-                        // Smoothly interpolate from previous value to new delta
-                        float smoothed = Mathf.Lerp(
-                            characterPreviewAvatarContainer.SmoothedDeltaX,
+                        angularVelocity = Mathf.Lerp(
+                            characterPreviewAvatarContainer.RotationAngularVelocity,
                             -pointerEventData.delta.x,
                             Time.deltaTime * inertia
                         );
-                        characterPreviewAvatarContainer.SetSmoothedDeltaX(smoothed);
                     }
 
-                    Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
-                    rotation.y += characterPreviewAvatarContainer.SmoothedDeltaX * rotationModifier;
-                    characterPreviewAvatarContainer.rotationTarget.rotation = Quaternion.Euler(rotation);
+                    characterPreviewAvatarContainer.SetRotationTween(angularVelocity, rotationModifier, curve);
 
                     break;
-
-                    // if (!cameraSettings.rotationEnabled) return;
-                    //
-                    // Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
-                    // float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
-                    //
-                    // rotation.y -= pointerEventData.delta.x * rotationModifier;
-                    // var quaternion = Quaternion.Euler(rotation);
-                    //
-                    // characterPreviewAvatarContainer.rotationTarget.rotation = quaternion;
-                    // break;
                 }
             }
-        }
-
-        private void OnDragRelease(PointerEventData pointerEventData)
-        {
-            if (pointerEventData.button == PointerEventData.InputButton.Left)
-            {
-                float currentDelta = characterPreviewAvatarContainer.SmoothedDeltaX;
-
-                if (Mathf.Abs(currentDelta) < 0.001f)
-                    return;
-
-                // Duration proportional to angular velocity
-                float duration = Mathf.Abs(currentDelta) * cameraSettings.rotationInertia;
-
-                // Tween velocity to 0
-                characterPreviewAvatarContainer.TweenRotationTo(0f, duration, Ease.OutQuad);
-            }
-        }
-
-        private void TweenRotationTo(float targetValue, float duration, Ease ease)
-        {
-            characterPreviewAvatarContainer.StopRotationTween();
-
-            characterPreviewAvatarContainer.RotationTween = DOTween.To(() => smoothedDeltaX,
-                                                                        x => smoothedDeltaX = x,
-                                                                        targetValue,
-                                                                        duration)
-                                                                   .SetEase(ease)
-                                                                   .OnComplete(() => rotationTween = null);
-        }
-
-        public void Dispose()
-        {
-            characterPreviewInputEventBus.OnDraggingEvent -= OnDrag;
-            characterPreviewInputEventBus.OnDragReleaseEvent -= OnDragRelease;
-            characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
-            characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
-            characterPreviewAvatarContainer.Dispose();
         }
     }
 }

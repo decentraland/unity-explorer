@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using UnityEngine;
 
 namespace DCL.CharacterPreview
@@ -39,11 +40,14 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal float fieldOfViewThresholdForPanning { get; private set; }
         [field: SerializeField] internal float fieldOfViewThresholdForReCentering { get; private set; }
         [field: SerializeField] internal Vector2 fieldOfViewLimits { get; private set; }
+        [field: SerializeField] internal Ease fieldOfViewCurve { get; private set; }
+        [field: SerializeField, Min(0f)] internal float fieldOfViewDuration { get; private set; }
 
         [field: Header("Rotation Settings")]
         [field: SerializeField] public bool rotationEnabled { get; private set; }
         [field: SerializeField] public float rotationModifier { get; private set; }
         [field: SerializeField, Min(0f)] public float rotationInertia { get; private set; }
+        [field: SerializeField] public Ease rotationInertiaCurve { get; private set; }
     }
 
     [Serializable]

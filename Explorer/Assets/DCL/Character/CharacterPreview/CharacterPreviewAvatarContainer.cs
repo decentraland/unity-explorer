@@ -1,6 +1,8 @@
 using Cinemachine;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -12,8 +14,11 @@ namespace DCL.CharacterPreview
     /// </summary>
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
-        private Tween fovTween;
+        private const float ANGULAR_VELOCITY_DIVISOR = 10f;
+
+        private Tween? fovTween;
         private Tween? rotationTween;
+        private float rotationAngularVelocity;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -24,14 +29,11 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
         [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
 
-        private float smoothedDeltaX = 0f;
-
-        public float SmoothedDeltaX => smoothedDeltaX;
-        public Tween? RotationTween { get; set; }
+        public float RotationAngularVelocity => rotationAngularVelocity;
 
         public void Dispose()
         {
-            StopCameraTween();
+            StopCameraTweens();
         }
 
         public void Initialize(RenderTexture targetTexture, Vector3 position)
@@ -51,28 +53,64 @@ namespace DCL.CharacterPreview
             if (cameraTarget != null)
                 cameraTarget.localPosition = preset.verticalPosition;
 
-            StopCameraTween();
+            StopCameraTweens();
 
             fovTween = DOTween.To(() => freeLookCamera.m_Lens.FieldOfView, x => freeLookCamera.m_Lens.FieldOfView = x, preset.cameraFieldOfView, 1)
                               .SetEase(Ease.OutQuad)
                               .OnComplete(() => fovTween = null);
         }
 
-        public void StopCameraTween()
+        public void StopCameraTweens()
         {
             fovTween?.Kill();
+            rotationTween?.Kill();
         }
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
 
-        public void SetSmoothedDeltaX(float newDelta)
+        public void SetRotationTween(float angularVelocity, float rotationModifier, Ease curve)
         {
-            smoothedDeltaX = newDelta;
+            rotationAngularVelocity = angularVelocity;
+
+            rotationTween.Kill();
+
+            rotationTween = DOTween.To(
+                                        () => rotationAngularVelocity,
+                                        x => rotationAngularVelocity = x,
+                                        0f,
+                                        Mathf.Abs(rotationAngularVelocity) / ANGULAR_VELOCITY_DIVISOR // duration based on velocity (tweak divisor)
+                                    )
+                                   .SetEase(curve)
+                                   .OnUpdate(() =>
+                                    {
+                                        Vector3 rotation = rotationTarget.rotation.eulerAngles;
+                                        rotation.y += rotationAngularVelocity * rotationModifier; // apply rotationModifier here
+                                        rotationTarget.rotation = Quaternion.Euler(rotation);
+                                    })
+                                   .OnComplete(() =>
+                                    {
+                                        rotationAngularVelocity = 0f;
+                                        rotationTween.Kill();
+                                    });
         }
 
-        public void StopRotationTween() =>
-            rotationTween?.Kill();
+        public void SetFOVTween(float targetFOV, float duration, Ease curve)
+        {
+            fovTween?.Kill();
+
+            fovTween = DOTween.To(
+                () => freeLookCamera.m_Lens.FieldOfView,
+                x => freeLookCamera.m_Lens.FieldOfView = x,
+                targetFOV,
+                duration
+                )
+               .SetEase(curve)
+               .OnComplete(() =>
+                {
+                    fovTween?.Kill();
+                });
+        }
     }
 
     [Serializable]

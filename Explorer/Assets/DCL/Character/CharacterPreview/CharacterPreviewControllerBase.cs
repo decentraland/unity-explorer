@@ -56,7 +56,6 @@ namespace DCL.CharacterPreview
 
             view.CharacterPreviewInputDetector.OnPointerEnterEvent += OnPointerEnter;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
-            view.CharacterPreviewInputDetector.OnEndDragEvent += OnEndDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
 
@@ -114,7 +113,6 @@ namespace DCL.CharacterPreview
             previewController?.Dispose();
             view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
-            view.CharacterPreviewInputDetector.OnEndDragEvent -= OnEndDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
             view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
@@ -169,15 +167,6 @@ namespace DCL.CharacterPreview
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
                         break;
                 }
-            }
-        }
-
-        private void OnEndDrag(PointerEventData pointerEventData)
-        {
-            if ((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled) ||
-                (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
-            {
-                inputEventBus.OnEndDrag(pointerEventData);
             }
         }
 
