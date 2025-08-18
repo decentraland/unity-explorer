@@ -4,6 +4,7 @@ using DCL.Chat.MessageBus;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace DCL.Chat.ChatServices
 {
@@ -41,7 +42,7 @@ namespace DCL.Chat.ChatServices
             if (type == ChatChannel.ChatChannelType.COMMUNITY && !chatHistory.Channels.ContainsKey(channel))
                 return;
 
-            if (!message.IsSystemMessage)
+            if (!message.IsSystemMessage && !IsCopyOfSystemMessage(message.Message))
             {
                 // string formattedText = hyperlinkTextFormatter.FormatText(message.Message);
                 // var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, message);
@@ -89,6 +90,21 @@ namespace DCL.Chat.ChatServices
                     UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ? chatConfig.ChatReceiveMentionMessageAudio : chatConfig.ChatReceiveMessageAudio);
                     break;
             }
+        }
+
+        /// <summary>
+        ///     Determines if a message string is a copy of a system message by checking for status emojis.
+        /// </summary>
+        /// <param name="message">The message content to check.</param>
+        /// <returns>True if the message starts with a known system message emoji.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsCopyOfSystemMessage(string message)
+        {
+            // System messages are identified by starting with one of these status emojis.
+            // We check for these to avoid re-formatting a message that a user has copied and pasted.
+            return message.StartsWith("🟢") ||
+                   message.StartsWith("🔴") ||
+                   message.StartsWith("🟡");
         }
     }
 }
