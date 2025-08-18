@@ -316,9 +316,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, bool updateJoinRequests, CancellationToken ct)
         {
-            if (updateJoinRequests)
-                await LoadRequestsAsync(ct);
-
             isGridResultsLoadingItems = true;
 
             if (pageNumber == 1)
@@ -328,6 +325,9 @@ namespace DCL.Communities.CommunitiesBrowser
             }
             else
                 view.SetResultsLoadingMoreActive(true);
+
+            if (updateJoinRequests)
+                await LoadRequestsAsync(ct);
 
             var result = await dataProvider.GetUserCommunitiesAsync(
                 name,

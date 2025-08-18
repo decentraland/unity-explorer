@@ -92,7 +92,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.clearSearchButton.onClick.AddListener(() => SearchBarClearButtonClicked?.Invoke());
             createCommunityButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke());
 
-            invitesAndRequestsView.CommunityProfileOpened += CommunityProfileOpened;
+            invitesAndRequestsView.CommunityProfileOpened += OnInvitesAndRequestsCommunityProfileOpened;
             invitesAndRequestsView.RequestToJoinCommunityCanceled += OnCommunityRequestToJoinCanceled;
             invitesAndRequestsView.CommunityInvitationAccepted += OnCommunityInvitationAccepted;
             invitesAndRequestsView.CommunityInvitationRejected += OnCommunityInvitationRejected;
@@ -113,7 +113,7 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.ScrollRect.onValueChanged.RemoveAllListeners();
             createCommunityButton.onClick.RemoveAllListeners();
 
-            invitesAndRequestsView.CommunityProfileOpened -= CommunityProfileOpened;
+            invitesAndRequestsView.CommunityProfileOpened -= OnInvitesAndRequestsCommunityProfileOpened;
             invitesAndRequestsView.RequestToJoinCommunityCanceled -= OnCommunityRequestToJoinCanceled;
             invitesAndRequestsView.CommunityInvitationAccepted -= OnCommunityInvitationAccepted;
             invitesAndRequestsView.CommunityInvitationRejected -= OnCommunityInvitationRejected;
@@ -366,7 +366,7 @@ namespace DCL.Communities.CommunitiesBrowser
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
             cardView.SetActonLoadingActive(false);
 
-                // Setup card events
+            // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
             cardView.MainButtonClicked += CommunityProfileOpened;
             cardView.ViewCommunityButtonClicked -= CommunityProfileOpened;
@@ -408,6 +408,9 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetActonLoadingActive(true);
             CommunityRequestedToJoin?.Invoke(communityId);
         }
+
+        private void OnInvitesAndRequestsCommunityProfileOpened(string communityId) =>
+            CommunityProfileOpened?.Invoke(communityId);
 
         private void OnCommunityRequestToJoinCanceled(string communityId, string requestId, CommunityResultCardView cardView)
         {
