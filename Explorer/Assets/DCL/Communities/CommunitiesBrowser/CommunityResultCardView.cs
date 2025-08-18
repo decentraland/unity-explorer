@@ -76,6 +76,8 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
+        public string CommunityId => currentCommunityId;
+
         private string currentCommunityId = null!;
         private string currentInviteOrRequestId = null!;
         private Tweener? headerTween;

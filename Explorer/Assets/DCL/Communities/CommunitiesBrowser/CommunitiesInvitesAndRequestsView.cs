@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
@@ -41,6 +42,8 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Transform requestsGridContainer = null!;
         [SerializeField] private GameObject requestsEmptyContainer = null!;
         [SerializeField] private TMP_Text requestsTitleText = null!;
+
+        private int currentInvitesCounter = 0;
 
         private IObjectPool<CommunityResultCardView> invitedCommunityCardsPool = null!;
         private IObjectPool<CommunityResultCardView> requestedToJoinCommunityCardsPool = null!;
@@ -112,6 +115,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             invitesCounterContainer.SetActive(count > 0);
             invitesCounterText.text = count.ToString();
+            currentInvitesCounter = count;
         }
 
         public void ClearRequestsItems()
@@ -141,6 +145,53 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             invitesAndRequestsEmptyContainer.SetActive(isEmpty);
             invitesAndRequestsDataContainer.SetActive(!isEmpty);
+        }
+
+        public void UpdateJoinRequestCancelled(string communityId, bool isSuccess)
+        {
+            foreach (CommunityResultCardView requestCard in currentRequests)
+            {
+                if (requestCard.CommunityId != communityId)
+                    continue;
+
+                if (isSuccess)
+                {
+                    requestedToJoinCommunityCardsPool.Release(requestCard);
+                    currentRequests.Remove(requestCard);
+                    SetRequestsAsEmpty(currentRequests.Count == 0);
+                }
+                else
+                {
+                    requestCard.SetActonLoadingActive(false);
+                    ClearSelection();
+                }
+
+                break;
+            }
+        }
+
+        public void UpdateCommunityInvitation(string communityId, bool isSuccess)
+        {
+            foreach (CommunityResultCardView invitationCard in currentInvites)
+            {
+                if (invitationCard.CommunityId != communityId)
+                    continue;
+
+                if (isSuccess)
+                {
+                    invitedCommunityCardsPool.Release(invitationCard);
+                    currentInvites.Remove(invitationCard);
+                    SetInvitesAsEmpty(currentInvites.Count == 0);
+                    SetInvitesCounter(currentInvitesCounter - 1);
+                }
+                else
+                {
+                    invitationCard.SetActonLoadingActive(false);
+                    ClearSelection();
+                }
+
+                break;
+            }
         }
 
         private void SetInvitesAsEmpty(bool isEmpty)
@@ -243,5 +294,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityInvitationRejected(string communityId, string invitationId, CommunityResultCardView cardView) =>
             CommunityInvitationRejected?.Invoke(communityId, invitationId, cardView);
+
+        private void ClearSelection() =>
+            EventSystem.current.SetSelectedGameObject(null);
     }
 }

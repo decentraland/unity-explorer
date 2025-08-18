@@ -702,23 +702,23 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!isInvitesAndRequestsSectionActive)
                 view.UpdateRequestedToJoinCommunity(communityId, false, success, false);
             else
-                LoadInvitesAndRequestsResults();
+                view.InvitesAndRequestsView.UpdateJoinRequestCancelled(communityId, success);
         }
 
-        private void OnCommunityInvitationAccepted(string communityId)
+        private void OnCommunityInvitationAccepted(string communityId, bool success)
         {
             if (!isInvitesAndRequestsSectionActive)
                 return;
 
-            LoadInvitesAndRequestsResults();
+            view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
         }
 
-        private void OnCommunityInvitationRejected(string communityId)
+        private void OnCommunityInvitationRejected(string communityId, bool success)
         {
             if (!isInvitesAndRequestsSectionActive)
                 return;
 
-            LoadInvitesAndRequestsResults();
+            view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
         }
 
         private void OnCommunityLeft(string communityId, bool success) =>
