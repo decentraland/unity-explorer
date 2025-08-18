@@ -44,25 +44,7 @@ namespace DCL.Chat.ChatServices
 
             if (!message.IsSystemMessage && !IsCopyOfSystemMessage(message.Message))
             {
-                // string formattedText = hyperlinkTextFormatter.FormatText(message.Message);
-                // var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, message);
-                // chatHistory.AddMessage(channel, type, newChatMessage);
-
-                // --- NEW SANITIZATION LOGIC ---
-                // Before formatting, check for and remove status emojis from user messages.
-                // This handles cases where a user copies and pastes a system message.
-                string messageToFormat = message.Message;
-
-                if (messageToFormat.StartsWith("🟢"))
-                    messageToFormat = messageToFormat.Substring("🟢".Length).TrimStart(' ');
-                else if (messageToFormat.StartsWith("🔴"))
-                    messageToFormat = messageToFormat.Substring("🔴".Length).TrimStart(' ');
-                else if (messageToFormat.StartsWith("🟡"))
-                    messageToFormat = messageToFormat.Substring("🟡".Length).TrimStart(' ');
-                // --- END OF SANITIZATION LOGIC ---
-
-                // Now, format the sanitized text.
-                string formattedText = hyperlinkTextFormatter.FormatText(messageToFormat);
+                string formattedText = hyperlinkTextFormatter.FormatText(message.Message);
                 var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, message);
                 chatHistory.AddMessage(channel, type, newChatMessage);
             }
