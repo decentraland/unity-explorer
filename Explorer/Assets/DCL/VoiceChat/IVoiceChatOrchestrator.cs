@@ -69,6 +69,7 @@ namespace DCL.VoiceChat
     {
         void JoinCommunityVoiceChat(string communityId, CancellationToken ct, bool force = false);
         void RequestToSpeakInCurrentCall();
+        void LowerHandInCurrentCall();
         void PromoteToSpeakerInCurrentCall(string walletId);
         void DenySpeakerInCurrentCall(string walletId);
         void DemoteFromSpeakerInCurrentCall(string walletId);

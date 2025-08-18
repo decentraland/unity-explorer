@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.VoiceChat.Services
@@ -166,20 +167,22 @@ namespace DCL.VoiceChat.Services
             return result;
         }
 
-        public async UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, CancellationToken ct)
+        public async UniTask<RequestToSpeakInCommunityVoiceChatResponse> RequestToSpeakInCommunityVoiceChatAsync(string communityId, bool isRequestingToSpeak, CancellationToken ct)
         {
             ThrowIfServiceDisabled();
 
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+            Debug.Log($"Is reauesrting to spek {isRequestingToSpeak}");
             var payload = new RequestToSpeakInCommunityVoiceChatPayload()
             {
                 CommunityId = communityId,
+                IsRaisingHand = isRequestingToSpeak
             };
 
             RequestToSpeakInCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
-                                                                             .CallUnaryProcedure<RequestToSpeakInCommunityVoiceChatResponse>(REQUEST_TO_SPEAK_COMMUNITY_VOICE_CHAT, payload)
-                                                                             .AttachExternalCancellation(ct)
-                                                                             .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+                                                                                         .CallUnaryProcedure<RequestToSpeakInCommunityVoiceChatResponse>(REQUEST_TO_SPEAK_COMMUNITY_VOICE_CHAT, payload)
+                                                                                         .AttachExternalCancellation(ct)
+                                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
             return response;
         }

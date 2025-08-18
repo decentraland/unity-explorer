@@ -129,7 +129,27 @@ namespace DCL.VoiceChat
             {
                 try
                 {
-                    RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, ct);
+                    RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, true, ct);
+
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} RequestToSpeak response: {response.ResponseCase} for community {communityId}");
+                }
+                catch (Exception e) { }
+            }
+        }
+
+        public void LowerHandInCurrentCall()
+        {
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || string.IsNullOrEmpty(CallId.Value)) return;
+
+            cts = cts.SafeRestart();
+            LowerHandAsync(CallId.Value, cts.Token).Forget();
+            return;
+
+            async UniTaskVoid LowerHandAsync(string communityId, CancellationToken ct)
+            {
+                try
+                {
+                    RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, false, ct);
 
                     ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} RequestToSpeak response: {response.ResponseCase} for community {communityId}");
                 }

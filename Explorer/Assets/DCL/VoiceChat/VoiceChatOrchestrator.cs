@@ -237,6 +237,12 @@ namespace DCL.VoiceChat
                 communityVoiceChatCallStatusService.RequestToSpeakInCurrentCall();
         }
 
+        public void LowerHandInCurrentCall()
+        {
+            if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))
+                communityVoiceChatCallStatusService.LowerHandInCurrentCall();
+        }
+
         public void PromoteToSpeakerInCurrentCall(string walletId)
         {
             if (VoiceChatCallTypeValidator.IsCommunityCall(currentVoiceChatType.Value))

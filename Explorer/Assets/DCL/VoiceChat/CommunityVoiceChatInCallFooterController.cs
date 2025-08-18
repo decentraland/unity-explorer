@@ -33,6 +33,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.view.EndCallButton.onClick.AddListener(OnEndCallButtonClicked);
             this.view.LeaveStageButton.onClick.AddListener(OnLeaveStageButtonClicked);
             this.view.RaiseHandButton.onClick.AddListener(OnRaiseHandButtonClicked);
+            this.view.LowerHandButton.onClick.AddListener(OnLowerHandButtonClicked);
             this.view.MicrophoneButton.MicButton.onClick.AddListener(OnMicrophoneButtonClicked);
 
             isRequestingToSpeakSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsRequestingToSpeak.Subscribe(OnRequestingToSpeakChanged);
@@ -45,6 +46,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.LeaveStageButton.gameObject.SetActive(false);
             view.MicrophoneButton.gameObject.SetActive(false);
             view.RaiseHandButton.gameObject.SetActive(false);
+            view.LowerHandButton.gameObject.SetActive(false);
         }
 
         private void OnMicrophoneButtonClicked()
@@ -81,6 +83,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 view.LeaveStageButton.gameObject.SetActive(isSpeaker);
                 view.MicrophoneButton.gameObject.SetActive(isSpeaker);
                 view.RaiseHandButton.gameObject.SetActive(!isSpeaker);
+                view.LowerHandButton.gameObject.SetActive(false);
                 if (isSpeaker)
                     view.MicrophoneButton.SetMicrophoneStatus(microphoneHandler.IsMicrophoneEnabled.Value);
             }
@@ -105,6 +108,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             void OnRequestingToSpeakChangedInternal()
             {
                 view.RaiseHandButton.gameObject.SetActive(!isRequestingToSpeak);
+                view.LowerHandButton.gameObject.SetActive(isRequestingToSpeak && !orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker);
             }
 
             async UniTaskVoid OnRequestingToSpeakChangedAsync()
@@ -127,6 +131,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnRaiseHandButtonClicked()
         {
             orchestrator.RequestToSpeakInCurrentCall();
+        }
+
+        private void OnLowerHandButtonClicked()
+        {
+            orchestrator.LowerHandInCurrentCall();
         }
 
         private void OnLeaveStageButtonClicked()
