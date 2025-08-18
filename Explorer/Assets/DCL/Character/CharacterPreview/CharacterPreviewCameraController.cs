@@ -122,10 +122,13 @@ namespace DCL.CharacterPreview
                     }
                     else
                     {
+                        // Frame-rate independent damping
+                        float smoothing = 1f - Mathf.Exp(-inertia * Time.deltaTime);
+
                         angularVelocity = Mathf.Lerp(
                             characterPreviewAvatarContainer.RotationAngularVelocity,
                             -pointerEventData.delta.x,
-                            Time.deltaTime * inertia
+                            smoothing
                         );
                     }
 
