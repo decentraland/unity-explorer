@@ -610,6 +610,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fc78f0ea3986a4e08922b0212a1734b5
+    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Splash.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fdd9de2cf51974e4f9be30ab72d8eabd
     m_Address: MapLayerIconMapping
     m_ReadOnly: 0

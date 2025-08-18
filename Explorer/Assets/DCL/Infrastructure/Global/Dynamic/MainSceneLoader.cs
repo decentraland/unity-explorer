@@ -75,9 +75,8 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
+        [SerializeField] private SplashScreenRef splashScreenRef = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
-        [SerializeField] private SplashScreen splashScreen = null!;
-        [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
@@ -86,6 +85,8 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
+
+        private SplashScreen splashScreen = null!;
 
         private void Awake()
         {
@@ -162,6 +163,9 @@ namespace Global.Dynamic
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
+
+            splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct)).Value;
+
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
@@ -270,10 +274,9 @@ namespace Global.Dynamic
 
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
 
-                //This is done in order to release the memory usage of the splash screen logo animation sprites
+                //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
-                logoAnimation.StopPlayback();
-                logoAnimation.runtimeAnimatorController = null;
+                splashScreen.CleanupLogo();
 
                 RestoreInputs();
             }
@@ -570,6 +573,14 @@ namespace Global.Dynamic
             public void Dispose()
             {
                 ReportHub.Log(data, "Finish checking");
+            }
+        }
+
+        [Serializable]
+        public class SplashScreenRef : ComponentReference<SplashScreen>
+        {
+            public SplashScreenRef(string guid) : base(guid)
+            {
             }
         }
     }

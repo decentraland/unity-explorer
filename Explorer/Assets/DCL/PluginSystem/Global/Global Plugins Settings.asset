@@ -850,7 +850,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <FollowTarget>k__BackingField: {fileID: 9209778991738672599, guid: ace53bd2bc5e2b8439785bb3122b12e3, type: 3}
+        <FollowTarget>k__BackingField:
+          m_AssetGUID: ace53bd2bc5e2b8439785bb3122b12e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <TransitionSettings>k__BackingField: {fileID: 11400000, guid: 230436585dd166a4e98f1c0953e3a5f6, type: 2}
         <MovementSettings>k__BackingField: {fileID: 11400000, guid: 9c104547ad3a8454baeb79e1bb45ce4c, type: 2}
         <PhotoDetailPrefab>k__BackingField:
@@ -879,12 +884,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ChatEntryConfiguration>k__BackingField:
-          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
