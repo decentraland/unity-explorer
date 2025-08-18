@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b68e7f2294347b4a4320799a41d0abf, type: 3}
   m_Name: CommunityCardContextMenuSettings
   m_EditorClassIdentifier: 
-  <ContextMenuWidth>k__BackingField: 218
+  <ContextMenuWidth>k__BackingField: 262
   <ElementsSpacing>k__BackingField: 5
   <OffsetFromTarget>k__BackingField: {x: -20, y: -30}
   <VerticalPadding>k__BackingField:
@@ -20,6 +20,8 @@ MonoBehaviour:
     m_Right: 15
     m_Top: 20
     m_Bottom: 25
+  <ToggleNotificationsSprite>k__BackingField: {fileID: 21300000, guid: b68a1845513e146bbbbb9b209ce4120d, type: 3}
+  <ToggleNotificationsText>k__BackingField: Notifications
   <LeaveCommunitySprite>k__BackingField: {fileID: 21300000, guid: 5f39f01f09cd04a7c9a041960e0e0484, type: 3}
   <LeaveCommunityText>k__BackingField: Leave Community
   <DeleteCommunitySprite>k__BackingField: {fileID: 21300000, guid: ac4ebefc5fac7475ba19ac778feacfa8, type: 3}
