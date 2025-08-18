@@ -27,6 +27,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
 
             public string inviteOrRequestId;
             public InviteRequestAction pendingActionType;
+            public int requestsReceived;
 
             public void SetAsJoined(bool isJoined)
             {

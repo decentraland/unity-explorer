@@ -338,6 +338,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
+            cardView.SetRequestsReceived(communityData.requestsReceived);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
             // Setup card events
