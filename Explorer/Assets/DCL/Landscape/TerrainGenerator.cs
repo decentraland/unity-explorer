@@ -85,6 +85,9 @@ namespace DCL.Landscape
 
         private ITerrainDetailSetter terrainDetailSetter;
         private IGPUIWrapper gpuiWrapper;
+        private Texture2D occupancyMap;
+        private NativeArray<byte> occupancyMapData;
+        private int occupancyMapSize;
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
@@ -229,7 +232,15 @@ namespace DCL.Landscape
                         rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
                         if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
-                            await LoadTreesAsync(terrainGenData.treeAssets, rootGo);
+                        {
+                            occupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
+                                TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+
+                            occupancyMapData = occupancyMap.GetRawTextureData<byte>();
+                            occupancyMapSize = occupancyMap.width; // width == height
+
+                            await LoadTreesAsync();
+                        }
 
                         Ocean = factory.CreateOcean(rootGo);
                         Wind = factory.CreateWind();
@@ -574,7 +585,7 @@ namespace DCL.Landscape
             noiseGenCache.Dispose();
         }
 
-        private static Texture2D CreateOccupancyMap(ReadOnlySpan<int2> emptyParcels, int2 minParcel,
+        private static Texture2D CreateOccupancyMap(NativeArray<int2> emptyParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
             int2 terrainSize = minParcel + maxParcel + 1;
@@ -616,7 +627,7 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 0;
 
-                    endX = i + textureSize / 2 - maxParcel.x - 1;
+                    endX = i + textureSize / 2 - maxParcel.x;
 
                     while (i < endX)
                         data[i++] = 255;
@@ -649,7 +660,7 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 0;
 
-                    endX = i + textureSize / 2 - maxParcel.x - 1;
+                    endX = i + textureSize / 2 - maxParcel.x;
 
                     while (i < endX)
                         data[i++] = 255;
@@ -670,14 +681,14 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 0;
 
-                    endX = i + textureSize / 2 - maxParcel.x - 1;
+                    endX = i + textureSize / 2 - maxParcel.x;
 
                     while (i < endX)
                         data[i++] = 255;
                 }
 
                 // Fifth section, same as first section.
-                endY = i + (textureSize / 2 - maxParcel.y - 1) * textureSize;
+                endY = i + (textureSize / 2 - maxParcel.y) * textureSize;
 
                 while (i < endY)
                     data[i++] = 255;
@@ -691,6 +702,75 @@ namespace DCL.Landscape
 
             occupancyMap.Apply(false, false);
             return occupancyMap;
+        }
+
+        public bool IsParcelOccupied(int2 parcel)
+        {
+            if (any(parcel < TerrainModel.MinParcel) || any(parcel > TerrainModel.MaxParcel))
+                return false;
+
+            if (occupancyMapSize <= 0)
+                return false;
+
+            parcel += occupancyMapSize / 2;
+            int index = parcel.y * occupancyMapSize + parcel.x;
+            return occupancyMapData[index] > 0;
+        }
+
+        private bool OverlapsOccupiedParcel(float2 position, float radius)
+        {
+            int2 parcel = (int2)floor(position * (1f / ParcelSize));
+            float2 localPosition = position - parcel * ParcelSize;
+
+            if (localPosition.x < radius)
+            {
+                if (IsParcelOccupied(int2(parcel.x - 1, parcel.y)))
+                    return true;
+
+                if (localPosition.y < radius)
+                {
+                    if (IsParcelOccupied(int2(parcel.x - 1, parcel.y - 1)))
+                        return true;
+                }
+            }
+
+            if (ParcelSize - localPosition.x < radius)
+            {
+                if (IsParcelOccupied(int2(parcel.x + 1, parcel.y)))
+                    return true;
+
+                if (ParcelSize - localPosition.y < radius)
+                {
+                    if (IsParcelOccupied(int2(parcel.x + 1, parcel.y + 1)))
+                        return true;
+                }
+            }
+
+            if (localPosition.y < radius)
+            {
+                if (IsParcelOccupied(int2(parcel.x, parcel.y - 1)))
+                    return true;
+
+                if (ParcelSize - localPosition.x < radius)
+                {
+                    if (IsParcelOccupied(int2(parcel.x + 1, parcel.y - 1)))
+                        return true;
+                }
+            }
+
+            if (ParcelSize - localPosition.y < radius)
+            {
+                if (IsParcelOccupied(int2(parcel.x, parcel.y + 1)))
+                    return true;
+
+                if (localPosition.x < radius)
+                {
+                    if (IsParcelOccupied(int2(parcel.x - 1, parcel.y + 1)))
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
@@ -734,7 +814,7 @@ namespace DCL.Landscape
         }
 
 #if GPUI_PRO_PRESENT
-        private static async UniTask LoadTreesAsync(LandscapeAsset[] treePrototypes, Transform terrainRoot)
+        private async UniTask LoadTreesAsync()
         {
             const int SIZE_OF_MATRIX = 64;
 
@@ -744,10 +824,11 @@ namespace DCL.Landscape
                     throw new Exception("The size of the Matrix4x4 struct is wrong");
             }
 
+            LandscapeAsset[] treePrototypes = terrainGenData.treeAssets;
             var rendererKeys = new int[treePrototypes.Length];
 
             for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
-                GPUICoreAPI.RegisterRenderer(terrainRoot, treePrototypes[prototypeIndex].asset,
+                GPUICoreAPI.RegisterRenderer(rootGo, treePrototypes[prototypeIndex].asset,
                     out rendererKeys[prototypeIndex]);
 
             await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,
@@ -766,6 +847,16 @@ namespace DCL.Landscape
                 {
                     fixed (Matrix4x4* bufferPtr = buffer)
                         ReadReliably(reader, new Span<byte>(bufferPtr, instanceCount * SIZE_OF_MATRIX));
+                }
+
+                float treeRadius = treePrototypes[prototypeIndex].radius;
+
+                for (int instanceIndex = instanceCount - 1; instanceIndex >= 0; instanceIndex--)
+                {
+                    Vector3 position = buffer[instanceIndex].GetPosition();
+
+                    if (OverlapsOccupiedParcel(float2(position.x, position.z), treeRadius))
+                        buffer[instanceIndex] = buffer[--instanceCount];
                 }
 
                 GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex], buffer,
