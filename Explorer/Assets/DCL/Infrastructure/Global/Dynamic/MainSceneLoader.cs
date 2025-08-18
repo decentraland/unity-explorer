@@ -86,7 +86,7 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
 
-        private SplashScreen splashScreen = null!;
+        private ProvidedInstance<SplashScreen> splashScreen;
 
         private void Awake()
         {
@@ -164,7 +164,7 @@ namespace Global.Dynamic
 
             var assetsProvisioner = new AddressablesProvisioner();
 
-            splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct)).Value;
+            splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
@@ -187,7 +187,7 @@ namespace Global.Dynamic
                 globalPluginSettingsContainer,
                 launchSettings,
                 applicationParametersParser,
-                splashScreen,
+                splashScreen.Value,
                 realmUrls,
                 diskCache,
                 partialsDiskCache,
@@ -242,14 +242,14 @@ namespace Global.Dynamic
                     return;
                 }
 
-                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, splashScreen, decentralandUrlsSource, ct))
+                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
-                    splashScreen.Hide();
+                    splashScreen.Value.Hide();
 
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
@@ -257,7 +257,7 @@ namespace Global.Dynamic
                         return;
                     }
 
-                    splashScreen.Show();
+                    splashScreen.Value.Show();
                 }
 
                 DisableInputs();
@@ -276,7 +276,7 @@ namespace Global.Dynamic
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
-                splashScreen.CleanupLogo();
+                splashScreen.Dispose();
 
                 RestoreInputs();
             }
@@ -336,7 +336,7 @@ namespace Global.Dynamic
             await minimumSpecsScreenController.HoldingTask.Task;
         }
 
-        private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, DecentralandUrlsSource dclSources,
+        private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
             CancellationToken ct)
         {
             //If Livekit is down, stop bootstrapping
@@ -344,7 +344,7 @@ namespace Global.Dynamic
                 return false;
 
             //If application requires version update, stop bootstrapping
-            if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
+            if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen.Value, ct))
                 return false;
 
             //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
