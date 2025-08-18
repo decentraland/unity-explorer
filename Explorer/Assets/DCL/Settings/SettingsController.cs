@@ -102,7 +102,7 @@ namespace DCL.Settings
         }
 
         public UniTask InitializeAsync() =>
-            GenerateSettings();
+            GenerateSettingsAsync();
 
         public void Activate()
         {
@@ -136,7 +136,7 @@ namespace DCL.Settings
             ChatBubblesVisibilityChanged?.Invoke(newVisibility);
         }
 
-        private async UniTask GenerateSettings()
+        private async UniTask GenerateSettingsAsync()
         {
             if (settingsMenuConfiguration.SettingsGroupPrefab == null)
             {
@@ -144,11 +144,11 @@ namespace DCL.Settings
                 return;
             }
 
-            await GenerateSettingsSection(settingsMenuConfiguration.GeneralSectionConfig, view.GeneralSectionContainer);
-            await GenerateSettingsSection(settingsMenuConfiguration.GraphicsSectionConfig, view.GraphicsSectionContainer);
-            await GenerateSettingsSection(settingsMenuConfiguration.SoundSectionConfig, view.SoundSectionContainer);
-            await GenerateSettingsSection(settingsMenuConfiguration.ControlsSectionConfig, view.ControlsSectionContainer);
-            await GenerateSettingsSection(settingsMenuConfiguration.ChatSectionConfig, view.ChatSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.GeneralSectionConfig, view.GeneralSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.GraphicsSectionConfig, view.GraphicsSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.SoundSectionConfig, view.SoundSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.ControlsSectionConfig, view.ControlsSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.ChatSectionConfig, view.ChatSectionContainer);
 
             foreach (var controller in controllers)
                 controller.OnAllControllersInstantiated(controllers);
@@ -156,7 +156,7 @@ namespace DCL.Settings
             SetInitialSectionsVisibility();
         }
 
-        private async UniTask GenerateSettingsSection(SettingsSectionConfig sectionConfig, Transform sectionContainer)
+        private async UniTask GenerateSettingsSectionAsync(SettingsSectionConfig sectionConfig, Transform sectionContainer)
         {
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
@@ -172,7 +172,7 @@ namespace DCL.Settings
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
                     if (module != null)
-                        controllers.Add(await module.CreateModule
+                        controllers.Add(await module.CreateModuleAsync
                         (
                             generalGroupView.ModulesContainer,
                             realmPartitionSettingsAsset,

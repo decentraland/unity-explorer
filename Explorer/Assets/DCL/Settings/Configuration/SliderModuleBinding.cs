@@ -36,7 +36,7 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override async UniTask<SettingsFeatureController> CreateModule(
+        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
