@@ -14,7 +14,9 @@ namespace DCL.CharacterPreview
     /// </summary>
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
-        private const float ANGULAR_VELOCITY_DIVISOR = 10f;
+        private const float MAX_ANGULAR_VELOCITY = 100f;
+        private const float ANGULAR_VELOCITY_DIVISOR = 15f;
+        private const float MIN_DURATION = .2f;
 
         private Tween? fovTween;
         private Tween? rotationTween;
@@ -53,7 +55,7 @@ namespace DCL.CharacterPreview
             if (cameraTarget != null)
                 cameraTarget.localPosition = preset.verticalPosition;
 
-            StopCameraTweens();
+            StopFOVTween();
 
             fovTween = DOTween.To(() => freeLookCamera.m_Lens.FieldOfView, x => freeLookCamera.m_Lens.FieldOfView = x, preset.cameraFieldOfView, 1)
                               .SetEase(Ease.OutQuad)
@@ -62,30 +64,45 @@ namespace DCL.CharacterPreview
 
         public void StopCameraTweens()
         {
-            fovTween?.Kill();
-            rotationTween?.Kill();
+            StopFOVTween();
+            StopRotationTween();
         }
+
+        public void StopFOVTween() =>
+            fovTween?.Kill();
+
+        public void StopRotationTween() =>
+            rotationTween?.Kill();
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
 
         public void SetRotationTween(float angularVelocity, float rotationModifier, Ease curve)
         {
-            rotationAngularVelocity = angularVelocity;
+            rotationAngularVelocity = Mathf.Clamp(
+                angularVelocity,
+                -MAX_ANGULAR_VELOCITY,
+                MAX_ANGULAR_VELOCITY
+            );
 
-            rotationTween.Kill();
+            float duration = Mathf.Max(
+                MIN_DURATION,
+                Mathf.Abs(rotationAngularVelocity) / ANGULAR_VELOCITY_DIVISOR
+            );
+
+            StopRotationTween();
 
             rotationTween = DOTween.To(
                                         () => rotationAngularVelocity,
                                         x => rotationAngularVelocity = x,
                                         0f,
-                                        Mathf.Abs(rotationAngularVelocity) / ANGULAR_VELOCITY_DIVISOR // duration based on velocity (tweak divisor)
+                                        duration
                                     )
                                    .SetEase(curve)
                                    .OnUpdate(() =>
                                     {
                                         Vector3 rotation = rotationTarget.rotation.eulerAngles;
-                                        rotation.y += rotationAngularVelocity * rotationModifier; // apply rotationModifier here
+                                        rotation.y += rotationAngularVelocity * rotationModifier * Time.deltaTime;
                                         rotationTarget.rotation = Quaternion.Euler(rotation);
                                     })
                                    .OnComplete(() =>
@@ -97,19 +114,16 @@ namespace DCL.CharacterPreview
 
         public void SetFOVTween(float targetFOV, float duration, Ease curve)
         {
-            fovTween?.Kill();
+            StopFOVTween();
 
             fovTween = DOTween.To(
-                () => freeLookCamera.m_Lens.FieldOfView,
-                x => freeLookCamera.m_Lens.FieldOfView = x,
-                targetFOV,
-                duration
-                )
-               .SetEase(curve)
-               .OnComplete(() =>
-                {
-                    fovTween?.Kill();
-                });
+                                   () => freeLookCamera.m_Lens.FieldOfView,
+                                   x => freeLookCamera.m_Lens.FieldOfView = x,
+                                   targetFOV,
+                                   duration
+                               )
+                              .SetEase(curve)
+                              .OnComplete(() => { fovTween?.Kill(); });
         }
     }
 

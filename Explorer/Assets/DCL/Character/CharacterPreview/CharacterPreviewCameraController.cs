@@ -76,7 +76,7 @@ namespace DCL.CharacterPreview
                 characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
 
-            characterPreviewAvatarContainer.StopCameraTweens();
+            characterPreviewAvatarContainer.StopFOVTween();
             characterPreviewAvatarContainer.SetFOVTween(newFieldOfView, cameraSettings.fieldOfViewDuration, cameraSettings.fieldOfViewCurve);
         }
 
@@ -88,7 +88,7 @@ namespace DCL.CharacterPreview
             {
                 case PointerEventData.InputButton.Right:
                 {
-                    characterPreviewAvatarContainer.StopCameraTweens();
+                    characterPreviewAvatarContainer.StopFOVTween();
 
                     if (!cameraSettings.dragEnabled) return;
 
@@ -111,7 +111,7 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
+                    float rotationModifier = cameraSettings.rotationModifier;
                     float inertia = cameraSettings.rotationInertia;
                     Ease curve = cameraSettings.rotationInertiaCurve;
                     float angularVelocity;
