@@ -37,6 +37,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
 using DCL.Roads.Systems;
+using DCL.SkyBox;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -193,7 +194,7 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity);
+            var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
