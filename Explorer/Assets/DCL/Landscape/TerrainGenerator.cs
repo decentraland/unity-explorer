@@ -22,6 +22,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
+using static Unity.Mathematics.math;
 using JobHandle = Unity.Jobs.JobHandle;
 
 namespace DCL.Landscape
@@ -573,7 +574,126 @@ namespace DCL.Landscape
             noiseGenCache.Dispose();
         }
 
-        private static string TreeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
+        private static Texture2D CreateOccupancyMap(ReadOnlySpan<int2> emptyParcels, int2 minParcel,
+            int2 maxParcel, int padding)
+        {
+            int2 terrainSize = minParcel + maxParcel + 1;
+            int2 citySize = terrainSize - padding * 2;
+            int textureSize = ceilpow2(cmax(terrainSize) + 2);
+
+            Texture2D occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false,
+                true);
+
+            NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
+
+            // A square of red pixels surrounded by a border of black pixels totalPadding pixels wide
+            // surrounded by red pixels to fill out the power of two texture, but at least one. World
+            // origin (parcel 0,0) corresponds to uv of 0.5 plus half a pixel. The outer border is there
+            // so that terrain height blends to zero at its edges.
+            {
+                int i = 0;
+
+                // First section: rows of red pixels from the top edge of the texture to minParcel.y.
+                int endY = (textureSize / 2 + minParcel.y) * textureSize;
+
+                while (i < endY)
+                    data[i++] = 255;
+
+                // Second section: totalPadding rows of: one or more red pixels (enough to pad the
+                // texture out to a power of two), terrainSize.x black pixels, one or more red pixels
+                // again for padding.
+                endY = i + padding * textureSize;
+
+                while (i < endY)
+                {
+                    int endX = i + textureSize / 2 + minParcel.x;
+
+                    while (i < endX)
+                        data[i++] = 255;
+
+                    endX = i + terrainSize.x;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
+
+                    while (i < endX)
+                        data[i++] = 255;
+                }
+
+                // Third, innermost section: citySize.y rows of: one or more red pixels, totalPadding
+                // black pixels, citySize.x red pixels, totalPadding black pixels, one or more red
+                // pixels.
+                endY = i + citySize.y * textureSize;
+
+                while (i < endY)
+                {
+                    int endX = i + textureSize / 2 + minParcel.x;
+
+                    while (i < endX)
+                        data[i++] = 255;
+
+                    endX = i + padding;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + citySize.x;
+
+                    while (i < endX)
+                        data[i++] = 255;
+
+                    endX = i + padding;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
+
+                    while (i < endX)
+                        data[i++] = 255;
+                }
+
+                // Fourth section, same as second section.
+                endY = i + padding * textureSize;
+
+                while (i < endY)
+                {
+                    int endX = i + textureSize / 2 + minParcel.x;
+
+                    while (i < endX)
+                        data[i++] = 255;
+
+                    endX = i + terrainSize.x;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
+
+                    while (i < endX)
+                        data[i++] = 255;
+                }
+
+                // Fifth section, same as first section.
+                endY = i + (textureSize / 2 - maxParcel.y - 1) * textureSize;
+
+                while (i < endY)
+                    data[i++] = 255;
+            }
+
+            for (int i = 0; i < emptyParcels.Length; i++)
+            {
+                int2 parcel = emptyParcels[i] + textureSize / 2;
+                data[parcel.y * textureSize + parcel.x] = 0;
+            }
+
+            occupancyMap.Apply(false, false);
+            return occupancyMap;
+        }
+
+        private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
 
         private static void SaveTrees(ChunkModel[] chunks)
         {
@@ -597,7 +717,7 @@ namespace DCL.Landscape
                 }
             }
 
-            using var stream = new FileStream(TreeFilePath, FileMode.Create, FileAccess.Write);
+            using var stream = new FileStream(treeFilePath, FileMode.Create, FileAccess.Write);
             using var writer = new BinaryWriter(stream, new UTF8Encoding(false));
 
             // To help us allocate the correct size buffer when loading.
@@ -630,7 +750,7 @@ namespace DCL.Landscape
                 GPUICoreAPI.RegisterRenderer(terrainRoot, treePrototypes[prototypeIndex].asset,
                     out rendererKeys[prototypeIndex]);
 
-            await using var stream = new FileStream(TreeFilePath, FileMode.Open, FileAccess.Read,
+            await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,
                 FileShare.Read);
 
             using var reader = new BinaryReader(stream, new UTF8Encoding(false));
