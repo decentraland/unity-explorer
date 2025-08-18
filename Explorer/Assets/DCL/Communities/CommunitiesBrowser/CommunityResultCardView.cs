@@ -23,6 +23,9 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string>? ViewCommunityButtonClicked;
         public event Action<string, CommunityResultCardView>? JoinCommunityButtonClicked;
         public event Action<string, CommunityResultCardView>? RequestToJoinCommunityButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? CancelRequestToJoinCommunityButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? AcceptCommunityInvitationButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? RejectCommunityInvitationButtonClicked;
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
@@ -73,7 +76,8 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private string currentCommunityId;
+        private string currentCommunityId = null!;
+        private string currentInviteOrRequestId = null!;
         private Tweener? headerTween;
         private Tweener? footerTween;
         private Vector2 originalHeaderSizeDelta;
@@ -81,29 +85,13 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            mainButton.onClick.AddListener(() =>
-            {
-                if (currentCommunityId != null)
-                    MainButtonClicked?.Invoke(currentCommunityId);
-            });
-
-            viewCommunityButton.onClick.AddListener(() =>
-            {
-                if (currentCommunityId != null)
-                    ViewCommunityButtonClicked?.Invoke(currentCommunityId);
-            });
-
-            joinCommunityButton.onClick.AddListener(() =>
-            {
-                if (currentCommunityId != null)
-                    JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
-            });
-
-            requestToJoinButton.onClick.AddListener(() =>
-            {
-                if (currentCommunityId != null)
-                    RequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
-            });
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
+            viewCommunityButton.onClick.AddListener(() => ViewCommunityButtonClicked?.Invoke(currentCommunityId));
+            joinCommunityButton.onClick.AddListener(() => JoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
+            requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
+            cancelJoinRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this));
+            acceptInvitationButton.onClick.AddListener(() => AcceptCommunityInvitationButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this));
+            rejectInvitationButton.onClick.AddListener(() => RejectCommunityInvitationButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this));
 
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
@@ -145,6 +133,9 @@ namespace DCL.Communities.CommunitiesBrowser
             if (showMembers)
                 communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
         }
+
+        public void SetInviteOrRequestId(string id) =>
+            currentInviteOrRequestId = id;
 
         public void SetActionButtonsType(CommunityPrivacy privacy, InviteRequestAction type, bool isMember)
         {
@@ -212,6 +203,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 role = userInviteRequestData.role,
                 friends = userInviteRequestData.friends,
                 pendingActionType = userInviteRequestData.type,
+                inviteOrRequestId = userInviteRequestData.id,
             };
 
             SetupMutualFriends(profileDataProvider, communityFromInviteRequestData);

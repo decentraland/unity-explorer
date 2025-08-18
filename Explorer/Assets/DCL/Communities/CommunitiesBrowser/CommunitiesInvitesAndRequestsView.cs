@@ -17,6 +17,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public event Action? InvitesAndRequestsButtonClicked;
         public event Action<string>? CommunityProfileOpened;
+        public event Action<string, string, CommunityResultCardView>? RequestToJoinCommunityCanceled;
+        public event Action<string, string, CommunityResultCardView>? CommunityInvitationAccepted;
+        public event Action<string, string, CommunityResultCardView>? CommunityInvitationRejected;
 
         [Header("Invites & Requests Section")]
         [SerializeField] private Button invitesAndRequestsButton = null!;
@@ -169,6 +172,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.SetDescription(community.description);
             invitedCommunityCardView.SetPrivacy(community.privacy);
             invitedCommunityCardView.SetMembersCount(community.membersCount);
+            invitedCommunityCardView.SetInviteOrRequestId(community.id);
             invitedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
             invitedCommunityCardView.SetActonLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
@@ -178,6 +182,10 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.MainButtonClicked += OnOpenCommunityProfile;
             invitedCommunityCardView.ViewCommunityButtonClicked -= OnOpenCommunityProfile;
             invitedCommunityCardView.ViewCommunityButtonClicked += OnOpenCommunityProfile;
+            invitedCommunityCardView.AcceptCommunityInvitationButtonClicked -= OnCommunityInvitationAccepted;
+            invitedCommunityCardView.AcceptCommunityInvitationButtonClicked += OnCommunityInvitationAccepted;
+            invitedCommunityCardView.RejectCommunityInvitationButtonClicked -= OnCommunityInvitationRejected;
+            invitedCommunityCardView.RejectCommunityInvitationButtonClicked += OnCommunityInvitationRejected;
 
             // Setup mutual friends
             if (profileRepositoryWrapper != null)
@@ -204,6 +212,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.SetDescription(community.description);
             requestedCommunityCardView.SetPrivacy(community.privacy);
             requestedCommunityCardView.SetMembersCount(community.membersCount);
+            requestedCommunityCardView.SetInviteOrRequestId(community.id);
             requestedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
             requestedCommunityCardView.SetActonLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
@@ -213,6 +222,8 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.MainButtonClicked += OnOpenCommunityProfile;
             requestedCommunityCardView.ViewCommunityButtonClicked -= OnOpenCommunityProfile;
             requestedCommunityCardView.ViewCommunityButtonClicked += OnOpenCommunityProfile;
+            requestedCommunityCardView.CancelRequestToJoinCommunityButtonClicked -= OnCommunityRequestToJoinCanceled;
+            requestedCommunityCardView.CancelRequestToJoinCommunityButtonClicked += OnCommunityRequestToJoinCanceled;
 
             // Setup mutual friends
             if (profileRepositoryWrapper != null)
@@ -223,5 +234,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnOpenCommunityProfile(string communityId) =>
             CommunityProfileOpened?.Invoke(communityId);
+
+        private void OnCommunityRequestToJoinCanceled(string communityId, string requestId, CommunityResultCardView cardView) =>
+            RequestToJoinCommunityCanceled?.Invoke(communityId, requestId, cardView);
+
+        private void OnCommunityInvitationAccepted(string communityId, string invitationId, CommunityResultCardView cardView) =>
+            CommunityInvitationAccepted?.Invoke(communityId, invitationId, cardView);
+
+        private void OnCommunityInvitationRejected(string communityId, string invitationId, CommunityResultCardView cardView) =>
+            CommunityInvitationRejected?.Invoke(communityId, invitationId, cardView);
     }
 }

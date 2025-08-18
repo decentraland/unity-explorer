@@ -37,6 +37,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading requests. Please try again.";
         private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
         private const string REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error requesting to join community. Please try again.";
+        private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
+        private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
+        private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly CommunitiesBrowserView view;
@@ -59,8 +62,12 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource? updateInvitesCounterCts;
         private CancellationTokenSource? joinCommunityCts;
         private CancellationTokenSource? requestToJoinCommunityCts;
+        private CancellationTokenSource? cancelRequestToJoinCommunityCts;
+        private CancellationTokenSource? acceptCommunityInvitationCts;
+        private CancellationTokenSource? rejectCommunityInvitationCts;
 
         private bool isSectionActivated;
+        private bool isInvitesAndRequestsSectionActive;
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
         private bool currentIsMemberFilter;
@@ -69,6 +76,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private string currentSearchText = string.Empty;
         private bool currentOnlyMemberOf;
         private bool isGridResultsLoadingItems;
+        private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentInvitations = new ();
         private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentJoinRequests = new ();
 
         public CommunitiesBrowserController(
@@ -112,6 +120,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened += OpenCommunityProfile;
             view.CommunityJoined += JoinCommunity;
             view.CommunityRequestedToJoin += RequestToJoinCommunity;
+            view.CommunityRequestToJoinCanceled += CancelRequestToJoinCommunity;
+            view.CommunityInvitationAccepted += AcceptCommunityInvitation;
+            view.CommunityInvitationRejected += RejectCommunityInvitation;
             view.CreateCommunityButtonClicked += CreateCommunity;
         }
 
@@ -140,6 +151,9 @@ namespace DCL.Communities.CommunitiesBrowser
             updateInvitesCounterCts?.SafeCancelAndDispose();
             joinCommunityCts?.SafeCancelAndDispose();
             requestToJoinCommunityCts?.SafeCancelAndDispose();
+            cancelRequestToJoinCommunityCts?.SafeCancelAndDispose();
+            acceptCommunityInvitationCts?.SafeCancelAndDispose();
+            rejectCommunityInvitationCts?.SafeCancelAndDispose();
             spriteCache.Clear();
 
             UnsubscribeDataProviderEvents();
@@ -168,6 +182,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened -= OpenCommunityProfile;
             view.CommunityJoined -= JoinCommunity;
             view.CommunityRequestedToJoin -= RequestToJoinCommunity;
+            view.CommunityRequestToJoinCanceled -= CancelRequestToJoinCommunity;
+            view.CommunityInvitationAccepted -= AcceptCommunityInvitation;
+            view.CommunityInvitationRejected -= RejectCommunityInvitation;
             view.CreateCommunityButtonClicked -= CreateCommunity;
 
             UnsubscribeDataProviderEvents();
@@ -180,6 +197,9 @@ namespace DCL.Communities.CommunitiesBrowser
             updateInvitesCounterCts?.SafeCancelAndDispose();
             joinCommunityCts?.SafeCancelAndDispose();
             requestToJoinCommunityCts?.SafeCancelAndDispose();
+            cancelRequestToJoinCommunityCts?.SafeCancelAndDispose();
+            acceptCommunityInvitationCts?.SafeCancelAndDispose();
+            rejectCommunityInvitationCts?.SafeCancelAndDispose();
             spriteCache.Clear();
         }
 
@@ -188,11 +208,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
             LoadAllCommunitiesResults(updateInvitations: true);
-
-            // Get the current invites to update the invite counter on the main page
-            view.InvitesAndRequestsView.SetInvitesCounter(0);
-            updateInvitesCounterCts = updateInvitesCounterCts.SafeRestart();
-            LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token).Forget();
+            RefreshInvitesCounter();
         }
 
         private void ConfigureMyCommunitiesList() =>
@@ -239,6 +255,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetResultsCountTextActive(true);
             view.SetResultsSectionActive(true);
             view.InvitesAndRequestsView.SetSectionActive(false);
+            isInvitesAndRequestsSectionActive = false;
 
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
@@ -271,6 +288,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetResultsCountTextActive(true);
             view.SetResultsSectionActive(true);
             view.InvitesAndRequestsView.SetSectionActive(false);
+            isInvitesAndRequestsSectionActive = false;
         }
 
         private void LoadMoreResults(Vector2 _)
@@ -328,13 +346,13 @@ namespace DCL.Communities.CommunitiesBrowser
                 // Match the current join requests with the results to know what communities have been requested to join
                 foreach (GetUserCommunitiesData.CommunityData communityData in result.Value.data.results)
                 {
-                    communityData.SetPendingActionType(InviteRequestAction.none);
-
+                    communityData.pendingActionType = InviteRequestAction.none;
                     foreach (GetUserInviteRequestData.UserInviteRequestData joinRequest in currentJoinRequests)
                     {
                         if (communityData.id == joinRequest.communityId)
                         {
-                            communityData.SetPendingActionType(InviteRequestAction.request_to_join);
+                            communityData.pendingActionType = InviteRequestAction.request_to_join;
+                            communityData.inviteOrRequestId = joinRequest.id;
                             break;
                         }
                     }
@@ -365,6 +383,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetResultsCountTextActive(false);
             view.SetResultsSectionActive(false);
             view.InvitesAndRequestsView.SetSectionActive(true);
+            isInvitesAndRequestsSectionActive = true;
 
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadInvitesAndRequestsAsync(loadResultsCts.Token).Forget();
@@ -385,6 +404,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTask<int> LoadInvitesAsync(bool updateInvitesGrid, CancellationToken ct)
         {
             view.InvitesAndRequestsView.ClearInvitesItems();
+            currentInvitations.Clear();
 
             var invitesResult = await dataProvider.GetUserInviteRequestAsync(
                 InviteRequestAction.invite,
@@ -402,8 +422,12 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             int invitesCount = invitesResult.Value.data.results.Length;
+
             if (updateInvitesGrid && invitesCount > 0)
+            {
                 view.InvitesAndRequestsView.SetInvitesItems(invitesResult.Value.data.results);
+                currentInvitations.AddRange(invitesResult.Value.data.results);
+            }
 
             view.InvitesAndRequestsView.SetInvitesCounter(invitesCount);
 
@@ -437,6 +461,16 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             return requestsResult.Value.data.results.Length;
+        }
+
+        private void RefreshInvitesCounter(bool setCounterToZeroAtTheBeginning = true)
+        {
+            if (setCounterToZeroAtTheBeginning)
+                view.InvitesAndRequestsView.SetInvitesCounter(0);
+
+            // Get the current invites to update the invite counter on the main page
+            updateInvitesCounterCts = updateInvitesCounterCts.SafeRestart();
+            LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token).Forget();
         }
 
         private void DisableShortcutsInput(string text) =>
@@ -474,6 +508,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 view.SetResultsCountTextActive(true);
                 view.SetResultsSectionActive(true);
                 view.InvitesAndRequestsView.SetSectionActive(false);
+                isInvitesAndRequestsSectionActive = false;
 
                 loadResultsCts = loadResultsCts.SafeRestart();
                 LoadResultsAsync(
@@ -547,6 +582,72 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
+        private void CancelRequestToJoinCommunity(string communityId, string requestId)
+        {
+            cancelRequestToJoinCommunityCts = requestToJoinCommunityCts.SafeRestart();
+            CancelRequestToJoinCommunityAsync(communityId, requestId, cancelRequestToJoinCommunityCts.Token).Forget();
+        }
+
+        private async UniTaskVoid CancelRequestToJoinCommunityAsync(string communityId, string requestId, CancellationToken ct)
+        {
+            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, requestId, InviteRequestIntention.cancel, ct)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success || !result.Value)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            }
+        }
+
+        private void AcceptCommunityInvitation(string communityId, string invitationId)
+        {
+            acceptCommunityInvitationCts = acceptCommunityInvitationCts.SafeRestart();
+            AcceptCommunityInvitationAsync(communityId, invitationId, acceptCommunityInvitationCts.Token).Forget();
+        }
+
+        private async UniTaskVoid AcceptCommunityInvitationAsync(string communityId, string invitationId, CancellationToken ct)
+        {
+            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, invitationId, InviteRequestIntention.accept, ct)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success || !result.Value)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            }
+        }
+
+        private void RejectCommunityInvitation(string communityId, string invitationId)
+        {
+            rejectCommunityInvitationCts = rejectCommunityInvitationCts.SafeRestart();
+            RejectCommunityInvitationAsync(communityId, invitationId, rejectCommunityInvitationCts.Token).Forget();
+        }
+
+        private async UniTaskVoid RejectCommunityInvitationAsync(string communityId, string invitationId, CancellationToken ct)
+        {
+            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, invitationId, InviteRequestIntention.reject, ct)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success || !result.Value)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            }
+        }
+
         private void OpenCommunityProfile(string communityId) =>
             mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId, spriteCache))).Forget();
 
@@ -580,8 +681,45 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityJoined(string communityId, bool success) =>
             view.UpdateJoinedCommunity(communityId, true, success);
 
-        private void OnCommunityRequestedToJoin(string communityId, bool success) =>
-            view.UpdateRequestedToJoinCommunity(communityId, true, success);
+        private void OnCommunityRequestedToJoin(string communityId, bool success)
+        {
+            var alreadyExistsInvitation = false;
+            foreach (GetUserInviteRequestData.UserInviteRequestData invitation in currentInvitations)
+            {
+                if (communityId == invitation.communityId)
+                {
+                    alreadyExistsInvitation = true;
+                    RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+                    break;
+                }
+            }
+
+            view.UpdateRequestedToJoinCommunity(communityId, true, success, alreadyExistsInvitation);
+        }
+
+        private void OnCommunityRequestToJoinCancelled(string communityId, bool success)
+        {
+            if (!isInvitesAndRequestsSectionActive)
+                view.UpdateRequestedToJoinCommunity(communityId, false, success, false);
+            else
+                LoadInvitesAndRequestsResults();
+        }
+
+        private void OnCommunityInvitationAccepted(string communityId)
+        {
+            if (!isInvitesAndRequestsSectionActive)
+                return;
+
+            LoadInvitesAndRequestsResults();
+        }
+
+        private void OnCommunityInvitationRejected(string communityId)
+        {
+            if (!isInvitesAndRequestsSectionActive)
+                return;
+
+            LoadInvitesAndRequestsResults();
+        }
 
         private void OnCommunityLeft(string communityId, bool success) =>
             view.UpdateJoinedCommunity(communityId, false, success);
@@ -605,6 +743,9 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityUpdated += OnCommunityUpdated;
             dataProvider.CommunityJoined += OnCommunityJoined;
             dataProvider.CommunityRequestedToJoin += OnCommunityRequestedToJoin;
+            dataProvider.CommunityRequestToJoinCancelled += OnCommunityRequestToJoinCancelled;
+            dataProvider.CommunityInvitationAccepted += OnCommunityInvitationAccepted;
+            dataProvider.CommunityInvitationRejected += OnCommunityInvitationRejected;
             dataProvider.CommunityLeft += OnCommunityLeft;
             dataProvider.CommunityUserRemoved += OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
@@ -617,6 +758,9 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityUpdated -= OnCommunityUpdated;
             dataProvider.CommunityJoined -= OnCommunityJoined;
             dataProvider.CommunityRequestedToJoin -= OnCommunityRequestedToJoin;
+            dataProvider.CommunityRequestToJoinCancelled -= OnCommunityRequestToJoinCancelled;
+            dataProvider.CommunityInvitationAccepted -= OnCommunityInvitationAccepted;
+            dataProvider.CommunityInvitationRejected -= OnCommunityInvitationRejected;
             dataProvider.CommunityLeft -= OnCommunityLeft;
             dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;

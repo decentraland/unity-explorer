@@ -24,6 +24,8 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
+
+            public string inviteOrRequestId;
             public InviteRequestAction pendingActionType;
 
             public void SetAsJoined(bool isJoined)
@@ -37,9 +39,6 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 else
                     membersCount--;
             }
-
-            public void SetPendingActionType(InviteRequestAction actionType) =>
-                pendingActionType = actionType;
 
             public void DecreaseMembersCount()
             {

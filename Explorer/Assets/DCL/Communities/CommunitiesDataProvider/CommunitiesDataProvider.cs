@@ -24,6 +24,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string> CommunityUserRemoved;
         public event Action<string, string> CommunityUserBanned;
         public event Action<string, bool> CommunityRequestedToJoin;
+        public event Action<string, bool> CommunityRequestToJoinCancelled;
+        public event Action<string> CommunityInvitationAccepted;
+        public event Action<string> CommunityInvitationRejected;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -289,14 +292,28 @@ namespace DCL.Communities.CommunitiesDataProvider
             throw new NotImplementedException();
         }
 
-        public async UniTask<bool> ManageRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
+        public async UniTask<bool> ManageInviteRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
         {
-            throw new NotImplementedException();
-        }
+            var url = $"{communitiesBaseUrl}/{communityId}/requests/{requestId}";
 
-        public async UniTask<bool> ManageInviteToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
-        {
-            throw new NotImplementedException();
+            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"intention\": \"{intention.ToString()}\"}}"), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            switch (intention)
+            {
+                case InviteRequestIntention.accept:
+                    CommunityInvitationAccepted?.Invoke(communityId);
+                    break;
+                case InviteRequestIntention.reject:
+                    CommunityInvitationRejected?.Invoke(communityId);
+                    break;
+                case InviteRequestIntention.cancel:
+                    CommunityRequestToJoinCancelled?.Invoke(communityId, result.Success);
+                    break;
+            }
+
+            return result.Success;
         }
 
         public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
