@@ -44,8 +44,18 @@ namespace DCL.PluginSystem.World
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.assetsProvisioner = assetsProvisioner;
 
-            textMeshProPool = componentPoolsRegistry.AddGameObjectPool<TextMeshPro>();
+            textMeshProPool = componentPoolsRegistry.AddGameObjectPool(CreateTextObject);
             cacheCleaner.Register(textMeshProPool);
+        }
+
+        private TextMeshPro CreateTextObject()
+        {
+            var go = new GameObject("POOL_OBJECT_TextMeshPro");
+            go.gameObject.SetActive(false);
+            var tmp = go.AddComponent<TextMeshPro>();
+            // Set the default font so we don't get warnings before we get a chance to assign the correct one
+            tmp.font = fontsStorage.Font(Font.FSansSerif);
+            return tmp;
         }
 
         public void Dispose()
