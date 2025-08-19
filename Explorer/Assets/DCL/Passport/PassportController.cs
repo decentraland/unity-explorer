@@ -54,7 +54,7 @@ using Utility.Types;
 
 namespace DCL.Passport
 {
-    public partial class PassportController : ControllerBase<PassportView, PassportController.Params>
+    public partial class PassportController : ControllerBase<PassportView, PassportController.Params>, IBlocksChat
     {
         private enum OpenBadgeSectionOrigin
         {

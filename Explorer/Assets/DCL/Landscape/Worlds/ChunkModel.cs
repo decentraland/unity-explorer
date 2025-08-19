@@ -27,6 +27,22 @@ namespace DCL.Landscape
             TerrainData = null;
         }
 
+        public bool IsOutsideOrOccupied(int2 parcel)
+        {
+            if (parcel.x < MinParcel.x || parcel.x > MaxParcel.x) return true;
+            if (parcel.y < MinParcel.y || parcel.y > MaxParcel.y) return true;
+
+            for (var i = 0; i < OccupiedParcels.Count; i++)
+            {
+                int2 occupiedParcel = OccupiedParcels[i];
+
+                if (occupiedParcel.x == parcel.x && occupiedParcel.y == parcel.y)
+                    return true;
+            }
+
+            return false;
+        }
+
         public void AddOccupiedParcel(int2 parcel)
         {
             occupiedParcels.Add(parcel);

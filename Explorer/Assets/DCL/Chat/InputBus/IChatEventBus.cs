@@ -5,6 +5,8 @@ namespace DCL.Chat.EventBus
         public delegate void StartCallDelegate();
 
         public delegate void InsertTextInChatRequestedDelegate(string text);
+
+        public delegate void ClearAndInsertTextInChatRequestedDelegate(string text);
         public delegate void OpenPrivateConversationRequestedDelegate(string userId);
         public delegate void OpenCommunityConversationRequestedDelegate(string userId);
 
@@ -12,6 +14,8 @@ namespace DCL.Chat.EventBus
         /// Raised when somebody requested to add a text message in the current chat channel.
         /// </summary>
         public event InsertTextInChatRequestedDelegate InsertTextInChatRequested;
+
+        public event ClearAndInsertTextInChatRequestedDelegate ClearAndInsertTextInChatRequested;
 
         /// <summary>
         /// Raised when somebody wants to open and focus a private conversation in the chat.
@@ -30,6 +34,13 @@ namespace DCL.Chat.EventBus
         /// </summary>
         /// <param name="text">The text to add.</param>
         void InsertText(string text);
+
+        /// <summary>
+        ///     Sends the order of adding a text message in the current chat channel,
+        ///     but first clears the input field
+        /// </summary>
+        /// <param name="text"></param>
+        void ClearAndInsertText(string text);
 
         void StartCallInCurrentConversation();
 
