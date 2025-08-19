@@ -9,6 +9,7 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.EventBus;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -75,6 +76,8 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly bool includeCommunities;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private PassportController? passportController;
 
@@ -109,13 +112,15 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
+            bool includeCommunities,
             bool isNameEditorEnabled,
             bool isCallEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            GalleryEventBus galleryEventBus)
+            GalleryEventBus galleryEventBus,
+            CommunitiesDataProvider communitiesDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -154,6 +159,8 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.galleryEventBus = galleryEventBus;
+            this.includeCommunities = includeCommunities;
+            this.communitiesDataProvider = communitiesDataProvider;
         }
 
         public void Dispose()
@@ -212,6 +219,7 @@ namespace DCL.PluginSystem.Global
                 enableCameraReel,
                 enableFriends,
                 includeUserBlocking,
+                includeCommunities,
                 isNameEditorEnabled,
                 isCallEnabled,
                 chatEventBus,
@@ -219,7 +227,8 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 voiceChatCallStatusService,
                 passport3DPreviewCamera,
-                galleryEventBus
+                galleryEventBus,
+                communitiesDataProvider
             );
 
             mvcManager.RegisterController(passportController);

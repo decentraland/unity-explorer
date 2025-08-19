@@ -53,6 +53,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly bool includeVoiceChat;
+        private readonly bool includeCommunities;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -78,7 +79,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly List<string> lastCommunityNames = new List<string>();
         private GetUserCommunitiesData.CommunityData[] lastCommunityData;
         private CancellationTokenSource invitationActionCts;
-        
+        private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
             IChatEventBus chatEventBus,
@@ -108,6 +110,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.includeCommunities = includeCommunities;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -132,73 +135,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(contextMenuBlockUserButton);
 
             if (includeCommunities)
-                contextMenu.AddControl(new SubMenuContextMenuButtonSettings(contextMenuSettings.InviteToCommunityConfig.Text,
-                                                              contextMenuSettings.InviteToCommunityConfig.Sprite,
-                                                              new GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH,
-                                                                                         verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING,
-                                                                                         elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING,
-                                                                                         offsetFromTarget: CONTEXT_MENU_OFFSET),
-                                                              asyncControlSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync,
-                                                              asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync));
-        }
-
-        private async UniTask<bool> ResolveInvitationSubmenuVisibilityAsync(CancellationToken ct)
-        {
-            if(ct.IsCancellationRequested)
-                return false;
-
-            // Asks the server for the data of the communities to which the user can be invited
-            Result<GetUserCommunitiesResponse> response = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, 99, ct).SuppressToResultAsync();
-
-            if (response.Success)
             {
-                lastCommunityData = response.Value.data.results;
-                lastCommunityNames.Clear();
-
-                foreach (GetUserCommunitiesData.CommunityData community in lastCommunityData)
-                    if (community.role == CommunityMemberRole.moderator || community.role == CommunityMemberRole.owner) // TODO: remove this once the endpoint is implemented
-                        lastCommunityNames.Add(community.name);
-
-                if(lastCommunityNames.Count > 0)
-                    return true;
-            }
-            else
-            {
-                // TODO
-            }
-
-            return false;
-        }
-
-        private UniTask CreateInvitationSubmenuItemsAsync(GenericContextMenuParameter.GenericContextMenu contextSubMenu, CancellationToken ct)
-        {
-            if(ct.IsCancellationRequested)
-                return UniTask.CompletedTask;
-
-            // Adds the scroll view
-            var scroll = new ScrollableButtonListControlSettings(CONTEXT_MENU_ELEMENTS_SPACING, 600, OnInviteToCommunitySubmenuScrollViewItemClicked, verticalLayoutPadding:CONTEXT_MENU_VERTICAL_LAYOUT_PADDING);
-            contextSubMenu.AddControl(scroll);
-
-            scroll.SetData(lastCommunityNames);
-
-            return UniTask.CompletedTask;
-        }
-
-        private async void OnInviteToCommunitySubmenuScrollViewItemClicked(int itemIndex)
-        {
-            Debug.Log(itemIndex);
-
-            invitationActionCts = invitationActionCts.SafeRestart();
-            Result<bool> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(lastCommunityData[itemIndex].id, targetProfile.UserId, InviteRequestAction.invite, invitationActionCts.Token).SuppressToResultAsync();
-
-            if (result.Success && result.Value)
-            {
-                Debug.Log($"INVITED! {targetProfile.DisplayName} ({targetProfile.UserId}) to {lastCommunityData[itemIndex].name} ({lastCommunityData[itemIndex].id})");
-            }
-            else
-            {
-                Debug.LogError($"NOT INVITED! {targetProfile.DisplayName} ({targetProfile.UserId}) to {lastCommunityData[itemIndex].name} ({lastCommunityData[itemIndex].id})");
-                // TODO
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
             }
         }
 
@@ -255,6 +194,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 offset = CONTEXT_MENU_OFFSET;
 
             contextMenu.ChangeOffsetFromTarget(offset);
+
+            if (includeCommunities)
+                invitationButtonHandler.SetUserToInvite(profile.UserId);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter.GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);

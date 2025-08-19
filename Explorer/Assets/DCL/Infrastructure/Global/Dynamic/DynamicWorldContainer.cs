@@ -881,13 +881,15 @@ namespace Global.Dynamic
                     profileChangesBus,
                     includeFriends,
                     includeUserBlocking,
+                    includeCommunities,
                     isNameEditorEnabled,
                     includeVoiceChat,
                     chatEventBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper,
                     voiceChatCallStatusService,
-                    galleryEventBus
+                    galleryEventBus,
+                    communitiesDataProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),

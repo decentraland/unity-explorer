@@ -7,6 +7,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -47,6 +48,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.UI.GenericContextMenu.Controllers;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -101,6 +103,7 @@ namespace DCL.Passport
         private readonly bool enableCameraReel;
         private readonly bool enableFriendshipInteractions;
         private readonly bool includeUserBlocking;
+        private readonly bool includeCommunities;
         private readonly bool isNameEditorEnabled;
         private readonly bool isCallEnabled;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
@@ -114,6 +117,7 @@ namespace DCL.Passport
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -135,6 +139,7 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
+        private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -184,6 +189,7 @@ namespace DCL.Passport
             bool enableCameraReel,
             bool enableFriendshipInteractions,
             bool includeUserBlocking,
+            bool includeCommunities,
             bool isNameEditorEnabled,
             bool isCallEnabled,
             IChatEventBus chatEventBus,
@@ -191,7 +197,8 @@ namespace DCL.Passport
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
-            GalleryEventBus galleryEventBus) : base(viewFactory)
+            GalleryEventBus galleryEventBus,
+            CommunitiesDataProvider communitiesDataProvider) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -232,6 +239,8 @@ namespace DCL.Passport
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.galleryEventBus = galleryEventBus;
+            this.includeCommunities = includeCommunities;
+            this.communitiesDataProvider = communitiesDataProvider;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -360,6 +369,13 @@ namespace DCL.Passport
                               () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
                                   parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
                          .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+
+            if (includeCommunities)
+            {
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, viewInstance.InviteToCommunityText, viewInstance.InviteToCommunitySprite);
+                invitationButtonHandler.SetUserToInvite(inputData.UserId);
+            }
         }
 
         private void OnStartCallButtonClicked()
