@@ -265,6 +265,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5729e2631c53948629ab380aa951e394
+    m_Address: Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/DebugViewsCatalog.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 58c436690cb47644492bc0d655dbcce8
     m_Address: EmotesWheelHUD.prefab
     m_ReadOnly: 0
@@ -335,6 +340,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6cfe7986a3d81484d96b5962ae4f300f
+    m_Address: Assets/DCL/Interaction/HoverCanvas/UI/HoverUIDocument.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6dfe28bda416549a9b6598e822044ba1
     m_Address: CommonTexturesAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -402,6 +412,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 809b68e5ce75da1429e55ffcc44fa23b
     m_Address: ExternalUrlPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8521b529ac852454480e3f6596bca3ba
+    m_Address: DebugMenuRootCanvas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -565,6 +580,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0f5a4ab5d8f74640ae94adb6824bd45
+    m_Address: ScenesUIRootCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e7d14406516774d91886b6b4d1a26a58
     m_Address: MapPin
     m_ReadOnly: 0
@@ -602,6 +622,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f999deca82ccdc14ebae40250c8eb0c9
     m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fb7327249a7554d50afaf729d15aa697
+    m_Address: Assets/DCL/Input/Crosshair/CrosshairUIDocument.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fc78f0ea3986a4e08922b0212a1734b5
+    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Splash.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
