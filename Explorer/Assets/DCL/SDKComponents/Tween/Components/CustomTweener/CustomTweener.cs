@@ -14,21 +14,33 @@ namespace DCL.SDKComponents.Tween.Components
         private TweenerCore<T, T, TU> core;
         private ITweener customTweenerImplementation;
 
-        public T CurrentValue { get; set; }
+        private readonly DOGetter<T> getValue;
+        private readonly DOSetter<T> setValue;
+
+        public T CurrentValue { get; private set; }
 
         protected CustomTweener()
         {
             onCompleteCallback = OnTweenComplete;
+
+            getValue = GetCurrentValue;
+            setValue = SetCurrentValue;
         }
 
         public void Initialize(T startValue, T endValue, float durationInSeconds)
         {
             core?.Kill();
             finished = false;
-            core = CreateTweener(startValue, endValue, durationInSeconds);
+            core = CreateTweenerCore(startValue, endValue, durationInSeconds);
         }
 
-        protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
+        private TweenerCore<T, T, TU> CreateTweenerCore(T start, T end, float duration)
+        {
+            SetCurrentValue(start);
+            return CreateTweener(getValue, setValue, end, duration);
+        }
+
+        protected abstract TweenerCore<T, T, TU> CreateTweener(DOGetter<T> getter, DOSetter<T> setter, T end, float duration);
 
         public void Play() =>
             core.Play();
@@ -57,5 +69,13 @@ namespace DCL.SDKComponents.Tween.Components
         {
             finished = true;
         }
+
+        protected void SetCurrentValue(T value)
+        {
+            CurrentValue = value;
+        }
+
+        protected T GetCurrentValue() =>
+            CurrentValue;
     }
 }
