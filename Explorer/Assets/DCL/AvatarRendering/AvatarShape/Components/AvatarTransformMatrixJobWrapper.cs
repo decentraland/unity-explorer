@@ -35,11 +35,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         private int avatarIndex;
         private int nextResizeValue;
-        internal int currentAvatarAmountSupported;
+        private int currentAvatarAmountSupported;
 
 #if UNITY_INCLUDE_TESTS
         public int MatrixFromAllAvatarsLength => matrixFromAllAvatars.Length;
         public int UpdateAvatarLength => updateAvatar.Length;
+        public int CurrentAvatarAmountSupported => currentAvatarAmountSupported;
 #endif
 
         public AvatarTransformMatrixJobWrapper()

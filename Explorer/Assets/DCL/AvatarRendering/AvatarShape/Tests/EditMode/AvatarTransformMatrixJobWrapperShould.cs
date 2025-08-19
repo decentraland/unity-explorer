@@ -43,7 +43,7 @@ public class AvatarTransformMatrixJobWrapperShould : MonoBehaviour
         }
 
         // After resizing, the internal array size should be doubled
-        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.currentAvatarAmountSupported);
+        Assert.AreEqual(AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE * 2, jobWrapper.CurrentAvatarAmountSupported);
     }
 
     [Test]
