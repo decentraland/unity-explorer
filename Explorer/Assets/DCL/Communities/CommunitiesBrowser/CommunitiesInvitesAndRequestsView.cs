@@ -158,7 +158,11 @@ namespace DCL.Communities.CommunitiesBrowser
                 {
                     requestedToJoinCommunityCardsPool.Release(requestCard);
                     currentRequests.Remove(requestCard);
-                    SetRequestsAsEmpty(currentRequests.Count == 0);
+
+                    if (currentInvites.Count == 0 && currentRequests.Count == 0)
+                        SetInvitesAndRequestsAsEmpty(true);
+                    else
+                        SetRequestsAsEmpty(currentRequests.Count == 0);
                 }
                 else
                 {
@@ -181,8 +185,12 @@ namespace DCL.Communities.CommunitiesBrowser
                 {
                     invitedCommunityCardsPool.Release(invitationCard);
                     currentInvites.Remove(invitationCard);
-                    SetInvitesAsEmpty(currentInvites.Count == 0);
                     SetInvitesCounter(currentInvitesCounter - 1);
+
+                    if (currentInvites.Count == 0 && currentRequests.Count == 0)
+                        SetInvitesAndRequestsAsEmpty(true);
+                    else
+                        SetInvitesAsEmpty(currentInvites.Count == 0);
                 }
                 else
                 {
