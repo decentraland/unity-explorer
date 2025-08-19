@@ -14,6 +14,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -139,6 +140,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
+            WarningNotificationView showUINotificationView,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -179,6 +181,7 @@ namespace Global.Dynamic
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
+                showUINotificationView,
                 ct);
 
             if (tuple.container != null)
@@ -253,8 +256,7 @@ namespace Global.Dynamic
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
-            staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
-            staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag() || appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
+            InitializeDebugPanel(staticContainer.DebugContainerBuilder, debugUiRoot);
 
             return globalWorld;
         }
@@ -301,6 +303,18 @@ namespace Global.Dynamic
         {
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
+        }
+
+        private void InitializeDebugPanel(IDebugContainerBuilder debugContainerBuilder, UIDocument debugUiRoot)
+        {
+            debugContainerBuilder.BuildWithFlex(debugUiRoot);
+            bool hasDebugFlag = appArgs.HasDebugFlag();
+
+            // Make Debug Panel available
+            debugContainerBuilder.IsVisible = hasDebugFlag || appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
+
+            // Start application with Debug Panel open/closed
+            debugContainerBuilder.Container.SetPanelVisibility(hasDebugFlag);
         }
     }
 }

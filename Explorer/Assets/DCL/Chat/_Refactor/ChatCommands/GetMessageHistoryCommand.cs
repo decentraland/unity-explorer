@@ -43,7 +43,7 @@ namespace DCL.Chat.ChatCommands
                     if (chatHistoryStorage != null && !chatHistoryStorage.IsChannelInitialized(channelId))
                     {
                         // NOTE: doesn't use cancellation token for loading messages it should though
-                        await chatHistoryStorage.InitializeChannelWithMessagesAsync(channelId);
+                        _ = await chatHistoryStorage.InitializeChannelWithMessagesAsync(channelId);
                         token.ThrowIfCancellationRequested();
 
                         // For a brand new conversation that has just been loaded, add a system message

@@ -47,6 +47,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.UI;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -80,6 +81,7 @@ namespace Global.Dynamic
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
+        [SerializeField] private WarningNotificationView showUINotificationView = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
@@ -234,6 +236,7 @@ namespace Global.Dynamic
                     applicationParametersParser,
                     coroutineRunner: this,
                     dclVersion,
+                    showUINotificationView,
                     destroyCancellationToken);
 
                 if (!isLoaded)
