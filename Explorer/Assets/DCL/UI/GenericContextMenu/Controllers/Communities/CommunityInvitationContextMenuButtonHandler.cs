@@ -11,22 +11,31 @@ using Utility.Types;
 
 namespace DCL.UI.GenericContextMenu.Controllers
 {
+    /// <summary>
+    ///
+    /// </summary>
     public class CommunityInvitationContextMenuButtonHandler
     {
         private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly int subMenuitemSpacing;
+        private readonly int subMenuItemSpacing;
         private string userWalletId;
 
         private readonly List<string> lastCommunityNames = new List<string>();
-        private GetUserCommunitiesData.CommunityData[] lastCommunityData;
+        private GetInvitableCommunityListResponse.InvitableCommunityData[] lastCommunityData;
         private CancellationTokenSource invitationActionCts;
 
-        public CommunityInvitationContextMenuButtonHandler(CommunitiesDataProvider communitiesDataProvider, int subMenuitemSpacing)
+        public CommunityInvitationContextMenuButtonHandler(CommunitiesDataProvider communitiesDataProvider, int subMenuItemSpacing)
         {
             this.communitiesDataProvider = communitiesDataProvider;
-            this.subMenuitemSpacing = subMenuitemSpacing;
+            this.subMenuItemSpacing = subMenuItemSpacing;
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="contextMenu"></param>
+        /// <param name="buttonText"></param>
+        /// <param name="buttonIcon"></param>
         public void AddSubmenuControlToContextMenu(GenericContextMenuParameter.GenericContextMenu contextMenu, string buttonText, Sprite buttonIcon)
         {
             contextMenu.AddControl(new SubMenuContextMenuButtonSettings(buttonText,
@@ -39,6 +48,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
                                                                         asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync));
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="walletId"></param>
         public void SetUserToInvite(string walletId)
         {
             userWalletId = walletId;
@@ -50,16 +63,15 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 return false;
 
             // Asks the server for the data of the communities to which the user can be invited
-            Result<GetUserCommunitiesResponse> response = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, 99, ct).SuppressToResultAsync();
+            Result<GetInvitableCommunityListResponse> response = await communitiesDataProvider.GetInvitableCommunityList(userWalletId, ct).SuppressToResultAsync();
 
             if (response.Success)
             {
-                lastCommunityData = response.Value.data.results;
+                lastCommunityData = response.Value.data;
                 lastCommunityNames.Clear();
 
-                foreach (GetUserCommunitiesData.CommunityData community in lastCommunityData)
-                    if (community.role == CommunityMemberRole.moderator || community.role == CommunityMemberRole.owner) // TODO: remove this once the endpoint is implemented
-                        lastCommunityNames.Add(community.name);
+                foreach (GetInvitableCommunityListResponse.InvitableCommunityData communityData in lastCommunityData)
+                    lastCommunityNames.Add(communityData.name);
 
                 if(lastCommunityNames.Count > 0)
                     return true;
@@ -78,7 +90,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 return UniTask.CompletedTask;
 
             // Adds the scroll view
-            var scroll = new ScrollableButtonListControlSettings(subMenuitemSpacing, 600, OnInviteToCommunitySubmenuScrollViewItemClicked);
+            var scroll = new ScrollableButtonListControlSettings(subMenuItemSpacing, 600, OnInviteToCommunitySubmenuScrollViewItemClicked);
             contextSubMenu.AddControl(scroll);
 
             scroll.SetData(lastCommunityNames);
@@ -88,8 +100,6 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private async void OnInviteToCommunitySubmenuScrollViewItemClicked(int itemIndex)
         {
-            Debug.Log(itemIndex);
-
             invitationActionCts = invitationActionCts.SafeRestart();
             Result<bool> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(lastCommunityData[itemIndex].id, userWalletId, InviteRequestAction.invite, invitationActionCts.Token).SuppressToResultAsync();
 

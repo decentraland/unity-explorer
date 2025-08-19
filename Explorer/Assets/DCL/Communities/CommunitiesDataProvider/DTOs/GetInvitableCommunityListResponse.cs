@@ -7,12 +7,13 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     public class GetInvitableCommunityListResponse : ISerializationCallbackReceiver
     {
         [Serializable]
-        public class InvitableCommunityData
+        public struct InvitableCommunityData
         {
-            public string communityId;
-            public string communityName;
+            public string id;
+            public string name;
         }
 
+        [NonSerialized]
         private string[] communityNames;
 
         public InvitableCommunityData[] data;
@@ -23,7 +24,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         {
             communityNames = new string[data.Length];
             for (int i = 0; i < data.Length; i++)
-                communityNames[i] = data[i].communityName;
+                communityNames[i] = data[i].name;
         }
     }
 }
