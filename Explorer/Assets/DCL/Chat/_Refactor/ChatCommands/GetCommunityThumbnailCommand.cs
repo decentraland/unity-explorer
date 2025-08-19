@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -24,13 +25,14 @@ namespace DCL.Chat.ChatCommands
                 if (string.IsNullOrEmpty(thumbnailUrl))
                     return chatConfig.DefaultCommunityThumbnail;
 
-                var sprite = await spriteCache.GetSpriteAsync(thumbnailUrl, true, ct);
+                try
+                {
+                    var sprite = await spriteCache.GetSpriteAsync(thumbnailUrl, true, ct);
 
-                if (sprite != null)
-                    return sprite;
-
-                ReportHub.LogError(ReportCategory.COMMUNITIES,
-                    $"Community thumbnail download failed for {thumbnailUrl}");
+                    if (sprite != null)
+                        return sprite;
+                }
+                catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
 
                 return chatConfig.DefaultProfileThumbnail;
             }

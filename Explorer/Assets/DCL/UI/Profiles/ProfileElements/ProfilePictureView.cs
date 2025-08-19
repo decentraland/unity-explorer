@@ -104,11 +104,12 @@ namespace DCL.UI.ProfileElements
         }
 
         [Obsolete("Use" + nameof(Bind) + " instead.")]
-        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct)
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct,
+            bool rethrowError = false)
         {
             profileRepositoryWrapper = profileDataProvider;
             SetBackgroundColor(userColor);
-            await LoadThumbnailAsync(faceSnapshotUrl, ct);
+            await LoadThumbnailAsync(faceSnapshotUrl, rethrowError, ct);
         }
 
         [Obsolete("Use" + nameof(Bind) + " instead.")]
@@ -116,7 +117,7 @@ namespace DCL.UI.ProfileElements
         {
             profileRepositoryWrapper = profileDataProvider;
             SetBackgroundColor(userColor);
-            LoadThumbnailAsync(faceSnapshotUrl).Forget();
+            LoadThumbnailAsync(faceSnapshotUrl, false).Forget();
         }
 
         [Obsolete("Use" + nameof(Bind) + " instead.")]
@@ -151,7 +152,7 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, bool rethrowError, CancellationToken ct = default)
         {
             if (faceSnapshotUrl.Equals(currentUrl)) return;
 
@@ -185,10 +186,13 @@ namespace DCL.UI.ProfileElements
             catch (OperationCanceledException) { currentUrl = null; }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
-
                 currentUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
+
+                if (rethrowError)
+                    throw;
+
+                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
             }
         }
 

@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using MVC;
+using System;
 using System.Threading;
 using Utility;
 
@@ -10,6 +12,8 @@ namespace DCL.UI.ProfileElements
 {
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {
+        private const int MAX_PICTURE_ATTEMPTS = 10;
+        private const int ATTEMPT_PICTURE_DELAY_MS = 10000;
         private const string GUEST_NAME = "Guest";
 
         private readonly IWeb3IdentityCache identityCache;
@@ -36,14 +40,14 @@ namespace DCL.UI.ProfileElements
 
         public override void Dispose()
         {
-            profileChangesBus.UnsubscribeToProfileNameChange(ProfileNameChanged);
+            profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
 
             base.Dispose();
         }
 
         protected override void OnViewInstantiated()
         {
-            profileChangesBus.SubscribeToProfileNameChange(ProfileNameChanged);
+            profileChangesBus.SubscribeToUpdate(OnProfileUpdated);
         }
 
         protected override void OnBeforeViewShow()
@@ -57,30 +61,41 @@ namespace DCL.UI.ProfileElements
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
-        private void ProfileNameChanged(Profile profile)
+        private void OnProfileUpdated(Profile profile)
         {
-            SetupProfileData(profile);
-            viewInstance!.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+            loadProfileCts = loadProfileCts.SafeRestart();
+            LoadAsync(loadProfileCts.Token).Forget();
         }
 
-        private async UniTaskVoid LoadAsync(CancellationToken ct)
+        private async UniTask LoadAsync(CancellationToken ct, int attempts = 0)
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
 
             if (profile == null) return;
 
-            SetupProfileData(profile);
-
-            await viewInstance.ProfilePictureView.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
-        }
-
-        private void SetupProfileData(Profile profile)
-        {
-            if (viewInstance!.NameLabel != null) viewInstance.NameLabel.text = profile.ValidatedName ?? GUEST_NAME;
+            if (viewInstance!.NameLabel != null)
+                viewInstance.NameLabel.text = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
 
             if (viewInstance.AddressLabel != null)
                 if (profile.HasClaimedName == false)
                     viewInstance.AddressLabel.text = profile.WalletId;
+
+            try
+            {
+                await viewInstance!.ProfilePictureView.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct,
+
+                    // We need to get the error so we can retry
+                    rethrowError: true);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                await UniTask.Delay(ATTEMPT_PICTURE_DELAY_MS, cancellationToken: ct);
+
+                if (attempts < MAX_PICTURE_ATTEMPTS)
+                    await LoadAsync(ct, attempts + 1);
+                else
+                    ReportHub.LogException(e, ReportCategory.UI);
+            }
         }
     }
 }

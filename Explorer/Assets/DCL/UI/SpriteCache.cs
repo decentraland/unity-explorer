@@ -110,13 +110,12 @@ namespace DCL.UI
 
         private async UniTaskVoid DownloadSpriteAsync(string imageUrl, bool useKtx, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
         {
-            Sprite? result = null;
-
             if (URLAddress.EMPTY.Equals(imageUrl)
                 || IsUnsolvable(imageUrl)
                 || !IsRetryCooldownElapsed(imageUrl))
             {
-                FinalizeTask(tcs, result, imageUrl);
+                currentSpriteTasks.Remove(imageUrl);
+                tcs.TrySetResult(null);
                 return;
             }
 
@@ -134,24 +133,29 @@ namespace DCL.UI
                 Texture2D texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
 
-                result = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+                var result = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
 
                 SetSpriteIntoCache(imageUrl, result);
                 failedSprites.Remove(imageUrl);
+                tcs.TrySetResult(result);
             }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { MarkAsFailed(imageUrl, e); }
-            finally { FinalizeTask(tcs, result, imageUrl); }
+            catch (OperationCanceledException) { tcs.TrySetResult(null); }
+            catch (Exception e)
+            {
+                MarkAsFailed(imageUrl);
+
+                // This log might be redundant as the exception will be managed from the caller side
+                ReportData reportData = new ReportData(ReportCategory.UI);
+                ReportHub.LogError(reportData, $"Failed to fetch sprite for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for image '{imageUrl}'");
+                ReportHub.LogException(e, reportData);
+
+                tcs.TrySetException(e);
+            }
+            finally { currentSpriteTasks.Remove(imageUrl); }
         }
 
-        private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, string imageUrl)
-        {
-            currentSpriteTasks.Remove(imageUrl);
-            tcs.TrySetResult(result);
-        }
-
-        private void MarkAsFailed(string imageUrl, Exception e)
+        private void MarkAsFailed(string imageUrl)
         {
             if (failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts))
                 if (requestAttempts.HasReachedMaxAttempts())
@@ -161,10 +165,6 @@ namespace DCL.UI
                 }
                 else
                 {
-                    ReportData reportData = new ReportData(ReportCategory.UI);
-                    ReportHub.LogError(reportData, $"Failed to fetch sprite for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for image '{imageUrl}'");
-                    ReportHub.LogException(e, reportData);
-
                     unsolvableSprites.Add(imageUrl);
                     failedSprites.Remove(imageUrl);
                 }
