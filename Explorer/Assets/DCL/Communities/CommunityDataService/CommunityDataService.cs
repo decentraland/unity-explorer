@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -25,7 +26,7 @@ namespace DCL.Communities
         private readonly IChatHistory chatHistory;
         private readonly IMVCManager mvcManager;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities = new();
 
@@ -35,7 +36,7 @@ namespace DCL.Communities
         public CommunityDataService(IChatHistory chatHistory,
             IMVCManager mvcManager,
             CommunitiesEventBus communitiesEventBus,
-            CommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.chatHistory = chatHistory;
@@ -139,7 +140,7 @@ namespace DCL.Communities
             var channelId = ChatChannel.NewCommunityChannelId(communityId);
             chatHistory.RemoveChannel(channelId);
         }
-        
+
         public void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> newCommunities)
         {
             communities.Clear();
@@ -159,7 +160,7 @@ namespace DCL.Communities
             communitiesDataProvider.CommunityCreated -= OnCommunityCreated;
             communitiesDataProvider.CommunityDeleted -= OnCommunityDeleted;
             communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
-            
+
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
 
