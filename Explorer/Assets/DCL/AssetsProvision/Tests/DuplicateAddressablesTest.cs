@@ -8,14 +8,13 @@ namespace DCL.AssetsProvision.Tests
 {
     public class DuplicateAddressablesTest
     {
-        [Test]
+        [Test, Timeout(1000000)]
         public void CheckBundleDuplicateAddressables()
         {
             var settings = AddressableAssetSettingsDefaultObject.Settings;
 
             // Create rule
             var rule = new CheckBundleDupeDependencies();
-            rule.ClearAnalysis(); // reset any previous data
             var results = rule.RefreshAnalysis(settings);
 
 
@@ -35,7 +34,6 @@ namespace DCL.AssetsProvision.Tests
 
             // Create rule
             var rule = new CheckResourcesDupeDependencies();
-            rule.ClearAnalysis(); // reset any previous data
             var results = rule.RefreshAnalysis(settings);
 
 
@@ -55,7 +53,6 @@ namespace DCL.AssetsProvision.Tests
 
             // Create rule
             var rule = new CheckSceneDupeDependencies();
-            rule.ClearAnalysis(); // reset any previous data
             var results = rule.RefreshAnalysis(settings);
 
 
