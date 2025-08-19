@@ -70,12 +70,12 @@ namespace DCL.SDKComponents.Tween.Components
             finished = true;
         }
 
-        protected void SetCurrentValue(T value)
+        private void SetCurrentValue(T value)
         {
             CurrentValue = value;
         }
 
-        protected T GetCurrentValue() =>
+        private T GetCurrentValue() =>
             CurrentValue;
     }
 }
