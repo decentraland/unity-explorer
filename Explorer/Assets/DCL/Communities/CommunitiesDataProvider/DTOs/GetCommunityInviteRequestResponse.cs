@@ -9,11 +9,14 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public class CommunityInviteRequestData
         {
             public string id;
-            public string address;
+            public string communityId;
+            public string memberAddress;
+            public InviteRequestAction type;
+            public string status;
             public string profilePictureUrl;
             public bool hasClaimedName;
             public string name;
-            public string requestedAt;
+            public FriendshipStatus friendshipStatus;
         }
 
         [Serializable]
