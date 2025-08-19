@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
-using DCL.DebugUtilities;
 using DCL.InWorldCamera;
 using DCL.UI;
 using ECS.Abstract;
@@ -34,6 +33,7 @@ namespace DCL.Input.Systems
         {
             dclInput = DCLInput.Instance;
             this.mvcManager = mvcManager;
+            this.warningNotificationView = warningNotificationView;
         }
 
         public override void Initialize()

@@ -140,7 +140,6 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
-            WarningNotificationView showUINotificationView,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -181,7 +180,6 @@ namespace Global.Dynamic
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
-                showUINotificationView,
                 ct);
 
             if (tuple.container != null)

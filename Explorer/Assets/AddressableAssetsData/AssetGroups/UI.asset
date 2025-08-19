@@ -205,6 +205,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4a21ec4cd76d144a5bce86b3ac4cc9d6
+    m_Address: Assets/DCL/UI/Assets/ShowUICanvas.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4a2a7b610414b45c1b576946ce094877
     m_Address: NftCategoryIcons
     m_ReadOnly: 0

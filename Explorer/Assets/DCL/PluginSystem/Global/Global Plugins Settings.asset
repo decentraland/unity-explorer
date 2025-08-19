@@ -592,6 +592,12 @@ MonoBehaviour:
             Culture=neutral, PublicKeyToken=null
           m_SubObjectGUID: 
           m_EditorAssetChanged: 1
+        <ShowUIToast>k__BackingField:
+          m_AssetGUID: 4a21ec4cd76d144a5bce86b3ac4cc9d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 4340256219339423747
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
