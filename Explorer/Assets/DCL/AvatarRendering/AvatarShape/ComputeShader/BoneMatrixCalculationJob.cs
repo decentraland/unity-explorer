@@ -10,8 +10,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     [BurstCompile]
     public struct BoneMatrixCalculationJob : IJobParallelFor, IDisposable
     {
-        private readonly int BONE_COUNT;
-        private int AvatarIndex;
+        private readonly int boneCount;
 
         private NativeArray<float4x4> bonesMatricesResult;
         [NativeDisableParallelForRestriction]
@@ -25,11 +24,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public BoneMatrixCalculationJob(int boneCount, int bonesPerAvatarLength, NativeArray<Matrix4x4> boneWorldMatrixArray)
         {
-            BONE_COUNT = boneCount;
+            this.boneCount = boneCount;
             bonesMatricesResult = new NativeArray<float4x4>(bonesPerAvatarLength, Allocator.Persistent);
             AvatarTransform = default;
             UpdateAvatar = default;
-            AvatarIndex = 0;
 
             this.boneWorldMatrixArray = boneWorldMatrixArray;
         }
@@ -43,12 +41,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             // The avatarIndex is calculated by dividing the index by the amount of bones per avatar
             // Therefore, all of the indexes between 0 and ComputeShaderConstants.BONE_COUNT correlates to a single avatar
-            AvatarIndex = index / BONE_COUNT;
+            int avatarIndex = index / boneCount;
 
-            if (!UpdateAvatar[AvatarIndex])
+            if (!UpdateAvatar[avatarIndex])
                 return;
 
-            bonesMatricesResult[index] = AvatarTransform[AvatarIndex] * boneWorldMatrixArray[index];
+            bonesMatricesResult[index] = AvatarTransform[avatarIndex] * boneWorldMatrixArray[index];
         }
     }
 }
