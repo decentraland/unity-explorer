@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.UI
 {
@@ -15,7 +16,7 @@ namespace DCL.UI
         private struct RequestAttempts
         {
             public const int MAX_ATTEMPTS = 5;
-            private const int ATTEMPT_SECONDS_UNIT = 30;
+            private const int ATTEMPT_COOLDOWN_SECONDS = 5;
 
             private int attempts;
             private DateTime nextAvailableAttempt;
@@ -26,19 +27,20 @@ namespace DCL.UI
                 this.nextAvailableAttempt = nextAttempt;
             }
 
-            public bool CanIncreaseCooldown() => attempts < MAX_ATTEMPTS;
+            public bool HasReachedMaxAttempts() =>
+                attempts < MAX_ATTEMPTS;
 
             public void IncreaseCooldown()
             {
                 attempts++;
-                nextAvailableAttempt = DateTime.Now.AddSeconds(ATTEMPT_SECONDS_UNIT * attempts);
+                nextAvailableAttempt = DateTime.Now.AddSeconds(ATTEMPT_COOLDOWN_SECONDS * attempts);
             }
 
-            public bool CanRetry() =>
+            public bool IsCooldownElapsed() =>
                 DateTime.Now >= nextAvailableAttempt;
 
             public static RequestAttempts FirstAttempt() =>
-                new (1, DateTime.Now.AddSeconds(ATTEMPT_SECONDS_UNIT));
+                new (1, DateTime.Now.AddSeconds(ATTEMPT_COOLDOWN_SECONDS));
         }
 
         private const int PIXELS_PER_UNIT = 50;
@@ -63,14 +65,16 @@ namespace DCL.UI
         public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, bool useKtx, CancellationToken ct)
         {
             Sprite? sprite = GetCachedSprite(imageUrl);
+
             if (sprite != null)
                 return sprite;
 
-            //Avoid multiple requests for the same thumbnail
+            // Avoid multiple requests for the same thumbnail
             if (currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?> thumbnailTask))
                 return await thumbnailTask.Task;
 
             UniTaskCompletionSource<Sprite?> spriteTaskCompletionSource = new UniTaskCompletionSource<Sprite?>();
+
             if (currentSpriteTasks.TryAdd(imageUrl, spriteTaskCompletionSource))
                 DownloadSpriteAsync(imageUrl, useKtx, spriteTaskCompletionSource, ct).Forget();
 
@@ -82,7 +86,7 @@ namespace DCL.UI
             if (imageUrl == null)
                 return;
 
-            if(currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?>? task))
+            if (currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?>? task))
                 task.TrySetCanceled();
 
             failedSprites.Remove(imageUrl);
@@ -93,7 +97,7 @@ namespace DCL.UI
         public void Clear()
         {
             foreach (KeyValuePair<string, Sprite> row in cachedSprites)
-                GameObject.Destroy(row.Value);
+                Object.Destroy(row.Value);
 
             cachedSprites.Clear();
             failedSprites.Clear();
@@ -108,13 +112,9 @@ namespace DCL.UI
         {
             Sprite? result = null;
 
-            if (URLAddress.EMPTY.Equals(imageUrl))
-            {
-                FinalizeTask(tcs, result, imageUrl);
-                return;
-            }
-
-            if (unsolvableSprites.Contains(imageUrl) || !TestCooldownCondition(imageUrl))
+            if (URLAddress.EMPTY.Equals(imageUrl)
+                || IsUnsolvable(imageUrl)
+                || !IsRetryCooldownElapsed(imageUrl))
             {
                 FinalizeTask(tcs, result, imageUrl);
                 return;
@@ -141,14 +141,8 @@ namespace DCL.UI
                 failedSprites.Remove(imageUrl);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                HandleCooldownOnException(imageUrl, e);
-            }
-            finally
-            {
-                FinalizeTask(tcs, result, imageUrl);
-            }
+            catch (Exception e) { MarkAsFailed(imageUrl, e); }
+            finally { FinalizeTask(tcs, result, imageUrl); }
         }
 
         private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, string imageUrl)
@@ -157,10 +151,10 @@ namespace DCL.UI
             tcs.TrySetResult(result);
         }
 
-        private void HandleCooldownOnException(string imageUrl, Exception e)
+        private void MarkAsFailed(string imageUrl, Exception e)
         {
             if (failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts))
-                if (requestAttempts.CanIncreaseCooldown())
+                if (requestAttempts.HasReachedMaxAttempts())
                 {
                     requestAttempts.IncreaseCooldown();
                     failedSprites[imageUrl] = requestAttempts;
@@ -178,10 +172,18 @@ namespace DCL.UI
                 failedSprites[imageUrl] = RequestAttempts.FirstAttempt();
         }
 
-        private bool TestCooldownCondition(string imageUrl) =>
-            !failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts) || requestAttempts.CanRetry();
+        private bool IsRetryCooldownElapsed(string imageUrl)
+        {
+            if (failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts))
+                return requestAttempts.IsCooldownElapsed();
+
+            return true;
+        }
 
         private void SetSpriteIntoCache(string imageUrl, Sprite sprite) =>
             cachedSprites[imageUrl] = sprite;
+
+        private bool IsUnsolvable(string imageUrl) =>
+            unsolvableSprites.Contains(imageUrl);
     }
 }
