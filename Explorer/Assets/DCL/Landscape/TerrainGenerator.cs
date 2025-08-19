@@ -627,7 +627,7 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + (textureSize / 2) - maxParcel.x - 1;
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -660,7 +660,7 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + (textureSize / 2) - maxParcel.x - 1;
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -681,14 +681,15 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + (textureSize / 2) - maxParcel.x - 1;
+                    endX = i + textureSize / 2 - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
                 }
 
                 // Fifth section, same as first section.
-                endY = i + (((textureSize / 2) - maxParcel.y - 1) * textureSize);
+                endY = i + (textureSize / 2 - maxParcel.y - 1) * textureSize;
+
                 while (i < endY)
                     data[i++] = 0;
             }
@@ -719,6 +720,10 @@ namespace DCL.Landscape
         private bool OverlapsOccupiedParcel(float2 position, float radius)
         {
             int2 parcel = (int2)floor(position * (1f / ParcelSize));
+
+            if (IsParcelOccupied(parcel))
+                return true;
+
             float2 localPosition = position - parcel * ParcelSize;
 
             if (localPosition.x < radius)
@@ -852,9 +857,9 @@ namespace DCL.Landscape
 
                 for (int instanceIndex = instanceCount - 1; instanceIndex >= 0; instanceIndex--)
                 {
-                    Vector3 position = buffer[instanceIndex].GetPosition();
+                    float3 position = buffer[instanceIndex].GetPosition();
 
-                    if (OverlapsOccupiedParcel(float2(position.x, position.z), treeRadius))
+                    if (OverlapsOccupiedParcel(position.xz, treeRadius))
                         buffer[instanceIndex] = buffer[--instanceCount];
                 }
 
