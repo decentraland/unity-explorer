@@ -14,6 +14,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -148,6 +149,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
+            WarningNotificationView showUINotificationView,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -191,6 +193,7 @@ namespace Global.Dynamic
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
+                showUINotificationView,
                 ct);
 
             if (tuple.container != null)
