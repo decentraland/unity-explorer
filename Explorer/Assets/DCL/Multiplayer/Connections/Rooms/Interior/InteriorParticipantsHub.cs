@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
         public Participant? RemoteParticipant(string identity) =>
             assigned.EnsureAssigned().RemoteParticipant(identity);
 
-        public IReadOnlyCollection<string> RemoteParticipantIdentities() =>
+        public IReadOnlyDictionary<string, Participant> RemoteParticipantIdentities() =>
             assigned.EnsureAssigned().RemoteParticipantIdentities();
     }
 }

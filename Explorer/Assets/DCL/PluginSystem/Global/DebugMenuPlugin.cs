@@ -25,13 +25,15 @@ namespace DCL.PluginSystem.Global
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly IRoomsStatus roomsStatus;
         private DebugMenuController? debugMenuController;
+        private readonly DebugUtilities.IDebugContainerBuilder debugContainerBuilder;
 
-        public DebugMenuPlugin(DiagnosticsContainer diagnostics, IInputBlock inputBlock, IAssetsProvisioner assetsProvisioner, ICurrentSceneInfo currentSceneInfo, IRoomsStatus roomsStatus)
+        public DebugMenuPlugin(DiagnosticsContainer diagnostics, IInputBlock inputBlock, IAssetsProvisioner assetsProvisioner, ICurrentSceneInfo currentSceneInfo, IRoomsStatus roomsStatus, DebugUtilities.IDebugContainerBuilder debugContainerBuilder)
         {
             this.inputBlock = inputBlock;
             this.assetsProvisioner = assetsProvisioner;
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
+            this.debugContainerBuilder = debugContainerBuilder;
 
             logEntriesBus = new DebugMenuConsoleLogEntryBus();
             diagnostics.AddDebugConsoleHandler(logEntriesBus);
@@ -41,6 +43,7 @@ namespace DCL.PluginSystem.Global
         {
             debugMenuController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<DebugMenuController>();
             debugMenuController.SetInputBlock(inputBlock);
+            debugMenuController.SetDebugContainerBuilder(debugContainerBuilder);
 
             currentSceneInfo.SceneStatus.OnUpdate += OnSceneStatusUpdate;
             roomsStatus.ConnectionQualityScene.OnUpdate += OnSceneConnectionQualityUpdate;
