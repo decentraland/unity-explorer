@@ -16,7 +16,7 @@ namespace DCL.UI
         private struct RequestAttempts
         {
             public const int MAX_ATTEMPTS = 5;
-            private const int ATTEMPT_COOLDOWN_SECONDS = 5;
+            private const int ATTEMPT_COOLDOWN_SECONDS = 10;
 
             private int attempts;
             private DateTime nextAvailableAttempt;

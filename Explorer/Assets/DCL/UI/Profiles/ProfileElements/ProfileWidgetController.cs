@@ -89,6 +89,7 @@ namespace DCL.UI.ProfileElements
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+                // We need to set a delay due to the time that takes to regenerate the thumbnail at the backend
                 await UniTask.Delay(ATTEMPT_PICTURE_DELAY_MS, cancellationToken: ct);
 
                 if (attempts < MAX_PICTURE_ATTEMPTS)
