@@ -472,6 +472,7 @@ namespace DCL.Chat
             memberListCts.SafeCancelAndDispose();
             isUserAllowedInInitializationCts.SafeCancelAndDispose();
             isUserAllowedInCommunitiesBusSubscriptionCts.SafeCancelAndDispose();
+            userConnectivityInfoProvider.Dispose();
         }
 #endregion
 
@@ -603,7 +604,8 @@ namespace DCL.Chat
 #endregion
 
 #region Chat History Events
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 

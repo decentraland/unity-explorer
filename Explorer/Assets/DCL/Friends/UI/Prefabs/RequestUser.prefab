@@ -137,6 +137,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 4259715656478843361}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &1104277341837610071
 GameObject:
   m_ObjectHideFlags: 0
@@ -274,6 +277,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 3451016736453679246}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &1671170444579859960
 GameObject:
   m_ObjectHideFlags: 0
@@ -821,6 +827,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 2349608275359085897}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &7508043306453600687
 GameObject:
   m_ObjectHideFlags: 0
@@ -1208,6 +1217,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5750795568307202879, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5750795568307202879, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6422732380923386402, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -1460,6 +1477,10 @@ PrefabInstance:
       propertyPath: m_TargetGraphic
       value: 
       objectReference: {fileID: 7488346134653886422}
+    - target: {fileID: 4734613736382104757, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1000
+      objectReference: {fileID: 0}
     - target: {fileID: 5316031541966112930, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
       propertyPath: m_Name
       value: ContextMenuButton

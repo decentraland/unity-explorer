@@ -114,6 +114,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.Chat.Services;
+using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -200,6 +202,7 @@ namespace Global.Dynamic
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
             RealmUrls realmUrls,
+            WarningNotificationView showUINotificationView,
             CancellationToken ct)
         {
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
@@ -424,8 +427,8 @@ namespace Global.Dynamic
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, globalWorld, roomHub, terrainContainer.Landscape, exposedGlobalDataContainer, loadingScreen);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
-                ? new IHealthCheck.AlwaysFails() :
-                  new StartLiveKitRooms(roomHub);
+                ? new IHealthCheck.AlwaysFails()
+                : new StartLiveKitRooms(roomHub);
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
@@ -525,8 +528,7 @@ namespace Global.Dynamic
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
-                new LogsChatCommand(),
-                new AppArgsCommand(appArgs)
+                new LogsChatCommand(), new AppArgsCommand(appArgs)
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -583,8 +585,7 @@ namespace Global.Dynamic
             var clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
-            var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
-            notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
+            NotificationsRequestController notificationsRequestController = new (staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
 
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
@@ -598,17 +599,23 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            ProfileRepositoryWrapper profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
+            GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
-            CommunitiesEventBus communitiesEventBus = new CommunitiesEventBus();
+            var communitiesEventBus = new CommunitiesEventBus();
 
             var profileChangesBus = new ProfileChangesBus();
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+            var communitiesDataService = new CommunityDataService(chatHistory,
+                mvcManager,
+                communitiesEventBus,
+                communitiesDataProvider,
+                identityCache);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -668,7 +675,7 @@ namespace Global.Dynamic
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
-                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument),
+                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument, showUINotificationView),
                 new GlobalInteractionPlugin(dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
@@ -707,6 +714,7 @@ namespace Global.Dynamic
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
                     mvcManager,
+                    menusAccessFacade,
                     chatMessagesBus,
                     chatHistory,
                     entityParticipantTable,
@@ -730,12 +738,14 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     friendServiceProxy,
                     communitiesDataProvider,
+                    communitiesDataService,
                     thumbnailCache,
                     mainUIView.WarningNotification,
                     communitiesEventBus,
                     voiceChatCallStatusService,
                     includeVoiceChat,
-                    realmNavigator),
+                    realmNavigator,
+                    mainUIView.SidebarView.unreadMessagesButton.transform),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -834,7 +844,8 @@ namespace Global.Dynamic
                     mvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     notificationsBusController,
-                    sharedSpaceManager),
+                    notificationsRequestController,
+                    identityCache),
                 new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,
@@ -1040,7 +1051,13 @@ namespace Global.Dynamic
                 );
 
             if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
-                globalPlugins.Add(new DebugMenuPlugin(bootstrapContainer.DiagnosticsContainer, staticContainer.InputBlock, assetsProvisioner, currentSceneInfo, roomsStatus));
+                globalPlugins.Add(new DebugMenuPlugin(
+                    bootstrapContainer.DiagnosticsContainer,
+                    staticContainer.InputBlock,
+                    assetsProvisioner,
+                    currentSceneInfo,
+                    roomsStatus,
+                    debugBuilder));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,

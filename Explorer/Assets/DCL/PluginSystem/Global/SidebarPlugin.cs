@@ -147,7 +147,7 @@ namespace DCL.PluginSystem.Global
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
-                mainUIView.ChatView,
+                mainUIView.ChatView2,
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
