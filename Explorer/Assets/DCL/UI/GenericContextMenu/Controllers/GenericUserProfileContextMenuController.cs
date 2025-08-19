@@ -74,6 +74,11 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private UniTaskCompletionSource closeContextMenuTask;
         private Profile targetProfile;
 
+        // Used in the Invite to Community button, which is loaded asynchronously
+        private readonly List<string> lastCommunityNames = new List<string>();
+        private GetUserCommunitiesData.CommunityData[] lastCommunityData;
+        private CancellationTokenSource invitationActionCts;
+        
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
             IChatEventBus chatEventBus,
@@ -133,42 +138,50 @@ namespace DCL.UI.GenericContextMenu.Controllers
                                                                                          verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING,
                                                                                          elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING,
                                                                                          offsetFromTarget: CONTEXT_MENU_OFFSET),
-                                                              asyncSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync));
+                                                              asyncControlSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync,
+                                                              asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync));
         }
 
-        private GetUserCommunitiesData.CommunityData[] lastCommunityData;
-        private CancellationTokenSource invitationActionCts;
-
-        private async UniTask CreateInvitationSubmenuItemsAsync(GenericContextMenuParameter.GenericContextMenu contextSubMenu, CancellationToken ct)
+        private async UniTask<bool> ResolveInvitationSubmenuVisibilityAsync(CancellationToken ct)
         {
-            await UniTask.Delay(2000, DelayType.DeltaTime, PlayerLoopTiming.Update, ct);
-
             if(ct.IsCancellationRequested)
-                return;
-
-            // Adds the scroll view
-            var scroll = new ScrollableButtonListControlSettings(CONTEXT_MENU_ELEMENTS_SPACING, 600, OnInviteToCommunitySubmenuScrollViewItemClicked, verticalLayoutPadding:CONTEXT_MENU_VERTICAL_LAYOUT_PADDING);
-            contextSubMenu.AddControl(scroll);
+                return false;
 
             // Asks the server for the data of the communities to which the user can be invited
             Result<GetUserCommunitiesResponse> response = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, 99, ct).SuppressToResultAsync();
 
-            List<string> items = new List<string>();
-
             if (response.Success)
             {
                 lastCommunityData = response.Value.data.results;
+                lastCommunityNames.Clear();
 
                 foreach (GetUserCommunitiesData.CommunityData community in lastCommunityData)
                     if (community.role == CommunityMemberRole.moderator || community.role == CommunityMemberRole.owner) // TODO: remove this once the endpoint is implemented
-                        items.Add(community.name);
+                        lastCommunityNames.Add(community.name);
 
-                scroll.SetData(items);
+                if(lastCommunityNames.Count > 0)
+                    return true;
             }
             else
             {
                 // TODO
             }
+
+            return false;
+        }
+
+        private UniTask CreateInvitationSubmenuItemsAsync(GenericContextMenuParameter.GenericContextMenu contextSubMenu, CancellationToken ct)
+        {
+            if(ct.IsCancellationRequested)
+                return UniTask.CompletedTask;
+
+            // Adds the scroll view
+            var scroll = new ScrollableButtonListControlSettings(CONTEXT_MENU_ELEMENTS_SPACING, 600, OnInviteToCommunitySubmenuScrollViewItemClicked, verticalLayoutPadding:CONTEXT_MENU_VERTICAL_LAYOUT_PADDING);
+            contextSubMenu.AddControl(scroll);
+
+            scroll.SetData(lastCommunityNames);
+
+            return UniTask.CompletedTask;
         }
 
         private async void OnInviteToCommunitySubmenuScrollViewItemClicked(int itemIndex)

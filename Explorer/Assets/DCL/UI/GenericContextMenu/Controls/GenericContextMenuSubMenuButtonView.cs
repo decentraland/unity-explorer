@@ -15,13 +15,16 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public Button ButtonComponent { get; private set; }
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
         [field: SerializeField] public Image ImageComponent { get; private set; }
+        [field: SerializeField] public Image Arrow { get; private set; }
         [field: SerializeField] public int UnHoverDebounceDurationMs { get; private set; } = 300;
         [field: SerializeField] public RectTransform RightAnchor { get; private set; }
         [field: SerializeField] public RectTransform LeftAnchor { get; private set; }
+        [field: SerializeField] private GameObject visibilityCalculationAnimator;
 
         internal ControlsContainerView container;
         private bool isHovering;
         private CancellationTokenSource hoverCts;
+        private bool isButtonVisible;
 
         private Action containerConfigurationDelegate;
 
@@ -38,7 +41,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private void OnEnable()
         {
-            ButtonComponent.onClick.AddListener(() => Show(!container.gameObject.activeSelf));
+            ButtonComponent.onClick.AddListener(() => ShowSubmenu(!container.gameObject.activeSelf));
         }
 
         private void OnDisable()
@@ -59,6 +62,34 @@ namespace DCL.UI.GenericContextMenu.Controls
             HorizontalLayoutComponent.reverseArrangement = settings.horizontalLayoutReverseArrangement;
             RightAnchor.anchoredPosition = new Vector2(settings.anchorPadding, RightAnchor.anchoredPosition.y);
             LeftAnchor.anchoredPosition = new Vector2(-settings.anchorPadding, LeftAnchor.anchoredPosition.y);
+            isButtonVisible = !settings.IsButtonAsynchronous;
+
+            if (settings.IsButtonAsynchronous)
+                ResolveVisibilityAsync(settings.asyncVisibilityResolverDelegate, CancellationToken.None).Forget(); // TODO
+        }
+
+        private async UniTaskVoid ResolveVisibilityAsync(SubMenuContextMenuButtonSettings.VisibilityResolverDelegate asyncVisibilityResolverDelegate, CancellationToken ct)
+        {
+            try
+            {
+                TextComponent.enabled = false;
+                ImageComponent.enabled = false;
+                Arrow.enabled = false;
+                visibilityCalculationAnimator.SetActive(true);
+
+                isButtonVisible = await asyncVisibilityResolverDelegate(ct);
+
+                if(isHovering)
+                    OnPointerEnter(null);
+            }
+            finally
+            {
+                gameObject.SetActive(isButtonVisible);
+                TextComponent.enabled = true;
+                ImageComponent.enabled = true;
+                Arrow.enabled = true;
+                visibilityCalculationAnimator.SetActive(false);
+            }
         }
 
         public override void UnregisterListeners() =>
@@ -70,7 +101,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             isHovering = true;
             hoverCts.SafeCancelAndDispose();
-            Show(true);
+            ShowSubmenu(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -80,9 +111,9 @@ namespace DCL.UI.GenericContextMenu.Controls
             WaitAndTriggerExitAsync(hoverCts.Token).Forget();
         }
 
-        private void Show(bool show)
+        private void ShowSubmenu(bool show)
         {
-            if(show == container.gameObject.activeSelf)
+            if(show == container.gameObject.activeSelf || !isButtonVisible)
                 return;
 
             container.gameObject.SetActive(show);
@@ -99,7 +130,7 @@ namespace DCL.UI.GenericContextMenu.Controls
                 await UniTask.Delay(UnHoverDebounceDurationMs, cancellationToken: token);
 
                 if (!isHovering)
-                    Show(false);
+                    ShowSubmenu(false);
             }
             catch (Exception) { }
         }

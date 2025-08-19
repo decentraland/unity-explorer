@@ -144,6 +144,8 @@ namespace DCL.UI.GenericContextMenu
                     await queuedDeferredConfig.SettingsFillingDelegate(queuedDeferredConfig.Config, settingsFillingCts.Token);
                 }
 
+    //            queuedDeferredConfig.ParentComponent.container.controlsContainer.localPosition = GetControlsPosition(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.ParentComponent.RightAnchor.position + new Vector3(queuedDeferredConfig.Config.width, 0) /*- contextMenuConfig.offsetFromTarget*/, Vector2.zero /*queuedDeferredConfig.Config.offsetFromTarget*/, queuedDeferredConfig.OverlapRect, queuedDeferredConfig.Config.anchorPoint);
+
                 // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
                 ConfigureContextMenu(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.Config, Vector2.zero, queuedDeferredConfig.OverlapRect);
             }
@@ -171,10 +173,10 @@ namespace DCL.UI.GenericContextMenu
 
                 if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings && component is GenericContextMenuSubMenuButtonView subMenuButtonView)
                 {
-                    DeferredConfig deferredConfig = new DeferredConfig(subMenuButtonSettings.subMenu, subMenuButtonView, subMenuButtonSettings.asyncSettingsFillingDelegate, overlapRect);
+                    DeferredConfig deferredConfig = new DeferredConfig(subMenuButtonSettings.subMenu, subMenuButtonView, subMenuButtonSettings.asyncControlSettingsFillingDelegate, overlapRect);
                     deferredConfigs.Enqueue(deferredConfig);
 
-                    if (subMenuButtonSettings.IsAsynchronous)
+                    if (subMenuButtonSettings.IsSubMenuAsynchronous)
                         subMenuButtonView.SetContainerCreationMethod(() => { ConfigureContextMenuAsync(deferredConfig).Forget(); }); // TODO: improve this
                     else
                         subMenuButtonView.SetContainerCreationMethod(null);
@@ -219,6 +221,8 @@ namespace DCL.UI.GenericContextMenu
                 // If it is not an asynchronous submenu...
                 if (!queuedDeferredConfig.IsAsynchronous)
                 {
+ //                   subContainer.controlsContainer.localPosition = GetControlsPosition(subContainer, queuedDeferredConfig.ParentComponent.RightAnchor.position/*subContainerAnchor.position + new Vector3(queuedDeferredConfig.Config.width, 0) /*- contextMenuConfig.offsetFromTarget*/, Vector2.zero /*queuedDeferredConfig.Config.offsetFromTarget*/, overlapRect, queuedDeferredConfig.Config.anchorPoint);
+
                     // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
                     ConfigureContextMenu(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.Config, Vector2.zero, queuedDeferredConfig.OverlapRect);
                 }
