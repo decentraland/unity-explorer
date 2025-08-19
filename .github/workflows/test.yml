@@ -1,6 +1,7 @@
 name: Unity Test
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'Explorer/**'
@@ -26,7 +27,7 @@ concurrency:
 
 jobs:
   test:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
     name: Test
     runs-on: windows-latest
     steps:
