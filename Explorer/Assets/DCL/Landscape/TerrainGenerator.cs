@@ -817,7 +817,7 @@ namespace DCL.Landscape
             }
 
             int minValue = 255 - (stepSize * maxPixelDistance);
-            ReportHub.LogError(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxD}, max maxPixelDistance={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
+            ReportHub.Log(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxD}, max maxPixelDistance={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
 
             // Write back: keep black at 0, map distances to [minValue, 255] range
             for (var i = 0; i < n; i++)
