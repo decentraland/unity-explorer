@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Cysharp.Threading.Tasks;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
@@ -40,6 +41,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         internal Button denyButton { get; private set; }
 
+        [field: SerializeField]
+        internal Button openPassportButton { get; private set; }
+
         private VoiceChatParticipantsStateService.ParticipantState userProfile;
         private VoiceChatParticipantsStateService.ParticipantState localUserProfile;
         private Sequence isSpeakingCurrentSequence;
@@ -51,7 +55,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             hoverElement.gameObject.SetActive(false);
             contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, contextMenuButton.transform.position, this));
+            openPassportButton.onClick.AddListener(OnOpenPassportClicked);
         }
+
+        private void OnOpenPassportClicked()
+        {
+            if (string.IsNullOrEmpty(userProfile.WalletId)) return;
+
+            OpenPassportDirectly(userProfile.WalletId);
+        }
+
+        private void OpenPassportDirectly(string walletId) =>
+            VoiceChatPassportBridge.OpenPassport(walletId);
 
         public void SetUserProfile(VoiceChatParticipantsStateService.ParticipantState participantState, VoiceChatParticipantsStateService.ParticipantState localParticipantState)
         {

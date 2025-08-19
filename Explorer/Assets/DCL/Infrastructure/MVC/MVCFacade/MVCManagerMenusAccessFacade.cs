@@ -21,6 +21,7 @@ using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
+using DCL.Passport;
 
 namespace MVC
 {
@@ -147,6 +148,18 @@ namespace MVC
             await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker);
         }
 
+
+        public async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
+        {
+            try
+            {
+                await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($"Failed to open passport for user {userId}: {ex.Message}");
+            }
+        }
 
         private ContextMenuOpenDirection ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)
         {
