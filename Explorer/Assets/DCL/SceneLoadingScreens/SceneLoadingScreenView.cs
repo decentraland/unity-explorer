@@ -7,6 +7,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.UI;
+using Utility.Types;
 using Random = UnityEngine.Random;
 
 namespace DCL.SceneLoadingScreens
@@ -76,16 +77,16 @@ namespace DCL.SceneLoadingScreens
             tipsBreadcrumbs.Clear();
         }
 
-        public void AddTip(SceneTips.Tip tip)
+        public void AddTip(SceneTips.LoadedTip tip)
         {
             TipView view = Instantiate(tipViewPrefab, tipsParent);
             view.TitleLabel.text = tip.Title;
             view.BodyLabel.text = tip.Body;
 
-            Sprite? sprite = tip.Image;
+            Option<Sprite> spriteResource = tip.Image.Resource;
 
-            Sprite icon = sprite != null
-                ? sprite
+            Sprite icon = spriteResource.Has
+                ? spriteResource.Value
                 : fallbackSprites[Random.Range(0, fallbackSprites.Length)];
 
             view.Image.sprite = icon;
