@@ -32,7 +32,11 @@ namespace DCL.Chat.ChatCommands
                     if (sprite != null)
                         return sprite;
                 }
-                catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    ReportHub.LogError(ReportCategory.COMMUNITIES,
+                        $"Community thumbnail download failed for {thumbnailUrl}");
+                }
 
                 return chatConfig.DefaultProfileThumbnail;
             }
