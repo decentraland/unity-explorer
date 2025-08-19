@@ -26,6 +26,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public bool HasClaimedName => hasClaimedName;
             public string Name => name;
             public int MutualFriends => 0;
+
             public CommunityMemberRole Role
             {
                 get => role;

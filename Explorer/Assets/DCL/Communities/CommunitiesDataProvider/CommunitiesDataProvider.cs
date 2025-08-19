@@ -319,7 +319,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         public async UniTask<ICommunityMemberPagedResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             await UniTask.Delay(Random.Range(500, 2000), cancellationToken: ct);
-            int total = action == InviteRequestAction.request ? 5 : 3;
+            int total = action == InviteRequestAction.request_to_join ? 5 : 3;
 
             GetCommunityInviteRequestResponse.CommunityInviteRequestData[] members = new GetCommunityInviteRequestResponse.CommunityInviteRequestData[total];
             for (int i = 0; i < total; i++)
@@ -327,7 +327,7 @@ namespace DCL.Communities.CommunitiesDataProvider
                 members[i] = new GetCommunityInviteRequestResponse.CommunityInviteRequestData
                 {
                     id = Guid.NewGuid().ToString(),
-                    address = Guid.NewGuid().ToString(),
+                    memberAddress = Guid.NewGuid().ToString(),
                     profilePictureUrl = string.Empty,
                     hasClaimedName = Random.Range(0, 101) > 50,
                     name = $"User {i + 1}",

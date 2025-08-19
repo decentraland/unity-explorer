@@ -89,9 +89,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             cancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
             unblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
 
-            deleteRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.reject));
-            acceptRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.accept));
-            cancelInviteButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.cancel));
+            deleteRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.rejected));
+            acceptRequestButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.accepted));
+            cancelInviteButton.onClick.AddListener(() => ManageRequestClicked?.Invoke(UserProfile!, InviteRequestIntention.cancelled));
 
             background.color = normalColor;
         }

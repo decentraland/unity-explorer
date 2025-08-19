@@ -154,7 +154,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 RequestsAmount--;
                 currentSectionFetchData.Items.Remove(profile);
 
-                if (intention == InviteRequestIntention.accept)
+                if (intention == InviteRequestIntention.accepted)
                 {
                     profile.Role = CommunityMemberRole.member;
                     List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
@@ -471,7 +471,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                       MembersListView.MemberListSections.MEMBERS => communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct),
                                                                       MembersListView.MemberListSections.BANNED => communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct),
                                                                       MembersListView.MemberListSections.REQUESTS =>
-                                                                          communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                          communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request_to_join, membersData.PageNumber, PAGE_SIZE, ct),
                                                                       MembersListView.MemberListSections.INVITES =>
                                                                           communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.invite, membersData.PageNumber, PAGE_SIZE, ct),
                                                                       _ => throw new ArgumentOutOfRangeException(nameof(currentSection), currentSection, null)
@@ -519,7 +519,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             async UniTaskVoid FetchRequestsToJoinAsync(CancellationToken ctkn)
             {
                 //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request, 1, 0, ctkn);
-                Result<ICommunityMemberPagedResponse> response = await communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request, 1, 0, ctkn)
+                Result<ICommunityMemberPagedResponse> response = await communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request_to_join, 1, 0, ctkn)
                                                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
