@@ -608,6 +608,20 @@ namespace DCL.Communities.CommunitiesBrowser
                 await warningNotificationView.AnimatedShowAsync(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
             }
+
+            int? indexToRemove = null;
+            for (int i = 0; i < currentJoinRequests.Count; i++)
+            {
+                GetUserInviteRequestData.UserInviteRequestData joinRequest = currentJoinRequests[i];
+                if (joinRequest.communityId == communityId && joinRequest.id == requestId)
+                {
+                    indexToRemove = i;
+                    break;
+                }
+            }
+
+            if (indexToRemove != null)
+                currentJoinRequests.RemoveAt(indexToRemove.Value);
         }
 
         private void AcceptCommunityInvitation(string communityId, string invitationId)
@@ -684,12 +698,23 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityUpdated(string _) =>
             ReloadBrowser();
 
-        private void OnCommunityJoined(string communityId, bool success) =>
+        private void OnCommunityJoined(string communityId, bool success)
+        {
+            foreach (GetUserInviteRequestData.UserInviteRequestData invitation in currentInvitations)
+            {
+                if (communityId == invitation.communityId)
+                {
+                    RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+                    break;
+                }
+            }
+
             view.UpdateJoinedCommunity(communityId, true, success);
+        }
 
         private void OnCommunityRequestedToJoin(string communityId, bool success)
         {
-            var alreadyExistsInvitation = false;
+            bool alreadyExistsInvitation = false;
             foreach (GetUserInviteRequestData.UserInviteRequestData invitation in currentInvitations)
             {
                 if (communityId == invitation.communityId)
