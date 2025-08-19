@@ -588,7 +588,7 @@ namespace DCL.Landscape
         private static Texture2D CreateOccupancyMap(NativeArray<int2> emptyParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
-            int2 terrainSize = minParcel + maxParcel + 1;
+            int2 terrainSize = maxParcel - minParcel + 1;
             int2 citySize = terrainSize - padding * 2;
             int textureSize = ceilpow2(cmax(terrainSize) + 2);
 
@@ -627,7 +627,7 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + textureSize / 2 - maxParcel.x;
+                    endX = i + (textureSize / 2) - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -660,7 +660,7 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + textureSize / 2 - maxParcel.x;
+                    endX = i + (textureSize / 2) - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -681,15 +681,14 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + textureSize / 2 - maxParcel.x;
+                    endX = i + (textureSize / 2) - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
                 }
 
                 // Fifth section, same as first section.
-                endY = i + (textureSize / 2 - maxParcel.y) * textureSize;
-
+                endY = i + (((textureSize / 2) - maxParcel.y - 1) * textureSize);
                 while (i < endY)
                     data[i++] = 0;
             }
