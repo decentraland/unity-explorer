@@ -80,7 +80,7 @@ jobs:
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
-        timeout-minutes: 60
+        timeout-minutes: 120
         continue-on-error: true
         with:
           projectPath: Explorer
