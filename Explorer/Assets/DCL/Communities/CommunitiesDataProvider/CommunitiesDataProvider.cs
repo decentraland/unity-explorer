@@ -318,13 +318,13 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             switch (intention)
             {
-                case InviteRequestIntention.accept:
+                case InviteRequestIntention.accepted:
                     CommunityInvitationAccepted?.Invoke(communityId, result.Success);
                     break;
-                case InviteRequestIntention.reject:
+                case InviteRequestIntention.rejected:
                     CommunityInvitationRejected?.Invoke(communityId, result.Success);
                     break;
-                case InviteRequestIntention.cancel:
+                case InviteRequestIntention.cancelled:
                     CommunityRequestToJoinCancelled?.Invoke(communityId, result.Success);
                     break;
             }

@@ -596,7 +596,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid CancelRequestToJoinCommunityAsync(string communityId, string requestId, CancellationToken ct)
         {
-            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, requestId, InviteRequestIntention.cancel, ct)
+            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, requestId, InviteRequestIntention.cancelled, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -618,7 +618,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid AcceptCommunityInvitationAsync(string communityId, string invitationId, CancellationToken ct)
         {
-            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, invitationId, InviteRequestIntention.accept, ct)
+            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, invitationId, InviteRequestIntention.accepted, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -640,7 +640,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid RejectCommunityInvitationAsync(string communityId, string invitationId, CancellationToken ct)
         {
-            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, invitationId, InviteRequestIntention.reject, ct)
+            var result = await dataProvider.ManageInviteRequestToJoinAsync(communityId, invitationId, InviteRequestIntention.rejected, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -717,7 +717,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
-            LoadMyCommunities();
+
+            if (success)
+                LoadMyCommunities();
         }
 
         private void OnCommunityInvitationRejected(string communityId, bool success)
