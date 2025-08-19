@@ -68,12 +68,28 @@ namespace DCL.Communities.CommunitiesDataProvider
                     if (community.role != CommunityMemberRole.owner && community.role != CommunityMemberRole.moderator)
                         continue;
 
-                    GetCommunityInviteRequestResponse requestsReceivedResults = await GetCommunityInviteRequestAsync(community.id, InviteRequestAction.request_to_join, 1, 1000, ct);
-                    community.requestsReceived = requestsReceivedResults.data.total;
+                    community.requestsReceived = await GetCommunityRequestsAmountAsync(community.id, ct);
                 }
             }
 
             return response;
+        }
+
+        private async UniTask<int> GetCommunityRequestsAmountAsync(string communityId, CancellationToken ct)
+        {
+            var url = $"{communitiesBaseUrl}/{communityId}/requests";
+
+            GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                   .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            int totalRequests = 0;
+            foreach (var request in response.data.results)
+            {
+                if (request.type == InviteRequestAction.request_to_join)
+                    totalRequests++;
+            }
+
+            return totalRequests;
         }
 
         public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CancellationToken ct)
@@ -301,11 +317,7 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/{communityId}/requests?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
-
-            GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                   .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
-            return response;
+            throw new NotImplementedException();
         }
 
         public async UniTask<bool> ManageInviteRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
