@@ -236,6 +236,9 @@ namespace DCL.Landscape
                             occupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
                                 TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
 
+                            int floorValue = WriteInteriorChamferOnWhite(occupancyMap);
+                            occupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+
                             occupancyMapData = occupancyMap.GetRawTextureData<byte>();
                             occupancyMapSize = occupancyMap.width; // width == height
 
@@ -591,6 +594,7 @@ namespace DCL.Landscape
             int2 terrainSize = maxParcel - minParcel + 1;
             int2 citySize = terrainSize - padding * 2;
             int textureSize = ceilpow2(cmax(terrainSize) + 2);
+            int textureHalfSize = textureSize / 2;
 
             Texture2D occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false,
                 true);
@@ -605,7 +609,7 @@ namespace DCL.Landscape
                 int i = 0;
 
                 // First section: rows of black pixels from the top edge of the texture to minParcel.y.
-                int endY = (textureSize / 2 + minParcel.y) * textureSize;
+                int endY = (textureHalfSize + minParcel.y) * textureSize;
 
                 while (i < endY)
                     data[i++] = 0;
@@ -617,7 +621,7 @@ namespace DCL.Landscape
 
                 while (i < endY)
                 {
-                    int endX = i + textureSize / 2 + minParcel.x;
+                    int endX = i + textureHalfSize + minParcel.x;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -627,7 +631,7 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + textureSize / 2 - maxParcel.x - 1;
+                    endX = i + textureHalfSize - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -640,7 +644,7 @@ namespace DCL.Landscape
 
                 while (i < endY)
                 {
-                    int endX = i + textureSize / 2 + minParcel.x;
+                    int endX = i + textureHalfSize + minParcel.x;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -660,7 +664,7 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + textureSize / 2 - maxParcel.x - 1;
+                    endX = i + textureHalfSize - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -671,7 +675,7 @@ namespace DCL.Landscape
 
                 while (i < endY)
                 {
-                    int endX = i + textureSize / 2 + minParcel.x;
+                    int endX = i + textureHalfSize + minParcel.x;
 
                     while (i < endX)
                         data[i++] = 0;
@@ -681,14 +685,14 @@ namespace DCL.Landscape
                     while (i < endX)
                         data[i++] = 255;
 
-                    endX = i + textureSize / 2 - maxParcel.x - 1;
+                    endX = i + textureHalfSize - maxParcel.x - 1;
 
                     while (i < endX)
                         data[i++] = 0;
                 }
 
                 // Fifth section, same as first section.
-                endY = i + (textureSize / 2 - maxParcel.y - 1) * textureSize;
+                endY = i + ((textureHalfSize - maxParcel.y - 1) * textureSize);
 
                 while (i < endY)
                     data[i++] = 0;
@@ -696,12 +700,153 @@ namespace DCL.Landscape
 
             for (int i = 0; i < emptyParcels.Length; i++)
             {
-                int2 parcel = emptyParcels[i] + textureSize / 2;
+                int2 parcel = emptyParcels[i] + textureHalfSize;
                 data[parcel.y * textureSize + parcel.x] = 255;
             }
 
-            occupancyMap.Apply(false, false);
             return occupancyMap;
+        }
+
+        private static int WriteInteriorChamferOnWhite(Texture2D r8)
+        {
+            int w = r8.width, h = r8.height, n = w * h;
+            NativeArray<byte> src = r8.GetRawTextureData<byte>();
+            if (!src.IsCreated || src.Length != n) return 0;
+
+            const int INF = 1 << 28;
+            const int ORTH = 3; // 3-4 chamfer (good Euclidean approx)
+            const int DIAG = 4;
+
+            // Seed distances at BLACK pixels (occupied parcels - leave them 0), propagate into WHITE (free parcels)
+            var dist = new int[n];
+            bool anyBlack = false, anyWhite = false;
+
+            for (var i = 0; i < n; i++)
+            {
+                if (src[i] == 0)
+                {
+                    dist[i] = 0;
+                    anyBlack = true;
+                } // Black pixels (occupied) are seeds
+                else
+                {
+                    dist[i] = INF;
+                    anyWhite = true;
+                } // White pixels (free) will get distances
+            }
+
+            if (!anyBlack || !anyWhite)
+                return 0; // Nothing to do if no black or no white regions exist.
+
+            // Forward pass
+            for (var y = 0; y < h; y++)
+            {
+                int row = y * w;
+
+                for (var x = 0; x < w; x++)
+                {
+                    int i = row + x;
+                    int d = dist[i];
+
+                    if (d != 0) // skip black seeds
+                    {
+                        if (x > 0) d = Mathf.Min(d, dist[i - 1] + ORTH);
+                        if (y > 0) d = Mathf.Min(d, dist[i - w] + ORTH);
+                        if (x > 0 && y > 0) d = Mathf.Min(d, dist[i - w - 1] + DIAG);
+                        if (x + 1 < w && y > 0) d = Mathf.Min(d, dist[i - w + 1] + DIAG);
+                        dist[i] = d;
+                    }
+                }
+            }
+
+            // Backward pass
+            for (int y = h - 1; y >= 0; y--)
+            {
+                int row = y * w;
+
+                for (int x = w - 1; x >= 0; x--)
+                {
+                    int i = row + x;
+                    int d = dist[i];
+
+                    if (d != 0) // skip black seeds
+                    {
+                        if (x + 1 < w) d = Mathf.Min(d, dist[i + 1] + ORTH);
+                        if (y + 1 < h) d = Mathf.Min(d, dist[i + w] + ORTH);
+                        if (x + 1 < w && y + 1 < h) d = Mathf.Min(d, dist[i + w + 1] + DIAG);
+                        if (x > 0 && y + 1 < h) d = Mathf.Min(d, dist[i + w - 1] + DIAG);
+                        dist[i] = d;
+                    }
+                }
+            }
+
+            // Find maximum distance and convert to pixel distance
+            var maxD = 0;
+
+            for (var i = 0; i < n; i++)
+                if (src[i] != 0 && dist[i] < INF && dist[i] > maxD)
+                    maxD = dist[i]; // Check white pixels
+
+            if (maxD == 0)
+                return 0;
+
+            // Convert chamfer distance to approximate pixel distance
+            int maxPixelDistance = maxD / ORTH;
+
+            // Check for overflow and warn if needed
+            bool hasOverflow = maxPixelDistance > 255;
+
+            if (hasOverflow)
+            {
+                ReportHub.LogError(ReportCategory.LANDSCAPE, $"Distance field overflow! Max distance {maxPixelDistance} pixels, clamping to 255");
+                maxPixelDistance = 255;
+            }
+
+            // Calculate adaptive stepSize to avoid merging with black pixels
+            int stepSize;
+
+            if (maxPixelDistance <= 25)
+            {
+                stepSize = 10; // Default stepSize for reasonable distances
+            }
+            else
+            {
+                // Adaptive stepSize to fit large distances, ensuring minValue >= 1
+                stepSize = (255 - 1) / maxPixelDistance; // 254 / maxPixelDistance
+                stepSize = Mathf.Max(stepSize, 1); // Ensure at least 1
+            }
+
+            int minValue = 255 - (stepSize * maxPixelDistance);
+            ReportHub.LogError(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxD}, max maxPixelDistance={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
+
+            // Write back: keep black at 0, map distances to [minValue, 255] range
+            for (var i = 0; i < n; i++)
+            {
+                if (src[i] == 0)
+                {
+                    src[i] = 0;
+                    continue;
+                } // keep black pixels (occupied)
+
+                // Convert chamfer distance to pixel distance
+                int pixelDist = dist[i] / ORTH;
+                pixelDist = Mathf.Min(pixelDist, maxPixelDistance); // Clamp to max
+
+                // Map [1, maxPixelDistance] to [minValue, 255]
+                int value;
+
+                if (maxPixelDistance == 1)
+                    value = 255; // Only one distance level, use max value
+                else
+                {
+                    value = minValue + ((pixelDist - 1) * (255 - minValue) / (maxPixelDistance - 1));
+                    value = Mathf.Clamp(value, minValue, 255);
+                }
+
+                src[i] = (byte)value;
+            }
+
+            return maxPixelDistance;
         }
 
         public bool IsParcelOccupied(int2 parcel)
