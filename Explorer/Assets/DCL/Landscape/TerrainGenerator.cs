@@ -597,21 +597,21 @@ namespace DCL.Landscape
 
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
 
-            // A square of red pixels surrounded by a border of black pixels totalPadding pixels wide
-            // surrounded by red pixels to fill out the power of two texture, but at least one. World
+            // A square of black pixels surrounded by a border of red pixels totalPadding pixels wide
+            // surrounded by black pixels to fill out the power of two texture, but at least one. World
             // origin (parcel 0,0) corresponds to uv of 0.5 plus half a pixel. The outer border is there
             // so that terrain height blends to zero at its edges.
             {
                 int i = 0;
 
-                // First section: rows of red pixels from the top edge of the texture to minParcel.y.
+                // First section: rows of black pixels from the top edge of the texture to minParcel.y.
                 int endY = (textureSize / 2 + minParcel.y) * textureSize;
 
                 while (i < endY)
-                    data[i++] = 255;
+                    data[i++] = 0;
 
-                // Second section: totalPadding rows of: one or more red pixels (enough to pad the
-                // texture out to a power of two), terrainSize.x black pixels, one or more red pixels
+                // Second section: totalPadding rows of: one or more black pixels (enough to pad the
+                // texture out to a power of two), terrainSize.x red pixels, one or more black pixels
                 // again for padding.
                 endY = i + padding * textureSize;
 
@@ -620,21 +620,21 @@ namespace DCL.Landscape
                     int endX = i + textureSize / 2 + minParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        data[i++] = 0;
 
                     endX = i + terrainSize.x;
 
                     while (i < endX)
-                        data[i++] = 0;
+                        data[i++] = 255;
 
                     endX = i + textureSize / 2 - maxParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        data[i++] = 0;
                 }
 
-                // Third, innermost section: citySize.y rows of: one or more red pixels, totalPadding
-                // black pixels, citySize.x red pixels, totalPadding black pixels, one or more red
+                // Third, innermost section: citySize.y rows of: one or more black pixels, totalPadding
+                // red pixels, citySize.x black pixels, totalPadding red pixels, one or more black
                 // pixels.
                 endY = i + citySize.y * textureSize;
 
@@ -643,27 +643,27 @@ namespace DCL.Landscape
                     int endX = i + textureSize / 2 + minParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        data[i++] = 0;
 
                     endX = i + padding;
 
                     while (i < endX)
-                        data[i++] = 0;
+                        data[i++] = 255;
 
                     endX = i + citySize.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        data[i++] = 0;
 
                     endX = i + padding;
 
                     while (i < endX)
-                        data[i++] = 0;
+                        data[i++] = 255;
 
                     endX = i + textureSize / 2 - maxParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        data[i++] = 0;
                 }
 
                 // Fourth section, same as second section.
@@ -674,30 +674,30 @@ namespace DCL.Landscape
                     int endX = i + textureSize / 2 + minParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        data[i++] = 0;
 
                     endX = i + terrainSize.x;
 
                     while (i < endX)
-                        data[i++] = 0;
+                        data[i++] = 255;
 
                     endX = i + textureSize / 2 - maxParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        data[i++] = 0;
                 }
 
                 // Fifth section, same as first section.
                 endY = i + (textureSize / 2 - maxParcel.y) * textureSize;
 
                 while (i < endY)
-                    data[i++] = 255;
+                    data[i++] = 0;
             }
 
             for (int i = 0; i < emptyParcels.Length; i++)
             {
                 int2 parcel = emptyParcels[i] + textureSize / 2;
-                data[parcel.y * textureSize + parcel.x] = 0;
+                data[parcel.y * textureSize + parcel.x] = 255;
             }
 
             occupancyMap.Apply(false, false);
@@ -714,7 +714,7 @@ namespace DCL.Landscape
 
             parcel += occupancyMapSize / 2;
             int index = parcel.y * occupancyMapSize + parcel.x;
-            return occupancyMapData[index] > 0;
+            return occupancyMapData[index] < 255;
         }
 
         private bool OverlapsOccupiedParcel(float2 position, float radius)
