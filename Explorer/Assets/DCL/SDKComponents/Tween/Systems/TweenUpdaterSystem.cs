@@ -150,16 +150,9 @@ namespace DCL.SDKComponents.Tween.Systems
 
             SetupTweener(ref sdkTweenComponent, pbTween, durationInSeconds, isPlaying);
 
-            if (isPlaying)
-            {
-                sdkTweenComponent.CustomTweener.Play();
-                sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsActive;
-            }
-            else
-            {
-                sdkTweenComponent.CustomTweener.Pause();
-                sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
-            }
+            if (isPlaying) sdkTweenComponent.CustomTweener.Play();
+            else sdkTweenComponent.CustomTweener.Pause();
+            sdkTweenComponent.TweenStateStatus = isPlaying ? TweenStateStatus.TsActive : TweenStateStatus.TsPaused;
 
             sdkTweenComponent.IsDirty = false;
         }
