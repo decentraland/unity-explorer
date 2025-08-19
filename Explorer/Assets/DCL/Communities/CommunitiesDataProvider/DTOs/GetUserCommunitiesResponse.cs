@@ -61,5 +61,3 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public int total;
     }
 }
-
-
