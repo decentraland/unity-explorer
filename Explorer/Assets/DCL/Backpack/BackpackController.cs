@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
+using DCL.CharacterPreview;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.UI;
@@ -168,7 +169,7 @@ namespace DCL.Backpack
 
             avatarController.RequestInitialWearablesPage();
             backpackEmoteGridController.RequestAndFillEmotes(1, true);
-            backpackCharacterPreviewController.Initialize(avatar);
+            backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);
 
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: ct);

@@ -1235,8 +1235,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 2164260863
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.5019608}
+    rgba: 3003121663
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0.69803923}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1342,8 +1342,8 @@ RectTransform:
   m_Children:
   - {fileID: 5800817397900643791}
   - {fileID: 5041929595815222596}
-  - {fileID: 1877479989643155433}
   - {fileID: 71727479616604118}
+  - {fileID: 1877479989643155433}
   - {fileID: 6135224288403869516}
   m_Father: {fileID: 2021242745061089878}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1370,7 +1370,7 @@ MonoBehaviour:
     m_Top: 20
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 30
+  m_Spacing: 46
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -1458,7 +1458,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 124
+  m_MinHeight: 106
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
@@ -1760,7 +1760,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 299712988115795410}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.5622168
+  m_Size: 0.54835933
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1852,8 +1852,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 2164260863
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.5019608}
+    rgba: 3003121663
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0.69803923}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2340,10 +2340,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Events and public photos associated with LANDs or Worlds linked to your
-    Community will automatically appear in your Community's profile. Places can be
-    linked by Community owners or moderators as long as the individual adding a Place
-    is its owner.
+  m_text: Community owners and moderators may link Places they own to a Community.
+    <b>Note:</b> Public photos taken at linked Places will appear in your Community's
+    profile.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -2352,8 +2351,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 2164063484
-  m_fontColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 0.5019608}
+    rgba: 3003121663
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0.69803923}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2428,7 +2427,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 76
+  m_MinHeight: 58
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
@@ -2737,7 +2736,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Control who can join your Community.
+  m_text: The dropdown closes automatically after selecting an option.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -2746,8 +2745,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 2164063484
-  m_fontColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 0.5019608}
+    rgba: 3003121663
+  m_fontColor: {r: 1, g: 1, b: 1, a: 0.69803923}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5449,19 +5448,40 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2205277358643444546, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_text
-      value: "Public \u2014 anyone can join"
+      value: <b>Public</b> <size="12">Anyone can become a member, view Community
+        details, and join your Voice Streams</size>
       objectReference: {fileID: 0}
+    - target: {fileID: 2205277358643444546, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_fontSize
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2205277358643444546, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    - target: {fileID: 2205277358643444546, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2205277358643444546, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
     - target: {fileID: 2212829265055187121, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2212829265055187121, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2212829265055187121, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 2212829265055187121, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3221873678144687217, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_Name
@@ -5469,24 +5489,45 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7871806658679262717, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7871806658679262717, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7871806658679262717, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871806658679262717, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 7871806658679262717, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -30
       objectReference: {fileID: 0}
     - target: {fileID: 8561516910421046114, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_text
-      value: "Private \u2014 can only be viewed or joined by invitation"
+      value: <b>Private</b> <size="12">Membership by request/invite; only Community
+        description visible to non-members</size>
       objectReference: {fileID: 0}
+    - target: {fileID: 8561516910421046114, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_fontSize
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8561516910421046114, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    - target: {fileID: 8561516910421046114, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8561516910421046114, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
     - target: {fileID: 8669832226481238598, guid: fe0f91b5a19f4be42b3909c610e977f5, type: 3}
       propertyPath: m_Pivot.x
       value: 0

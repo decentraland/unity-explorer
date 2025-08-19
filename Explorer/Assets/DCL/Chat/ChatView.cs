@@ -215,8 +215,8 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
         private bool isSubmitHooked;
-        private CancellationTokenSource privateConversationItemCts = new CancellationTokenSource();
-        private CancellationTokenSource communityConversationItemCts = new CancellationTokenSource();
+        private CancellationTokenSource privateConversationItemCts;
+        private CancellationTokenSource communityConversationItemCts;
         private CancellationTokenSource communityTitleCts;
 
         private ISpriteCache thumbnailCache;
@@ -524,6 +524,9 @@ namespace DCL.Chat
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
             chatTitleBar.ViewCommunityRequested += OnTitleBarViewCommunityRequested;
+
+            privateConversationItemCts = new CancellationTokenSource();
+            communityConversationItemCts = new CancellationTokenSource();
 
             this.loadingStatus = loadingStatus;
             loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;

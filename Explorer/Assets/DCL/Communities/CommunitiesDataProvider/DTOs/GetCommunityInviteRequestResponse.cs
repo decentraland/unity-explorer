@@ -11,14 +11,17 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public class CommunityInviteRequestData : ICommunityMemberData
         {
             public string id;
-            public string address;
+            public string communityId;
+            public string memberAddress;
+            public InviteRequestAction type;
+            public string status;
             public string profilePictureUrl;
             public bool hasClaimedName;
             public string name;
-            public string requestedAt;
+            public FriendshipStatus friendshipStatus;
 
             public string Id => id;
-            public string Address => address;
+            public string Address => memberAddress;
             public string ProfilePictureUrl => profilePictureUrl;
             public bool HasClaimedName => hasClaimedName;
             public string Name => name;
@@ -35,7 +38,6 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 set => friendshipStatus = value;
             }
 
-            private FriendshipStatus friendshipStatus = FriendshipStatus.none;
             private CommunityMemberRole role = CommunityMemberRole.none;
 
             public Color GetUserNameColor() =>

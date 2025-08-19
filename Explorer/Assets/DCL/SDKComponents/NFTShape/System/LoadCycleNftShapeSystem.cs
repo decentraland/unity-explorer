@@ -58,7 +58,6 @@ namespace DCL.SDKComponents.NFTShape.System
             }
 
             nftRenderer.Apply(result.Asset!);
-            nftRenderer.SetTextureScale(Vector2.one);
 
             if (result.Asset?.VideoURL != null) InitializeNftVideo(entity, result.Asset, nftRenderer);
         }
@@ -90,7 +89,7 @@ namespace DCL.SDKComponents.NFTShape.System
                 World.Add(entity, pbVideo, vtc);
             }
 
-            World.Create(new InitializeNftVideoMaterialRequest { Renderer = nftRenderer, MediaPlayerComponentEntity = entity });
+            vtc.IsDirty = true;
         }
     }
 }

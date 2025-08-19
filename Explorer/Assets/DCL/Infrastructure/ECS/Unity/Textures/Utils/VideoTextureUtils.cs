@@ -18,33 +18,33 @@ namespace ECS.Unity.Textures.Utils
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IObjectPool<Texture2D> videoTexturesPool,
             World world,
-            out VideoRenderingInfo info)
+            out Texture2DData? texture)
         {
-            info = default(VideoRenderingInfo);
+            texture = null;
 
-            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out info.VideoPlayer) || !world.IsAlive(info.VideoPlayer))
+            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out var videoPlayerEntity) || !world.IsAlive(videoPlayerEntity))
                 return false;
 
-            ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(info.VideoPlayer, out bool hasConsumer);
+            ref var consumer = ref world.TryGetRef<VideoTextureConsumer>(videoPlayerEntity, out bool hasConsumer);
 
             if (!hasConsumer)
-                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), info.VideoPlayer);
+                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), videoPlayerEntity);
 
-            info.VideoTexture = consumer.Texture;
-            info.VideoTexture.AddReference();
 
             if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
             {
-                info.VideoRenderer = primitiveMeshComponent.MeshRenderer;
                 consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
             }
             else if (world.TryGet(entity, out GltfNode gltfNode))
             {
-                info.VideoRenderer = gltfNode.Renderers.Count > 0 ? gltfNode.Renderers[0] : null;
                 foreach (var renderer in gltfNode.Renderers)
                     consumer.AddConsumer(renderer);
             }
 
+            consumer.Texture.AddReference();
+            consumer.IsDirty = true;
+
+            texture = consumer.Texture;
             return true;
         }
 

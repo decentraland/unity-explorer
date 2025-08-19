@@ -222,15 +222,12 @@ namespace ECS.Unity.Materials.Systems
             {
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
-                bool foundConsumeEntity = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out var info);
+                bool foundConsumeEntity = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out var texture);
                 if (!foundConsumeEntity) return false;
 
-                StreamableLoadingResult<Texture2DData> result = new StreamableLoadingResult<Texture2DData>(info.VideoTexture!);
+                var result = new StreamableLoadingResult<Texture2DData>(texture);
 
                 promise = Promise.CreateFinalized(intention, result);
-
-                if (info.VideoRenderer)
-                    World.Create(new InitializeVideoPlayerMaterialRequest { Renderer = info.VideoRenderer, MediaPlayerComponentEntity = info.VideoPlayer });
             }
             else
                 promise = Promise.Create(

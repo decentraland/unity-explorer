@@ -25,6 +25,10 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
 
+            public string inviteOrRequestId;
+            public InviteRequestAction pendingActionType;
+            public int requestsReceived;
+
             public void SetAsJoined(bool isJoined)
             {
                 // Change the role
@@ -57,5 +61,3 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public int total;
     }
 }
-
-

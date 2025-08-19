@@ -16,6 +16,7 @@ using DCL.Utilities.Extensions;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -58,6 +59,11 @@ namespace DCL.Communities.CommunityCreation
 
         private Sprite? lastSelectedProfileThumbnail;
         private bool isProfileThumbnailDirty;
+        private string originalCommunityNameForEdition;
+        private string originalCommunityDescriptionForEdition;
+        private CommunityPrivacy? originalCommunityPrivacyForEdition;
+        private readonly List<string> originalCommunityLandsForEdition = new ();
+        private readonly List<string> originalCommunityWorldsForEdition = new ();
 
         private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
@@ -399,6 +405,12 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
+            originalCommunityNameForEdition = getCommunityResult.Value.data.name;
+            originalCommunityDescriptionForEdition = getCommunityResult.Value.data.description;
+            originalCommunityPrivacyForEdition = getCommunityResult.Value.data.privacy;
+            originalCommunityLandsForEdition.Clear();
+            originalCommunityWorldsForEdition.Clear();
+
             viewInstance!.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw, thumbnailLoader);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
@@ -488,6 +500,11 @@ namespace DCL.Communities.CommunityCreation
                             }
                         }
 
+                        if (string.IsNullOrEmpty(placeInfo.world_name))
+                            originalCommunityLandsForEdition.Add(placeInfo.id);
+                        else
+                            originalCommunityWorldsForEdition.Add(placeInfo.id);
+
                         AddPlaceTag(new CommunityPlace(
                             placeInfo.id,
                             !string.IsNullOrEmpty(placeInfo.world_name),
@@ -535,12 +552,31 @@ namespace DCL.Communities.CommunityCreation
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            UpdateCommunityAsync(inputData.CommunityId, name, description, lands, worlds, privacy, createCommunityCts.Token).Forget();
+            UpdateCommunityAsync(
+                inputData.CommunityId,
+                originalCommunityNameForEdition == name ? null : name,
+                originalCommunityDescriptionForEdition == description ? null : description,
+                originalCommunityLandsForEdition.Count == lands.Count && !originalCommunityLandsForEdition.Except(lands).Any() ? null : lands,
+                originalCommunityWorldsForEdition.Count == worlds.Count && !originalCommunityWorldsForEdition.Except(worlds).Any() ? null : worlds,
+                originalCommunityPrivacyForEdition == privacy ? null : privacy,
+                createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy,
+        private async UniTaskVoid UpdateCommunityAsync(string id, string? name, string? description, List<string>? lands, List<string>? worlds, CommunityPrivacy? privacy,
             CancellationToken ct)
         {
+            if (name == null &&
+                description == null &&
+                lands == null &&
+                worlds == null &&
+                privacy == null &&
+                lastSelectedImageData == null)
+            {
+                // If there is nothing to save, just close the panel
+                closeTaskCompletionSource.TrySetResult();
+                return;
+            }
+
             viewInstance!.SetCommunityCreationInProgress(true);
 
             var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, privacy, ct)

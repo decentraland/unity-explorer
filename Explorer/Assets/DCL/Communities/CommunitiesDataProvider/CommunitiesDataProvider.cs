@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Networking;
 using Random = UnityEngine.Random;
 
@@ -23,12 +24,17 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string, bool> CommunityLeft;
         public event Action<string> CommunityUserRemoved;
         public event Action<string, string> CommunityUserBanned;
+        public event Action<string, bool> CommunityRequestedToJoin;
+        public event Action<string, bool> CommunityRequestToJoinCancelled;
+        public event Action<string, bool> CommunityInvitationAccepted;
+        public event Action<string, bool> CommunityInvitationRejected;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
+        private string membersBaseUrl => urlsSource.Url(DecentralandUrl.Members);
 
         public CommunitiesDataProvider(
             IWebRequestController webRequestController,
@@ -49,44 +55,82 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool includeRequestsReceivedPerCommunity = false)
         {
             var url = $"{communitiesBaseUrl}?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetUserCommunitiesResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                             .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
 
+            if (includeRequestsReceivedPerCommunity)
+            {
+                foreach (GetUserCommunitiesData.CommunityData community in response.data.results)
+                {
+                    if (community.role != CommunityMemberRole.owner && community.role != CommunityMemberRole.moderator)
+                        continue;
+
+                    community.requestsReceived = await GetCommunityRequestsAmountAsync(community.id, ct);
+                }
+            }
+
             return response;
         }
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy privacy, CancellationToken ct)
+        private async UniTask<int> GetCommunityRequestsAmountAsync(string communityId, CancellationToken ct)
+        {
+            var url = $"{communitiesBaseUrl}/{communityId}/requests";
+
+            GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                   .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            int totalRequests = 0;
+            foreach (var request in response.data.results)
+            {
+                if (request.type == InviteRequestAction.request_to_join)
+                    totalRequests++;
+            }
+
+            return totalRequests;
+        }
+
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CancellationToken ct)
         {
             CreateOrUpdateCommunityResponse response;
 
-            var formData = new List<IMultipartFormSection>
-            {
-                new MultipartFormDataSection("name", name),
-                new MultipartFormDataSection("description", description),
-                new MultipartFormDataSection("privacy", privacy.ToString()),
-            };
+            var formData = new List<IMultipartFormSection>();
 
-            StringBuilder placeIdsJsonString = new StringBuilder("[");
-            for (var i = 0; i < lands.Count; i++)
+            if (name != null)
+                formData.Add(new MultipartFormDataSection("name", name));
+
+            if (description != null)
+                formData.Add(new MultipartFormDataSection("description", description));
+
+            if (privacy != null)
+                formData.Add(new MultipartFormDataSection("privacy", privacy.ToString()));
+
+            if (lands != null || worlds != null)
             {
-                placeIdsJsonString.Append($"\"{lands[i]}\"");
-                if (i < lands.Count - 1)
+                lands ??= new List<string>();
+                worlds ??= new List<string>();
+
+                StringBuilder placeIdsJsonString = new StringBuilder("[");
+                for (var i = 0; i < lands.Count; i++)
+                {
+                    placeIdsJsonString.Append($"\"{lands[i]}\"");
+                    if (i < lands.Count - 1)
+                        placeIdsJsonString.Append(", ");
+                }
+                if (lands.Count > 0 && worlds.Count > 0)
                     placeIdsJsonString.Append(", ");
+                for (var i = 0; i < worlds.Count; i++)
+                {
+                    placeIdsJsonString.Append($"\"{worlds[i]}\"");
+                    if (i < worlds.Count - 1)
+                        placeIdsJsonString.Append(", ");
+                }
+                placeIdsJsonString.Append("]");
+                formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
             }
-            if (lands.Count > 0 && worlds.Count > 0)
-                placeIdsJsonString.Append(", ");
-            for (var i = 0; i < worlds.Count; i++)
-            {
-                placeIdsJsonString.Append($"\"{worlds[i]}\"");
-                if (i < worlds.Count - 1)
-                    placeIdsJsonString.Append(", ");
-            }
-            placeIdsJsonString.Append("]");
-            formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
 
             if (thumbnail != null)
                 formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/png"));
@@ -262,9 +306,14 @@ namespace DCL.Communities.CommunitiesDataProvider
             return result.Success;
         }
 
-        public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var url = $"{membersBaseUrl}/{web3IdentityCache.Identity?.Address}/requests?type={action.ToString()}";
+
+            GetUserInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                              .CreateFromJson<GetUserInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
         }
 
         public async UniTask<ICommunityMemberPagedResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
@@ -297,12 +346,44 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         public async UniTask<bool> ManageInviteRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
         {
-            return true;
+            var url = $"{communitiesBaseUrl}/{communityId}/requests/{requestId}";
+
+            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"intention\": \"{intention.ToString()}\"}}"), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            switch (intention)
+            {
+                case InviteRequestIntention.accepted:
+                    CommunityInvitationAccepted?.Invoke(communityId, result.Success);
+                    break;
+                case InviteRequestIntention.rejected:
+                    CommunityInvitationRejected?.Invoke(communityId, result.Success);
+                    break;
+                case InviteRequestIntention.cancelled:
+                    CommunityRequestToJoinCancelled?.Invoke(communityId, result.Success);
+                    break;
+            }
+
+            return result.Success;
         }
 
-        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, CancellationToken ct)
+        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var url = $"{communitiesBaseUrl}/{communityId}/requests";
+            string jsonBody = JsonUtility.ToJson(new SendInviteOrRequestToJoinBody
+            {
+                targetedAddress = targetedUserAddress,
+                type = action.ToString(),
+            });
+
+            var result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            CommunityRequestedToJoin?.Invoke(communityId, result.Success);
+
+            return result.Success;
         }
 
         public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityList(string userAddress, CancellationToken ct)

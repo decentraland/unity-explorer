@@ -67,7 +67,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 // See: https://github.com/decentraland/unity-explorer/issues/3796
                 lock (participants)
                 {
-                    foreach (string remoteParticipantIdentity in participants.RemoteParticipantIdentities())
+                    foreach ((string remoteParticipantIdentity, _) in participants.RemoteParticipantIdentities())
                     {
                         var participant = participants.RemoteParticipant(remoteParticipantIdentity);
 

@@ -17,15 +17,18 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public string id;
             public string communityId;
             public CommunityThumbnails? thumbnails;
+            public string memberAddress;
+            public InviteRequestAction type;
+            public string status;
             public string name;
             public string description;
             public string ownerAddress;
-            public string ownerName;
-            public int membersCount;
-            public CommunityPrivacy privacy;
             public CommunityMemberRole role;
+            public CommunityPrivacy privacy;
+            public bool active;
+            public int membersCount;
             public GetUserCommunitiesData.FriendInCommunity[] friends;
-            public InviteRequestAction action;
+            public string ownerName;
         }
 
         public UserInviteRequestData[] results;

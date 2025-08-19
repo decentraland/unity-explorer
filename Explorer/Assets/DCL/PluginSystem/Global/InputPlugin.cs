@@ -11,6 +11,7 @@ using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
 using DCL.Multiplayer.Emotes;
+using DCL.UI;
 using DCL.UI.SharedSpaceManager;
 using MVC;
 using System;
@@ -44,6 +45,7 @@ namespace DCL.PluginSystem.Global
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument sceneUIDocument;
         private readonly UIDocument cursorUIDocument;
+        private readonly WarningNotificationView warningNotificationView;
         private CrosshairCanvas crosshairCanvas = null!;
 
         public InputPlugin(
@@ -56,7 +58,8 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
             UIDocument sceneUIDocument,
-            UIDocument cursorUIDocument)
+            UIDocument cursorUIDocument,
+            WarningNotificationView warningNotificationView)
         {
             this.cursor = cursor;
             this.eventSystem = eventSystem;
@@ -68,6 +71,7 @@ namespace DCL.PluginSystem.Global
             this.rootUIDocument = rootUIDocument;
             this.sceneUIDocument = sceneUIDocument;
             this.cursorUIDocument = cursorUIDocument;
+            this.warningNotificationView = warningNotificationView;
 
             DCLInput.Instance.Enable();
         }
@@ -99,7 +103,7 @@ namespace DCL.PluginSystem.Global
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, DCLInput.Instance.FreeCamera.DropPlayer);
             UpdateEmoteInputSystem.InjectToWorld(ref builder, messageBus, mvcManager);
             UpdateCursorInputSystem.InjectToWorld(ref builder, eventSystem, cursor, crosshairCanvas);
-            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, debugContainerBuilder, rootUIDocument, sceneUIDocument, cursorUIDocument);
+            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, debugContainerBuilder, rootUIDocument, sceneUIDocument, cursorUIDocument, warningNotificationView);
         }
 
         public void Dispose()

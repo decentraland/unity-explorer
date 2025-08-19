@@ -18,7 +18,7 @@ using UnityEngine.Pool;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [UpdateAfter(typeof(NametagPlacementSystem))]
     [LogCategory(ReportCategory.DEBUG)]
     public partial class DebugRoomsSystem : BaseUnityLoopSystem

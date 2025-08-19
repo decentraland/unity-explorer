@@ -24,6 +24,18 @@ PrefabInstance:
       propertyPath: <verifiedIcon>k__BackingField
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 2520904133966978804, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_Alpha
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2520904133966978804, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_Interactable
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2520904133966978804, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2986110115110872576, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -100,9 +112,25 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5569678122417686519, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_Alpha
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5569678122417686519, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_Interactable
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5569678122417686519, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5730766251205960226, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6332478220486376778, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: thumbnailFrame
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 6332478220486376778, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: thumbnailBackground
@@ -111,6 +139,10 @@ PrefabInstance:
     - target: {fileID: 6979630135461700999, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7088210785754902257, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: <skeletonLoadingView>k__BackingField
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7253102694193305417, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_Pivot.x
@@ -263,6 +295,13 @@ PrefabInstance:
     - {fileID: 5298955457008553957, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
     - {fileID: 7406274172203655002, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
     - {fileID: 5337272724111525965, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 679667521870969891, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 7950505578789126724, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 2568169814313379662, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 591695399663106317, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 6078326758100426593, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 669214756966493442, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 3504873494045477904, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
     m_RemovedGameObjects:
     - {fileID: 660116915281079526, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
     - {fileID: 4097828356427392652, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
