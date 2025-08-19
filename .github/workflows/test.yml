@@ -17,7 +17,11 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  
+  UNITY_VERSION: 6000.0.49f1
+  UNITY_IMAGE_FLAVOR: windows-il2cpp-3
+  UNITY_IMAGE_NAME: unityci/editor:windows-${{ env.UNITY_VERSION }}-${{ env.UNITY_IMAGE_FLAVOR }}
+  UNITY_IMAGE_TAR: unityci-editor-${{ env.UNITY_VERSION }}-${{ env.UNITY_IMAGE_FLAVOR }}.tar.zst
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -60,22 +64,47 @@ jobs:
         env:
           REPOS_READ_ONLY_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
         run: |
-            git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com/decentraland/unity-explorer-packages.git
-            $jsonFilePath = "Explorer/Packages/manifest.json"
-            (Get-Content $jsonFilePath) `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/FileBrowserPro', 'file:../../unity-explorer-packages/FileBrowserPro' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/RenderGraphs/RenderFeatures', 'file:../../unity-explorer-packages/RenderGraphs/RenderFeatures' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' |
-                Set-Content $jsonFilePath
+          git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com/decentraland/unity-explorer-packages.git
+          $jsonFilePath = "Explorer/Packages/manifest.json"
+          (Get-Content $jsonFilePath) `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/FileBrowserPro', 'file:../../unity-explorer-packages/FileBrowserPro' `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/RenderGraphs/RenderFeatures', 'file:../../unity-explorer-packages/RenderGraphs/RenderFeatures' `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro' `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' `
+            -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' |
+            Set-Content $jsonFilePath
+          Get-ChildItem
+          Get-Content $jsonFilePath
 
-            Get-ChildItem
-            Get-Content $jsonFilePath
+      # --- Cache the Unity IL2CPP Docker image ---
+      - name: Restore cached Unity Docker image
+        uses: actions/cache@v4
+        id: unity-image-cache
+        with:
+          path: ${{ env.UNITY_IMAGE_TAR }}
+          key: unity-image-${{ runner.os }}-${{ env.UNITY_VERSION }}-${{ env.UNITY_IMAGE_FLAVOR }}
+
+      - name: Load Unity Docker image (if cached)
+        if: steps.unity-image-cache.outputs.cache-hit == 'true'
+        shell: pwsh
+        run: |
+          choco install -y zstd
+          zstd -d $env:UNITY_IMAGE_TAR -o unity-image.tar
+          docker load -i unity-image.tar
+
+      - name: Pull & cache Unity Docker image (if cache miss)
+        if: steps.unity-image-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          docker pull $env:UNITY_IMAGE_NAME
+          choco install -y zstd
+          docker save $env:UNITY_IMAGE_NAME -o unity-image.tar
+          zstd -19 unity-image.tar -o $env:UNITY_IMAGE_TAR
+      # --- end image cache ---
 
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
@@ -84,7 +113,8 @@ jobs:
         continue-on-error: true
         with:
           projectPath: Explorer
-          testMode: all      
+          testMode: all
+          customImage: ${{ env.UNITY_IMAGE_NAME }}
 
       - name: Convert NUnit to JUnit
         if: always()
@@ -95,7 +125,6 @@ jobs:
             --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml" `
             .github/workflows/nunit-to-junit.xsl `
             "${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml"
-
           xsltproc `
             --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml" `
             .github/workflows/nunit-to-junit.xsl `
@@ -109,7 +138,6 @@ jobs:
           path: ${{ steps.testRunner.outputs.artifactsPath }}-junit/*.xml
           reporter: jest-junit
 
-      # Upload artifact
       - uses: actions/upload-artifact@v4
         if: always()
         with:
