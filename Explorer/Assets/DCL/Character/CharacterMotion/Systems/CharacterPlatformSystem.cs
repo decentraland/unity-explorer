@@ -2,13 +2,14 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
-using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using RichTypes;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -19,6 +20,7 @@ namespace DCL.CharacterMotion.Systems
     public partial class CharacterPlatformSystem : BaseUnityLoopSystem
     {
         private const int UNGROUNDED_FRAMES = 2;
+
         public CharacterPlatformSystem(World world) : base(world) { }
 
         protected override void Update(float _)
@@ -29,7 +31,7 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention))]
         private void ResolvePlatformMovement(
-            in ICharacterControllerSettings settings,
+            ICharacterObject characterObject,
             ref CharacterPlatformComponent platformComponent,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController)
@@ -38,8 +40,7 @@ namespace DCL.CharacterMotion.Systems
 
             if (rigidTransform.JustJumped)
             {
-                platformComponent.CurrentPlatform = null;
-                platformComponent.PlatformCollider = null;
+                platformComponent.CurrentPlatform = Option<CurrentPlatform>.None;
                 return;
             }
 
@@ -48,10 +49,8 @@ namespace DCL.CharacterMotion.Systems
                 platformComponent.FramesUngrounded++;
 
                 if (platformComponent.FramesUngrounded > UNGROUNDED_FRAMES)
-                {
-                    platformComponent.CurrentPlatform = null;
-                    platformComponent.PlatformCollider = null;
-                }
+                    platformComponent.CurrentPlatform = Option<CurrentPlatform>.None;
+
                 return;
             }
 
@@ -59,12 +58,12 @@ namespace DCL.CharacterMotion.Systems
 
             Transform characterTransform = characterController.transform;
 
-            PlatformRaycast.Execute(platformComponent, characterController.radius, characterTransform, settings);
+            PlatformRaycast.Execute(characterObject, platformComponent, characterTransform);
 
-            if (platformComponent.CurrentPlatform == null)
+            if (platformComponent.CurrentPlatform.Has == false)
                 return;
 
-            Transform platformTransform = platformComponent.CurrentPlatform.transform;
+            Transform platformTransform = platformComponent.CurrentPlatform.Value.Transform;
 
             Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastAvatarRelativePosition);
             rigidTransform.PlatformDelta = newGroundWorldPos - characterTransform.position;

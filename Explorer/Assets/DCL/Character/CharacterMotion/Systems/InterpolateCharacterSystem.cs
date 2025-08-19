@@ -52,10 +52,10 @@ namespace DCL.CharacterMotion.Systems
             Vector3 prevPos = characterTransform.position;
 
             // Force the platform collider to update its position, so slope modifier raycast can work properly
-            if (platformComponent.IsMovingPlatform && platformComponent.PlatformCollider != null)
+            if (platformComponent.IsMovingPlatform && platformComponent.CurrentPlatform.Has)
             {
-                platformComponent.PlatformCollider.enabled = false;
-                platformComponent.PlatformCollider.enabled = true;
+                platformComponent.CurrentPlatform.Value.Collider.enabled = false;
+                platformComponent.CurrentPlatform.Value.Collider.enabled = true;
             }
 
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
@@ -63,16 +63,19 @@ namespace DCL.CharacterMotion.Systems
             if (platformComponent.IsRotatingPlatform || platformComponent.IsMovingPlatform)
             {
                 // Similarly to the old client, we need to adjust position directly for the platform delta. Otherwise, avatar can be pushed away.
-                characterController.transform.position += rigidTransform.PlatformDelta;
+                // TODO remove characterController.transform.position += rigidTransform.PlatformDelta;
                 Physics.SyncTransforms();
             }
 
             CollisionFlags collisionFlags = CollisionFlags.None;
+
             if (characterController.enabled)
                 collisionFlags = characterController.Move(
                     movementDelta
                     + gravityDelta
-                    + slopeModifier);
+                    + slopeModifier
+                    + rigidTransform.PlatformDelta // TODO causes jiggering
+                );
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
             bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
@@ -86,10 +89,7 @@ namespace DCL.CharacterMotion.Systems
             PlatformSaveLocalPosition.Execute(ref platformComponent, characterTransform.position);
 
             // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
-            if (rigidTransform.IsOnASteepSlope && Mathf.Abs(deltaMovement.sqrMagnitude) <= ALMOST_ZERO)
-                rigidTransform.IsStuck = true;
-            else
-                rigidTransform.IsStuck = false;
+            rigidTransform.IsStuck = rigidTransform.IsOnASteepSlope && Mathf.Abs(deltaMovement.sqrMagnitude) <= ALMOST_ZERO;
         }
 
         private static Vector3 CalculateGravityDelta(float dt, CharacterRigidTransform rigidTransform, CharacterPlatformComponent platformComponent)

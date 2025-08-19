@@ -9,9 +9,9 @@ namespace DCL.CharacterMotion.Platforms
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 characterPosition)
         {
-            if (platformComponent.CurrentPlatform != null)
+            if (platformComponent.CurrentPlatform.Has)
             {
-                Transform transform = platformComponent.CurrentPlatform.transform;
+                Transform transform = platformComponent.CurrentPlatform.Value.Transform;
                 Vector3 currentPlatformPosition = transform.position;
 
                 if (platformComponent.LastPlatformPosition != null)

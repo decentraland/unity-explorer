@@ -9,9 +9,9 @@ namespace DCL.CharacterMotion.Platforms
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 forward)
         {
-            if (platformComponent.CurrentPlatform != null)
+            if (platformComponent.CurrentPlatform.Has)
             {
-                Transform transform = platformComponent.CurrentPlatform.transform;
+                Transform transform = platformComponent.CurrentPlatform.Value.Transform;
                 var currentPlatformRotation = transform.rotation;
 
                 if (platformComponent.LastPlatformRotation != null)
@@ -22,7 +22,7 @@ namespace DCL.CharacterMotion.Platforms
                 }
 
                 platformComponent.LastPlatformRotation = currentPlatformRotation;
-                platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.transform.InverseTransformDirection(forward);
+                platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.Value.Transform.InverseTransformDirection(forward);
             }
             else
             {

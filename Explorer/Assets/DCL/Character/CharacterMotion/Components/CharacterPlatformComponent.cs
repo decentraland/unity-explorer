@@ -1,11 +1,12 @@
-﻿using UnityEngine;
+﻿using DCL.Character;
+using RichTypes;
+using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
     public class CharacterPlatformComponent
     {
-        public Transform? CurrentPlatform;
-        public Collider? PlatformCollider;
+        public Option<CurrentPlatform> CurrentPlatform;
 
         public Vector3? LastPlatformDelta;
         public Vector3? LastPlatformPosition;

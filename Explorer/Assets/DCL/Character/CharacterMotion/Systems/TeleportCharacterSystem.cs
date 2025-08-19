@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Character;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -10,6 +11,7 @@ using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
+using RichTypes;
 using System;
 using UnityEngine;
 
@@ -139,7 +141,7 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.IsGrounded = false; // teleportation is always above
 
             // Reset the current platform so we don't bounce back if we are touching the world plane
-            platformComponent.CurrentPlatform = null;
+            platformComponent.CurrentPlatform = Option<CurrentPlatform>.None;
 
             World.Remove<PlayerTeleportIntent>(playerEntity);
             World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));

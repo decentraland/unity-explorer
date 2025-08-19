@@ -1,7 +1,6 @@
-﻿using CrdtEcsBridge.Physics;
+﻿using DCL.Character;
 using DCL.CharacterMotion.Components;
-using DCL.CharacterMotion.Settings;
-using DCL.Utilities;
+using RichTypes;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -10,33 +9,22 @@ namespace DCL.CharacterMotion.Platforms
     public static class PlatformRaycast
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(CharacterPlatformComponent platformComponent, float radius, Transform characterTransform, ICharacterControllerSettings settings)
+        public static void Execute(ICharacterObject characterObject, CharacterPlatformComponent platformComponent, Transform characterTransform)
         {
-            float rayDistance = settings.PlatformRaycastLength;
-            float halfDistance = (rayDistance * 0.5f) + radius;
+            Option<CurrentPlatform> standing = characterObject.StandingGround;
 
-            Vector3 rayOrigin = characterTransform.position + (Vector3.up * halfDistance);
-
-            var ray = new Ray
+            if (standing.Has == false)
             {
-                origin = rayOrigin,
-                direction = Vector3.down,
-            };
-
-            if (!DCLPhysics.SphereCast(ray, radius, out RaycastHit hitInfo, rayDistance + radius, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
-            {
-                platformComponent.PlatformCollider = null;
-                platformComponent.CurrentPlatform = null;
+                platformComponent.CurrentPlatform = Option<CurrentPlatform>.None;
                 platformComponent.LastPlatformPosition = null;
             }
-            else if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
+            else if (platformComponent.CurrentPlatform.Has == false
+                     || platformComponent.CurrentPlatform.Value.Transform != standing.Value.Transform)
             {
-                platformComponent.PlatformCollider = hitInfo.collider;
-                platformComponent.CurrentPlatform = hitInfo.collider.transform;
-
+                platformComponent.CurrentPlatform = standing;
                 platformComponent.LastPlatformPosition = null;
-                platformComponent.LastAvatarRelativePosition = platformComponent.CurrentPlatform.InverseTransformPoint(characterTransform.position);
-                platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.InverseTransformDirection(characterTransform.forward);
+                platformComponent.LastAvatarRelativePosition = platformComponent.CurrentPlatform.Value.Transform.InverseTransformPoint(characterTransform.position);
+                platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.Value.Transform.InverseTransformDirection(characterTransform.forward);
             }
         }
     }
