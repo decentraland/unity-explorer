@@ -65,8 +65,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
-            PlayerParcelTrackerService playerParcelTracker
-        )
+            PlayerParcelTrackerService playerParcelTracker)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;

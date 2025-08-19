@@ -15,6 +15,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly ImageController thumbnailController;
 
         public event Action EndStream;
+        public event Action CommunityButtonClicked;
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct;
 
@@ -29,6 +30,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             thumbnailController = new ImageController(view.CommunityThumbnail, webRequestController);
             view.EndStreamButton.onClick.AddListener(() => EndStream?.Invoke());
+            view.CommunityButton.onClick.AddListener(() => CommunityButtonClicked?.Invoke());
             ct = new CancellationTokenSource();
         }
 

@@ -23,6 +23,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -158,6 +159,9 @@ namespace DCL.PluginSystem.Global
                 voiceChatOrchestrator);
 
             mvcManager.RegisterController(communityCardController);
+
+            VoiceChatCommunityCardBridge.SetOpenCommunityCardAction(communityId =>
+                mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId)), ct: ct));
 
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);

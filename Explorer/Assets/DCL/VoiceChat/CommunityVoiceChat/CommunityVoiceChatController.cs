@@ -1,6 +1,7 @@
 #nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Communities;
+using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
@@ -54,6 +55,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController);
 
             inCallController.EndStream += OnEndStream;
+            inCallController.CommunityButtonClicked += OnCommunityButtonClicked;
 
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
@@ -111,6 +113,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void Dispose()
         {
             roomManager.ConnectionEstablished -= OnConnectionEstablished;
+            inCallController.CommunityButtonClicked -= OnCommunityButtonClicked;
 
             view.CollapseButtonClicked -= OnCollapsedButtonClicked;
             view.ApproveSpeaker -= PromoteToSpeaker;
@@ -361,6 +364,15 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1);
             inCallController.RefreshCounter();
             communityVoiceChatSearchController.RefreshCounters();
+        }
+
+        private void OnCommunityButtonClicked()
+        {
+            string communityId = voiceChatOrchestrator.CurrentCommunityId.Value;
+            if (!string.IsNullOrEmpty(communityId))
+            {
+                VoiceChatCommunityCardBridge.OpenCommunityCard(communityId);
+            }
         }
     }
 }

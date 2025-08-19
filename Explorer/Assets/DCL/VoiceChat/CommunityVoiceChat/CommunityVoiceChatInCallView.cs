@@ -15,6 +15,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public TMP_Text CommunityName { get; private set; }
 
         [field: SerializeField]
+        public Button CommunityButton { get; private set; }
+
+        [field: SerializeField]
         public ImageView CommunityThumbnail { get; private set; }
 
         [field: SerializeField]
