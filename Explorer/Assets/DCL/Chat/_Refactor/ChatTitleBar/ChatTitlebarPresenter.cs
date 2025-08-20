@@ -283,7 +283,7 @@ namespace DCL.Chat
 
         private void InitializeChannelContextMenu()
         {
-            var toggleGroup = view.gameObject.AddComponent<ToggleGroup>();
+            var toggleGroup = view.gameObject.GetComponent<ToggleGroup>();
             notificationPingToggles = new ToggleWithCheckContextMenuControlSettings[3];
 
             var deleteChatHistoryButton =
