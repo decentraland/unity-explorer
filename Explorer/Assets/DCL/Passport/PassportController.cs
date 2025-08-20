@@ -374,7 +374,6 @@ namespace DCL.Passport
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
                 invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, viewInstance.InviteToCommunityText, viewInstance.InviteToCommunitySprite);
-                invitationButtonHandler.SetUserToInvite(inputData.UserId);
             }
         }
 
@@ -419,6 +418,9 @@ namespace DCL.Passport
 
         private void ShowContextMenu()
         {
+            if (includeCommunities)
+                invitationButtonHandler.SetUserToInvite(inputData.UserId);
+
             contextMenuCloseTask = new UniTaskCompletionSource();
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, viewInstance!.ContextMenuButton.transform.position, closeTask: contextMenuCloseTask?.Task))).Forget();

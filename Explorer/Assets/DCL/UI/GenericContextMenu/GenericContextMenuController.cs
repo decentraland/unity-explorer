@@ -148,6 +148,12 @@ namespace DCL.UI.GenericContextMenu
 
                 // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
                 ConfigureContextMenu(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.Config, Vector2.zero, queuedDeferredConfig.OverlapRect);
+
+//                float4 boundaryRect = queuedDeferredConfig.OverlapRect.HasValue ? BurstRectUtils.RectToFloat4(queuedDeferredConfig.OverlapRect.Value) : backgroundWorldRect;
+//                queuedDeferredConfig.ParentComponent.container.transform.position = AdjustPositionToFitBounds(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.ParentComponent.container.transform.position, boundaryRect);
+
+                float4 boundaryRect = queuedDeferredConfig.OverlapRect.HasValue ? BurstRectUtils.RectToFloat4(queuedDeferredConfig.OverlapRect.Value) : backgroundWorldRect;
+                queuedDeferredConfig.ParentComponent.container.transform.position = AdjustSubmenuPositionToFitBounds(queuedDeferredConfig.ParentComponent.container, boundaryRect);
             }
             finally
             {
@@ -225,8 +231,46 @@ namespace DCL.UI.GenericContextMenu
 
                     // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
                     ConfigureContextMenu(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.Config, Vector2.zero, queuedDeferredConfig.OverlapRect);
+
+//                    subContainer.controlsContainer.localPosition = GetControlsPosition(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.ParentComponent.container.controlsContainer.position, contextMenuConfig.offsetFromTarget, overlapRect, queuedDeferredConfig.Config.anchorPoint);
+//                    float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : backgroundWorldRect;
+//                    queuedDeferredConfig.ParentComponent.container.transform.position = AdjustPositionToFitBounds(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.ParentComponent.container.transform.position, boundaryRect);
+                    float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : backgroundWorldRect;
+                    queuedDeferredConfig.ParentComponent.container.transform.position = AdjustSubmenuPositionToFitBounds(queuedDeferredConfig.ParentComponent.container, boundaryRect);
                 }
             }
+        }
+
+        private Vector3 AdjustSubmenuPositionToFitBounds(ControlsContainerView container, float4 boundaryRect)
+        {
+            RectTransform rectTransform = (RectTransform)container.transform;
+            Rect menuRect = new Rect(rectTransform.position.x, rectTransform.position.y, rectTransform.sizeDelta.x, rectTransform.sizeDelta.y);
+            Vector3 adjustedPosition = menuRect.position;
+            menuRect.y = boundaryRect.w - menuRect.y;
+
+            if (menuRect.x < boundaryRect.x)
+            {
+                float adjustment = boundaryRect.x - menuRect.x;
+                adjustedPosition.x += adjustment;
+            }
+            else if (menuRect.x + menuRect.width > boundaryRect.x + boundaryRect.z)
+            {
+                float adjustment = menuRect.x + menuRect.width - (boundaryRect.x + boundaryRect.z);
+                adjustedPosition.x -= adjustment;
+            }
+
+            if (menuRect.y < boundaryRect.y)
+            {
+                float adjustment = boundaryRect.y - menuRect.y;
+                adjustedPosition.y += adjustment;
+            }
+            else if (menuRect.y + menuRect.height > boundaryRect.y + boundaryRect.w)
+            {
+                float adjustment = menuRect.y + menuRect.height - (boundaryRect.y + boundaryRect.w);
+                adjustedPosition.y += adjustment;
+            }
+
+            return adjustedPosition;
         }
 
         private RectTransform GetSubContainerAnchor(RectTransform rightAnchor, RectTransform leftAnchor, GenericContextMenuParameter.GenericContextMenu contextMenuConfig)
@@ -418,6 +462,7 @@ namespace DCL.UI.GenericContextMenu
         private float3 AdjustPositionToFitBounds(ControlsContainerView container, float3 position, float4 boundaryRect)
         {
             float3 adjustedPosition = position;
+            //float4 menuRect = new float4(adjustedPosition.x, adjustedPosition.y, container.controlsContainer.rect.size.x, container.controlsContainer.rect.size.y);// GetProjectedRect(container, new Vector3(position.x, position.y, position.z));
             float4 menuRect = GetProjectedRect(container, new Vector3(position.x, position.y, position.z));
 
             if (menuRect.x < boundaryRect.x)
