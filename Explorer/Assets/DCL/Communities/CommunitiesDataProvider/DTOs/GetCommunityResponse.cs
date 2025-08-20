@@ -23,10 +23,14 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                     membersCount--;
             }
 
-            public void IncreaseMembersCount()
-            {
+            public void IncreaseMembersCount() =>
                 membersCount++;
-            }
+
+            public void SetRole(CommunityMemberRole newRole) =>
+                role = newRole;
+
+            public bool IsAccessAllowed() =>
+                privacy == CommunityPrivacy.@public || (privacy == CommunityPrivacy.@private && role != CommunityMemberRole.none);
         }
 
         public CommunityData data;

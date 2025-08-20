@@ -12,6 +12,7 @@ using DCL.UI.GenericContextMenuParameter;
 using DCL.Utilities.Extensions;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using TMPro;
@@ -56,6 +57,8 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? JoinCommunity;
         public event Action? LeaveCommunityRequested;
         public event Action? DeleteCommunityRequested;
+        public event Action? RequestToJoinCommunity;
+        public event Action? CancelRequestToJoinCommunity;
 
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; } = null!;
@@ -77,6 +80,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Button openContextMenuButton { get; set; } = null!;
         [field: SerializeField] private Button joinedButton { get; set; } = null!;
         [field: SerializeField] private Button joinButton { get; set; } = null!;
+        [field: SerializeField] private Button requestToJoinButton { get; set; } = null!;
+        [field: SerializeField] private Button cancelRequestButton { get; set; } = null!;
 
         [field: Header("Community data references")]
         [field: SerializeField] private TMP_Text communityName { get; set; } = null!;
@@ -107,6 +112,10 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; } = null!;
         [field: SerializeField] public EventListView EventListView { get; private set; } = null!;
 
+        [field: Header("Restricted Access")]
+        [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsAllowed { get; private set; }
+        [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsNotAllowed { get; private set; }
+
         private readonly UniTask[] closingTasks = new UniTask[3];
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
@@ -121,6 +130,8 @@ namespace DCL.Communities.CommunitiesCard
             openContextMenuButton.onClick.AddListener(OpenContextMenu);
             joinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
             joinedButton.onClick.AddListener(ShowLeaveConfirmationDialog);
+            requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunity?.Invoke());
+            cancelRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunity?.Invoke());
 
             photosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
             membersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
@@ -248,13 +259,17 @@ namespace DCL.Communities.CommunitiesCard
                 SectionChanged?.Invoke(section);
         }
 
-        public void ConfigureInteractionButtons(CommunityMemberRole role)
+        public void ConfigureInteractionButtons(GetCommunityResponse.CommunityData communityData)
         {
-            openChatButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member);
-            openWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            openContextMenuButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            joinedButton.gameObject.SetActive(role is CommunityMemberRole.member);
-            joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
+            openChatButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed());
+            openWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed());
+            openContextMenuButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed());
+            joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed());
+            joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed());
+
+            // TODO (Santi): Manage the visibility of these buttons depending on the requests received by the community
+            requestToJoinButton.gameObject.SetActive(false);
+            cancelRequestButton.gameObject.SetActive(false);
         }
 
         public void SetDefaults()
@@ -269,8 +284,11 @@ namespace DCL.Communities.CommunitiesCard
             openContextMenuButton.gameObject.SetActive(false);
             joinedButton.gameObject.SetActive(false);
             joinButton.gameObject.SetActive(false);
+            requestToJoinButton.gameObject.SetActive(false);
+            cancelRequestButton.gameObject.SetActive(false);
             placesWithSignButton.gameObject.SetActive(false);
             placesButton.gameObject.SetActive(true);
+            SetCommunityAccessAsAllowed(true);
         }
 
         public void UpdateMemberCount(GetCommunityResponse.CommunityData communityData) =>
@@ -291,10 +309,21 @@ namespace DCL.Communities.CommunitiesCard
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
 
-            ConfigureInteractionButtons(communityData.role);
+            ConfigureInteractionButtons(communityData);
 
             placesWithSignButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             placesButton.gameObject.SetActive(!placesWithSignButton.gameObject.activeSelf);
+
+            SetCommunityAccessAsAllowed(communityData.IsAccessAllowed());
+        }
+
+        public void SetCommunityAccessAsAllowed(bool isAllowed)
+        {
+            foreach (GameObject go in ObjectsToShowWhenAccessIsAllowed)
+                go.SetActive(isAllowed);
+
+            foreach (GameObject go in ObjectsToShowWhenAccessIsNotAllowed)
+                go.SetActive(!isAllowed);
         }
     }
 }

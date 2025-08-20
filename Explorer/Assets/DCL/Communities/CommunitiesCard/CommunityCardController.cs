@@ -312,17 +312,21 @@ namespace DCL.Communities.CommunitiesCard
                 }
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
-                communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
                 communityData = response.data;
+
+                if (communityData.IsAccessAllowed())
+                    communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
 
                 viewInstance.SetLoadingState(false);
 
                 viewInstance.SetPanelCancellationToken(ct);
                 viewInstance.ConfigureCommunity(communityData, thumbnailLoader);
 
-                viewInstance.ResetToggle(true);
-
-                eventListController?.ShowEvents(communityData, ct);
+                if (communityData.IsAccessAllowed())
+                {
+                    viewInstance.ResetToggle(true);
+                    eventListController?.ShowEvents(communityData, ct);
+                }
             }
         }
 
@@ -398,6 +402,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
                 }
 
+                communityData.SetRole(CommunityMemberRole.member);
                 communityData.IncreaseMembersCount();
                 viewInstance!.UpdateMemberCount(communityData);
 
@@ -405,7 +410,7 @@ namespace DCL.Communities.CommunitiesCard
                 membersListController?.Reset();
                 membersListController?.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
 
-                viewInstance.ConfigureInteractionButtons(CommunityMemberRole.member);
+                viewInstance.ConfigureInteractionButtons(communityData);
             }
         }
 
@@ -432,7 +437,9 @@ namespace DCL.Communities.CommunitiesCard
 
                 membersListController?.TryRemoveLocalUser();
 
-                viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.none);
+                communityData.SetRole(CommunityMemberRole.none);
+                viewInstance!.ConfigureInteractionButtons(communityData);
+                viewInstance!.SetCommunityAccessAsAllowed(communityData.IsAccessAllowed());
             }
         }
 
