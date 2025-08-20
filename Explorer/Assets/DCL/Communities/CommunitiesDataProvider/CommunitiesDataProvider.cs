@@ -363,7 +363,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return result.Success;
         }
 
-        public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityList(string userAddress, CancellationToken ct)
+        public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityListAsync(string userAddress, CancellationToken ct)
         {
             throw new NotImplementedException();
         }
