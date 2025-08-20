@@ -239,7 +239,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 await UniTask.Delay(ANIMATION_DELAY);
                 if (reelToDelete is not null)
                     DeleteScreenshotsAsync(new ReelToDeleteInfo(reelToDelete.id, reelToDelete.dateTime), deleteScreenshotCts.Token).Forget();
-                
+
                 reelToDelete = null;
                 HideDeleteModal();
             }
@@ -320,8 +320,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
             foreach (var thumbnail in pagedCameraReelManager.AllOrderedResponses)
             {
                 if(thumbnail.id != reelId) continue;
-                
+
                 thumbnail.isPublic = isPublic;
+                return;
             }
         }
 
@@ -333,6 +334,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 if (thumbnail.id != reelId) continue;
 
                 HideReelFromList(thumbnail);
+                return;
             }
         }
 
