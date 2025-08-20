@@ -1,9 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
-using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
-using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -25,7 +23,6 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using Segment.Serialization;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -69,16 +66,11 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
         private Profile targetProfile;
 
-        // Used in the Invite to Community button, which is loaded asynchronously
-        private readonly List<string> lastCommunityNames = new List<string>();
-        private GetUserCommunitiesData.CommunityData[] lastCommunityData;
-        private CancellationTokenSource invitationActionCts;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
 
         public GenericUserProfileContextMenuController(
@@ -109,7 +101,6 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-            this.communitiesDataProvider = communitiesDataProvider;
             this.includeCommunities = includeCommunities;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
