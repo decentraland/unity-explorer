@@ -525,7 +525,7 @@ namespace Global.Dynamic
                 new WorldChatCommand(chatTeleporter),
                 new DebugPanelChatCommand(debugBuilder),
                 new ShowEntityChatCommand(worldInfoHub),
-                new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, localSceneDevelopment),
+                new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new VersionChatCommand(dclVersion),

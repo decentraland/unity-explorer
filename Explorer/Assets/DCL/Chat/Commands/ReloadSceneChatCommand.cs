@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
-using DCL.CharacterMotion.Components;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Chat.Commands
 {
@@ -23,6 +23,7 @@ namespace DCL.Chat.Commands
         private readonly ECSReloadScene reloadScene;
         private readonly World globalWorld;
         private readonly Entity playerEntity;
+        private readonly ITeleportController teleportController;
         private readonly bool isLocalSceneDevelopmentMode;
 
         private readonly Func<bool> sceneReadyCondition;
@@ -31,11 +32,13 @@ namespace DCL.Chat.Commands
             World globalWorld,
             Entity playerEntity,
             IScenesCache scenesCache,
+            ITeleportController teleportController,
             bool isLocalSceneDevelopmentMode)
         {
             this.reloadScene = reloadScene;
             this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
+            this.teleportController = teleportController;
             this.isLocalSceneDevelopmentMode = isLocalSceneDevelopmentMode;
 
             this.sceneReadyCondition = () => scenesCache.CurrentScene != null && scenesCache.CurrentScene.IsSceneReady();
@@ -56,9 +59,8 @@ namespace DCL.Chat.Commands
                 {
                     if (reloadedScene != null)
                     {
-                        globalWorld.AddOrGet(playerEntity,
-                            new PlayerTeleportIntent(reloadedScene.SceneData.SceneEntityDefinition,
-                                reloadedScene.SceneData.SceneShortInfo.BaseParcel, Vector3.zero, ct));
+                        WaitForSceneReadiness sceneReadiness = teleportController.TeleportToSceneSpawnPoint(reloadedScene.SceneData.SceneEntityDefinition, ct);
+                        await sceneReadiness.ToUniTask();
                     }
                 }
 
