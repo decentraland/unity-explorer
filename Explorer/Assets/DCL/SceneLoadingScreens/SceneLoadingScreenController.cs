@@ -15,6 +15,7 @@ using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using Utility;
 using Utility.Storage;
 using DCL.Prefs;
+using UnityEngine.Pool;
 
 namespace DCL.SceneLoadingScreens
 {
@@ -111,6 +112,9 @@ namespace DCL.SceneLoadingScreens
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
+
+            viewInstance.ClearTips();
+            tips.Release();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -166,8 +170,11 @@ namespace DCL.SceneLoadingScreens
             if (tips.Random)
                 tips.Tips.Shuffle();
 
-            foreach (SceneTips.Tip tip in tips.Tips)
-                viewInstance.AddTip(tip);
+            using var scope = ListPool<UniTask<SceneTips.LoadedTip>>.Get(out var tasks);
+            foreach (SceneTips.Tip tip in tips.Tips) tasks.Add(tip.LoadAsync());
+            var loaded = await UniTask.WhenAll(tasks!);
+
+            foreach (SceneTips.LoadedTip tip in loaded) viewInstance.AddTip(tip);
         }
 
         private async UniTask WaitUntilWorldIsLoadedAsync(float progressProportion, CancellationToken ct)
