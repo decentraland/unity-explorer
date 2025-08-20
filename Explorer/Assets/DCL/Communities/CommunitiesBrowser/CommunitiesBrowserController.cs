@@ -713,7 +713,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.UpdateJoinedCommunity(communityId, true, success);
         }
 
-        private void OnCommunityRequestedToJoin(string communityId, bool success)
+        private void OnCommunityRequestedToJoin(string communityId, string requestId, bool success)
         {
             bool alreadyExistsInvitation = false;
             foreach (GetUserInviteRequestData.UserInviteRequestData invitation in currentInvitations)
@@ -726,13 +726,13 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
             }
 
-            view.UpdateRequestedToJoinCommunity(communityId, true, success, alreadyExistsInvitation);
+            view.UpdateRequestedToJoinCommunity(communityId, requestId, true, success, alreadyExistsInvitation);
         }
 
         private void OnCommunityRequestToJoinCancelled(string communityId, bool success)
         {
             if (!isInvitesAndRequestsSectionActive)
-                view.UpdateRequestedToJoinCommunity(communityId, false, success, false);
+                view.UpdateRequestedToJoinCommunity(communityId, null, false, success, false);
             else
                 view.InvitesAndRequestsView.UpdateJoinRequestCancelled(communityId, success);
         }

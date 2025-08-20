@@ -23,7 +23,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string, bool> CommunityLeft;
         public event Action<string> CommunityUserRemoved;
         public event Action<string, string> CommunityUserBanned;
-        public event Action<string, bool> CommunityRequestedToJoin;
+        public event Action<string, string, bool> CommunityRequestedToJoin;
         public event Action<string, bool> CommunityRequestToJoinCancelled;
         public event Action<string, bool> CommunityInvitationAccepted;
         public event Action<string, bool> CommunityInvitationRejected;
@@ -354,10 +354,11 @@ namespace DCL.Communities.CommunitiesDataProvider
             });
 
             var result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
-                                                   .WithNoOpAsync()
+                                                   .CreateFromJson<SendInviteOrRequestToJoinAsyncResponse>(WRJsonParser.Newtonsoft)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            CommunityRequestedToJoin?.Invoke(communityId, result.Success);
+            if (action == InviteRequestAction.request_to_join)
+                CommunityRequestedToJoin?.Invoke(communityId, result.Success ? result.Value.data.id : null, result.Success);
 
             return result.Success;
         }

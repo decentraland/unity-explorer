@@ -252,20 +252,22 @@ namespace DCL.Communities.CommunitiesBrowser
             RefreshCommunityCardInGrid(communityId);
         }
 
-        public void UpdateRequestedToJoinCommunity(string communityId, bool isRequestedToJoin, bool isSuccess, bool alreadyExistsInvitation)
+        public void UpdateRequestedToJoinCommunity(string communityId, string? requestId, bool isRequestedToJoin, bool isSuccess, bool alreadyExistsInvitation)
         {
             if (isSuccess)
             {
+                CommunityData? resultCommunityData = GetResultCommunityById(communityId);
+                if (resultCommunityData != null)
+                    resultCommunityData.inviteOrRequestId = requestId;
+
                 if (!alreadyExistsInvitation)
                 {
-                    CommunityData? resultCommunityData = GetResultCommunityById(communityId);
-
                     if (resultCommunityData != null)
                     {
                         resultCommunityData.pendingActionType = isRequestedToJoin ? InviteRequestAction.request_to_join : InviteRequestAction.none;
 
                         if (resultCommunityData.pendingActionType == InviteRequestAction.none)
-                            resultCommunityData.inviteOrRequestId = string.Empty;
+                            resultCommunityData.inviteOrRequestId = null;
                     }
                 }
                 else
