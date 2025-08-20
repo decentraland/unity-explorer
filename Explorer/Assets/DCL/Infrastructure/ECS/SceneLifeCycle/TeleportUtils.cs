@@ -8,9 +8,15 @@ namespace ECS.SceneLifeCycle
     public static class TeleportUtils
     {
         private const string TRAM_LINE_TITLE = "Tram Line";
+        private const string LONG_ROAD_TITLE = "Long Road";
 
-        public static bool IsTramLine(ReadOnlySpan<char> originalJson) =>
-            ExtractTitleValue(originalJson).SequenceEqual(TRAM_LINE_TITLE.AsSpan());
+        public static bool IsRoad(ReadOnlySpan<char> originalJson)
+        {
+            ReadOnlySpan<char> span = ExtractTitleValue(originalJson);
+
+            return span.SequenceEqual(TRAM_LINE_TITLE.AsSpan())
+                || span.SequenceEqual(LONG_ROAD_TITLE.AsSpan());
+        }
 
         private static ReadOnlySpan<char> ExtractTitleValue(ReadOnlySpan<char> json)
         {
