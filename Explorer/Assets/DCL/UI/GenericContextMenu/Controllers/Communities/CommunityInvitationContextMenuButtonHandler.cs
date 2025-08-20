@@ -9,7 +9,7 @@ using UnityEngine;
 using Utility;
 using Utility.Types;
 
-namespace DCL.UI.GenericContextMenu.Controllers
+namespace DCL.UI.GenericContextMenu.Controllers.Communities
 {
     /// <summary>
     ///

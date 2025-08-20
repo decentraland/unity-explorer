@@ -48,7 +48,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.InWorldCamera;
-using DCL.UI.GenericContextMenu.Controllers;
+using DCL.UI.GenericContextMenu.Controllers.Communities;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
