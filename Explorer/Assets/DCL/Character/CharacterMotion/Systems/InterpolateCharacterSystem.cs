@@ -63,7 +63,6 @@ namespace DCL.CharacterMotion.Systems
             if (platformComponent.IsRotatingPlatform || platformComponent.IsMovingPlatform)
             {
                 // Similarly to the old client, we need to adjust position directly for the platform delta. Otherwise, avatar can be pushed away.
-                // TODO remove characterController.transform.position += rigidTransform.PlatformDelta;
                 Physics.SyncTransforms();
             }
 
@@ -74,7 +73,7 @@ namespace DCL.CharacterMotion.Systems
                     movementDelta
                     + gravityDelta
                     + slopeModifier
-                    + rigidTransform.PlatformDelta // TODO causes jiggering
+                    + rigidTransform.PlatformDelta
                 );
 
             Vector3 deltaMovement = characterTransform.position - prevPos;

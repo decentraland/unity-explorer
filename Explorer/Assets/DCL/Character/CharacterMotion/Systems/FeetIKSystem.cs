@@ -14,7 +14,6 @@ using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
-using Utility.Animations;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -112,6 +111,9 @@ namespace DCL.CharacterMotion.Systems
                              && !stunComponent.IsStunned // disable IK while stunned
                              && !emoteComponent.IsPlayingEmote // disable IK while doing an emote
                              && !disableByPlatform; // disable IK on moving platforms
+
+            if (isEnabled == false)
+                return;
 
             // First: Raycast down from right/left constraints and update IK targets
             ApplyLegIK(rightLegConstraint, rightLegConstraint.forward, avatarBase.RightLegIKTarget, ref feetIKComponent.Right, settings, dt, settings.FeetIKVerticalAngleLimits, settings.FeetIKTwistAngleLimits, settings.FeetIKRightOffset, settings.FeetIKRightRotationOffset);
