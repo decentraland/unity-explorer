@@ -68,6 +68,8 @@ namespace DCL.Character.CharacterMotion.Systems
             }
 
             teleportIntent.IsPositionSet = true;
+            // The component needs to be re-applied to the entity to ensure that changes are properly propagated
+            // within the ECS structure. Without this, other systems may receive an outdated version of the component.
             World!.Set(playerEntity, teleportIntent);
         }
 
