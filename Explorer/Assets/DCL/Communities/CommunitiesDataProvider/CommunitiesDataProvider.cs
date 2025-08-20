@@ -23,7 +23,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string, bool> CommunityLeft;
         public event Action<string> CommunityUserRemoved;
         public event Action<string, string> CommunityUserBanned;
-        public event Action<string, bool> CommunityRequestedToJoin;
+        public event Action<string, string, bool> CommunityRequestedToJoin;
         public event Action<string, bool> CommunityRequestToJoinCancelled;
         public event Action<string, bool> CommunityInvitationAccepted;
         public event Action<string, bool> CommunityInvitationRejected;
@@ -68,28 +68,12 @@ namespace DCL.Communities.CommunitiesDataProvider
                     if (community.role != CommunityMemberRole.owner && community.role != CommunityMemberRole.moderator)
                         continue;
 
-                    community.requestsReceived = await GetCommunityRequestsAmountAsync(community.id, ct);
+                    var communityRequests = await GetCommunityRequestsAsync(community.id, ct);
+                    community.requestsReceived = communityRequests.Count;
                 }
             }
 
             return response;
-        }
-
-        private async UniTask<int> GetCommunityRequestsAmountAsync(string communityId, CancellationToken ct)
-        {
-            var url = $"{communitiesBaseUrl}/{communityId}/requests";
-
-            GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                   .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
-
-            int totalRequests = 0;
-            foreach (var request in response.data.results)
-            {
-                if (request.type == InviteRequestAction.request_to_join)
-                    totalRequests++;
-            }
-
-            return totalRequests;
         }
 
         public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CancellationToken ct)
@@ -315,6 +299,23 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
+        private async UniTask<List<GetCommunityInviteRequestResponse.CommunityInviteRequestData>> GetCommunityRequestsAsync(string communityId, CancellationToken ct)
+        {
+            var url = $"{communitiesBaseUrl}/{communityId}/requests";
+
+            GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                   .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            List<GetCommunityInviteRequestResponse.CommunityInviteRequestData> communityRequests = new ();
+            foreach (var request in response.data.results)
+            {
+                if (request.type == InviteRequestAction.request_to_join)
+                    communityRequests.Add(request);
+            }
+
+            return communityRequests;
+        }
+
         public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             throw new NotImplementedException();
@@ -354,15 +355,16 @@ namespace DCL.Communities.CommunitiesDataProvider
             });
 
             var result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
-                                                   .WithNoOpAsync()
+                                                   .CreateFromJson<SendInviteOrRequestToJoinAsyncResponse>(WRJsonParser.Newtonsoft)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            CommunityRequestedToJoin?.Invoke(communityId, result.Success);
+            if (action == InviteRequestAction.request_to_join)
+                CommunityRequestedToJoin?.Invoke(communityId, result.Success ? result.Value.data.id : null, result.Success);
 
             return result.Success;
         }
 
-        public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityList(string userAddress, CancellationToken ct)
+        public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityListAsync(string userAddress, CancellationToken ct)
         {
             var url = $"{membersBaseUrl}/{userAddress}/invites";
 
