@@ -107,6 +107,7 @@ namespace DCL.CharacterPreview
                 inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
 
+            ResetAvatarMovement();
             OnModelUpdated();
         }
 
@@ -306,5 +307,8 @@ namespace DCL.CharacterPreview
 
         protected void PlayEmote(string emoteId) =>
             previewController?.PlayEmote(emoteId);
+
+        private void ResetAvatarMovement() =>
+            previewController?.ResetAvatarMovement();
     }
 }

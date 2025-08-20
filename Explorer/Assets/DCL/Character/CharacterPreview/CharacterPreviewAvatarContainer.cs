@@ -130,6 +130,13 @@ namespace DCL.CharacterPreview
                               .SetEase(curve)
                               .OnComplete(() => { fovTween?.Kill(); });
         }
+
+        public void ResetAvatarMovement()
+        {
+            StopCameraTweens();
+            rotationTarget.rotation = Quaternion.identity;
+            rotationAngularVelocity = 0f;
+        }
     }
 
     [Serializable]

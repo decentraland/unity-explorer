@@ -34,6 +34,9 @@ namespace DCL.CharacterPreview
             characterPreviewAvatarContainer.Dispose();
         }
 
+        public void ResetAvatarMovement() =>
+            characterPreviewAvatarContainer.ResetAvatarMovement();
+
         private void OnChangePreviewCategory(AvatarWearableCategoryEnum categoryEnum)
         {
             int positions = cameraSettings.cameraPositions.Length;
