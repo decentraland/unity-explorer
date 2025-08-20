@@ -236,7 +236,7 @@ namespace DCL.Landscape
                             occupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
                                 TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
 
-                            int floorValue = WriteInteriorChamferOnWhite(occupancyMap);
+                            float floorValue = WriteInteriorChamferOnWhite(occupancyMap);
                             occupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
 
                             occupancyMapData = occupancyMap.GetRawTextureData<byte>();
@@ -707,7 +707,7 @@ namespace DCL.Landscape
             return occupancyMap;
         }
 
-        private static int WriteInteriorChamferOnWhite(Texture2D r8)
+        private static float WriteInteriorChamferOnWhite(Texture2D r8)
         {
             int w = r8.width, h = r8.height, n = w * h;
             NativeArray<byte> src = r8.GetRawTextureData<byte>();
@@ -846,7 +846,7 @@ namespace DCL.Landscape
                 src[i] = (byte)value;
             }
 
-            return maxPixelDistance;
+            return minValue / 255f;
         }
 
         public bool IsParcelOccupied(int2 parcel)
