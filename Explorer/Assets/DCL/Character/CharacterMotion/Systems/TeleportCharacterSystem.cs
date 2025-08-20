@@ -43,9 +43,40 @@ namespace DCL.CharacterMotion.Systems
         {
             AsyncLoadProcessReport? loadReport = teleportIntent.AssetsResolution;
 
+            if (teleportIntent.TimedOut)
+            {
+                var exception = new TimeoutException("Teleport timed out");
+                loadReport?.SetException(exception);
+                ResolveAsFailure(entity, in teleportIntent, exception);
+                controller.detectCollisions = true;
+                return;
+            }
+
+            if (teleportIntent.CancellationToken.IsCancellationRequested)
+            {
+                loadReport?.SetCancelled();
+                ResolveAsCancelled(entity, in teleportIntent);
+                controller.detectCollisions = true;
+                return;
+            }
+
+            // If the position is not set, then the player might be teleported to a wrong location.
+            // It is a must that TeleportPositionCalculationSystem processes the PlayerTeleportIntent before running this system,
+            // especially if the scene is already loaded
+            if (!teleportIntent.IsPositionSet)
+            {
+                // Since its a "pending" teleport, we disable collisions to prevent any undesired interaction with the scene
+                controller.transform.position = teleportIntent.Position;
+                controller.detectCollisions = false;
+                return;
+            }
+
+            // If there are no assets to wait for, teleport immediately
             if (loadReport == null)
-                // If there are no assets to wait for, teleport immediately
+            {
                 ResolveAsSuccess(entity, in teleportIntent, controller, platformComponent, rigidTransform);
+                controller.detectCollisions = true;
+            }
             else
             {
                 AsyncLoadProcessReport.Status status = loadReport.GetStatus();
@@ -71,22 +102,6 @@ namespace DCL.CharacterMotion.Systems
                         controller.detectCollisions = true;
                         ResolveAsFailure(entity, in teleportIntent, status.Exception!);
                         return;
-                }
-
-                // pending cases left
-
-                if (teleportIntent.TimedOut)
-                {
-                    var exception = new TimeoutException("Teleport timed out");
-                    loadReport?.SetException(exception);
-                    ResolveAsFailure(entity, in teleportIntent, exception);
-                    return;
-                }
-
-                if (teleportIntent.CancellationToken.IsCancellationRequested)
-                {
-                    loadReport?.SetCancelled();
-                    ResolveAsCancelled(entity, in teleportIntent);
                 }
             }
         }
