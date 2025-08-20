@@ -9,7 +9,6 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
-using RichTypes;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -40,7 +39,7 @@ namespace DCL.CharacterMotion.Systems
 
             if (rigidTransform.JustJumped)
             {
-                platformComponent.CurrentPlatform = Option<CurrentPlatform>.None;
+                platformComponent.ResetPlatform();
                 return;
             }
 
@@ -49,7 +48,7 @@ namespace DCL.CharacterMotion.Systems
                 platformComponent.FramesUngrounded++;
 
                 if (platformComponent.FramesUngrounded > UNGROUNDED_FRAMES)
-                    platformComponent.CurrentPlatform = Option<CurrentPlatform>.None;
+                    platformComponent.ResetPlatform();
 
                 return;
             }

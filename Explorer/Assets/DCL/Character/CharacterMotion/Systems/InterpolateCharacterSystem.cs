@@ -86,7 +86,7 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Sides);
 
             // If we are on a platform we save our local position
-            PlatformSaveLocalPosition.Execute(ref platformComponent, characterTransform.position);
+            platformComponent.SaveLocalPosition(characterTransform.position);
 
             // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
             rigidTransform.IsStuck = rigidTransform.IsOnASteepSlope && Mathf.Abs(deltaMovement.sqrMagnitude) <= ALMOST_ZERO;
