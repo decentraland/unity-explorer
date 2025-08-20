@@ -196,13 +196,14 @@ GameObject:
   - component: {fileID: 7446897494615956440}
   - component: {fileID: 1878155915622983914}
   - component: {fileID: 3029749034696696981}
+  - component: {fileID: 1573865950815959163}
   m_Layer: 5
   m_Name: CommunityStreamingResultCard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &642764471525080873
 RectTransform:
   m_ObjectHideFlags: 0
@@ -358,6 +359,18 @@ MonoBehaviour:
   mutualFriends:
     thumbnails: []
   listenersCountView: {fileID: 1230501869457849747}
+--- !u!114 &1573865950815959163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8215373150881848067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec0432517adfcb84bb6163d7a44ab8c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2653508766543462149
 PrefabInstance:
   m_ObjectHideFlags: 0
