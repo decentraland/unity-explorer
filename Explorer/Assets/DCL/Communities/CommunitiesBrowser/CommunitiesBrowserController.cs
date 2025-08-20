@@ -398,6 +398,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTaskVoid LoadInvitesAndRequestsAsync(CancellationToken ct)
         {
             view.InvitesAndRequestsView.SetAsLoading(true);
+            view.InvitesAndRequestsView.SetInvitesAndRequestsAsEmpty(false);
             int invitesCount = await LoadInvitesAsync(updateInvitesGrid: true, ct);
             view.InvitesAndRequestsView.SetInvitesTitle($"{INVITES_RESULTS_TITLE} ({invitesCount})");
             if (ct.IsCancellationRequested) return;
