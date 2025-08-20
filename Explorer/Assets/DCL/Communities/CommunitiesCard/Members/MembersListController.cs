@@ -7,6 +7,7 @@ using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.Requests;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.UI;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -64,7 +65,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             WarningNotificationView inWorldWarningNotificationView,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
-            IWeb3IdentityCache web3IdentityCache) : base(view, PAGE_SIZE)
+            IWeb3IdentityCache web3IdentityCache,
+            INotificationsBusController notificationsBus) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -92,6 +94,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.BanUserRequested += OnBanUser;
 
             this.view.SetProfileDataProvider(profileDataProvider);
+            this.view.SetCommunitiesDataProvider(communitiesDataProvider);
+            this.view.SetNotificationsBusController(notificationsBus);
         }
 
         public override void Dispose()

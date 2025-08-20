@@ -201,7 +201,7 @@ namespace DCL.Notifications.NotificationsMenu
 
             if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite, true);
-            else
+            else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
                 LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts!.Token).Forget();
 
             return listItem;

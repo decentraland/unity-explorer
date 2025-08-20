@@ -1039,7 +1039,8 @@ namespace Global.Dynamic
                     notificationsBusController,
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
-                    identityCache));
+                    identityCache,
+                    notificationsBusController));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

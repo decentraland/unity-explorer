@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
+using DCL.UI.GenericContextMenu.Controllers.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
@@ -85,6 +87,10 @@ namespace DCL.Communities.CommunitiesCard.Members
         private UniTask panelTask;
         private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
 
+        private CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
+        private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
+        private INotificationsBusController? notificationsBus;
+
         private void Awake()
         {
             loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
@@ -130,6 +136,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             banUserContextMenuElement!.Enabled = profile.role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.ALL;
 
             communityOptionsSeparatorContextMenuElement!.Enabled = removeModeratorContextMenuElement.Enabled || addModeratorContextMenuElement.Enabled || kickUserContextMenuElement.Enabled || banUserContextMenuElement.Enabled;
+
+            if (invitationButtonHandler == null)
+            {
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, notificationsBus, contextMenuSettings.ElementsSpacing);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, contextMenuSettings.InviteToCommunityText, contextMenuSettings.InviteToCommunitySprite);
+            }
+
+            invitationButtonHandler.SetUserToInvite(profile.memberAddress);
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,
@@ -214,6 +228,16 @@ namespace DCL.Communities.CommunitiesCard.Members
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
             this.profileRepositoryWrapper = profileDataProvider;
+        }
+
+        public void SetCommunitiesDataProvider(CommunitiesDataProvider.CommunitiesDataProvider dataProvider)
+        {
+            this.communitiesDataProvider = dataProvider;
+        }
+
+        public void SetNotificationsBusController(INotificationsBusController notificationsBusController)
+        {
+            this.notificationsBus = notificationsBusController;
         }
 
         public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask, CancellationToken ct)
