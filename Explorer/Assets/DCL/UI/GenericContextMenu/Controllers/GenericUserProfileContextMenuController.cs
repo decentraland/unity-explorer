@@ -10,6 +10,7 @@ using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connectivity;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
@@ -72,7 +73,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private UniTaskCompletionSource closeContextMenuTask;
         private Profile targetProfile;
 
-        private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+        private readonly CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -87,7 +88,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             ISharedSpaceManager sharedSpaceManager,
             bool includeVoiceChat,
             bool includeCommunities,
-            CommunitiesDataProvider communitiesDataProvider)
+            CommunitiesDataProvider communitiesDataProvider,
+            INotificationsBusController notificationsBus)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -128,7 +130,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             if (includeCommunities)
             {
-                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, notificationsBus, CONTEXT_MENU_ELEMENTS_SPACING);
                 invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
             }
         }

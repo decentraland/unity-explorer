@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities.Extensions;
 using System.Collections.Generic;
@@ -17,6 +19,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
     public class CommunityInvitationContextMenuButtonHandler
     {
         private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly INotificationsBusController notificationsBus;
         private readonly int subMenuItemSpacing;
         private string userWalletId;
 
@@ -24,10 +27,11 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
         private GetInvitableCommunityListResponse.InvitableCommunityData[] lastCommunityData;
         private CancellationTokenSource invitationActionCts;
 
-        public CommunityInvitationContextMenuButtonHandler(CommunitiesDataProvider communitiesDataProvider, int subMenuItemSpacing)
+        public CommunityInvitationContextMenuButtonHandler(CommunitiesDataProvider communitiesDataProvider, INotificationsBusController notificationsBus, int subMenuItemSpacing)
         {
             this.communitiesDataProvider = communitiesDataProvider;
             this.subMenuItemSpacing = subMenuItemSpacing;
+            this.notificationsBus = notificationsBus;
         }
 
         /// <summary>
@@ -105,6 +109,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
 
             if (result.Success && result.Value)
             {
+                notificationsBus.AddNotification(new InvitationToCommunitySentNotification() { Type = NotificationType.INVITATION_TO_COMMUNITY_SENT });
                 Debug.Log($"INVITED! ({userWalletId}) to {lastCommunityData[itemIndex].name} ({lastCommunityData[itemIndex].id})");
             }
             else

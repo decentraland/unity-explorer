@@ -228,7 +228,8 @@ namespace DCL.PluginSystem.Global
                 voiceChatCallStatusService,
                 passport3DPreviewCamera,
                 galleryEventBus,
-                communitiesDataProvider
+                communitiesDataProvider,
+                notificationsBusController
             );
 
             mvcManager.RegisterController(passportController);

@@ -633,7 +633,8 @@ namespace Global.Dynamic
                 sharedSpaceManager,
                 includeVoiceChat,
                 includeCommunities,
-                communitiesDataProvider);
+                communitiesDataProvider,
+                notificationsBusController);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
