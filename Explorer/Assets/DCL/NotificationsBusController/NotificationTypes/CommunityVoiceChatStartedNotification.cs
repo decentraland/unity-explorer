@@ -1,3 +1,6 @@
+using System;
+using Utility.Times;
+
 namespace DCL.NotificationsBusController.NotificationTypes
 {
     public class CommunityVoiceChatStartedNotification : NotificationBase
@@ -8,9 +11,11 @@ namespace DCL.NotificationsBusController.NotificationTypes
 
         public CommunityVoiceChatStartedNotification(string communityName, string thumbnail, string communityId)
         {
+            Type = NotificationType.COMMUNITY_VOICE_CHAT_STARTED;
             CommunityName = communityName;
             Thumbnail = thumbnail;
             CommunityId = communityId;
+            Timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds().ToString();
         }
 
         public override string GetHeader() =>

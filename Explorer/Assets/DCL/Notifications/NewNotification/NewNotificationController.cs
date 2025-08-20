@@ -127,13 +127,14 @@ namespace DCL.Notifications.NewNotification
         private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
         {
             viewInstance!.CommunityNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.CommunityNotificationView.TitleText.text = notification.GetTitle();
             viewInstance.CommunityNotificationView.NotificationType = notification.Type;
             viewInstance.CommunityNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+                communityThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
 
-            await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
+            await AnimateNotificationCanvasGroupAsync(viewInstance.CommunityNotificationCanvasGroup);
         }
 
         private async UniTask ProcessArrivedNotificationAsync(INotification notification)

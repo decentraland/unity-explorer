@@ -137,9 +137,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 192176438896886382}
   m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!114 &3024536914856735182
 MonoBehaviour:
@@ -171,8 +171,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8815ad6a56bc942efbd293d1ea3f0d46, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <NormalColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-  <HoveredColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+  <NormalColor>k__BackingField: {r: 0, g: 0, b: 0, a: 1}
+  <HoveredColor>k__BackingField: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
   <Background>k__BackingField: {fileID: 1626829344947425582}
   <UnreadImage>k__BackingField: {fileID: 927537932988240709}
   <MainButton>k__BackingField: {fileID: 5733177991484291323}
