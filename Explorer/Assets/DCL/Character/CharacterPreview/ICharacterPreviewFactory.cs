@@ -11,7 +11,12 @@ namespace DCL.CharacterPreview
     /// </summary>
     public interface ICharacterPreviewFactory
     {
-        CharacterPreviewController Create(World world, RectTransform renderImage, RenderTexture targetTexture, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewCameraSettings cameraSettings);
+        CharacterPreviewController Create(World world,
+            RectTransform renderImage,
+            RenderTexture targetTexture,
+            CharacterPreviewInputEventBus inputEventBus,
+            CharacterPreviewCameraSettings cameraSettings,
+            Vector3 position);
     }
 
     public class CharacterPreviewFactory : ICharacterPreviewFactory
@@ -28,12 +33,17 @@ namespace DCL.CharacterPreview
             this.appArgs = appArgs;
         }
 
-        public CharacterPreviewController Create(World world, RectTransform renderImage, RenderTexture targetTexture, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewCameraSettings cameraSettings)
+        public CharacterPreviewController Create(World world,
+            RectTransform renderImage,
+            RenderTexture targetTexture,
+            CharacterPreviewInputEventBus inputEventBus,
+            CharacterPreviewCameraSettings cameraSettings,
+            Vector3 position)
         {
             characterPreviewComponentPool ??= componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
             transformPool ??= componentPoolsRegistry.GetReferenceTypePool<Transform>();
             CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get();
-            container.Initialize(targetTexture);
+            container.Initialize(targetTexture, position);
             return new CharacterPreviewController(world, renderImage, container, inputEventBus, characterPreviewComponentPool, cameraSettings, transformPool, appArgs);
         }
     }

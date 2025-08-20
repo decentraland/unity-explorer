@@ -25,6 +25,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.UI.GenericContextMenu.Controllers
 {
@@ -50,7 +51,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
-        private readonly UI.GenericContextMenuParameter.GenericContextMenu contextMenu;
+        private readonly GenericContextMenuParameter.GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
@@ -106,7 +107,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
 
-            contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
+            contextMenu = new GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(mentionUserButtonControlSettings)
@@ -129,14 +130,27 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             if (friendServiceProxy.Configured)
             {
-                FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
-                contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
-                blockButtonControlSettings.SetData(profile.UserId);
-                jumpInButtonControlSettings.SetData(profile.UserId);
-                contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+                Result<FriendshipStatus> friendshipStatusAsyncResult = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.FRIENDS);
 
-                contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
-                                                  friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
+                if (!friendshipStatusAsyncResult.Success)
+                {
+                    contextMenuBlockUserButton.Enabled = false;
+                    contextMenuJumpInButton.Enabled = false;
+                }
+                else
+                {
+                    FriendshipStatus friendshipStatus = friendshipStatusAsyncResult.Value;
+
+                    contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
+
+                    blockButtonControlSettings.SetData(profile.UserId);
+                    jumpInButtonControlSettings.SetData(profile.UserId);
+
+                    contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+                    contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
+                                                      friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
+                }
             }
 
             userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
@@ -264,8 +278,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
         {
             closeContextMenuTask.TrySetResult();
 
-            //Per design request we need to add an extra character after adding the mention to the chat.
-            ShowChatAsync(() => chatEventBus.InsertText(userName + " ")).Forget();
+            ShowChatAsync(() =>
+            {
+                chatEventBus.InsertText(userName + " ");
+            }).Forget();
         }
 
         private void OnOpenConversationButtonClicked(string userId)

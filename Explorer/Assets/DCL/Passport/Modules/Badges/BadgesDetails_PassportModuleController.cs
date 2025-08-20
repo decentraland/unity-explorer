@@ -136,7 +136,7 @@ namespace DCL.Passport.Modules.Badges
                 badgeDetailsCardsController.CreateEmptyDetailCards();
                 ShowBadgesInGridByCategory(ALL_FILTER);
                 view.LoadingSpinner.SetActive(false);
-                badgeInfoController.SetAsEmpty(badges.achieved.Count == 0 && badges.notAchieved.Count == 0);
+
                 view.NoBadgesLabel.SetActive(badges.achieved.Count == 0 && badges.notAchieved.Count == 0);
             }
             catch (OperationCanceledException) { }

@@ -101,7 +101,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 0.03137255}
+    m_NormalColor: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
     m_HighlightedColor: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
     m_PressedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
     m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
@@ -161,6 +161,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 7783094320483912714}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &7493286629642196269
 MonoBehaviour:
   m_ObjectHideFlags: 0
