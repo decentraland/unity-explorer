@@ -859,7 +859,7 @@ namespace DCL.Landscape
 
             parcel += occupancyMapSize / 2;
             int index = parcel.y * occupancyMapSize + parcel.x;
-            return occupancyMapData[index] < 255;
+            return occupancyMapData[index] == 0;
         }
 
         private bool OverlapsOccupiedParcel(float2 position, float radius)
@@ -1008,8 +1008,8 @@ namespace DCL.Landscape
                         buffer[instanceIndex] = buffer[--instanceCount];
                 }
 
-                GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex], buffer,
-                    count: instanceCount);
+                GPUIRenderingSystem.SetTransformBufferData(rendererKeys[prototypeIndex], buffer, 0, 0,
+                    instanceCount);
             }
         }
 
