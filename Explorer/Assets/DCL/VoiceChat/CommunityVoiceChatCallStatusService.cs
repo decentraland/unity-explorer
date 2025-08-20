@@ -24,6 +24,7 @@ namespace DCL.VoiceChat
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
 
         private CancellationTokenSource cts = new ();
+        private string? locallyStartedCommunityId = null;
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
@@ -46,6 +47,9 @@ namespace DCL.VoiceChat
 
             //Setting starting call status to instantly disable call button
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTING_CALL);
+
+            // Track that we started this community call
+            locallyStartedCommunityId = communityId;
 
             StartCallAsync(communityId, cts.Token).Forget();
         }
@@ -85,6 +89,7 @@ namespace DCL.VoiceChat
         {
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
+            locallyStartedCommunityId = null;
         }
 
         public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
@@ -301,6 +306,10 @@ namespace DCL.VoiceChat
                     ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Community voice chat ended for {communityUpdate.CommunityId}");
                 }
 
+                // Clear locally started community ID if this was the one we started
+                if (communityUpdate.CommunityId == locallyStartedCommunityId)
+                    locallyStartedCommunityId = null;
+
                 // Delegate scene unregistration to the tracker
                 voiceChatSceneTrackerService.UnregisterCommunityFromScene(communityUpdate.CommunityId);
                 voiceChatSceneTrackerService.RemoveActiveCommunityVoiceChat(communityUpdate.CommunityId);
@@ -339,8 +348,8 @@ namespace DCL.VoiceChat
                 voiceChatSceneTrackerService.RegisterCommunityInScene(communityUpdate.CommunityId, communityUpdate.Positions, communityUpdate.Worlds);
                 voiceChatSceneTrackerService.SetActiveCommunityVoiceChat(communityUpdate.CommunityId, activeChat);
 
-                // We only show notification if we are part of the community
-                if (communityUpdate.IsMember)
+                // We only show notification if we are part of the community and we didn't start the stream ourselves
+                if (communityUpdate.IsMember && communityUpdate.CommunityId != locallyStartedCommunityId)
                     notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage,communityUpdate.CommunityId));
             }
         }
@@ -396,6 +405,7 @@ namespace DCL.VoiceChat
 
             communityVoiceChatCalls.Clear();
             activeCommunityVoiceChats.Clear();
+            locallyStartedCommunityId = null;
             cts.SafeCancelAndDispose();
             base.Dispose();
         }
