@@ -51,10 +51,10 @@ namespace DCL.CharacterCamera.Systems
 
                 case CameraMode.InWorld:
                     ICinemachineFreeCameraData inWorldCamera = cinemachinePreset.InWorldCameraData;
-                    UpdateFarClipPlane(inWorldCamera.Camera.Follow, settings, ref inWorldCamera.Camera.m_Lens);
+                    // Here we use camera transform because Camera.Follow could be null
+                    UpdateFarClipPlane(inWorldCamera.Camera.transform, settings, ref inWorldCamera.Camera.m_Lens);
                     break;
             }
-
         }
 
         private void UpdateFarClipPlane(Transform target, CameraFarClipPlaneSettings settings, ref LensSettings lens)
