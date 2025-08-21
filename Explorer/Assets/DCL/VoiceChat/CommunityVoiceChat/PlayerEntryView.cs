@@ -58,6 +58,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             openPassportButton.onClick.AddListener(OnOpenPassportClicked);
         }
 
+        public void CleanupEntry()
+        {
+            approveDenySection.SetActive(false);
+            isSpeakingIcon.gameObject.SetActive(false);
+        }
+
         private void OnOpenPassportClicked()
         {
             if (string.IsNullOrEmpty(userProfile.WalletId)) return;

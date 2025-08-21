@@ -289,6 +289,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries[participantState.WalletId] =  entryView;
+            entryView.CleanupEntry();
 
             var nameColor = ProfileNameColorHelper.GetNameColor(participantState.Name.Value);
 
