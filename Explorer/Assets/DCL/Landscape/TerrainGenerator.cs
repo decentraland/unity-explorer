@@ -57,7 +57,7 @@ namespace DCL.Landscape
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashSet<int2> ownedParcels;
-        private int maxHeightIndex;
+        public int MaxHeight;
         private bool hideTrees;
         private bool hideDetails;
         private bool withHoles;
@@ -84,6 +84,7 @@ namespace DCL.Landscape
 
         private ITerrainDetailSetter terrainDetailSetter;
         private IGPUIWrapper gpuiWrapper;
+        public Texture2D OccupancyMap { get; private set; }
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
@@ -343,7 +344,7 @@ namespace DCL.Landscape
         private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
         {
             if (localCache.IsValid())
-                maxHeightIndex = localCache.GetMaxHeight();
+                MaxHeight = localCache.GetMaxHeight();
             else
             {
                 JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
@@ -356,10 +357,10 @@ namespace DCL.Landscape
 
                 // Calculate this outside the jobs since they are Parallel
                 foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelsData)
-                    if (emptyParcelHeight.Value > maxHeightIndex)
-                        maxHeightIndex = emptyParcelHeight.Value;
+                    if (emptyParcelHeight.Value > MaxHeight)
+                        MaxHeight = emptyParcelHeight.Value;
 
-                localCache.SetMaxHeight(maxHeightIndex);
+                localCache.SetMaxHeight(MaxHeight);
             }
         }
 
@@ -387,11 +388,11 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, maxHeightIndex);
+                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, MaxHeight);
 
                 var tasks = new List<UniTask>
                 {
-                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, ParcelSize,
+                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, MaxHeight, ParcelSize,
                         chunkModel.TerrainData, worldSeed, cancellationToken),
                     chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * ParcelSize,
                         chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,

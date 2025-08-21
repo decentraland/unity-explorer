@@ -20,3 +20,9 @@ MonoBehaviour:
   worldsTerrainData: {fileID: 11400000, guid: 073a968567df25b4988ecaf238256181, type: 2}
   gpuiAssets: {fileID: 11400000, guid: 4177f048c26079f4296ecc8377c8d7fb, type: 2}
   detailDistanceValue: 1000
+  <GroundMaterial>k__BackingField: {fileID: 2100000, guid: c882e23b0b2b83c45b15f00494fd796c, type: 2}
+  <GroundInstanceCapacity>k__BackingField: 80
+  <GroundMeshes>k__BackingField:
+  - {fileID: 1394718660543912083, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
+  - {fileID: 2474922959326173943, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
+  - {fileID: -3615330361707025511, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Landscape.Utils;
+using System;
 using UnityEngine;
 
 namespace DCL.Landscape.Settings
@@ -34,6 +35,20 @@ namespace DCL.Landscape.Settings
                 detailDistanceValue = value;
                 OnDetailDistanceChanged?.Invoke(value);
             }
+        }
+
+        public bool RenderGround { get; set; }
+        [field: SerializeField] public Material GroundMaterial { get; private set; } = null!;
+        [field: SerializeField] public int GroundInstanceCapacity { get; set; }
+
+        [field: SerializeField, EnumIndexedArray(typeof(GroundMeshPiece))]
+        public Mesh[] GroundMeshes { get; private set; } = null!;
+
+        private enum GroundMeshPiece
+        {
+            MIDDLE,
+            EDGE,
+            CORNER,
         }
     }
 }
