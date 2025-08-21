@@ -10,6 +10,8 @@ namespace DCL.UI.SelectorButton
 {
     public class SelectorButtonView : MonoBehaviour
     {
+        public event Action? OptionsPanelOpened;
+        public event Action? OptionsPanelClosed;
         public event Action<int>? OptionClicked;
 
         [SerializeField] private Button selectorButton;
@@ -148,10 +150,15 @@ namespace DCL.UI.SelectorButton
                 selectorPanel.localPosition = originalLocalPosition;
                 selectorPanel.parent = selectorPanelParent;
             }
+
+            OptionsPanelOpened?.Invoke();
         }
 
-        private void OnCloseOptionsPanel() =>
+        private void OnCloseOptionsPanel()
+        {
             selectorPanel.gameObject.SetActive(false);
+            OptionsPanelClosed?.Invoke();
+        }
 
         private void RefreshSelectorPanelSize()
         {

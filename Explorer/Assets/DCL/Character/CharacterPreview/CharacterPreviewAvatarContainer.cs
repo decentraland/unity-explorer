@@ -27,9 +27,9 @@ namespace DCL.CharacterPreview
             StopCameraTween();
         }
 
-        public void Initialize(RenderTexture targetTexture)
+        public void Initialize(RenderTexture targetTexture, Vector3 position)
         {
-            transform.position = new Vector3(0, 5000, 0);
+            transform.position = position;
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
 
@@ -37,6 +37,11 @@ namespace DCL.CharacterPreview
 
             //We disable post processing on all platforms as the shader is not working correctly and it shows a black background
             cameraData.renderPostProcessing = false;
+        }
+
+        public void DeInitialize()
+        {
+            camera.targetTexture = null!;
         }
 
         public void SetCameraPosition(CharacterPreviewCameraPreset preset)

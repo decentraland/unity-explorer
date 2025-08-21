@@ -46,6 +46,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.UI;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -61,7 +62,7 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
-        [Header("Startup Config")] [SerializeField]
+        [Header("STARTUP CONFIG")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
 
         [Space]
@@ -73,7 +74,7 @@ namespace Global.Dynamic
         [Space]
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
-        [Header("References")]
+        [Header("REFERENCES")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
@@ -89,6 +90,7 @@ namespace Global.Dynamic
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
+        [SerializeField] private WarningNotificationView showUINotificationView = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
@@ -239,6 +241,7 @@ namespace Global.Dynamic
                     applicationParametersParser,
                     coroutineRunner: this,
                     dclVersion,
+                    showUINotificationView,
                     destroyCancellationToken);
 
                 if (!isLoaded)
