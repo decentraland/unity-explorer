@@ -1,7 +1,7 @@
 // #include "MountainsNoise.cs"
 
 void Noise_float(float3 PositionIn, float ParcelSize, float4 TerrainBounds,
-                 UnityTexture2D OccupancyMap, float HeightScale, float MinDistOccupancy, out float3 PositionOut, out float3 Normal)
+                 UnityTexture2D OccupancyMap, float TerrainHeight, float MinDistOccupancy, out float3 PositionOut, out float3 Normal)
 {
     PositionOut.x = clamp(PositionIn.x, TerrainBounds.x, TerrainBounds.z);
     PositionOut.z = clamp(PositionIn.z, TerrainBounds.y, TerrainBounds.w);
@@ -23,7 +23,7 @@ void Noise_float(float3 PositionIn, float ParcelSize, float4 TerrainBounds,
         float saturationFactor = 20;
         float noiseH = 0; //GetHeight(PositionOut.x, PositionOut.z) * saturate( normalizedHeight * saturationFactor);
 
-        PositionOut.y = normalizedHeight * HeightScale + noiseH;
+        PositionOut.y = normalizedHeight * TerrainHeight + noiseH;
         Normal =  float3(0.0, 1.0, 0.0); //GetNormal(PositionOut.x, PositionOut.z);
 
         // Ensure no negative heights

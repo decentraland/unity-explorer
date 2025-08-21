@@ -388,6 +388,21 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
+    "m_ObjectId": "01a29c51cbab4c90bddb567dca720e48",
+    "m_Id": 19,
+    "m_DisplayName": "TerrainHeight",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "TerrainHeight",
+    "m_StageCapability": 3,
+    "m_Value": 0.0,
+    "m_DefaultValue": 0.0,
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Internal.Texture2DShaderProperty",
     "m_ObjectId": "078f73d35a1c4cc3baeaa179be1888f6",
     "m_Guid": {
@@ -1395,21 +1410,6 @@
 
 {
     "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
-    "m_ObjectId": "78620c24fd29486385ed171fa68b8f2f",
-    "m_Id": 19,
-    "m_DisplayName": "HeightScale",
-    "m_SlotType": 0,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "HeightScale",
-    "m_StageCapability": 3,
-    "m_Value": 0.0,
-    "m_DefaultValue": 0.0,
-    "m_Labels": []
-}
-
-{
-    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.CategoryData",
     "m_ObjectId": "7d4004fc94744374835a197b182cfdbd",
     "m_Name": "",
@@ -2134,7 +2134,7 @@
             "m_Id": "b236fc97171947a98c8942f21d828e68"
         },
         {
-            "m_Id": "78620c24fd29486385ed171fa68b8f2f"
+            "m_Id": "01a29c51cbab4c90bddb567dca720e48"
         },
         {
             "m_Id": "54307bdfd43d4cb5877244f11362acce"

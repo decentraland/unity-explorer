@@ -5,6 +5,7 @@ using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
+using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
 using ECS.Abstract;
@@ -27,6 +28,8 @@ namespace DCL.Landscape.Systems
         private MaterialPropertyBlock materialProperties;
 
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
+        private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
+        private static readonly int TERRAIN_HEIGHT_ID = Shader.PropertyToID("_TerrainHeight");
         private static readonly int OCCUPANCY_MAP_ID = Shader.PropertyToID("_OccupancyMap");
         private static readonly int TERRAIN_BOUNDS_ID = Shader.PropertyToID("_TerrainBounds");
 
@@ -79,7 +82,7 @@ namespace DCL.Landscape.Systems
             NativeList<Matrix4x4> transforms = new NativeList<Matrix4x4>(
                 landscapeData.GroundInstanceCapacity, Allocator.TempJob);
 
-            var generateGroundJob = new Jobs.GenerateGroundJob()
+            var generateGroundJob = new GenerateGroundJob
             {
                 ParcelSize = parcelSize,
                 TerrainBounds = terrainBounds,
@@ -95,6 +98,8 @@ namespace DCL.Landscape.Systems
             {
                 materialProperties = new MaterialPropertyBlock();
                 materialProperties.SetFloat(PARCEL_SIZE_ID, parcelSize);
+                materialProperties.SetFloat(MIN_DIST_OCCUPANCY_ID, terrainGenerator.OccupancyFloor / 255f);
+                materialProperties.SetFloat(TERRAIN_HEIGHT_ID, landscapeData.TerrainHeight);
 
                 if (terrainGenerator.OccupancyMap != null)
                     materialProperties.SetTexture(OCCUPANCY_MAP_ID, terrainGenerator.OccupancyMap);
