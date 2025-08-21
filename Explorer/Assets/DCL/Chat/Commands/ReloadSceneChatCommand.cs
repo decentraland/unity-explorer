@@ -55,13 +55,10 @@ namespace DCL.Chat.Commands
 
                 await UniTask.WaitUntil(sceneReadyCondition, cancellationToken: ct);
 
-                if (!isLocalSceneDevelopmentMode)
+                if (!isLocalSceneDevelopmentMode && reloadedScene != null)
                 {
-                    if (reloadedScene != null)
-                    {
-                        WaitForSceneReadiness sceneReadiness = teleportController.TeleportToSceneSpawnPoint(reloadedScene.SceneData.SceneEntityDefinition, ct);
-                        await sceneReadiness.ToUniTask();
-                    }
+                    WaitForSceneReadiness sceneReadiness = teleportController.TeleportToSceneSpawnPoint(reloadedScene.SceneData.SceneEntityDefinition, ct);
+                    await sceneReadiness.ToUniTask();
                 }
 
                 return reloadedScene != null
