@@ -55,7 +55,7 @@ namespace DCL.UI.GenericContextMenu
         private Vector3[] cornersArray;
 
         // Probable limitation?: This will work as long as there are no more than one asynchronous submenu
-        private CancellationTokenSource submenuConfigurationCts;
+        private CancellationTokenSource submenuConfigurationCts = new ();
         private bool isConfiguringSubmenu;
 
         public GenericContextMenuController(ViewFactoryMethod viewFactory,
@@ -466,7 +466,6 @@ namespace DCL.UI.GenericContextMenu
         private float3 AdjustPositionToFitBounds(ControlsContainerView container, float3 position, float4 boundaryRect)
         {
             float3 adjustedPosition = position;
-            //float4 menuRect = new float4(adjustedPosition.x, adjustedPosition.y, container.controlsContainer.rect.size.x, container.controlsContainer.rect.size.y);// GetProjectedRect(container, new Vector3(position.x, position.y, position.z));
             float4 menuRect = GetProjectedRect(container, new Vector3(position.x, position.y, position.z));
 
             if (menuRect.x < boundaryRect.x)
