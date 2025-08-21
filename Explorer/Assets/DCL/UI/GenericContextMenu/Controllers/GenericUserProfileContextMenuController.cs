@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -9,9 +10,11 @@ using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connectivity;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
+using DCL.UI.GenericContextMenu.Controllers.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
@@ -26,6 +29,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Types;
+using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
 namespace DCL.UI.GenericContextMenu.Controllers
 {
@@ -48,6 +52,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly bool includeVoiceChat;
+        private readonly bool includeCommunities;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -68,6 +73,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private UniTaskCompletionSource closeContextMenuTask;
         private Profile targetProfile;
 
+        private readonly CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
             IChatEventBus chatEventBus,
@@ -79,7 +86,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
-            bool includeVoiceChat)
+            bool includeVoiceChat,
+            bool includeCommunities,
+            CommunitiesDataProvider communitiesDataProvider,
+            INotificationsBusController notificationsBus)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -94,6 +104,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.includeCommunities = includeCommunities;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -116,6 +127,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(contextMenuCallButton)
                          .AddControl(contextMenuJumpInButton)
                          .AddControl(contextMenuBlockUserButton);
+
+            if (includeCommunities)
+            {
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, notificationsBus, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
+            }
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
@@ -171,6 +188,9 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 offset = CONTEXT_MENU_OFFSET;
 
             contextMenu.ChangeOffsetFromTarget(offset);
+
+            if (includeCommunities)
+                invitationButtonHandler.SetUserToInvite(profile.UserId);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter.GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);

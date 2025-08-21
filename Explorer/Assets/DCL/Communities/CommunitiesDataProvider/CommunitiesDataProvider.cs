@@ -365,7 +365,12 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityListAsync(string userAddress, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var url = $"{membersBaseUrl}/{userAddress}/invites";
+
+            GetInvitableCommunityListResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                    .CreateFromJson<GetInvitableCommunityListResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
         }
 
         // TODO: Pending to implement these methods:

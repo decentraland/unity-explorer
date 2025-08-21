@@ -109,6 +109,9 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.CREDITS_GOAL_COMPLETED:
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
                         break;
+                    case NotificationType.INVITATION_TO_COMMUNITY_SENT:
+                        await ProcessInvitationToCommunitySentNotificationAsync(notification);
+                        break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
                         break;
@@ -119,6 +122,15 @@ namespace DCL.Notifications.NewNotification
         }
 
         private async UniTask ProcessArrivedNotificationAsync(INotification notification)
+        {
+            viewInstance!.SystemNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.SystemNotificationView.NotificationType = notification.Type;
+            viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessInvitationToCommunitySentNotificationAsync(INotification notification)
         {
             viewInstance!.SystemNotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.SystemNotificationView.NotificationType = notification.Type;
