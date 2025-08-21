@@ -42,7 +42,7 @@ namespace DCL.Communities.CommunitiesCard
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
         private const string GET_COMMUNITY_ERROR_TEXT = "There was an error getting community data. Please try again.";
-        private const string GET_USER_REQUESTS_ERROR_TEXT = "There was an error getting user requests. Please try again.";
+        private const string GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT = "There was an error getting user invites and requests. Please try again.";
         private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
         private const string DELETE_COMMUNITY_ERROR_TEXT = "There was an error deleting the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
@@ -328,10 +328,13 @@ namespace DCL.Communities.CommunitiesCard
 
                 communityData = getCommunityResult.Value.data;
 
-                if (!communityData.IsAccessAllowed())
+                // Check if we have a pending invite to the community
+                bool existsInvitation = await CheckUserInviteOrRequestAsync(InviteRequestAction.invite, ct);
+
+                if (!communityData.IsAccessAllowed() && !existsInvitation)
                 {
                     // Check if we have a pending request to join the community
-                    await CheckUserRequestsToJoinAsync(ct);
+                    await CheckUserInviteOrRequestAsync(InviteRequestAction.request_to_join, ct);
                 }
                 else
                     communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
@@ -348,30 +351,32 @@ namespace DCL.Communities.CommunitiesCard
                 }
             }
 
-            async UniTask CheckUserRequestsToJoinAsync(CancellationToken ct)
+            async UniTask<bool> CheckUserInviteOrRequestAsync(InviteRequestAction action, CancellationToken ct)
             {
-                var getUserInviteRequestResult = await communitiesDataProvider.GetUserInviteRequestAsync(InviteRequestAction.request_to_join, ct)
+                var getUserInviteRequestResult = await communitiesDataProvider.GetUserInviteRequestAsync(action, ct)
                                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
-                    return;
+                    return false;
 
                 if (!getUserInviteRequestResult.Success)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(GET_USER_REQUESTS_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                    return;
+                    return false;
                 }
 
                 foreach (var request in getUserInviteRequestResult.Value.data.results)
                 {
                     if (string.Equals(request.communityId, inputData.CommunityId, StringComparison.CurrentCultureIgnoreCase))
                     {
-                        communityData.SetPendingAction(InviteRequestAction.request_to_join);
-                        break;
+                        communityData.SetPendingAction(action);
+                        return true;
                     }
                 }
+
+                return false;
             }
         }
 

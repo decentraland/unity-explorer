@@ -59,6 +59,8 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? DeleteCommunityRequested;
         public event Action? RequestToJoinCommunity;
         public event Action? CancelRequestToJoinCommunity;
+        public event Action? AcceptInvite;
+        public event Action? RejectInvite;
 
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; } = null!;
@@ -82,6 +84,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Button joinButton { get; set; } = null!;
         [field: SerializeField] private Button requestToJoinButton { get; set; } = null!;
         [field: SerializeField] private Button cancelRequestButton { get; set; } = null!;
+        [field: SerializeField] private Button acceptInviteButton { get; set; } = null!;
+        [field: SerializeField] private Button rejectInviteButton { get; set; } = null!;
 
         [field: Header("Community data references")]
         [field: SerializeField] private TMP_Text communityName { get; set; } = null!;
@@ -132,6 +136,8 @@ namespace DCL.Communities.CommunitiesCard
             joinedButton.onClick.AddListener(ShowLeaveConfirmationDialog);
             requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunity?.Invoke());
             cancelRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunity?.Invoke());
+            acceptInviteButton.onClick.AddListener(() => AcceptInvite?.Invoke());
+            rejectInviteButton.onClick.AddListener(() => RejectInvite?.Invoke());
 
             photosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
             membersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
@@ -261,13 +267,15 @@ namespace DCL.Communities.CommunitiesCard
 
         public void ConfigureInteractionButtons(GetCommunityResponse.CommunityData communityData)
         {
-            openChatButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed());
-            openWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed());
-            openContextMenuButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed());
-            joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed());
-            joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed());
+            openChatButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            openWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            openContextMenuButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
             requestToJoinButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.none);
             cancelRequestButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.request_to_join);
+            acceptInviteButton.gameObject.SetActive(communityData.pendingActionType == InviteRequestAction.invite);
+            rejectInviteButton.gameObject.SetActive(communityData.pendingActionType == InviteRequestAction.invite);
         }
 
         public void SetDefaults()
@@ -284,6 +292,8 @@ namespace DCL.Communities.CommunitiesCard
             joinButton.gameObject.SetActive(false);
             requestToJoinButton.gameObject.SetActive(false);
             cancelRequestButton.gameObject.SetActive(false);
+            acceptInviteButton.gameObject.SetActive(false);
+            rejectInviteButton.gameObject.SetActive(false);
             placesWithSignButton.gameObject.SetActive(false);
             placesButton.gameObject.SetActive(true);
             SetCommunityAccessAsAllowed(true);
