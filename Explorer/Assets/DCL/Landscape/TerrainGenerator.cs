@@ -136,6 +136,7 @@ namespace DCL.Landscape
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
+            this.terrainHeight = terrainHeight;
 
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
