@@ -35,6 +35,10 @@ namespace DCL.Communities.CommunitiesCard
         private const string DELETE_COMMUNITY_CONFIRM_TEXT = "CONTINUE";
         private const string DELETE_COMMUNITY_CANCEL_TEXT = "CANCEL";
 
+        private const string REJECT_COMMUNITY_INVITATION_TEXT_FORMAT = "Are you sure you want to delete your invitation to the [{0}] Community?";
+        private const string REJECT_COMMUNITY_INVITATION_CONFIRM_TEXT = "YES";
+        private const string REJECT_COMMUNITY_INVITATION_CANCEL_TEXT = "NO";
+
         public enum Sections
         {
             PHOTOS,
@@ -137,7 +141,26 @@ namespace DCL.Communities.CommunitiesCard
             requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunity?.Invoke());
             cancelRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunity?.Invoke());
             acceptInviteButton.onClick.AddListener(() => AcceptInvite?.Invoke());
-            rejectInviteButton.onClick.AddListener(() => RejectInvite?.Invoke());
+            rejectInviteButton.onClick.AddListener(() =>
+            {
+                confirmationDialogCts = confirmationDialogCts.SafeRestart();
+                ShowDeleteInvitationConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+                return;
+
+                async UniTask ShowDeleteInvitationConfirmationDialogAsync(CancellationToken ct)
+                {
+                    Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(REJECT_COMMUNITY_INVITATION_TEXT_FORMAT, communityName.text),
+                                                                                         REJECT_COMMUNITY_INVITATION_CANCEL_TEXT,
+                                                                                         REJECT_COMMUNITY_INVITATION_CONFIRM_TEXT,
+                                                                                         CommunityThumbnail.ImageSprite,
+                                                                                         false, false), ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+
+                    RejectInvite?.Invoke();
+                }
+            });
 
             photosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
             membersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
@@ -170,7 +193,7 @@ namespace DCL.Communities.CommunitiesCard
                                                                                      DELETE_COMMUNITY_CANCEL_TEXT,
                                                                                      DELETE_COMMUNITY_CONFIRM_TEXT,
                                                                                      deleteCommunityImage,
-                                                                                     false, false), ct)
+                                                                                     true, false), ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;

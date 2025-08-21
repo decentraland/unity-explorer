@@ -742,21 +742,24 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityInvitationAccepted(string communityId, bool success)
         {
-            if (!isInvitesAndRequestsSectionActive)
-                return;
-
-            view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
+            if (isInvitesAndRequestsSectionActive)
+                view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
 
             if (success)
+            {
                 LoadMyCommunities();
+                RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+                view.UpdateJoinedCommunity(communityId, true, success);
+            }
         }
 
         private void OnCommunityInvitationRejected(string communityId, bool success)
         {
-            if (!isInvitesAndRequestsSectionActive)
-                return;
+            if (isInvitesAndRequestsSectionActive)
+                view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
 
-            view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
+            if (success)
+                RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
         }
 
         private void OnCommunityLeft(string communityId, bool success) =>

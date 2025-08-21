@@ -119,7 +119,7 @@ namespace DCL.Communities.CommunitiesBrowser
                                                                                          DELETE_COMMUNITY_INVITATION_CANCEL_TEXT,
                                                                                          DELETE_COMMUNITY_INVITATION_CONFIRM_TEXT,
                                                                                          communityThumbnail.ImageSprite,
-                                                                                         false, false), ct)
+                                                                                         true, false), ct)
                                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                     if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
