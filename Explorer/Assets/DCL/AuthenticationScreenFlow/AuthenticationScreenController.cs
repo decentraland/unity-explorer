@@ -161,6 +161,15 @@ namespace DCL.AuthenticationScreenFlow
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
+
+            DisableInputs();
+        }
+
+        private void DisableInputs()
+        {
+            DCLInput dclInput = DCLInput.Instance;
+            dclInput.Shortcuts.Disable();
+            dclInput.InWorldCamera.Disable();
         }
 
         protected override void OnViewClose()
@@ -176,6 +185,15 @@ namespace DCL.AuthenticationScreenFlow
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
+
+            EnableInputs();
+        }
+
+        private void EnableInputs()
+        {
+            DCLInput dclInput = DCLInput.Instance;
+            dclInput.Shortcuts.Enable();
+            dclInput.InWorldCamera.Enable();
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
