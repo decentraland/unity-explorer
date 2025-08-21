@@ -152,7 +152,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, contextMenuSettings.InviteToCommunityText, contextMenuSettings.InviteToCommunitySprite);
             }
 
-            invitationButtonHandler.SetUserToInvite(profile.memberAddress);
+            invitationButtonHandler.SetUserToInvite(profile.Address);
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,
