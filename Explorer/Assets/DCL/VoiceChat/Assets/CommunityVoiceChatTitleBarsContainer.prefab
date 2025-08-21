@@ -75,9 +75,8 @@ MonoBehaviour:
   <VoiceChatCanvasGroup>k__BackingField: {fileID: 4057661149494416725}
   <VoiceChatContainer>k__BackingField: {fileID: 7245032890507791707}
   <CollapseButton>k__BackingField: {fileID: 505923493756295153}
-  <CollapseButtonImage>k__BackingField: {fileID: 7956568145073055262}
-  <CollapsedButtonImage>k__BackingField: {fileID: 21300000, guid: e0a2bc75af20840e79cb10bba9987431, type: 3}
-  <UnCollapsedButtonImage>k__BackingField: {fileID: 21300000, guid: 2790348c2cfcf48199960d5e87498e08, type: 3}
+  <CollapseButtonImage>k__BackingField: {fileID: 3263668825119442192}
+  <ExpandButtonImage>k__BackingField: {fileID: 1699025131398878322}
   <HeaderContainer>k__BackingField: {fileID: 5097160325435173478}
   <ContentContainer>k__BackingField: {fileID: 8953764426506797409}
   <FooterContainer>k__BackingField: {fileID: 4895001121833812381}
@@ -1239,6 +1238,16 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4427581666171299874, guid: 33d439d46847e43ceb45144f854771c0, type: 3}
   m_PrefabInstance: {fileID: 3557489126270227469}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1699025131398878322 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2795217878853025919, guid: 33d439d46847e43ceb45144f854771c0, type: 3}
+  m_PrefabInstance: {fileID: 3557489126270227469}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3263668825119442192 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2023343297168412957, guid: 33d439d46847e43ceb45144f854771c0, type: 3}
+  m_PrefabInstance: {fileID: 3557489126270227469}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3886185350859594567 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 337837590255685450, guid: 33d439d46847e43ceb45144f854771c0, type: 3}
@@ -1305,17 +1314,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 2
   m_VerticalFit: 0
---- !u!114 &7956568145073055262 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6860623878270644755, guid: 33d439d46847e43ceb45144f854771c0, type: 3}
-  m_PrefabInstance: {fileID: 3557489126270227469}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &8953764426506797409 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5556479650669090156, guid: 33d439d46847e43ceb45144f854771c0, type: 3}

@@ -26,13 +26,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public Button CollapseButton  { get; private set; }
 
         [field: SerializeField]
-        public Image CollapseButtonImage  { get; private set; }
+        public GameObject CollapseButtonImage  { get; private set; }
 
         [field: SerializeField]
-        public Sprite CollapsedButtonImage { get; private set; }
-
-        [field: SerializeField]
-        public Sprite UnCollapsedButtonImage { get; private set; }
+        public GameObject ExpandButtonImage  { get; private set; }
 
         [field: SerializeField]
         public RectTransform HeaderContainer { get; private set; }
@@ -90,7 +87,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ContentContainer.gameObject.SetActive(!isCollapsed);
             FooterContainer.gameObject.SetActive(!isCollapsed);
             CommunityVoiceChatInCallView.OpenListenersSectionButton.gameObject.SetActive(!isCollapsed);
-            CollapseButtonImage.sprite = isCollapsed ? UnCollapsedButtonImage : CollapsedButtonImage;
+            CollapseButtonImage.SetActive(!isCollapsed);
+            ExpandButtonImage.SetActive(isCollapsed);
         }
 
         public void Show()
