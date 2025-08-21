@@ -46,7 +46,7 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation().WithTerrainOffset();
             }
-            else if (TeleportUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
             }
