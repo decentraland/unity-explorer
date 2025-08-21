@@ -109,6 +109,7 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
+    - _MinDistOccupancy: 0.6862745
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _ParcelSize: 16
@@ -121,6 +122,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
+    - _TerrainHeight: 13
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:

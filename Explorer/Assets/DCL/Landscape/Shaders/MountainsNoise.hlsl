@@ -24,7 +24,7 @@ void Noise_float(float3 PositionIn, float ParcelSize, float4 TerrainBounds,
         float noiseH = 0; //GetHeight(PositionOut.x, PositionOut.z) * saturate( normalizedHeight * saturationFactor);
 
         PositionOut.y = normalizedHeight * HeightScale + noiseH;
-        Normal = GetNormal(PositionOut.x, PositionOut.z);
+        Normal =  float3(0.0, 1.0, 0.0); //GetNormal(PositionOut.x, PositionOut.z);
 
         // Ensure no negative heights
         if (PositionOut.y < 0.0)
