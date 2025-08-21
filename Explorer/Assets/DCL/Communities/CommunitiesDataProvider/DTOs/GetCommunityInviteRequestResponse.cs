@@ -15,9 +15,9 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public string memberAddress;
             public InviteRequestAction type;
             public string status;
-            public string profilePictureUrl;
-            public bool hasClaimedName;
             public string name;
+            public bool hasClaimedName;
+            public string profilePictureUrl;
             public FriendshipStatus friendshipStatus;
 
             public string Id => id;
@@ -50,6 +50,8 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         {
             public CommunityInviteRequestData[] results;
             public int total;
+            public int limit;
+            public int offset;
         }
 
         public GetCommunityInviteRequestResponseData data;

@@ -316,49 +316,14 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        private async UniTask<List<GetCommunityInviteRequestResponse.CommunityInviteRequestData>> GetCommunityRequestsAsync(string communityId, CancellationToken ct)
+        public async UniTask<ICommunityMemberPagedResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/{communityId}/requests";
+            var url = $"{communitiesBaseUrl}/{communityId}/requests?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}&type={action}";
 
             GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                                    .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
 
-            List<GetCommunityInviteRequestResponse.CommunityInviteRequestData> communityRequests = new ();
-            foreach (var request in response.data.results)
-            {
-                if (request.type == InviteRequestAction.request_to_join)
-                    communityRequests.Add(request);
-            }
-
-            return communityRequests;
-        }
-
-        public async UniTask<ICommunityMemberPagedResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
-        {
-            await UniTask.Delay(Random.Range(500, 2000), cancellationToken: ct);
-            int total = action == InviteRequestAction.request_to_join ? 5 : 3;
-
-            GetCommunityInviteRequestResponse.CommunityInviteRequestData[] members = new GetCommunityInviteRequestResponse.CommunityInviteRequestData[total];
-            for (int i = 0; i < total; i++)
-            {
-                members[i] = new GetCommunityInviteRequestResponse.CommunityInviteRequestData
-                {
-                    id = Guid.NewGuid().ToString(),
-                    memberAddress = Guid.NewGuid().ToString(),
-                    profilePictureUrl = string.Empty,
-                    hasClaimedName = Random.Range(0, 101) > 50,
-                    name = $"User {i + 1}",
-                };
-            }
-
-            return new GetCommunityInviteRequestResponse ()
-            {
-                data = new GetCommunityInviteRequestResponse.GetCommunityInviteRequestResponseData
-                {
-                    results = members,
-                    total = total,
-                }
-            };
+            return response;
         }
 
         public async UniTask<bool> ManageInviteRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
