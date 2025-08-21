@@ -51,7 +51,7 @@ namespace DCL.CharacterMotion.Systems
                 characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
 
             // If we are on a platform we save our local rotation
-            PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
+            platformComponent.SaveLocalRotation(characterTransform.forward);
         }
 
         [Query]

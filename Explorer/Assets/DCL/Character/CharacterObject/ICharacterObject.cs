@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using RichTypes;
 using UnityEngine;
 
 namespace DCL.Character
@@ -12,6 +13,8 @@ namespace DCL.Character
         Transform Transform { get; }
 
         Vector3 Position { get; }
+
+        public Option<CurrentPlatform> StandingGround { get; }
 
         class Fake : ICharacterObject
         {
@@ -35,6 +38,20 @@ namespace DCL.Character
             public Transform CameraFocus { get; }
             public Transform Transform { get; }
             public Vector3 Position { get; }
+
+            public Option<CurrentPlatform> StandingGround => Option<CurrentPlatform>.None;
+        }
+    }
+
+    public readonly struct CurrentPlatform
+    {
+        public readonly Collider Collider;
+        public readonly Transform Transform;
+
+        public CurrentPlatform(Collider collider)
+        {
+            Collider = collider;
+            Transform = collider.transform;
         }
     }
 }

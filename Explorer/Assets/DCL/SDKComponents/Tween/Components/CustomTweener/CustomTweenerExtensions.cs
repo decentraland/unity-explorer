@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.Tween.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void UpdateSDKTransform(this ITweener self, ref SDKTransform sdkTransform, PBTween.ModeOneofCase updateType)
+        public static void UpdateSDKTransform(this ITweener self, SDKTransform sdkTransform, PBTween.ModeOneofCase updateType)
         {
             switch (updateType)
             {

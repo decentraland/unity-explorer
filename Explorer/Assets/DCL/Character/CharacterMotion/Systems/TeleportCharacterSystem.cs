@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Character;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -10,6 +11,7 @@ using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
+using RichTypes;
 using System;
 using UnityEngine;
 
@@ -44,6 +46,7 @@ namespace DCL.CharacterMotion.Systems
             AsyncLoadProcessReport? loadReport = teleportIntent.AssetsResolution;
 
             if (loadReport == null)
+
                 // If there are no assets to wait for, teleport immediately
                 ResolveAsSuccess(entity, in teleportIntent, controller, platformComponent, rigidTransform);
             else
@@ -54,6 +57,7 @@ namespace DCL.CharacterMotion.Systems
                 {
                     case UniTaskStatus.Pending:
                         controller.transform.position = teleportIntent.Position;
+
                         // Disable collisions so the scene does not interact with the character, and we avoid possible issues at startup
                         // For example: teleport to Genesis Plaza. The dialog with the barman should not show at the spawn point
                         // See https://github.com/decentraland/unity-explorer/issues/3289 for more info
@@ -139,7 +143,7 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.IsGrounded = false; // teleportation is always above
 
             // Reset the current platform so we don't bounce back if we are touching the world plane
-            platformComponent.CurrentPlatform = null;
+            platformComponent.ResetPlatform();
 
             World.Remove<PlayerTeleportIntent>(playerEntity);
             World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));

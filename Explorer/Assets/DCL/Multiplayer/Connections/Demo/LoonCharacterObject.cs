@@ -1,4 +1,5 @@
 using DCL.Character;
+using RichTypes;
 using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -15,6 +16,8 @@ namespace DCL.Multiplayer.Connections.Demo
         public Transform CameraFocus { get; }
         public Transform Transform { get; }
         public Vector3 Position => randomMoves ? new Vector3(RandomValue(), RandomValue(), RandomValue()) : Vector3.zero;
+
+        public Option<CurrentPlatform> StandingGround => Option<CurrentPlatform>.None;
 
         private int RandomValue() =>
             Random.Range(-magnitude, magnitude);

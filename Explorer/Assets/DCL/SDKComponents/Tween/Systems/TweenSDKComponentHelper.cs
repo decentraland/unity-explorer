@@ -6,6 +6,7 @@ using DCL.SDKComponents.Tween.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using System.Runtime.CompilerServices;
+using UnityEngine.Assertions;
 
 namespace DCL.SDKComponents.Tween.Helpers
 {
@@ -18,15 +19,17 @@ namespace DCL.SDKComponents.Tween.Helpers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void UpdateTweenResult(ref SDKTransform sdkTransform, ref TransformComponent transformComponent, SDKTweenComponent sdkTweenComponent, bool shouldUpdateTransform)
+        public static void UpdateTweenResult(SDKTransform sdkTransform, ref TransformComponent transformComponent, SDKTweenComponent sdkTweenComponent, bool shouldUpdateTransform)
         {
-            sdkTweenComponent.CustomTweener.UpdateSDKTransform(ref sdkTransform, sdkTweenComponent.TweenMode);
+            Assert.IsNotNull(sdkTweenComponent.CustomTweener);
+
+            sdkTweenComponent.CustomTweener!.UpdateSDKTransform(sdkTransform, sdkTweenComponent.TweenMode);
 
             //we only set the SDK transform to dirty here if we didn't already update the transform, but if the sdkTransform was already dirty,
             //we dont change it, as it might have pending updates to be done from the scene side.
             if (shouldUpdateTransform)
             {
-                sdkTweenComponent.CustomTweener.UpdateTransform(transformComponent.Transform, sdkTweenComponent.TweenMode);
+                sdkTweenComponent.CustomTweener!.UpdateTransform(transformComponent.Transform, sdkTweenComponent.TweenMode);
 
                 transformComponent.UpdateCache();
             }
