@@ -331,10 +331,13 @@ namespace DCL.Communities.CommunitiesCard
                 // Check if we have a pending invite to the community
                 bool existsInvitation = await CheckUserInviteOrRequestAsync(InviteRequestAction.invite, ct);
 
-                if (!communityData.IsAccessAllowed() && !existsInvitation)
+                if (!communityData.IsAccessAllowed())
                 {
-                    // Check if we have a pending request to join the community
-                    await CheckUserInviteOrRequestAsync(InviteRequestAction.request_to_join, ct);
+                    if (!existsInvitation)
+                    {
+                        // Check if we have a pending request to join the community
+                        await CheckUserInviteOrRequestAsync(InviteRequestAction.request_to_join, ct);
+                    }
                 }
                 else
                     communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
