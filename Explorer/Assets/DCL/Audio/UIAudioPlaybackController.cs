@@ -82,13 +82,11 @@ namespace DCL.Audio
                 audioData.FadeTweener.Kill();
                 audioData.CancellationTokenSource.SafeCancelAndDispose();
 
-                audioData.FadeTweener = audioData.AudioSource.DOFade(0, fadeDuration)
-                                                 .SetAutoKill()
-                                                 .OnComplete(() =>
-                                                  {
-                                                      if (!mainCancellationTokenSource.IsCancellationRequested)
-                                                          ReleaseOnFadeOut(audioData, audioClipConfig);
-                                                  });
+                audioData.FadeTweener = audioData.AudioSource.DOFade(0, fadeDuration).SetAutoKill().OnComplete(() =>
+                {
+                    if (!mainCancellationTokenSource.IsCancellationRequested) 
+                        ReleaseOnFadeOut(audioData, audioClipConfig);
+                });
             }
         }
 
