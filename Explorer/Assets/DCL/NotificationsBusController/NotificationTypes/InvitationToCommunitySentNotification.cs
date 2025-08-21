@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-using System;
 
 namespace DCL.NotificationsBusController.NotificationTypes
 {
