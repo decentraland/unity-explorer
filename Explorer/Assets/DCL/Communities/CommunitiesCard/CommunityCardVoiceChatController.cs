@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.VoiceChat;
 using System;
 using System.Text;
@@ -44,6 +45,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             ClosePanel?.Invoke();
             voiceChatOrchestrator.JoinCommunityVoiceChat(currentCommunityId, new CancellationToken(), true);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.StartStreamAudio);
             SetPanelStatus(true, false, currentCommunityId);
         }
 
@@ -51,6 +53,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             ClosePanel?.Invoke();
             voiceChatOrchestrator.StartCall(currentCommunityId, VoiceChatType.COMMUNITY);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.StartStreamAudio);
             SetPanelStatus(true, true, currentCommunityId);
         }
 

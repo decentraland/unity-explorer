@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Chat.History;
 using DCL.Utilities;
 using System;
@@ -51,6 +52,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnMicrophoneButtonClicked()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(microphoneHandler.IsMicrophoneEnabled.Value ? view.MuteAudio : view.UnMuteAudio);
             microphoneHandler.ToggleMicrophone();
         }
 
@@ -130,21 +132,25 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnRaiseHandButtonClicked()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RaiseHandAudio);
             orchestrator.RequestToSpeakInCurrentCall();
         }
 
         private void OnLowerHandButtonClicked()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.LowerHandAudio);
             orchestrator.LowerHandInCurrentCall();
         }
 
         private void OnLeaveStageButtonClicked()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.GenericButtonAudio);
             orchestrator.DemoteFromSpeakerInCurrentCall(orchestrator.ParticipantsStateService.LocalParticipantId);
         }
 
         private void OnEndCallButtonClicked()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.GenericButtonAudio);
             cts = cts?.SafeRestart();
             orchestrator.HangUp();
         }

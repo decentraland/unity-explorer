@@ -96,6 +96,7 @@ MonoBehaviour:
   ListenersCount: {fileID: 7481380362271094255}
   <isSpeakingIconRect>k__BackingField: {fileID: 2120390104510176022}
   <isSpeakingIconOuterRect>k__BackingField: {fileID: 3869724940436582434}
+  <StartStreamAudio>k__BackingField: {fileID: 11400000, guid: 40f0c59c2ab6f48e4b20c3f631bddd2f, type: 2}
 --- !u!114 &7297621711789535126
 MonoBehaviour:
   m_ObjectHideFlags: 0

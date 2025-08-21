@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -35,6 +36,9 @@ namespace DCL.Communities.CommunitiesCard
 
         [field: SerializeField]
         internal RectTransform isSpeakingIconOuterRect { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig StartStreamAudio { get; private set; }
 
         private Sequence? isSpeakingCurrentSequence;
 

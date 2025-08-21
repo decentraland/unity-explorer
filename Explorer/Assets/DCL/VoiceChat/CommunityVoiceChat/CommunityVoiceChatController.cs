@@ -1,5 +1,6 @@
 #nullable enable
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Communities;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.Profiles.Helpers;
@@ -107,6 +108,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnEndStream()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.EndStreamAudio);
             voiceChatOrchestrator.EndStreamInCurrentCall();
         }
 

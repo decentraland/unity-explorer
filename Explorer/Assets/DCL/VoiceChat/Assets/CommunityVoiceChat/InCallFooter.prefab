@@ -295,6 +295,11 @@ MonoBehaviour:
   <LeaveStageButton>k__BackingField: {fileID: 9093920860087420819}
   <RaiseHandButton>k__BackingField: {fileID: 1930612449916445568}
   <LowerHandButton>k__BackingField: {fileID: 5347962801883064411}
+  <UnMuteAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
+  <MuteAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <RaiseHandAudio>k__BackingField: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
+  <LowerHandAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <GenericButtonAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!222 &3731252311985573541
 CanvasRenderer:
   m_ObjectHideFlags: 0

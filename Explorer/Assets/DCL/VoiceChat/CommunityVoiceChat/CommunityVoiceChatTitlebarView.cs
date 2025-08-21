@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DG.Tweening;
 using MVC;
 using System;
@@ -47,6 +48,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField]
         public CommunityVoiceChatSearchView CommunityVoiceChatSearchView { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig EndStreamAudio { get; private set; }
 
         private CancellationTokenSource popupCts = new ();
         private UniTaskCompletionSource contextMenuTask = new ();
