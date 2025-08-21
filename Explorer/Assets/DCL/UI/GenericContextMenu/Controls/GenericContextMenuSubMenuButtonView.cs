@@ -24,10 +24,15 @@ namespace DCL.UI.GenericContextMenu.Controls
         internal ControlsContainerView container;
         private bool isHovering;
         private CancellationTokenSource hoverCts;
+        private CancellationTokenSource visibilityResolutionCts;
         private bool isButtonVisible;
 
         private Action containerConfigurationDelegate;
 
+        /// <summary>
+        /// Provides the view with a way to configure the container of the controls when it is shown.
+        /// </summary>
+        /// <param name="containerConfigurationDelegate">A method that configures the container.</param>
         public void SetContainerCreationMethod(Action containerConfigurationDelegate)
         {
             this.containerConfigurationDelegate = containerConfigurationDelegate;
@@ -65,7 +70,10 @@ namespace DCL.UI.GenericContextMenu.Controls
             isButtonVisible = !settings.IsButtonAsynchronous;
 
             if (settings.IsButtonAsynchronous)
-                ResolveVisibilityAsync(settings.asyncVisibilityResolverDelegate, CancellationToken.None).Forget(); // TODO
+            {
+                visibilityResolutionCts = visibilityResolutionCts.SafeRestart();
+                ResolveVisibilityAsync(settings.asyncVisibilityResolverDelegate, visibilityResolutionCts.Token).Forget();
+            }
         }
 
         private async UniTaskVoid ResolveVisibilityAsync(SubMenuContextMenuButtonSettings.VisibilityResolverDelegate asyncVisibilityResolverDelegate, CancellationToken ct)
@@ -79,9 +87,10 @@ namespace DCL.UI.GenericContextMenu.Controls
 
                 isButtonVisible = await asyncVisibilityResolverDelegate(ct);
 
-                if(isHovering)
+                if (isHovering)
                     OnPointerEnter(null);
             }
+            catch (OperationCanceledException) { }
             finally
             {
                 gameObject.SetActive(isButtonVisible);
