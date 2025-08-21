@@ -4,14 +4,16 @@ on:
   workflow_dispatch:
   merge_group: {}
 
+permissions:
+  contents: read
+  packages: write  # needed to push to GHCR on first run (cache miss)
+
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  # Set the exact Unity editor Docker tag you want to use from Docker Hub:
-  # Example: 6000.0.49f1 + windows-il2cpp-3
-  UNITY_VERSION: 6000.0.49f1
-  UNITY_IMAGE_FLAVOR: windows-il2cpp-3
+  UNITY_IMAGE_FLAVOR: windows-il2cpp-3  # change only if you switch flavor
+  GHCR_IMAGE_NAME: unityci-editor
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -66,30 +68,82 @@ jobs:
             -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' `
             -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' |
             Set-Content $jsonFilePath
-
           Get-ChildItem
           Get-Content $jsonFilePath
 
-      # --- Pull Unity Editor image directly from Docker Hub (unityci/editor) ---
-      - name: Set Docker image tag
-        id: tag
+      # --- Detect Unity version from the project ---
+      - name: Read Unity version from ProjectVersion.txt
+        id: unity-version
         shell: pwsh
         run: |
-          $tag = "unityci/editor:windows-$env:UNITY_VERSION-$env:UNITY_IMAGE_FLAVOR"
-          echo "image=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          Write-Host "Using image tag: $tag"
+          $verFile = "Explorer/ProjectSettings/ProjectVersion.txt"
+          if (!(Test-Path $verFile)) {
+            Write-Error "File not found: $verFile"
+            exit 1
+          }
+          $match = Select-String -Path $verFile -Pattern 'm_EditorVersion:\s*(\S+)' | Select-Object -First 1
+          if (-not $match) {
+            Write-Error "Could not parse Unity version from $verFile"
+            exit 1
+          }
+          $ver = $match.Matches[0].Groups[1].Value.Trim()
+          echo "version=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Detected Unity version: $ver"
 
-      - name: Download Unity image from Docker Hub
+      # --- Build image references (GHCR + upstream) ---
+      - name: Set image names
+        id: img
         shell: pwsh
         run: |
-          $img = "${{ steps.tag.outputs.image }}"
-          docker pull $img
+          $tag   = "windows-${{ steps.unity-version.outputs.version }}-${{ env.UNITY_IMAGE_FLAVOR }}"
+          $owner = "${{ github.repository_owner }}".ToLower()
+          $upstream = "unityci/editor:$tag"
+          $ghcr     = "ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
+          echo "tag=$tag"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "upstream=$upstream" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "ghcr=$ghcr"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Upstream image: $upstream"
+          Write-Host "GHCR image:     $ghcr"
+
+      # --- Log into GHCR ---
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Restore Unity image from GHCR (fast path) ---
+      - name: Restore Unity image from GHCR
+        id: restore-image
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          docker pull "${{ steps.img.outputs.ghcr }}"
+
+      # --- Seed GHCR from Docker Hub if missing (one-time per tag) ---
+      - name: Download from Docker Hub and upload to GHCR (if missing)
+        if: steps.restore-image.outcome == 'failure'
+        shell: pwsh
+        run: |
+          $upstream = "${{ steps.img.outputs.upstream }}"
+          $ghcr     = "${{ steps.img.outputs.ghcr }}"
+          Write-Host "GHCR miss. Pulling upstream: $upstream"
+          docker pull $upstream
+          docker tag  $upstream $ghcr
+          docker push $ghcr
+          Write-Host "Seeded GHCR: $ghcr"
+
+      - name: Show Unity image info
+        shell: pwsh
+        run: |
+          $img = "${{ steps.img.outputs.ghcr }}"
           $info   = docker image inspect $img | ConvertFrom-Json
           $sizeGB = [math]::Round($info[0].Size/1GB, 2)
-          Write-Host "Pulled $img (size ~ $sizeGB GB)"
-      # --- end Docker Hub pull ---
+          Write-Host "Using Unity image: $img"
+          Write-Host "Image size: $sizeGB GB"
 
-      # Configure test runner (explicitly point to the image we just pulled)
+      # --- Run tests using the GHCR image ---
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
         timeout-minutes: 60
@@ -97,7 +151,7 @@ jobs:
         with:
           projectPath: Explorer
           testMode: all
-          customImage: ${{ steps.tag.outputs.image }}
+          customImage: ${{ steps.img.outputs.ghcr }}
 
       - name: Convert NUnit to JUnit
         if: always()
