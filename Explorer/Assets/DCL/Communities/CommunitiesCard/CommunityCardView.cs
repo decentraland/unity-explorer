@@ -266,10 +266,8 @@ namespace DCL.Communities.CommunitiesCard
             openContextMenuButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed());
             joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed());
             joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed());
-
-            // TODO (Santi): Manage the visibility of these buttons depending on the requests received by the community
-            requestToJoinButton.gameObject.SetActive(false);
-            cancelRequestButton.gameObject.SetActive(false);
+            requestToJoinButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.none);
+            cancelRequestButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.request_to_join);
         }
 
         public void SetDefaults()

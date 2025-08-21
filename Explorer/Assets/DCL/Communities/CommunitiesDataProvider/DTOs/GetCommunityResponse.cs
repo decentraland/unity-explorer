@@ -17,6 +17,8 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityMemberRole role;
             public int membersCount;
 
+            public InviteRequestAction pendingActionType;
+
             public void DecreaseMembersCount()
             {
                 if (membersCount > 0)
@@ -28,6 +30,9 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
 
             public void SetRole(CommunityMemberRole newRole) =>
                 role = newRole;
+
+            public void SetPendingAction(InviteRequestAction action) =>
+                pendingActionType = action;
 
             public bool IsAccessAllowed() =>
                 privacy == CommunityPrivacy.@public || (privacy == CommunityPrivacy.@private && role != CommunityMemberRole.none);
