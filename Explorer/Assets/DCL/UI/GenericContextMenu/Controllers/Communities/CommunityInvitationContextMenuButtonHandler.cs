@@ -67,7 +67,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
                 return false;
 
             // Asks the server for the data of the communities to which the user can be invited
-            Result<GetInvitableCommunityListResponse> response = await communitiesDataProvider.GetInvitableCommunityList(userWalletId, ct).SuppressToResultAsync();
+            Result<GetInvitableCommunityListResponse> response = await communitiesDataProvider.GetInvitableCommunityListAsync(userWalletId, ct).SuppressToResultAsync();
 
             if (response.Success)
             {
