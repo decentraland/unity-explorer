@@ -80,6 +80,7 @@ namespace DCL.UI.GenericContextMenu
         {
             base.Dispose();
 
+            submenuConfigurationCts.SafeCancelAndDispose();
             controlsPoolManager.Dispose();
             DisposeNativeArrays();
         }
