@@ -73,7 +73,6 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly GalleryEventBus galleryEventBus;
-        private readonly ISelfProfile selfProfile;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -108,8 +107,7 @@ namespace DCL.Communities.CommunitiesCard
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             LambdasProfilesProvider lambdasProfilesProvider,
-            GalleryEventBus galleryEventBus,
-            ISelfProfile selfProfile)
+            GalleryEventBus galleryEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -131,7 +129,6 @@ namespace DCL.Communities.CommunitiesCard
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.galleryEventBus = galleryEventBus;
             this.thumbnailLoader = new ThumbnailLoader(null);
-            this.selfProfile = selfProfile;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -521,11 +518,7 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
             {
-                var ownProfile = await selfProfile.ProfileAsync(ct);
-                if (ownProfile == null)
-                    return;
-
-                var result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, ownProfile.UserId, InviteRequestAction.request_to_join, ct)
+                var result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, web3IdentityCache.Identity?.Address, InviteRequestAction.request_to_join, ct)
                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)

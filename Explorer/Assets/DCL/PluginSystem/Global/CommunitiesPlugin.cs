@@ -151,8 +151,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 web3IdentityCache,
                 lambdasProfilesProvider,
-                galleryEventBus,
-                selfProfile);
+                galleryEventBus);
 
             mvcManager.RegisterController(communityCardController);
 
