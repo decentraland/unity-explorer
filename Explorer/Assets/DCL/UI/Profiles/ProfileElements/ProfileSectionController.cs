@@ -44,6 +44,8 @@ namespace DCL.UI.ProfileElements
 
         private async UniTaskVoid SetupAsync(CancellationToken ct)
         {
+            if (identityCache.Identity == null) return;
+
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
 
             if (profile == null) return;
