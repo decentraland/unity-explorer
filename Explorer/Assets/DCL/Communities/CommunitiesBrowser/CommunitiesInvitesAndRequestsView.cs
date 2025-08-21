@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -73,8 +74,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnDestroy()
         {
             invitesAndRequestsButton.onClick.RemoveAllListeners();
-            thumbnailsCts.Cancel();
-            thumbnailsCts.Dispose();
+            thumbnailsCts.SafeCancelAndDispose();
         }
 
         public void Initialize(ProfileRepositoryWrapper profileDataProvider) =>
@@ -261,7 +261,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void CreateAndSetupRequestCard(GetUserInviteRequestData.UserInviteRequestData community)
         {
-            // TODO (Santi): Create a pool!
             CommunityResultCardView requestedCommunityCardView = requestedToJoinCommunityCardsPool.Get();
 
             // Setup card data
