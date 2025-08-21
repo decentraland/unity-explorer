@@ -40,6 +40,7 @@ namespace DCL.UI.ProfileElements
 
         public override void Dispose()
         {
+            loadProfileCts.SafeCancelAndDispose();
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
 
             base.Dispose();
@@ -69,7 +70,9 @@ namespace DCL.UI.ProfileElements
 
         private async UniTask LoadAsync(CancellationToken ct, int attempts = 0)
         {
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
+            if (identityCache.Identity == null) return;
+
+            Profile? profile = await profileRepository.GetAsync(identityCache.Identity.Address, ct);
 
             if (profile == null) return;
 
@@ -87,7 +90,8 @@ namespace DCL.UI.ProfileElements
                     // We need to get the error so we can retry
                     rethrowError: true);
             }
-            catch (Exception e) when (e is not OperationCanceledException)
+            catch (OperationCanceledException) { }
+            catch (Exception e)
             {
                 // We need to set a delay due to the time that takes to regenerate the thumbnail at the backend
                 await UniTask.Delay(ATTEMPT_PICTURE_DELAY_MS, cancellationToken: ct);
