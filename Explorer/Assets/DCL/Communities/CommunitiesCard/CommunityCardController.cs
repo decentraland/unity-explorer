@@ -19,6 +19,7 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -46,6 +47,8 @@ namespace DCL.Communities.CommunitiesCard
         private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
         private const string DELETE_COMMUNITY_ERROR_TEXT = "There was an error deleting the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
+        private const string REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error requesting to join community. Please try again.";
+        private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -68,6 +71,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly ISelfProfile selfProfile;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -102,7 +106,8 @@ namespace DCL.Communities.CommunitiesCard
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             LambdasProfilesProvider lambdasProfilesProvider,
-            GalleryEventBus galleryEventBus)
+            GalleryEventBus galleryEventBus,
+            ISelfProfile selfProfile)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -124,6 +129,7 @@ namespace DCL.Communities.CommunitiesCard
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.galleryEventBus = galleryEventBus;
             this.thumbnailLoader = new ThumbnailLoader(null);
+            this.selfProfile = selfProfile;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -142,6 +148,8 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
+                viewInstance.RequestToJoinCommunity -= RequestToJoinCommunity;
+                viewInstance.CancelRequestToJoinCommunity -= CancelRequestToJoinCommunity;
                 viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
             }
 
@@ -243,6 +251,8 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
+            viewInstance.RequestToJoinCommunity += RequestToJoinCommunity;
+            viewInstance.CancelRequestToJoinCommunity += CancelRequestToJoinCommunity;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
@@ -374,6 +384,7 @@ namespace DCL.Communities.CommunitiesCard
                 {
                     if (string.Equals(request.communityId, inputData.CommunityId, StringComparison.CurrentCultureIgnoreCase))
                     {
+                        communityData.SetPendingInviteOrRequestId(request.id);
                         communityData.SetPendingAction(action);
                         return true;
                     }
@@ -493,6 +504,62 @@ namespace DCL.Communities.CommunitiesCard
                 communityData.SetRole(CommunityMemberRole.none);
                 viewInstance!.ConfigureInteractionButtons(communityData);
                 viewInstance!.SetCommunityAccessAsAllowed(communityData.IsAccessAllowed());
+            }
+        }
+
+        private void RequestToJoinCommunity()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            RequestToJoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
+            {
+                var ownProfile = await selfProfile.ProfileAsync(ct);
+                if (ownProfile == null)
+                    return;
+
+                var result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, ownProfile.UserId, InviteRequestAction.request_to_join, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                }
+
+                communityData.SetPendingInviteOrRequestId(result.Value);
+                communityData.SetPendingAction(InviteRequestAction.request_to_join);
+                viewInstance!.ConfigureInteractionButtons(communityData);
+            }
+        }
+
+        private void CancelRequestToJoinCommunity()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            CancelRequestToJoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid CancelRequestToJoinCommunityAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData.id, communityData.pendingInviteOrRequestId, InviteRequestIntention.cancelled, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                }
+
+                communityData.SetPendingInviteOrRequestId(null);
+                communityData.SetPendingAction(InviteRequestAction.none);
+                viewInstance!.ConfigureInteractionButtons(communityData);
             }
         }
 

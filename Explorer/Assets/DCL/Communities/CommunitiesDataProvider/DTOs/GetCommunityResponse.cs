@@ -17,6 +17,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityMemberRole role;
             public int membersCount;
 
+            public string pendingInviteOrRequestId;
             public InviteRequestAction pendingActionType;
 
             public void DecreaseMembersCount()
@@ -30,6 +31,9 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
 
             public void SetRole(CommunityMemberRole newRole) =>
                 role = newRole;
+
+            public void SetPendingInviteOrRequestId(string inviteOrRequestId) =>
+                pendingInviteOrRequestId = inviteOrRequestId;
 
             public void SetPendingAction(InviteRequestAction action) =>
                 pendingActionType = action;

@@ -581,7 +581,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ct.IsCancellationRequested)
                 return;
 
-            if (!result.Success || !result.Value)
+            if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
                 await warningNotificationView.AnimatedShowAsync(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
@@ -726,7 +726,10 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
             }
 
-            view.UpdateRequestedToJoinCommunity(communityId, requestId, true, success, alreadyExistsInvitation);
+            if (!isInvitesAndRequestsSectionActive)
+                view.UpdateRequestedToJoinCommunity(communityId, requestId, true, success, alreadyExistsInvitation);
+            else
+                LoadInvitesAndRequestsResults();
         }
 
         private void OnCommunityRequestToJoinCancelled(string communityId, bool success)

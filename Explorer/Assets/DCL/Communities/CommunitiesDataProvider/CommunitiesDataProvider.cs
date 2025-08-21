@@ -385,7 +385,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return result.Success;
         }
 
-        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
+        public async UniTask<string> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/requests";
             string jsonBody = JsonUtility.ToJson(new SendInviteOrRequestToJoinBody
@@ -398,10 +398,12 @@ namespace DCL.Communities.CommunitiesDataProvider
                                                    .CreateFromJson<SendInviteOrRequestToJoinAsyncResponse>(WRJsonParser.Newtonsoft)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (action == InviteRequestAction.request_to_join)
-                CommunityRequestedToJoin?.Invoke(communityId, result.Success ? result.Value.data.id : null, result.Success);
+            string inviteOrRequestIdResult = result.Success ? result.Value.data.id : null;
 
-            return result.Success;
+            if (action == InviteRequestAction.request_to_join)
+                CommunityRequestedToJoin?.Invoke(communityId, inviteOrRequestIdResult, result.Success);
+
+            return inviteOrRequestIdResult;
         }
 
         public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityListAsync(string userAddress, CancellationToken ct)
