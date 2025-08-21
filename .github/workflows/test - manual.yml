@@ -4,12 +4,17 @@ on:
   workflow_dispatch:
   merge_group: {}
 
+permissions:
+  contents: read
+  packages: write  # allow pushing the image to GHCR on first run (cache miss)
+
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
   UNITY_VERSION: 6000.0.49f1
   UNITY_IMAGE_FLAVOR: windows-il2cpp-3
+  GHCR_IMAGE_NAME: unityci-editor
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -67,49 +72,53 @@ jobs:
           Get-ChildItem
           Get-Content $jsonFilePath
 
-      # --- Cache the Unity IL2CPP Docker image ---
-      - name: Restore cached Unity Docker image
-        uses: actions/cache@v4
-        id: unity-image-cache
+      # ---------- Use GHCR as an image cache ----------
+      - name: Set Unity image names
+        id: img
+        shell: pwsh
+        run: |
+          $tag   = "windows-$env:UNITY_VERSION-$env:UNITY_IMAGE_FLAVOR"
+          $owner = "${{ github.repository_owner }}".ToLower()
+          $upstream = "unityci/editor:$tag"
+          $ghcr    = "ghcr.io/$owner/$env:GHCR_IMAGE_NAME:$tag"
+          echo "tag=$tag"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "upstream=$upstream" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "ghcr=$ghcr"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          path: ${{ format('unityci-editor-{0}-{1}.tar.zst', env.UNITY_VERSION, env.UNITY_IMAGE_FLAVOR) }}
-          key: unity-image-${{ runner.os }}-${{ env.UNITY_VERSION }}-${{ env.UNITY_IMAGE_FLAVOR }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Unity Docker image (if cached)
-        if: steps.unity-image-cache.outputs.cache-hit == 'true'
+      - name: Restore Unity Docker image from GHCR
+        id: restore-image
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          docker pull "${{ steps.img.outputs.ghcr }}"
+
+      - name: Download Unity Docker image (if not in GHCR)
+        if: steps.restore-image.outcome == 'failure'
         shell: pwsh
         run: |
-          $img  = "unityci/editor:windows-$env:UNITY_VERSION-$env:UNITY_IMAGE_FLAVOR"
-          $tarz = "unityci-editor-$env:UNITY_VERSION-$env:UNITY_IMAGE_FLAVOR.tar.zst"
-          $zstd = (Get-Command zstd -ErrorAction SilentlyContinue)?.Source
-          if (-not $zstd) { $zstd = "$env:ProgramFiles\Git\usr\bin\zstd.exe" }
-          & $zstd -d -c $tarz | docker load
-          $info   = docker image inspect $img | ConvertFrom-Json
-          $sizeGB = [math]::Round($info[0].Size/1GB, 2)
-          $virtGB = [math]::Round($info[0].VirtualSize/1GB, 2)
-          $arcGB  = [math]::Round((Get-Item $tarz).Length/1GB, 2)
-          Write-Host "Loaded image: $img"
-          Write-Host "Compressed archive: $arcGB GB"
-          Write-Host "Image Size: $sizeGB GB | VirtualSize: $virtGB GB"
+          $upstream = "${{ steps.img.outputs.upstream }}"
+          $ghcr     = "${{ steps.img.outputs.ghcr }}"
+          Write-Host "GHCR copy not found. Downloading from Docker Hub: $upstream"
+          docker pull $upstream
+          docker tag  $upstream $ghcr
+          docker push $ghcr
+          Write-Host "Uploaded image to GHCR for future runs."
 
-      - name: Pull & cache Unity Docker image (if cache miss)
-        if: steps.unity-image-cache.outputs.cache-hit != 'true'
+      - name: Show Unity image info
         shell: pwsh
         run: |
-          $img  = "unityci/editor:windows-$env:UNITY_VERSION-$env:UNITY_IMAGE_FLAVOR"
-          docker pull $img
-          $info   = docker image inspect $img | ConvertFrom-Json
+          $info = docker image inspect "${{ steps.img.outputs.ghcr }}" | ConvertFrom-Json
           $sizeGB = [math]::Round($info[0].Size/1GB, 2)
-          $virtGB = [math]::Round($info[0].VirtualSize/1GB, 2)
-          Write-Host "Pulled image: $img"
-          Write-Host "Image Size: $sizeGB GB | VirtualSize: $virtGB GB"
-          $tarz = "unityci-editor-$env:UNITY_VERSION-$env:UNITY_IMAGE_FLAVOR.tar.zst"
-          $zstd = (Get-Command zstd -ErrorAction SilentlyContinue)?.Source
-          if (-not $zstd) { $zstd = "$env:ProgramFiles\Git\usr\bin\zstd.exe" }
-          docker save $img | & $zstd -19 -T0 -o $tarz
-          $arcGB = [math]::Round((Get-Item $tarz).Length/1GB, 2)
-          Write-Host "Compressed archive: $arcGB GB"
-      # --- end image cache ---
+          Write-Host "Using Unity image: ${{ steps.img.outputs.ghcr }}"
+          Write-Host "Image size: $sizeGB GB"
+      # ---------- end GHCR block ----------
 
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
@@ -118,7 +127,7 @@ jobs:
         with:
           projectPath: Explorer
           testMode: all
-          customImage: ${{ format('unityci/editor:windows-{0}-{1}', env.UNITY_VERSION, env.UNITY_IMAGE_FLAVOR) }}
+          customImage: ${{ steps.img.outputs.ghcr }}
 
       - name: Convert NUnit to JUnit
         if: always()
