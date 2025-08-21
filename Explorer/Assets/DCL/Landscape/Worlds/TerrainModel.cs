@@ -12,6 +12,7 @@ namespace DCL.Landscape
 
         public readonly int2 MinParcel;
         public readonly int2 MaxParcel;
+        public readonly int PaddingInParcels;
 
         public readonly int2 SizeInUnits;
         public readonly int2 MinInUnits;
@@ -33,6 +34,7 @@ namespace DCL.Landscape
             ChunkSizeInUnits = 0;
             ChunkSizeInParcels = 0;
 
+            PaddingInParcels = paddingInParcels;
             int2 sizeInParcels = world.SizeInParcels + (2 * paddingInParcels);
             int2 centerInParcels = world.CenterInParcels;
             MinParcel = centerInParcels - (sizeInParcels / 2);
