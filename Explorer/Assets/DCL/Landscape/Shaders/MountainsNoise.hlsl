@@ -3,8 +3,8 @@
 void Noise_float(float3 PositionIn, float ParcelSize, float4 TerrainBounds,
                  UnityTexture2D OccupancyMap, float HeightScale, float MinDistOccupancy, out float3 PositionOut, out float3 Normal)
 {
-    PositionOut.x = clamp(PositionIn.x, TerrainBounds.x, TerrainBounds.y);
-    PositionOut.z = clamp(PositionIn.z, TerrainBounds.z, TerrainBounds.w);
+    PositionOut.x = clamp(PositionIn.x, TerrainBounds.x, TerrainBounds.z);
+    PositionOut.z = clamp(PositionIn.z, TerrainBounds.y, TerrainBounds.w);
 
     float2 uv = (PositionOut.xz * ParcelSize + OccupancyMap.texelSize.z * 0.5)
         * OccupancyMap.texelSize.x;

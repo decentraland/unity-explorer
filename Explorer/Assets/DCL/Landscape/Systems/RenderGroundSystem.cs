@@ -94,8 +94,10 @@ namespace DCL.Landscape.Systems
             if (materialProperties == null)
             {
                 materialProperties = new MaterialPropertyBlock();
-                materialProperties.SetTexture(OCCUPANCY_MAP_ID, terrainGenerator.OccupancyMap);
                 materialProperties.SetFloat(PARCEL_SIZE_ID, parcelSize);
+
+                if (terrainGenerator.OccupancyMap != null)
+                    materialProperties.SetTexture(OCCUPANCY_MAP_ID, terrainGenerator.OccupancyMap);
 
                 materialProperties.SetVector(TERRAIN_BOUNDS_ID, new Vector4(
                     terrainBounds.Min.x, terrainBounds.Min.z, terrainBounds.Max.x,
