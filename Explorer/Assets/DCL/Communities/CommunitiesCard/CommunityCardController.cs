@@ -17,6 +17,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -85,6 +86,7 @@ namespace DCL.Communities.CommunitiesCard
         private ISpriteCache? spriteCache;
         private bool isSpriteCacheExternal;
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly INotificationsBusController notificationsBus;
 
         private GetCommunityResponse.CommunityData communityData;
         private string[] communityPlaceIds;
@@ -107,7 +109,8 @@ namespace DCL.Communities.CommunitiesCard
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             LambdasProfilesProvider lambdasProfilesProvider,
-            GalleryEventBus galleryEventBus)
+            GalleryEventBus galleryEventBus,
+            INotificationsBusController notificationsBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -129,6 +132,7 @@ namespace DCL.Communities.CommunitiesCard
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.galleryEventBus = galleryEventBus;
             this.thumbnailLoader = new ThumbnailLoader(null);
+            this.notificationsBus = notificationsBus;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -271,7 +275,8 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.warningNotificationView,
                 sharedSpaceManager,
                 chatEventBus,
-                web3IdentityCache);
+                web3IdentityCache,
+                notificationsBus);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,

@@ -36,3 +36,5 @@ MonoBehaviour:
   <KickUserText>k__BackingField: Remove Member
   <BanUserSprite>k__BackingField: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
   <BanUserText>k__BackingField: Ban
+  <InviteToCommunitySprite>k__BackingField: {fileID: 21300000, guid: 8be81fdf59a094b458426c66803c47e3, type: 3}
+  <InviteToCommunityText>k__BackingField: Invite to Community

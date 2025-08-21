@@ -59,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly INotificationsBusController notificationsBus;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -88,7 +89,8 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             LambdasProfilesProvider lambdasProfilesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            INotificationsBusController notificationsBus)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -111,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.galleryEventBus = galleryEventBus;
+            this.notificationsBus = notificationsBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
             notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
         }
@@ -151,7 +154,8 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 web3IdentityCache,
                 lambdasProfilesProvider,
-                galleryEventBus);
+                galleryEventBus,
+                notificationsBus);
 
             mvcManager.RegisterController(communityCardController);
 

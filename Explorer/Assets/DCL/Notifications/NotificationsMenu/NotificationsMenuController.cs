@@ -199,9 +199,9 @@ namespace DCL.Notifications.NotificationsMenu
 
             notificationView.NotificationImage.SetImage(null);
 
-            if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
+            if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite, true);
-            else
+            else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
                 LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts!.Token).Forget();
 
             return listItem;
@@ -216,7 +216,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.Notification = notificationData;
             notificationView.CloseButton.gameObject.SetActive(false);
             notificationView.UnreadImage.SetActive(!notificationData.Read);
-            notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
+            notificationView.TimeText.text = notificationData.Timestamp != null ? TimestampUtilities.GetRelativeTime(notificationData.Timestamp) : string.Empty;
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
 

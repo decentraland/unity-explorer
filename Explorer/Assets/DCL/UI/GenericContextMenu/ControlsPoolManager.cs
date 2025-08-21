@@ -85,7 +85,11 @@ namespace DCL.UI.GenericContextMenu
             ObjectPool<T> pool = new (
                 createFunc: createFunc,
                 actionOnGet: component => component.gameObject.SetActive(true),
-                actionOnRelease: component => component?.gameObject.SetActive(false),
+                actionOnRelease: component =>
+                {
+                    component?.gameObject.SetActive(false);
+                    component?.transform.SetParent(controlsParent);
+                },
                 actionOnDestroy: component => Object.Destroy(component.gameObject));
 
             Type type = typeof(T);
@@ -220,13 +224,53 @@ namespace DCL.UI.GenericContextMenu
             return view;
         }
 
+        public void ReleaseControl<T>(T control) where T : GenericContextMenuComponentBase
+        {
+            switch (control)
+            {
+                case GenericContextMenuScrollableButtonListView view:
+                    GetPoolFromRegistry<GenericContextMenuScrollableButtonListView>().Release(view);
+                    break;
+                case GenericContextMenuToggleWithIconView view:
+                    GetPoolFromRegistry<GenericContextMenuToggleWithIconView>().Release(view);
+                    break;
+                case GenericContextMenuUserProfileView view:
+                    GetPoolFromRegistry<GenericContextMenuUserProfileView>().Release(view);
+                    break;
+                case GenericContextMenuSeparatorView view:
+                    GetPoolFromRegistry<GenericContextMenuSeparatorView>().Release(view);
+                    break;
+                case GenericContextMenuButtonWithTextView view:
+                    GetPoolFromRegistry<GenericContextMenuButtonWithTextView>().Release(view);
+                    break;
+                case GenericContextMenuSimpleButtonView view:
+                    GetPoolFromRegistry<GenericContextMenuSimpleButtonView>().Release(view);
+                    break;
+                case GenericContextMenuSubMenuButtonView view:
+                    GetPoolFromRegistry<GenericContextMenuSubMenuButtonView>().Release(view);
+                    break;
+                case GenericContextMenuToggleView view:
+                    GetPoolFromRegistry<GenericContextMenuToggleView>().Release(view);
+                    break;
+                case GenericContextMenuToggleWithCheckView view:
+                    GetPoolFromRegistry<GenericContextMenuToggleWithCheckView>().Release(view);
+                    break;
+                case GenericContextMenuButtonWithStringDelegateView view:
+                    GetPoolFromRegistry<GenericContextMenuButtonWithStringDelegateView>().Release(view);
+                    break;
+                case GenericContextMenuTextView view:
+                    GetPoolFromRegistry<GenericContextMenuTextView>().Release(view);
+                    break;
+            }
+
+            control.UnregisterListeners();
+            currentControls.Remove(control);
+        }
+
         public void ReleaseAllCurrentControls()
         {
-            foreach (GenericContextMenuComponentBase control in currentControls)
-            {
-                control.UnregisterListeners();
-                poolRegistry[control.GetType()].ReleaseAction.Invoke(control);
-            }
+            while(currentControls.Count > 0)
+                ReleaseControl(currentControls[0]);
 
             foreach (var containerView in currentContainers)
                 poolRegistry[typeof(ControlsContainerView)].ReleaseAction.Invoke(containerView);

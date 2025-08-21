@@ -297,7 +297,8 @@ namespace DCL.Chat
                 new GenericContextMenu(chatConfig.chatContextMenuSettings.ContextMenuWidth,
                         verticalLayoutPadding: chatConfig.chatContextMenuSettings.VerticalPadding,
                         elementsSpacing: chatConfig.chatContextMenuSettings.ElementsSpacing,
-                        offsetFromTarget: chatConfig.chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget)
+                        offsetFromTarget: chatConfig.chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget,
+                        anchorPoint:ContextMenuOpenDirection.TOP_LEFT)
                     .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] =
                         new ToggleWithCheckContextMenuControlSettings("All Messages",
                             x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
