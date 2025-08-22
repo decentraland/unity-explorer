@@ -29,7 +29,7 @@ namespace DCL.Landscape.Systems
 
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
         private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
-        private static readonly int TERRAIN_HEIGHT_ID = Shader.PropertyToID("_TerrainHeight");
+        private static readonly int TERRAIN_HEIGHT_ID = Shader.PropertyToID("_terrainHeight");
         private static readonly int OCCUPANCY_MAP_ID = Shader.PropertyToID("_OccupancyMap");
         private static readonly int TERRAIN_BOUNDS_ID = Shader.PropertyToID("_TerrainBounds");
 
