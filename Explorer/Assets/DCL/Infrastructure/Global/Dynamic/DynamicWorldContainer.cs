@@ -345,6 +345,8 @@ namespace Global.Dynamic
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
+            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
+
             var realmContainer = RealmContainer.Create(
                 staticContainer,
                 identityCache,
@@ -355,7 +357,7 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
-                new TeleportController(staticContainer.SceneReadinessReportQueue));
+                teleportController);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
@@ -523,7 +525,7 @@ namespace Global.Dynamic
                 new WorldChatCommand(chatTeleporter),
                 new DebugPanelChatCommand(debugBuilder),
                 new ShowEntityChatCommand(worldInfoHub),
-                new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache),
+                new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new VersionChatCommand(dclVersion),

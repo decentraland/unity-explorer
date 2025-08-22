@@ -15,6 +15,7 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -57,6 +58,7 @@ namespace DCL.Navmap
         private Vector2Int? currentBaseParcel;
         private Vector2Int? destination;
         private Section? currentSection;
+        private Vector2Int? originParcel;
 
         public PlaceInfoPanelController(PlaceInfoPanelView view,
             IWebRequestController webRequestController,
@@ -140,14 +142,11 @@ namespace DCL.Navmap
             view.EventsTabContainer.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
-            Action<CameraReelResponseCompact> reelDeleteIntention,  Action<CameraReelResponseCompact> reelListRefreshIntention) =>
-            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
-                true, PhotoDetailParameter.CallerContext.PlaceInfoPanel, reelDeleteIntention,
-                reelListRefreshIntention, galleryEventBus)));
-
-        private void UpdatePhotosTabText(int count) =>
-            view.SetPhotoTabText(count);
+        public void Dispose()
+        {
+            cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
+            cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
+        }
 
         public void Show()
         {
@@ -187,6 +186,17 @@ namespace DCL.Navmap
             SetCategories(place);
 
             ClearEventElements();
+        }
+
+        public void SetOriginParcel(Vector2Int? originParcel)
+        {
+            this.originParcel = originParcel;
+
+            if (originParcel == null) return;
+            if (place == null) return;
+
+            if (TeleportUtils.IsRoad(place.title))
+                view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
         }
 
         public void SetLiveEvent(EventDTO @event)
@@ -292,7 +302,10 @@ namespace DCL.Navmap
                 mapPathEventBus.ArrivedToDestination();
 
             navmapBus.JumpIn(place!);
-            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {currentBaseParcel?.x},{currentBaseParcel?.y}", "jump in");
+
+            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) ? originParcel : currentBaseParcel;
+
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {destinationParcel?.x},{destinationParcel?.y}", "jump in");
         }
 
         private void Share()
@@ -441,17 +454,20 @@ namespace DCL.Navmap
             cameraReelGalleryController?.ShowPlaceGalleryAsync(place?.id, showPlaceGalleryCancellationToken!.Token).Forget();
         }
 
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
+            Action<CameraReelResponseCompact> reelDeleteIntention,  Action<CameraReelResponseCompact> reelListRefreshIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
+                true, PhotoDetailParameter.CallerContext.PlaceInfoPanel, reelDeleteIntention,
+                reelListRefreshIntention, galleryEventBus)));
+
+        private void UpdatePhotosTabText(int count) =>
+            view.SetPhotoTabText(count);
+
         public enum Section
         {
             OVERVIEW,
             PHOTOS,
             EVENTS,
-        }
-
-        public void Dispose()
-        {
-            cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
-            cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
         }
     }
 }
