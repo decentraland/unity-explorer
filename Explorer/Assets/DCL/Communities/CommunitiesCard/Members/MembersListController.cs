@@ -517,7 +517,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.SetCommunityData(community, panelLifecycleTask!.Task, ct);
 
             FetchNewDataAsync(ct).Forget();
-            FetchRequestsToJoinAsync(ct).Forget();
+
+            if (community.privacy == CommunityPrivacy.@private)
+                FetchRequestsToJoinAsync(ct).Forget();
+
             return;
 
             async UniTaskVoid FetchRequestsToJoinAsync(CancellationToken ctkn)
