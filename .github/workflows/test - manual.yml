@@ -9,7 +9,6 @@ permissions:
   packages: write
   checks: write
   actions: read
-  artifacts: write
 
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
