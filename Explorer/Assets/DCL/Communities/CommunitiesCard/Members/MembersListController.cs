@@ -167,6 +167,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 }
 
                 RefreshGrid(true);
+
+                if(currentSectionFetchData.Items.Count == 0)
+                    view.SetEmptyStateActive(true);
             }
 
         }
@@ -525,7 +528,6 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid FetchRequestsToJoinAsync(CancellationToken ctkn)
             {
-                //communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request, 1, 0, ctkn);
                 Result<ICommunityMemberPagedResponse> response = await communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request_to_join, 1, 0, ctkn)
                                                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
