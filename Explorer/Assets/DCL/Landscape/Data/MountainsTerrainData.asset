@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b04c705ba83e914479b78c338b400965, type: 3}
+  m_Name: MountainsTerrainData
+  m_EditorClassIdentifier: 
+  <RandomSeed>k__BackingField: 1
+  <GroundMaterial>k__BackingField: {fileID: 0}
+  <ParcelSize>k__BackingField: 16
+  <Bounds>k__BackingField:
+    x: -152
+    y: -152
+    width: 318
+    height: 313
+  <MaxHeight>k__BackingField: 13
+  <OccupancyMap>k__BackingField: {fileID: 0}
+  <DetailDistance>k__BackingField: 200
+  <RenderGround>k__BackingField: 1
+  <RenderTrees>k__BackingField: 0
+  <RenderDetail>k__BackingField: 1
+  <GroundInstanceCapacity>k__BackingField: 80
+  <TreeInstanceCapacity>k__BackingField: 3000
+  <ClutterInstanceCapacity>k__BackingField: 1
+  <GrassInstanceCapacity>k__BackingField: 1
+  <FlowerInstanceCapacity>k__BackingField: 1
+  <DetailInstanceCapacity>k__BackingField: 40000
+  <GroundMeshes>k__BackingField: []
+  <TreePrototypes>k__BackingField: []
+  <GrassPrototypes>k__BackingField: []
+  <FlowerPrototypes>k__BackingField: []
+  <DetailPrototypes>k__BackingField: []

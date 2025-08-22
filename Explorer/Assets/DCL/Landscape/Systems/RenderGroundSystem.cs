@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
+using Decentraland.Terrain;
 using ECS.Abstract;
 using Unity.Collections;
 using Unity.Jobs;
@@ -15,6 +16,7 @@ using Unity.Mathematics;
 using Unity.Mathematics.Geometry;
 using UnityEngine;
 using static Unity.Mathematics.math;
+using ClipVolume = DCL.Landscape.Utils.ClipVolume;
 
 namespace DCL.Landscape.Systems
 {
@@ -26,6 +28,7 @@ namespace DCL.Landscape.Systems
         private readonly LandscapeData landscapeData;
         private readonly TerrainGenerator terrainGenerator;
         private MaterialPropertyBlock materialProperties;
+        private readonly GrassIndirectRenderer grassIndirectRenderer;
 
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
         private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
@@ -38,6 +41,7 @@ namespace DCL.Landscape.Systems
         {
             this.landscapeData = landscapeData;
             this.terrainGenerator = terrainGenerator;
+            grassIndirectRenderer = landscapeData.GrassIndirectRenderer;
         }
 
         protected override void Update(float t)
@@ -45,13 +49,19 @@ namespace DCL.Landscape.Systems
             if (!landscapeData.RenderGround || !terrainGenerator.IsTerrainShown)
                 return;
 
-            RenderGroundQuery(World);
+            SingleInstanceEntity cameraEntity = World.CacheCamera();
+
+            if (World.TryGet<ICinemachinePreset>(cameraEntity, out ICinemachinePreset? cinemachinePreset))
+            {
+                Camera camera = cinemachinePreset!.Brain.OutputCamera;
+
+                RenderGroundInternal(camera);
+                grassIndirectRenderer.Render(landscapeData.TerrainData, camera, true);
+            }
         }
 
-        [Query]
-        private void RenderGround(ICinemachinePreset cinemachinePreset)
+        private void RenderGroundInternal(Camera camera)
         {
-            Camera camera = cinemachinePreset.Brain.OutputCamera;
             float3 cameraPosition = camera.transform.position;
 
             if (cameraPosition.y < 0f)
