@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Navmap
 {
@@ -18,11 +19,13 @@ namespace DCL.Navmap
 
     public struct AdditionalParams
     {
-        public bool IsFromSearchResults;
+        public readonly bool IsFromSearchResults;
+        public readonly Vector2Int? OriginalParcel;
 
-        public AdditionalParams(bool isFromSearchResults)
+        public AdditionalParams(bool isFromSearchResults, Vector2Int? originalParcel = null)
         {
             this.IsFromSearchResults = isFromSearchResults;
+            this.OriginalParcel = originalParcel;
         }
     }
 }
