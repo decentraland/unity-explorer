@@ -235,19 +235,17 @@ namespace DCL.Landscape
                         rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
                         rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
+                        OccupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
+                            TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+
+                        OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
+                        OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+
+                        occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                        occupancyMapSize = OccupancyMap.width; // width == height
+
                         if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
-                        {
-                            OccupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
-                                TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
-
-                            OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
-                            OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-
-                            occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
-                            occupancyMapSize = OccupancyMap.width; // width == height
-
                             await LoadTreesAsync();
-                        }
 
                         Ocean = factory.CreateOcean(rootGo);
                         Wind = factory.CreateWind();
