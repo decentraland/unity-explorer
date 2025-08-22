@@ -37,6 +37,7 @@ namespace DCL.Landscape.Systems
 
         private bool drawTerrain;
         private bool drawDetail;
+        private bool renderGround;
 
         private LandscapeTerrainCullingSystem(World world,
             LandscapeData landscapeData,
@@ -56,6 +57,7 @@ namespace DCL.Landscape.Systems
 
             drawTerrain = landscapeData.drawTerrain;
             drawDetail = landscapeData.drawTerrainDetails;
+            renderGround = landscapeData.RenderGround;
         }
 
         protected override void OnDispose()
@@ -111,9 +113,10 @@ namespace DCL.Landscape.Systems
                 Profiler.BeginSample("UpdateTerrainVisibility.Update");
                 jobHandle.Complete();
 
-                bool isSettingsDirty = drawTerrain != landscapeData.drawTerrain || drawDetail != landscapeData.drawTerrainDetails;
+                bool isSettingsDirty = drawTerrain != landscapeData.drawTerrain || drawDetail != landscapeData.drawTerrainDetails || renderGround != landscapeData.RenderGround;
                 drawTerrain = landscapeData.drawTerrain;
                 drawDetail = landscapeData.drawTerrainDetails;
+                renderGround = landscapeData.RenderGround;
 
                 IReadOnlyList<Terrain> terrains = terrainGenerator.Terrains;
 
@@ -123,8 +126,11 @@ namespace DCL.Landscape.Systems
                     if (!visibility.IsDirty && !isSettingsDirty) continue;
 
                     Terrain terrain = terrains[i];
-                    terrain.drawHeightmap = visibility.IsVisible && landscapeData.drawTerrain;
+                    terrain.drawHeightmap = visibility.IsVisible && landscapeData is { drawTerrain: true, RenderGround: false };
                     terrain.drawTreesAndFoliage = visibility is { IsVisible: true, IsAtDistance: true } && landscapeData.drawTerrainDetails;
+
+                    if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS && landscapeData.RenderGround)
+                        terrain.gameObject.SetActive(terrain.drawHeightmap);
                 }
 
                 Profiler.EndSample();
