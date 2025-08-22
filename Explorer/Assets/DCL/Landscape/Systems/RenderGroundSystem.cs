@@ -51,12 +51,13 @@ namespace DCL.Landscape.Systems
 
             SingleInstanceEntity cameraEntity = World.CacheCamera();
 
-            if (World.TryGet<ICinemachinePreset>(cameraEntity, out ICinemachinePreset? cinemachinePreset))
+            if (World.TryGet(cameraEntity, out ICinemachinePreset? cinemachinePreset))
             {
                 Camera camera = cinemachinePreset!.Brain.OutputCamera;
 
                 RenderGroundInternal(camera);
-                grassIndirectRenderer.Render(landscapeData.TerrainData, camera, true);
+
+                // grassIndirectRenderer.Render(landscapeData.TerrainData, camera, true);
             }
         }
 

@@ -126,7 +126,7 @@ namespace DCL.Landscape.Systems
                     if (!visibility.IsDirty && !isSettingsDirty) continue;
 
                     Terrain terrain = terrains[i];
-                    terrain.drawHeightmap = visibility.IsVisible && landscapeData is { drawTerrain: true, RenderGround: false };
+                    terrain.drawHeightmap = visibility.IsVisible && landscapeData is { drawTerrain: true };
                     terrain.drawTreesAndFoliage = visibility is { IsVisible: true, IsAtDistance: true } && landscapeData.drawTerrainDetails;
 
                     if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS && landscapeData.RenderGround)
