@@ -49,6 +49,9 @@ namespace DCL.Landscape.Systems
             if (!landscapeData.RenderGround || !terrainGenerator.IsTerrainShown)
                 return;
 
+            if (landscapeData.TerrainData.OccupancyMap == null)
+                landscapeData.TerrainData.OccupancyMap = terrainGenerator.OccupancyMap;
+
             SingleInstanceEntity cameraEntity = World.CacheCamera();
 
             if (World.TryGet(cameraEntity, out ICinemachinePreset? cinemachinePreset))
@@ -56,7 +59,6 @@ namespace DCL.Landscape.Systems
                 Camera camera = cinemachinePreset!.Brain.OutputCamera;
 
                 RenderGroundInternal(camera);
-
                 // grassIndirectRenderer.Render(landscapeData.TerrainData, camera, true);
             }
         }
