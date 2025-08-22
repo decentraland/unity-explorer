@@ -143,7 +143,9 @@ namespace DCL.Profiles.Self
             if (!updateAvatarInWorld)
             {
                 await profileRepository.SetAsync(newProfile, ct);
-                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+                    // force to fetch the profile: there are some fields that might change, like the profile picture url
+                    getFromCacheIfPossible: false);
             }
 
             // Update profile immediately to prevent UI inconsistencies
@@ -155,7 +157,9 @@ namespace DCL.Profiles.Self
             try
             {
                 await profileRepository.SetAsync(newProfile, ct);
-                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+                    // force to fetch the profile: there are some fields that might change, like the profile picture url
+                    getFromCacheIfPossible: false);
 
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack
