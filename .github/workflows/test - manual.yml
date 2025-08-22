@@ -14,7 +14,7 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  UNITY_IMAGE_FLAVOR: windows-il2cpp-3  # change only if you switch flavor
+  UNITY_IMAGE_FLAVOR: windows-mono-3  # change only if you switch flavor
   GHCR_IMAGE_NAME: unityci-editor
 
 concurrency:
