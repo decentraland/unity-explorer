@@ -462,7 +462,7 @@
       }
     },
     "decentraland.grassshader": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader#feat/grassindirect",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -470,7 +470,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "7aa85f76fe500491d47395e4198fa6f96532c073"
+      "hash": "4f3fe2510f5fabe3f0c38c8ccf0aca2835194d45"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
@@ -501,6 +501,17 @@
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
       "hash": "4d02af4b7063c3d20ccbda56e6ed7029cc3e1197"
+    },
+    "org.decentraland.terrain": {
+      "version": "https://github.com/decentraland/TerrainProto.git?path=/Packages/org.decentraland.terrain",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.burst": "1.8.21",
+        "com.unity.collections": "2.5.1",
+        "com.unity.mathematics": "1.3.2"
+      },
+      "hash": "d5d82b620cba5dafd8679bc0d931536ba1442b65"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
