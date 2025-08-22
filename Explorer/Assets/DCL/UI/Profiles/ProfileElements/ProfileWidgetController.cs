@@ -13,7 +13,7 @@ namespace DCL.UI.ProfileElements
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {
         private const int MAX_PICTURE_ATTEMPTS = 10;
-        private const int ATTEMPT_PICTURE_DELAY_MS = 20000;
+        private const int ATTEMPT_PICTURE_DELAY_MS = 30000;
         private const string GUEST_NAME = "Guest";
 
         private readonly IWeb3IdentityCache identityCache;
