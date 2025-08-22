@@ -14,8 +14,8 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  UNITY_IMAGE_FLAVOR: windows-mono   # was windows-mono-3
-  UNITY_IMAGE_VERSION: 3.1.0         # NEW: GameCI image version suffix
+  UNITY_IMAGE_FLAVOR: base
+  UNITY_IMAGE_VERSION: 3      
   GHCR_IMAGE_NAME: unityci-editor
 
 concurrency:
@@ -102,8 +102,8 @@ jobs:
           $flavor  = "${{ env.UNITY_IMAGE_FLAVOR }}"
           $imgVer  = "${{ env.UNITY_IMAGE_VERSION }}"
 
-          # New-style tag: <version>-<flavor>-<gameciVersion>
-          $tag     = "$version-$flavor-$imgVer"
+           # windows-<unityVersion>-<flavor>-<gameciVersion>
+          $tag = "windows-$version-$flavor-$imgVer"
           $owner = "${{ github.repository_owner }}".ToLower()
           $upstream = "unityci/editor:$tag"
           $ghcr     = "ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
