@@ -1,6 +1,7 @@
 name: Unity Test
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'Explorer/**'
@@ -13,10 +14,18 @@ on:
   merge_group: {}
   push: { branches: [dev] }
 
+permissions:
+  contents: read
+  packages: write
+  checks: write
+  actions: read
+
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
+  UNITY_IMAGE_FLAVOR: windows-il2cpp-3 
+  GHCR_IMAGE_NAME: unityci-editor
   
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -77,6 +86,69 @@ jobs:
             Get-ChildItem
             Get-Content $jsonFilePath
 
+      # --- Detect Unity version from the project ---
+      - name: Read Unity version from ProjectVersion.txt
+        id: unity-version
+        shell: pwsh
+        run: |
+          $verFile = "Explorer/ProjectSettings/ProjectVersion.txt"
+          if (!(Test-Path $verFile)) {
+            Write-Error "File not found: $verFile"
+            exit 1
+          }
+          $match = Select-String -Path $verFile -Pattern 'm_EditorVersion:\s*(\S+)' | Select-Object -First 1
+          if (-not $match) {
+            Write-Error "Could not parse Unity version from $verFile"
+            exit 1
+          }
+          $ver = $match.Matches[0].Groups[1].Value.Trim()
+          echo "version=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Detected Unity version: $ver"
+
+      # --- Build image references (GHCR + upstream) ---
+      - name: Set image names
+        id: img
+        shell: pwsh
+        run: |
+          $tag   = "windows-${{ steps.unity-version.outputs.version }}-${{ env.UNITY_IMAGE_FLAVOR }}"
+          $owner = "${{ github.repository_owner }}".ToLower()
+          $upstream = "unityci/editor:$tag"
+          $ghcr     = "ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
+          echo "tag=$tag"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "upstream=$upstream" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "ghcr=$ghcr"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Upstream image: $upstream"
+          Write-Host "GHCR image:     $ghcr"
+
+      # --- Log into GHCR ---
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Restore Unity image from GHCR (fast path) ---
+      - name: Restore Unity image from GHCR
+        id: restore-image
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          docker pull "${{ steps.img.outputs.ghcr }}"
+
+      # --- Seed GHCR from Docker Hub if missing (one-time per tag) ---
+      - name: Download from Docker Hub and upload to GHCR (if missing)
+        if: steps.restore-image.outcome == 'failure'
+        shell: pwsh
+        run: |
+          $upstream = "${{ steps.img.outputs.upstream }}"
+          $ghcr     = "${{ steps.img.outputs.ghcr }}"
+          Write-Host "GHCR miss. Pulling upstream: $upstream"
+          docker pull $upstream
+          docker tag  $upstream $ghcr
+          docker push $ghcr
+          Write-Host "Seeded GHCR: $ghcr"
+
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
@@ -84,7 +156,8 @@ jobs:
         continue-on-error: true
         with:
           projectPath: Explorer
-          testMode: all      
+          testMode: all
+          customImage: ${{ steps.img.outputs.ghcr }}
 
       - name: Convert NUnit to JUnit
         if: always()
