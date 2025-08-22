@@ -410,7 +410,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTask<int> LoadInvitesAsync(bool updateInvitesGrid, CancellationToken ct)
         {
-            view.InvitesAndRequestsView.ClearInvitesItems();
+            if (updateInvitesGrid)
+                view.InvitesAndRequestsView.ClearInvitesItems();
+
             currentInvitations.Clear();
 
             var invitesResult = await dataProvider.GetUserInviteRequestAsync(
