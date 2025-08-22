@@ -730,6 +730,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 view.UpdateRequestedToJoinCommunity(communityId, requestId, true, success, alreadyExistsInvitation);
             else
                 LoadInvitesAndRequestsResults();
+
+            if (success)
+                currentJoinRequests.Add(new GetUserInviteRequestData.UserInviteRequestData { communityId = communityId, id = requestId });
         }
 
         private void OnCommunityInviteRequestCancelled(string communityId, bool success)
@@ -739,7 +742,7 @@ namespace DCL.Communities.CommunitiesBrowser
             else
                 view.InvitesAndRequestsView.UpdateJoinRequestCancelled(communityId, success);
 
-            if (success)
+            if (success && !RemoveCurrentCommunityInviteRequest(communityId))
                 LoadMyCommunities();
         }
 
@@ -751,8 +754,10 @@ namespace DCL.Communities.CommunitiesBrowser
             if (success)
             {
                 view.UpdateJoinedCommunity(communityId, true, success);
-                LoadMyCommunities();
                 RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+
+                if (!RemoveCurrentCommunityInviteRequest(communityId))
+                    LoadMyCommunities();
             }
         }
 
@@ -762,7 +767,37 @@ namespace DCL.Communities.CommunitiesBrowser
                 view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
 
             if (success)
+            {
                 RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
+                RemoveCurrentCommunityInviteRequest(communityId);
+            }
+        }
+
+        private bool RemoveCurrentCommunityInviteRequest(string communityId)
+        {
+            bool foundInvitation = false;
+            foreach (var invitation in currentInvitations)
+            {
+                if (invitation.communityId == communityId)
+                {
+                    currentInvitations.Remove(invitation);
+                    foundInvitation = true;
+                    break;
+                }
+            }
+
+            bool foundJoinRequest = false;
+            foreach (var joinRequest in currentJoinRequests)
+            {
+                if (joinRequest.communityId == communityId)
+                {
+                    currentJoinRequests.Remove(joinRequest);
+                    foundJoinRequest = true;
+                    break;
+                }
+            }
+
+            return foundInvitation || foundJoinRequest;
         }
 
         private void OnCommunityLeft(string communityId, bool success) =>
