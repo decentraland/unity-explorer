@@ -732,28 +732,31 @@ namespace DCL.Communities.CommunitiesBrowser
                 LoadInvitesAndRequestsResults();
         }
 
-        private void OnCommunityRequestToJoinCancelled(string communityId, bool success)
+        private void OnCommunityInviteRequestCancelled(string communityId, bool success)
         {
             if (!isInvitesAndRequestsSectionActive)
                 view.UpdateRequestedToJoinCommunity(communityId, null, false, success, false);
             else
                 view.InvitesAndRequestsView.UpdateJoinRequestCancelled(communityId, success);
+
+            if (success)
+                LoadMyCommunities();
         }
 
-        private void OnCommunityInvitationAccepted(string communityId, bool success)
+        private void OnCommunityInviteRequestAccepted(string communityId, bool success)
         {
             if (isInvitesAndRequestsSectionActive)
                 view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
 
             if (success)
             {
+                view.UpdateJoinedCommunity(communityId, true, success);
                 LoadMyCommunities();
                 RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
-                view.UpdateJoinedCommunity(communityId, true, success);
             }
         }
 
-        private void OnCommunityInvitationRejected(string communityId, bool success)
+        private void OnCommunityInviteRequestRejected(string communityId, bool success)
         {
             if (isInvitesAndRequestsSectionActive)
                 view.InvitesAndRequestsView.UpdateCommunityInvitation(communityId, success);
@@ -784,9 +787,9 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityUpdated += OnCommunityUpdated;
             dataProvider.CommunityJoined += OnCommunityJoined;
             dataProvider.CommunityRequestedToJoin += OnCommunityRequestedToJoin;
-            dataProvider.CommunityRequestToJoinCancelled += OnCommunityRequestToJoinCancelled;
-            dataProvider.CommunityInvitationAccepted += OnCommunityInvitationAccepted;
-            dataProvider.CommunityInvitationRejected += OnCommunityInvitationRejected;
+            dataProvider.CommunityInviteRequestCancelled += OnCommunityInviteRequestCancelled;
+            dataProvider.CommunityInviteRequestAccepted += OnCommunityInviteRequestAccepted;
+            dataProvider.CommunityInviteRequestRejected += OnCommunityInviteRequestRejected;
             dataProvider.CommunityLeft += OnCommunityLeft;
             dataProvider.CommunityUserRemoved += OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
@@ -799,9 +802,9 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityUpdated -= OnCommunityUpdated;
             dataProvider.CommunityJoined -= OnCommunityJoined;
             dataProvider.CommunityRequestedToJoin -= OnCommunityRequestedToJoin;
-            dataProvider.CommunityRequestToJoinCancelled -= OnCommunityRequestToJoinCancelled;
-            dataProvider.CommunityInvitationAccepted -= OnCommunityInvitationAccepted;
-            dataProvider.CommunityInvitationRejected -= OnCommunityInvitationRejected;
+            dataProvider.CommunityInviteRequestCancelled -= OnCommunityInviteRequestCancelled;
+            dataProvider.CommunityInviteRequestAccepted -= OnCommunityInviteRequestAccepted;
+            dataProvider.CommunityInviteRequestRejected -= OnCommunityInviteRequestRejected;
             dataProvider.CommunityLeft -= OnCommunityLeft;
             dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
