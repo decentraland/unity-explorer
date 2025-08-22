@@ -25,15 +25,13 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     }
     else
     {
-        // Noise for surface detail (scaled by terrain scale)
-        // float noiseH = GetHeight(input.positionWS.x * _terrainScale, input.positionWS.z * _terrainScale);
-        // Smooth transition factor near the boundary with flat surface
-        // float smoothness = 2.0;
-        // float transitionFactor = saturate((threshold - height2) / (stepSize * smoothness));
-
-        // Combine base height with attenuated noise (add to existing position)
+        // Calculate normalized height first
         float normalizedHeight = (fOccupancy - minValue) / (1 - minValue);
-        input.positionWS.y += normalizedHeight * _DistanceFieldScale;// + noiseH * transitionFactor;
+
+        float noiseH = GetHeight(input.positionWS.x, input.positionWS.z);
+        float noiseIntensity = lerp(0.0f, 0.5f, normalizedHeight);
+
+        input.positionWS.y += normalizedHeight * _DistanceFieldScale + noiseH * noiseIntensity;
         heightDerivative.x = heightDerivative2;
 
         // Ensure no negative heights
