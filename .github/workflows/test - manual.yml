@@ -14,7 +14,8 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  UNITY_IMAGE_FLAVOR: windows-mono-3  # change only if you switch flavor
+  UNITY_IMAGE_FLAVOR: windows-mono   # was windows-mono-3
+  UNITY_IMAGE_VERSION: 3.1.0         # NEW: GameCI image version suffix
   GHCR_IMAGE_NAME: unityci-editor
 
 concurrency:
@@ -97,7 +98,12 @@ jobs:
         id: img
         shell: pwsh
         run: |
-          $tag   = "windows-${{ steps.unity-version.outputs.version }}-${{ env.UNITY_IMAGE_FLAVOR }}"
+          $version = "${{ steps.unity-version.outputs.version }}"
+          $flavor  = "${{ env.UNITY_IMAGE_FLAVOR }}"
+          $imgVer  = "${{ env.UNITY_IMAGE_VERSION }}"
+
+          # New-style tag: <version>-<flavor>-<gameciVersion>
+          $tag     = "$version-$flavor-$imgVer"
           $owner = "${{ github.repository_owner }}".ToLower()
           $upstream = "unityci/editor:$tag"
           $ghcr     = "ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
@@ -170,7 +176,7 @@ jobs:
             "${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml"
 
       - name: Report test results
-        uses: decentraland/test-reporting@v0.3
+        uses: phoenix-actions/test-reporting@v15
         if: always()
         with:
           name: Report test results
