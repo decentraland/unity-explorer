@@ -9,27 +9,18 @@ namespace DCL.SceneLoadingScreens.SplashScreen
         [SerializeField] private Image logoImage;
         [SerializeField] private Animator splashScreenAnimation;
 
-        private int frame = 0;
-        private float timer = 0f;
+        private int frame;
+        private float timer;
 
-        public void Show()
-        {
+        public void Show() =>
             gameObject.SetActive(true);
-        }
 
-        public void Hide()
-        {
+        public void Hide() =>
             gameObject.SetActive(false);
-        }
-
-        public void CleanupLogo()
-        {
-            // TODO
-        }
 
         private void Update()
         {
-            const float FPS = 8f;
+            const float FPS = 30f;
 
             timer += Time.deltaTime;
 
