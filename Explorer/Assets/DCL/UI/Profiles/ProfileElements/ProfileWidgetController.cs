@@ -82,7 +82,7 @@ namespace DCL.UI.ProfileElements
             LoadAsync(loadProfileCts.Token).Forget();
         }
 
-        private async UniTask LoadAsync(CancellationToken ct, int attempts = 0)
+        private async UniTask LoadAsync(CancellationToken ct, int attempts = 1)
         {
             if (identityCache.Identity == null) return;
 
@@ -108,12 +108,13 @@ namespace DCL.UI.ProfileElements
             catch (Exception e)
             {
                 // We need to set a delay due to the time that takes to regenerate the thumbnail at the backend
-                await UniTask.Delay(ATTEMPT_PICTURE_DELAY_MS, cancellationToken: ct);
+                // It is incremental, as the time to process it varies depending on the traffic
+                await UniTask.Delay(ATTEMPT_PICTURE_DELAY_MS * attempts, cancellationToken: ct);
 
-                if (attempts < MAX_PICTURE_ATTEMPTS)
+                if (attempts <= MAX_PICTURE_ATTEMPTS)
                     await LoadAsync(ct, attempts + 1);
                 else
-                    ReportHub.LogException(e, ReportCategory.UI);
+                    ReportHub.LogException(e, ReportCategory.PROFILE);
             }
         }
     }
