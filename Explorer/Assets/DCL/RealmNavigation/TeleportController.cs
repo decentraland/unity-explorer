@@ -75,7 +75,7 @@ namespace DCL.RealmNavigation
 
             SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
-            if (sceneDef != null && !TeleportUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+            if (sceneDef != null && !TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
 

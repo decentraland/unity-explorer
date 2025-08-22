@@ -43,10 +43,11 @@ namespace DCL.Navmap
             obj.OnSelectPlaceFromResultsPanel += OnSelectPlaceFromResultsPanel;
         }
 
-        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false)
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct,
+            bool isFromSearchResults = false, Vector2Int? originalParcel = null)
         {
             if (source.Object == null) return;
-            await source.Object.SelectPlaceAsync(place, ct, isFromSearchResults);
+            await source.Object.SelectPlaceAsync(place, ct, isFromSearchResults, originalParcel);
         }
 
         public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false)
