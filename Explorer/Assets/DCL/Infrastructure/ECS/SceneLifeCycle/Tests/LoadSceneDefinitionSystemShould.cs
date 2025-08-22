@@ -1,11 +1,8 @@
-﻿using DCL.Ipfs;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
+﻿using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
-using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -28,7 +25,7 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, TestSuite.TestWebRequestController.INSTANCE, cache);
+            new (world, TestSuite.TestWebRequestController.INSTANCE, cache, URLDomain.EMPTY);
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {

@@ -1,0 +1,65 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.WebRequests;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Common.Systems;
+using SceneRunner.Scene;
+using System;
+using System.Threading;
+using Utility;
+
+namespace ECS.StreamableLoading.AssetBundles
+{
+    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [LogCategory(ReportCategory.ASSET_BUNDLES)]
+    public partial class LoadAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetAssetBundleManifestIntention>
+    {
+        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
+        private readonly URLDomain assetBundleURL;
+        private readonly IWebRequestController webRequestController;
+
+        //TODO (JUANI): This whole system can go away once the information comes the entity DTO
+        internal LoadAssetBundleManifestSystem(World world,
+            IStreamableCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention> cache, URLDomain assetBundleURL, IWebRequestController webRequestController) : base(world, cache)
+        {
+            this.assetBundleURL = assetBundleURL;
+            this.webRequestController = webRequestController;
+        }
+
+        protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetAssetBundleManifestIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
+        {
+            SceneAssetBundleManifest sceneAssetBundleManifest =
+                    await LoadAssetBundleManifestAsync(
+                        intention.Hash,
+                        GetReportData(),
+                        ct
+                    );
+
+            return new StreamableLoadingResult<SceneAssetBundleManifest>(sceneAssetBundleManifest);
+        }
+
+
+        private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string hash, ReportData reportCategory, CancellationToken ct)
+        {
+            using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
+            urlBuilder!.Clear();
+
+            urlBuilder.AppendDomain(assetBundleURL)
+                      .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
+                      .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
+
+            SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), RetryPolicy.WithRetries(1)), ct, reportCategory)
+                                                              .CreateFromJson<SceneAbDto>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchBackToMainThread);
+
+            AssetValidation.ValidateSceneAbDto(sceneAbDto.Version, hash);
+
+            return new SceneAssetBundleManifest(sceneAbDto.Version, sceneAbDto.Date);
+        }
+    }
+}

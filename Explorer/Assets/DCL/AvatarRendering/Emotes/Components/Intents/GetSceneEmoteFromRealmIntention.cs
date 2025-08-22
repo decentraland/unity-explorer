@@ -21,7 +21,6 @@ namespace DCL.AvatarRendering.Emotes
 
         public CancellationTokenSource CancellationTokenSource { get; }
         public string SceneId { get; }
-        public SceneAssetBundleManifest AssetBundleManifest { get; }
         public string EmoteHash { get; }
         public bool Loop { get; }
         public AssetSource PermittedSources { get; }
@@ -32,7 +31,6 @@ namespace DCL.AvatarRendering.Emotes
 
         public GetSceneEmoteFromRealmIntention(
             string sceneId,
-            SceneAssetBundleManifest assetBundleManifest,
             string emoteHash,
             bool loop,
             BodyShape bodyShape,
@@ -41,7 +39,6 @@ namespace DCL.AvatarRendering.Emotes
         ) : this()
         {
             SceneId = sceneId;
-            AssetBundleManifest = assetBundleManifest;
             EmoteHash = emoteHash;
             Loop = loop;
             CancellationTokenSource = new CancellationTokenSource();
@@ -61,10 +58,11 @@ namespace DCL.AvatarRendering.Emotes
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(typeof(GameObject),
                     this.EmoteHash + PlatformUtils.GetCurrentPlatform(),
+                    assetBundleManifestVersion: emote.DTO.assetBundleManifestVersion,
+                    parentEntityID: emote.DTO.id,
                     permittedSources: this.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory.Value,
-                    cancellationTokenSource: this.CancellationTokenSource,
-                    manifest: this.AssetBundleManifest),
+                    cancellationTokenSource: this.CancellationTokenSource),
                 partitionComponent);
 
             world.Create(promise, emote, this.BodyShape);
