@@ -13,7 +13,7 @@ namespace DCL.UI.ProfileElements
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {
         private const int MAX_PICTURE_ATTEMPTS = 10;
-        private const int ATTEMPT_PICTURE_DELAY_MS = 10000;
+        private const int ATTEMPT_PICTURE_DELAY_MS = 20000;
         private const string GUEST_NAME = "Guest";
 
         private readonly IWeb3IdentityCache identityCache;
@@ -42,6 +42,8 @@ namespace DCL.UI.ProfileElements
         {
             loadProfileCts.SafeCancelAndDispose();
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
+            identityCache.OnIdentityChanged -= OnIdentityChanged;
+            identityCache.OnIdentityCleared -= OnIdentityCleared;
 
             base.Dispose();
         }
@@ -49,6 +51,9 @@ namespace DCL.UI.ProfileElements
         protected override void OnViewInstantiated()
         {
             profileChangesBus.SubscribeToUpdate(OnProfileUpdated);
+
+            identityCache.OnIdentityChanged += OnIdentityChanged;
+            identityCache.OnIdentityCleared += OnIdentityCleared;
         }
 
         protected override void OnBeforeViewShow()
@@ -61,6 +66,15 @@ namespace DCL.UI.ProfileElements
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
+
+        private void OnIdentityCleared() =>
+            loadProfileCts.SafeCancelAndDispose();
+
+        private void OnIdentityChanged()
+        {
+            loadProfileCts = loadProfileCts.SafeRestart();
+            LoadAsync(loadProfileCts.Token).Forget();
+        }
 
         private void OnProfileUpdated(Profile profile)
         {
