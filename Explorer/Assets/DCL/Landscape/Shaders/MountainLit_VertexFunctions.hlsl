@@ -31,7 +31,7 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
         float noiseH = GetHeight(input.positionWS.x, input.positionWS.z);
         float noiseIntensity = lerp(0.0f, 0.5f, normalizedHeight);
 
-        input.positionWS.y += normalizedHeight * _DistanceFieldScale + noiseH * noiseIntensity;
+        input.positionWS.y += normalizedHeight * _DistanceFieldScale;// + noiseH * noiseIntensity;
         heightDerivative.x = heightDerivative2;
 
         // Ensure no negative heights

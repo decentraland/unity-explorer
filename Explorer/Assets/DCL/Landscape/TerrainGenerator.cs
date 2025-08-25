@@ -239,8 +239,9 @@ namespace DCL.Landscape
                             TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
 
                         OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
+                        OccupancyMap.filterMode = FilterMode.Point;
                         OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-
+                        
                         occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
                         occupancyMapSize = OccupancyMap.width; // width == height
 
