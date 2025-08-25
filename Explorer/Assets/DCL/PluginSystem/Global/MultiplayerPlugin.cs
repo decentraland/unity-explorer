@@ -67,8 +67,6 @@ namespace DCL.PluginSystem.Global
         private readonly IActivatableConnectiveRoom chatRoom;
         private readonly IActivatableConnectiveRoom voiceChatRoom;
 
-        private IObjectPool<DebugRoomIndicatorView>? debugRoomIndicatorPool;
-
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
             IArchipelagoIslandRoom archipelagoIslandRoom,
@@ -128,8 +126,6 @@ namespace DCL.PluginSystem.Global
         {
             RemoteAvatarCollider remoteAvatarCollider = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarColliderPrefab, ct)).Value.GetComponent<RemoteAvatarCollider>();
             remoteEntities.Initialize(remoteAvatarCollider);
-
-            await CreateCreateRoomIndicatorPoolAsync(settings, ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments globalPluginArguments)
@@ -137,8 +133,7 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
-                debugRoomIndicatorPool);
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
@@ -164,26 +159,10 @@ namespace DCL.PluginSystem.Global
 #endif
         }
 
-        private async UniTask CreateCreateRoomIndicatorPoolAsync(Settings settings, CancellationToken ct)
-        {
-            DebugRoomIndicatorView? indicatorPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.DebugRoomIndicator, ct: ct)).Value.GetComponent<DebugRoomIndicatorView>();
-
-            debugRoomIndicatorPool = new GameObjectPool<DebugRoomIndicatorView>(poolsRegistry.RootContainerTransform(),
-                creationHandler: () => Object.Instantiate(indicatorPrefab, Vector3.zero, Quaternion.identity), maxSize: PoolConstants.AVATARS_COUNT);
-        }
-
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [SerializeField] public AssetReferenceGameObject RemoteAvatarColliderPrefab;
-
-            public DebugRoomIndicatorViewReference DebugRoomIndicator;
-
-            [Serializable]
-            public class DebugRoomIndicatorViewReference : ComponentReference<DebugRoomIndicatorView>
-            {
-                public DebugRoomIndicatorViewReference(string guid) : base(guid) { }
-            }
         }
     }
 }
