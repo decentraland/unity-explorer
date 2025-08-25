@@ -1,0 +1,31 @@
+{
+    "name": "Decentraland.Terrain.Editor",
+    "rootNamespace": "Decentraland.Terrain",
+    "references": [
+        "GUID:430c28733ca4ba04abc819f9253a6e2d",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:915a520bbb67079439171b6a48480818"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.imageconversion",
+            "expression": "",
+            "define": "IMAGE_CONVERSION"
+        },
+        {
+            "name": "com.unity.modules.terrain",
+            "expression": "",
+            "define": "TERRAIN"
+        }
+    ],
+    "noEngineReferences": false
+}

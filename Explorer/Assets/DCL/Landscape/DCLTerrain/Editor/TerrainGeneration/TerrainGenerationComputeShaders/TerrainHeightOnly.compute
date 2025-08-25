@@ -1,0 +1,51 @@
+// TerrainHeightOnly.compute
+#pragma kernel TerrainHeightOnly
+
+// Height-only terrain generation kernel for BC4 compression
+// Single channel output optimized for height data
+RWTexture2D<float4> Result;
+
+// Shader properties for terrain generation
+float4 _TerrainParams; // x: frequency, y: unused, z: octaves, w: unused
+uint2 _TextureSize;    // x: width, y: height
+
+#include "Noise.hlsl"
+
+// ============================================================================
+// COMPUTE KERNEL
+// ============================================================================
+
+// Height-only terrain generation kernel
+[numthreads(8,8,1)]
+void TerrainHeightOnly (uint3 id : SV_DispatchThreadID)
+{
+    // Early exit if outside texture bounds
+    if (id.x >= _TextureSize.x || id.y >= _TextureSize.y)
+        return;
+
+    // For some reason compute has the Y axis upside down.
+    float inverted_Y = (float)_TextureSize.y - (float)id.y;
+    // Compiler will optimise out, however due to Unity's inverted Y, it's useful for quick testing, just comment out.
+    inverted_Y = (float)id.y;
+
+    // Convert pixel coordinates to centered world position
+    // Center of texture is (0,0)
+    float offset_X = (float)id.x - ((float)_TextureSize.x * 0.5f);
+    float offset_Y = inverted_Y - ((float)_TextureSize.y * 0.5f);
+
+    // -4096 to 4096 coords = equal to metres for the terrain height algorithm
+    float2 coordTest = float2(offset_X, offset_Y);
+
+    // Get terrain parameters
+    float frequency = _TerrainParams.x;
+    int octaves = (int)_TerrainParams.z;
+
+    // Calculate height using the terrain function
+    // Use Unity coordinate system: (X, Y=0, Z) where Y=0 for the 2D terrain plane
+    float4 terrainData = terrain(float3(coordTest.x, 0.0f, coordTest.y), frequency, octaves);
+    float height = terrainData.x;
+
+    // Output: R = height, G/B/A = unused (set to 0 for clarity)
+    // BC4 compression will only use the red channel
+    Result[id.xy] = float4(height, 0.0f, 0.0f, 1.0f);
+}

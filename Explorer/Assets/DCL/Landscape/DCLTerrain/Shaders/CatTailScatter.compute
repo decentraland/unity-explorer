@@ -1,0 +1,116 @@
+﻿#pragma enable_d3d11_debug_symbols
+
+#include "ScatterFunctions.cginc"
+
+#pragma kernel CatTailScatter
+
+struct PerInst
+{
+    float4 position;
+    float4 quatRotation;
+    float4 colour;
+};
+
+cbuffer ConstBuffer : register(b0)
+{
+    float4 TerrainBounds;
+    int2 HeightTextureSize;
+    int2 OccupancyTextureSize;
+    int2 TerrainBlendTextureSize;
+    int2 GroundDetailTextureSize;
+    int2 SandDetailTextureSize;
+    float TerrainHeight;
+    int parcelSize;
+}
+
+Texture2D<float4> HeightMapTexture : register(t0);
+Texture2D<float4> OccupancyTexture : register(t1);
+Texture2D<float4> TerrainBlendTexture : register(t2);
+Texture2D<float4> GroundDetailTexture : register(t3);
+Texture2D<float4> SandDetailTexture : register(t4);
+StructuredBuffer<int2> visibleParcels : register(t5);
+StructuredBuffer<uint> visibleParcelCount : register(t6);
+
+SamplerState samplerHeightMapTexture : register(s0);
+SamplerState samplerOccupancyTexture : register(s1);
+SamplerState HeightMapTexturePointClampSampler : register(s2);
+SamplerState samplerTerrainBlendTexture : register(s3);
+SamplerState TerrainBlendPointRepeatSampler : register(s4);
+SamplerState samplerGroundDetailTexture : register(s5);
+SamplerState samplerSandDetailTexture : register(s6);
+
+RWStructuredBuffer<PerInst> flower2Instances : register(u0);
+shared RWStructuredBuffer<uint> drawArgs2 : register(u1);
+
+groupshared int2 gridPositions[256];
+groupshared uint foundCount;
+
+[numthreads(64, 1, 1)]
+void CatTailScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint3 localId : SV_GroupThreadID)
+{
+    if (groupId.x >= visibleParcelCount[0])
+        return;
+
+    if (localId.x == 0)
+        foundCount = 0;
+
+    // ALL threads must hit this sync point
+    GroupMemoryBarrierWithGroupSync();
+
+    int2 corner0 = (int2)(visibleParcels[groupId.x] * 16.0f);
+    int2 gridPosition = int2((int)(localId.x % 8), (int)(localId.x / 8)) * 2.0f;
+
+    float2 worldSpaceCoord_ParcelBlock = corner0 + gridPosition;
+    float2 UV_coords_ParcelBlock = (worldSpaceCoord_ParcelBlock + 4096.0f) / 8192.0f;
+
+    // Check the texture
+    half4 terrainColour = SplatmapMix(UV_coords_ParcelBlock * 8.0f,
+        TerrainBlendTexture, samplerTerrainBlendTexture,
+        GroundDetailTexture, samplerGroundDetailTexture,
+        SandDetailTexture, samplerSandDetailTexture, 1);
+
+    if (terrainColour.g > 0.2f)
+    {
+        uint original_out;
+        InterlockedAdd(foundCount, 1, original_out);
+        gridPositions[original_out] = gridPosition;
+    }
+
+    // ALL threads must hit this sync point
+    GroupMemoryBarrierWithGroupSync();
+
+    PerInst perInst;
+    if (foundCount <= 0)
+    {
+        perInst.position = float4(0.0f, -5000.0f, 0.0f, 0.0f);
+        perInst.quatRotation = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        perInst.colour = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        InterlockedAdd(drawArgs2[1], 1);
+        flower2Instances[id.x] = perInst;
+    }
+    else
+    {
+        uint perPlotCount = ceil(64.0f / foundCount);
+        int2 currentGridPosition = gridPositions[floor(localId.x / perPlotCount)];
+
+        half random_X = hash_int_to_float(currentGridPosition + localId.x) * 2.0f;
+        half random_Z = hash_int_to_float(-currentGridPosition + localId.x) * 2.0f;
+        float2 worldSpaceCoord = corner0 + currentGridPosition + float2(random_X, random_Z);
+        float2 UV_coords = (worldSpaceCoord + 4096.0f) / 8192.0f;
+
+        // Check occupancy
+        float fOccupancy = GetOccupancy(UV_coords, TerrainBounds, parcelSize, OccupancyTexture, samplerOccupancyTexture);
+
+        // Get Height
+        float height = CalculateHeightFromHeightmap(UV_coords, TerrainHeight, fOccupancy, HeightMapTexture, HeightMapTexturePointClampSampler);
+        float fScale = 1.0f + hash_int_to_float(currentGridPosition + localId.x);
+        float3 normalWS = CalculateNormalFromHeightmap(UV_coords, TerrainHeight, fOccupancy, HeightMapTexture, samplerHeightMapTexture);
+
+        perInst.position = float4(currentGridPosition.x + random_X, height, currentGridPosition.y + random_Z, fScale);
+        perInst.quatRotation = CreateGrassRotationQuaternion(normalWS, hash_int_to_float(currentGridPosition + localId.x));
+        perInst.colour = float4(1.0f, 1.0f, 1.0f, 1.0f);
+
+        InterlockedAdd(drawArgs2[1], 1);
+        flower2Instances[id.x] = perInst;
+    }
+}

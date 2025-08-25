@@ -40,7 +40,6 @@
     "com.unity.timeline": "1.8.8",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualeffectgraph": "17.0.4",
-    "org.decentraland.terrain": "https://github.com/decentraland/TerrainProto.git?path=/Packages/org.decentraland.terrain",
     "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader#feat/grassindirect",
     "decentraland.renderfeatures": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
     "io.sentry.unity": "https://github.com/getsentry/unity.git#2.1.3",

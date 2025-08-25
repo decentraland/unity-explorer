@@ -502,17 +502,6 @@
       },
       "hash": "4d02af4b7063c3d20ccbda56e6ed7029cc3e1197"
     },
-    "org.decentraland.terrain": {
-      "version": "https://github.com/decentraland/TerrainProto.git?path=/Packages/org.decentraland.terrain",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.burst": "1.8.21",
-        "com.unity.collections": "2.5.1",
-        "com.unity.mathematics": "1.3.2"
-      },
-      "hash": "d5d82b620cba5dafd8679bc0d931536ba1442b65"
-    },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
       "depth": 0,
