@@ -301,7 +301,6 @@ namespace Global.Dynamic
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
             ProfileNameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
-            NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -692,7 +691,7 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     userBlockingCacheProxy),
@@ -718,7 +717,7 @@ namespace Global.Dynamic
                     chatMessagesBus,
                     chatHistory,
                     entityParticipantTable,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     mainUIView,
                     staticContainer.InputBlock,
                     globalWorld,
@@ -984,7 +983,7 @@ namespace Global.Dynamic
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     globalWorld,
                     debugBuilder,
-                    nametagsData,
+                    dynamicSettings.NametagsData,
                     profileRepositoryWrapper,
                     sharedSpaceManager,
                     identityCache,
