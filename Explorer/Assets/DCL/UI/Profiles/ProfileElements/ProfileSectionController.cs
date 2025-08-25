@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
@@ -44,6 +45,12 @@ namespace DCL.UI.ProfileElements
 
         private async UniTaskVoid SetupAsync(CancellationToken ct)
         {
+            if (identityCache.Identity == null)
+            {
+                ReportHub.LogError(ReportCategory.PROFILE, "Cannot setup own profile. Identity is null.");
+                return;
+            }
+
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
 
             if (profile == null) return;

@@ -116,7 +116,7 @@ namespace DCL.PluginSystem.Global
             CheckGPUIFF();
             gpuiWrapper.SetupLandscapeData(landscapeData.Value);
             terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
-                parcelChecksum, isZone, gpuiWrapper, gpuiWrapper.GetDetailSetter());
+                parcelChecksum, isZone, gpuiWrapper, gpuiWrapper.GetDetailSetter(), landscapeData.Value.TerrainHeight);
 
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, new CPUTerrainDetailSetter());
         }
@@ -156,6 +156,7 @@ namespace DCL.PluginSystem.Global
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
+            RenderGroundSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
 
             gpuiWrapper.InjectDebugSystem(ref builder, debugContainerBuilder);
         }
