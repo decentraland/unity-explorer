@@ -51,6 +51,6 @@ namespace DCL.NotificationsBusController.NotificationTypes
         // Referral
         REFERRAL_INVITED_USERS_ACCEPTED,
         REFERRAL_NEW_TIER_REACHED,
-        INVITATION_TO_COMMUNITY_SENT
+        INTERNAL_INVITATION_TO_COMMUNITY_SENT
     }
 }

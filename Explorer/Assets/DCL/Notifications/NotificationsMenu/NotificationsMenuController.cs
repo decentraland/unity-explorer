@@ -31,7 +31,8 @@ namespace DCL.Notifications.NotificationsMenu
 
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
-            NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
+            NotificationType.INTERNAL_ARRIVED_TO_DESTINATION,
+            NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT
         };
 
         private readonly NotificationsMenuView view;

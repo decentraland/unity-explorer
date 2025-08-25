@@ -122,7 +122,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
             Result<string> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(lastCommunityData[itemIndex].id, userWalletId, InviteRequestAction.invite, invitationActionCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
-                notificationsBus.AddNotification(new InvitationToCommunitySentNotification() { Type = NotificationType.INVITATION_TO_COMMUNITY_SENT });
+                notificationsBus.AddNotification(new InvitationToCommunitySentNotification() { Type = NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT });
             else
                 ;// TODO
         }

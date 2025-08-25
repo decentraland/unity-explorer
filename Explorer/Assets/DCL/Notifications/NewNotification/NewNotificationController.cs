@@ -109,7 +109,7 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.CREDITS_GOAL_COMPLETED:
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
                         break;
-                    case NotificationType.INVITATION_TO_COMMUNITY_SENT:
+                    case NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT:
                         await ProcessInvitationToCommunitySentNotificationAsync(notification);
                         break;
                     default:
