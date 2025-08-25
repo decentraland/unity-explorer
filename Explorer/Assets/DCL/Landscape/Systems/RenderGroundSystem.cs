@@ -59,7 +59,7 @@ namespace DCL.Landscape.Systems
                 Camera camera = cinemachinePreset!.Brain.OutputCamera;
 
                 RenderGroundInternal(camera);
-                // grassIndirectRenderer.Render(landscapeData.TerrainData, camera, true);
+                grassIndirectRenderer.Render(landscapeData.TerrainData, camera, true);
             }
         }
 

@@ -37,6 +37,46 @@ MonoBehaviour:
   - {fileID: 2474922959326173943, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
   - {fileID: -3615330361707025511, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
   <TreePrototypes>k__BackingField: []
-  <GrassPrototypes>k__BackingField: []
-  <FlowerPrototypes>k__BackingField: []
-  <DetailPrototypes>k__BackingField: []
+  <GrassPrototypes>k__BackingField:
+  - <Source>k__BackingField: {fileID: 1333259486307050118, guid: 7326c89d1e84ecb429de2f08a2baf2fe, type: 3}
+    <Density>k__BackingField: 1
+    <MinScaleXZ>k__BackingField: 1
+    <MaxScaleXZ>k__BackingField: 2
+    <MinScaleY>k__BackingField: 1
+    <MaxScaleY>k__BackingField: 2
+    <Mesh>k__BackingField: {fileID: -4648866359324950487, guid: 59b704c2a2c7c8c45884563197e63a54, type: 3}
+    <Material>k__BackingField: {fileID: 2100000, guid: 1fb265a1eb82642428d82e5c54ad2148, type: 2}
+  <FlowerPrototypes>k__BackingField:
+  - <Source>k__BackingField: {fileID: 4014139367857823368, guid: 36f2ef51fd1df5942b1a0b6dcbfdf2e2, type: 3}
+    <Density>k__BackingField: 1
+    <MinScaleXZ>k__BackingField: 1
+    <MaxScaleXZ>k__BackingField: 2
+    <MinScaleY>k__BackingField: 1
+    <MaxScaleY>k__BackingField: 2
+    <Mesh>k__BackingField: {fileID: -7906079627112090217, guid: ec2c14d367ac7bd41b1293350c9fb7ec, type: 3}
+    <Material>k__BackingField: {fileID: 2100000, guid: 652d2568f4fa3b94fa84f3d290ef06e1, type: 2}
+  - <Source>k__BackingField: {fileID: 8770045540823553937, guid: 0a8d0d3422a9f0d40a97ab299916236f, type: 3}
+    <Density>k__BackingField: 1
+    <MinScaleXZ>k__BackingField: 1
+    <MaxScaleXZ>k__BackingField: 2
+    <MinScaleY>k__BackingField: 1
+    <MaxScaleY>k__BackingField: 2
+    <Mesh>k__BackingField: {fileID: -4829891079021562753, guid: 7ed3350f6d079f145bb5be4027b94476, type: 3}
+    <Material>k__BackingField: {fileID: 2100000, guid: 652d2568f4fa3b94fa84f3d290ef06e1, type: 2}
+  - <Source>k__BackingField: {fileID: 8197679525369401166, guid: 11055c0853dd6484f9fb5572e2179979, type: 3}
+    <Density>k__BackingField: 1
+    <MinScaleXZ>k__BackingField: 1
+    <MaxScaleXZ>k__BackingField: 2
+    <MinScaleY>k__BackingField: 1
+    <MaxScaleY>k__BackingField: 2
+    <Mesh>k__BackingField: {fileID: 2140836983364464420, guid: 21b91474660c00f45b6aca3e7715fbc3, type: 3}
+    <Material>k__BackingField: {fileID: 2100000, guid: 652d2568f4fa3b94fa84f3d290ef06e1, type: 2}
+  <DetailPrototypes>k__BackingField:
+  - <Source>k__BackingField: {fileID: 1333259486307050118, guid: 7326c89d1e84ecb429de2f08a2baf2fe, type: 3}
+    <Density>k__BackingField: 1
+    <MinScaleXZ>k__BackingField: 1
+    <MaxScaleXZ>k__BackingField: 2
+    <MinScaleY>k__BackingField: 1
+    <MaxScaleY>k__BackingField: 2
+    <Mesh>k__BackingField: {fileID: -4648866359324950487, guid: 59b704c2a2c7c8c45884563197e63a54, type: 3}
+    <Material>k__BackingField: {fileID: 2100000, guid: 1fb265a1eb82642428d82e5c54ad2148, type: 2}
