@@ -6,4 +6,10 @@
     <assembly fullname="SceneRuntime" preserve="all" />
     <assembly fullname="NotificationsBus" preserve="all" />
     <assembly fullname="Decentraland.ClearScript" preserve="all" />
+    
+    <!--  Because of Ipfs.ProtobufHelper  -->
+    <assembly fullname="Google.Protobuf">
+        <type fullname="Google.Protobuf.CodedOutputStream" preserve="all" />
+        <type fullname="Google.Protobuf.CodedInputStream" preserve="all" />
+    </assembly>
 </linker>
