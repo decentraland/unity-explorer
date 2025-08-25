@@ -218,7 +218,8 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreen.Hide();
+            if (splashScreen != null) // Splash screen is destroyed after first login
+                splashScreen.Hide();
         }
 
         private void ShowRestrictedUserPopup()
