@@ -24,7 +24,8 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  UNITY_IMAGE_FLAVOR: windows-il2cpp-3 
+  UNITY_IMAGE_FLAVOR: base
+  UNITY_IMAGE_VERSION: 3      
   GHCR_IMAGE_NAME: unityci-editor
   
 concurrency:
@@ -110,7 +111,12 @@ jobs:
         id: img
         shell: pwsh
         run: |
-          $tag   = "windows-${{ steps.unity-version.outputs.version }}-${{ env.UNITY_IMAGE_FLAVOR }}"
+          $version = "${{ steps.unity-version.outputs.version }}"
+          $flavor  = "${{ env.UNITY_IMAGE_FLAVOR }}"
+          $imgVer  = "${{ env.UNITY_IMAGE_VERSION }}"
+
+          # windows-<unityVersion>-<flavor>-<gameciVersion>
+          $tag = "windows-$version-$flavor-$imgVer"
           $owner = "${{ github.repository_owner }}".ToLower()
           $upstream = "unityci/editor:$tag"
           $ghcr     = "ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
@@ -159,28 +165,16 @@ jobs:
           testMode: all
           customImage: ${{ steps.img.outputs.ghcr }}
 
-      - name: Convert NUnit to JUnit
-        if: always()
-        run: |
-          New-Item -ItemType Directory -Force -Path "${{ steps.testRunner.outputs.artifactsPath }}-junit"
-          choco install xsltproc
-          xsltproc `
-            --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml" `
-            .github/workflows/nunit-to-junit.xsl `
-            "${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml"
-
-          xsltproc `
-            --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml" `
-            .github/workflows/nunit-to-junit.xsl `
-            "${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml"
-
       - name: Report test results
-        uses: decentraland/test-reporting@v0.3
         if: always()
+        uses: dorny/test-reporter@v2.1.1
         with:
-          name: Report test results
-          path: ${{ steps.testRunner.outputs.artifactsPath }}-junit/*.xml
-          reporter: jest-junit
+          name: Unity Tests
+          path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml
+          reporter: dotnet-nunit
+          fail-on-error: true
+          fail-on-empty: true
+          use-actions-summary: true
 
       # Upload artifact
       - uses: actions/upload-artifact@v4
