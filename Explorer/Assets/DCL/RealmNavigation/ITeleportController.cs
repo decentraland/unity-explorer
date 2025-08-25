@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.Utilities;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
@@ -9,6 +10,7 @@ namespace DCL.RealmNavigation
 {
     public interface ITeleportController
     {
+        WaitForSceneReadiness TeleportToSceneSpawnPoint(SceneEntityDefinition sceneEntityDefinition, CancellationToken ct);
         UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
 
         UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);

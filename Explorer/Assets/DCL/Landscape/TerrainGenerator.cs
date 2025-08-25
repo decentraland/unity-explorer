@@ -58,7 +58,7 @@ namespace DCL.Landscape
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashSet<int2> ownedParcels;
-        private int maxHeightIndex;
+        public int MaxHeight;
         private bool hideTrees;
         private bool hideDetails;
         private bool withHoles;
@@ -82,12 +82,14 @@ namespace DCL.Landscape
         public bool IsTerrainShown { get; private set; }
 
         public TerrainModel TerrainModel { get; private set; }
+        public Texture2D OccupancyMap { get; private set; }
+        public int OccupancyFloor { get; private set; }
 
         private ITerrainDetailSetter terrainDetailSetter;
         private IGPUIWrapper gpuiWrapper;
-        private Texture2D occupancyMap;
         private NativeArray<byte> occupancyMapData;
         private int occupancyMapSize;
+        private float terrainHeight;
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
@@ -128,11 +130,13 @@ namespace DCL.Landscape
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter)
+            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter,
+            float terrainHeight)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
+            this.terrainHeight = terrainHeight;
 
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
@@ -231,19 +235,17 @@ namespace DCL.Landscape
                         rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
                         rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
+                        OccupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
+                            TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+
+                        OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
+                        OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+
+                        occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                        occupancyMapSize = OccupancyMap.width; // width == height
+
                         if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
-                        {
-                            occupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
-                                TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
-
-                            float floorValue = WriteInteriorChamferOnWhite(occupancyMap);
-                            occupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-
-                            occupancyMapData = occupancyMap.GetRawTextureData<byte>();
-                            occupancyMapSize = occupancyMap.width; // width == height
-
                             await LoadTreesAsync();
-                        }
 
                         Ocean = factory.CreateOcean(rootGo);
                         Wind = factory.CreateWind();
@@ -358,7 +360,7 @@ namespace DCL.Landscape
         private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
         {
             if (localCache.IsValid())
-                maxHeightIndex = localCache.GetMaxHeight();
+                MaxHeight = localCache.GetMaxHeight();
             else
             {
                 JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
@@ -371,10 +373,10 @@ namespace DCL.Landscape
 
                 // Calculate this outside the jobs since they are Parallel
                 foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelsData)
-                    if (emptyParcelHeight.Value > maxHeightIndex)
-                        maxHeightIndex = emptyParcelHeight.Value;
+                    if (emptyParcelHeight.Value > MaxHeight)
+                        MaxHeight = emptyParcelHeight.Value;
 
-                localCache.SetMaxHeight(maxHeightIndex);
+                localCache.SetMaxHeight(MaxHeight);
             }
         }
 
@@ -402,11 +404,11 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, maxHeightIndex);
+                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, MaxHeight);
 
                 var tasks = new List<UniTask>
                 {
-                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, ParcelSize,
+                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, MaxHeight, ParcelSize,
                         chunkModel.TerrainData, worldSeed, cancellationToken),
                     chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * ParcelSize,
                         chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
@@ -707,7 +709,7 @@ namespace DCL.Landscape
             return occupancyMap;
         }
 
-        private static float WriteInteriorChamferOnWhite(Texture2D r8)
+        private static int WriteInteriorChamferOnWhite(Texture2D r8)
         {
             int w = r8.width, h = r8.height, n = w * h;
             NativeArray<byte> src = r8.GetRawTextureData<byte>();
@@ -846,7 +848,7 @@ namespace DCL.Landscape
                 src[i] = (byte)value;
             }
 
-            return minValue / 255f;
+            return minValue;
         }
 
         public bool IsParcelOccupied(int2 parcel)
@@ -860,6 +862,13 @@ namespace DCL.Landscape
             parcel += occupancyMapSize / 2;
             int index = parcel.y * occupancyMapSize + parcel.x;
             return occupancyMapData[index] == 0;
+        }
+
+        private float GetParcelBaseHeight(int2 parcel)
+        {
+            parcel += occupancyMapSize / 2;
+            int index = (parcel.y * occupancyMapSize) + parcel.x;
+            return (occupancyMapData[index] - OccupancyFloor) / (255f - OccupancyFloor) * terrainHeight;
         }
 
         private bool OverlapsOccupiedParcel(float2 position, float radius)
@@ -1006,6 +1015,13 @@ namespace DCL.Landscape
 
                     if (OverlapsOccupiedParcel(position.xz, treeRadius))
                         buffer[instanceIndex] = buffer[--instanceCount];
+                    else
+                    {
+                        var parcel = (int2)floor(position.xz / ParcelSize);
+                        position.y = GetParcelBaseHeight(parcel); // + NoiseHeight
+                        Matrix4x4 originalMatrix = buffer[instanceIndex];
+                        buffer[instanceIndex] = Matrix4x4.TRS(position, originalMatrix.rotation, originalMatrix.lossyScale);
+                    }
                 }
 
                 GPUIRenderingSystem.SetTransformBufferData(rendererKeys[prototypeIndex], buffer, 0, 0,
