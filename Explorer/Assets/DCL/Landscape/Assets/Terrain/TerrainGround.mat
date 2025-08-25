@@ -133,7 +133,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DistanceFieldScale: 13
+    - _DistanceFieldScale: 16
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
@@ -166,8 +166,8 @@ Material:
     - _YellowThreshold: 1
     - _ZWrite: 1
     - _frequency: 0.005
-    - _terrainHeight: 13
-    - _terrainScale: 13
+    - _terrainHeight: 16
+    - _terrainScale: 16
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}

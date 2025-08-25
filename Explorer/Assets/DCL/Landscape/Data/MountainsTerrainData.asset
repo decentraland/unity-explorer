@@ -20,7 +20,7 @@ MonoBehaviour:
     y: -152
     width: 318
     height: 313
-  <MaxHeight>k__BackingField: 13
+  <MaxHeight>k__BackingField: 16
   <OccupancyMap>k__BackingField: {fileID: 0}
   <DetailDistance>k__BackingField: 200
   <RenderGround>k__BackingField: 1
