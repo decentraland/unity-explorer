@@ -68,6 +68,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
+        private readonly VolumeBus volumeBus;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -93,7 +94,8 @@ namespace DCL.AuthenticationScreenFlow
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
             World world,
-            AuthScreenEmotesSettings emotesSettings)
+            AuthScreenEmotesSettings emotesSettings,
+            VolumeBus volumeBus)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -107,6 +109,7 @@ namespace DCL.AuthenticationScreenFlow
             this.buildData = buildData;
             this.world = world;
             this.emotesSettings = emotesSettings;
+            this.volumeBus = volumeBus;
         }
 
         public override void Dispose()
@@ -134,8 +137,12 @@ namespace DCL.AuthenticationScreenFlow
 
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
+            viewInstance.ExitButton.onClick.AddListener(ExitApplication);
+            viewInstance.MuteButton.Button.onClick.AddListener(ToggleMute);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
 
+            InitMuteIcon();
+            
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildData.InstallSource}"
                 : $"{Application.version} - {buildData.InstallSource}";
@@ -463,6 +470,25 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OpenDiscord() =>
             webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
+
+        private void ExitApplication()
+        {
+            CancelLoginProcess();
+            ExitUtils.Exit();
+        }
+
+        private void ToggleMute()
+        {
+            bool isGloballyMuted = volumeBus.GetGlobalMuteValue();
+            volumeBus.SetGlobalMute(!isGloballyMuted);
+            viewInstance?.MuteButton.SetIcon(!isGloballyMuted);
+        }
+
+        private void InitMuteIcon()
+        {
+            bool isGloballyMuted = volumeBus.GetGlobalMuteValue();
+            viewInstance?.MuteButton.SetIcon(isGloballyMuted);
+        }
 
         private void CancelVerificationCountdown()
         {

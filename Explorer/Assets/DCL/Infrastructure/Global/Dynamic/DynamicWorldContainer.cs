@@ -570,7 +570,7 @@ namespace Global.Dynamic
             var upscaleController = new UpscalingController(mvcManager);
 
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
-            var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
+            var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer, bootstrapContainer.VolumeBus);
 
             var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
 
@@ -784,7 +784,7 @@ namespace Global.Dynamic
                     playerEntity,
                     chatMessagesBus,
                     staticContainer.MemoryCap,
-                    bootstrapContainer.WorldVolumeMacBus,
+                    bootstrapContainer.VolumeBus,
                     eventsApiService,
                     userCalendar,
                     clipboard,
@@ -805,7 +805,7 @@ namespace Global.Dynamic
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, characterPreviewEventBus, globalWorld),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, characterPreviewEventBus, bootstrapContainer.VolumeBus, globalWorld),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
