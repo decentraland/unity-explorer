@@ -316,14 +316,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 0
+    initialRealm: 5
     targetScene: {x: 0, y: 0}
     EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: olavra.dcl.eth
+    targetWorld: squeazer.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -362,12 +362,7 @@ MonoBehaviour:
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
     <DirectionalLight>k__BackingField: {fileID: 233166827}
-    <NametagsData>k__BackingField:
-      m_AssetGUID: d65049d6f7a244863b39c4dda5ba538e
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
+    <NametagsData>k__BackingField: {fileID: 11400000, guid: d65049d6f7a244863b39c4dda5ba538e, type: 2}
     <CursorSettings>k__BackingField:
       m_AssetGUID: 7382805fd18299d41925547efbad99f0
       m_SubObjectName: 

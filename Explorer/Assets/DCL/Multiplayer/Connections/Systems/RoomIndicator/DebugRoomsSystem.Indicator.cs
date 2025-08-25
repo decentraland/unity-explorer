@@ -15,53 +15,48 @@ namespace DCL.Multiplayer.Connections.Systems
 {
     public partial class DebugRoomsSystem
     {
-        private readonly IObjectPool<DebugRoomIndicatorView> roomIndicatorPool;
-
         [Query]
         [None(typeof(DebugRoomIndicatorComponent), typeof(PlayerComponent), typeof(DeleteEntityIntention))]
-        private void AddIndicator(Entity entity, NametagView nametagView)
-        {
-            DebugRoomIndicatorView? view = roomIndicatorPool.Get();
-            view.Attach(nametagView.BackgroundSprite);
-            World.Add(entity, new DebugRoomIndicatorComponent(view));
-        }
+        [All(typeof(NametagElement))]
+        private void AddIndicator(Entity entity) =>
+            World.Add(entity, new DebugRoomIndicatorComponent());
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateIndicator(in AvatarShapeComponent avatarShapeComponent, NametagView nametagView, ref DebugRoomIndicatorComponent indicatorComponent)
+        private void UpdateIndicator(in AvatarShapeComponent avatarShapeComponent, NametagElement nametagView, ref DebugRoomIndicatorComponent indicatorComponent)
         {
             RoomSource prevValue = indicatorComponent.ConnectedTo;
 
             indicatorComponent.ConnectedTo = entityParticipantTable.TryGet(avatarShapeComponent.ID, out IReadOnlyEntityParticipantTable.Entry entry) ? entry.ConnectedTo : RoomSource.NONE;
 
-            if (prevValue != indicatorComponent.ConnectedTo) { indicatorComponent.View.SetRooms(indicatorComponent.ConnectedTo); }
-
-            indicatorComponent.View.UpdateTransparency(nametagView.NameTagAlpha);
+            if (prevValue != indicatorComponent.ConnectedTo)
+                nametagView.DebugText = indicatorComponent.ConnectedTo.ToString();
         }
 
         [Query]
-        [None(typeof(NametagView), typeof(PlayerComponent), typeof(DeleteEntityIntention))]
-        private void RemoveIndicatorOnComponentRemoval(Entity entity, in DebugRoomIndicatorComponent component)
+        [None(typeof(NametagElement), typeof(PlayerComponent), typeof(DeleteEntityIntention))]
+        [All(typeof(DebugRoomIndicatorComponent))]
+        private void RemoveIndicatorOnComponentRemoval(Entity entity) =>
+            RemoveIndicatorInternal(entity, null);
+
+        [Query]
+        [All(typeof(DebugRoomIndicatorComponent))]
+        private void RemoveIndicatorOnEntityRemoval(Entity entity, in DeleteEntityIntention deleteEntityIntention)
         {
-            RemoveIndicatorInternal(entity, component);
+            if (!deleteEntityIntention.DeferDeletion)
+                RemoveIndicatorInternal(entity, null);
         }
 
         [Query]
-        private void RemoveIndicatorOnEntityRemoval(Entity entity, in DebugRoomIndicatorComponent component, in DeleteEntityIntention deleteEntityIntention)
-        {
-            if (deleteEntityIntention.DeferDeletion == false)
-                RemoveIndicatorInternal(entity, component);
-        }
+        [All(typeof(DebugRoomIndicatorComponent))]
+        private void RemoveAllIndicators(Entity entity, in NametagElement nametagElement) =>
+            RemoveIndicatorInternal(entity, nametagElement);
 
-        [Query]
-        private void RemoveAllIndicators(Entity entity, in DebugRoomIndicatorComponent component)
+        private void RemoveIndicatorInternal(Entity entity, in NametagElement? nametagElement)
         {
-            RemoveIndicatorInternal(entity, component);
-        }
+            if (nametagElement != null)
+                nametagElement.DebugText = null;
 
-        private void RemoveIndicatorInternal(Entity entity, in DebugRoomIndicatorComponent component)
-        {
-            roomIndicatorPool.Release(component.View);
             World.Remove<DebugRoomIndicatorComponent>(entity);
         }
 
