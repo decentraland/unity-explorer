@@ -23,6 +23,7 @@ using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
+using DCL.Chat.Commands;
 using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -40,7 +41,11 @@ namespace DCL.Minimap
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
         private const string DEFAULT_BACK_FROM_WORLD_TEXT = "JUMP BACK TO GENESIS CITY";
-        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new () { { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" } };
+        private const string RELOAD_SCENE_TEXT = "RELOAD SCENE";
+        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new ()
+        {
+            { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" }
+        };
         private const float ANIMATION_TIME = 0.2f;
 
         private readonly IMapRenderer mapRenderer;
@@ -56,6 +61,8 @@ namespace DCL.Minimap
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrls;
+
+        private readonly ReloadSceneChatCommand reloadSceneCommand;
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
@@ -81,7 +88,8 @@ namespace DCL.Minimap
             Vector2Int startParcelInGenesis,
             ISharedSpaceManager sharedSpaceManager,
             ISystemClipboard systemClipboard,
-            IDecentralandUrlsSource decentralandUrls
+            IDecentralandUrlsSource decentralandUrls,
+            ReloadSceneChatCommand reloadSceneCommand
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -96,6 +104,7 @@ namespace DCL.Minimap
             this.sharedSpaceManager = sharedSpaceManager;
             this.systemClipboard = systemClipboard;
             this.decentralandUrls = decentralandUrls;
+            this.reloadSceneCommand = reloadSceneCommand;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -129,7 +138,18 @@ namespace DCL.Minimap
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
 
             viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
-                realmNavigator.TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, false).Forget());
+            {
+                if (realmData.IsLocalSceneDevelopment)
+                {
+                    // In local scene development mode, reload the scene using the existing command
+                    reloadSceneCommand.ExecuteCommandAsync(new string[0], disposeCts.Token).Forget();
+                }
+                else
+                {
+                    // Normal behavior: teleport to Genesis City
+                    realmNavigator.TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, false).Forget();
+                }
+            });
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -315,7 +335,13 @@ namespace DCL.Minimap
                 go.SetActive(!isGenesisModeActivated);
 
             if (!isGenesisModeActivated)
-                viewInstance.goToGenesisCityText.text = CUSTOM_BACK_FROM_WORLD_TEXTS.GetValueOrDefault(realmData.RealmName, DEFAULT_BACK_FROM_WORLD_TEXT);
+            {
+                string buttonText = realmData.IsLocalSceneDevelopment
+                    ? RELOAD_SCENE_TEXT
+                    : CUSTOM_BACK_FROM_WORLD_TEXTS.GetValueOrDefault(realmData.RealmName, DEFAULT_BACK_FROM_WORLD_TEXT);
+
+                viewInstance.goToGenesisCityText.text = buttonText;
+            }
 
             viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
         }

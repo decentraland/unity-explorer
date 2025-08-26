@@ -489,6 +489,8 @@ namespace Global.Dynamic
                         ct
                     );
 
+            // TODO instantiate ReloadSceneChatCommand a single time since it is re-used
+
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
                 mapRendererContainer.MapRenderer,
@@ -502,7 +504,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.StartParcel.Peek(),
                 sharedSpaceManager,
                 clipboard,
-                bootstrapContainer.DecentralandUrlsSource
+                bootstrapContainer.DecentralandUrlsSource,
+                new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment)
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
