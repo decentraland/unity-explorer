@@ -20,6 +20,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -42,9 +43,15 @@ namespace DCL.Communities.CommunitiesCard
     {
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
+        private const string GET_COMMUNITY_ERROR_TEXT = "There was an error getting community data. Please try again.";
+        private const string GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT = "There was an error getting user invites and requests. Please try again.";
         private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
         private const string DELETE_COMMUNITY_ERROR_TEXT = "There was an error deleting the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
+        private const string REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error requesting to join community. Please try again.";
+        private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
+        private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
+        private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -144,6 +151,10 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
+                viewInstance.RequestToJoinCommunity -= RequestToJoinCommunity;
+                viewInstance.CancelRequestToJoinCommunity -= CancelRequestToJoinCommunity;
+                viewInstance.AcceptInvite -= AcceptCommunityInvitation;
+                viewInstance.RejectInvite -= RejectCommunityInvitation;
                 viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
             }
 
@@ -245,6 +256,10 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
+            viewInstance.RequestToJoinCommunity += RequestToJoinCommunity;
+            viewInstance.CancelRequestToJoinCommunity += CancelRequestToJoinCommunity;
+            viewInstance.AcceptInvite += AcceptCommunityInvitation;
+            viewInstance.RejectInvite += RejectCommunityInvitation;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
@@ -316,18 +331,74 @@ namespace DCL.Communities.CommunitiesCard
                     thumbnailLoader.Cache = spriteCache;
                 }
 
-                GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
-                communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
-                communityData = response.data;
+                var getCommunityResult = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct)
+                                                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!getCommunityResult.Success)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    return;
+                }
+
+                communityData = getCommunityResult.Value.data;
+
+                // Check if we have a pending invite to the community
+                bool existsInvitation = await CheckUserInviteOrRequestAsync(InviteRequestAction.invite, ct);
+
+                if (!communityData.IsAccessAllowed())
+                {
+                    if (!existsInvitation)
+                    {
+                        // Check if we have a pending request to join the community
+                        await CheckUserInviteOrRequestAsync(InviteRequestAction.request_to_join, ct);
+                    }
+                }
+                else
+                    communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
 
                 viewInstance.SetLoadingState(false);
 
                 viewInstance.SetPanelCancellationToken(ct);
                 viewInstance.ConfigureCommunity(communityData, thumbnailLoader);
 
-                viewInstance.ResetToggle(true);
+                if (communityData.IsAccessAllowed())
+                {
+                    viewInstance.ResetToggle(true);
+                    eventListController?.ShowEvents(communityData, ct);
+                }
+            }
 
-                eventListController?.ShowEvents(communityData, ct);
+            async UniTask<bool> CheckUserInviteOrRequestAsync(InviteRequestAction action, CancellationToken ct)
+            {
+                var getUserInviteRequestResult = await communitiesDataProvider.GetUserInviteRequestAsync(action, ct)
+                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return false;
+
+                if (!getUserInviteRequestResult.Success)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                    return false;
+                }
+
+                foreach (var request in getUserInviteRequestResult.Value.data.results)
+                {
+                    if (string.Equals(request.communityId, inputData.CommunityId, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        communityData.SetPendingInviteOrRequestId(request.id);
+                        communityData.SetPendingAction(action);
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -403,6 +474,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
                 }
 
+                communityData.SetRole(CommunityMemberRole.member);
                 communityData.IncreaseMembersCount();
                 viewInstance!.UpdateMemberCount(communityData);
 
@@ -410,7 +482,7 @@ namespace DCL.Communities.CommunitiesCard
                 membersListController?.Reset();
                 membersListController?.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
 
-                viewInstance.ConfigureInteractionButtons(CommunityMemberRole.member);
+                viewInstance.ConfigureInteractionButtons(communityData);
             }
         }
 
@@ -437,7 +509,120 @@ namespace DCL.Communities.CommunitiesCard
 
                 membersListController?.TryRemoveLocalUser();
 
-                viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.none);
+                communityData.SetRole(CommunityMemberRole.none);
+                viewInstance!.ConfigureInteractionButtons(communityData);
+                viewInstance!.SetCommunityAccessAsAllowed(communityData.IsAccessAllowed());
+            }
+        }
+
+        private void RequestToJoinCommunity()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            RequestToJoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, web3IdentityCache.Identity?.Address, InviteRequestAction.request_to_join, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                }
+
+                communityData.SetPendingInviteOrRequestId(result.Value);
+                communityData.SetPendingAction(InviteRequestAction.request_to_join);
+                viewInstance!.ConfigureInteractionButtons(communityData);
+            }
+        }
+
+        private void CancelRequestToJoinCommunity()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            CancelRequestToJoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid CancelRequestToJoinCommunityAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData.id, communityData.pendingInviteOrRequestId, InviteRequestIntention.cancelled, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                }
+
+                communityData.SetPendingInviteOrRequestId(null);
+                communityData.SetPendingAction(InviteRequestAction.none);
+                viewInstance!.ConfigureInteractionButtons(communityData);
+            }
+        }
+
+        private void AcceptCommunityInvitation()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            AcceptCommunityInvitationAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid AcceptCommunityInvitationAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData.id, communityData.pendingInviteOrRequestId, InviteRequestIntention.accepted, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                }
+
+                if (communityData.privacy == CommunityPrivacy.@public)
+                {
+                    communityData.SetRole(CommunityMemberRole.member);
+                    communityData.SetPendingInviteOrRequestId(null);
+                    communityData.SetPendingAction(InviteRequestAction.none);
+                    viewInstance!.ConfigureInteractionButtons(communityData);
+                }
+                else
+                {
+                    ResetSubControllers();
+                    SetDefaultsAndLoadData();
+                }
+            }
+        }
+
+        private void RejectCommunityInvitation()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            RejectCommunityInvitationAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid RejectCommunityInvitationAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData.id, communityData.pendingInviteOrRequestId, InviteRequestIntention.rejected, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                }
+
+                CloseController();
             }
         }
 

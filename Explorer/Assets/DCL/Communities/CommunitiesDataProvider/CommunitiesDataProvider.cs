@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Random = UnityEngine.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
@@ -24,9 +25,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         public event Action<string> CommunityUserRemoved;
         public event Action<string, string> CommunityUserBanned;
         public event Action<string, string, bool> CommunityRequestedToJoin;
-        public event Action<string, bool> CommunityRequestToJoinCancelled;
-        public event Action<string, bool> CommunityInvitationAccepted;
-        public event Action<string, bool> CommunityInvitationRejected;
+        public event Action<string, bool> CommunityInviteRequestCancelled;
+        public event Action<string, bool> CommunityInviteRequestAccepted;
+        public event Action<string, bool> CommunityInviteRequestRejected;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -155,7 +156,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<ICommunityMemberPagedResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
@@ -164,7 +165,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        public async UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<ICommunityMemberPagedResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/bans?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
@@ -315,9 +316,14 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
-        public async UniTask<GetCommunityInviteRequestResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<ICommunityMemberPagedResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var url = $"{communitiesBaseUrl}/{communityId}/requests?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}&type={action}";
+
+            GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                   .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
         }
 
         public async UniTask<bool> ManageInviteRequestToJoinAsync(string communityId, string requestId, InviteRequestIntention intention, CancellationToken ct)
@@ -331,20 +337,20 @@ namespace DCL.Communities.CommunitiesDataProvider
             switch (intention)
             {
                 case InviteRequestIntention.accepted:
-                    CommunityInvitationAccepted?.Invoke(communityId, result.Success);
+                    CommunityInviteRequestAccepted?.Invoke(communityId, result.Success);
                     break;
                 case InviteRequestIntention.rejected:
-                    CommunityInvitationRejected?.Invoke(communityId, result.Success);
+                    CommunityInviteRequestRejected?.Invoke(communityId, result.Success);
                     break;
                 case InviteRequestIntention.cancelled:
-                    CommunityRequestToJoinCancelled?.Invoke(communityId, result.Success);
+                    CommunityInviteRequestCancelled?.Invoke(communityId, result.Success);
                     break;
             }
 
             return result.Success;
         }
 
-        public async UniTask<bool> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
+        public async UniTask<string> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/requests";
             string jsonBody = JsonUtility.ToJson(new SendInviteOrRequestToJoinBody
@@ -357,10 +363,12 @@ namespace DCL.Communities.CommunitiesDataProvider
                                                    .CreateFromJson<SendInviteOrRequestToJoinAsyncResponse>(WRJsonParser.Newtonsoft)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (action == InviteRequestAction.request_to_join)
-                CommunityRequestedToJoin?.Invoke(communityId, result.Success ? result.Value.data.id : null, result.Success);
+            string inviteOrRequestIdResult = result.Success ? result.Value.data.id : null;
 
-            return result.Success;
+            if (action == InviteRequestAction.request_to_join)
+                CommunityRequestedToJoin?.Invoke(communityId, inviteOrRequestIdResult, result.Success);
+
+            return inviteOrRequestIdResult;
         }
 
         public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityListAsync(string userAddress, CancellationToken ct)

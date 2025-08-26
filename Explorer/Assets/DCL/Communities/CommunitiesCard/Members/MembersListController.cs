@@ -23,11 +23,10 @@ using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
-using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MembersListController : CommunityFetchingControllerBase<MemberData, MembersListView>
+    public class MembersListController : CommunityFetchingControllerBase<ICommunityMemberData, MembersListView>
     {
         private const int PAGE_SIZE = 20;
         private const string UNBAN_USER_ERROR_TEXT = "There was an error unbanning the user. Please try again.";
@@ -35,6 +34,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string ADD_MODERATOR_ERROR_TEXT = "There was an error adding moderator to user. Please try again.";
         private const string KICK_USER_ERROR_TEXT = "There was an error kicking the user. Please try again.";
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
+        private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         private readonly MembersListView view;
@@ -46,16 +46,28 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
-        private readonly SectionFetchData<MemberData> allMembersFetchData = new (PAGE_SIZE);
-        private readonly SectionFetchData<MemberData> bannedMembersFetchData = new (PAGE_SIZE);
+        private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
 
         private GetCommunityResponse.CommunityData? communityData = null;
-        protected override SectionFetchData<MemberData> currentSectionFetchData => currentSection == MembersListView.MemberListSections.ALL ? allMembersFetchData : bannedMembersFetchData;
+
+        private int requestAmount;
+        private int RequestsAmount
+        {
+            get => requestAmount;
+
+            set
+            {
+                requestAmount = value;
+                view.UpdateRequestsCounter(value);
+            }
+        }
+        protected override SectionFetchData<ICommunityMemberData> currentSectionFetchData => sectionsFetchData[currentSection];
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
+        private CancellationTokenSource communityOperationCts = new ();
         private UniTaskCompletionSource? panelLifecycleTask;
-        private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
+        private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.MEMBERS;
 
         public MembersListController(MembersListView view,
             ProfileRepositoryWrapper profileDataProvider,
@@ -83,6 +95,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.ContextMenuUserProfileButtonClicked += HandleContextMenuUserProfileButtonAsync;
             this.view.ElementFriendButtonClicked += OnFriendButtonClicked;
             this.view.ElementUnbanButtonClicked += OnUnbanButtonClicked;
+            this.view.ElementManageRequestClicked += OnManageRequestClicked;
 
             this.view.OpenProfilePassportRequested += OpenProfilePassport;
             this.view.OpenUserChatRequested += OpenChatWithUserAsync;
@@ -96,17 +109,22 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.SetProfileDataProvider(profileDataProvider);
             this.view.SetCommunitiesDataProvider(communitiesDataProvider);
             this.view.SetNotificationsBusController(notificationsBus);
+
+            foreach (MembersListView.MemberListSections section in EnumUtils.Values<MembersListView.MemberListSections>())
+                sectionsFetchData[section] = new SectionFetchData<ICommunityMemberData>(PAGE_SIZE);
         }
 
         public override void Dispose()
         {
             contextMenuOperationCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
+            communityOperationCts.SafeCancelAndDispose();
             view.ActiveSectionChanged -= OnMemberListSectionChanged;
             view.ElementMainButtonClicked -= OnMainButtonClicked;
             view.ContextMenuUserProfileButtonClicked -= HandleContextMenuUserProfileButtonAsync;
             view.ElementFriendButtonClicked -= OnFriendButtonClicked;
             view.ElementUnbanButtonClicked -= OnUnbanButtonClicked;
+            view.ElementManageRequestClicked -= OnManageRequestClicked;
 
             view.OpenProfilePassportRequested -= OpenProfilePassport;
             view.OpenUserChatRequested -= OpenChatWithUserAsync;
@@ -118,6 +136,42 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.BanUserRequested -= OnBanUser;
 
             base.Dispose();
+        }
+
+        private void OnManageRequestClicked(ICommunityMemberData profile, InviteRequestIntention intention)
+        {
+            communityOperationCts = communityOperationCts.SafeRestart();
+            ManageRequestAsync(communityOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ManageRequestAsync(CancellationToken ct)
+            {
+                Result<bool> result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData!.Value.id, profile.Id, intention, ct)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                if (!result.Success || !result.Value)
+                {
+                    await inWorldWarningNotificationView.AnimatedShowAsync(MANAGE_REQUEST_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    return;
+                }
+
+                RequestsAmount--;
+                currentSectionFetchData.Items.Remove(profile);
+
+                if (intention == InviteRequestIntention.accepted)
+                {
+                    profile.Role = CommunityMemberRole.member;
+                    List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
+                    memberList.Add(profile);
+                    MembersSorter.SortMembersList(memberList);
+                }
+
+                RefreshGrid(true);
+
+                if(currentSectionFetchData.Items.Count == 0)
+                    view.SetEmptyStateActive(true);
+            }
+
         }
 
         private void OnMemberListSectionChanged(MembersListView.MemberListSections section)
@@ -139,23 +193,25 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 currentSection = section;
 
-                SectionFetchData<MemberData> sectionData = currentSectionFetchData;
+                SectionFetchData<ICommunityMemberData> sectionData = currentSectionFetchData;
 
                 if (sectionData.PageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
+                else
+                    view.SetEmptyStateActive(sectionData.Items.Count == 0);
 
                 RefreshGrid(true);
             }
         }
 
-        private async void BlockUserClickedAsync(MemberData profile)
+        private async void BlockUserClickedAsync(ICommunityMemberData profile)
         {
             try
             {
                 await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(
-                    new BlockUserPromptParams(new Web3Address(profile.memberAddress), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)),
+                    new BlockUserPromptParams(new Web3Address(profile.Address), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)),
                     cancellationToken);
-                await FetchFriendshipStatusAndRefreshAsync(profile.memberAddress, cancellationToken);
+                await FetchFriendshipStatusAndRefreshAsync(profile.Address, cancellationToken);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -164,7 +220,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void OnBanUser(MemberData profile)
+        private void OnBanUser(ICommunityMemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             BanUserAsync(contextMenuOperationCts.Token).Forget();
@@ -172,7 +228,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid BanUserAsync(CancellationToken token)
             {
-                Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.memberAddress, communityData?.id, token)
+                Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.Address, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (token.IsCancellationRequested)
@@ -185,10 +241,10 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.Items.Remove(profile);
+                sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items.Remove(profile);
 
-                List<MemberData> memberList = bannedMembersFetchData.Items;
-                profile.role = CommunityMemberRole.none;
+                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.BANNED].Items;
+                profile.Role = CommunityMemberRole.none;
                 memberList.Add(profile);
 
                 MembersSorter.SortMembersList(memberList);
@@ -197,7 +253,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void OnKickUser(MemberData profile)
+        private void OnKickUser(ICommunityMemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             KickUserAsync(contextMenuOperationCts.Token).Forget();
@@ -205,7 +261,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid KickUserAsync(CancellationToken token)
             {
-                Result<bool> result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.memberAddress, communityData?.id, token)
+                Result<bool> result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.Address, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (token.IsCancellationRequested)
@@ -218,25 +274,27 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.Items.Remove(profile);
+                sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items.Remove(profile);
                 RefreshGrid(true);
             }
         }
 
         public void TryRemoveLocalUser()
         {
+            List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
+
             string? userAddress = web3IdentityCache.Identity?.Address;
-            for (int i = 0; i < allMembersFetchData.Items.Count; i++)
-                if (allMembersFetchData.Items[i].memberAddress.Equals(userAddress, StringComparison.OrdinalIgnoreCase))
+            for (int i = 0; i < memberList.Count; i++)
+                if (memberList[i].Address.Equals(userAddress, StringComparison.OrdinalIgnoreCase))
                 {
-                    allMembersFetchData.Items.RemoveAt(i);
-                    if (currentSection == MembersListView.MemberListSections.ALL)
+                    memberList.RemoveAt(i);
+                    if (currentSection == MembersListView.MemberListSections.MEMBERS)
                         RefreshGrid(true);
                     break;
                 }
         }
 
-        private void AddModerator(MemberData profile)
+        private void AddModerator(ICommunityMemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             AddModeratorAsync(contextMenuOperationCts.Token).Forget();
@@ -244,7 +302,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid AddModeratorAsync(CancellationToken token)
             {
-                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.memberAddress, communityData?.id, CommunityMemberRole.moderator, token)
+                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.Address, communityData?.id, CommunityMemberRole.moderator, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (token.IsCancellationRequested)
@@ -257,12 +315,12 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<MemberData> memberList = allMembersFetchData.Items;
+                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
 
-                foreach (MemberData member in memberList)
-                    if (member.memberAddress.Equals(profile.memberAddress))
+                foreach (ICommunityMemberData member in memberList)
+                    if (member.Address.Equals(profile.Address))
                     {
-                        member.role = CommunityMemberRole.moderator;
+                        member.Role = CommunityMemberRole.moderator;
                         break;
                     }
 
@@ -272,7 +330,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void RemoveModerator(MemberData profile)
+        private void RemoveModerator(ICommunityMemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             RemoveModeratorAsync(contextMenuOperationCts.Token).Forget();
@@ -281,7 +339,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             async UniTaskVoid RemoveModeratorAsync(CancellationToken token)
             {
 
-                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.memberAddress, communityData?.id, CommunityMemberRole.member, token)
+                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.Address, communityData?.id, CommunityMemberRole.member, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (token.IsCancellationRequested)
@@ -294,11 +352,11 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<MemberData> memberList = allMembersFetchData.Items;
-                foreach (MemberData member in memberList)
-                    if (member.memberAddress.Equals(profile.memberAddress))
+                List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
+                foreach (ICommunityMemberData member in memberList)
+                    if (member.Address.Equals(profile.Address))
                     {
-                        member.role = CommunityMemberRole.member;
+                        member.Role = CommunityMemberRole.member;
                         break;
                     }
 
@@ -308,18 +366,18 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void CallUser(MemberData profile)
+        private void CallUser(ICommunityMemberData profile)
         {
             //TODO: call user in private conversation
             throw new NotImplementedException();
         }
 
-        private async void OpenChatWithUserAsync(MemberData profile)
+        private async void OpenChatWithUserAsync(ICommunityMemberData profile)
         {
             try
             {
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-                chatEventBus.OpenPrivateConversationUsingUserId(profile.memberAddress);
+                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -328,17 +386,21 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void OpenProfilePassport(MemberData profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.memberAddress)), cancellationToken).Forget();
+        private void OpenProfilePassport(ICommunityMemberData profile) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address)), cancellationToken).Forget();
 
         public override void Reset()
         {
             communityData = null;
+            currentSection = MembersListView.MemberListSections.MEMBERS;
+            view.Close();
 
-            allMembersFetchData.Reset();
-            bannedMembersFetchData.Reset();
+            foreach (var sectionFetchData in sectionsFetchData)
+                sectionFetchData.Value.Reset();
 
             panelLifecycleTask?.TrySetResult();
+
+            RequestsAmount = 0;
 
             base.Reset();
         }
@@ -401,21 +463,28 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             Friends.FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userId, ct);
 
-            currentSectionFetchData.Items.Find(item => item.memberAddress.Equals(userId))
-                                   .friendshipStatus = status.Convert();
+            currentSectionFetchData.Items.Find(item => item.Address.Equals(userId))
+                                   .FriendshipStatus = status.Convert();
 
             RefreshGrid(true);
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            SectionFetchData<MemberData> membersData = currentSectionFetchData;
+            SectionFetchData<ICommunityMemberData> membersData = currentSectionFetchData;
 
-            Result<GetCommunityMembersResponse> response = currentSection == MembersListView.MemberListSections.ALL
-                ? await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct)
-                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                : await communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct)
-                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            UniTask<ICommunityMemberPagedResponse> responseTask = currentSection switch
+                                                                  {
+                                                                      MembersListView.MemberListSections.MEMBERS => communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                      MembersListView.MemberListSections.BANNED => communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                      MembersListView.MemberListSections.REQUESTS =>
+                                                                          communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request_to_join, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                      MembersListView.MemberListSections.INVITES =>
+                                                                          communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.invite, membersData.PageNumber, PAGE_SIZE, ct),
+                                                                      _ => throw new ArgumentOutOfRangeException(nameof(currentSection), currentSection, null)
+                                                                  };
+
+            Result<ICommunityMemberPagedResponse> response = await responseTask.SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
                 return 0;
@@ -427,13 +496,16 @@ namespace DCL.Communities.CommunitiesCard.Members
                 return membersData.TotalToFetch;
             }
 
-            foreach (var member in response.Value.data.results)
+            foreach (var member in response.Value.members)
                 if (!membersData.Items.Contains(member))
                     membersData.Items.Add(member);
 
             MembersSorter.SortMembersList(membersData.Items);
 
-            return response.Value.data.total;
+            if (currentSection == MembersListView.MemberListSections.REQUESTS)
+                RequestsAmount = response.Value.total;
+
+            return response.Value.total;
         }
 
         public void ShowMembersList(GetCommunityResponse.CommunityData community, CancellationToken ct)
@@ -448,15 +520,34 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.SetCommunityData(community, panelLifecycleTask!.Task, ct);
 
             FetchNewDataAsync(ct).Forget();
+
+            if (community.privacy == CommunityPrivacy.@private)
+                FetchRequestsToJoinAsync(ct).Forget();
+
+            return;
+
+            async UniTaskVoid FetchRequestsToJoinAsync(CancellationToken ctkn)
+            {
+                Result<ICommunityMemberPagedResponse> response = await communitiesDataProvider.GetCommunityInviteRequestAsync(communityData?.id, InviteRequestAction.request_to_join, 1, 0, ctkn)
+                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!response.Success)
+                    return;
+
+                RequestsAmount = response.Value.total;
+            }
         }
 
-        private void OnMainButtonClicked(MemberData profile) =>
+        private void OnMainButtonClicked(ICommunityMemberData profile) =>
             OpenProfilePassport(profile);
 
-        private void OnFriendButtonClicked(MemberData profile) =>
-            HandleContextMenuUserProfileButtonAsync(profile.ToUserData(), profile.friendshipStatus.Convert());
+        private void OnFriendButtonClicked(ICommunityMemberData profile) =>
+            HandleContextMenuUserProfileButtonAsync(profile.ToUserData(), profile.FriendshipStatus.Convert());
 
-        private void OnUnbanButtonClicked(MemberData profile)
+        private void OnUnbanButtonClicked(ICommunityMemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             UnbanUserAsync(contextMenuOperationCts.Token).Forget();
@@ -465,7 +556,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             async UniTaskVoid UnbanUserAsync(CancellationToken ct)
             {
 
-                Result<bool> result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.memberAddress, communityData?.id, ct)
+                Result<bool> result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.Address, communityData?.id, ct)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
@@ -478,7 +569,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                bannedMembersFetchData.Items.Remove(profile);
+                sectionsFetchData[MembersListView.MemberListSections.BANNED].Items.Remove(profile);
                 RefreshGrid(false);
             }
         }

@@ -1,20 +1,20 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using System;
 using System.Collections.Generic;
-using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
     public static class MembersSorter
     {
-        private static readonly Comparison<MemberData> CACHED_MEMBER_COMPARISON = MemberDataComparison;
+        private static readonly Comparison<ICommunityMemberData> CACHED_MEMBER_COMPARISON = MemberDataComparison;
 
-        internal static void SortMembersList(List<MemberData> friends) =>
+        internal static void SortMembersList(List<ICommunityMemberData> friends) =>
             friends.Sort(CACHED_MEMBER_COMPARISON);
 
-        private static int MemberDataComparison(MemberData f1, MemberData f2)
+        private static int MemberDataComparison(ICommunityMemberData f1, ICommunityMemberData f2)
         {
-            int roleComparison = f2.role.CompareTo(f1.role);
-            return roleComparison != 0 ? roleComparison : string.Compare(f1.name, f2.name, StringComparison.OrdinalIgnoreCase);
+            int roleComparison = f2.Role.CompareTo(f1.Role);
+            return roleComparison != 0 ? roleComparison : string.Compare(f1.Name, f2.Name, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

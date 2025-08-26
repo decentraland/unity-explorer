@@ -185,7 +185,6 @@ namespace DCL.Communities.CommunitiesBrowser
                 {
                     invitedCommunityCardsPool.Release(invitationCard);
                     currentInvites.Remove(invitationCard);
-                    SetInvitesCounter(currentInvitesCounter - 1);
 
                     if (currentInvites.Count == 0 && currentRequests.Count == 0)
                         SetInvitesAndRequestsAsEmpty(true);
