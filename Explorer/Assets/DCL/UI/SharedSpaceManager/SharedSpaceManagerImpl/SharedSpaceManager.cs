@@ -45,7 +45,7 @@ namespace DCL.UI.SharedSpaceManager
             this.mvcManager = mvcManager;
             mvcManager.OnViewShowed += OnMvcViewShowed;
             mvcManager.OnViewClosed += OnMvcViewClosed;
-            
+
             dclInput = DCLInput.Instance;
             isFriendsFeatureEnabled = isFriendsEnabled;
             isCameraReelFeatureEnabled = isCameraReelEnabled;
@@ -102,7 +102,7 @@ namespace DCL.UI.SharedSpaceManager
 
             mvcManager.OnViewShowed -= OnMvcViewShowed;
             mvcManager.OnViewClosed -= OnMvcViewClosed;
-            
+
             cts.SafeCancelAndDispose();
             configureShortcutsCts.SafeCancelAndDispose();
         }
@@ -137,7 +137,7 @@ namespace DCL.UI.SharedSpaceManager
             try
             {
                 await HideAllAsync(panelToIgnore: PanelsSharingSpace.Chat);
-                
+
                 PanelRegistration<TParams> registration = registrations[panel].GetByParams<TParams>();
                 IPanelInSharedSpace<TParams> panelInSharedSpace = registration.instance;
 
@@ -148,7 +148,7 @@ namespace DCL.UI.SharedSpaceManager
                     {
                         IController controller = registration.GetPanel<IController>();
                         var chatParams = (ChatControllerShowParams)(object)parameters;
-                        
+
                         if (controller.State == ControllerState.ViewHidden)
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
                         else if (!panelInSharedSpace.IsVisibleInSharedSpace || chatParams.Focus)
@@ -254,14 +254,14 @@ namespace DCL.UI.SharedSpaceManager
             }
         }
 
-        
+
         public async UniTask ToggleVisibilityAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
         {
             if (!IsRegistered(panel) || isTransitioning)
                 return;
 
             bool show = !registrations[panel].panel.IsVisibleInSharedSpace;
-            
+
             if (show)
                 await ShowAsync(panel, parameters);
             else
@@ -288,10 +288,10 @@ namespace DCL.UI.SharedSpaceManager
 
                     return;
                 }
-                
+
                 await HideAsync(panel);
             }
-                
+
         }
 
         private bool IsRegistered(PanelsSharingSpace panel) =>

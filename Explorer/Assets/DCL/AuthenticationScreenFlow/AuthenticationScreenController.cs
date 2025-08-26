@@ -79,6 +79,7 @@ namespace DCL.AuthenticationScreenFlow
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
+        private IInputBlock inputBlock;
         private float originalWorldAudioVolume;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
@@ -98,7 +99,8 @@ namespace DCL.AuthenticationScreenFlow
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
             World world,
-            AuthScreenEmotesSettings emotesSettings)
+            AuthScreenEmotesSettings emotesSettings,
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -112,6 +114,7 @@ namespace DCL.AuthenticationScreenFlow
             this.buildData = buildData;
             this.world = world;
             this.emotesSettings = emotesSettings;
+            this.inputBlock = inputBlock;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -159,6 +162,7 @@ namespace DCL.AuthenticationScreenFlow
             base.OnBeforeViewShow();
 
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
+            BlockUnwantedInputs();
         }
 
         protected override void OnViewShow()
@@ -336,6 +340,7 @@ namespace DCL.AuthenticationScreenFlow
 
             // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;
+
             // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
             profile.HasConnectedWeb3 = true;
 
@@ -373,10 +378,15 @@ namespace DCL.AuthenticationScreenFlow
             async UniTaskVoid AnimateAndAwaitAsync()
             {
                 await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
+
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
+
+                // Restore inputs before transitioning to world
+                UnblockUnwantedInputs();
+
                 lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
             }
@@ -551,5 +561,11 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ShowConnectionErrorPopup() =>
             viewInstance!.ErrorPopupRoot.SetActive(true);
+
+        private void BlockUnwantedInputs() =>
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+
+        private void UnblockUnwantedInputs() =>
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
     }
 }

@@ -1,18 +1,14 @@
 using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
-using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
-using Utility;
 
 namespace DCL.Navmap
 {
     public class ShowPlaceInfoCommand : INavmapCommand<AdditionalParams>
     {
         private readonly PlacesData.PlaceInfo placeInfo;
-        private readonly NavmapView navmapView;
         private readonly PlaceInfoPanelController placeInfoPanelController;
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly IEventsApiService eventsApiService;
@@ -21,14 +17,12 @@ namespace DCL.Navmap
 
         public ShowPlaceInfoCommand(
             PlacesData.PlaceInfo placeInfo,
-            NavmapView navmapView,
             PlaceInfoPanelController placeInfoPanelController,
             PlacesAndEventsPanelController placesAndEventsPanelController,
             IEventsApiService eventsApiService,
             NavmapSearchBarController searchBarController)
         {
             this.placeInfo = placeInfo;
-            this.navmapView = navmapView;
             this.placeInfoPanelController = placeInfoPanelController;
             this.placesAndEventsPanelController = placesAndEventsPanelController;
             this.eventsApiService = eventsApiService;
@@ -45,6 +39,7 @@ namespace DCL.Navmap
             placesAndEventsPanelController.Expand();
 
             placeInfoPanelController.Set(placeInfo);
+            placeInfoPanelController.SetOriginParcel(additionalParams?.OriginalParcel);
             placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.OVERVIEW);
             placeInfoPanelController.HideLiveEvent();
             searchBarController.ToggleClearButton(true);
