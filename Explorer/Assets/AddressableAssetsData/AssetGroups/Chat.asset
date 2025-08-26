@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f35770447348416ab31f59bfd77ac2b
+    m_Address: Assets/DCL/VoiceChat/Assets/CommunityVoiceChat/PlayerEntry.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 51646f2adc3264ba7bf9b4f90febbd22
     m_Address: EmojiPanelConfig
     m_ReadOnly: 0
@@ -77,6 +82,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: efdc5e8175a88de4eaaf5800a0e3bea8
     m_Address: Assets/DCL/Chat/Assets/ChatEntry_System.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3988fe058c9e463580d97c75e2b574d
+    m_Address: Assets/DCL/VoiceChat/Assets/CommunityVoiceChatContextMenuSettings.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
