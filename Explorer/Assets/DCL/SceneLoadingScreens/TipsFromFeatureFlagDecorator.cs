@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace DCL.SceneLoadingScreens
 {
-    public class FilterTipsFromFeatureFlag : ISceneTipsProvider
+    public class TipsFromFeatureFlagDecorator : ISceneTipsProvider
     {
         private readonly FeatureFlagsConfiguration featureFlags;
         private readonly ISceneTipsProvider source;
@@ -16,8 +16,7 @@ namespace DCL.SceneLoadingScreens
         private bool featureFlagChecked;
         private bool tipsParseSuccess;
 
-        public FilterTipsFromFeatureFlag(FeatureFlagsConfiguration featureFlags,
-            ISceneTipsProvider source)
+        public TipsFromFeatureFlagDecorator(ISceneTipsProvider source, FeatureFlagsConfiguration featureFlags)
         {
             this.featureFlags = featureFlags;
             this.source = source;
