@@ -1,5 +1,6 @@
 using DCL.Chat.History;
 using System;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -56,10 +57,13 @@ namespace DCL.Chat
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageContentElement.SetMessageContent(data.Message);
 
-            timestamp.gameObject.SetActive(data.SentTimestamp != 0.0);
-
-            if(timestamp.gameObject.activeSelf)
-                timestamp.text = DateTime.FromOADate(data.SentTimestamp).ToLocalTime().ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+            if (data.SentTimestamp.HasValue)
+            {
+                timestamp.gameObject.SetActive(true);
+                timestamp.text = data.SentTimestamp.Value.ToLocalTime().ToString("hh:mm tt", CultureInfo.InvariantCulture);
+            }
+            else
+                timestamp.gameObject.SetActive(false);
 
             backgroundSize = backgroundRectTransform.sizeDelta;
             backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
@@ -69,7 +73,7 @@ namespace DCL.Chat
             mentionedOutline.SetActive(data.IsMention);
 
             backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
-            messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
+            //messageOptionsButton.onClick.AddListener(OnMessageOptionsClicked);
         }
 
         private void OnMessageOptionsClicked()

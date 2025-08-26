@@ -163,8 +163,6 @@ namespace DCL.Passport
             ViewportSoftMask.enabled = passportSection != PassportSection.PHOTOS;
 
             MainScroll.verticalNormalizedPosition = 1;
-
-            CharacterPreviewView.gameObject.SetActive(passportSection != PassportSection.BADGES);
         }
     }
 }

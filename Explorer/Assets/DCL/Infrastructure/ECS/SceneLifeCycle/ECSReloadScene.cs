@@ -32,29 +32,29 @@ namespace ECS.SceneLifeCycle
             this.localSceneDevelopment = localSceneDevelopment;
         }
 
-        public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)
+        public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct)
         {
             var parcel = world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
-            if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache)) return false;
+            if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache)) return null;
 
             var foundEntity = FindSceneEntity(sceneInCache);
-            if (foundEntity == Entity.Null) return false;
+            if (foundEntity == Entity.Null) return null;
 
             await DisposeAndRestartAsync(foundEntity, sceneInCache, ct);
 
-            return true;
+            return sceneInCache;
         }
 
-        public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct, string sceneId)
+        public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId)
         {
-            if (!scenesCache.TryGetBySceneId(sceneId, out var sceneInCache)) return false;
+            if (!scenesCache.TryGetBySceneId(sceneId, out var sceneInCache)) return null;
 
             var foundEntity = FindSceneEntity(sceneInCache!);
-            if (foundEntity == Entity.Null) return false;
+            if (foundEntity == Entity.Null) return null;
 
             await DisposeAndRestartAsync(foundEntity, sceneInCache!, ct);
 
-            return true;
+            return sceneInCache;
         }
 
         private Entity FindSceneEntity(ISceneFacade targetScene)
