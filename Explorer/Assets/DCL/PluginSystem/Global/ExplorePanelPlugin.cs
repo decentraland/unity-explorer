@@ -299,7 +299,8 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 appArgs,
                 webBrowser,
-                inWorldWarningNotificationView
+                inWorldWarningNotificationView,
+                profileChangesBus
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
