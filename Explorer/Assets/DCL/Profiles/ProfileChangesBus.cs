@@ -12,13 +12,13 @@ namespace DCL.Profiles
         public void Dispose() =>
             profileChangedDelegate = null;
 
-        public void PushProfileNameChange(Profile profile) =>
+        public void PushUpdate(Profile profile) =>
             profileChangedDelegate?.Invoke(profile);
 
-        public void SubscribeToProfileNameChange(ProfileChangedDelegate callback) =>
+        public void SubscribeToUpdate(ProfileChangedDelegate callback) =>
             profileChangedDelegate += callback;
 
-        public void UnsubscribeToProfileNameChange(ProfileChangedDelegate callback) =>
+        public void UnsubscribeToUpdate(ProfileChangedDelegate callback) =>
             profileChangedDelegate -= callback;
     }
 }

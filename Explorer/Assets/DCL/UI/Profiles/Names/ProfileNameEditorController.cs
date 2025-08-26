@@ -248,7 +248,7 @@ namespace DCL.UI.ProfileNames
                         NameChanged?.Invoke();
 
                         if (updatedProfile != null)
-                            profileChangesBus.PushProfileNameChange(updatedProfile);
+                            profileChangesBus.PushUpdate(updatedProfile);
                     }
                     catch (IdenticalProfileUpdateException) { }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
@@ -285,7 +285,7 @@ namespace DCL.UI.ProfileNames
                         NameChanged?.Invoke();
 
                         if (updatedProfile != null)
-                            profileChangesBus.PushProfileNameChange(updatedProfile);
+                            profileChangesBus.PushUpdate(updatedProfile);
                     }
                     catch (IdenticalProfileUpdateException) { }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
