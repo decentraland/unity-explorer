@@ -38,10 +38,14 @@ namespace DCL.Chat
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IMVCManager mvcManager;
-        private ChatStateMachine? chatStateMachine;
-        private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly CommunitiesDataProvider communityDataProvider;
+
+        private ChatStateMachine? chatStateMachine;
+        private EventSubscriptionScope uiScope;
+        private CommunityVoiceChatSubTitleButtonController communityVoiceChatSubTitleButtonController;
+
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public event Action? PointerEntered;
@@ -68,7 +72,8 @@ namespace DCL.Chat
             ChatContextMenuService chatContextMenuService,
             CommunityDataService communityDataService,
             ChatClickDetectionService chatClickDetectionService,
-            IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            CommunitiesDataProvider communityDataProvider) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
@@ -85,6 +90,7 @@ namespace DCL.Chat
             this.communityDataService = communityDataService;
             this.chatClickDetectionService = chatClickDetectionService;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communityDataProvider = communityDataProvider;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -102,6 +108,13 @@ namespace DCL.Chat
             viewInstance.OnPointerExitEvent += HandlePointerExit;
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed += OnUIClose;
+
+            communityVoiceChatSubTitleButtonController = new CommunityVoiceChatSubTitleButtonController(
+                viewInstance.CommunityStreamSubTitleButton,
+                voiceChatOrchestrator,
+                currentChannelService.CurrentChannelProperty,
+                communityDataProvider);
+
 
             var titleBarPresenter = new ChatTitlebarPresenter(
                 viewInstance.TitlebarView,
@@ -282,6 +295,8 @@ namespace DCL.Chat
             uiScope?.Dispose();
 
             chatMemberListService.Dispose();
+
+            communityVoiceChatSubTitleButtonController?.Dispose();
         }
 
         private void OnMvcViewShowed(IController controller)
