@@ -1,6 +1,7 @@
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatViews;
+using DCL.VoiceChat;
 using System;
 using DG.Tweening;
 using MVC;
@@ -14,13 +15,13 @@ namespace DCL.Chat
         public event Action OnPointerEnterEvent;
         public event Action OnPointerExitEvent;
         public event Action OnClickedOutsideEvent;
-     
+
         // [field: SerializeField]
         // public ChatConfig Config { get; private set; }
-        
+
         [SerializeField]
         private CanvasGroup sharedBackgroundCanvasGroup;
-        
+
         [field: SerializeField]
         public ChatChannelsView ConversationToolbarView2 { get; private set; }
 
@@ -35,6 +36,11 @@ namespace DCL.Chat
 
         [field: SerializeField]
         public ChannelMemberFeedView MemberListView { get; private set; }
+
+        [field: Header("Voice Chat")]
+        [field: SerializeField] public CommunityStreamSubTitleButtonView CommunityStreamSubTitleButton { get; private set; }
+
+        [field: SerializeField] public CanvasGroup CommunitySubTitleBarCanvasGroup { get; private set; }
 
         public void Dispose()
         {
@@ -52,7 +58,7 @@ namespace DCL.Chat
             IsPointerInside = false;
             OnPointerExitEvent?.Invoke();
         }
-        
+
         public void SetSharedBackgroundFocusState(bool isFocused, bool animate, float duration, Ease easing)
         {
             // This is the logic that was previously in ChatMessageFeedView, now in its correct home.

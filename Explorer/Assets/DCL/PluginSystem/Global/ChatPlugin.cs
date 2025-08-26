@@ -290,7 +290,8 @@ namespace DCL.PluginSystem.Global
                 chatMemberService,
                 chatContextMenuService,
                 communityDataService,
-                chatClickDetectionService
+                chatClickDetectionService,
+                voiceChatOrchestrator
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, chatSettingsAsset.Value);

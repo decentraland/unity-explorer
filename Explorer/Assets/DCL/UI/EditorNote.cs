@@ -5,8 +5,8 @@ namespace DCL.UI
 {
     public class EditorNote : MonoBehaviour
     {
-        [TextArea]
-        public string Note;
+        [TextArea(3,20)]
+        public string Note = string.Empty;
     }
 }
 #endif

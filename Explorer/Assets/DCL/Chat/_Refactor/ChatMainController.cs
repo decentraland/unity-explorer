@@ -16,6 +16,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
 using DCL.UI.Profiles.Helpers;
+using DCL.VoiceChat;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -35,6 +36,7 @@ namespace DCL.Chat
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IMVCManager mvcManager;
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
@@ -65,7 +67,8 @@ namespace DCL.Chat
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
             CommunityDataService communityDataService,
-            ChatClickDetectionService chatClickDetectionService) : base(viewFactory)
+            ChatClickDetectionService chatClickDetectionService,
+            IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
@@ -81,6 +84,7 @@ namespace DCL.Chat
             this.chatContextMenuService = chatContextMenuService;
             this.communityDataService = communityDataService;
             this.chatClickDetectionService = chatClickDetectionService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -99,7 +103,8 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed += OnUIClose;
 
-            var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
+            var titleBarPresenter = new ChatTitlebarPresenter(
+                viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,
                 communityDataService,
@@ -107,7 +112,9 @@ namespace DCL.Chat
                 chatMemberListService,
                 chatContextMenuService,
                 commandRegistry.GetTitlebarViewModel,
-                commandRegistry.DeleteChatHistory);
+                commandRegistry.DeleteChatHistory,
+                voiceChatOrchestrator,
+                chatEventBus);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,

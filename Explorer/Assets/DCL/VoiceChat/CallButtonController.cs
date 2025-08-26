@@ -44,7 +44,7 @@ namespace DCL.VoiceChat
 
         public event Action<string> StartCall;
 
-        public CallButtonController(CallButtonView view, IVoiceChatOrchestratorState voiceChatState, IChatEventBus chatEventBus, ReactiveProperty<ChatChannel> currentChannel)
+        public CallButtonController(CallButtonView view, IVoiceChatOrchestratorState voiceChatState, IChatEventBus chatEventBus, IReadonlyReactiveProperty<ChatChannel> currentChannel)
         {
             this.view = view;
             this.voiceChatState = voiceChatState;
