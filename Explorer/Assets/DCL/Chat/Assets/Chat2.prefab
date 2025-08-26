@@ -1012,7 +1012,7 @@ MonoBehaviour:
   buttonOpenMembers: {fileID: 882752283130315916}
   buttonOpenContextMenu: {fileID: 7643003288699712754}
   buttonOpenProfileContextMenu: {fileID: 5133522435735351255}
-  buttonStartCall: {fileID: 0}
+  buttonStartCall: {fileID: 7066417917549196683}
   textChannelName: {fileID: 4598247860072284817}
   textMembersCount: {fileID: 7613955907325954088}
   chatProfileView: {fileID: 5153817964307362364}
@@ -7573,6 +7573,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2040614972627197556, guid: c90d10fe6c8f84cbdae2657ec55f681f, type: 3}
   m_PrefabInstance: {fileID: 3730693067208277341}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7066417917549196683 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5897147310610024662, guid: c90d10fe6c8f84cbdae2657ec55f681f, type: 3}
+  m_PrefabInstance: {fileID: 3730693067208277341}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfdbe7decd2b4bffbe2615bb69cd0e09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3831890921412750634
 PrefabInstance:
   m_ObjectHideFlags: 0
