@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-	public class MuteButtonView : ButtonWithAnimationView
+	public class MuteButtonView : ButtonView
 	{
 		[SerializeField] private Image icon;
 		[SerializeField] private Sprite mutedSprite;
