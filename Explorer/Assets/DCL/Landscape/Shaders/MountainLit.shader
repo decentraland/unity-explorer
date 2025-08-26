@@ -16,7 +16,7 @@ Shader "DCL/MountainLit"
         _SpecularHighlights("Specular Highlights", Float) = 1.0
 
         _HeightMap("HeightMap", 2D) = "white" {}
-        _UseHeightMap("Use HeightMap", Range(0, 15)) = 0
+        _UseHeightMap("Use HeightMap", Range(0, 1)) = 0
         _HeightMapScale("HeightMap Scale", Float) = 4.3567
 
         _OccupancyMap("Occupancy Map", 2D) = "black" {}

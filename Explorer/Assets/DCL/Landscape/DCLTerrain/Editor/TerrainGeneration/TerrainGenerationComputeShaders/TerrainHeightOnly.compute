@@ -9,6 +9,8 @@ RWTexture2D<float4> Result;
 float4 _TerrainParams; // x: frequency, y: unused, z: octaves, w: unused
 uint2 _TextureSize;    // x: width, y: height
 
+// Force HLSL path in GeoffNoise (avoid C# "using" in compute compile)
+#define SHADER_TARGET 1
 #include "../../../../Shaders/GeoffNoise.hlsl"
 
 // ============================================================================

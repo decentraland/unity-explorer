@@ -17,12 +17,8 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     input.positionWS = ClampPosition(input.positionWS, terrainBounds);
 
     float2 heightUV = (input.positionWS.xz + 4096.0f) / 8192.0f;
-    float2 heightUV2 = heightUV;
-    if (_UseHeightMap > 10)
-    {
-        heightUV2.y = 1.0f - heightUV2.y;
-    }
-    float heightDerivative2 = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, heightUV2, 0).x;
+   
+    float heightDerivative2 = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, heightUV, 0).x;
     fOccupancy = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, heightUV, 0).r;
 
     float minValue = 175.0 / 255.0;
@@ -43,16 +39,11 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
 
         if (_UseHeightMap > 0)
         {
-            noiseH = 0;
-        }
-
-        if (_UseHeightMap > 5)
-        {
             noiseH =  (heightDerivative2 * 2 - 1) * _HeightMapScale;
         }
         
         float saturationFactor = 20;
-        input.positionWS.y = noiseH;//normalizedHeight * _DistanceFieldScale + noiseH * saturate( normalizedHeight * saturationFactor);
+        input.positionWS.y = normalizedHeight * _DistanceFieldScale + noiseH * saturate( normalizedHeight * saturationFactor);
 
         // Ensure no negative heights
         if (input.positionWS.y < 0.0)
