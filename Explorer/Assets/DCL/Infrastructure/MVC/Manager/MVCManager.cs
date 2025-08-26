@@ -167,9 +167,8 @@ namespace MVC
             try
             {
                 // Hide all popups in the stack and clear it
-
-                foreach ((IController controller, int orderInLayer) popupController in fullscreenPushInfo.PopupControllers)
-                    popupController.controller.HideViewAsync(ct).Forget();
+                for (int i = fullscreenPushInfo.PopupControllers.Count - 1; i >= 0; i--)
+                    fullscreenPushInfo.PopupControllers[i].Item1.HideViewAsync(ct).Forget();
 
                 fullscreenPushInfo.PopupControllers.Clear();
 

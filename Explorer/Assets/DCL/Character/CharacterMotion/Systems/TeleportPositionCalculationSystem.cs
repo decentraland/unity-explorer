@@ -46,7 +46,7 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation().WithTerrainOffset();
             }
-            else if (TeleportUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
             }
@@ -68,6 +68,9 @@ namespace DCL.Character.CharacterMotion.Systems
             }
 
             teleportIntent.IsPositionSet = true;
+            // The component needs to be re-applied to the entity to ensure that changes are properly propagated
+            // within the ECS structure. Without this, other systems may receive an outdated version of the component.
+            World!.Set(playerEntity, teleportIntent);
         }
 
         private bool ValidateTeleportPosition(ref Vector3 targetPosition, Vector2Int targetParcel, SceneEntityDefinition sceneDefinition)

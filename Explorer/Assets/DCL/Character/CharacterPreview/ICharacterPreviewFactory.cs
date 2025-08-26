@@ -42,7 +42,7 @@ namespace DCL.CharacterPreview
         {
             characterPreviewComponentPool ??= componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
             transformPool ??= componentPoolsRegistry.GetReferenceTypePool<Transform>();
-            CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get();
+            CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get()!;
             container.Initialize(targetTexture, position);
             return new CharacterPreviewController(world, renderImage, container, inputEventBus, characterPreviewComponentPool, cameraSettings, transformPool, appArgs);
         }
