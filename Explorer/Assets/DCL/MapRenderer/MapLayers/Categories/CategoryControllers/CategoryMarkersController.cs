@@ -286,7 +286,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
                 marker.ToggleSelection(true);
-                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo!, cts.Token, true).Forget();
                 mapRenderMarker = marker;
                 return true;
             }

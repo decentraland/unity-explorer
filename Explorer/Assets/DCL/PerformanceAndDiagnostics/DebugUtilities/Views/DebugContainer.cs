@@ -22,6 +22,9 @@ namespace DCL.DebugUtilities.Views
             toolButton.clicked += TogglePanelVisibility;
         }
 
+        public void SetPanelVisibility(bool newVisibility) =>
+            mainPanel.SetDisplayed(newVisibility);
+
         public void TogglePanelVisibility() =>
             mainPanel.SetDisplayed(!IsPanelVisible());
 

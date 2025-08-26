@@ -34,6 +34,7 @@ namespace DCL.Backpack
         private readonly IWearableStorage wearableStorage;
         private readonly IAppArgs appArgs;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly World world;
         private readonly Entity playerEntity;
         private CancellationTokenSource? publishProfileCts;
@@ -51,7 +52,8 @@ namespace DCL.Backpack
             World world,
             Entity playerEntity,
             IAppArgs appArgs,
-            WarningNotificationView inWorldWarningNotificationView)
+            WarningNotificationView inWorldWarningNotificationView,
+            ProfileChangesBus profileChangesBus)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
@@ -81,6 +83,7 @@ namespace DCL.Backpack
             this.playerEntity = playerEntity;
             this.appArgs = appArgs;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.profileChangesBus = profileChangesBus;
         }
 
         public void Dispose()
@@ -185,13 +188,18 @@ namespace DCL.Backpack
 
                 profileCache.Set(newProfile.UserId, newProfile);
                 UpdateAvatarInWorld(newProfile);
+                profileChangesBus.PushUpdate(newProfile);
                 return;
             }
 
             try
             {
-                await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
+                Profile? newProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
+
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
+
+                if (newProfile != null)
+                    profileChangesBus.PushUpdate(newProfile);
             }
             catch (OperationCanceledException) { }
             catch (IdenticalProfileUpdateException)

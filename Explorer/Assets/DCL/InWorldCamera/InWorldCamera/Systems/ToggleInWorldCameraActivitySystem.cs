@@ -126,7 +126,7 @@ namespace DCL.InWorldCamera.Systems
         {
             if(hudController.State == ControllerState.ViewHiding || hudController.State == ControllerState.ViewHidden)
                 return;
-            
+
             if (debugContainerBuilder?.Container != null)
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
