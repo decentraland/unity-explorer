@@ -30,6 +30,9 @@ namespace DCL.Communities
 
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, EventCreatedClicked);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_ABOUT_TO_START, EventStartSoonClicked);
+            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_SENT, UserJoinRequestSentClicked);
+            //COMMUNITY_USER_INVITED type is handled in ExplorePanelController for circular dependency reasons, just like REWARD_ASSIGNMENT
+            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_ACCEPTED, UserRequestAcceptedClicked);
         }
 
         public void Dispose()
@@ -61,6 +64,24 @@ namespace DCL.Communities
             eventCreatedCts = eventCreatedCts.SafeRestart();
 
             CommunityEventCreatedNotification notification = (CommunityEventCreatedNotification)parameters[0];
+            mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(notification.Metadata.CommunityId)));
+        }
+
+        private void UserJoinRequestSentClicked(object[] parameters)
+        {
+            if (parameters.Length == 0 || parameters[0] is not CommunityUserRequestToJoinNotification)
+                return;
+
+            CommunityUserRequestToJoinNotification notification = (CommunityUserRequestToJoinNotification)parameters[0];
+            mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(notification.Metadata.CommunityId)));
+        }
+
+        private void UserRequestAcceptedClicked(object[] parameters)
+        {
+            if (parameters.Length == 0 || parameters[0] is not CommunityUserRequestToJoinAcceptedNotification)
+                return;
+
+            CommunityUserRequestToJoinAcceptedNotification notification = (CommunityUserRequestToJoinAcceptedNotification)parameters[0];
             mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(notification.Metadata.CommunityId)));
         }
     }
