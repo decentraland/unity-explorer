@@ -85,7 +85,7 @@ namespace DCL.Chat.History
                     ParseEntryValues(currentLine, entryValues);
                     bool sentByLocalUser = entryValues[ENTRY_SENT_BY_LOCAL_USER] == LOCAL_USER_TRUE_VALUE;
                     string walletAddress = sentByLocalUser ? localUserWalletAddress : remoteUserWalletAddress;
-                    ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], double.Parse(entryValues[ENTRY_TIMESTAMP]));
+                    ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], double.Parse(entryValues[ENTRY_TIMESTAMP], CultureInfo.InvariantCulture));
 
                     obtainedMessages.Add(newMessage);
                     currentLine = await reader2.ReadLineAsync();

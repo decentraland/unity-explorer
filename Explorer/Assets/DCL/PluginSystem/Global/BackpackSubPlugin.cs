@@ -59,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IWebBrowser webBrowser;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly ProfileChangesBus profileChangesBus;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -90,7 +91,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             IAppArgs appArgs,
             IWebBrowser webBrowser,
-            WarningNotificationView inWorldWarningNotificationView)
+            WarningNotificationView inWorldWarningNotificationView,
+            ProfileChangesBus profileChangesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -118,6 +120,7 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.webBrowser = webBrowser;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.profileChangesBus = profileChangesBus;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -214,7 +217,8 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 appArgs,
-                inWorldWarningNotificationView
+                inWorldWarningNotificationView,
+                profileChangesBus
             );
 
             backpackController = new BackpackController(
