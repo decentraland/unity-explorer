@@ -822,7 +822,7 @@ namespace Global.Dynamic
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, globalWorld),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
-                    staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
+                    staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus, featureFlags),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, mvcManager, dclCursor),
                 new TeleportPromptPlugin(
                     assetsProvisioner,

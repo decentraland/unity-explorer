@@ -7,7 +7,6 @@ namespace DCL.FeatureFlags
     {
         public const string MULTIPLAYER_COMPRESSION_WIN = "multiplayer_use_compression_win";
         public const string MULTIPLAYER_COMPRESSION_MAC = "multiplayer_use_compression_mac";
-
         public const string PORTABLE_EXPERIENCE = "alfa-portable-experiences";
         public const string GLOBAL_PORTABLE_EXPERIENCE = "alfa-global-portable-experiences";
         public const string PORTABLE_EXPERIENCE_CHAT_COMMANDS = "alfa-portable-experiences-chat-commands";
@@ -27,7 +26,6 @@ namespace DCL.FeatureFlags
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
         public const string VOICE_CHAT = "alfa-voice-chat";
         public const string COMMUNITY_VOICE_CHAT = "alfa-community-voice-chat";
-
         public const string CAMERA_REEL = "alfa-camera-reel";
         public const string FRIENDS = "alfa-friends";
         public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
@@ -40,10 +38,9 @@ namespace DCL.FeatureFlags
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_WALLETS_VARIANT = "wallets";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
-
         public const string AUTH_CODE_VALIDATION = "number-validation";
-
         public const string GPUI_ENABLED = "alfa-gpui";
+        public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
     }
 
     public enum FeatureFlag
