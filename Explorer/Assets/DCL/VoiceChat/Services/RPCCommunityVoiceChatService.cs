@@ -1,4 +1,3 @@
-#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.SocialService;
@@ -7,7 +6,6 @@ using DCL.WebRequests;
 using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.VoiceChat.Services
@@ -172,7 +170,6 @@ namespace DCL.VoiceChat.Services
             ThrowIfServiceDisabled();
 
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
-            Debug.Log($"Is reauesrting to spek {isRequestingToSpeak}");
             var payload = new RequestToSpeakInCommunityVoiceChatPayload()
             {
                 CommunityId = communityId,

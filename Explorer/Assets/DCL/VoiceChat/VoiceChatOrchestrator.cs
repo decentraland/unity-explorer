@@ -76,10 +76,10 @@ namespace DCL.VoiceChat
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
 
-            currentVoiceChatType?.Dispose();
-            currentCallStatus?.Dispose();
-            currentVoiceChatPanelSize?.Dispose();
-            currentActiveCommunityData?.Dispose();
+            currentVoiceChatType?.ClearSubscriptionsList();
+            currentCallStatus?.ClearSubscriptionsList();
+            currentVoiceChatPanelSize?.ClearSubscriptionsList();
+            currentActiveCommunityData?.ClearSubscriptionsList();
             ParticipantsStateService?.Dispose();
         }
 

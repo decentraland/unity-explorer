@@ -55,7 +55,7 @@ namespace DCL.Chat.ChatServices
 
             if (onlineParticipantsPerChannel.ContainsKey(addedChannel.Id))
                 return;
-            
+
             onlineParticipantsPerChannel.SyncAdd(addedChannel.Id, HASHSET_POOL.Get());
             InitializeOnlineMembersAsync(addedChannel.Id, lifeTimeCts.Token).Forget();
         }
@@ -138,7 +138,7 @@ namespace DCL.Chat.ChatServices
             if (!onlineParticipantsPerChannel.TryGetValue(channelId, out HashSet<string>? onlineParticipants))
                 return;
 
-            // Notifications for non-current channel are not sent as it's not needed from the esign standpoint (it's possible to open only one community at a time)
+            // Notifications for non-current channel are not sent as it's not needed from the design standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.Add(userId) && currentChannelId.Equals(channelId))
                 eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, true));
         }
@@ -148,7 +148,7 @@ namespace DCL.Chat.ChatServices
             if (!onlineParticipantsPerChannel.TryGetValue(channelId, out HashSet<string>? onlineParticipants))
                 return;
 
-            // Notifications for non-current channel are not sent as it's not needed from the esign standpoint (it's possible to open only one community at a time)
+            // Notifications for non-current channel are not sent as it's not needed from the design standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.Remove(userId) && currentChannelId.Equals(channelId))
                 eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, false));
         }

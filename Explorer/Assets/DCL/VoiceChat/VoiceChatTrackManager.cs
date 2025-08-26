@@ -128,16 +128,13 @@ namespace DCL.VoiceChat
             {
                 combinedStreamsAudioSource.Reset();
 
-                foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                foreach (var remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 {
-                    Participant participant = voiceChatRoom.Participants.RemoteParticipant(remoteParticipantIdentity);
-                    if (participant == null) continue;
-
-                    foreach ((string sid, TrackPublication value) in participant.Tracks)
+                    foreach ((string sid, TrackPublication value) in remoteParticipantIdentity.Value.Tracks)
                     {
                         if (value.Kind == TrackKind.KindAudio)
                         {
-                            WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity, sid);
+                            WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity.Key, sid);
 
                             if (stream != null)
                             {
@@ -188,7 +185,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio)
                 {
-                    WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
                     if (stream != null)
                     {
@@ -206,7 +203,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio)
                 {
-                    WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
                     if (stream != null)
                     {
@@ -224,7 +221,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
                     if (stream != null)
                     {
@@ -242,7 +239,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
                     if (stream != null)
                     {

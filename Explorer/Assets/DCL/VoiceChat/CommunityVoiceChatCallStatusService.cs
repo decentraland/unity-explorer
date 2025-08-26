@@ -24,7 +24,7 @@ namespace DCL.VoiceChat
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
 
         private CancellationTokenSource cts = new ();
-        private string? locallyStartedCommunityId = null;
+        private string? locallyStartedCommunityId ;
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
@@ -348,7 +348,7 @@ namespace DCL.VoiceChat
                 voiceChatSceneTrackerService.RegisterCommunityInScene(communityUpdate.CommunityId, communityUpdate.Positions, communityUpdate.Worlds);
                 voiceChatSceneTrackerService.SetActiveCommunityVoiceChat(communityUpdate.CommunityId, activeChat);
 
-                // We only show notification if we are part of the community and we didn't start the stream ourselves
+                // We only show notification if we are part of the community, and we didn't start the stream ourselves
                 if (communityUpdate.IsMember && communityUpdate.CommunityId != locallyStartedCommunityId)
                     notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage,communityUpdate.CommunityId));
             }
@@ -401,7 +401,7 @@ namespace DCL.VoiceChat
             voiceChatService.ActiveCommunityVoiceChatsFetched -= OnActiveCommunityVoiceChatsFetched;
             voiceChatService.Dispose();
 
-            foreach (ReactiveProperty<bool>? callData in communityVoiceChatCalls.Values) { callData.Dispose(); }
+            foreach (ReactiveProperty<bool>? callData in communityVoiceChatCalls.Values) { callData.ClearSubscriptionsList(); }
 
             communityVoiceChatCalls.Clear();
             activeCommunityVoiceChats.Clear();

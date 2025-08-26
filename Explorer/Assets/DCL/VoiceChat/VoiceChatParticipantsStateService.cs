@@ -1,4 +1,3 @@
-#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
@@ -84,7 +83,17 @@ namespace DCL.VoiceChat
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
             LocalParticipantId = identityCache.Identity?.Address ?? string.Empty;
-            CreateLocalParticipantState();
+
+            LocalParticipantState = new ParticipantState(
+                LocalParticipantId,
+                new ReactiveProperty<bool>(false),
+                new ReactiveProperty<string?>(null),
+                new ReactiveProperty<bool?>(false),
+                new ReactiveProperty<string?>(null),
+                new ReactiveProperty<bool>(false),
+                new ReactiveProperty<bool>(false),
+                new ReactiveProperty<UserCommunityRoleMetadata>(UserCommunityRoleMetadata.none)
+            );
         }
 
         public void Dispose()
@@ -105,7 +114,7 @@ namespace DCL.VoiceChat
 
             DisposeParticipantState(LocalParticipantState);
 
-            foreach (ReactiveProperty<bool>? status in onlineStatus.Values) { status.Dispose(); }
+            foreach (ReactiveProperty<bool>? status in onlineStatus.Values) { status.ClearSubscriptionsList(); }
 
             onlineStatus.Clear();
 
@@ -368,7 +377,7 @@ namespace DCL.VoiceChat
         public Participant? GetParticipant(string identity) =>
             voiceChatRoom.Participants.RemoteParticipant(identity);
 
-        public IReadOnlyCollection<string> GetRemoteParticipantIdentities() =>
+        public IReadOnlyDictionary<string, Participant> GetRemoteParticipantIdentities() =>
             voiceChatRoom.Participants.RemoteParticipantIdentities();
 
         public bool IsParticipantSpeaking(string participantId) =>
@@ -410,13 +419,13 @@ namespace DCL.VoiceChat
 
         private void DisposeParticipantState(ParticipantState state)
         {
-            state.IsSpeaking?.Dispose();
-            state.Name?.Dispose();
-            state.HasClaimedName?.Dispose();
-            state.ProfilePictureUrl?.Dispose();
-            state.IsRequestingToSpeak?.Dispose();
-            state.IsSpeaker?.Dispose();
-            state.Role?.Dispose();
+            state.IsSpeaking.ClearSubscriptionsList();
+            state.Name.ClearSubscriptionsList();
+            state.HasClaimedName.ClearSubscriptionsList();
+            state.ProfilePictureUrl.ClearSubscriptionsList();
+            state.IsRequestingToSpeak.ClearSubscriptionsList();
+            state.IsSpeaker.ClearSubscriptionsList();
+            state.Role.ClearSubscriptionsList();
         }
 
         private void ClearAllParticipantStates()
@@ -431,10 +440,9 @@ namespace DCL.VoiceChat
         {
             var currentParticipants = new List<Participant>();
 
-            foreach (string participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
+            foreach (var participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
-                Participant participant = voiceChatRoom.Participants.RemoteParticipant(participantId)!;
-                currentParticipants.Add(participant);
+                currentParticipants.Add(participantId.Value);
             }
 
             var participantsToRemove = new List<string>();
@@ -503,22 +511,6 @@ namespace DCL.VoiceChat
             ParticipantState? participantState = GetParticipantState(participantId);
 
             if (participantState != null) { ApplyMetadataToParticipantState(participantState, participantId, metadata); }
-        }
-
-        private void CreateLocalParticipantState()
-        {
-            LocalParticipantState = new ParticipantState(
-                LocalParticipantId,
-                new ReactiveProperty<bool>(false),
-                new ReactiveProperty<string?>(null),
-                new ReactiveProperty<bool?>(false),
-                new ReactiveProperty<string?>(null),
-                new ReactiveProperty<bool>(false),
-                new ReactiveProperty<bool>(false),
-                new ReactiveProperty<UserCommunityRoleMetadata>(UserCommunityRoleMetadata.none)
-            );
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Created local participant state for {LocalParticipantId}");
         }
 
         private void ResetLocalParticipantState()

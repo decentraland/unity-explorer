@@ -17,7 +17,7 @@ namespace DCL.VoiceChat
 
         public IReadonlyReactiveProperty<VoiceChatStatus> Status => status;
         public IReadonlyReactiveProperty<string> CallId => callId;
-        public string ConnectionUrl { get; protected set; }
+        public string ConnectionUrl { get; protected set; } = string.Empty;
 
         public abstract void StartCall(string target);
 
@@ -52,8 +52,8 @@ namespace DCL.VoiceChat
 
         public virtual void Dispose()
         {
-            status?.Dispose();
-            callId?.Dispose();
+            status.ClearSubscriptionsList();
+            callId.ClearSubscriptionsList();
         }
     }
 }

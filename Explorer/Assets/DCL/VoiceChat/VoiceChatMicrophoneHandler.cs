@@ -7,7 +7,6 @@ using DCL.Utilities;
 using Utility.Ownership;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
-using RichTypes;
 using UnityEngine;
 
 namespace DCL.VoiceChat
@@ -43,7 +42,7 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            isMicrophoneEnabledProperty.Dispose();
+            isMicrophoneEnabledProperty.ClearSubscriptionsList();
             DCLInput.Instance.VoiceChat.Talk!.performed -= OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled -= OnReleased;
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
@@ -56,7 +55,7 @@ namespace DCL.VoiceChat
         /// </summary>
         private bool TryGetCurrentMicrophoneSourceIfInCall(out MicrophoneRtcAudioSource? microphoneRtcAudioSource)
         {
-            Option<MicrophoneRtcAudioSource> resource = microphoneSource.Resource;
+            Utility.Types.Option<MicrophoneRtcAudioSource> resource = microphoneSource.Resource;
             microphoneRtcAudioSource = resource.Has ? resource.Value : null;
             return resource.Has;
         }

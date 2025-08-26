@@ -292,9 +292,15 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
-        private async void OnClosePanel()
+        private void OnClosePanel()
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            OnClosePanelAsync().Forget();
+            return;
+
+            async UniTaskVoid OnClosePanelAsync()
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            }
         }
 
         protected override void OnViewShow() =>

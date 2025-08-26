@@ -86,6 +86,8 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
+        private readonly WarningNotificationView warningNotificationView;
+
         private CommandRegistry commandRegistry;
 
         public ChatPlugin(
@@ -155,7 +157,6 @@ namespace DCL.PluginSystem.Global
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
-            this.realmNavigator = realmNavigator;
             this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
 
@@ -229,10 +230,10 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
-            communityUserStateService = new CommunityUserStateService(communityDataProvider,
+            communityUserStateService = new CommunityUserStateService(
+                communityDataProvider,
                 communitiesEventBus,
-                voiceChatOrchestrator,
-                realmNavigator,
+                //voiceChatOrchestrator, TODO, CHECK WHAT DID WE USE THIS FOR?
                 eventBus,
                 chatHistory,
                 web3IdentityCache);
