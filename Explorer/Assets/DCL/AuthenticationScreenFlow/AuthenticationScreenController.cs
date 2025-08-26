@@ -8,9 +8,11 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Prefs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
@@ -54,6 +56,8 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private const int ANIMATION_DELAY = 300;
+        private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
+        private const FullScreenMode DEFAULT_SCREEN_MODE = FullScreenMode.ExclusiveFullScreen;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -68,6 +72,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
+        private readonly List<Resolution> possibleResolutions = new ();
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -107,6 +112,8 @@ namespace DCL.AuthenticationScreenFlow
             this.buildData = buildData;
             this.world = world;
             this.emotesSettings = emotesSettings;
+
+            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
 
         public override void Dispose()
@@ -382,6 +389,8 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
+                    ForceResolutionAndWindowedMode();
+
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
 
@@ -397,6 +406,8 @@ namespace DCL.AuthenticationScreenFlow
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.Loading:
+                    ForceResolutionAndWindowedMode();
+
                     viewInstance!.PendingAuthentication.SetActive(false);
 
                     viewInstance.LoginContainer.SetActive(true);
@@ -410,6 +421,8 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.LoginInProgress:
+                    ForceResolutionAndWindowedMode();
+
                     ResetAnimator(viewInstance!.VerificationAnimator);
 
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
@@ -423,6 +436,8 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
+                    RestoreResolutionAndScreenMode();
+
                     ResetAnimator(viewInstance!.FinalizeAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
 
@@ -450,6 +465,64 @@ namespace DCL.AuthenticationScreenFlow
             animator.gameObject.SetActive(false);
         }
 
+        private void ForceResolutionAndWindowedMode()
+        {
+            Resolution highest = possibleResolutions[0];
+
+            int targetWidth = (int)(highest.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+            int targetHeight = (int)(highest.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+
+            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, highest.refreshRateRatio);
+        }
+
+        private void RestoreResolutionAndScreenMode()
+        {
+            Resolution targetResolution = GetTargetResolution();
+            FullScreenMode targetScreenMode = GetTargetScreenMode();
+            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
+        }
+
+        private Resolution GetTargetResolution()
+        {
+            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION)
+                ? GetSavedResolution()
+                : GetDefaultResolution();
+
+            Resolution GetSavedResolution()
+            {
+                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
+                return possibleResolutions[index];
+            }
+
+            Resolution GetDefaultResolution()
+            {
+                int defaultIndex = 0;
+
+                for (var index = 0; index < possibleResolutions.Count; index++)
+                {
+                    Resolution resolution = possibleResolutions[index];
+                    if (!ResolutionUtils.IsDefaultResolution(resolution))
+                        continue;
+
+                    defaultIndex = index;
+                    break;
+                }
+
+                return possibleResolutions[defaultIndex];
+            }
+        }
+
+        private FullScreenMode GetTargetScreenMode()
+        {
+            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE) ? GetSavedScreenMode() : DEFAULT_SCREEN_MODE;
+
+            FullScreenMode GetSavedScreenMode()
+            {
+                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
+                return FullscreenModeUtils.Modes[index];
+            }
+        }
+
         private void CancelLoginProcess()
         {
             loginCancellationToken?.SafeCancelAndDispose();
@@ -472,7 +545,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private void RequestAlphaAccess() =>
             webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
-
 
         private void CloseErrorPopup() =>
             viewInstance!.ErrorPopupRoot.SetActive(false);
