@@ -49,9 +49,6 @@ namespace DCL.Landscape.Systems
             if (!landscapeData.RenderGround || !terrainGenerator.IsTerrainShown)
                 return;
 
-            if (landscapeData.TerrainData.OccupancyMap == null)
-                landscapeData.TerrainData.OccupancyMap = terrainGenerator.OccupancyMap;
-
             SingleInstanceEntity cameraEntity = World.CacheCamera();
 
             if (World.TryGet(cameraEntity, out ICinemachinePreset? cinemachinePreset))

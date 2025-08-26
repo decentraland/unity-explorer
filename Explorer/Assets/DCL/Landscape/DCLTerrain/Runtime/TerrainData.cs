@@ -40,6 +40,7 @@ namespace Decentraland.Terrain
         [field: SerializeField] internal GrassPrototype[] GrassPrototypes { get; private set; }
         [field: SerializeField] internal FlowerPrototype[] FlowerPrototypes { get; private set; }
         [field: SerializeField] internal DetailPrototype[] DetailPrototypes { get; private set; }
+        public int OccupancyFloor { private get; set; }
 
         protected FunctionPointer<GetHeightDelegate> getHeight;
         protected FunctionPointer<GetNormalDelegate> getNormal;
@@ -159,7 +160,7 @@ namespace Decentraland.Terrain
             return loadTreeInstancesTask;
         }
 
-        internal TerrainDataData GetData()
+        public TerrainDataData GetData()
         {
             if (!treePrototypes.IsCreated)
             {
@@ -188,7 +189,7 @@ namespace Decentraland.Terrain
 
             return new TerrainDataData(RandomSeed, ParcelSize, Bounds, MaxHeight, OccupancyMap,
                 treePrototypes, treeIndices, treeInstances, getHeight, getNormal, treeMinParcel,
-                treeMaxParcel);
+                treeMaxParcel, OccupancyFloor);
         }
 
         private enum GroundMeshPiece
@@ -199,7 +200,7 @@ namespace Decentraland.Terrain
         }
     }
 
-    internal readonly struct TerrainDataData
+    public readonly struct TerrainDataData
     {
         private readonly uint randomSeed;
         public readonly int ParcelSize;
@@ -213,6 +214,7 @@ namespace Decentraland.Terrain
         private readonly FunctionPointer<GetNormalDelegate> getNormal;
         private readonly int2 treeMinParcel;
         private readonly int2 treeMaxParcel;
+        private readonly int occupancyFloor;
 
         /// <summary>xy = min, zw = max, size = max - min</summary>
         private readonly int4 bounds;
@@ -223,7 +225,7 @@ namespace Decentraland.Terrain
             Texture2D occupancyMap, NativeArray<TreePrototypeData> treePrototypes,
             NativeArray<int> treeIndices, NativeArray<TreeInstance> treeInstances,
             FunctionPointer<GetHeightDelegate> getHeight, FunctionPointer<GetNormalDelegate> getNormal,
-            int2 treeMinParcel, int2 treeMaxParcel)
+            int2 treeMinParcel, int2 treeMaxParcel, int occupancyFloor)
         {
             this.randomSeed = randomSeed;
             ParcelSize = parcelSize;
@@ -236,6 +238,8 @@ namespace Decentraland.Terrain
             this.getNormal = getNormal;
             this.treeMinParcel = treeMinParcel;
             this.treeMaxParcel = treeMaxParcel;
+            this.occupancyFloor = occupancyFloor;
+
 
             if (IsPowerOfTwo(occupancyMap, out occupancyMapSize)) { this.occupancyMap = occupancyMap.GetRawTextureData<byte>(); }
             else
@@ -266,14 +270,13 @@ namespace Decentraland.Terrain
             else { occupancy = 0f; }
 
             // float height = SAMPLE_TEXTURE2D_LOD(HeightMap, HeightMap.samplerstate, uv, 0.0).r;
-            float minValue = 175.0f / 255.0f; // 0.68
+            float minValue = occupancyFloor / 255.0f; // 0.68
 
-            // In the "worst case", if occupancy is 0.25, it can mean that the current vertex is on a
-            // corner between one occupied parcel and three free ones, and height must be zero.
-            if (occupancy <= minValue) { return 0f; }
+            if (occupancy <= minValue) return 0f;
 
+            const float SATURATION_FACTOR = 20;
             float normalizedHeight = (occupancy - minValue) / (1 - minValue);
-            return normalizedHeight * maxHeight; // + noiseH * transitionFactor;
+            return (normalizedHeight * maxHeight) + (getHeight.Invoke(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
         }
 
         public float3 GetNormal(float x, float z)
@@ -519,7 +522,7 @@ namespace Decentraland.Terrain
         [field: SerializeField] public Material Material { get; set; }
     }
 
-    internal readonly struct TreeInstance
+    public readonly struct TreeInstance
     {
         public readonly byte PrototypeIndex;
         public readonly byte PositionX;
@@ -594,7 +597,7 @@ namespace Decentraland.Terrain
         [field: SerializeField] internal TreeLOD[] Lods { get; set; }
     }
 
-    internal readonly struct TreePrototypeData
+    public readonly struct TreePrototypeData
     {
         public readonly float LocalSize;
         public readonly float MinScaleXZ;

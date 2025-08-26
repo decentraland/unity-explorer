@@ -28,10 +28,10 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
         // Calculate normalized height first
         float normalizedHeight = (fOccupancy - minValue) / (1 - minValue);
 
-        float noiseH = GetHeight(input.positionWS.x, input.positionWS.z);
-        float noiseIntensity = lerp(0.0f, 0.5f, normalizedHeight);
+        float saturationFactor = 20;
+        float noiseH = GetHeight(input.positionWS.x, input.positionWS.z) * saturate( normalizedHeight * saturationFactor);
 
-        input.positionWS.y += normalizedHeight * _DistanceFieldScale;// + noiseH * noiseIntensity;
+        input.positionWS.y = normalizedHeight * _DistanceFieldScale + noiseH;
         heightDerivative.x = heightDerivative2;
 
         // Ensure no negative heights

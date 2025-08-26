@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
+using Decentraland.Terrain;
 using GPUInstancerPro;
 using System.IO;
 using System.Linq;
@@ -24,6 +25,8 @@ using UnityEngine;
 using Utility;
 using static Unity.Mathematics.math;
 using JobHandle = Unity.Jobs.JobHandle;
+using TerrainData = UnityEngine.TerrainData;
+using TreePrototype = UnityEngine.TreePrototype;
 
 namespace DCL.Landscape
 {
@@ -90,6 +93,7 @@ namespace DCL.Landscape
         private NativeArray<byte> occupancyMapData;
         private int occupancyMapSize;
         private float terrainHeight;
+        private Decentraland.Terrain.TerrainData newTerrainData;
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
@@ -129,10 +133,11 @@ namespace DCL.Landscape
             activeChunk = chunkIndex;
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
+        public void Initialize(Decentraland.Terrain.TerrainData newTerrainData, TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
             ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter,
             float terrainHeight)
         {
+            this.newTerrainData = newTerrainData;
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
@@ -239,11 +244,15 @@ namespace DCL.Landscape
                             TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
 
                         OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
-                        OccupancyMap.filterMode = FilterMode.Point;
+
+                        // OccupancyMap.filterMode = FilterMode.Point;
                         OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-                        
+
                         occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
                         occupancyMapSize = OccupancyMap.width; // width == height
+
+                        newTerrainData.OccupancyMap = OccupancyMap;
+                        newTerrainData.OccupancyFloor = OccupancyFloor;
 
                         if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
                             await LoadTreesAsync();
@@ -865,13 +874,6 @@ namespace DCL.Landscape
             return occupancyMapData[index] == 0;
         }
 
-        private float GetParcelBaseHeight(int2 parcel)
-        {
-            parcel += occupancyMapSize / 2;
-            int index = (parcel.y * occupancyMapSize) + parcel.x;
-            return (occupancyMapData[index] - OccupancyFloor) / (255f - OccupancyFloor) * terrainHeight;
-        }
-
         private bool OverlapsOccupiedParcel(float2 position, float radius)
         {
             int2 parcel = (int2)floor(position * (1f / ParcelSize));
@@ -947,7 +949,7 @@ namespace DCL.Landscape
                 Vector3 terrainPosition = chunk.terrain.GetPosition();
                 Vector3 terrainSize = chunk.TerrainData.size;
 
-                foreach (TreeInstance tree in chunk.TerrainData.treeInstances)
+                foreach (UnityEngine.TreeInstance tree in chunk.TerrainData.treeInstances)
                 {
                     Vector3 position = Vector3.Scale(tree.position, terrainSize) + terrainPosition;
                     Quaternion rotation = Quaternion.Euler(0f, tree.rotation * Mathf.Rad2Deg, 0f);
@@ -998,6 +1000,7 @@ namespace DCL.Landscape
             int maxInstanceCount = reader.ReadInt32();
             var buffer = new Matrix4x4[maxInstanceCount];
 
+            TerrainDataData terrainDataData = newTerrainData.GetData();
             for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
             {
                 int instanceCount = reader.ReadInt32();
@@ -1005,7 +1008,9 @@ namespace DCL.Landscape
                 unsafe
                 {
                     fixed (Matrix4x4* bufferPtr = buffer)
+                    {
                         ReadReliably(reader, new Span<byte>(bufferPtr, instanceCount * SIZE_OF_MATRIX));
+                    }
                 }
 
                 float treeRadius = treePrototypes[prototypeIndex].radius;
@@ -1018,8 +1023,7 @@ namespace DCL.Landscape
                         buffer[instanceIndex] = buffer[--instanceCount];
                     else
                     {
-                        var parcel = (int2)floor(position.xz / ParcelSize);
-                        position.y = GetParcelBaseHeight(parcel); // + NoiseHeight
+                        position.y = terrainDataData.GetHeight(position.x, position.z);
                         Matrix4x4 originalMatrix = buffer[instanceIndex];
                         buffer[instanceIndex] = Matrix4x4.TRS(position, originalMatrix.rotation, originalMatrix.lossyScale);
                     }
