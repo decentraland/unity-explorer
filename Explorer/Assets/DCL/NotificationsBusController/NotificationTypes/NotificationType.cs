@@ -36,6 +36,9 @@ namespace DCL.NotificationsBusController.NotificationTypes
         COMMUNITY_MEMBER_BANNED,
         COMMUNITY_RENAMED,
         COMMUNITY_DELETED,
+        COMMUNITY_USER_JOIN_REQUEST_SENT,
+        COMMUNITY_USER_INVITED,
+        COMMUNITY_USER_JOIN_REQUEST_ACCEPTED,
 
         //Internal notification types
         INTERNAL_ARRIVED_TO_DESTINATION,
