@@ -401,8 +401,6 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
-                    ForceResolutionAndWindowedMode();
-
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
 
