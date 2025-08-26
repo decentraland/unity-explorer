@@ -16,7 +16,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private const float MINIMAP_PIN_MIN_SCALE = 45;
         private const float PIN_SIZE_MULTIPLIER = 0.6f;
         private const float ANIMATION_DURATION = 0.4f;
-        private static readonly Vector2 TargetAnimationScale = new (1.2f, 1.2f);
+        private static readonly Vector2 TARGET_ANIMATION_SCALE = new (1.2f, 1.2f);
 
         private readonly IMapCullingController cullingController;
 
@@ -71,7 +71,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (poolablePin.instance != null)
             {
                 selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
-                await MarkerHelper.ScaleToAsync(poolablePin.instance.selectionScalingParent, TargetAnimationScale, ANIMATION_DURATION, Ease.OutBack, selectionCancellationTokenSource.Token);
+                await MarkerHelper.ScaleToAsync(poolablePin.instance.selectionScalingParent, TARGET_ANIMATION_SCALE, ANIMATION_DURATION, Ease.OutBack, selectionCancellationTokenSource.Token);
             }
         }
 
