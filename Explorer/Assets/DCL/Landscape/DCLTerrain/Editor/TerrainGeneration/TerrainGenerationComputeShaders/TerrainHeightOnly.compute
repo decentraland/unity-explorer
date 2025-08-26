@@ -9,7 +9,7 @@ RWTexture2D<float4> Result;
 float4 _TerrainParams; // x: frequency, y: unused, z: octaves, w: unused
 uint2 _TextureSize;    // x: width, y: height
 
-#include "Noise.hlsl"
+#include "../../../../Shaders/GeoffNoise.hlsl"
 
 // ============================================================================
 // COMPUTE KERNEL
@@ -36,14 +36,8 @@ void TerrainHeightOnly (uint3 id : SV_DispatchThreadID)
     // -4096 to 4096 coords = equal to metres for the terrain height algorithm
     float2 coordTest = float2(offset_X, offset_Y);
 
-    // Get terrain parameters
-    float frequency = _TerrainParams.x;
-    int octaves = (int)_TerrainParams.z;
-
-    // Calculate height using the terrain function
-    // Use Unity coordinate system: (X, Y=0, Z) where Y=0 for the 2D terrain plane
-    float4 terrainData = terrain(float3(coordTest.x, 0.0f, coordTest.y), frequency, octaves);
-    float height = terrainData.x;
+    // Calculate height using the same noise as in GeoffNoise
+    float height = GetHeight(coordTest.x, coordTest.y);
 
     // Output: R = height, G/B/A = unused (set to 0 for clarity)
     // BC4 compression will only use the red channel
