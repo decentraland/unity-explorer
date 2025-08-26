@@ -1,4 +1,5 @@
-﻿using DCL.Friends.UserBlocking;
+﻿using DCL.Audio;
+using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
@@ -42,19 +43,19 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus = null,
+            VolumeBus volumeBus = null,
             bool isVoiceChatEnabled = false)
         {
             var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
-                                                   {
-                                                       ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
-                                                       ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
-                                                       // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
-                                                   };
+            {
+                ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
+                ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
+                // add other cases...
+                _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+            };
 
             controller.SetView(viewInstance);
             return controller;

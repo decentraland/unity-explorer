@@ -7,6 +7,7 @@ namespace DCL.Audio
 {
     public enum AudioMixerExposedParam
     {
+        Master_Volume,
         Avatar_Volume,
         Chat_Volume,
         Music_Volume,
@@ -21,16 +22,28 @@ namespace DCL.Audio
         private const float MUTE_VALUE = -80;
 
         private readonly AudioMixer audioMixer;
+        private readonly VolumeBus volumeBus;
         private readonly string[] allExposedParams;
         private readonly Dictionary<string, float> originalVolumes = new ();
         private readonly HashSet<string> mutedGroups = new ();
 
-        public AudioMixerVolumesController(AudioMixer audioMixer)
+        public AudioMixerVolumesController(AudioMixer audioMixer, VolumeBus volumeBus)
         {
             this.audioMixer = audioMixer;
+            this.volumeBus = volumeBus;
             allExposedParams = Enum.GetNames(typeof(AudioMixerExposedParam));
             //We mute microphone by default as we don't want to hear ourselves
             MuteGroup(AudioMixerExposedParam.Microphone_Volume);
+
+            volumeBus.OnGlobalMuteChanged += GlobalMuteChanged;
+        }
+
+        private void GlobalMuteChanged(bool value)
+        {
+            if(value)
+                MuteGroup(AudioMixerExposedParam.Master_Volume);
+            else
+                UnmuteGroup(AudioMixerExposedParam.Master_Volume);
         }
 
         public void MuteGroup(AudioMixerExposedParam groupParam)

@@ -4,12 +4,12 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Settings;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly IWebRequestController webRequestController;
         private readonly ObjectProxy<IRoomHub> roomHub;
@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.MediaStream
             MediaPlayerCustomPool mediaPlayerPool,
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
-            WorldVolumeMacBus worldVolumeMacBus
+            VolumeBus volumeBus
         ) : base(world)
         {
             this.webRequestController = webRequestController;
@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.MediaStream
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
             this.mediaPlayerPool = mediaPlayerPool;
 
             //This following part is a workaround applied for the MacOS platform, the reason
@@ -69,11 +69,11 @@ namespace DCL.SDKComponents.MediaStream
             //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
             //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            this.worldVolumeMacBus = worldVolumeMacBus;
-            this.worldVolumeMacBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
-            this.worldVolumeMacBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
-            masterVolumePercentage = worldVolumeMacBus.GetMasterVolume();
-            worldVolumePercentage = worldVolumeMacBus.GetWorldVolume();
+            this.volumeBus = volumeBus;
+            this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
+            this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
+            masterVolumePercentage = volumeBus.GetMasterVolume();
+            worldVolumePercentage = volumeBus.GetWorldVolume();
 #endif
         }
 

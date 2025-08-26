@@ -118,7 +118,7 @@ namespace DCL.Prefs
         }
 
         public bool HasKey(string key) =>
-            (unityPrefs != null && unityPrefs.HasKey(key)) || userData.Strings.ContainsKey(key) || userData.Ints.ContainsKey(key) || userData.Floats.ContainsKey(key);
+            (unityPrefs != null && unityPrefs.HasKey(key)) || userData.Strings.ContainsKey(key) || userData.Ints.ContainsKey(key) || userData.Floats.ContainsKey(key) || userData.Bools.ContainsKey(key);
 
         public void DeleteKey(string key)
         {
@@ -129,6 +129,7 @@ namespace DCL.Prefs
                 userData.Strings.Remove(key);
                 userData.Ints.Remove(key);
                 userData.Floats.Remove(key);
+                userData.Bools.Remove(key);
                 PlayerPrefs.DeleteKey(key);
                 dataChanged = true;
             }
@@ -141,6 +142,7 @@ namespace DCL.Prefs
                 userData.Strings.Clear();
                 userData.Ints.Clear();
                 userData.Floats.Clear();
+                userData.Bools.Clear();
                 PlayerPrefs.DeleteAll();
                 dataChanged = true;
             }

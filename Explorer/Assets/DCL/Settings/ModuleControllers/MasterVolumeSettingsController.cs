@@ -1,4 +1,5 @@
-﻿using DCL.Prefs;
+﻿using DCL.Audio;
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
@@ -11,19 +12,27 @@ namespace DCL.Settings.ModuleControllers
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
 
-        public MasterVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, WorldVolumeMacBus worldVolumeMacBus)
+        public MasterVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, VolumeBus volumeBus)
         {
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
 
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MASTER_VOLUME))
+            if (DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_VOLUME_MUTED))
+            {
+                view.SliderView.Slider.value = 0;
+                SetMasterVolumeSettingsWithoutSerialization(0);
+            }
+            else if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MASTER_VOLUME))
+            {
                 view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME);
-
+                SetMasterVolumeSettings(view.SliderView.Slider.value);
+            }
+            
             view.SliderView.Slider.onValueChanged.AddListener(SetMasterVolumeSettings);
-            SetMasterVolumeSettings(view.SliderView.Slider.value);
+            volumeBus.OnGlobalMuteChanged += GlobalMuteChanged;
         }
 
         private void SetMasterVolumeSettings(float volumePercentage)
@@ -31,8 +40,41 @@ namespace DCL.Settings.ModuleControllers
             generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage, save: true);
 
+            if (volumePercentage > 0)
+                volumeBus.SetGlobalMute(false);
+
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            worldVolumeMacBus.SetMasterVolume(volumePercentage / 100);
+            volumeBus.SetMasterVolume(volumePercentage / 100);
+#endif
+        }
+        
+        private void SetMasterVolumeSettingsWithoutSerialization(float volumePercentage)
+        {
+            generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
+
+            if (volumePercentage > 0)
+                volumeBus.SetGlobalMute(false);
+
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            volumeBus.SetMasterVolume(volumePercentage / 100);
+#endif
+        }
+
+        private void GlobalMuteChanged(bool value)
+        {
+            float volumePercentage = 0;
+            if (value || !DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MASTER_VOLUME))
+                view.SliderView.Slider.SetValueWithoutNotify(0);
+            else
+            {
+                volumePercentage = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME);
+                view.SliderView.Slider.SetValueWithoutNotify(volumePercentage);
+            }
+            
+            generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
+            
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            volumeBus.SetMasterVolume(volumePercentage / 100);
 #endif
         }
 
