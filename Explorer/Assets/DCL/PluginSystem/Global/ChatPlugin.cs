@@ -120,7 +120,7 @@ namespace DCL.PluginSystem.Global
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-             IVoiceChatOrchestrator voiceChatOrchestrator,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             IRealmNavigator realmNavigator,
             Transform chatViewRectTransform)
         {
@@ -153,7 +153,7 @@ namespace DCL.PluginSystem.Global
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.communityDataProvider = communityDataProvider;
+            this.communityDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
