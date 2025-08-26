@@ -44,7 +44,7 @@ MonoBehaviour:
     <MaxScaleXZ>k__BackingField: 2
     <MinScaleY>k__BackingField: 1
     <MaxScaleY>k__BackingField: 2
-    <Mesh>k__BackingField: {fileID: -4648866359324950487, guid: 59b704c2a2c7c8c45884563197e63a54, type: 3}
+    <Mesh>k__BackingField: {fileID: 8666578268043267355, guid: 396ff52ab0b0210408b55a00b0c3cd57, type: 3}
     <Material>k__BackingField: {fileID: 2100000, guid: 1fb265a1eb82642428d82e5c54ad2148, type: 2}
   <FlowerPrototypes>k__BackingField:
   - <Source>k__BackingField: {fileID: 4014139367857823368, guid: 36f2ef51fd1df5942b1a0b6dcbfdf2e2, type: 3}
