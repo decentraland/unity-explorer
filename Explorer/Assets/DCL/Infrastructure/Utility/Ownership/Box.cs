@@ -1,5 +1,6 @@
 using RichTypes;
 using System;
+using Utility.Types;
 
 namespace Utility.Ownership
 {

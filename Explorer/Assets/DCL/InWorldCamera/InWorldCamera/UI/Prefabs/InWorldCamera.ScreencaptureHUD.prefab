@@ -216,6 +216,7 @@ MonoBehaviour:
   whiteSplashImage: {fileID: 2926745434062198778}
   cameraReelIcon: {fileID: 592682626191998567}
   animatedImage: {fileID: 4429869035757732807}
+  gridImage: {fileID: 8366362807014008651}
   <NoStorageNotification>k__BackingField: {fileID: 8266421467152206612}
   <ShortcutsInfoPanel>k__BackingField: {fileID: 6937741378551344804}
   <SFXScreenshotCapture>k__BackingField: {fileID: 11400000, guid: 7f53a7b2e8dca514c9c8f3114f3da727, type: 2}
@@ -487,7 +488,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0071e477d02b34317b64d4eb2f3a927f, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -644,6 +645,7 @@ GameObject:
   - component: {fileID: 701528572946407338}
   - component: {fileID: 4703000339658110885}
   - component: {fileID: 4913311366325189895}
+  - component: {fileID: 8366362807014008651}
   m_Layer: 5
   m_Name: GoldenRuleGuideImage
   m_TagString: Untagged
@@ -698,7 +700,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0bbeb665cb8b4bb4cbea314581e50bab, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -708,6 +710,26 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &8366362807014008651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7953393637595162633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9688e6de611b437aaa1cbd8dd2bcd932, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 4913311366325189895}
+  spriteAsset:
+    m_AssetGUID: 0bbeb665cb8b4bb4cbea314581e50bab
+    m_SubObjectName: RuleOf3rd
+    m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 1
 --- !u!1 &7972305663620559094
 GameObject:
   m_ObjectHideFlags: 0
@@ -1780,11 +1802,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4986538752391755247, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -35.799988
+      value: -35.80005
       objectReference: {fileID: 0}
     - target: {fileID: 4986538752391755247, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 69.99997
+      value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 4986538752391755247, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

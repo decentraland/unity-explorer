@@ -83,6 +83,9 @@ namespace DCL.Chat.History
 
         private readonly ReportData reportData = new ReportData(ReportCategory.CHAT_HISTORY);
 
+        private readonly HashSet<ChatChannel.ChannelId> initializingChannels = new();
+        private readonly HashSet<ChatChannel.ChannelId> rehydratingChannels = new();
+
         public ChatHistoryStorage(IChatHistory chatHistory, ChatMessageFactory messageFactory, string localUserWalletAddress)
         {
             const string CHAT_HISTORY_FOLDER = "/c/";
@@ -189,7 +192,7 @@ namespace DCL.Chat.History
         /// If there is no file for the channel or if the channel was already initialized, nothing will be done.
         /// </remarks>
         /// <param name="channelId">The id of the channel that is to be filled.</param>
-        public async UniTask InitializeChannelWithMessagesAsync(ChatChannel.ChannelId channelId)
+        public async UniTask<bool> InitializeChannelWithMessagesAsync(ChatChannel.ChannelId channelId)
         {
             ReportHub.Log(reportData, $"Initializing conversation with messages for channel: " + channelId.Id);
 
@@ -201,18 +204,21 @@ namespace DCL.Chat.History
                 (channelFile.Content != null && channelFile.Content.CanRead))
             {
                 ReportHub.LogWarning(reportData, $"Initialization canceled. The file does not exist or the channel was already initialized: " + channelId.Id);
-                return;
+                return false;
             }
 
             messagesBuffer.Clear();
             await ReadMessagesFromFileAsync(channelId, messagesBuffer);
 
-            if (messagesBuffer.Count > 0)
+            bool loadedAny = messagesBuffer.Count > 0;
+
+            if (loadedAny)
                 chatHistory.Channels[channelId].FillChannel(messagesBuffer);
 
             channelFile.IsInitialized = true;
-
+            
             ReportHub.Log(reportData, $"Conversation initialized.");
+            return loadedAny;
         }
 
         /// <summary>
@@ -356,21 +362,128 @@ namespace DCL.Chat.History
             }
         }
 
-        private async void OnChatHistoryMessageAddedAsync(ChatChannel destinationChannel, ChatMessage addedMessage)
-        {
-            if (destinationChannel.ChannelType == ChatChannel.ChatChannelType.USER)
-            {
-                if (!IsChannelInitialized(destinationChannel.Id))
-                {
-                    GetOrCreateChannelFile(destinationChannel.Id);
-                    await InitializeChannelWithMessagesAsync(destinationChannel.Id);
-                }
+        /*
+        WHY THIS EXISTS
+        ---------------
+        We had two coupled bugs when a private channel (DM) receives a message before its history is loaded:
 
-                lock (queueLocker)
+        1) Message overwrite/race:
+           - Old flow: A new message was added to the in-memory channel. Then async history load called FillChannel(...)
+             which *replaced* the list, wiping fresh messages unpredictably depending on timing.
+
+        2) Unread explosion / wrong baseline:
+           - Historical messages (deserialized from disk) were all treated as "new/unread" until the user opened the channel.
+
+        WHAT THIS CODE CHANGES
+        ----------------------
+        We "hydrate-then-restore" deterministically, and we set the unread baseline correctly:
+
+        - First-time init guard per channel (initializingChannels)
+          Ensures exactly one async init runs for a DM per session; no duplicated inits.
+
+        - Defensive file presence
+          GetOrCreateChannelFile(...) is called so InitializeChannelWithMessagesAsync(...) never early-outs unnecessarily.
+
+        - Session snapshot + conditional replay
+          We snapshot the current session messages (`sessionTail`) *before* history load, then:
+            - Load history from disk (FillChannel(...)) and
+            - ONLY IF history actually existed (loadedAny == true), we:
+                * Mark all historical messages as read (baseline),
+                * Temporarily set `rehydratingChannels` to prevent double-persist,
+                * Replay the session snapshot back into the channel in correct order.
+
+        - Correct unread logic
+          Historical messages become the read baseline (only when we actually loaded history).
+          If the file was empty (e.g., after a Clear), we DO NOT mark-as-read, so the very first new DM is shown as unread.
+
+        - Persistence discipline
+          We enqueue the "current" message for disk persistence unless we're in the rehydration section,
+          which prevents duplicate writes for the replayed messages.
+
+        CONCURRENCY / RACE NOTES
+        ------------------------
+        - This handler runs on the main thread (Unity event loop); the file writer dequeues on a background thread.
+        - `initializingChannels` prevents overlapping inits; `rehydratingChannels` prevents double-persistence while we replay.
+        - `queueLocker` protects `messagesToProcess` from concurrent access.
+
+        EDGE CASES HANDLED
+        ------------------
+        - Cleared file / empty history: `loadedAny == false` ⇒ no replay and no mark-as-read ⇒ first new DM is truly "new".
+        - Channel closed then reappears from incoming DMs: background init sets baseline; no second init on open; stable unread.
+        - Burst of messages just before init starts: included in the `sessionTail` snapshot and replayed when `loadedAny == true`.
+
+        LIMITATIONS / FUTURE SWITCH
+        ---------------------------
+        - Messages arriving *during* the `await Initialize...` window are not buffered in this variant. In practice this window is tiny,
+          but if we need absolute determinism under heavy burst, add a per-channel `initBuffers[channelId]` to capture mid-await arrivals
+          and replay them after history load (only when `loadedAny == true`).
+        */
+        private async void OnChatHistoryMessageAddedAsync(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
+        {
+            if (destinationChannel.ChannelType != ChatChannel.ChatChannelType.USER)
+                return;
+
+            var channelId = destinationChannel.Id;
+
+            // First-time DM init triggered by the arrival of a new message?
+            // - IsChannelInitialized(): we haven't hydrated this DM this session yet
+            // - initializingChannels: prevent concurrent/duplicate inits for this channel
+            if (!IsChannelInitialized(channelId) && !initializingChannels.Contains(channelId))
+            {
+                initializingChannels.Add(channelId);
+
+                try
                 {
-                    if(destinationChannel.ChannelType == ChatChannel.ChatChannelType.USER)
-                        messagesToProcess.Enqueue(new MessageToProcess(){ DestinationChannelId = destinationChannel.Id, Message = addedMessage});
+                    // Ensure the backing file & ChannelFile metadata exist so Initialize... doesn't early-out
+                    GetOrCreateChannelFile(channelId);
+
+                    // Snapshot any messages already added in this session
+                    // (includes `addedMessage` and possibly a few more if multiple arrived fast)
+                    var channel = chatHistory.Channels[channelId];
+                    var sessionTail = new List<ChatMessage>(channel.Messages);
+
+                    // Hydrate history from disk. If the file had content, FillChannel(...) will REPLACE
+                    // the in-memory list. We use the return value to know if replacement actually happened.
+                    bool loadedAny = await InitializeChannelWithMessagesAsync(channelId);
+
+                    // Only if we actually replaced the list with historical content do we need to:
+                    // 1) set the unread baseline to the end of history, and
+                    // 2) replay the session messages we just overwrote.
+                    if (loadedAny)
+                    {
+                        // Historical messages are the baseline: consider them read
+                        channel.MarkAllMessagesAsRead();
+
+                        // Restore the session messages we just lost due to FillChannel,
+                        // but do NOT enqueue duplicate file writes for them.
+                        rehydratingChannels.Add(channelId);
+                        try
+                        {
+                            foreach (var m in sessionTail)
+                                chatHistory.AddMessage(channelId, channel.ChannelType, m);
+                        }
+                        finally
+                        {
+                            rehydratingChannels.Remove(channelId);
+                        }
+                    }
                 }
+                finally
+                {
+                    initializingChannels.Remove(channelId);
+                }
+            }
+
+            // Normal persistence path:
+            // Enqueue the CURRENT `addedMessage` to the writer queue, except when we're in the middle of the replay
+            // (rehydratingChannels) to avoid duplicate file appends for the re-added items.
+            lock (queueLocker)
+            {
+                if (!rehydratingChannels.Contains(channelId))
+                    messagesToProcess.Enqueue(new MessageToProcess
+                    {
+                        DestinationChannelId = channelId, Message = addedMessage
+                    });
             }
         }
 

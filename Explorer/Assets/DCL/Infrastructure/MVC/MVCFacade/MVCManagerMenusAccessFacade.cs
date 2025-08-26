@@ -11,6 +11,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
@@ -20,6 +21,7 @@ using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
+using DCL.Chat.Services;
 using UnityEngine;
 using DCL.Passport;
 
@@ -49,6 +51,8 @@ namespace MVC
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
         private CommunityPlayerEntryContextMenu communityPlayerEntryContextMenu;
+        private ChatOptionsContextMenuController chatOptionsContextMenuController;
+        private CommunityContextMenuController communityContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
@@ -129,6 +133,12 @@ namespace MVC
             await ShowUserProfileContextMenuAsync(profile, position, offset, ct, onHide, closeMenuTask);
         }
 
+        public async UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask)
+        {
+            chatOptionsContextMenuController ??= new ChatOptionsContextMenuController(mvcManager, data.DeleteChatHistoryIcon, data.DeleteChatHistoryText, onDeleteChatHistoryClicked);
+            await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
+        }
+
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
@@ -151,14 +161,12 @@ namespace MVC
 
         public async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
         {
-            try
-            {
-                await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
-            }
-            catch (Exception ex)
-            {
-                UnityEngine.Debug.LogError($"Failed to open passport for user {userId}: {ex.Message}");
-            }
+            try { await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct); }
+            catch (Exception ex) { UnityEngine.Debug.LogError($"Failed to open passport for user {userId}: {ex.Message}"); }
+        }
+        public async UniTask ShowGenericContextMenuAsync(GenericContextMenuParameter parameter)
+        {
+            await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(parameter));
         }
 
         private ContextMenuOpenDirection ConvertMenuAnchorPoint(MenuAnchorPoint anchorPoint)

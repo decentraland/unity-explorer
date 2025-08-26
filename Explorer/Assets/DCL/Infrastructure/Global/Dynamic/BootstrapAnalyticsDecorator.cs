@@ -8,6 +8,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.UI;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using Global.Versioning;
@@ -79,11 +80,12 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
+            WarningNotificationView showUINotificationView,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
+                    settings, dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, showUINotificationView, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

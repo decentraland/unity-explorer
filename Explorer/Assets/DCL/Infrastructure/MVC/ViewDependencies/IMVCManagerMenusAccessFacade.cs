@@ -4,6 +4,7 @@ using DCL.UI;
 using DCL.Web3;
 using System;
 using System.Threading;
+using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 
 namespace MVC
@@ -32,6 +33,23 @@ namespace MVC
         /// <param name="userId">The user ID to open the passport for</param>
         /// <param name="ct">Cancellation token</param>
         UniTask OpenPassportAsync(string userId, CancellationToken ct = default);
+        UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask);
+
+        UniTask ShowGenericContextMenuAsync(GenericContextMenuParameter parameter);
+    }
+
+    [Serializable]
+    public struct ChatOptionsContextMenuData
+    {
+        public string DeleteChatHistoryText;
+        public Sprite DeleteChatHistoryIcon;
+    }
+
+    public struct CommunityContextMenuData
+    {
+        public string ViewCommunityText;
+        public Sprite ViewCommunityIcon;
+        public Action OnViewCommunityClicked;
     }
 
     public enum MenuAnchorPoint
