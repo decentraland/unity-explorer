@@ -35,11 +35,11 @@ namespace DCL.Chat.ChatInput
         {
             this.view = view;
             this.view.Initialize(chatConfig);
-            
+
             this.resolveInputStateCommand = resolveInputStateCommand;
 
             var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
-                new EmojiMapping(view.emojiContainer.emojiMappingJson, view.emojiContainer.emojiPanelConfiguration));
+                new EmojiMapping(view.emojiContainer.emojiPanelConfiguration));
 
             fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(context, new InitializingChatInputState());
 
