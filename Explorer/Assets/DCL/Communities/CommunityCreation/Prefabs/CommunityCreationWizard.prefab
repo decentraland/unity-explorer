@@ -268,6 +268,7 @@ MonoBehaviour:
   creationPanelCreateButton: {fileID: 3026729670463483168}
   creationPanelCreateButtonText: {fileID: 764634872873488758}
   creationPanelCreateButtonLoading: {fileID: 1998900302886066027}
+  creationPanelContentPolicyAndCodeOfEthicsText: {fileID: 1323504477650636928}
   <WarningNotificationView>k__BackingField: {fileID: 4847848383146126928}
 --- !u!1 &1501630461376916409
 GameObject:
@@ -933,7 +934,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7891702222690418044, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_Size
-      value: 0.54835933
+      value: 0.5272326
       objectReference: {fileID: 0}
     - target: {fileID: 7891702222690418044, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_Value
@@ -1078,6 +1079,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1323504477650636928 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4950068109514799631, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+  m_PrefabInstance: {fileID: 6263421827064736399}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1339329984271857070 stripped
