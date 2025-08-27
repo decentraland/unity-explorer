@@ -14,8 +14,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void RefreshCounters()
         {
-            view.ListenersCounter.text = string.Format("({0})", view.ListenersParent.transform.childCount);
-            view.RequestToSpeakCounter.text = string.Format("({0})", view.RequestToSpeakParent.transform.childCount);
+            view.ListenersCounter.text = $"({view.ListenersParent.transform.childCount})";
+            view.RequestToSpeakCounter.text = $"({view.RequestToSpeakParent.transform.childCount})";
             view.RequestToSpeakSection.gameObject.SetActive(view.RequestToSpeakParent.transform.childCount >= 1);
         }
 
