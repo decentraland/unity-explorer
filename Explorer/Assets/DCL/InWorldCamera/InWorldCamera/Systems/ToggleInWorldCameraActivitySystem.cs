@@ -106,9 +106,7 @@ namespace DCL.InWorldCamera.Systems
         private void ToggleCamera(bool enable, CameraMode? targetMode)
         {
             if (enable)
-            {
                 EnableCamera();
-            }
             else
                 DisableCamera(targetMode);
         }
