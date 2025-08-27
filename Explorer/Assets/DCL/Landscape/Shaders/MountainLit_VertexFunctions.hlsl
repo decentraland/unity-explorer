@@ -36,8 +36,11 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
 
         if (_UseHeightMap > 0)
         {
-            /// Min: -4.135159, Width (Range): 8.236154
-            noiseH =(fHeightMapValue * 8.236154) -4.135159;
+            /// Value taken from generating HeightMap via TerrainGeneratorWithAnalysis. 
+            float min = -4.135159f; // min value of the GeoffNoise.GetHeight
+            float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
+            
+            noiseH = fHeightMapValue * range + min;
         }
         
         float saturationFactor = 20;
