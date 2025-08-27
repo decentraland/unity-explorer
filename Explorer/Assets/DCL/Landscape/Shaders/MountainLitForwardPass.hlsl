@@ -51,10 +51,7 @@ struct Varyings
 #ifdef USE_APV_PROBE_OCCLUSION
     float4 probeOcclusion : TEXCOORD9;
 #endif
-
-    float4 heightDerivatives :TEXCOORD10;
-    float occupancy : TEXCOORD11;
-
+    
     float4 positionCS                  : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -183,8 +180,8 @@ Varyings LitPassVertexSimple(Attributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-    output.occupancy = 0.0f;
-    VertexPositionInputs vertexInput = GetVertexPositionInputs_Mountain(input.positionOS.xyz, _TerrainBounds, output.occupancy, output.heightDerivatives);
+    float occupancy = 0.0f;
+    VertexPositionInputs vertexInput = GetVertexPositionInputs_Mountain(input.positionOS.xyz, _TerrainBounds, occupancy);
     output.positionWS.xyz = vertexInput.positionWS;
 
     VertexNormalInputs normalInput;
@@ -194,7 +191,7 @@ Varyings LitPassVertexSimple(Attributes input)
     float3 tangentWS;
     float3 bitangentWS;
 
-    CalculateNormalFromHeightmap(heightUV, output.occupancy, normalWS, tangentWS, bitangentWS);
+    CalculateNormalFromHeightmap(heightUV, occupancy, normalWS, tangentWS, bitangentWS);
     normalInput.normalWS = normalWS;
     normalInput.tangentWS = tangentWS;
     normalInput.bitangentWS = bitangentWS;
