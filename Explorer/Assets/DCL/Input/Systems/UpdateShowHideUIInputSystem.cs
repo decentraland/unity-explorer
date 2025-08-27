@@ -3,13 +3,13 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
-using DCL.DebugUtilities;
 using DCL.InWorldCamera;
 using DCL.UI;
 using ECS.Abstract;
 using MVC;
 using System.Threading;
 using UnityEngine.UIElements;
+using Utility.UIToolkit;
 using Utility;
 
 namespace DCL.Input.Systems
@@ -22,32 +22,17 @@ namespace DCL.Input.Systems
 
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
-        private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly UIDocument rootUIDocument;
-        private readonly UIDocument sceneUIDocument;
-        private readonly UIDocument cursorUIDocument;
-        private readonly WarningNotificationView warningNotificationView;
 
         private SingleInstanceEntity camera;
         private CancellationTokenSource? toastCt;
+        private readonly WarningNotificationView warningNotificationView;
 
         private bool currentUIVisibilityState = true;
 
-        private UpdateShowHideUIInputSystem(
-            World world,
-            IMVCManager mvcManager,
-            IDebugContainerBuilder debugContainerBuilder,
-            UIDocument rootUIDocument,
-            UIDocument sceneUIDocument,
-            UIDocument cursorUIDocument,
-            WarningNotificationView warningNotificationView) : base(world)
+        private UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView) : base(world)
         {
             dclInput = DCLInput.Instance;
             this.mvcManager = mvcManager;
-            this.debugContainerBuilder = debugContainerBuilder;
-            this.rootUIDocument = rootUIDocument;
-            this.sceneUIDocument = sceneUIDocument;
-            this.cursorUIDocument = cursorUIDocument;
             this.warningNotificationView = warningNotificationView;
         }
 
@@ -81,17 +66,8 @@ namespace DCL.Input.Systems
                 ShowOrHideToast();
             }
 
-            // Debug Panel UI
-            debugContainerBuilder.Container.parent.style.display = currentUIVisibilityState ? DisplayStyle.Flex : DisplayStyle.None;
-
-            // Root UIs (I think that's just cursor overlays?)
-            rootUIDocument.rootVisualElement.parent.style.display = currentUIVisibilityState ? DisplayStyle.Flex : DisplayStyle.None;
-
-            // Scenes UIs
-            sceneUIDocument.rootVisualElement.parent.style.display = currentUIVisibilityState ? DisplayStyle.Flex : DisplayStyle.None;
-
-            // Cursor UI
-            cursorUIDocument.rootVisualElement.parent.style.display = currentUIVisibilityState ? DisplayStyle.Flex : DisplayStyle.None;
+            foreach (UIDocument doc in UIDocumentTracker.ActiveDocuments)
+                doc.rootVisualElement.SetDisplayed(currentUIVisibilityState);
         }
 
         private void ShowOrHideToast()

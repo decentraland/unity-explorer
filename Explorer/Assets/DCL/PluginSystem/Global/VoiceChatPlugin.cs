@@ -27,11 +27,10 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
 
-        private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
-        private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
-        private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
         private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> combinedAudioSource;
+        private VoiceChatSettingsAsset voiceChatSettings;
+        private VoiceChatConfiguration voiceChatConfiguration;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
         private VoiceChatController? controller;
@@ -72,10 +71,7 @@ namespace DCL.PluginSystem.Global
             livekitRoomHandler.Dispose();
 
             combinedAudioSource.Dispose();
-            voiceChatConfigurationAsset.Dispose();
-            voiceChatSettingsAsset.Dispose();
             microphoneAudioFilter.Dispose();
-            voiceChatConfigurations.Dispose();
             controller?.Dispose();
         }
 
@@ -87,20 +83,14 @@ namespace DCL.PluginSystem.Global
             audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
             AudioSettings.Reset(audioConfig);
 
-            voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
-            VoiceChatPluginSettings configurations = voiceChatConfigurations.Value;
-
-            microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(configurations.MicrophoneAudioFilter, ct: ct);
+            microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(settings.MicrophoneAudioFilter, ct: ct);
             AudioSource? microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
 
-            voiceChatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatSettings, ct: ct);
-            VoiceChatSettingsAsset voiceChatSettings = voiceChatSettingsAsset.Value;
-
-            voiceChatConfigurationAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatConfiguration, ct: ct);
-            VoiceChatConfiguration voiceChatConfiguration = voiceChatConfigurationAsset.Value;
+            voiceChatSettings = settings.VoiceChatSettings;
+            voiceChatConfiguration = settings.VoiceChatConfiguration;
 
             microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
-            combinedAudioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
+            combinedAudioSource = await assetsProvisioner.ProvideInstanceAsync(settings.CombinedAudioSource, ct: ct);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatCallStatusService);
@@ -121,12 +111,21 @@ namespace DCL.PluginSystem.Global
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: SerializeField] public VoiceChatConfigurationsReference VoiceChatConfigurations { get; private set; }
+            [field: SerializeField] public VoiceChatSettingsAsset VoiceChatSettings { get; private set; }
+            [field: SerializeField] public MicrophoneAudioFilterReference MicrophoneAudioFilter { get; private set; }
+            [field: SerializeField] public CombinedAudioSourceReference CombinedAudioSource { get; private set; }
+            [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; }
 
             [Serializable]
-            public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
+            public class CombinedAudioSourceReference : ComponentReference<VoiceChatCombinedStreamsAudioSource>
             {
-                public VoiceChatConfigurationsReference(string guid) : base(guid) { }
+                public CombinedAudioSourceReference(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class MicrophoneAudioFilterReference : ComponentReference<VoiceChatMicrophoneAudioFilter>
+            {
+                public MicrophoneAudioFilterReference(string guid) : base(guid) { }
             }
         }
     }

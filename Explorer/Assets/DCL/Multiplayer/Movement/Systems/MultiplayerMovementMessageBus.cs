@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -53,10 +54,10 @@ namespace DCL.Multiplayer.Movement.Systems
             cancellationTokenSource.Dispose();
         }
 
-        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue)
+        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue, LandscapeData landscapeData)
         {
             this.settingsValue = settingsValue;
-            messageEncoder = new NetworkMessageEncoder(messageEncodingSettings);
+            messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, landscapeData);
         }
 
         private void OnOldSchemaMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)

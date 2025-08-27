@@ -17,8 +17,6 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SUN_RADIANCE_INTENSITY = Shader.PropertyToID("_Sun_Radiance_Intensity");
     private static readonly int MOON_MASK_SIZE = Shader.PropertyToID("_Moon_Mask_Size");
 
-    [SerializeField] private Material skyboxMaterial;
-
     [Header("Directional Light")]
     [SerializeField] private Light directionalLight;
     [SerializeField] private AnimationClip lightAnimation;
@@ -55,6 +53,8 @@ public class SkyboxRenderController : MonoBehaviour
     [Header("Fog")]
     [InspectorName("Enabled")] [SerializeField] private bool fog = true;
     [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
+
+    private Material skyboxMaterial;
 
     private float currentTimeOfDay = float.MinValue;
 
@@ -205,7 +205,7 @@ public class SkyboxRenderController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(null, null, null, 0.5f);
+            Initialize(RenderSettings.skybox, null!, null!, 0.5f);
     }
 #endif
 }
