@@ -22,6 +22,8 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
     /// </summary>
     public class CommunityInvitationContextMenuButtonHandler
     {
+        private const string INVITATION_FAILED_TEXT = "It was not possible to send the invitation. Please try again";
+        private const string USER_POTENTIAL_INVITATIONS_FAILED_TEXT = "An error occurred when retrieving the community invitation options";
         private const int MAXIMUM_HEIGHT_OF_SUBMENU = 600;
 
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -77,11 +79,11 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
 
         private async UniTask<bool> ResolveInvitationSubmenuVisibilityAsync(CancellationToken ct)
         {
-            if(ct.IsCancellationRequested)
-                return false;
-
             // Asks the server for the data of the communities to which the user can be invited
             Result<GetInvitableCommunityListResponse> response = await communitiesDataProvider.GetInvitableCommunityListAsync(userWalletId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if(ct.IsCancellationRequested)
+                return false;
 
             if (response.Success)
             {
@@ -96,7 +98,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
             }
             else
             {
-                // TODO
+                notificationsBus.AddNotification(new ServerErrorNotification(USER_POTENTIAL_INVITATIONS_FAILED_TEXT){ Type = NotificationType.INTERNAL_SERVER_ERROR });
             }
 
             return false;
@@ -124,7 +126,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
             if (result.Success)
                 notificationsBus.AddNotification(new InvitationToCommunitySentNotification() { Type = NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT });
             else
-                ;// TODO
+                notificationsBus.AddNotification(new ServerErrorNotification(INVITATION_FAILED_TEXT){ Type = NotificationType.INTERNAL_SERVER_ERROR });
         }
     }
 }
