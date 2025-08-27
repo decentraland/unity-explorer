@@ -33,6 +33,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Events;
 using Utility;
 
 namespace DCL.Minimap
@@ -136,20 +137,6 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
-
-            viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
-            {
-                if (realmData.IsLocalSceneDevelopment)
-                {
-                    // In local scene development mode, reload the scene using the existing command
-                    reloadSceneCommand.ExecuteCommandAsync(new string[0], disposeCts.Token).Forget();
-                }
-                else
-                {
-                    // Normal behavior: teleport to Genesis City
-                    realmNavigator.TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, false).Forget();
-                }
-            });
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -334,15 +321,37 @@ namespace DCL.Minimap
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
                 go.SetActive(!isGenesisModeActivated);
 
-            if (!isGenesisModeActivated)
-            {
-                string buttonText = realmData.IsLocalSceneDevelopment
-                    ? RELOAD_SCENE_TEXT
-                    : CUSTOM_BACK_FROM_WORLD_TEXTS.GetValueOrDefault(realmData.RealmName, DEFAULT_BACK_FROM_WORLD_TEXT);
+            // Define button text
+            string buttonText;
 
-                viewInstance.goToGenesisCityText.text = buttonText;
+            if (isGenesisModeActivated)
+                buttonText = DEFAULT_BACK_FROM_WORLD_TEXT;
+            else if (realmData.IsLocalSceneDevelopment)
+                buttonText = RELOAD_SCENE_TEXT;
+            else
+                buttonText = CUSTOM_BACK_FROM_WORLD_TEXTS.GetValueOrDefault(
+                    realmData.RealmName, DEFAULT_BACK_FROM_WORLD_TEXT
+                );
+
+            viewInstance.goToGenesisCityText.text = buttonText;
+
+            // Define button action
+            UnityAction buttonAction;
+
+            if (isGenesisModeActivated || !realmData.IsLocalSceneDevelopment)
+            {
+                buttonAction = () => realmNavigator
+                                    .TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, false).Forget();
+            }
+            else
+            {
+                buttonAction = () => reloadSceneCommand
+                                    .ExecuteCommandAsync(Array.Empty<string>(), disposeCts.Token).Forget();
             }
 
+            viewInstance.goToGenesisCityButton.onClick.AddListener(buttonAction);
+
+            // Define animator controller
             viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
         }
     }
