@@ -267,8 +267,11 @@ namespace DCL.AuthenticationScreenFlow
         private void StartLoginFlowUntilEnd()
         {
             CancelLoginProcess();
+            ForceResolutionAndWindowedMode();
+
             loginCancellationToken = new CancellationTokenSource();
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
+
             return;
 
             async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
@@ -401,6 +404,8 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
+                    RestoreResolutionAndScreenMode();
+
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
 
@@ -416,8 +421,6 @@ namespace DCL.AuthenticationScreenFlow
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.Loading:
-                    ForceResolutionAndWindowedMode();
-
                     viewInstance!.PendingAuthentication.SetActive(false);
 
                     viewInstance.LoginContainer.SetActive(true);
@@ -431,8 +434,6 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.LoginInProgress:
-                    ForceResolutionAndWindowedMode();
-
                     ResetAnimator(viewInstance!.VerificationAnimator);
 
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
