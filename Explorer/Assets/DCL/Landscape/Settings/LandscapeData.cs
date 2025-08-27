@@ -2,6 +2,7 @@
 using System;
 using UnityEngine;
 using TerrainData = Decentraland.Terrain.TerrainData;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.Landscape.Settings
 {
@@ -18,7 +19,7 @@ namespace DCL.Landscape.Settings
 
 #if GPUI_PRO_PRESENT
         public GPUIAssets gpuiAssets;
-        public const bool LOAD_TREES_FROM_STREAMINGASSETS = true;
+        public const bool LOAD_TREES_FROM_STREAMINGASSETS = false;
 #else
         public const bool LOAD_TREES_FROM_STREAMINGASSETS = false;
 #endif
@@ -54,5 +55,11 @@ namespace DCL.Landscape.Settings
             EDGE,
             CORNER,
         }
+    }
+
+    [Serializable]
+    public class LandscapeDataRef : AssetReferenceT<LandscapeData>
+    {
+        public LandscapeDataRef(string guid) : base(guid) { }
     }
 }

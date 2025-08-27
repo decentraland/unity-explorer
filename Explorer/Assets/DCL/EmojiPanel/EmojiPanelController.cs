@@ -28,10 +28,6 @@ namespace DCL.Emoji
 
         private CancellationTokenSource cts = new ();
 
-        private int startDec;
-        private int endDec;
-        private int emojiCode;
-
         public EmojiPanelController(
             EmojiPanelView view,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
@@ -57,9 +53,8 @@ namespace DCL.Emoji
         public EmojiPanelController(
             EmojiPanelView view,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
-            TextAsset emojiMappingJson,
             EmojiSectionView emojiSectionPrefab,
-            EmojiButton emojiButtonPrefab) : this(view, emojiPanelConfiguration, new EmojiMapping(emojiMappingJson, emojiPanelConfiguration), emojiSectionPrefab, emojiButtonPrefab) { }
+            EmojiButton emojiButtonPrefab) : this(view, emojiPanelConfiguration, new EmojiMapping(emojiPanelConfiguration), emojiSectionPrefab, emojiButtonPrefab) { }
 
         private void OnSearchTextChanged(string searchText)
         {
@@ -104,8 +99,7 @@ namespace DCL.Emoji
             {
                 EmojiSectionView sectionView = Object.Instantiate(emojiSectionPrefab, view.EmojiContainer);
                 sectionView.SectionTitle.text = emojiSection.title;
-                foreach (SerializableKeyValuePair<string, string> range in emojiSection.ranges)
-                    GenerateEmojis(range.key, range.value, sectionView);
+                GenerateEmojis(emojiSection.emojis, sectionView);
 
                 sectionView.SectionName = emojiSection.sectionName;
                 emojiSectionViews.Add(sectionView);
@@ -121,26 +115,14 @@ namespace DCL.Emoji
             sectionTransforms.Add(sectionView.SectionName, sectionView.SectionRectTransform);
         }
 
-        private void GenerateEmojis(string hexRangeStart, string hexRageEnd, EmojiSectionView sectionView)
+        private void GenerateEmojis(List<SerializableKeyValuePair<string, int>> emojis, EmojiSectionView sectionView)
         {
-            startDec = int.Parse(hexRangeStart, NumberStyles.HexNumber);
-            endDec = int.Parse(hexRageEnd, NumberStyles.HexNumber);
-            for (int i = 0; i < endDec-startDec; i++)
+            foreach (var kvp in emojis)
             {
-                emojiCode = startDec + i;
-
-                if(emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromUnicode((uint) emojiCode) == -1)
-                    continue;
-
                 EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
-                emojiButton.EmojiImage.text = $"\\U000{emojiCode:X}";
+                emojiButton.EmojiImage.text = char.ConvertFromUtf32(kvp.value);
+                emojiButton.TooltipText.text = kvp.key;
                 emojiButton.EmojiSelected += OnEmojiSelected;
-
-                // Uses the new EmojiMapping class, as per the July 17th refactor
-                if (EmojiMapping.ValueMapping.TryGetValue(emojiCode, out string emojiValue))
-                    emojiButton.TooltipText.text = emojiValue;
-                else
-                    emojiButton.TooltipText.text = string.Empty;
             }
         }
 
@@ -162,10 +144,10 @@ namespace DCL.Emoji
                 {
                     UnityObjectUtils.SafeDestroy(emojiButtonTransform.gameObject);
                 }
-                
+
                 UnityObjectUtils.SafeDestroy(sectionView.gameObject);
             }
-            
+
             emojiSectionViews.Clear();
             sectionTransforms.Clear();
             foundEmojis.Clear();

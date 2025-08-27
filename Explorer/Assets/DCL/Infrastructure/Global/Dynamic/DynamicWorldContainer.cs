@@ -120,6 +120,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using UnityEngine.UIElements;
 using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
@@ -202,7 +203,6 @@ namespace Global.Dynamic
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
             RealmUrls realmUrls,
-            WarningNotificationView showUINotificationView,
             CancellationToken ct)
         {
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
@@ -273,8 +273,6 @@ namespace Global.Dynamic
             CursorSettings cursorSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
             ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
             ProvidedAsset<Texture2D> interactionCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.InteractionCursor, ct);
-            ProvidedAsset<MultiplayerDebugSettings> multiplayerDebugSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MultiplayerDebugSettings, ct);
-            ProvidedAsset<AdaptivePhysicsSettings> physicsSettings = await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.AdaptivePhysicsSettings, ct);
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
@@ -564,7 +562,7 @@ namespace Global.Dynamic
                 new ProfileBroadcast(messagePipesHub, selfProfile)
             );
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, multiplayerDebugSettings, userBlockingCacheProxy);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCacheProxy);
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
 
@@ -676,14 +674,14 @@ namespace Global.Dynamic
                     voiceChatRoom
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
-                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument, showUINotificationView),
-                new GlobalInteractionPlugin(dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
+                new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
+                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, mvcManager),
+                new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs),
-                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, physicsSettings.Value, staticContainer.SceneLoadingLimit),
+                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     assetsProvisioner,
@@ -807,10 +805,10 @@ namespace Global.Dynamic
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, characterPreviewEventBus, globalWorld),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, globalWorld),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
-                    staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
+                    staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus, featureFlags),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, mvcManager, dclCursor),
                 new TeleportPromptPlugin(
                     assetsProvisioner,
@@ -834,7 +832,7 @@ namespace Global.Dynamic
                     debugBuilder,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform,
-                    multiplayerDebugSettings,
+                    dynamicSettings.MultiplayerDebugSettings,
                     appArgs,
                     entityParticipantTable,
                     staticContainer.RealmData,

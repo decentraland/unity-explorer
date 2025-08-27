@@ -23,5 +23,17 @@ namespace Utility.UIToolkit
                 if (@class.Contains("--"))
                     element.RemoveFromClassList(@class);
         }
+
+        /// <summary>
+        /// Removes all sprite classes (those starting with sprite-)
+        /// </summary>
+        public static void RemoveSprites(this VisualElement element)
+        {
+            var classes = element.GetClasses().ToList();
+
+            foreach (string @class in classes)
+                if (@class.StartsWith("sprite-"))
+                    element.RemoveFromClassList(@class);
+        }
     }
 }

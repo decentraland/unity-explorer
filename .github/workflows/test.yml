@@ -1,6 +1,7 @@
 name: Unity Test
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'Explorer/**'
@@ -13,10 +14,19 @@ on:
   merge_group: {}
   push: { branches: [dev] }
 
+permissions:
+  contents: read
+  packages: write
+  checks: write
+  actions: read
+
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
+  UNITY_IMAGE_FLAVOR: base
+  UNITY_IMAGE_VERSION: 3      
+  GHCR_IMAGE_NAME: unityci-editor
   
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -77,37 +87,94 @@ jobs:
             Get-ChildItem
             Get-Content $jsonFilePath
 
+      # --- Detect Unity version from the project ---
+      - name: Read Unity version from ProjectVersion.txt
+        id: unity-version
+        shell: pwsh
+        run: |
+          $verFile = "Explorer/ProjectSettings/ProjectVersion.txt"
+          if (!(Test-Path $verFile)) {
+            Write-Error "File not found: $verFile"
+            exit 1
+          }
+          $match = Select-String -Path $verFile -Pattern 'm_EditorVersion:\s*(\S+)' | Select-Object -First 1
+          if (-not $match) {
+            Write-Error "Could not parse Unity version from $verFile"
+            exit 1
+          }
+          $ver = $match.Matches[0].Groups[1].Value.Trim()
+          echo "version=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Detected Unity version: $ver"
+
+      # --- Build image references (GHCR + upstream) ---
+      - name: Set image names
+        id: img
+        shell: pwsh
+        run: |
+          $version = "${{ steps.unity-version.outputs.version }}"
+          $flavor  = "${{ env.UNITY_IMAGE_FLAVOR }}"
+          $imgVer  = "${{ env.UNITY_IMAGE_VERSION }}"
+
+          # windows-<unityVersion>-<flavor>-<gameciVersion>
+          $tag = "windows-$version-$flavor-$imgVer"
+          $owner = "${{ github.repository_owner }}".ToLower()
+          $upstream = "unityci/editor:$tag"
+          $ghcr     = "ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
+          echo "tag=$tag"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "upstream=$upstream" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "ghcr=$ghcr"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Upstream image: $upstream"
+          Write-Host "GHCR image:     $ghcr"
+
+      # --- Log into GHCR ---
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # --- Restore Unity image from GHCR (fast path) ---
+      - name: Restore Unity image from GHCR
+        id: restore-image
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          docker pull "${{ steps.img.outputs.ghcr }}"
+
+      # --- Seed GHCR from Docker Hub if missing (one-time per tag) ---
+      - name: Download from Docker Hub and upload to GHCR (if missing)
+        if: steps.restore-image.outcome == 'failure'
+        shell: pwsh
+        run: |
+          $upstream = "${{ steps.img.outputs.upstream }}"
+          $ghcr     = "${{ steps.img.outputs.ghcr }}"
+          Write-Host "GHCR miss. Pulling upstream: $upstream"
+          docker pull $upstream
+          docker tag  $upstream $ghcr
+          docker push $ghcr
+          Write-Host "Seeded GHCR: $ghcr"
+
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
-        timeout-minutes: 60
+        timeout-minutes: 80
         continue-on-error: true
         with:
           projectPath: Explorer
-          testMode: all      
-
-      - name: Convert NUnit to JUnit
-        if: always()
-        run: |
-          New-Item -ItemType Directory -Force -Path "${{ steps.testRunner.outputs.artifactsPath }}-junit"
-          choco install xsltproc
-          xsltproc `
-            --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml" `
-            .github/workflows/nunit-to-junit.xsl `
-            "${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml"
-
-          xsltproc `
-            --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml" `
-            .github/workflows/nunit-to-junit.xsl `
-            "${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml"
+          testMode: all
+          customImage: ${{ steps.img.outputs.ghcr }}
 
       - name: Report test results
-        uses: decentraland/test-reporting@v0.3
         if: always()
+        uses: dorny/test-reporter@v2.1.1
         with:
-          name: Report test results
-          path: ${{ steps.testRunner.outputs.artifactsPath }}-junit/*.xml
-          reporter: jest-junit
+          name: Unity Tests
+          path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml
+          reporter: dotnet-nunit
+          fail-on-error: true
+          fail-on-empty: true
+          use-actions-summary: true
 
       # Upload artifact
       - uses: actions/upload-artifact@v4
