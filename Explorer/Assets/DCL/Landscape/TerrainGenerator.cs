@@ -242,17 +242,10 @@ namespace DCL.Landscape
                         rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
                         rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
-                        OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel,
-                            TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+                        OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+                        OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
 
-                        OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
-
-                        byte[] pngData = OccupancyMap.EncodeToPNG();
-                        File.WriteAllBytes(Application.dataPath + "/Test4.png", pngData);
-                        AssetDatabase.ImportAsset(Application.dataPath + "/Test4.png");
-                        AssetDatabase.Refresh();
-
-                        // OccupancyMap.filterMode = FilterMode.Point;
+                        // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
                         OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
 
                         occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
@@ -695,11 +688,37 @@ namespace DCL.Landscape
             return occupancyMap;
         }
 
-        private static int WriteInteriorChamferOnWhite(Texture2D r8)
+        private static int WriteInteriorChamferOnWhite(Texture2D r8, int2 minParcel, int2 maxParcel, int padding)
         {
             int w = r8.width, h = r8.height, n = w * h;
             NativeArray<byte> src = r8.GetRawTextureData<byte>();
             if (!src.IsCreated || src.Length != n) return 0;
+
+            int textureHalfSize = w / 2; // Assuming square texture
+
+            // Calculate working area bounds in texture coordinates (with padding)
+            int workMinX = minParcel.x - padding;
+            int workMinY = minParcel.y - padding;
+            int workMaxX = maxParcel.x + padding;
+            int workMaxY = maxParcel.y + padding;
+
+            // Clamp to texture logical range [-textureHalfSize .. textureHalfSize-1]
+            workMinX = Math.Max(workMinX, -textureHalfSize);
+            workMinY = Math.Max(workMinY, -textureHalfSize);
+            workMaxX = Math.Min(workMaxX, textureHalfSize - 1);
+            workMaxY = Math.Min(workMaxY, textureHalfSize - 1);
+
+            // Convert to texture pixel coordinates and expand by 1 to include border stripes
+            int texMinX = workMinX + textureHalfSize - 1;
+            int texMinY = workMinY + textureHalfSize - 1;
+            int texMaxX = workMaxX + textureHalfSize + 1;
+            int texMaxY = workMaxY + textureHalfSize + 1;
+
+            // Clamp to actual texture bounds
+            texMinX = Math.Max(texMinX, 0);
+            texMinY = Math.Max(texMinY, 0);
+            texMaxX = Math.Min(texMaxX, w - 1);
+            texMaxY = Math.Min(texMaxY, h - 1);
 
             const int INF = 1 << 28;
             const int ORTH = 3; // 3-4 chamfer (good Euclidean approx)
@@ -709,8 +728,12 @@ namespace DCL.Landscape
             var dist = new int[n];
             bool anyBlack = false, anyWhite = false;
 
-            for (var i = 0; i < n; i++)
+            // Initialize only working area pixels
+            for (int y = texMinY; y <= texMaxY; y++)
+            for (int x = texMinX; x <= texMaxX; x++)
             {
+                int i = (y * w) + x;
+
                 if (src[i] == 0)
                 {
                     dist[i] = 0;
@@ -726,54 +749,58 @@ namespace DCL.Landscape
             if (!anyBlack || !anyWhite)
                 return 0; // Nothing to do if no black or no white regions exist.
 
-            // Forward pass
-            for (var y = 0; y < h; y++)
+            // Forward pass - only within working area
+            for (int y = texMinY; y <= texMaxY; y++)
             {
                 int row = y * w;
 
-                for (var x = 0; x < w; x++)
+                for (int x = texMinX; x <= texMaxX; x++)
                 {
                     int i = row + x;
                     int d = dist[i];
 
                     if (d != 0) // skip black seeds
                     {
-                        if (x > 0) d = Mathf.Min(d, dist[i - 1] + ORTH);
-                        if (y > 0) d = Mathf.Min(d, dist[i - w] + ORTH);
-                        if (x > 0 && y > 0) d = Mathf.Min(d, dist[i - w - 1] + DIAG);
-                        if (x + 1 < w && y > 0) d = Mathf.Min(d, dist[i - w + 1] + DIAG);
+                        if (x > texMinX) d = Mathf.Min(d, dist[i - 1] + ORTH);
+                        if (y > texMinY) d = Mathf.Min(d, dist[i - w] + ORTH);
+                        if (x > texMinX && y > texMinY) d = Mathf.Min(d, dist[i - w - 1] + DIAG);
+                        if (x < texMaxX && y > texMinY) d = Mathf.Min(d, dist[i - w + 1] + DIAG);
                         dist[i] = d;
                     }
                 }
             }
 
-            // Backward pass
-            for (int y = h - 1; y >= 0; y--)
+            // Backward pass - only within working area
+            for (int y = texMaxY; y >= texMinY; y--)
             {
                 int row = y * w;
 
-                for (int x = w - 1; x >= 0; x--)
+                for (int x = texMaxX; x >= texMinX; x--)
                 {
                     int i = row + x;
                     int d = dist[i];
 
                     if (d != 0) // skip black seeds
                     {
-                        if (x + 1 < w) d = Mathf.Min(d, dist[i + 1] + ORTH);
-                        if (y + 1 < h) d = Mathf.Min(d, dist[i + w] + ORTH);
-                        if (x + 1 < w && y + 1 < h) d = Mathf.Min(d, dist[i + w + 1] + DIAG);
-                        if (x > 0 && y + 1 < h) d = Mathf.Min(d, dist[i + w - 1] + DIAG);
+                        if (x < texMaxX) d = Mathf.Min(d, dist[i + 1] + ORTH);
+                        if (y < texMaxY) d = Mathf.Min(d, dist[i + w] + ORTH);
+                        if (x < texMaxX && y < texMaxY) d = Mathf.Min(d, dist[i + w + 1] + DIAG);
+                        if (x > texMinX && y < texMaxY) d = Mathf.Min(d, dist[i + w - 1] + DIAG);
                         dist[i] = d;
                     }
                 }
             }
 
-            // Find maximum distance and convert to pixel distance
+            // Find maximum distance and convert to pixel distance - only within working area
             var maxD = 0;
 
-            for (var i = 0; i < n; i++)
+            for (int y = texMinY; y <= texMaxY; y++)
+            for (int x = texMinX; x <= texMaxX; x++)
+            {
+                int i = (y * w) + x;
                 if (src[i] != 0 && dist[i] < INF && dist[i] > maxD)
                     maxD = dist[i]; // Check white pixels
+            }
 
             if (maxD == 0)
                 return 0;
@@ -807,31 +834,36 @@ namespace DCL.Landscape
             int minValue = 255 - (stepSize * maxPixelDistance);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxD}, max maxPixelDistance={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
 
-            // Write back: keep black at 0, map distances to [minValue, 255] range
-            for (var i = 0; i < n; i++)
+            // Write back: keep black at 0, map distances to [minValue, 255] range - only within working area
+            for (int y = texMinY; y <= texMaxY; y++)
             {
-                if (src[i] == 0)
+                for (int x = texMinX; x <= texMaxX; x++)
                 {
-                    src[i] = 0;
-                    continue;
-                } // keep black pixels (occupied)
+                    int i = (y * w) + x;
 
-                // Convert chamfer distance to pixel distance
-                int pixelDist = dist[i] / ORTH;
-                pixelDist = Mathf.Min(pixelDist, maxPixelDistance); // Clamp to max
+                    if (src[i] == 0)
+                    {
+                        src[i] = 0;
+                        continue;
+                    } // keep black pixels (occupied)
 
-                // Map [1, maxPixelDistance] to [minValue, 255]
-                int value;
+                    // Convert chamfer distance to pixel distance
+                    int pixelDist = dist[i] / ORTH;
+                    pixelDist = Mathf.Min(pixelDist, maxPixelDistance); // Clamp to max
 
-                if (maxPixelDistance == 1)
-                    value = 255; // Only one distance level, use max value
-                else
-                {
-                    value = minValue + ((pixelDist - 1) * (255 - minValue) / (maxPixelDistance - 1));
-                    value = Mathf.Clamp(value, minValue, 255);
+                    // Map [1, maxPixelDistance] to [minValue, 255]
+                    int value;
+
+                    if (maxPixelDistance == 1)
+                        value = 255; // Only one distance level, use max value
+                    else
+                    {
+                        value = minValue + ((pixelDist - 1) * (255 - minValue) / (maxPixelDistance - 1));
+                        value = Mathf.Clamp(value, minValue, 255);
+                    }
+
+                    src[i] = (byte)value;
                 }
-
-                src[i] = (byte)value;
             }
 
             return minValue;
