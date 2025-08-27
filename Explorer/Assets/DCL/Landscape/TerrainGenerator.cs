@@ -58,7 +58,7 @@ namespace DCL.Landscape
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashSet<int2> ownedParcels;
-        public int MaxHeight;
+        public int MaxHeight { get; private set; }
         private bool hideTrees;
         private bool hideDetails;
         private bool withHoles;
@@ -66,7 +66,7 @@ namespace DCL.Landscape
         private int spawnedTerrainDataCount;
         private float terrainDataCount;
 
-        private Transform rootGo;
+        public Transform TerrainRoot { get; private set; }
         private GrassColorMapRenderer grassRenderer;
         private bool isInitialized;
         private int activeChunk = -1;
@@ -165,8 +165,8 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null)
-                UnityObjectUtils.SafeDestroy(rootGo);
+            if (TerrainRoot != null)
+                UnityObjectUtils.SafeDestroy(TerrainRoot);
         }
 
         public int GetChunkSize() =>
@@ -176,8 +176,8 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null)
-                rootGo.gameObject.SetActive(true);
+            if (TerrainRoot != null)
+                TerrainRoot.gameObject.SetActive(true);
 
             UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
@@ -196,9 +196,9 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null && rootGo.gameObject.activeSelf)
+            if (TerrainRoot != null && TerrainRoot.gameObject.activeSelf)
             {
-                rootGo.gameObject.SetActive(false);
+                TerrainRoot.gameObject.SetActive(false);
 
                 foreach (var collider in terrainChunkColliders)
                     if (collider.enabled) collider.enabled = false;
@@ -232,8 +232,8 @@ namespace DCL.Landscape
                 {
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Misc & Cliffs, Border Colliders")))
                     {
-                        rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
-                        rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
+                        TerrainRoot = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+                        TerrainRoot.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
                         OccupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
                             TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
@@ -247,7 +247,7 @@ namespace DCL.Landscape
                         if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
                             await LoadTreesAsync();
 
-                        Ocean = factory.CreateOcean(rootGo);
+                        Ocean = factory.CreateOcean(TerrainRoot);
                         Wind = factory.CreateWind();
 
                         Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
@@ -286,7 +286,7 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(TerrainModel, processReport, cancellationToken);
 
-                    grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
+                    grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(TerrainRoot, terrains, factory);
 
                     await ReEnableTerrainAsync(processReport);
 
@@ -295,8 +295,8 @@ namespace DCL.Landscape
             }
             catch (OperationCanceledException)
             {
-                if (rootGo != null)
-                    UnityObjectUtils.SafeDestroy(rootGo);
+                if (TerrainRoot != null)
+                    UnityObjectUtils.SafeDestroy(TerrainRoot);
             }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
             finally
@@ -386,7 +386,9 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * ParcelSize, terrainGenData.terrainMaterial);
+                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(
+                    chunkModel.TerrainData, TerrainRoot.transform, chunkModel.MinParcel * ParcelSize,
+                    terrainGenData.terrainMaterial);
 
                 chunkModel.terrain = terrain;
                 terrains.Add(terrain);
@@ -986,7 +988,7 @@ namespace DCL.Landscape
             var rendererKeys = new int[treePrototypes.Length];
 
             for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
-                GPUICoreAPI.RegisterRenderer(rootGo, treePrototypes[prototypeIndex].asset,
+                GPUICoreAPI.RegisterRenderer(TerrainRoot, treePrototypes[prototypeIndex].asset,
                     out rendererKeys[prototypeIndex]);
 
             await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,
