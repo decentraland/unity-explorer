@@ -82,6 +82,7 @@ namespace DCL.Chat.Commands
                        ChangeRealmError.SameRealm => $"🟡 You are already in {realm}!",
                        ChangeRealmError.NotReachable => $"🔴 Error. The world {realm} doesn't exist or not reachable!",
                        ChangeRealmError.ChangeCancelled => "🔴 Error. The operation was canceled!",
+                       ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error. Realm changes are not allowed in local scene development mode",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
