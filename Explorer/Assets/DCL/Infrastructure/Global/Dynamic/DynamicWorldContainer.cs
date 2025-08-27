@@ -848,7 +848,7 @@ namespace Global.Dynamic
                     notificationsBusController,
                     notificationsRequestController,
                     identityCache),
-                new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
+                new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 new PassportPlugin(
                     assetsProvisioner,
                     mvcManager,
