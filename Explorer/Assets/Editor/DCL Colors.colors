@@ -15,3 +15,5 @@ MonoBehaviour:
   m_Presets:
   - m_Name: Cloudy Sky
     m_Color: {r: 0.44313726, g: 0.41960785, b: 0.4862745, a: 1}
+  - m_Name: Green
+    m_Color: {r: 0.1882353, g: 0.8039216, b: 0, a: 1}

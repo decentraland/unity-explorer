@@ -12,18 +12,13 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class StreamingCommunityResultCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private Tweener? descriptionTween;
-        private const float HOVER_ANIMATION_DURATION = 0.3f;
-        private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 45f;
-
         public event Action<string>? MainButtonClicked;
 
-        [SerializeField] private RectTransform headerContainer = null!;
-        [SerializeField] private RectTransform footerContainer = null!;
+        [SerializeField] private RectTransform hoverOverlay = null!;
         [SerializeField] private TMP_Text communityTitle = null!;
         [field: SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private Button mainButton = null!;
-        [SerializeField] private ListenersCountView listenersCountView;
+        [SerializeField] private ListenersCountView listenersCountView = null!;
 
         private readonly StringBuilder stringBuilder = new ();
 
@@ -56,9 +51,6 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (currentCommunityId != null)
                     MainButtonClicked?.Invoke(currentCommunityId);
             });
-
-            originalHeaderSizeDelta = headerContainer.sizeDelta;
-            originalFooterSizeDelta = footerContainer.sizeDelta;
         }
 
         private void OnEnable() =>
@@ -78,7 +70,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public void ConfigureListenersCount(bool isActive, int listenersCount)
         {
             listenersCountView.gameObject.SetActive(isActive);
-
             stringBuilder.Clear();
             stringBuilder.Append(listenersCount);
             listenersCountView.ParticipantCount.text = stringBuilder.ToString();
@@ -92,53 +83,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void PlayHoverAnimation()
         {
-            headerTween?.Kill();
-            footerTween?.Kill();
-            descriptionTween?.Kill();
-
-            headerTween = DOTween.To(() =>
-                          headerContainer.sizeDelta,
-                          newSizeDelta => headerContainer.sizeDelta = newSizeDelta,
-                          new Vector2(headerContainer.sizeDelta.x, originalHeaderSizeDelta.y - HOVER_ANIMATION_HEIGHT_TO_APPLY),
-                          HOVER_ANIMATION_DURATION)
-                     .SetEase(Ease.OutQuad);
-
-            footerTween = DOTween.To(() =>
-                          footerContainer.sizeDelta,
-                          newSizeDelta => footerContainer.sizeDelta = newSizeDelta,
-                          new Vector2(footerContainer.sizeDelta.x, originalFooterSizeDelta.y + HOVER_ANIMATION_HEIGHT_TO_APPLY),
-                          HOVER_ANIMATION_DURATION)
-                     .SetEase(Ease.OutQuad);
+            hoverOverlay.gameObject.SetActive(true);
         }
 
         private void PlayHoverExitAnimation(bool instant = false)
         {
-            headerTween?.Kill();
-            footerTween?.Kill();
-            descriptionTween?.Kill();
-
-            if (instant)
-            {
-                headerContainer.sizeDelta = originalHeaderSizeDelta;
-                footerContainer.sizeDelta = originalFooterSizeDelta;
-            }
-            else
-            {
-                headerTween = DOTween.To(() =>
-                              headerContainer.sizeDelta,
-                              x => headerContainer.sizeDelta = x,
-                              new Vector2(headerContainer.sizeDelta.x, originalHeaderSizeDelta.y),
-                              HOVER_ANIMATION_DURATION)
-                         .SetEase(Ease.OutQuad);
-
-                footerTween = DOTween.To(() =>
-                              footerContainer.sizeDelta,
-                              x => footerContainer.sizeDelta = x,
-                              new Vector2(footerContainer.sizeDelta.x, originalFooterSizeDelta.y),
-                              HOVER_ANIMATION_DURATION)
-                         .SetEase(Ease.OutQuad);
-
-            }
+            hoverOverlay.gameObject.SetActive(false);
         }
     }
 }

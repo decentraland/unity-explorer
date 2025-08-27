@@ -8,11 +8,11 @@ namespace DCL.VoiceChat
         private readonly VoiceChatPanelResizeView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
 
-        private const float DEFAULT_VOICE_CHAT_SIZE = 46;
+        private const float DEFAULT_VOICE_CHAT_SIZE = 50;
         private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 240;
-        private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 46;
+        private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
         private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100;
-        private const float COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 46;
+        private const float COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 50;
 
         public VoiceChatPanelResizeController(VoiceChatPanelResizeView view, IVoiceChatOrchestratorState voiceChatState)
         {
