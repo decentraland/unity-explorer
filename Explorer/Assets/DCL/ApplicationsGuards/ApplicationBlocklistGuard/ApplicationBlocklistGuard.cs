@@ -25,7 +25,12 @@ namespace DCL.ApplicationBlocklistGuard
 
                 BlocklistData bd = JsonUtility.FromJson<BlocklistData>(response.body);
 
-                return bd?.users?.Any(u => u.wallet == userID) ?? false;
+                foreach (var t in bd.users)
+                {
+                    if (string.Equals(t.wallet, userID, StringComparison.OrdinalIgnoreCase)) return true;
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
