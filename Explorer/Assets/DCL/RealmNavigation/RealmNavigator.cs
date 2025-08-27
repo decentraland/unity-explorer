@@ -197,7 +197,7 @@ namespace DCL.RealmNavigation
             if (ct.IsCancellationRequested)
                 return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
 
-            if (realmController.RealmData.IsLocalSceneDevelopment)
+            if (!isLocal && realmController.RealmData.IsLocalSceneDevelopment)
                 return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, TELEPORT_NOT_ALLOWED_LOCAL_SCENE);
 
             Result parcelCheckResult = landscape.IsParcelInsideTerrain(parcel, isLocal);
