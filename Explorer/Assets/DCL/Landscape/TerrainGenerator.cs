@@ -21,6 +21,8 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Collections.LowLevel.Unsafe;
+using UnityEditor;
 using UnityEngine;
 using Utility;
 using static Unity.Mathematics.math;
@@ -240,7 +242,7 @@ namespace DCL.Landscape
                         rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
                         rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
-                        OccupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
+                        OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel,
                             TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
 
                         OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
@@ -600,7 +602,7 @@ namespace DCL.Landscape
             noiseGenCache.Dispose();
         }
 
-        private static Texture2D CreateOccupancyMap(NativeArray<int2> emptyParcels, int2 minParcel,
+        private static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
             int2 terrainSize = maxParcel - minParcel + 1;
@@ -613,107 +615,100 @@ namespace DCL.Landscape
 
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
 
-            // A square of black pixels surrounded by a border of red pixels totalPadding pixels wide
-            // surrounded by black pixels to fill out the power of two texture, but at least one. World
-            // origin (parcel 0,0) corresponds to uv of 0.5 plus half a pixel. The outer border is there
-            // so that terrain height blends to zero at its edges.
+            // 1) memset all to 255 (FREE)
+            unsafe
             {
-                int i = 0;
-
-                // First section: rows of black pixels from the top edge of the texture to minParcel.y.
-                int endY = (textureHalfSize + minParcel.y) * textureSize;
-
-                while (i < endY)
-                    data[i++] = 0;
-
-                // Second section: totalPadding rows of: one or more black pixels (enough to pad the
-                // texture out to a power of two), terrainSize.x red pixels, one or more black pixels
-                // again for padding.
-                endY = i + padding * textureSize;
-
-                while (i < endY)
-                {
-                    int endX = i + textureHalfSize + minParcel.x;
-
-                    while (i < endX)
-                        data[i++] = 0;
-
-                    endX = i + terrainSize.x;
-
-                    while (i < endX)
-                        data[i++] = 255;
-
-                    endX = i + textureHalfSize - maxParcel.x - 1;
-
-                    while (i < endX)
-                        data[i++] = 0;
-                }
-
-                // Third, innermost section: citySize.y rows of: one or more black pixels, totalPadding
-                // red pixels, citySize.x black pixels, totalPadding red pixels, one or more black
-                // pixels.
-                endY = i + citySize.y * textureSize;
-
-                while (i < endY)
-                {
-                    int endX = i + textureHalfSize + minParcel.x;
-
-                    while (i < endX)
-                        data[i++] = 0;
-
-                    endX = i + padding;
-
-                    while (i < endX)
-                        data[i++] = 255;
-
-                    endX = i + citySize.x;
-
-                    while (i < endX)
-                        data[i++] = 0;
-
-                    endX = i + padding;
-
-                    while (i < endX)
-                        data[i++] = 255;
-
-                    endX = i + textureHalfSize - maxParcel.x - 1;
-
-                    while (i < endX)
-                        data[i++] = 0;
-                }
-
-                // Fourth section, same as second section.
-                endY = i + padding * textureSize;
-
-                while (i < endY)
-                {
-                    int endX = i + textureHalfSize + minParcel.x;
-
-                    while (i < endX)
-                        data[i++] = 0;
-
-                    endX = i + terrainSize.x;
-
-                    while (i < endX)
-                        data[i++] = 255;
-
-                    endX = i + textureHalfSize - maxParcel.x - 1;
-
-                    while (i < endX)
-                        data[i++] = 0;
-                }
-
-                // Fifth section, same as first section.
-                endY = i + ((textureHalfSize - maxParcel.y - 1) * textureSize);
-
-                while (i < endY)
-                    data[i++] = 0;
+                void* ptr = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
+                UnsafeUtility.MemSet(ptr, 255, data.Length);
             }
 
-            for (int i = 0; i < emptyParcels.Length; i++)
+            // 2) mark outside [minParcel..maxParcel] as BLACK (occupied) – we keep power-of-two borders black
             {
-                int2 parcel = emptyParcels[i] + textureHalfSize;
-                data[parcel.y * textureSize + parcel.x] = 255;
+                // Top area above minParcel.y
+                int topRows = textureHalfSize + minParcel.y;
+                int count = topRows * textureSize;
+                for (var i = 0; i < count; i++) data[i] = 0;
+
+                // Middle rows: left and right outside [minParcel.x..maxParcel.x]
+                int startY = topRows;
+                int endY = textureHalfSize + maxParcel.y + 1; // exclusive
+
+                for (int ty = startY; ty < endY; ty++)
+                {
+                    int rowBase = ty * textureSize;
+
+                    // Left outside
+                    int leftCount = textureHalfSize + minParcel.x;
+                    for (var i = 0; i < leftCount; i++) data[rowBase + i] = 0;
+
+                    // Right outside
+                    int rightStart = rowBase + textureHalfSize + maxParcel.x + 1;
+                    int rightEnd = rowBase + textureSize;
+                    for (int i = rightStart; i < rightEnd; i++) data[i] = 0;
+                }
+
+                // Bottom area below maxParcel.y
+                int bottomStart = (textureHalfSize + maxParcel.y + 1) * textureSize;
+                for (int i = bottomStart; i < data.Length; i++) data[i] = 0;
+            }
+
+            // 3) apply configurable padding as BLACK around [minParcel..maxParcel]
+            if (padding > 0)
+            {
+                int minX = minParcel.x - padding;
+                int minY = minParcel.y - padding;
+                int maxX = maxParcel.x + padding;
+                int maxY = maxParcel.y + padding;
+
+                // Clamp to texture logical coords range [-textureHalfSize .. textureHalfSize-1]
+                minX = Math.Max(minX, -textureHalfSize);
+                minY = Math.Max(minY, -textureHalfSize);
+                maxX = Math.Min(maxX, textureHalfSize - 1);
+                maxY = Math.Min(maxY, textureHalfSize - 1);
+
+                // Top padding band
+                for (int y = minY; y < minParcel.y; y++)
+                {
+                    int ty = y + textureHalfSize;
+                    int rowBase = ty * textureSize;
+                    int start = minX + textureHalfSize;
+                    int end = maxX + textureHalfSize + 1;
+                    for (int i = rowBase + start; i < rowBase + end; i++) data[i] = 0;
+                }
+
+                // Bottom padding band
+                for (int y = maxParcel.y + 1; y <= maxY; y++)
+                {
+                    int ty = y + textureHalfSize;
+                    int rowBase = ty * textureSize;
+                    int start = minX + textureHalfSize;
+                    int end = maxX + textureHalfSize + 1;
+                    for (int i = rowBase + start; i < rowBase + end; i++) data[i] = 0;
+                }
+
+                // Left/Right padding within [minParcel.y..maxParcel.y]
+                for (int y = minParcel.y; y <= maxParcel.y; y++)
+                {
+                    int ty = y + textureHalfSize;
+                    int rowBase = ty * textureSize;
+
+                    // Left band
+                    for (int x = minX; x < minParcel.x; x++) data[rowBase + x + textureHalfSize] = 0;
+
+                    // Right band
+                    for (int x = maxParcel.x + 1; x <= maxX; x++) data[rowBase + x + textureHalfSize] = 0;
+                }
+            }
+
+            // 4) mark owned parcels as BLACK (occupied)
+            foreach (int2 owned in ownedParcels)
+            {
+                int tx = owned.x + textureHalfSize;
+                int ty = owned.y + textureHalfSize;
+                int idx = (ty * textureSize) + tx;
+
+                if ((uint)idx < (uint)data.Length)
+                    data[idx] = 0;
             }
 
             return occupancyMap;
