@@ -24,6 +24,8 @@ using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -48,6 +50,7 @@ namespace DCL.Minimap
             { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" }
         };
         private const float ANIMATION_TIME = 0.2f;
+        private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
@@ -62,8 +65,9 @@ namespace DCL.Minimap
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrls;
-
+        private readonly IChatMessagesBus chatMessagesBus;
         private readonly ReloadSceneChatCommand reloadSceneCommand;
+
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
@@ -90,6 +94,7 @@ namespace DCL.Minimap
             ISharedSpaceManager sharedSpaceManager,
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrls,
+            IChatMessagesBus chatMessagesBus,
             ReloadSceneChatCommand reloadSceneCommand
         ) : base(() => minimapView)
         {
@@ -105,6 +110,7 @@ namespace DCL.Minimap
             this.sharedSpaceManager = sharedSpaceManager;
             this.systemClipboard = systemClipboard;
             this.decentralandUrls = decentralandUrls;
+            this.chatMessagesBus = chatMessagesBus;
             this.reloadSceneCommand = reloadSceneCommand;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
@@ -345,8 +351,11 @@ namespace DCL.Minimap
             }
             else
             {
-                buttonAction = () => reloadSceneCommand
-                                    .ExecuteCommandAsync(Array.Empty<string>(), disposeCts.Token).Forget();
+                buttonAction = () => chatMessagesBus.Send(
+                    ChatChannel.NEARBY_CHANNEL,
+                    $"/{reloadSceneCommand.Command}",
+                    RELOAD_SCENE_COMMAND_ORIGIN
+                );
             }
 
             viewInstance.goToGenesisCityButton.onClick.AddListener(buttonAction);

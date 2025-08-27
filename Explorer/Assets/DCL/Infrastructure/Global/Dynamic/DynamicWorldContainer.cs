@@ -548,6 +548,7 @@ namespace Global.Dynamic
                 sharedSpaceManager,
                 clipboard,
                 bootstrapContainer.DecentralandUrlsSource,
+                chatMessagesBus,
                 reloadSceneChatCommand
             );
 
