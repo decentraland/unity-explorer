@@ -12,7 +12,6 @@ using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using UnityEngine;
-using Utility;
 
 namespace DCL.SDKComponents.AvatarShape.Systems
 {
@@ -22,12 +21,10 @@ namespace DCL.SDKComponents.AvatarShape.Systems
     public partial class UpdateAvatarShapeInterpolateMovementSystem : BaseUnityLoopSystem
     {
         private readonly World globalWorld;
-        private readonly Vector2Int sceneBaseParcel;
 
-        private UpdateAvatarShapeInterpolateMovementSystem(World world, World globalWorld, Vector2Int sceneBaseParcel) : base(world)
+        private UpdateAvatarShapeInterpolateMovementSystem(World world, World globalWorld) : base(world)
         {
             this.globalWorld = globalWorld;
-            this.sceneBaseParcel = sceneBaseParcel;
         }
 
         protected override void Update(float t)
