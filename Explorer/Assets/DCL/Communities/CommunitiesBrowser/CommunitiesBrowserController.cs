@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
@@ -8,6 +9,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3;
@@ -46,6 +48,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly ISpriteCache spriteCache;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
         private CancellationTokenSource? loadResultsCts;
@@ -74,7 +77,8 @@ namespace DCL.Communities.CommunitiesBrowser
             ProfileRepositoryWrapper profileDataProvider,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
-            ICommunityCallOrchestrator orchestrator)
+            ICommunityCallOrchestrator orchestrator,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -87,6 +91,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
             this.orchestrator = orchestrator;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             spriteCache = new SpriteCache(webRequestController);
 
@@ -112,7 +117,18 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void JoinStream(string communityId)
         {
-            orchestrator.JoinCommunityVoiceChat(communityId, CancellationToken.None, true);
+            //If we already joined, we cannot join again
+            if (orchestrator.CurrentCommunityId.Value == communityId) return;
+
+            JoinStreamAsync().Forget();
+            return;
+
+            async UniTaskVoid JoinStreamAsync()
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(false));
+                await UniTask.Delay(500);
+                orchestrator.JoinCommunityVoiceChat(communityId, CancellationToken.None, true);
+            }
         }
 
         public void Activate()

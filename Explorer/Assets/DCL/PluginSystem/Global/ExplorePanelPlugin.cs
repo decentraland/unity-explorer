@@ -434,7 +434,8 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 selfProfile,
                 nftNamesProvider,
-                communityCallOrchestrator);
+                communityCallOrchestrator,
+                sharedSpaceManager);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
