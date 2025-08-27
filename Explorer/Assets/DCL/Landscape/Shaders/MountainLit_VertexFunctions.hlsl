@@ -36,7 +36,8 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
 
         if (_UseHeightMap > 0)
         {
-            noiseH =  (fHeightMapValue * 2 - 1) * _HeightMapScale;
+            /// Min: -4.135159, Width (Range): 8.236154
+            noiseH =(fHeightMapValue * 8.236154) -4.135159;
         }
         
         float saturationFactor = 20;
