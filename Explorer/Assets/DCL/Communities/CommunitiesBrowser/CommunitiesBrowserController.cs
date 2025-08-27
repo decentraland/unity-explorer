@@ -254,6 +254,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTaskVoid LoadStreamingCommunitiesAsync(CancellationToken ct)
         {
             view.ClearStreamingResultsItems();
+
             view.SetStreamingResultsAsLoading(true);
 
             var result = await dataProvider.GetUserCommunitiesAsync(

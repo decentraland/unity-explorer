@@ -67,7 +67,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [Header("Streaming Section")]
         [SerializeField] private GameObject streamingSection = null!;
         [SerializeField] private LoopGridView streamingLoopGrid = null!;
-        [SerializeField] private GameObject streamingEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView streamingLoadingSpinner = null!;
 
         private readonly List<CommunityData> currentMyCommunities = new ();
@@ -363,8 +362,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void SetStreamingResultsAsEmpty(bool isEmpty)
         {
-            streamingEmptyContainer.SetActive(isEmpty);
-            streamingLoopGrid.gameObject.SetActive(!isEmpty);
+            streamingSection.gameObject.SetActive(!isEmpty);
         }
 
 
@@ -393,6 +391,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void AddStreamingResultsItems(CommunityData[] dataResults)
         {
+            streamingSection.SetActive(true);
             currentStreamingResults.AddRange(dataResults);
             streamingLoopGrid.SetListItemCount(currentStreamingResults.Count, true);
             SetStreamingResultsAsEmpty(currentStreamingResults.Count == 0);
