@@ -66,7 +66,7 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private string currentCommunityId;
+        private string? currentCommunityId;
         private Tweener? headerTween;
         private Tweener? footerTween;
         private Vector2 originalHeaderSizeDelta;
@@ -80,17 +80,23 @@ namespace DCL.Communities.CommunitiesBrowser
                     MainButtonClicked?.Invoke(currentCommunityId);
             });
 
-            viewCommunityButton.onClick.AddListener(() =>
+            if (viewCommunityButton != null)
             {
-                if (currentCommunityId != null)
-                    ViewCommunityButtonClicked?.Invoke(currentCommunityId);
-            });
+                viewCommunityButton.onClick.AddListener(() =>
+                {
+                    if (currentCommunityId != null)
+                        ViewCommunityButtonClicked?.Invoke(currentCommunityId);
+                });
+            }
 
-            joinCommunityButton.onClick.AddListener(() =>
+            if (joinCommunityButton != null)
             {
-                if (currentCommunityId != null)
-                    JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
-            });
+                joinCommunityButton.onClick.AddListener(() =>
+                {
+                    if (currentCommunityId != null)
+                        JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
+                });
+            }
 
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
