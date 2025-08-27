@@ -436,7 +436,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 profileRepositoryWrapper,
                 selfProfile,
-                nftNamesProvider);
+                nftNamesProvider,
+                notificationsBusController);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

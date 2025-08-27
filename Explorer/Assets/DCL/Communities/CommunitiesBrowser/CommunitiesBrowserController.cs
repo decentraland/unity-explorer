@@ -5,6 +5,8 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -52,6 +54,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly INotificationsBusController notificationsBusController;
         private readonly ISpriteCache spriteCache;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
@@ -89,7 +92,8 @@ namespace DCL.Communities.CommunitiesBrowser
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileDataProvider,
             ISelfProfile selfProfile,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider,
+            INotificationsBusController notificationsBusController)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -101,6 +105,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
+            this.notificationsBusController = notificationsBusController;
 
             spriteCache = new SpriteCache(webRequestController);
 
@@ -124,6 +129,10 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityInvitationAccepted += AcceptCommunityInvitation;
             view.CommunityInvitationRejected += RejectCommunityInvitation;
             view.CreateCommunityButtonClicked += CreateCommunity;
+
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_USER_JOIN_REQUEST_SENT, OnJoinRequestReceived);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_USER_INVITED, OnInvitationReceived);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_USER_JOIN_REQUEST_ACCEPTED, OnJoinRequestAccepted);
         }
 
         public void Activate()
@@ -845,6 +854,38 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityLeft -= OnCommunityLeft;
             dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
+        }
+
+        private void OnJoinRequestReceived(INotification notification)
+        {
+            if (!isSectionActivated)
+                return;
+
+            LoadMyCommunities();
+        }
+
+        private void OnInvitationReceived(INotification notification)
+        {
+            if (!isSectionActivated)
+                return;
+
+            if (isInvitesAndRequestsSectionActive)
+                LoadInvitesAndRequestsResults();
+
+            RefreshInvitesCounter();
+        }
+
+        private void OnJoinRequestAccepted(INotification notification)
+        {
+            if (!isSectionActivated)
+                return;
+
+            LoadMyCommunities();
+
+            if (!isInvitesAndRequestsSectionActive)
+                LoadAllCommunitiesResults(updateInvitations: true);
+            else
+                LoadInvitesAndRequestsResults();
         }
     }
 }
