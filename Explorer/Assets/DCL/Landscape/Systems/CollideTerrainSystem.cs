@@ -54,18 +54,18 @@ namespace DCL.Landscape.Systems
             indexBuffer = CreateIndexBuffer(landscapeData.terrainData.parcelSize);
             treePools = new ObjectPool<GameObject>[landscapeData.terrainData.treeAssets.Length];
 
+            Transform terrainRoot = terrainGenerator.TerrainRoot;
+
             for (int i = 0; i < treePools.Length; i++)
             {
-                LandscapeAsset prototype = landscapeData.terrainData.treeAssets[i];
-                GameObject? collider = prototype.Collider;
-                Transform terrainRoot = terrainGenerator.TerrainRoot;
+                GameObject? collider = landscapeData.terrainData.treeAssets[i].Collider;
 
-                if (collider != null)
-                {
-                    treePools[i] = new ObjectPool<GameObject>(
-                        createFunc: () => Object.Instantiate(collider, terrainRoot),
-                        actionOnDestroy: static instance => Object.Destroy(instance));
-                }
+                if (collider == null)
+                    continue;
+
+                treePools[i] = new ObjectPool<GameObject>(
+                    createFunc: () => Object.Instantiate(collider, terrainRoot),
+                    actionOnDestroy: static instance => Object.Destroy(instance));
             }
         }
 
@@ -96,11 +96,12 @@ namespace DCL.Landscape.Systems
 
             var generateColliderVerticesJob = new GenerateColliderVertices()
             {
-                Parcels = parcels,
-                Vertices = vertices,
                 MaxHeight = terrainGenerator.MaxHeight,
                 OccupancyMap = terrainGenerator.OccupancyMap.GetRawTextureData<byte>(),
-                OccupancyMapSize =  terrainGenerator.OccupancyMap.width
+                OccupancyMapSize =  terrainGenerator.OccupancyMap.width,
+                Parcels = parcels,
+                ParcelSize = landscapeData.terrainData.parcelSize,
+                Vertices = vertices
             };
 
             generateColliderVerticesJob.Schedule(vertices.Length).Complete();
@@ -209,7 +210,7 @@ namespace DCL.Landscape.Systems
 
                     transform.SetParent(terrainGenerator.TerrainRoot, true);
 
-                    var parcelData = new ParcelData(collider, mesh);
+                    var parcelData = new ParcelData(collider, mesh) { Parcel = parcel };
                     dirtyParcels.Add(parcelData);
                     usedParcels.Add(parcelData);
 

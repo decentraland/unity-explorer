@@ -9,11 +9,11 @@ namespace DCL.Landscape.Jobs
     [BurstCompile]
     public struct GenerateColliderVertices : IJobParallelForBatch
     {
-        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int2> Parcels;
-        public int ParcelSize;
+        public float MaxHeight;
         [ReadOnly] public NativeArray<byte> OccupancyMap;
         public int OccupancyMapSize;
-        public float MaxHeight;
+        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int2> Parcels;
+        public int ParcelSize;
         [WriteOnly] public NativeArray<GroundColliderVertex> Vertices;
 
         public void Execute(int startIndex, int count)
