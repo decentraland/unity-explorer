@@ -247,6 +247,11 @@ namespace DCL.Landscape
 
                         OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
 
+                        byte[] pngData = OccupancyMap.EncodeToPNG();
+                        File.WriteAllBytes(Application.dataPath + "/Test4.png", pngData);
+                        AssetDatabase.ImportAsset(Application.dataPath + "/Test4.png");
+                        AssetDatabase.Refresh();
+
                         // OccupancyMap.filterMode = FilterMode.Point;
                         OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
 
@@ -615,88 +620,64 @@ namespace DCL.Landscape
 
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
 
-            // 1) memset all to 255 (FREE)
+            // 1) memset all to 0 (OCCUPIED)
             unsafe
             {
                 void* ptr = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
-                UnsafeUtility.MemSet(ptr, 255, data.Length);
+                UnsafeUtility.MemSet(ptr, 0, data.Length);
             }
 
-            // 2) mark outside [minParcel..maxParcel] as BLACK (occupied) – we keep power-of-two borders black
+            // 2) Fill wide horizontal WHITE stripe for FREE area rows (full width), then trim with vertical black stripes
             {
-                // Top area above minParcel.y
-                int topRows = textureHalfSize + minParcel.y;
-                int count = topRows * textureSize;
-                for (var i = 0; i < count; i++) data[i] = 0;
+                int freeMinX = minParcel.x - padding;
+                int freeMinY = minParcel.y - padding;
+                int freeMaxX = maxParcel.x + padding;
+                int freeMaxY = maxParcel.y + padding;
 
-                // Middle rows: left and right outside [minParcel.x..maxParcel.x]
-                int startY = topRows;
-                int endY = textureHalfSize + maxParcel.y + 1; // exclusive
+                // Clamp logical coordinates to texture logical range [-textureHalfSize .. textureHalfSize-1]
+                freeMinX = Math.Max(freeMinX, -textureHalfSize);
+                freeMinY = Math.Max(freeMinY, -textureHalfSize);
+                freeMaxX = Math.Min(freeMaxX, textureHalfSize - 1);
+                freeMaxY = Math.Min(freeMaxY, textureHalfSize - 1);
 
-                for (int ty = startY; ty < endY; ty++)
+                int startRow = textureHalfSize + freeMinY;
+                int endRowInclusive = textureHalfSize + freeMaxY;
+                int rowCount = Math.Max(0, endRowInclusive - startRow + 1);
+
+                // Fill entire horizontal stripe WHITE in one MemSet call
+                if (rowCount > 0)
                 {
-                    int rowBase = ty * textureSize;
-
-                    // Left outside
-                    int leftCount = textureHalfSize + minParcel.x;
-                    for (var i = 0; i < leftCount; i++) data[rowBase + i] = 0;
-
-                    // Right outside
-                    int rightStart = rowBase + textureHalfSize + maxParcel.x + 1;
-                    int rightEnd = rowBase + textureSize;
-                    for (int i = rightStart; i < rightEnd; i++) data[i] = 0;
+                    unsafe
+                    {
+                        var basePtr = (byte*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
+                        int stripeStartByte = startRow * textureSize;
+                        int stripeSizeBytes = rowCount * textureSize;
+                        UnsafeUtility.MemSet(basePtr + stripeStartByte, 255, stripeSizeBytes);
+                    }
                 }
 
-                // Bottom area below maxParcel.y
-                int bottomStart = (textureHalfSize + maxParcel.y + 1) * textureSize;
-                for (int i = bottomStart; i < data.Length; i++) data[i] = 0;
-            }
-
-            // 3) apply configurable padding as BLACK around [minParcel..maxParcel]
-            if (padding > 0)
-            {
-                int minX = minParcel.x - padding;
-                int minY = minParcel.y - padding;
-                int maxX = maxParcel.x + padding;
-                int maxY = maxParcel.y + padding;
-
-                // Clamp to texture logical coords range [-textureHalfSize .. textureHalfSize-1]
-                minX = Math.Max(minX, -textureHalfSize);
-                minY = Math.Max(minY, -textureHalfSize);
-                maxX = Math.Min(maxX, textureHalfSize - 1);
-                maxY = Math.Min(maxY, textureHalfSize - 1);
-
-                // Top padding band
-                for (int y = minY; y < minParcel.y; y++)
+                // 3) Trim with vertical BLACK stripes to define actual FREE area boundaries
+                if (rowCount > 0)
                 {
-                    int ty = y + textureHalfSize;
-                    int rowBase = ty * textureSize;
-                    int start = minX + textureHalfSize;
-                    int end = maxX + textureHalfSize + 1;
-                    for (int i = rowBase + start; i < rowBase + end; i++) data[i] = 0;
-                }
+                    int leftCol = textureHalfSize + freeMinX - 1;
+                    int rightCol = textureHalfSize + freeMaxX + 1;
 
-                // Bottom padding band
-                for (int y = maxParcel.y + 1; y <= maxY; y++)
-                {
-                    int ty = y + textureHalfSize;
-                    int rowBase = ty * textureSize;
-                    int start = minX + textureHalfSize;
-                    int end = maxX + textureHalfSize + 1;
-                    for (int i = rowBase + start; i < rowBase + end; i++) data[i] = 0;
-                }
+                    // Clamp columns to texture bounds
+                    leftCol = Math.Clamp(leftCol, 0, textureSize - 1);
+                    rightCol = Math.Clamp(rightCol, 0, textureSize - 1);
 
-                // Left/Right padding within [minParcel.y..maxParcel.y]
-                for (int y = minParcel.y; y <= maxParcel.y; y++)
-                {
-                    int ty = y + textureHalfSize;
-                    int rowBase = ty * textureSize;
+                    unsafe
+                    {
+                        var basePtr = (byte*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
 
-                    // Left band
-                    for (int x = minX; x < minParcel.x; x++) data[rowBase + x + textureHalfSize] = 0;
+                        // Left vertical stripe
+                        for (int row = startRow; row <= endRowInclusive; row++)
+                            *(basePtr + (row * textureSize) + leftCol) = 0;
 
-                    // Right band
-                    for (int x = maxParcel.x + 1; x <= maxX; x++) data[rowBase + x + textureHalfSize] = 0;
+                        // Right vertical stripe
+                        for (int row = startRow; row <= endRowInclusive; row++)
+                            *(basePtr + (row * textureSize) + rightCol) = 0;
+                    }
                 }
             }
 
