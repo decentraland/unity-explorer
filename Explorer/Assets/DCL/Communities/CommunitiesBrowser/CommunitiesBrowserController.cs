@@ -54,7 +54,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly INotificationsBusController notificationsBusController;
         private readonly ISpriteCache spriteCache;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
@@ -105,7 +104,6 @@ namespace DCL.Communities.CommunitiesBrowser
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
-            this.notificationsBusController = notificationsBusController;
 
             spriteCache = new SpriteCache(webRequestController);
 
