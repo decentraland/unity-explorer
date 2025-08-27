@@ -40,6 +40,7 @@ namespace DCL.VoiceChat
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
             statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
             view.JoinStreamButton.onClick.AddListener(OnJoinStreamButtonClicked);
+            view.gameObject.SetActive(false);
         }
 
         private void OnJoinStreamButtonClicked()

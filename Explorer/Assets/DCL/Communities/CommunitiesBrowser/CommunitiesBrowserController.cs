@@ -281,7 +281,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 view.AddStreamingResultsItems(result.Value.data.results);
             }
 
-            view.SetResultsAsLoading(false);
+            view.SetStreamingResultsAsLoading(false);
         }
 
         private void LoadMoreResults(Vector2 _)

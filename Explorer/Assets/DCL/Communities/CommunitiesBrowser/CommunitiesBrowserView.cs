@@ -64,7 +64,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
 
-
         [Header("Streaming Section")]
         [SerializeField] private GameObject streamingSection = null!;
         [SerializeField] private LoopGridView streamingLoopGrid = null!;
@@ -362,6 +361,13 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
+        private void SetStreamingResultsAsEmpty(bool isEmpty)
+        {
+            streamingEmptyContainer.SetActive(isEmpty);
+            streamingLoopGrid.gameObject.SetActive(!isEmpty);
+        }
+
+
         private void OnCommunityJoined(string communityId, CommunityResultCardView cardView)
         {
             cardView.SetJoiningLoadingActive(true);
@@ -380,7 +386,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void InitializeStreamingResultsGrid(int itemTotalCount)
         {
-            streamingLoopGrid.InitGridView(itemTotalCount, SetupCommunityStreamingResultCardByIndex);
+            streamingLoopGrid.InitGridView(itemTotalCount, SetupStreamingCommunityResultCardByIndex);
             streamingLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
@@ -388,10 +394,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public void AddStreamingResultsItems(CommunityData[] dataResults)
         {
             currentStreamingResults.AddRange(dataResults);
-            streamingLoopGrid.SetListItemCount(currentResults.Count, true);
-            bool isEmpty = currentResults.Count == 0;
-            streamingEmptyContainer.SetActive(isEmpty);
-            streamingLoopGrid.gameObject.SetActive(!isEmpty);
+            streamingLoopGrid.SetListItemCount(currentStreamingResults.Count, true);
+            SetStreamingResultsAsEmpty(currentStreamingResults.Count == 0);
             streamingLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
@@ -399,27 +403,23 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             currentStreamingResults.Clear();
             streamingLoopGrid.SetListItemCount(0, false);
-            streamingEmptyContainer.SetActive(true);
-            streamingLoopGrid.gameObject.SetActive(true);
+            SetStreamingResultsAsEmpty(true);
         }
 
         public void SetStreamingResultsAsLoading(bool isLoading)
         {
             if (isLoading)
-            {
                 streamingLoadingSpinner.ShowLoading();
-            }
             else
                 streamingLoadingSpinner.HideLoading();
         }
 
-        private LoopGridViewItem SetupCommunityStreamingResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
+        private LoopGridViewItem SetupStreamingCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
-            CommunityData communityData = currentResults[index];
+            CommunityData communityData = currentStreamingResults[index];
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
-            CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
+            StreamingCommunityResultCardView cardView = gridItem.GetComponent<StreamingCommunityResultCardView>();
 
-            // Setup card data
             cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
             cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);

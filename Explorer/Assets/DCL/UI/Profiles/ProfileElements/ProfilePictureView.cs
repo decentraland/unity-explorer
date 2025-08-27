@@ -103,7 +103,7 @@ namespace DCL.UI.ProfileElements
             }
         }
 
-        [Obsolete("Use" + nameof(Bind) + " instead.")]
+        [Obsolete("Use " + nameof(Bind) + " instead.")]
         public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct,
             bool rethrowError = false)
         {
@@ -112,7 +112,7 @@ namespace DCL.UI.ProfileElements
             await LoadThumbnailAsync(faceSnapshotUrl, rethrowError, ct);
         }
 
-        [Obsolete("Use" + nameof(Bind) + " instead.")]
+        [Obsolete("Use " + nameof(Bind) + " instead.")]
         public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _ = "")
         {
             profileRepositoryWrapper = profileDataProvider;
@@ -120,14 +120,14 @@ namespace DCL.UI.ProfileElements
             LoadThumbnailAsync(faceSnapshotUrl, false).Forget();
         }
 
-        [Obsolete("Use" + nameof(Bind) + " instead.")]
+        [Obsolete("Use " + nameof(Bind) + " instead.")]
         public void SetImage(Sprite image)
         {
             thumbnailImageView.SetImage(image, true);
             SetLoadingState(false);
         }
 
-        [Obsolete("Use" + nameof(Bind) + " instead.")]
+        [Obsolete("Use " + nameof(Bind) + " instead.")]
         public void SetBackgroundColor(Color userColor)
         {
             SetBaseBackgroundColor(userColor);
