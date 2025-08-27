@@ -9,16 +9,15 @@
 int _UseHeightMap; // 0 = use noise, 1 = use HeightMap
 float _HeightMapScale; // 0 = use noise, 1 = use HeightMap
 
-VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 terrainBounds, out float fOccupancy, out float4 heightDerivative)
+VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 terrainBounds, out float fOccupancy)
 {
-    heightDerivative = float4(0.0f, 0.0f, 0.0f, 0.0f);
     VertexPositionInputs input;
     input.positionWS = TransformObjectToWorld(positionOS);
     input.positionWS = ClampPosition(input.positionWS, terrainBounds);
 
     float2 heightUV = (input.positionWS.xz + 4096.0f) / 8192.0f;
    
-    float heightDerivative2 = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, heightUV, 0).x;
+    float fHeightMapValue = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, heightUV, 0).x;
     fOccupancy = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, heightUV, 0).r;
 
     float minValue = 175.0 / 255.0;
@@ -35,11 +34,9 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
 
         float noiseH = GetHeight(input.positionWS.x, input.positionWS.z);
 
-        heightDerivative.x = heightDerivative2;
-
         if (_UseHeightMap > 0)
         {
-            noiseH =  (heightDerivative2 * 2 - 1) * _HeightMapScale;
+            noiseH =  (fHeightMapValue * 2 - 1) * _HeightMapScale;
         }
         
         float saturationFactor = 20;
