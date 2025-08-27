@@ -23,7 +23,9 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
     public class CommunityInvitationContextMenuButtonHandler
     {
         private const int MAXIMUM_HEIGHT_OF_SUBMENU = 600;
-
+        private const int MAXIMUM_WIDTH_OF_SUBMENU = 300;
+        
+        private readonly RectOffset scrollViewPaddings = new RectOffset();
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INotificationsBusController notificationsBus;
         private readonly int subMenuItemSpacing;
@@ -58,8 +60,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
         {
             contextMenu.AddControl(new SubMenuContextMenuButtonSettings(buttonText,
                                                                         buttonIcon,
-                                                                        new GenericContextMenuParameter.GenericContextMenu(contextMenu.width,
-                                                                                         verticalLayoutPadding: contextMenu.verticalLayoutPadding,
+                                                                        new GenericContextMenuParameter.GenericContextMenu(MAXIMUM_WIDTH_OF_SUBMENU,
                                                                                          elementsSpacing: contextMenu.elementsSpacing,
                                                                                          offsetFromTarget: contextMenu.offsetFromTarget),
                                                                         asyncControlSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync,
@@ -108,7 +109,10 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
                 return UniTask.CompletedTask;
 
             // Adds the scroll view
-            var scroll = new ScrollableButtonListControlSettings(subMenuItemSpacing, MAXIMUM_HEIGHT_OF_SUBMENU, OnInviteToCommunitySubmenuScrollViewItemClickedAsync);
+            var scroll = new ScrollableButtonListControlSettings(subMenuItemSpacing,
+                                                                 MAXIMUM_HEIGHT_OF_SUBMENU,
+                                                                 OnInviteToCommunitySubmenuScrollViewItemClickedAsync,
+                                                                 verticalLayoutPadding: scrollViewPaddings);
             contextSubMenu.AddControl(scroll);
 
             scroll.SetData(lastCommunityNames);

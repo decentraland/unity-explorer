@@ -1,7 +1,5 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Globalization;
-using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace DCL.Emoji
 {
@@ -10,20 +8,15 @@ namespace DCL.Emoji
         public readonly IReadOnlyDictionary<string, EmojiData> NameMapping;
         public readonly IReadOnlyDictionary<int, string> ValueMapping;
 
-        public EmojiMapping(TextAsset emojiMappingJson, EmojiPanelConfigurationSO emojiPanelConfiguration)
+        public EmojiMapping(EmojiPanelConfigurationSO emojiPanelConfiguration)
         {
-            Dictionary<string, string> deserialized = JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text);
+            var emojiNameMapping = new Dictionary<string, EmojiData>();
+            var emojiValueMapping = new Dictionary<int, string>();
 
-            var emojiNameMapping = new Dictionary<string, EmojiData>(deserialized.Count);
-            var emojiValueMapping = new Dictionary<int, string>(deserialized.Count);
-
-            foreach (KeyValuePair<string, string> emojiData in deserialized)
+            foreach (var kvp in emojiPanelConfiguration.EmojiSections.SelectMany(section => section.emojis))
             {
-                if (emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromName(emojiData.Value.ToUpper()) == -1)
-                    continue;
-
-                emojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
-                emojiValueMapping.Add(int.Parse(emojiData.Value, NumberStyles.HexNumber), emojiData.Key);
+                emojiNameMapping.Add(kvp.key, new EmojiData(char.ConvertFromUtf32(kvp.value), kvp.key));
+                emojiValueMapping.Add(kvp.value, kvp.key);
             }
 
             NameMapping = emojiNameMapping;

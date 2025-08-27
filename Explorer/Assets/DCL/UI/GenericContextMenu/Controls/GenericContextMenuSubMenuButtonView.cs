@@ -51,6 +51,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private void OnDisable()
         {
+            isHovering = false;
             hoverCts.SafeCancelAndDispose();
             UnregisterListeners();
             container.gameObject.SetActive(false);

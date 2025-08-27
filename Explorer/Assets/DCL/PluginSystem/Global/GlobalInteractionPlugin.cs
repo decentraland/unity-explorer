@@ -25,7 +25,6 @@ namespace DCL.PluginSystem.Global
     public class GlobalInteractionPlugin : IDCLGlobalPlugin<GlobalInteractionPlugin.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly UIDocument canvas;
 
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
@@ -39,7 +38,6 @@ namespace DCL.PluginSystem.Global
         private Material hoverOorMaterial;
 
         public GlobalInteractionPlugin(
-            UIDocument canvas,
             IAssetsProvisioner assetsProvisioner,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             GlobalInputEvents globalInputEvents,
@@ -47,7 +45,6 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade)
         {
-            this.canvas = canvas;
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.globalInputEvents = globalInputEvents;
@@ -62,14 +59,8 @@ namespace DCL.PluginSystem.Global
         {
             this.settings = settings;
 
-            hoverCanvas =
-                (await assetsProvisioner.ProvideMainAssetAsync(settings.hoverCanvasSettings.HoverCanvasAsset, ct: ct))
-               .Value.InstantiateForElement<HoverCanvas>();
-
+            hoverCanvas = (await assetsProvisioner.ProvideInstanceAsync(settings.hoverCanvasSettings.HoverUIDocument, ct: ct)).Value.rootVisualElement.Q<HoverCanvas>();
             hoverCanvas.Initialize();
-
-            canvas.rootVisualElement.Add(hoverCanvas);
-            hoverCanvas.SetDisplayed(false);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
