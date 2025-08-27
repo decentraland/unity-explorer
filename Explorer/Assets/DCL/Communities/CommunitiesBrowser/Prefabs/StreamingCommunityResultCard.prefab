@@ -578,8 +578,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3969e9a4b130ba24cb90761d66660854, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  headerContainer: {fileID: 1525929090898206160}
-  footerContainer: {fileID: 4997390486348344830}
+  hoverOverlay: {fileID: 4997390486348344830}
   communityTitle: {fileID: 9130300162100670150}
   communityThumbnail: {fileID: 1563201233504633467}
   mainButton: {fileID: 7446897494615956440}
@@ -661,7 +660,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: dc08f5705947d425db3af03657eb560e, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4cad8bfaa8bc24c48b5089d6b93d8414, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
