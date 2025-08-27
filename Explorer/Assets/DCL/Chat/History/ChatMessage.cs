@@ -10,7 +10,6 @@ namespace DCL.Chat.History
         public readonly string SenderValidatedName;
         public readonly string SenderWalletId;
         public readonly string SenderWalletAddress;
-        public readonly bool IsPaddingElement;
         public readonly bool IsSentByOwnUser;
         public readonly bool IsSystemMessage;
         public readonly bool IsMention;
@@ -18,7 +17,9 @@ namespace DCL.Chat.History
         /// <summary>
         /// The instant when the message was sent (UTC), in OLE Automation Date format. Zero means null or unassigned.
         /// </summary>
-        public readonly double SentTimestamp;
+        public readonly double SentTimestampRaw;
+
+        public readonly DateTime? SentTimestamp;
 
         public ChatMessage(
             string message,
@@ -28,30 +29,18 @@ namespace DCL.Chat.History
             string senderWalletId,
             double sentTimestamp,
             bool isMention = false,
-            bool isSystemMessage = false,
-            bool isPaddingElement = false)
+            bool isSystemMessage = false)
         {
             Message = message;
             SenderValidatedName = senderValidatedName;
             SenderWalletAddress = senderWalletAddress;
             IsSentByOwnUser = isSentByOwnUser;
-            IsPaddingElement = isPaddingElement;
             SenderWalletId = senderWalletId;
             IsMention = isMention;
             IsSystemMessage = isSystemMessage;
-            SentTimestamp = sentTimestamp;
+            SentTimestampRaw = sentTimestamp;
+            SentTimestamp = sentTimestamp != 0.0 ? DateTime.FromOADate(sentTimestamp) : null;
         }
-
-        public static ChatMessage NewPaddingElement() =>
-            new (string.Empty,
-                string.Empty,
-                string.Empty,
-                false,
-                string.Empty,
-                DateTime.UtcNow.ToOADate(),
-                false,
-                false,
-                true);
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
             new (newMessage,
@@ -61,20 +50,14 @@ namespace DCL.Chat.History
                 chatMessage.SenderWalletId,
                 DateTime.UtcNow.ToOADate(),
                 chatMessage.IsMention,
-                chatMessage.IsSystemMessage,
-                chatMessage.IsPaddingElement);
+                false);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                null, DateTime.UtcNow.ToOADate(), false, true, false);
+                null, DateTime.UtcNow.ToOADate(), false, true);
 
         public bool Equals(ChatMessage other)
         {
-            if (IsPaddingElement != other.IsPaddingElement)
-                return false;
-            if (IsPaddingElement)
-                return true;
-
             if (IsSystemMessage != other.IsSystemMessage)
                 return false;
             if (IsSystemMessage)
@@ -93,9 +76,6 @@ namespace DCL.Chat.History
 
         public override int GetHashCode()
         {
-            if (IsPaddingElement)
-                return 1;
-
             if (IsSystemMessage)
                 return HashCode.Combine(Message, true);
 
@@ -104,7 +84,6 @@ namespace DCL.Chat.History
         }
 
         public override string ToString() =>
-            IsPaddingElement ? "[Padding]" :
             IsSystemMessage ? $"[System] {Message}" :
             $"[{SenderValidatedName}] {Message}";
     }

@@ -44,9 +44,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             return participant;
         }
 
-        public IReadOnlyCollection<string> RemoteParticipantIdentities()
+        public IReadOnlyDictionary<string, Participant> RemoteParticipantIdentities()
         {
-            IReadOnlyCollection<string> sids = origin.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, Participant> sids = origin.RemoteParticipantIdentities();
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} remote sids {(sids.Count > 0 ? string.Join(", ", sids) : "empty")} ");

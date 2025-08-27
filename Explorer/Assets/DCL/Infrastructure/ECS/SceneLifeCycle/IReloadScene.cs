@@ -1,12 +1,13 @@
 using Cysharp.Threading.Tasks;
+using SceneRunner.Scene;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle
 {
     public interface IReloadScene
     {
-        UniTask<bool> TryReloadSceneAsync(CancellationToken ct);
+        UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct);
 
-        UniTask<bool> TryReloadSceneAsync(CancellationToken ct, string sceneId);
+        UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct, string sceneId);
     }
 }
