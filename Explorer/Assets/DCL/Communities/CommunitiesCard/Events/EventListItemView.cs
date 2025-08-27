@@ -90,7 +90,8 @@ namespace DCL.Communities.CommunitiesCard.Events
         public void UpdateInterestedCounter()
         {
             eventInterestedUsersText.text = eventData!.Value.Event.total_attendees.ToString();
-            interestedContainer.SetActive(eventData!.Value.Event is { live: false, total_attendees: > 0 });
+            //Disabled because of https://github.com/decentraland/unity-explorer/issues/5154. Old condition: eventData!.Value.Event is { live: false, total_attendees: > 0 }
+            interestedContainer.SetActive(false);
         }
 
         public void SubscribeToInteractions(Action<PlaceAndEventDTO> mainAction,
