@@ -115,7 +115,9 @@ TEXTURE2D(_SpecGlossMap);       SAMPLER(sampler_SpecGlossMap);
 TEXTURE2D(_TerrainMaskMap);     SAMPLER(sampler_TerrainMaskMap);
 TEXTURE2D(_GroundDetailMap);    SAMPLER(sampler_GroundDetailMap);
 TEXTURE2D(_SandDetailMap);      SAMPLER(sampler_SandDetailMap);
-TEXTURE2D(_HeightMap);          SAMPLER(sampler_HeightMap);
+TEXTURE2D(_GroundNormalMap);    SAMPLER(sampler_GroundNormalMap);
+TEXTURE2D(_SandNormalMap);      SAMPLER(sampler_SandNormalMap);
+TEXTURE2D(_HeightMap);          SAMPLER(sampler_HeightMap);         SamplerState my_point_clamp_sampler;
 TEXTURE2D(_OccupancyMap);       SAMPLER(sampler_OccupancyMap);
 TEXTURE2D(_DistanceFieldMap);   SAMPLER(sampler_DistanceFieldMap);
 
@@ -140,33 +142,33 @@ float GetOccupancy(float2 UV_Coords, float4 TerrainBounds, int ParcelSize)
     return SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, UV_Coords, 0.0).r;
 }
 
-// void NormalMapMix(float4 uvSplat01, float4 uvSplat23, inout half4 splatControl, inout half3 mixedNormal)
-// {
-//     #if defined(_NORMALMAP)
-//     half3 nrm = half(0.0);
-//     nrm += splatControl.r * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal0, sampler_Normal0, uvSplat01.xy), _NormalScale0);
-//     nrm += splatControl.g * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal1, sampler_Normal0, uvSplat01.zw), _NormalScale1);
-//     nrm += splatControl.b * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal2, sampler_Normal0, uvSplat23.xy), _NormalScale2);
-//     nrm += splatControl.a * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal3, sampler_Normal0, uvSplat23.zw), _NormalScale3);
-//
-//     // avoid risk of NaN when normalizing.
-//     #if !HALF_IS_FLOAT
-//     nrm.z += half(0.01);
-//     #else
-//     nrm.z += 1e-5f;
-//     #endif
-//
-//     mixedNormal = normalize(nrm.xyz);
-//     #endif
-// }
+half3 NormalMapMix(float2 uv, half4 splatControl)
+{
+    //#if defined(_NORMALMAP)
+    half3 nrm = half(0.0);
+    nrm += splatControl.r * UnpackNormalScale(SAMPLE_TEXTURE2D(_GroundNormalMap, sampler_GroundNormalMap, TRANSFORM_TEX(uv, _GroundDetailMap)), 1.0f);
+    nrm += splatControl.g * UnpackNormalScale(SAMPLE_TEXTURE2D(_SandNormalMap, sampler_SandNormalMap, TRANSFORM_TEX(uv, _SandDetailMap)), 1.0f);
+    // nrm += splatControl.b * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal2, sampler_Normal0, uvSplat23.xy), _NormalScale2);
+    // nrm += splatControl.a * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal3, sampler_Normal0, uvSplat23.zw), _NormalScale3);
 
-half4 SplatmapMix(float2 uv)
+    // avoid risk of NaN when normalizing.
+    #if !HALF_IS_FLOAT
+    nrm.z += half(0.01);
+    #else
+    nrm.z += 1e-5f;
+    #endif
+
+    return normalize(nrm.xyz);
+    //#endif
+}
+
+half4 SplatmapMix(float2 uv, half4 splatControl)
 {
     half weight;
     half4 mixedDiffuse;
     half4 defaultSmoothness;
     half3 mixedNormal = half3(0.0h, 0.0h, 1.0h);
-    half4 splatControl = SAMPLE_TEXTURE2D(_TerrainMaskMap, sampler_TerrainMaskMap, TRANSFORM_TEX(uv, _TerrainMaskMap));
+    //half4 splatControl = SAMPLE_TEXTURE2D(_TerrainMaskMap, sampler_TerrainMaskMap, TRANSFORM_TEX(uv, _TerrainMaskMap));
     half4 diffAlbedo[4];
 
     diffAlbedo[0] = SAMPLE_TEXTURE2D(_GroundDetailMap, sampler_GroundDetailMap, TRANSFORM_TEX(uv, _GroundDetailMap));
@@ -229,7 +231,8 @@ inline void InitializeSimpleLitSurfaceData(float2 uv, out SurfaceData outSurface
 {
     outSurfaceData = (SurfaceData)0;
 
-    half4 albedoAlpha = half4(SplatmapMix(uv).xyz, 1.0f);
+    half4 splatControl = SAMPLE_TEXTURE2D(_TerrainMaskMap, sampler_TerrainMaskMap, TRANSFORM_TEX(uv, _TerrainMaskMap));
+    half4 albedoAlpha = half4(SplatmapMix(uv, splatControl).xyz, 1.0f);
     outSurfaceData.alpha = albedoAlpha.a * _BaseColor.a;
     outSurfaceData.alpha = AlphaDiscard(outSurfaceData.alpha, _Cutoff);
 
@@ -240,7 +243,8 @@ inline void InitializeSimpleLitSurfaceData(float2 uv, out SurfaceData outSurface
     outSurfaceData.metallic = 0.0; // unused
     outSurfaceData.specular = specularSmoothness.rgb;
     outSurfaceData.smoothness = specularSmoothness.a;
-    outSurfaceData.normalTS = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
+    //outSurfaceData.normalTS = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
+    outSurfaceData.normalTS = NormalMapMix(uv, splatControl);
     outSurfaceData.occlusion = 1.0;
     outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
 }
