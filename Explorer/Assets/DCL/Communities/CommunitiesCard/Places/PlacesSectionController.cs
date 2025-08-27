@@ -303,11 +303,17 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
+            if(communityPlaceIds.Length <= 0)
+                return 0;
+
             int offset = (placesFetchData.PageNumber - 1) * PAGE_SIZE;
             int total = communityPlaceIds.Length;
 
+            if (offset >= total)
+                return 0;
+
             int remaining = total - offset;
-            int count = Math.Min(PAGE_SIZE, remaining);
+            int count = Math.Max(0, Math.Min(PAGE_SIZE, remaining));
 
             ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
 
