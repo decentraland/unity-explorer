@@ -87,14 +87,14 @@ namespace DCL.Roads.GPUInstancing
         [ContextMenu(nameof(HideAll))]
         private void HideAll()
         {
-            foreach (GPUInstancingLODGroup prop in RoadsConfig.PropsAndTiles)
+            foreach (CombinedLODGroupData prop in RoadsConfig.PropsAndTiles)
                 prop.HideAll();
         }
 
         [ContextMenu(nameof(ShowAll))]
         private void ShowAll()
         {
-            foreach (GPUInstancingLODGroup prop in RoadsConfig.PropsAndTiles)
+            foreach (CombinedLODGroupData prop in RoadsConfig.PropsAndTiles)
                 prop.ShowAll();
         }
 
