@@ -1,11 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
-using DCL.Communities.CommunitiesCard;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using ECS.SceneLifeCycle.Realm;
-using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -15,31 +13,20 @@ namespace DCL.Communities
 {
     public class NotificationHandler : IDisposable
     {
-        private readonly IMVCManager mvcManager;
         private readonly IRealmNavigator realmNavigator;
 
-        private CancellationTokenSource eventCreatedCts = new ();
         private CancellationTokenSource eventStartsCts = new ();
 
         public NotificationHandler(INotificationsBusController notificationsBusController,
-            IMVCManager mvcManager,
             IRealmNavigator realmNavigator)
         {
-            this.mvcManager = mvcManager;
             this.realmNavigator = realmNavigator;
 
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, EventCreatedClicked);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_ABOUT_TO_START, EventStartSoonClicked);
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_SENT, UserJoinRequestSentClicked);
-            //COMMUNITY_USER_INVITED type is handled in ExplorePanelController for circular dependency reasons, just like REWARD_ASSIGNMENT
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_ACCEPTED, UserRequestAcceptedClicked);
         }
 
-        public void Dispose()
-        {
-            eventCreatedCts.SafeCancelAndDispose();
+        public void Dispose() =>
             eventStartsCts.SafeCancelAndDispose();
-        }
 
         private void EventStartSoonClicked(object[] parameters)
         {
@@ -54,35 +41,6 @@ namespace DCL.Communities
                 realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(notification.Metadata.WorldName).ConvertEnsToWorldUrl()), eventStartsCts.Token).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(new Vector2Int(notification.Metadata.X, notification.Metadata.Y), eventStartsCts.Token, false).Forget();
-        }
-
-        private void EventCreatedClicked(object[] parameters)
-        {
-            if (parameters.Length == 0 || parameters[0] is not CommunityEventCreatedNotification)
-                return;
-
-            eventCreatedCts = eventCreatedCts.SafeRestart();
-
-            CommunityEventCreatedNotification notification = (CommunityEventCreatedNotification)parameters[0];
-            mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(notification.Metadata.CommunityId)));
-        }
-
-        private void UserJoinRequestSentClicked(object[] parameters)
-        {
-            if (parameters.Length == 0 || parameters[0] is not CommunityUserRequestToJoinNotification)
-                return;
-
-            CommunityUserRequestToJoinNotification notification = (CommunityUserRequestToJoinNotification)parameters[0];
-            mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(notification.Metadata.CommunityId)));
-        }
-
-        private void UserRequestAcceptedClicked(object[] parameters)
-        {
-            if (parameters.Length == 0 || parameters[0] is not CommunityUserRequestToJoinAcceptedNotification)
-                return;
-
-            CommunityUserRequestToJoinAcceptedNotification notification = (CommunityUserRequestToJoinAcceptedNotification)parameters[0];
-            mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(notification.Metadata.CommunityId)));
         }
     }
 }

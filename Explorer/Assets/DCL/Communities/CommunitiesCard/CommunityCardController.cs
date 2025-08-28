@@ -18,9 +18,9 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
-using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -139,6 +139,11 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
+
+            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, OnOpenCommunityCardFromNotification);
+            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_SENT, OnOpenCommunityCardFromNotification);
+            //COMMUNITY_USER_INVITED type is handled in ExplorePanelController for circular dependency reasons, just like REWARD_ASSIGNMENT
+            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_ACCEPTED, OnOpenCommunityCardFromNotification);
         }
 
         public override void Dispose()
@@ -177,6 +182,30 @@ namespace DCL.Communities.CommunitiesCard
             eventListController?.Dispose();
         }
 
+        private void OnOpenCommunityCardFromNotification(object[] parameters)
+        {
+            if (parameters.Length == 0)
+                return;
+
+            string communityId = parameters[0] switch
+                                 {
+                                     CommunityUserRequestToJoinNotification joinRequestNotification => joinRequestNotification.Metadata.CommunityId,
+                                     CommunityUserRequestToJoinAcceptedNotification joinAcceptedNotification => joinAcceptedNotification.Metadata.CommunityId,
+                                     CommunityEventCreatedNotification eventCreatedNotification => eventCreatedNotification.Metadata.CommunityId,
+                                     _ => string.Empty
+                                 };
+
+            if (communityId == string.Empty) return;
+
+            if (State == ControllerState.ViewHidden)
+                mvcManager.ShowAndForget(IssueCommand(new CommunityCardParameter(communityId)));
+            else
+            {
+                ResetSubControllers();
+                SetDefaultsAndLoadData(communityId);
+            }
+        }
+
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
             OnCommunityUserRemoved(communityId);
 
@@ -199,7 +228,7 @@ namespace DCL.Communities.CommunitiesCard
             if (!communityId.Equals(communityData.id)) return;
 
             ResetSubControllers();
-            SetDefaultsAndLoadData();
+            SetDefaultsAndLoadData(communityId);
         }
 
         private void CloseCardOnConversationRequested(string _) =>
@@ -306,9 +335,9 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         protected override void OnViewShow() =>
-            SetDefaultsAndLoadData();
+            SetDefaultsAndLoadData(inputData.CommunityId);
 
-        private void SetDefaultsAndLoadData()
+        private void SetDefaultsAndLoadData(string communityId)
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
             closeIntentCompletionSource = new UniTaskCompletionSource();
@@ -331,7 +360,7 @@ namespace DCL.Communities.CommunitiesCard
                     thumbnailLoader.Cache = spriteCache;
                 }
 
-                var getCommunityResult = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct)
+                var getCommunityResult = await communitiesDataProvider.GetCommunityAsync(communityId, ct)
                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
@@ -358,7 +387,7 @@ namespace DCL.Communities.CommunitiesCard
                     }
                 }
                 else
-                    communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
+                    communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(communityId, ct)).ToArray();
 
                 viewInstance.SetLoadingState(false);
 
@@ -389,14 +418,12 @@ namespace DCL.Communities.CommunitiesCard
                 }
 
                 foreach (var request in getUserInviteRequestResult.Value.data.results)
-                {
-                    if (string.Equals(request.communityId, inputData.CommunityId, StringComparison.CurrentCultureIgnoreCase))
+                    if (string.Equals(request.communityId, communityId, StringComparison.CurrentCultureIgnoreCase))
                     {
                         communityData.SetPendingInviteOrRequestId(request.id);
                         communityData.SetPendingAction(action);
                         return true;
                     }
-                }
 
                 return false;
             }
@@ -530,10 +557,8 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success)
-                {
                     await viewInstance!.warningNotificationView.AnimatedShowAsync(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                }
 
                 communityData.SetPendingInviteOrRequestId(result.Value);
                 communityData.SetPendingAction(InviteRequestAction.request_to_join);
@@ -556,10 +581,8 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
                     await viewInstance!.warningNotificationView.AnimatedShowAsync(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                }
 
                 communityData.SetPendingInviteOrRequestId(null);
                 communityData.SetPendingAction(InviteRequestAction.none);
@@ -582,10 +605,8 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                }
 
                 if (communityData.privacy == CommunityPrivacy.@public)
                 {
@@ -597,7 +618,7 @@ namespace DCL.Communities.CommunitiesCard
                 else
                 {
                     ResetSubControllers();
-                    SetDefaultsAndLoadData();
+                    SetDefaultsAndLoadData(communityData.id);
                 }
             }
         }
@@ -617,10 +638,8 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
                     await viewInstance!.warningNotificationView.AnimatedShowAsync(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                }
 
                 CloseController();
             }
