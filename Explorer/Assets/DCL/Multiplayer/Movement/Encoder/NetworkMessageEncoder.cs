@@ -1,4 +1,5 @@
 ﻿using DCL.CharacterMotion.Components;
+using DCL.Landscape.Settings;
 using DCL.Multiplayer.Movement.Settings;
 using UnityEngine;
 using Utility;
@@ -11,11 +12,11 @@ namespace DCL.Multiplayer.Movement
         private readonly TimestampEncoder timestampEncoder;
         private readonly ParcelEncoder parcelEncoder;
 
-        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings)
+        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings, LandscapeData landscapeData)
         {
             this.encodingSettings = encodingSettings;
             this.timestampEncoder = new TimestampEncoder(encodingSettings);
-            parcelEncoder = new ParcelEncoder(encodingSettings.landscapeData.terrainData);
+            parcelEncoder = new ParcelEncoder(landscapeData.terrainData);
         }
 
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>

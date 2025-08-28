@@ -15,7 +15,7 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField] internal CinemachinePresetRef cinemachinePreset { get; private set; }
         [field: SerializeField] internal CinemachineCameraAudioSettingsReference cinemachineCameraAudioSettingsReference { get; private set; }
-        [field: SerializeField] internal AssetReferenceT<ControlsSettingsAsset> controlsSettingsAsset { get; private set; }
+        [field: SerializeField] internal ControlsSettingsAsset controlsSettingsAsset { get; private set; }
 
         [Serializable]
         public class CinemachinePresetRef : ComponentReference<CinemachinePreset>

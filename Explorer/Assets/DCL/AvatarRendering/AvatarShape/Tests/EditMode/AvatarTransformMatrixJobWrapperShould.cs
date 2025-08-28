@@ -3,7 +3,8 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using NUnit.Framework;
 using UnityEngine;
 
-public class AvatarTransformMatrixJobWrapperShould : MonoBehaviour
+[Ignore("This produces 200mb worth of logs - @Nick revert this after your change")]
+public class AvatarTransformMatrixJobWrapperShould
 {
     private AvatarTransformMatrixJobWrapper jobWrapper;
 

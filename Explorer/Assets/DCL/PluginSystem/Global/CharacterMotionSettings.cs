@@ -10,12 +10,6 @@ namespace DCL.PluginSystem.Global
     {
         [field: Header(nameof(CharacterMotionSettings))] [field: Space]
         [field: SerializeField]
-        internal CharacterControllerSettingsRef controllerSettings { get; private set; }
-
-        [Serializable]
-        public class CharacterControllerSettingsRef : AssetReferenceT<CharacterControllerSettings>
-        {
-            public CharacterControllerSettingsRef(string guid) : base(guid) { }
-        }
+        internal CharacterControllerSettings controllerSettings { get; private set; }
     }
 }
