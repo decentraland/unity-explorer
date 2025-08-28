@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -22,44 +23,51 @@ namespace DCL.PluginSystem.World
         private readonly MemoryBudget memoryBudgetProvider;
 
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
         private IObjectPool<Material> basicMatPool = null!;
         private IObjectPool<Material> pbrMatPool = null!;
+
+        private Material basicMat = null!;
+        private Material pbrMat = null!;
 
         private DestroyMaterial destroyMaterial = null!;
 
         private int loadingAttemptsCount;
 
-        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IExtendedObjectPool<Texture2D> videoTexturePool)
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IExtendedObjectPool<Texture2D> videoTexturePool, IAssetsProvisioner assetsProvisioner)
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
             this.videoTexturePool = videoTexturePool;
+            this.assetsProvisioner = assetsProvisioner;
         }
 
         public void Dispose() { }
 
-        public UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            basicMatPool = new ObjectPool<Material>(() => new Material(settings.basicMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
-            pbrMatPool = new ObjectPool<Material>(() => new Material(settings.pbrMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            basicMat = (await assetsProvisioner.ProvideMainAssetAsync(settings.basicMaterial, ct)).Value;
+            pbrMat = (await assetsProvisioner.ProvideMainAssetAsync(settings.pbrMaterial, ct)).Value;
+
+            basicMatPool = new ObjectPool<Material>(() => new Material(basicMat), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMat), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
             destroyMaterial = (in MaterialData data, Material material) =>
             {
                 if (data.IsPbrMaterial)
                 {
-                    material.CopyPropertiesFromMaterial(settings.pbrMaterial);
+                    material.CopyPropertiesFromMaterial(pbrMat);
                     pbrMatPool.Release(material);
                 }
                 else
                 {
-                    material.CopyPropertiesFromMaterial(settings.basicMaterial);
+                    material.CopyPropertiesFromMaterial(basicMat);
                     basicMatPool.Release(material);
                 }
             };
 
             loadingAttemptsCount = settings.LoadingAttemptsCount;
-            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -82,10 +90,10 @@ namespace DCL.PluginSystem.World
             /// replaced from Addressables, Being in Addressables caused a problem with strobe-lights because shaders were not being compiled
             /// </summary>
             [field: SerializeField]
-            public Material basicMaterial = null!;
+            public AssetReferenceMaterial basicMaterial = null!;
 
             [field: SerializeField]
-            public Material pbrMaterial = null!;
+            public AssetReferenceMaterial pbrMaterial = null!;
             [field: Header(nameof(MaterialsPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]

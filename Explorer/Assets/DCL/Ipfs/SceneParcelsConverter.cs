@@ -3,12 +3,14 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace DCL.Ipfs
 {
     /// <summary>
     ///     Converts string representation of parcels into Vector2Int to eliminate the necessity of an additional abstraction layer
     /// </summary>
+    [Preserve]
     public class SceneParcelsConverter : JsonConverter<SceneMetadataScene>
     {
         public override bool CanWrite => true;

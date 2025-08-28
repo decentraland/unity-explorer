@@ -179,8 +179,7 @@ namespace DCL.PluginSystem.Global
         {
             var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, pluginCts.Token);
 
-            var chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, linkedCts.Token);
-            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, settings.ChatSettingsAsset);
 
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
             var chatConfig = chatConfigAsset.Value;
@@ -197,7 +196,7 @@ namespace DCL.PluginSystem.Global
                 entityParticipantTable,
                 profileCache,
                 nametagsData,
-                chatSettingsAsset.Value,
+                settings.ChatSettingsAsset,
                 chatHistory,
                 communityDataService);
 
@@ -208,7 +207,7 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 userBlockingCacheProxy,
                 friendsServiceProxy,
-                chatSettingsAsset.Value,
+                settings.ChatSettingsAsset,
                 privacySettings,
                 friendsEventBus,
                 roomHub.ChatRoom());
@@ -243,7 +242,7 @@ namespace DCL.PluginSystem.Global
 
             commandRegistry = new CommandRegistry(
                 chatConfig,
-                chatSettingsAsset.Value,
+                settings.ChatSettingsAsset,
                 eventBus,
                 web3IdentityCache,
                 chatEventBus,
@@ -289,7 +288,7 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService
             );
 
-            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, chatSettingsAsset.Value);
+            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);
 
             pluginScope.Add(chatMainController);
             pluginScope.Add(chatWorldBubbleService);
@@ -356,7 +355,7 @@ namespace DCL.PluginSystem.Global
 
     public class ChatPluginSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
+        [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; }
         [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; }
 
         [Header("Audio")]

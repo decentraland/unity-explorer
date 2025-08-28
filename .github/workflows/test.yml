@@ -24,7 +24,7 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  UNITY_IMAGE_FLAVOR: base
+  UNITY_IMAGE_FLAVOR: windows-il2cpp
   UNITY_IMAGE_VERSION: 3      
   GHCR_IMAGE_NAME: unityci-editor
   
@@ -158,7 +158,7 @@ jobs:
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
-        timeout-minutes: 60
+        timeout-minutes: 80
         continue-on-error: true
         with:
           projectPath: Explorer
