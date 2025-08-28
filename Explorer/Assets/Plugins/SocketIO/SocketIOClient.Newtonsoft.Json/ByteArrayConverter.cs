@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Scripting;
 
 namespace SocketIOClient.Newtonsoft.Json
 {
+    [Preserve]
     internal class ByteArrayConverter : JsonConverter
     {
         public ByteArrayConverter()

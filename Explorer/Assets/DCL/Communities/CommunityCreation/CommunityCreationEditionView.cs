@@ -20,6 +20,8 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_TITLE = "Create a Community";
         private const string EDIT_COMMUNITY_TITLE = "Edit Community";
         private const string PLACES_DROPDOWN_TITLE = "Select LAND or World";
+        private const string PUBLIC_MEMBERSHIP_OPTION = "<b>Public</b> <size=11>Anyone can become a member, view Community details, and join your Voice Streams</size>";
+        private const string PRIVATE_MEMBERSHIP_OPTION = "<b>Private</b> <size=11>Membership by request/invite; only Community description visible to non-members</size>";
 
         public Action? CancelButtonClicked;
         public Action? GetNameButtonClicked;
@@ -54,7 +56,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_InputField creationPanelCommunityDescriptionInputField = null!;
         [SerializeField] private GameObject creationPanelCommunityDescriptionInputFieldOutline = null!;
         [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter = null!;
-        [SerializeField] private ToggleGroupView creationPanelMembershipToggleGroup = null!;
+        [SerializeField] private SelectorButtonView creationPanelMembershipDropdown = null!;
         [SerializeField] private SelectorButtonView creationPanelPlacesDropdown = null!;
         [SerializeField] private Transform placeTagsContainer = null!;
         [SerializeField] private CommunityPlaceTag placeTagPrefab = null!;
@@ -104,18 +106,28 @@ namespace DCL.Communities.CommunityCreation
                         creationPanelCommunityDescriptionInputField.text,
                         lands,
                         worlds,
-                        creationPanelMembershipToggleGroup.SelectedToggleIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
+                        creationPanelMembershipDropdown.SelectedIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
                 else
                     SaveCommunityButtonClicked?.Invoke(
                         creationPanelCommunityNameInputField.text,
                         creationPanelCommunityDescriptionInputField.text,
                         lands,
                         worlds,
-                        creationPanelMembershipToggleGroup.SelectedToggleIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
+                        creationPanelMembershipDropdown.SelectedIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
             });
+
+            creationPanelMembershipDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
+            creationPanelMembershipDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
+
             creationPanelPlacesDropdown.OptionClicked += OnPlacesDropdownOptionSelected;
             creationPanelPlacesDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
             creationPanelPlacesDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
+        }
+
+        private void Start()
+        {
+            creationPanelMembershipDropdown.SetOptions(new List<string> { PUBLIC_MEMBERSHIP_OPTION, PRIVATE_MEMBERSHIP_OPTION });
+            SetCommunityPrivacy(CommunityPrivacy.@public, true);
         }
 
         private void OnDestroy()
@@ -130,6 +142,10 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityDescriptionInputField.onValueChanged.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onSelect.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onDeselect.RemoveAllListeners();
+
+            creationPanelMembershipDropdown.OptionsPanelOpened -= OnPlacesPanelOpened;
+            creationPanelMembershipDropdown.OptionsPanelClosed -= OnPlacesPanelClosed;
+
             creationPanelPlacesDropdown.OptionClicked -= OnPlacesDropdownOptionSelected;
             creationPanelPlacesDropdown.OptionsPanelOpened -= OnPlacesPanelOpened;
             creationPanelPlacesDropdown.OptionsPanelClosed -= OnPlacesPanelClosed;
@@ -218,8 +234,8 @@ namespace DCL.Communities.CommunityCreation
 
         public void SetCommunityPrivacy(CommunityPrivacy privacy, bool isInteractable)
         {
-            creationPanelMembershipToggleGroup.SelectedToggleIndex = (int)privacy;
-            creationPanelMembershipToggleGroup.SetAsInteractable(isInteractable);
+            creationPanelMembershipDropdown.SelectedIndex = (int)privacy;
+            creationPanelMembershipDropdown.SetAsInteractable(isInteractable);
         }
 
         public void SetPlacesSelector(List<string> options)

@@ -3,9 +3,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Scripting;
 
 namespace DCL.Notifications.Serialization
 {
+    [Preserve]
     public class NotificationJsonDtoConverter : JsonConverter<List<INotification>>
     {
         private const string EVENT_STARTED_TYPE = "events_started";

@@ -1,11 +1,11 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace DCL.Multiplayer.Connectivity
 {
+    [Preserve]
     public class OnlinePlayerInWorldJsonDtoConverter : JsonConverter<OnlineUserData?>
     {
         private const string SCENE_ROOM_PREFIX = "world-prd-scene-room-";

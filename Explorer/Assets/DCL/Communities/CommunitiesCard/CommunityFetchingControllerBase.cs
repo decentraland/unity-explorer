@@ -54,8 +54,6 @@ namespace DCL.Communities.CommunitiesCard
                 if (membersData.PageNumber == 0)
                     view.SetLoadingStateActive(true);
 
-                int count = membersData.Items.Count;
-
                 membersData.PageNumber++;
                 membersData.TotalToFetch = await FetchDataAsync(ct);
                 membersData.TotalFetched = membersData.PageNumber * pageSize;
@@ -64,7 +62,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 view.SetEmptyStateActive(membersData.TotalToFetch == 0);
 
-                view.RefreshGrid(currentSectionFetchData, true);
+                view.RefreshGrid(currentSectionFetchData, membersData.PageNumber > 1);
             }
             finally { isFetching = false; }
         }
