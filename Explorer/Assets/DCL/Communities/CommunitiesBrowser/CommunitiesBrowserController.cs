@@ -237,7 +237,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ViewAllMyCommunitiesResults()
         {
             ClearSearchBar();
-            view.SetResultsBackButtonVisible(true);
+            view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
 
             loadResultsCts = loadResultsCts.SafeRestart();
@@ -247,7 +247,6 @@ namespace DCL.Communities.CommunitiesBrowser
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
-
         }
 
         private void LoadAllCommunitiesResults()
