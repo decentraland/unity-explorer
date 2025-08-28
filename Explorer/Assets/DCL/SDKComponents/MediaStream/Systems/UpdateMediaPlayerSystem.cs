@@ -65,8 +65,8 @@ namespace DCL.SDKComponents.MediaStream
             this.volumeBus = volumeBus;
             this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
             this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
-            masterVolumePercentage = volumeBus.GetMasterVolume();
-            worldVolumePercentage = volumeBus.GetWorldVolume();
+            masterVolumePercentage = volumeBus.GetSerializedMasterVolume();
+            worldVolumePercentage = volumeBus.GetSerializedWorldVolume();
 #endif
         }
 

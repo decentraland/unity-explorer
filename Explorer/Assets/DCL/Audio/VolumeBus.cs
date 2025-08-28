@@ -17,11 +17,11 @@ namespace DCL.Audio
         public float GetSerializedMasterVolume() =>
             DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME, 100f) / 100f;
 
-        public float GetSerializedMusicVolume() =>
-            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_MUSIC_VOLUME, 100f) / 100f;
-
         public float GetSerializedWorldVolume() =>
             DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_WORLD_VOLUME, 100f) / 100f;
+
+        public float GetSerializedMusicVolume() =>
+            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_MUSIC_VOLUME, 100f) / 100f;
         
         public void SetWorldVolume(float volume)
         {
@@ -36,22 +36,6 @@ namespace DCL.Audio
         public void SetMusicVolume(float volume)
         {
             OnMusicVolumeChanged?.Invoke(volume);
-        }
-
-        public float GetWorldVolume()
-        {
-            if (DCLPlayerPrefs.HasKey(WORLD_VOLUME_DATA_STORE_KEY))
-                return DCLPlayerPrefs.GetFloat(WORLD_VOLUME_DATA_STORE_KEY) / 100;
-
-            return 1f;
-        }
-
-        public float GetMasterVolume()
-        {
-            if (DCLPlayerPrefs.HasKey(MASTER_VOLUME_DATA_STORE_KEY))
-                return DCLPlayerPrefs.GetFloat(MASTER_VOLUME_DATA_STORE_KEY) / 100;
-
-            return 1f;
         }
 
         public bool GetGlobalMuteValue()
