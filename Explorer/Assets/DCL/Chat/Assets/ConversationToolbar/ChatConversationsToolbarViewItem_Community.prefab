@@ -92,6 +92,26 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -8
       objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 84
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 42.38
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -1
+      objectReference: {fileID: 0}
     - target: {fileID: 5625176482234565394, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -208,6 +228,10 @@ PrefabInstance:
       propertyPath: PointerEntered.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 6633483077033816363}
+    - target: {fileID: 9143747102936479905, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 2637885989895282012, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
     - {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
@@ -265,6 +289,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!224 &4242690537863453639 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+  m_PrefabInstance: {fileID: 8094472875997857958}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &4299869884437659134 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5474526467279648088, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
@@ -311,6 +340,7 @@ MonoBehaviour:
   tooltipText: {fileID: 4299869884437659134}
   removeButton: {fileID: 3472235725929291034}
   claimedNameIcon: {fileID: 9140495448314402907}
+  officialIcon: {fileID: 4242690537863453639}
   tooltipPosition: {fileID: 272066746090127584}
   offlineThumbnailGreyOutOpacity: 0.6
 --- !u!114 &7030288766036531753 stripped
@@ -367,6 +397,14 @@ PrefabInstance:
     - target: {fileID: 1696866409616317005, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_Name
       value: CommunityThumbnailView
+      objectReference: {fileID: 0}
+    - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7465909787489353167, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier

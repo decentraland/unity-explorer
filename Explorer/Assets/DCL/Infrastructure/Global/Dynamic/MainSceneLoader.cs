@@ -10,6 +10,7 @@ using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
@@ -49,6 +50,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.UI;
 using DCL.Settings.ModuleControllers;
+using System.Collections.Generic;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -224,6 +226,18 @@ namespace Global.Dynamic
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
+                HashSet<string> officialWallets = new HashSet<string>();
+                if (FeatureFlagsConfiguration.Instance.TryGetCsvPayload(FeatureFlagsStrings.OFFICIAL_WALLETS, FeatureFlagsStrings.WALLETS_VARIANT, out var csv))
+                {
+                    foreach (string wallet in csv[0])
+                    {
+                        officialWallets.Add(wallet);
+                    }
+                }
+
+                officialWallets.Add("0x3f574d05ec670fe2c92305480b175654ca512005");
+                officialWallets.Add("0xa078291314bc4369035453f803a21d003badf548");
+
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
@@ -236,6 +250,7 @@ namespace Global.Dynamic
                     applicationParametersParser,
                     coroutineRunner: this,
                     dclVersion,
+                    officialWallets,
                     destroyCancellationToken);
 
                 if (!isLoaded)

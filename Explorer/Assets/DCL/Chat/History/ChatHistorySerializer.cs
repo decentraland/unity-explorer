@@ -73,6 +73,7 @@ namespace DCL.Chat.History
             using (StreamReader reader = new StreamReader(messagesSource))
             {
                 fullFileContent = await reader.ReadToEndAsync();
+
                 // Removes the paddings of the AES algorithm
                 fullFileContent = fullFileContent.Replace("\0", string.Empty); // TODO: This will change according to the chosen padding mode
             }
@@ -81,7 +82,7 @@ namespace DCL.Chat.History
             {
                 string currentLine = await reader2.ReadLineAsync();
 
-                while(currentLine != null)
+                while (currentLine != null)
                 {
                     if (ct.IsCancellationRequested) break;
 
@@ -95,7 +96,9 @@ namespace DCL.Chat.History
                     {
                         ParseEntryValues(currentLine, entryValues);
 
+                        string username = entryValues[ENTRY_USERNAME];
                         bool sentByLocalUser = entryValues[ENTRY_SENT_BY_LOCAL_USER] == LOCAL_USER_TRUE_VALUE;
+                        bool systemMessage = username == ChatMessage.DCL_SYSTEM_SENDER;
                         string walletAddress = sentByLocalUser ? localUserWalletAddress : remoteUserWalletAddress;
                         string timestampString = entryValues[ENTRY_TIMESTAMP].Trim();
 
@@ -107,7 +110,7 @@ namespace DCL.Chat.History
                             continue;
                         }
 
-                        ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], timestamp);
+                        ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, systemMessage, entryValues[ENTRY_MESSAGE], username, timestamp);
                         obtainedMessages.Add(newMessage);
                     }
                     catch { ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"skipping corrupted entry. Line: '{currentLine}'"); }
@@ -149,7 +152,7 @@ namespace DCL.Chat.History
             {
                 builder.Append(values[i]);
 
-                if(i < values.Length - 1)
+                if (i < values.Length - 1)
                     builder.Append(FIELD_SEPARATOR);
             }
 
@@ -162,9 +165,9 @@ namespace DCL.Chat.History
         {
             string[] entryParts = entry.Split(FIELD_SEPARATOR);
             values[ENTRY_SENT_BY_LOCAL_USER] = (entryParts.Length > ENTRY_SENT_BY_LOCAL_USER) ? entryParts[ENTRY_SENT_BY_LOCAL_USER] : LOCAL_USER_FALSE_VALUE;
-            values[ENTRY_MESSAGE] =            (entryParts.Length > ENTRY_MESSAGE)            ? entryParts[ENTRY_MESSAGE] : string.Empty;
-            values[ENTRY_USERNAME] =           (entryParts.Length > ENTRY_USERNAME)           ? entryParts[ENTRY_USERNAME] : string.Empty;
-            values[ENTRY_TIMESTAMP] =          (entryParts.Length > ENTRY_TIMESTAMP)          ? entryParts[ENTRY_TIMESTAMP] : "0.0";
+            values[ENTRY_MESSAGE] = (entryParts.Length > ENTRY_MESSAGE) ? entryParts[ENTRY_MESSAGE] : string.Empty;
+            values[ENTRY_USERNAME] = (entryParts.Length > ENTRY_USERNAME) ? entryParts[ENTRY_USERNAME] : string.Empty;
+            values[ENTRY_TIMESTAMP] = (entryParts.Length > ENTRY_TIMESTAMP) ? entryParts[ENTRY_TIMESTAMP] : "0.0";
         }
     }
 }

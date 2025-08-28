@@ -397,6 +397,11 @@ namespace DCL.Chat
             this.profileRepositoryWrapper = profileDataProvider;
         }
 
+        public void SetOfficialWalletsSet(HashSet<string> officialWallets)
+        {
+            conversationsToolbar.SetOfficialWalletsSet(officialWallets);
+        }
+
         private void Start()
         {
             IsUnfolded = true;

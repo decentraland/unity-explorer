@@ -204,6 +204,7 @@ namespace Global.Dynamic
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
             RealmUrls realmUrls,
+            HashSet<string> officialWallets,
             CancellationToken ct)
         {
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
@@ -520,7 +521,7 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
+            var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache, officialWallets);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, bootstrapContainer.Environment)
@@ -704,7 +705,8 @@ namespace Global.Dynamic
                     dynamicSettings.NametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
-                    userBlockingCacheProxy),
+                    userBlockingCacheProxy,
+                    officialWallets),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends, sharedSpaceManager),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -754,7 +756,8 @@ namespace Global.Dynamic
                     voiceChatCallStatusService,
                     includeVoiceChat,
                     realmNavigator,
-                    mainUIView.SidebarView.unreadMessagesButton.transform),
+                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    officialWallets),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

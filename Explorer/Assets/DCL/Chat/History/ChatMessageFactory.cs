@@ -1,5 +1,6 @@
 using DCL.Profiles;
 using DCL.Web3.Identities;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace DCL.Chat.History
@@ -13,13 +14,16 @@ namespace DCL.Chat.History
 
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly HashSet<string> officialWallets;
 
         public ChatMessageFactory(
             IProfileCache profileCache,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            HashSet<string> officialWallets)
         {
             this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
+            this.officialWallets = officialWallets;
         }
 
         /// <summary>
@@ -32,7 +36,7 @@ namespace DCL.Chat.History
         /// <param name="usernameOverride">Optional. A sender's username to use instead of the one stored in the profile currently.
         /// Leave it null to use the one provided by the profile.</param>
         /// <param name="sentTimestamp">The UTC time when the message was sent, in OLE automation format.</param>
-        public ChatMessage CreateChatMessage(string senderWalletAddress, bool isSentByLocalUser, string message, string? usernameOverride, double sentTimestamp)
+        public ChatMessage CreateChatMessage(string senderWalletAddress, bool isSentByLocalUser, bool isSystemMessage, string message, string? usernameOverride, double sentTimestamp)
         {
             Profile? ownProfile = null;
 
@@ -44,6 +48,11 @@ namespace DCL.Chat.History
                 if (string.IsNullOrEmpty(usernameOverride))
                     usernameOverride = ownProfile?.ValidatedName ?? string.Empty;
 
+                if (isSystemMessage)
+                {
+                    return ChatMessage.NewFromSystem(message);
+                }
+
                 return new ChatMessage(
                     message,
                     usernameOverride,
@@ -51,8 +60,11 @@ namespace DCL.Chat.History
                     true,
                     GetUserHash(ownProfile),
                     sentTimestamp,
-                    isMention: false
+                    officialWallets.Contains(senderWalletAddress),
+                    false,
+                    false
                 );
+
             }
 
             // Using profileCache for immediate access ensures chat messages maintain the correct chronological order
@@ -74,6 +86,7 @@ namespace DCL.Chat.History
                 false,
                 GetUserHash(profile),
                 sentTimestamp,
+                officialWallets.Contains(senderWalletAddress),
                 isMention,
                 false
             );

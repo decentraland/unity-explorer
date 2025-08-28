@@ -92,6 +92,26 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5625176482234565394, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -196,6 +216,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7788566020598598129, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7788566020598598129, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8403886969632430484, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: PointerExited.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -267,6 +295,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!224 &4399959024676152289 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5383007310952010593, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+  m_PrefabInstance: {fileID: 8627634418065387648}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5990277551918562136 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2637489220396157912, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
@@ -297,6 +330,7 @@ MonoBehaviour:
   tooltipText: {fileID: 4342295893590263256}
   removeButton: {fileID: 4017492368246973756}
   claimedNameIcon: {fileID: 8734533382899327101}
+  officialIcon: {fileID: 4399959024676152289}
   tooltipPosition: {fileID: 299569332994554054}
   offlineThumbnailGreyOutOpacity: 0.6
 --- !u!114 &7385412566423265807 stripped

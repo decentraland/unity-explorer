@@ -4,12 +4,13 @@ namespace DCL.Chat.History
 {
     public readonly struct ChatMessage : IEquatable<ChatMessage>
     {
-        private const string DCL_SYSTEM_SENDER = "DCL System";
+        public const string DCL_SYSTEM_SENDER = "DCL System";
 
         public readonly string Message;
         public readonly string SenderValidatedName;
         public readonly string SenderWalletId;
         public readonly string SenderWalletAddress;
+        public readonly bool SenderIsOfficial;
         public readonly bool IsSentByOwnUser;
         public readonly bool IsSystemMessage;
         public readonly bool IsMention;
@@ -28,12 +29,14 @@ namespace DCL.Chat.History
             bool isSentByOwnUser,
             string senderWalletId,
             double sentTimestamp,
-            bool isMention = false,
-            bool isSystemMessage = false)
+            bool senderIsOfficial,
+            bool isMention,
+            bool isSystemMessage)
         {
             Message = message;
             SenderValidatedName = senderValidatedName;
             SenderWalletAddress = senderWalletAddress;
+            SenderIsOfficial = senderIsOfficial;
             IsSentByOwnUser = isSentByOwnUser;
             SenderWalletId = senderWalletId;
             IsMention = isMention;
@@ -49,12 +52,13 @@ namespace DCL.Chat.History
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,
                 DateTime.UtcNow.ToOADate(),
+                chatMessage.SenderIsOfficial,
                 chatMessage.IsMention,
                 false);
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, DCL_SYSTEM_SENDER, string.Empty, true,
-                null, DateTime.UtcNow.ToOADate(), false, true);
+                null!, DateTime.UtcNow.ToOADate(), false, false, true);
 
         public bool Equals(ChatMessage other)
         {

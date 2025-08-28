@@ -285,12 +285,14 @@ namespace DCL.Chat
                 case NearbyChannelViewModel nearby:
                     newItem.SetConversationName(nearby.DisplayName);
                     newItem.SetConversationIcon(nearby.Icon);
+                    newItem.SetOfficialIconVisibility(false);
                     newItem.Configure(isClosable: false, hasOnlineStatus: false);
                     break;
 
                 case UserChannelViewModel user:
                     newItem.SetConversationName(user.DisplayName);
                     newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
+                    newItem.SetOfficialIconVisibility(user.IsOfficial);
                     newItem.Configure(isClosable: true, hasOnlineStatus: false);
                     newItem.BindProfileThumbnail(user.ProfilePicture);
                     newItem.SetConnectionStatus(OnlineStatus.OFFLINE);
@@ -300,6 +302,7 @@ namespace DCL.Chat
                 case CommunityChannelViewModel community:
                     newItem.SetConversationName(community.DisplayName);
                     newItem.SetPicture(community.Thumbnail, Color.white);
+                    newItem.SetOfficialIconVisibility(false);
                     newItem.Configure(isClosable: true, hasOnlineStatus: false);
                     break;
             }

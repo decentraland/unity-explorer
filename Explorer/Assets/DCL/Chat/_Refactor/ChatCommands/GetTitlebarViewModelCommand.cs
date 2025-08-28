@@ -8,6 +8,8 @@ using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
 using DCL.Chat.ChatServices;
+using DCL.Chat.ChatViews;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using Color = UnityEngine.Color;
@@ -20,6 +22,7 @@ namespace DCL.Chat.ChatCommands
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ICommunityDataService communityDataService;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+        private readonly HashSet<string> officialWallets;
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -29,13 +32,15 @@ namespace DCL.Chat.ChatCommands
             ProfileRepositoryWrapper profileRepository,
             ChatConfig.ChatConfig chatConfig,
             GetUserChatStatusCommand getUserChatStatusCommand,
-            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
+            HashSet<string> officialWallets)
         {
             this.eventBus = eventBus;
             this.communityDataService = communityDataService;
             this.profileRepository = profileRepository;
             this.getUserChatStatusCommand = getUserChatStatusCommand;
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
+            this.officialWallets = officialWallets;
             this.chatConfig = chatConfig;
         }
 
@@ -78,13 +83,14 @@ namespace DCL.Chat.ChatCommands
         {
             var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
             if (ct.IsCancellationRequested) return null; // TODO can't be null
-            
+
             if (profile == null)
             {
                 var item = new ChatTitlebarViewModel
                 {
                     ViewMode = TitlebarViewMode.DirectMessage, Username = $"{channel.Id.Id.Substring(0, 6)}...{channel.Id.Id.Substring(channel.Id.Id.Length - 4)}", HasClaimedName = false, Id = channel.Id.Id,
-                    WalletId = channel.Id.Id, ProfileColor = ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR
+                    WalletId = channel.Id.Id, ProfileColor = ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR,
+                    IsOfficial = false,
                 };
 
                 item.SetThumbnail(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultCommunityThumbnail));
@@ -99,6 +105,7 @@ namespace DCL.Chat.ChatCommands
             {
                 ViewMode = TitlebarViewMode.DirectMessage, Id = profile.UserId, Username = profile.Name, HasClaimedName = profile.HasClaimedName,
                 WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor, IsOnline = userStatus == PrivateConversationUserStateService.ChatUserState.CONNECTED,
+                IsOfficial = officialWallets.Contains(profile.UserId)
             };
 
             await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);

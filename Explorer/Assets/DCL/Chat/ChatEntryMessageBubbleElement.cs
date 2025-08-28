@@ -54,7 +54,7 @@ namespace DCL.Chat
         /// <param name="data"> a ChatMessage </param>
         public void SetMessageData(ChatMessage data)
         {
-            usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
+            usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId, data.SenderIsOfficial);
             messageContentElement.SetMessageContent(data.Message);
 
             if (data.SentTimestamp.HasValue)
@@ -86,6 +86,7 @@ namespace DCL.Chat
             int nameLength = message.SenderValidatedName.Length;
             string walletId = message.SenderWalletId;
             int walletIdLength = string.IsNullOrEmpty(walletId) ? 0 : walletId.Length;
+            float officialWidth = message.SenderIsOfficial ? configurationSo.OfficialBadgeWidth : 0;
             int nameTotalLength = nameLength + walletIdLength;
             string messageText = message.Message;
             TMP_Text messageContentText = messageContentElement.messageContentText;
@@ -100,7 +101,7 @@ namespace DCL.Chat
                 emojisCount = GetEmojisCount(messageText);
             }
 
-            float userNamePreferredWidth = usernameElement.GetUserNamePreferredWidth(configurationSo.BackgroundWidthOffset, configurationSo.VerifiedBadgeWidth);
+            float userNamePreferredWidth = usernameElement.GetUserNamePreferredWidth(configurationSo.BackgroundWidthOffset, configurationSo.VerifiedBadgeWidth, officialWidth);
 
             if (nameTotalLength > (needsEmojiCount && emojisCount > 0 ? parsedTextLength + emojisCount : parsedTextLength))
                 return userNamePreferredWidth;
