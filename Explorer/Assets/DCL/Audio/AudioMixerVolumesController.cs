@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
+using DCL.Prefs;
 using UnityEngine.Audio;
 
 namespace DCL.Audio
@@ -36,6 +37,7 @@ namespace DCL.Audio
             MuteGroup(AudioMixerExposedParam.Microphone_Volume);
 
             volumeBus.OnGlobalMuteChanged += GlobalMuteChanged;
+            volumeBus.OnMusicAndSFXMuteChanged += MusicAndSFXMuteChanged;
         }
 
         private void GlobalMuteChanged(bool value)
@@ -46,6 +48,14 @@ namespace DCL.Audio
                 UnmuteGroup(AudioMixerExposedParam.Master_Volume);
         }
 
+        private void MusicAndSFXMuteChanged(bool value)
+        {
+            if(value)
+                MuteGroup(AudioMixerExposedParam.Music_Volume);
+            else
+                UnmuteGroup(AudioMixerExposedParam.Music_Volume);
+        }
+
         public void MuteGroup(AudioMixerExposedParam groupParam)
         {
             var groupParamString = groupParam.ToString();
@@ -54,11 +64,32 @@ namespace DCL.Audio
             {
                 if (exposedParam != groupParamString)
                     continue;
-
+                
                 // Only store the original volume if this group hasn't been muted before
                 if (!mutedGroups.Contains(groupParamString))
                 {
                     audioMixer.GetFloat(groupParamString, out float originalVolume);
+                    
+                    // If that group is globally muted, override original volume with serialized volume.
+                    // This makes sure that bellow flow returns correct value: 
+                    // Muted globally -> temporarily muted (original value gets saved here as 0, which is incorrect) 
+                    // -> Globally unmuted -> locally unmuted (group volume gets wrongly set to 0)
+                    switch (groupParam)
+                    {
+                        case AudioMixerExposedParam.Music_Volume:
+                            if (volumeBus.GetMusicAndSFXMuteValue())
+                                originalVolume = volumeBus.GetSerializedMusicVolume();
+                            break;
+                        case AudioMixerExposedParam.World_Volume:
+                            if (volumeBus.GetMusicAndSFXMuteValue())
+                                originalVolume = volumeBus.GetSerializedWorldVolume();
+                            break;
+                        case AudioMixerExposedParam.Master_Volume:
+                            if (volumeBus.GetGlobalMuteValue())
+                                originalVolume = volumeBus.GetSerializedMasterVolume();
+                            break;
+                    }
+                    
                     originalVolumes[groupParamString] = originalVolume;
                     mutedGroups.Add(groupParamString);
                 }
@@ -79,11 +110,28 @@ namespace DCL.Audio
 
                 if (mutedGroups.Contains(groupParamString))
                 {
-                    if (originalVolumes.TryGetValue(groupParamString, out float originalVolume))
-                        audioMixer.SetFloat(groupParamString, originalVolume);
-                    else
-                        ReportHub.LogWarning(ReportCategory.AUDIO, "Cannot unmute audio mixer group: missing original volume. Probably the group was not previously muted.");
-
+                    bool isGloballyMuted = false;
+                    
+                    switch (groupParam)
+                    {
+                        case AudioMixerExposedParam.Music_Volume:
+                        case AudioMixerExposedParam.World_Volume:
+                            isGloballyMuted = volumeBus.GetMusicAndSFXMuteValue();
+                            break;
+                        
+                        case AudioMixerExposedParam.Master_Volume:
+                            isGloballyMuted = volumeBus.GetGlobalMuteValue();
+                            break;
+                    }
+                    
+                    // Don't unmute the group if its already muted.
+                    if (!isGloballyMuted)
+                    {
+                        if (originalVolumes.TryGetValue(groupParamString, out float originalVolume))
+                            audioMixer.SetFloat(groupParamString, originalVolume);
+                        else
+                            ReportHub.LogWarning(ReportCategory.AUDIO, "Cannot unmute audio mixer group: missing original volume. Probably the group was not previously muted.");
+                    }
                     mutedGroups.Remove(groupParamString);
                 }
                 break;

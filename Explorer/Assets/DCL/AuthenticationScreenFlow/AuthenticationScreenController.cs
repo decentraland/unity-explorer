@@ -491,14 +491,14 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ToggleMute()
         {
-            bool isGloballyMuted = volumeBus.GetGlobalMuteValue();
-            volumeBus.SetGlobalMute(!isGloballyMuted);
-            viewInstance?.MuteButton.SetIcon(!isGloballyMuted);
+            bool isMuted = volumeBus.GetMusicAndSFXMuteValue();
+            volumeBus.SetMusicAndSFXMute(!isMuted);
+            viewInstance?.MuteButton.SetIcon(!isMuted);
         }
 
         private void InitMuteIcon()
         {
-            bool isGloballyMuted = volumeBus.GetGlobalMuteValue();
+            bool isGloballyMuted = volumeBus.GetMusicAndSFXMuteValue();
             viewInstance?.MuteButton.SetIcon(isGloballyMuted);
         }
 

@@ -20,7 +20,7 @@ namespace DCL.Settings.ModuleControllers
             this.generalAudioMixer = generalAudioMixer;
             this.volumeBus = volumeBus;
 
-            if (DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_VOLUME_MUTED))
+            if (DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_MASTER_MUTED))
             {
                 view.SliderView.Slider.value = 0;
                 SetMasterVolumeSettingsWithoutSerialization(0);
@@ -32,7 +32,7 @@ namespace DCL.Settings.ModuleControllers
             }
             
             view.SliderView.Slider.onValueChanged.AddListener(SetMasterVolumeSettings);
-            volumeBus.OnGlobalMuteChanged += GlobalMuteChanged;
+            volumeBus.OnGlobalMuteChanged += MuteChanged;
         }
 
         private void SetMasterVolumeSettings(float volumePercentage)
@@ -60,7 +60,7 @@ namespace DCL.Settings.ModuleControllers
 #endif
         }
 
-        private void GlobalMuteChanged(bool value)
+        private void MuteChanged(bool value)
         {
             float volumePercentage = 0;
             if (value || !DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MASTER_VOLUME))
@@ -81,6 +81,7 @@ namespace DCL.Settings.ModuleControllers
         public override void Dispose()
         {
             view.SliderView.Slider.onValueChanged.RemoveListener(SetMasterVolumeSettings);
+            volumeBus.OnGlobalMuteChanged -= MuteChanged;
         }
     }
 }
