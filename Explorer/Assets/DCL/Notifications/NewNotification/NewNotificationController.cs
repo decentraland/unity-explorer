@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Notifications.NewNotification
@@ -128,6 +129,7 @@ namespace DCL.Notifications.NewNotification
             viewInstance.SystemNotificationView.NotificationType = notification.Type;
             viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
             viewInstance!.SystemNotificationView.CloseButtonContainer.SetActive(enableCloseButton);
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)viewInstance.transform);
 
             await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
         }
