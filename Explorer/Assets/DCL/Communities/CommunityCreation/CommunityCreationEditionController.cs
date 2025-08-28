@@ -543,10 +543,8 @@ namespace DCL.Communities.CommunityCreation
                                                 {
                                                     if (exception is UnityWebRequestException { ResponseCode: WebRequestUtils.BAD_REQUEST })
                                                     {
-                                                        return Result<CreateOrUpdateCommunityResponse>.SuccessResult(new CreateOrUpdateCommunityResponse
-                                                        {
-                                                            complianceStatus = CreateOrUpdateCommunityResponse.ComplianceStatus.REJECTED,
-                                                        });
+                                                        var moderationResponse = JsonUtility.FromJson<CommunityModerationResponse>((exception as UnityWebRequestException)?.Text);
+                                                        return Result<CreateOrUpdateCommunityResponse>.SuccessResult(new CreateOrUpdateCommunityResponse { moderationData = moderationResponse });
                                                     }
 
                                                     return Result.ErrorResult(exception.Message);
@@ -564,21 +562,31 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            switch (result.Value.complianceStatus)
+            if (result.Value.moderationData == null)
             {
-                case CreateOrUpdateCommunityResponse.ComplianceStatus.APPROVED:
-                    closeTaskCompletionSource.TrySetResult();
-                    openCommunityCardAfterCreationCts = openCommunityCardAfterCreationCts.SafeRestart();
-                    mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, thumbnailLoader!.Cache)), openCommunityCardAfterCreationCts.Token).Forget();
-                    break;
-                case CreateOrUpdateCommunityResponse.ComplianceStatus.REJECTED:
-                    // Show REJECTED modal
-                    viewInstance.ShowComplianceErrorModal(true, errorMessage: "TODO...");
-                    break;
-                case CreateOrUpdateCommunityResponse.ComplianceStatus.VALIDATION_NOT_AVAILABLE:
-                    // Show VALIDATION NOT AVAILABLE modal
-                    viewInstance.ShowComplianceErrorModal(true, isApiAvailable: false);
-                    break;
+                closeTaskCompletionSource.TrySetResult();
+                openCommunityCardAfterCreationCts = openCommunityCardAfterCreationCts.SafeRestart();
+                mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, thumbnailLoader!.Cache)), openCommunityCardAfterCreationCts.Token).Forget();
+            }
+            else
+            {
+                string formattedErrorMessage = string.Empty;
+                if (result.Value.moderationData.data != null)
+                {
+                    if (result.Value.moderationData.data.issues.name is { Length: > 0 })
+                        formattedErrorMessage += $"COMMUNITY NAME: {string.Join(", ", result.Value.moderationData.data.issues.name.Select(s => $"[{s}]"))}\n\n";
+
+                    if (result.Value.moderationData.data.issues.image is { Length: > 0 })
+                        formattedErrorMessage += $"COMMUNITY IMAGE: {string.Join(", ", result.Value.moderationData.data.issues.image.Select(s => $"[{s}]"))}\n\n";
+
+                    if (result.Value.moderationData.data.issues.description is { Length: > 0 })
+                        formattedErrorMessage += $"COMMUNITY DESCRIPTION: {string.Join(", ", result.Value.moderationData.data.issues.description.Select(s => $"[{s}]"))}\n";
+                }
+
+                viewInstance.ShowComplianceErrorModal(
+                    showErrorModal: true,
+                    errorMessage: formattedErrorMessage,
+                    isApiAvailable: !result.Value.moderationData.communityContentValidationUnavailable);
             }
         }
 

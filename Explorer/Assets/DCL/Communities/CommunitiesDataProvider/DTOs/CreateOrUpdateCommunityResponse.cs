@@ -26,7 +26,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
 
         public string message;
         public CommunityData data;
-        public ComplianceStatus complianceStatus = ComplianceStatus.APPROVED;
+        public CommunityModerationResponse moderationData;
     }
 }
 
