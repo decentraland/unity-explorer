@@ -75,7 +75,6 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; } = null!;
         [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; } = null!;
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
-        [field: SerializeField] private Sprite deleteCommunityImage { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
         [field: SerializeField] private Sprite publicCommunityImage { get; set; } = null!;
         [field: SerializeField] private Sprite privateCommunityImage { get; set; } = null!;
@@ -192,7 +191,7 @@ namespace DCL.Communities.CommunitiesCard
                 Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_COMMUNITY_TEXT_FORMAT, communityName.text),
                                                                                      DELETE_COMMUNITY_CANCEL_TEXT,
                                                                                      DELETE_COMMUNITY_CONFIRM_TEXT,
-                                                                                     deleteCommunityImage,
+                                                                                     CommunityThumbnail.ImageSprite,
                                                                                      true, false), ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
