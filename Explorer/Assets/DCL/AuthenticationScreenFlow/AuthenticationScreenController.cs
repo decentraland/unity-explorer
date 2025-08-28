@@ -317,6 +317,10 @@ namespace DCL.AuthenticationScreenFlow
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     ShowConnectionErrorPopup();
                 }
+                finally
+                {
+                    RestoreResolutionAndScreenMode();
+                }
             }
         }
 
@@ -404,8 +408,6 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
-                    RestoreResolutionAndScreenMode();
-
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
 
@@ -447,8 +449,6 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
-                    RestoreResolutionAndScreenMode();
-
                     ResetAnimator(viewInstance!.FinalizeAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
 
@@ -512,6 +512,7 @@ namespace DCL.AuthenticationScreenFlow
                 for (var index = 0; index < possibleResolutions.Count; index++)
                 {
                     Resolution resolution = possibleResolutions[index];
+
                     if (!ResolutionUtils.IsDefaultResolution(resolution))
                         continue;
 
