@@ -26,7 +26,6 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const int COMMUNITIES_PER_PAGE = 20;
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
-        private const string MY_GENERAL_RESULTS_TITLE = "Browse Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
@@ -255,16 +254,14 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             ClearSearchBar();
             loadResultsCts = loadResultsCts.SafeRestart();
+            view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
+            LoadStreamingCommunitiesAsync(loadResultsCts.Token).Forget();
             LoadResultsAsync(
                 name: string.Empty,
                 onlyMemberOf: false,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
-
-            view.SetResultsBackButtonVisible(false);
-            view.SetResultsTitleText(MY_GENERAL_RESULTS_TITLE);
-            LoadStreamingCommunitiesAsync(loadResultsCts.Token).Forget();
         }
 
         private async UniTaskVoid LoadStreamingCommunitiesAsync(CancellationToken ct)
@@ -396,6 +393,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 LoadAllCommunitiesResults();
             else
             {
+                view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
                 view.SetResultsBackButtonVisible(true);
                 view.SetResultsTitleText(string.Format(SEARCH_RESULTS_TITLE_FORMAT, searchText));
 
@@ -413,7 +411,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void SearchBarCleared()
         {
-            ClearSearchBar();
             LoadAllCommunitiesResults();
         }
 
@@ -510,5 +507,11 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
         }
+    }
+
+    public enum CommunitiesSections
+    {
+        BROWSE_ALL_COMMUNITIES,
+        FILTERED_COMMUNITIES
     }
 }

@@ -35,6 +35,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public int CurrentResultsCount => currentResults.Count;
 
+        [Header("Sections")]
+        [SerializeField] private GameObject filteredCommunitiesSection = null!;
+        [SerializeField] private GameObject browseAllCommunitiesSection = null!;
+
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator = null!;
         [SerializeField] private Animator headerAnimator = null!;
@@ -54,7 +58,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button myCommunitiesViewAllButton = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        [Header("Results Section")]
+        [Header("Filtered Results Section")]
         [SerializeField] private Button resultsBackButton = null!;
         [SerializeField] private TMP_Text resultsTitleText = null!;
         [SerializeField] private TMP_Text resultsCountText = null!;
@@ -64,14 +68,15 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
 
+        [Header("Browse All Section")]
+        [SerializeField] private BrowseAllCommunitiesView browseAllCommunitiesView = null!;
+
         [Header("Streaming Section")]
-        [SerializeField] private GameObject streamingSection = null!;
-        [SerializeField] private LoopGridView streamingLoopGrid = null!;
-        [SerializeField] private SkeletonLoadingView streamingLoadingSpinner = null!;
+        [SerializeField] private StreamingCommunitiesView streamingCommunitiesView = null!;
 
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
-        private readonly List<CommunityData> currentStreamingResults = new ();
+
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
@@ -90,6 +95,9 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.inputField.onSubmit.AddListener(text => SearchBarSubmit?.Invoke(text));
             searchBar.clearSearchButton.onClick.AddListener(() => SearchBarClearButtonClicked?.Invoke());
             createCommunityButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke());
+            streamingCommunitiesView.JoinStream += communityId => JoinStream?.Invoke(communityId);
+            browseAllCommunitiesView.CommunityProfileOpened += communityId => CommunityProfileOpened?.Invoke(communityId);
+            browseAllCommunitiesView.CommunityJoined += (communityId, cardView) => CommunityJoined?.Invoke(communityId);
         }
 
         private void Start() =>
@@ -106,6 +114,9 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.clearSearchButton.onClick.RemoveAllListeners();
             resultLoopGrid.ScrollRect.onValueChanged.RemoveAllListeners();
             createCommunityButton.onClick.RemoveAllListeners();
+            streamingCommunitiesView.JoinStream -= communityId => JoinStream?.Invoke(communityId);
+            browseAllCommunitiesView.CommunityProfileOpened -= communityId => CommunityProfileOpened?.Invoke(communityId);
+            browseAllCommunitiesView.CommunityJoined -= (communityId, cardView) => CommunityJoined?.Invoke(communityId);
         }
 
         public void SetViewActive(bool isActive) =>
@@ -142,6 +153,12 @@ namespace DCL.Communities.CommunitiesBrowser
             }
             else
                 resultsLoadingSpinner.HideLoading();
+        }
+
+        public void SetActiveSection(CommunitiesSections activeSection)
+        {
+            browseAllCommunitiesSection.SetActive(activeSection == CommunitiesSections.BROWSE_ALL_COMMUNITIES);
+            filteredCommunitiesSection.SetActive(activeSection == CommunitiesSections.FILTERED_COMMUNITIES);
         }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>
@@ -196,6 +213,7 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             profileRepositoryWrapper = profileDataProvider;
+            browseAllCommunitiesView.SetProfileRepositoryWrapper(profileDataProvider);
         }
 
         public void ClearResultsItems()
@@ -293,6 +311,8 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.clearSearchButton.gameObject.SetActive(isActive);
 
         private CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
+        private bool streamingIsLoading;
+        private bool browseAllIsLoading;
 
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
@@ -360,12 +380,6 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
-        private void SetStreamingResultsAsEmpty(bool isEmpty)
-        {
-            streamingSection.gameObject.SetActive(!isEmpty);
-        }
-
-
         private void OnCommunityJoined(string communityId, CommunityResultCardView cardView)
         {
             cardView.SetJoiningLoadingActive(true);
@@ -380,59 +394,90 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
             this.thumbnailLoader = newThumbnailLoader;
+            streamingCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
+            browseAllCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
         }
 
         public void InitializeStreamingResultsGrid(int itemTotalCount)
         {
-            streamingLoopGrid.InitGridView(itemTotalCount, SetupStreamingCommunityResultCardByIndex);
-            streamingLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            streamingCommunitiesView.InitializeStreamingResultsGrid(itemTotalCount);
         }
-
 
         public void AddStreamingResultsItems(CommunityData[] dataResults)
         {
-            streamingSection.SetActive(true);
-            currentStreamingResults.AddRange(dataResults);
-            streamingLoopGrid.SetListItemCount(currentStreamingResults.Count, true);
-            SetStreamingResultsAsEmpty(currentStreamingResults.Count == 0);
-            streamingLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
+            streamingCommunitiesView.AddStreamingResultsItems(dataResults);
         }
 
         public void ClearStreamingResultsItems()
         {
-            currentStreamingResults.Clear();
-            streamingLoopGrid.SetListItemCount(0, false);
-            SetStreamingResultsAsEmpty(true);
+            streamingCommunitiesView.ClearStreamingResultsItems();
         }
 
         public void SetStreamingResultsAsLoading(bool isLoading)
         {
+            streamingIsLoading = isLoading;
             if (isLoading)
-                streamingLoadingSpinner.ShowLoading();
+                streamingCommunitiesView.SetStreamingResultsAsLoading(isLoading);
             else
-                streamingLoadingSpinner.HideLoading();
+                TryDisableLoading();
         }
 
-        private LoopGridViewItem SetupStreamingCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
+        public void InitializeBrowseAllGrid(int itemTotalCount)
         {
-            CommunityData communityData = currentStreamingResults[index];
-            LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
-            StreamingCommunityResultCardView cardView = gridItem.GetComponent<StreamingCommunityResultCardView>();
-
-            cardView.SetCommunityId(communityData.id);
-            cardView.SetTitle(communityData.name);
-            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
-
-            cardView.MainButtonClicked -= JoinStreamClicked;
-            cardView.MainButtonClicked += JoinStreamClicked;
-
-            return gridItem;
+            browseAllCommunitiesView.InitializeBrowseAllGrid(itemTotalCount);
         }
 
-        private void JoinStreamClicked(string communityId)
+        public void ClearBrowseAllItems()
         {
-            JoinStream?.Invoke(communityId);
+            browseAllCommunitiesView.ClearBrowseAllItems();
+        }
+
+        public void AddBrowseAllItems(CommunityData[] communities, bool resetPos)
+        {
+            browseAllCommunitiesView.AddBrowseAllItems(communities, resetPos);
+        }
+
+        public void SetBrowseAllAsLoading(bool isLoading)
+        {
+            browseAllIsLoading = isLoading;
+
+            if (isLoading)
+                browseAllCommunitiesView.SetBrowseAllAsLoading(isLoading);
+            else
+                TryDisableLoading();
+        }
+
+        public void SetBrowseAllTitleText(string text)
+        {
+            browseAllCommunitiesView.SetBrowseAllTitleText(text);
+        }
+
+        public void SetBrowseAllCountText(int count)
+        {
+            browseAllCommunitiesView.SetBrowseAllCountText(count);
+        }
+
+        public void SetBrowseAllLoadingMoreActive(bool isActive)
+        {
+            browseAllCommunitiesView.SetBrowseAllLoadingMoreActive(isActive);
+        }
+
+        public void UpdateJoinedCommunityInBrowseAll(string communityId, bool isJoined, bool isSuccess)
+        {
+            browseAllCommunitiesView.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
+        }
+
+        public void RemoveOneMemberFromCounterInBrowseAll(string communityId)
+        {
+            browseAllCommunitiesView.RemoveOneMemberFromCounter(communityId);
+        }
+
+        private void TryDisableLoading()
+        {
+            if (streamingIsLoading || browseAllIsLoading) return;
+
+            streamingCommunitiesView.SetStreamingResultsAsLoading(false);
+            browseAllCommunitiesView.SetBrowseAllAsLoading(false);
         }
     }
 }
