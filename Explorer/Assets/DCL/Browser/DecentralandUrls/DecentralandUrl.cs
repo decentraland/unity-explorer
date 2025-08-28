@@ -17,6 +17,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         PrivacyPolicy,
         TermsOfUse,
+        ContentPolicy,
+        CodeOfEthics,
 
         ApiChunks,
 
