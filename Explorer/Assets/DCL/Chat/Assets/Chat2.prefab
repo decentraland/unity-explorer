@@ -161,7 +161,7 @@ MonoBehaviour:
   <ConversationToolbarView2>k__BackingField: {fileID: 6432947855054662703}
   <MessageFeedView>k__BackingField: {fileID: 5223059815053518565}
   <InputView>k__BackingField: {fileID: 4604863247866272039}
-  <TitlebarView>k__BackingField: {fileID: 0}
+  <TitlebarView>k__BackingField: {fileID: 217021846241032117}
   <MemberListView>k__BackingField: {fileID: 1760950000874434669}
 --- !u!1001 &4821772774638154071
 PrefabInstance:
@@ -576,6 +576,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
+--- !u!114 &217021846241032117 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4749438274970765026, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
+  m_PrefabInstance: {fileID: 4821772774638154071}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa423cacd93c0f244bef7ff47353248a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!225 &754136446368913457 stripped
 CanvasGroup:
   m_CorrespondingSourceObject: {fileID: 5232439293637192038, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
