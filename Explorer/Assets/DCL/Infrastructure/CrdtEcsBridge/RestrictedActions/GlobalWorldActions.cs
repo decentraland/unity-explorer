@@ -108,12 +108,15 @@ namespace CrdtEcsBridge.RestrictedActions
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            using var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
-            var value = consumed.Value[0]!;
-            URN urn = value.GetUrn();
-            bool isLooping = value.IsLooping();
+            if (promise.Result is {Succeeded: true})
+            {
+                using var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+                var value = consumed.Value[0];
+                URN urn = value.GetUrn();
+                bool isLooping = value.IsLooping();
 
-            TriggerEmote(urn, isLooping);
+                TriggerEmote(urn, isLooping);
+            }
         }
 
         private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
@@ -127,11 +130,15 @@ namespace CrdtEcsBridge.RestrictedActions
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
-            var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
-            var value = consumed.Value[0]!;
-            URN urn = value.GetUrn();
 
-            TriggerEmote(urn, loop);
+            if (promise.Result is {Succeeded: true})
+            {
+                var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+                var value = consumed.Value[0]!;
+                URN urn = value.GetUrn();
+
+                TriggerEmote(urn, loop);
+            }
         }
     }
 }

@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Emotes
         public BodyShape BodyShape { get; }
         public bool IsAssetBundleProcessed { get; set; }
 
-        public LoadTimeout Timeout { get; }
+        public LoadTimeout Timeout { get; private set; }
 
         public GetSceneEmoteFromRealmIntention(
             string sceneId,
@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Emotes
             CancellationTokenSource = new CancellationTokenSource();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
-            Timeout = new LoadTimeout(timeout);
+            Timeout = new LoadTimeout(timeout, 0);
         }
 
         public bool Equals(GetSceneEmoteFromRealmIntention other) =>
@@ -68,6 +68,14 @@ namespace DCL.AvatarRendering.Emotes
                 partitionComponent);
 
             world.Create(promise, emote, this.BodyShape);
+        }
+
+        public bool IsTimeout(float deltaTime)
+        {
+            // Timeout access returns a temporary value. We need to reassign the field or we lose the changes
+            Timeout = new LoadTimeout(Timeout.Timeout, Timeout.ElapsedTime + deltaTime);
+            bool result = Timeout.IsTimeout;
+            return result;
         }
     }
 }
