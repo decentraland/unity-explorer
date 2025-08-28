@@ -185,6 +185,11 @@ namespace DCL.CharacterPreview
             }
         }
 
+        public void OnBeforeShow()
+        {
+            EnableSpinner();
+        }
+
         /// <summary>
         /// Shows the character preview.
         /// </summary>
@@ -246,7 +251,6 @@ namespace DCL.CharacterPreview
         protected void OnModelUpdated()
         {
             updateModelCancellationToken = updateModelCancellationToken.SafeRestart();
-
             UpdateModelAsync(updateModelCancellationToken.Token).Forget();
             return;
 
