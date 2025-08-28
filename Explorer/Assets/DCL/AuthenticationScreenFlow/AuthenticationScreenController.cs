@@ -298,10 +298,26 @@ namespace DCL.AuthenticationScreenFlow
                     }
                 }
                 catch (OperationCanceledException) { SwitchState(ViewState.Login); }
-                catch (SignatureExpiredException) { SwitchState(ViewState.Login); }
-                catch (Web3SignatureException) { SwitchState(ViewState.Login); }
-                catch (CodeVerificationException) { SwitchState(ViewState.Login); }
-                catch (ProfileNotFoundException) { SwitchState(ViewState.Login); }
+                catch (SignatureExpiredException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (Web3SignatureException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (CodeVerificationException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (ProfileNotFoundException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
                 catch (Exception e)
                 {
                     SwitchState(ViewState.Login);
