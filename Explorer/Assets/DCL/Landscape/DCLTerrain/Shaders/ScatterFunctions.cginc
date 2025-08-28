@@ -96,7 +96,14 @@ float CalculateHeightFromHeightmap(float2 uv, float _DistanceFieldScale,
     float fOccupancy11 = _occupancyTexture.SampleLevel(_occupancySampler, uv + float2(_Heightmap_TexelSize, _Heightmap_TexelSize), 0).r;
     
     float fOccupancy = (fOccupancy00 + fOccupancy10 + fOccupancy01 + fOccupancy11) * 0.25f;
-    float minValue = 175.0f / 255.0f;
+    float minValue = 155.0f / 255.0f;
+
+    if (fOccupancy <= minValue)
+    {
+        // Flat surface (occupied parcels and above minValue threshold)
+        return  0.0f;
+    }
+    
     float normalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
 
     float min = -4.135159f; // min value of the GeoffNoise.GetHeight
