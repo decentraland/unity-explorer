@@ -78,8 +78,8 @@ namespace DCL.ExplorePanel
             this.profileWidgetController = profileWidgetController;
             dclInput = DCLInput.Instance;
             this.profileMenuController = profileMenuController;
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_INVITED, p => UserInvitedToCommunityClickedAsync(p).Forget());
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_INVITED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -95,20 +95,12 @@ namespace DCL.ExplorePanel
             setupExploreSectionsCts.SafeCancelAndDispose();
         }
 
-        private async UniTaskVoid UserInvitedToCommunityClickedAsync(object[] _)
+        private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
         {
             if(State == ControllerState.ViewHidden)
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Communities));
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(sectionToShow));
             else
-                ShowSection(ExploreSections.Communities);
-        }
-
-        private async UniTaskVoid OnRewardAssignedAsync(object[] _)
-        {
-            if(State == ControllerState.ViewHidden)
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack)); // TODO: move to the shared space manager?
-            else
-                ShowSection(ExploreSections.Backpack);
+                ShowSection(sectionToShow);
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
