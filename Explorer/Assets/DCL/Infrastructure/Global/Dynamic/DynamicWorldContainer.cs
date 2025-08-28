@@ -225,7 +225,8 @@ namespace Global.Dynamic
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
 
             var mapPathEventBus = new MapPathEventBus();
-            INotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsBusController.Initialize(notificationsBusController);
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
@@ -633,8 +634,7 @@ namespace Global.Dynamic
                 sharedSpaceManager,
                 includeVoiceChat,
                 includeCommunities,
-                communitiesDataProvider,
-                notificationsBusController);
+                communitiesDataProvider);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -1039,8 +1039,7 @@ namespace Global.Dynamic
                     notificationsBusController,
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
-                    identityCache,
-                    notificationsBusController));
+                    identityCache));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

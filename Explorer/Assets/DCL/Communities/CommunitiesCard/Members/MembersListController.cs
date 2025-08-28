@@ -77,8 +77,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             WarningNotificationView inWorldWarningNotificationView,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
-            IWeb3IdentityCache web3IdentityCache,
-            INotificationsBusController notificationsBus) : base(view, PAGE_SIZE)
+            IWeb3IdentityCache web3IdentityCache) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -108,7 +107,6 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             this.view.SetProfileDataProvider(profileDataProvider);
             this.view.SetCommunitiesDataProvider(communitiesDataProvider);
-            this.view.SetNotificationsBusController(notificationsBus);
 
             foreach (MembersListView.MemberListSections section in EnumUtils.Values<MembersListView.MemberListSections>())
                 sectionsFetchData[section] = new SectionFetchData<ICommunityMemberData>(PAGE_SIZE);

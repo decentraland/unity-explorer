@@ -86,7 +86,7 @@ namespace DCL.Communities.CommunitiesCard
         private ISpriteCache? spriteCache;
         private bool isSpriteCacheExternal;
         private readonly ThumbnailLoader thumbnailLoader;
-        private readonly INotificationsBusController notificationsBus;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBus;
 
         private GetCommunityResponse.CommunityData communityData;
         private string[] communityPlaceIds;
@@ -109,8 +109,7 @@ namespace DCL.Communities.CommunitiesCard
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             LambdasProfilesProvider lambdasProfilesProvider,
-            GalleryEventBus galleryEventBus,
-            INotificationsBusController notificationsBus)
+            GalleryEventBus galleryEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -132,7 +131,6 @@ namespace DCL.Communities.CommunitiesCard
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.galleryEventBus = galleryEventBus;
             this.thumbnailLoader = new ThumbnailLoader(null);
-            this.notificationsBus = notificationsBus;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -275,8 +273,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.warningNotificationView,
                 sharedSpaceManager,
                 chatEventBus,
-                web3IdentityCache,
-                notificationsBus);
+                web3IdentityCache);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,

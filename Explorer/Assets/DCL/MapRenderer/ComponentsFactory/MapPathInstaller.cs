@@ -26,7 +26,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapRendererSettings settings,
             IAssetsProvisioner assetProv,
             IMapPathEventBus mapPathEventBus,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             CancellationToken cancellationToken)
         {
             mapSettings = settings;

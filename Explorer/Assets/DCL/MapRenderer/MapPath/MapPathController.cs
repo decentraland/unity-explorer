@@ -25,7 +25,7 @@ namespace DCL.MapRenderer
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly MapPathRenderer mapPathRenderer;
         private readonly IMapCullingController cullingController;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly IObjectPool<PinMarkerObject> objectsPool;
         private readonly DestinationReachedNotification destinationReachedNotification = new()
             { Type = NotificationType.INTERNAL_ARRIVED_TO_DESTINATION };
@@ -43,7 +43,7 @@ namespace DCL.MapRenderer
             MapPathRenderer mapPathRenderer,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            INotificationsBusController notificationsBusController) : base(instantiationParent, coordsUtils, cullingController)
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController) : base(instantiationParent, coordsUtils, cullingController)
         {
             this.mapPathEventBus = mapPathEventBus;
             this.mapPathRenderer = mapPathRenderer;

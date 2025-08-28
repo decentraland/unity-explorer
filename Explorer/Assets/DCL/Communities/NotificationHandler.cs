@@ -21,7 +21,7 @@ namespace DCL.Communities
         private CancellationTokenSource eventCreatedCts = new ();
         private CancellationTokenSource eventStartsCts = new ();
 
-        public NotificationHandler(INotificationsBusController notificationsBusController,
+        public NotificationHandler(NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IMVCManager mvcManager,
             IRealmNavigator realmNavigator)
         {

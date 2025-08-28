@@ -42,7 +42,7 @@ namespace Global.Dynamic
             IEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             IRealmNavigator teleportBusController,
             IRealmData realmData,
             INavmapBus navmapBus,

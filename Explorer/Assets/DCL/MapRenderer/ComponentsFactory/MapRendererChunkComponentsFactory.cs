@@ -43,7 +43,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IMapPinsEventBus mapPinsEventBus;
         private readonly IRealmNavigator realmNavigator;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly INavmapBus navmapBus;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
@@ -65,7 +65,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IEventsApiService eventsApiService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IRealmNavigator realmNavigator,
             INavmapBus navmapBus,
             IOnlineUsersProvider onlineUsersProvider)

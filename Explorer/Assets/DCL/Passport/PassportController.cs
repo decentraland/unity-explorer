@@ -118,7 +118,6 @@ namespace DCL.Passport
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly INotificationsBusController notificationsBus;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -174,7 +173,7 @@ namespace DCL.Passport
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            INotificationsBusController notificationBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
@@ -199,8 +198,7 @@ namespace DCL.Passport
             IVoiceChatCallStatusService voiceChatCallStatusService,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
             GalleryEventBus galleryEventBus,
-            CommunitiesDataProvider communitiesDataProvider,
-            INotificationsBusController notificationsBus) : base(viewFactory)
+            CommunitiesDataProvider communitiesDataProvider) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -243,7 +241,6 @@ namespace DCL.Passport
             this.galleryEventBus = galleryEventBus;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
-            this.notificationsBus = notificationsBus;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -375,7 +372,7 @@ namespace DCL.Passport
 
             if (includeCommunities)
             {
-                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, notificationsBus, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
                 invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, viewInstance.InviteToCommunityText, viewInstance.InviteToCommunitySprite);
             }
         }

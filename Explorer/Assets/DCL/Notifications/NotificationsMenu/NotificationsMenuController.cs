@@ -38,7 +38,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
         private readonly NftTypeIconSO rarityBackgroundMapping;
@@ -59,7 +59,7 @@ namespace DCL.Notifications.NotificationsMenu
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
             NftTypeIconSO rarityBackgroundMapping,
