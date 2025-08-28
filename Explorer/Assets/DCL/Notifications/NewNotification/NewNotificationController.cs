@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Notifications.NewNotification
@@ -97,6 +98,7 @@ namespace DCL.Notifications.NewNotification
                 switch (notification.Type)
                 {
                     case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
+                    case NotificationType.INTERNAL_SERVER_ERROR:
                         await ProcessArrivedNotificationAsync(notification);
                         break;
                     case NotificationType.BADGE_GRANTED:
@@ -110,7 +112,7 @@ namespace DCL.Notifications.NewNotification
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
                         break;
                     case NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT:
-                        await ProcessInvitationToCommunitySentNotificationAsync(notification);
+                        await ProcessArrivedNotificationAsync(notification, false);
                         break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
@@ -121,20 +123,13 @@ namespace DCL.Notifications.NewNotification
             isDisplaying = false;
         }
 
-        private async UniTask ProcessArrivedNotificationAsync(INotification notification)
+        private async UniTask ProcessArrivedNotificationAsync(INotification notification, bool enableCloseButton = true)
         {
             viewInstance!.SystemNotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.SystemNotificationView.NotificationType = notification.Type;
             viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
-
-            await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
-        }
-
-        private async UniTask ProcessInvitationToCommunitySentNotificationAsync(INotification notification)
-        {
-            viewInstance!.SystemNotificationView.HeaderText.text = notification.GetHeader();
-            viewInstance.SystemNotificationView.NotificationType = notification.Type;
-            viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+            viewInstance!.SystemNotificationView.CloseButtonContainer.SetActive(enableCloseButton);
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)viewInstance.transform);
 
             await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
         }
