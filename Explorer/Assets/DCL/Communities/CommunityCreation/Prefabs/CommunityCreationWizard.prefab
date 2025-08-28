@@ -272,6 +272,7 @@ MonoBehaviour:
   creationPanelContentPolicyAndCodeOfEthicsText: {fileID: 1323504477650636928}
   creationPanelModerationErrorModalsContainer: {fileID: 2394277425005918900}
   creationPanelComplianceErrorModal: {fileID: 4668584144602405872}
+  creationPanelComplianceErrorModalErrorText: {fileID: 816391455551971685}
   creationPanelComplianceErrorModalCancelButton: {fileID: 891487426998531082}
   creationPanelComplianceErrorModalEditCommunityButton: {fileID: 570293651725843186}
   creationPanelModerationAPIUnavailableModal: {fileID: 5751194402901073248}
@@ -564,10 +565,6 @@ PrefabInstance:
     - target: {fileID: 6648269962382618181, guid: bfb71295165bae94f97b845a9c1d4dad, type: 3}
       propertyPath: m_Name
       value: ModerationAPIUnavailableModal
-      objectReference: {fileID: 0}
-    - target: {fileID: 6648269962382618181, guid: bfb71295165bae94f97b845a9c1d4dad, type: 3}
-      propertyPath: m_IsActive
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1852,10 +1849,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: ComplianceErrorModal
       objectReference: {fileID: 0}
-    - target: {fileID: 3560216253798439992, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 5032941443116173388, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -2058,6 +2051,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &816391455551971685 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8860320919552304813, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
+  m_PrefabInstance: {fileID: 8188187726566541256}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &891487426998531082 stripped

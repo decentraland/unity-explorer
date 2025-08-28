@@ -129,7 +129,6 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.RemovePlaceButtonClicked += RemoveCommunityPlace;
             viewInstance.ContentPolicyAndCodeOfEthicsLinksClicked += OpenContentPolicyAndCodeOfEthicsLink;
             viewInstance.GoBackToCreationEditionButtonClicked += GoBackToCreationEditionModal;
-            viewInstance.RetryCreationEditionButtonClicked += RetryCreationEdition;
         }
 
         protected override void OnBeforeViewShow()
@@ -172,7 +171,6 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.RemovePlaceButtonClicked -= RemoveCommunityPlace;
             viewInstance.ContentPolicyAndCodeOfEthicsLinksClicked -= OpenContentPolicyAndCodeOfEthicsLink;
             viewInstance.GoBackToCreationEditionButtonClicked -= GoBackToCreationEditionModal;
-            viewInstance.RetryCreationEditionButtonClicked -= RetryCreationEdition;
 
             createCommunityCts?.SafeCancelAndDispose();
             loadPanelCts?.SafeCancelAndDispose();
@@ -530,6 +528,7 @@ namespace DCL.Communities.CommunityCreation
 
         private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
         {
+            viewInstance!.ShowComplianceErrorModal(false);
             createCommunityCts = createCommunityCts.SafeRestart();
             CreateCommunityAsync(name, description, lands, worlds, privacy, createCommunityCts.Token).Forget();
         }
@@ -574,7 +573,7 @@ namespace DCL.Communities.CommunityCreation
                     break;
                 case CreateOrUpdateCommunityResponse.ComplianceStatus.REJECTED:
                     // Show REJECTED modal
-                    viewInstance.ShowComplianceErrorModal(true);
+                    viewInstance.ShowComplianceErrorModal(true, errorMessage: "TODO...");
                     break;
                 case CreateOrUpdateCommunityResponse.ComplianceStatus.VALIDATION_NOT_AVAILABLE:
                     // Show VALIDATION NOT AVAILABLE modal
@@ -585,6 +584,7 @@ namespace DCL.Communities.CommunityCreation
 
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
         {
+            viewInstance!.ShowComplianceErrorModal(false);
             createCommunityCts = createCommunityCts.SafeRestart();
             UpdateCommunityAsync(
                 inputData.CommunityId,
@@ -655,13 +655,10 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.PlayOnLinkClickAudio();
         }
 
-        private void GoBackToCreationEditionModal() =>
-            viewInstance!.ShowComplianceErrorModal(false);
-
-        private void RetryCreationEdition()
+        private void GoBackToCreationEditionModal()
         {
+            viewInstance!.SetCommunityCreationInProgress(false);
             viewInstance!.ShowComplianceErrorModal(false);
-            // TODO: Retry request...
         }
     }
 }
