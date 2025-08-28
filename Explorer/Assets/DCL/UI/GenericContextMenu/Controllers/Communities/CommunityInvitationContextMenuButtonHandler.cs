@@ -22,8 +22,8 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
     /// </summary>
     public class CommunityInvitationContextMenuButtonHandler
     {
-        private const string INVITATION_FAILED_TEXT = "It was not possible to send the invitation. Please try again";
-        private const string USER_POTENTIAL_INVITATIONS_FAILED_TEXT = "An error occurred when retrieving the community invitation options";
+        private const string INVITATION_FAILED_TEXT = "Error sending invitation. Please try again.";
+        private const string USER_POTENTIAL_INVITATIONS_FAILED_TEXT = "Error loading 'Invite to Community' menu option. Reopen menu to try again.";
         private const int MAXIMUM_HEIGHT_OF_SUBMENU = 600;
         private const int MAXIMUM_WIDTH_OF_SUBMENU = 300;
         
