@@ -45,7 +45,6 @@ namespace DCL.Chat
         [Header("Emojis")]
         [SerializeField] private EmojiPanelConfigurationSO emojiPanelConfiguration;
         [SerializeField] private EmojiButton emojiButtonPrefab;
-        [SerializeField] private TextAsset emojiMappingJson;
         [SerializeField] private EmojiSectionView emojiSectionViewPrefab;
         [SerializeField] private EmojiButtonView emojiPanelButton;
         [SerializeField] private EmojiPanelView emojiPanel;
@@ -502,7 +501,7 @@ namespace DCL.Chat
 
         private void InitializeEmojiPanelController()
         {
-            emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
+            emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.EmojiSelected += OnEmojiSelected;
             emojiPanelButton.Button.onClick.AddListener(OnEmojiPanelButtonClicked);
         }
