@@ -268,7 +268,7 @@ MonoBehaviour:
   creationPanelCancelButton: {fileID: 2428634819478053848}
   creationPanelCreateButton: {fileID: 3026729670463483168}
   creationPanelCreateButtonText: {fileID: 764634872873488758}
-  creationPanelCreateButtonLoading: {fileID: 1998900302886066027}
+  creationPanelModerationLoading: {fileID: 1485480504413443509}
   creationPanelContentPolicyAndCodeOfEthicsText: {fileID: 1323504477650636928}
   creationPanelModerationErrorModalsContainer: {fileID: 2394277425005918900}
   creationPanelComplianceErrorModal: {fileID: 4668584144602405872}
@@ -1425,6 +1425,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1485480504413443509 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4787704990276517690, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+  m_PrefabInstance: {fileID: 6263421827064736399}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1742210779712872466 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5675018827054402205, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
@@ -1436,11 +1441,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &1998900302886066027 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5571412109002997220, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
-  m_PrefabInstance: {fileID: 6263421827064736399}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2320985319465973368 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8564139150208752887, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}

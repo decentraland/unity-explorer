@@ -65,7 +65,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private Button creationPanelCancelButton = null!;
         [SerializeField] private Button creationPanelCreateButton = null!;
         [SerializeField] private TMP_Text creationPanelCreateButtonText = null!;
-        [SerializeField] private GameObject creationPanelCreateButtonLoading = null!;
+        [SerializeField] private GameObject creationPanelModerationLoading = null!;
         [SerializeField] private TMP_Text creationPanelContentPolicyAndCodeOfEthicsText = null!;
         [SerializeField] private GameObject creationPanelModerationErrorModalsContainer = null!;
         [SerializeField] private GameObject creationPanelComplianceErrorModal = null!;
@@ -184,12 +184,11 @@ namespace DCL.Communities.CommunityCreation
 
         public void SetCommunityCreationInProgress(bool isInProgress)
         {
-            creationPanelCreateButtonLoading.SetActive(isInProgress);
-            creationPanelCreateButtonText.gameObject.SetActive(!isInProgress);
+            creationPanelModerationLoading.SetActive(isInProgress);
+            creationPanelCreateButton.gameObject.SetActive(!isInProgress);
+            creationPanelCancelButton.gameObject.SetActive(!isInProgress);
 
-            if (isInProgress)
-                creationPanelCreateButton.interactable = false;
-            else
+            if (!isInProgress)
                 UpdateCreateButtonAvailability();
         }
 
