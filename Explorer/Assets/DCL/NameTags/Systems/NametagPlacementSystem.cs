@@ -16,6 +16,7 @@ using DCL.ECSComponents;
 using DCL.Profiles.Helpers;
 using DCL.VoiceChat;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Unity.Mathematics;
@@ -34,6 +35,7 @@ namespace DCL.Nametags
 
         private readonly IObjectPool<NametagHolder> nametagHolderPool;
         private readonly NametagsData nametagsData;
+        private readonly HashSet<string> officialWallets;
 
         private SingleInstanceEntity playerCamera;
         private CameraComponent cameraComponent;
@@ -44,11 +46,13 @@ namespace DCL.Nametags
         public NametagPlacementSystem(
             World world,
             IObjectPool<NametagHolder> nametagHolderPool,
-            NametagsData nametagsData
-        ) : base(world)
+            NametagsData nametagsData,
+            HashSet<string> officialWallets
+            ) : base(world)
         {
             this.nametagHolderPool = nametagHolderPool;
             this.nametagsData = nametagsData;
+            this.officialWallets = officialWallets;
         }
 
         public override void Initialize()
@@ -245,7 +249,9 @@ namespace DCL.Nametags
                 ? avatarShape.ID.AsSpan(avatarShape.ID.Length - 4).ToString()
                 : NAMETAG_DEFAULT_WALLET_ID);
 
-            nametagHolder.Nametag.SetData(avatarShape.Name, usernameColor, walletId, profile?.HasClaimedName ?? false, false);
+            bool isOfficial = !string.IsNullOrEmpty(profile?.UserId) && officialWallets.Contains(profile.UserId);
+
+            nametagHolder.Nametag.SetData(avatarShape.Name, usernameColor, walletId, profile?.HasClaimedName ?? false, isOfficial);
         }
     }
 }

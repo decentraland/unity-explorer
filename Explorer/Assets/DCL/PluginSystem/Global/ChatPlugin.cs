@@ -37,6 +37,7 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -84,6 +85,7 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryService? chatBusListenerService;
         private CommunityUserStateService communityUserStateService;
         private readonly Transform chatViewRectTransform;
+        private readonly HashSet<string> officialWallets;
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
@@ -122,7 +124,8 @@ namespace DCL.PluginSystem.Global
             IVoiceChatCallStatusService voiceChatCallStatusService,
             bool isCallEnabled,
             IRealmNavigator realmNavigator,
-            Transform chatViewRectTransform)
+            Transform chatViewRectTransform,
+            HashSet<string> officialWallets)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -155,6 +158,7 @@ namespace DCL.PluginSystem.Global
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.isCallEnabled = isCallEnabled;
             this.chatViewRectTransform = chatViewRectTransform;
+            this.officialWallets = officialWallets;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -234,7 +238,8 @@ namespace DCL.PluginSystem.Global
             var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
                 friendsServiceProxy,
                 currentChannelService,
-                eventBus);
+                eventBus,
+                officialWallets);
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
 
@@ -258,7 +263,8 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
-                getParticipantProfilesCommand
+                getParticipantProfilesCommand,
+                officialWallets
             );
 
             pluginScope.Add(commandRegistry);

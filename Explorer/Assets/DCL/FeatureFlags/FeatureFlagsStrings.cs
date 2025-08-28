@@ -26,6 +26,7 @@ namespace DCL.FeatureFlags
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
         public const string VOICE_CHAT = "alfa-voice-chat";
         public const string COMMUNITY_VOICE_CHAT = "alfa-community-voice-chat";
+        public const string OFFICIAL_WALLETS = "official-wallets";
         public const string CAMERA_REEL = "alfa-camera-reel";
         public const string FRIENDS = "alfa-friends";
         public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";

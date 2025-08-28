@@ -15,6 +15,7 @@ namespace DCL.Chat.ChatViewModels
         public bool IsOnline { get; set; }
         public string WalletId { get; set; }
         public bool HasClaimedName { get; set; }
+        public bool IsOfficial { get; set; }
         public Color ProfileColor { get; set; }
 
         public static ChatTitlebarViewModel CreateLoading(TitlebarViewMode viewMode)

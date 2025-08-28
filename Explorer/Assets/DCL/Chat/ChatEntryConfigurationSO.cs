@@ -10,5 +10,6 @@ namespace DCL.Chat
         [field: SerializeField] public float BackgroundWidthOffset { private set; get; } = 56;
         [field: SerializeField] public float MaxEntryWidth { private set; get; } = 246;
         [field: SerializeField] public float VerifiedBadgeWidth { private set; get; } = 15;
+        [field: SerializeField] public float OfficialBadgeWidth { private set; get; } = 84;
     }
 }

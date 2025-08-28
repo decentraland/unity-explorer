@@ -86,6 +86,7 @@ namespace DCL.Chat
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
         private readonly bool isCallEnabled;
+        private readonly HashSet<string> officialWallets;
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
@@ -145,7 +146,8 @@ namespace DCL.Chat
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             bool isCallEnabled,
-            IRealmNavigator realmNavigator
+            IRealmNavigator realmNavigator,
+            HashSet<string> officialWallets
             ) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
@@ -171,6 +173,7 @@ namespace DCL.Chat
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
             this.isCallEnabled = isCallEnabled;
+            this.officialWallets = officialWallets;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -285,6 +288,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
+            viewInstance.SetOfficialWalletsSet(officialWallets);
 
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
 

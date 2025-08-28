@@ -27,8 +27,9 @@ namespace DCL.Chat
             public ChatMemberConnectionStatus ConnectionStatus;
             public Color ProfileColor;
             public bool HasClaimedName;
+            public bool IsOfficial; // TODO mihak
         }
-        
+
         public delegate void VisibilityChangedDelegate(bool isVisible);
 
         /// <summary>

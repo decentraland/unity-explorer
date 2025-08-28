@@ -19,7 +19,7 @@ namespace DCL.Chat
 
         [SerializeField]
         private ProfilePictureView profilePictureView;
-        
+
         [SerializeField]
         protected GameObject thumbnailView;
 
@@ -59,6 +59,9 @@ namespace DCL.Chat
 
         [SerializeField]
         private RectTransform claimedNameIcon;
+
+        [SerializeField]
+        private RectTransform officialIcon;
 
         [SerializeField]
         private RectTransform tooltipPosition;
@@ -193,6 +196,15 @@ namespace DCL.Chat
         public void SetClaimedNameIconVisibility(bool isVisible)
         {
             claimedNameIcon.gameObject.SetActive(isVisible);
+        }
+
+        /// <summary>
+        /// Shows or hides the "verified" icon.
+        /// </summary>
+        /// <param name="isVisible">Whether the icon has to be displayed or not.</param>
+        public void SetOfficialIconVisibility(bool isVisible)
+        {
+            officialIcon.gameObject.SetActive(isVisible);
         }
 
         /// <summary>

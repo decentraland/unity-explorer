@@ -59,7 +59,7 @@ namespace DCL.Chat
         public void SetItemData(ChatMessage data, bool showDateDivider)
         {
             chatMessage = data;
-            usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
+            usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId, data.SenderIsOfficial);
             messageBubbleElement.SetMessageData(data);
 
             dateDividerElement.gameObject.SetActive(showDateDivider);

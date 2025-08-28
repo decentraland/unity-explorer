@@ -29,6 +29,7 @@ namespace DCL.Chat.ChatServices
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly IEventBus eventBus;
+        private readonly HashSet<string> officialWallets;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
 
@@ -61,12 +62,14 @@ namespace DCL.Chat.ChatServices
         public ChatMemberListService(ProfileRepositoryWrapper profileRepository,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             CurrentChannelService currentChannelService,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            HashSet<string> officialWallets)
         {
             this.profileRepository = profileRepository;
             this.friendsServiceProxy = friendsServiceProxy;
             this.currentChannelService = currentChannelService;
             this.eventBus = eventBus;
+            this.officialWallets = officialWallets;
         }
 
         public void Dispose() =>
@@ -289,7 +292,7 @@ namespace DCL.Chat.ChatServices
             new ()
             {
                 Id = profile.UserId, Name = profile.ValidatedName, FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
-                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, HasClaimedName = profile.HasClaimedName,
+                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, HasClaimedName = profile.HasClaimedName, IsOfficial = officialWallets.Contains(profile.UserId)
             };
     }
 }

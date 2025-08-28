@@ -26,7 +26,7 @@ namespace DCL.Chat.ChatCommands
             foreach (var member in rawMembers)
             {
                 var viewModel = new ChatMemberListViewModel(member.Id, member.WalletId, member.Name,
-                    member.ConnectionStatus == ChatMemberConnectionStatus.Online, member.ProfileColor, member.HasClaimedName);
+                    member.ConnectionStatus == ChatMemberConnectionStatus.Online, member.ProfileColor, member.HasClaimedName, member.IsOfficial);
 
                 targetList.Add(viewModel);
 

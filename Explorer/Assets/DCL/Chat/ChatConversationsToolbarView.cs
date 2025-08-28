@@ -51,6 +51,7 @@ namespace DCL.Chat
 
         private Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
+        private HashSet<string> officialWallets;
 
         /// <summary>
         /// Raised when a different conversation item is selected.
@@ -118,6 +119,7 @@ namespace DCL.Chat
             conversationItem.SetConversationIcon(icon);
             conversationItem.SetConversationName(NEARBY_CONVERSATION_NAME); // TODO: Localization
             conversationItem.SetClaimedNameIconVisibility(false);
+            conversationItem.SetOfficialIconVisibility(false);
         }
 
         public void SetCommunityConversationData(ChatChannel.ChannelId channelId, ISpriteCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData, CancellationToken ct)
@@ -186,6 +188,15 @@ namespace DCL.Chat
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
             this.profileRepositoryWrapper = profileDataProvider;
+        }
+
+        /// <summary>
+        /// Sets the list of official wallets that show the DCL tag.
+        /// </summary>
+        /// <param name="officialWallets"></param>
+        public void SetOfficialWalletsSet(HashSet<string> officialWallets)
+        {
+            this.officialWallets = officialWallets;
         }
 
         /// <summary>
@@ -299,6 +310,7 @@ namespace DCL.Chat
                 newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 newItem.SetConversationName(profile.ValidatedName);
                 newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
+                newItem.SetOfficialIconVisibility(officialWallets.Contains(profile.UserId));
             }
         }
 

@@ -58,7 +58,7 @@ namespace DCL.Chat.ChatViews
             this.model = model;
             onlineIndicator.SetActive(model.IsOnline);
             profilePictureView.Bind(model.ProfileThumbnail, model.ProfileColor);
-            usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, model.ProfileColor);
+            usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, model.IsOfficial, model.ProfileColor);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

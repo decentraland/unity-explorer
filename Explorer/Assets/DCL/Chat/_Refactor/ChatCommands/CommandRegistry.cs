@@ -12,6 +12,7 @@ using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
 using DCL.Web3.Identities;
+using System.Collections.Generic;
 using Utility;
 
 namespace DCL.Chat.ChatCommands
@@ -59,7 +60,8 @@ namespace DCL.Chat.ChatCommands
             ISpriteCache spriteCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             AudioClipConfig sendMessageSound,
-            GetParticipantProfilesCommand getParticipantProfilesCommand)
+            GetParticipantProfilesCommand getParticipantProfilesCommand,
+            HashSet<string> officialWallets)
         {
             RestartChatServices = new RestartChatServicesCommand(
                 privateConversationUserStateService,
@@ -73,7 +75,7 @@ namespace DCL.Chat.ChatCommands
                 privateConversationUserStateService,
                 communityUserStateService,
                 chatMemberListService);
-            
+
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
 
             InitializeChat = new InitializeChatSystemCommand(eventBus,
@@ -126,7 +128,8 @@ namespace DCL.Chat.ChatCommands
                 profileRepositoryWrapper,
                 chatConfig,
                 GetUserChatStatusCommand,
-                GetCommunityThumbnail);
+                GetCommunityThumbnail,
+                officialWallets);
 
             SendMessage = new SendMessageCommand(
                 chatMessageBus,
