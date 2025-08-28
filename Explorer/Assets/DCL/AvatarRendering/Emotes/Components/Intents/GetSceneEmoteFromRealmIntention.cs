@@ -56,6 +56,44 @@ namespace DCL.AvatarRendering.Emotes
         public readonly URN NewSceneEmoteURN() =>
             $"{SCENE_EMOTE_PREFIX}:{SceneId}-{EmoteHash}-{Loop.ToString().ToLower()}";
 
+        public static bool TryParseFromURN(URN urn, out string sceneId, out string emoteHash, out bool loop)
+        {
+            string urnStr = urn.ToString();
+            
+            sceneId = string.Empty;
+            emoteHash = string.Empty;
+            loop = false;
+
+            if (string.IsNullOrEmpty(urnStr))
+                return false;
+
+            string prefixWithColon = $"{SCENE_EMOTE_PREFIX}:";
+            if (!urnStr.StartsWith(prefixWithColon, StringComparison.Ordinal))
+                return false;
+
+            string payload = urnStr.Substring(prefixWithColon.Length);
+
+            // payload format: {sceneId}-{emoteHash}-{loop}
+            int lastDash = payload.LastIndexOf('-');
+            if (lastDash <= 0 || lastDash == payload.Length - 1)
+                return false;
+
+            string loopStr = payload.Substring(lastDash + 1);
+            if (!bool.TryParse(loopStr, out loop))
+                return false;
+
+            string rest = payload.Substring(0, lastDash);
+
+            int secondLastDash = rest.LastIndexOf('-');
+            if (secondLastDash <= 0 || secondLastDash == rest.Length - 1)
+                return false;
+
+            emoteHash = rest.Substring(secondLastDash + 1);
+            sceneId = rest.Substring(0, secondLastDash);
+
+            return !string.IsNullOrEmpty(sceneId) && !string.IsNullOrEmpty(emoteHash);
+        }
+
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
             var promise = AssetBundlePromise.Create(world,

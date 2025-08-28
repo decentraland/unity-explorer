@@ -26,6 +26,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ECS.SceneLifeCycle;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
@@ -57,10 +58,11 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
-        private bool localSceneDevelopment;
+        private readonly bool localSceneDevelopment;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly bool builderCollectionsPreview;
         private readonly IAppArgs appArgs;
+        private readonly IScenesCache scenesCache;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -82,7 +84,8 @@ namespace DCL.PluginSystem.Global
             bool localSceneDevelopment,
             ISharedSpaceManager sharedSpaceManager,
             bool builderCollectionsPreview,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            IScenesCache scenesCache)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -104,6 +107,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.builderCollectionsPreview = builderCollectionsPreview;
             this.appArgs = appArgs;
+            this.scenesCache = scenesCache;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -131,7 +135,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
