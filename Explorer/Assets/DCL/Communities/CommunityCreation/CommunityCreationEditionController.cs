@@ -13,6 +13,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Communities.CommunityCreation
 {
@@ -126,6 +128,8 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.AddPlaceButtonClicked += AddCommunityPlace;
             viewInstance.RemovePlaceButtonClicked += RemoveCommunityPlace;
             viewInstance.ContentPolicyAndCodeOfEthicsLinksClicked += OpenContentPolicyAndCodeOfEthicsLink;
+            viewInstance.GoBackToCreationEditionButtonClicked += GoBackToCreationEditionModal;
+            viewInstance.RetryCreationEditionButtonClicked += RetryCreationEdition;
         }
 
         protected override void OnBeforeViewShow()
@@ -167,6 +171,8 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.AddPlaceButtonClicked -= AddCommunityPlace;
             viewInstance.RemovePlaceButtonClicked -= RemoveCommunityPlace;
             viewInstance.ContentPolicyAndCodeOfEthicsLinksClicked -= OpenContentPolicyAndCodeOfEthicsLink;
+            viewInstance.GoBackToCreationEditionButtonClicked -= GoBackToCreationEditionModal;
+            viewInstance.RetryCreationEditionButtonClicked -= RetryCreationEdition;
 
             createCommunityCts?.SafeCancelAndDispose();
             loadPanelCts?.SafeCancelAndDispose();
@@ -533,7 +539,19 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetCommunityCreationInProgress(true);
 
             var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, privacy, ct)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES,
+                                                exceptionToResult: exception =>
+                                                {
+                                                    if (exception is UnityWebRequestException { ResponseCode: WebRequestUtils.BAD_REQUEST })
+                                                    {
+                                                        return Result<CreateOrUpdateCommunityResponse>.SuccessResult(new CreateOrUpdateCommunityResponse
+                                                        {
+                                                            complianceStatus = CreateOrUpdateCommunityResponse.ComplianceStatus.REJECTED,
+                                                        });
+                                                    }
+
+                                                    return Result.ErrorResult(exception.Message);
+                                                });
 
             if (ct.IsCancellationRequested)
                 return;
@@ -547,10 +565,22 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            closeTaskCompletionSource.TrySetResult();
-
-            openCommunityCardAfterCreationCts = openCommunityCardAfterCreationCts.SafeRestart();
-            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, thumbnailLoader!.Cache)), openCommunityCardAfterCreationCts.Token).Forget();
+            switch (result.Value.complianceStatus)
+            {
+                case CreateOrUpdateCommunityResponse.ComplianceStatus.APPROVED:
+                    closeTaskCompletionSource.TrySetResult();
+                    openCommunityCardAfterCreationCts = openCommunityCardAfterCreationCts.SafeRestart();
+                    mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, thumbnailLoader!.Cache)), openCommunityCardAfterCreationCts.Token).Forget();
+                    break;
+                case CreateOrUpdateCommunityResponse.ComplianceStatus.REJECTED:
+                    // Show REJECTED modal
+                    viewInstance.ShowComplianceErrorModal(true);
+                    break;
+                case CreateOrUpdateCommunityResponse.ComplianceStatus.VALIDATION_NOT_AVAILABLE:
+                    // Show VALIDATION NOT AVAILABLE modal
+                    viewInstance.ShowComplianceErrorModal(true, isApiAvailable: false);
+                    break;
+            }
         }
 
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
@@ -623,6 +653,15 @@ namespace DCL.Communities.CommunityCreation
             }
 
             viewInstance!.PlayOnLinkClickAudio();
+        }
+
+        private void GoBackToCreationEditionModal() =>
+            viewInstance!.ShowComplianceErrorModal(false);
+
+        private void RetryCreationEdition()
+        {
+            viewInstance!.ShowComplianceErrorModal(false);
+            // TODO: Retry request...
         }
     }
 }

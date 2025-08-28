@@ -31,6 +31,8 @@ namespace DCL.Communities.CommunityCreation
         public Action<int>? AddPlaceButtonClicked;
         public Action<int>? RemovePlaceButtonClicked;
         public Action<string>? ContentPolicyAndCodeOfEthicsLinksClicked;
+        public Action? GoBackToCreationEditionButtonClicked;
+        public Action? RetryCreationEditionButtonClicked;
 
         [SerializeField] public Button backgroundCloseButton = null!;
 
@@ -66,6 +68,13 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_Text creationPanelCreateButtonText = null!;
         [SerializeField] private GameObject creationPanelCreateButtonLoading = null!;
         [SerializeField] private TMP_Text creationPanelContentPolicyAndCodeOfEthicsText = null!;
+        [SerializeField] private GameObject creationPanelModerationErrorModalsContainer = null!;
+        [SerializeField] private GameObject creationPanelComplianceErrorModal = null!;
+        [SerializeField] private Button creationPanelComplianceErrorModalCancelButton = null!;
+        [SerializeField] private Button creationPanelComplianceErrorModalEditCommunityButton = null!;
+        [SerializeField] private GameObject creationPanelModerationAPIUnavailableModal = null!;
+        [SerializeField] private Button creationPanelModerationAPIUnavailableModalCancelButton = null!;
+        [SerializeField] private Button creationPanelModerationAPIUnavailableModalRetryButton = null!;
 
         [field: Header("Common")]
         [field: SerializeField] public WarningNotificationView WarningNotificationView { get; private set; } = null!;
@@ -84,6 +93,10 @@ namespace DCL.Communities.CommunityCreation
             getNamePanelGetNameButton.onClick.AddListener(() => GetNameButtonClicked?.Invoke());
             creationPanelCancelButton.onClick.AddListener(() => CancelButtonClicked?.Invoke());
             creationPanelEditProfilePictureButton.onClick.AddListener(() => SelectProfilePictureButtonClicked?.Invoke());
+            creationPanelComplianceErrorModalCancelButton.onClick.AddListener(() => CancelButtonClicked?.Invoke());
+            creationPanelComplianceErrorModalEditCommunityButton.onClick.AddListener(() => GoBackToCreationEditionButtonClicked?.Invoke());
+            creationPanelModerationAPIUnavailableModalCancelButton.onClick.AddListener(() => GoBackToCreationEditionButtonClicked?.Invoke());
+            creationPanelModerationAPIUnavailableModalRetryButton.onClick.AddListener(() => RetryCreationEditionButtonClicked?.Invoke());
             creationPanelCommunityNameInputField.onValueChanged.AddListener(CreationPanelCommunityNameInputChanged);
             creationPanelCommunityNameInputField.onSelect.AddListener(CreationPanelCommunityNameInputSelected);
             creationPanelCommunityNameInputField.onDeselect.AddListener(CreationPanelCommunityNameInputDeselected);
@@ -140,6 +153,10 @@ namespace DCL.Communities.CommunityCreation
             getNamePanelGetNameButton.onClick.RemoveAllListeners();
             creationPanelCancelButton.onClick.RemoveAllListeners();
             creationPanelEditProfilePictureButton.onClick.RemoveAllListeners();
+            creationPanelComplianceErrorModalCancelButton.onClick.RemoveAllListeners();
+            creationPanelComplianceErrorModalEditCommunityButton.onClick.RemoveAllListeners();
+            creationPanelModerationAPIUnavailableModalCancelButton.onClick.RemoveAllListeners();
+            creationPanelModerationAPIUnavailableModalRetryButton.onClick.RemoveAllListeners();
             creationPanelCommunityNameInputField.onValueChanged.RemoveAllListeners();
             creationPanelCommunityNameInputField.onSelect.RemoveAllListeners();
             creationPanelCommunityNameInputField.onDeselect.RemoveAllListeners();
@@ -248,6 +265,13 @@ namespace DCL.Communities.CommunityCreation
             creationPanelPlacesDropdown.SetOptions(options);
         }
 
+        public void ShowComplianceErrorModal(bool showErrorModal, bool isApiAvailable = true)
+        {
+            creationPanelModerationErrorModalsContainer.SetActive(showErrorModal);
+            creationPanelComplianceErrorModal.SetActive(isApiAvailable);
+            creationPanelModerationAPIUnavailableModal.SetActive(!isApiAvailable);
+        }
+
         private void OnPlacesDropdownOptionSelected(int index) =>
             AddPlaceButtonClicked?.Invoke(index);
 
@@ -306,6 +330,7 @@ namespace DCL.Communities.CommunityCreation
 
         public void CleanCreationPanel()
         {
+            ShowComplianceErrorModal(false);
             SetCommunityCreationInProgress(false);
             SetProfileSelectedImage(sprite: null);
             SetCommunityName(string.Empty, true);
