@@ -76,6 +76,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
+                DecentralandUrl.ContentPolicy => $"https://decentraland.{ENV}/content",
+                DecentralandUrl.CodeOfEthics => $"https://decentraland.{ENV}/ethics",
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
                 DecentralandUrl.ApiWorlds => $"https://places.decentraland.{ENV}/api/worlds",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",

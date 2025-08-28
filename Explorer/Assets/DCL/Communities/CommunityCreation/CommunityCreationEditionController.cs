@@ -40,6 +40,8 @@ namespace DCL.Communities.CommunityCreation
         private const int MAX_IMAGE_SIZE_BYTES = 512000; // 500 KB
         private const int MAX_IMAGE_DIMENSION_PIXELS = 512;
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
+        private const string CONTENT_POLICY_LINK_ID = "CONTENT_POLICY_LINK_ID";
+        private const string CODE_AND_ETHICS_LINK_ID = "CODE_AND_ETHICS_LINK_ID";
 
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
@@ -123,6 +125,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SaveCommunityButtonClicked += UpdateCommunity;
             viewInstance.AddPlaceButtonClicked += AddCommunityPlace;
             viewInstance.RemovePlaceButtonClicked += RemoveCommunityPlace;
+            viewInstance.ContentPolicyAndCodeOfEthicsLinksClicked += OpenContentPolicyAndCodeOfEthicsLink;
         }
 
         protected override void OnBeforeViewShow()
@@ -163,6 +166,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SaveCommunityButtonClicked -= UpdateCommunity;
             viewInstance.AddPlaceButtonClicked -= AddCommunityPlace;
             viewInstance.RemovePlaceButtonClicked -= RemoveCommunityPlace;
+            viewInstance.ContentPolicyAndCodeOfEthicsLinksClicked -= OpenContentPolicyAndCodeOfEthicsLink;
 
             createCommunityCts?.SafeCancelAndDispose();
             loadPanelCts?.SafeCancelAndDispose();
@@ -604,6 +608,21 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
+        }
+
+        private void OpenContentPolicyAndCodeOfEthicsLink(string id)
+        {
+            switch (id)
+            {
+                case CONTENT_POLICY_LINK_ID:
+                    webBrowser.OpenUrl(DecentralandUrl.ContentPolicy);
+                    break;
+                case CODE_AND_ETHICS_LINK_ID:
+                    webBrowser.OpenUrl(DecentralandUrl.CodeOfEthics);
+                    break;
+            }
+
+            viewInstance!.PlayOnLinkClickAudio();
         }
     }
 }

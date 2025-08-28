@@ -30,6 +30,7 @@ namespace DCL.Communities.CommunityCreation
         public Action<string, string, List<string>, List<string>, CommunityPrivacy>? SaveCommunityButtonClicked;
         public Action<int>? AddPlaceButtonClicked;
         public Action<int>? RemovePlaceButtonClicked;
+        public Action<string>? ContentPolicyAndCodeOfEthicsLinksClicked;
 
         [SerializeField] public Button backgroundCloseButton = null!;
 
@@ -64,6 +65,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private Button creationPanelCreateButton = null!;
         [SerializeField] private TMP_Text creationPanelCreateButtonText = null!;
         [SerializeField] private GameObject creationPanelCreateButtonLoading = null!;
+        [SerializeField] private TMP_Text creationPanelContentPolicyAndCodeOfEthicsText = null!;
 
         [field: Header("Common")]
         [field: SerializeField] public WarningNotificationView WarningNotificationView { get; private set; } = null!;
@@ -122,6 +124,8 @@ namespace DCL.Communities.CommunityCreation
             creationPanelPlacesDropdown.OptionClicked += OnPlacesDropdownOptionSelected;
             creationPanelPlacesDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
             creationPanelPlacesDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
+
+            creationPanelContentPolicyAndCodeOfEthicsText.ConvertUrlsToClickeableLinks(OpenContentPolicyAndCodeOfEthicsLink);
         }
 
         private void Start()
@@ -365,5 +369,8 @@ namespace DCL.Communities.CommunityCreation
                 !string.IsNullOrEmpty(creationPanelCommunityNameInputField.text) &&
                 !string.IsNullOrEmpty(creationPanelCommunityDescriptionInputField.text);
         }
+
+        private void OpenContentPolicyAndCodeOfEthicsLink(string id) =>
+            ContentPolicyAndCodeOfEthicsLinksClicked?.Invoke(id);
     }
 }
