@@ -9,9 +9,9 @@ namespace DCL.Settings.Utils
         public static readonly IReadOnlyList<FullScreenMode> Modes =
             new[]
             {
-                FullScreenMode.Windowed,
-                FullScreenMode.FullScreenWindow,
-                FullScreenMode.ExclusiveFullScreen
+                FullScreenMode.Windowed, // Windowed
+                FullScreenMode.FullScreenWindow, // Fullscreen Borderless
+                FullScreenMode.ExclusiveFullScreen // Fullscreen
             };
     }
 }
