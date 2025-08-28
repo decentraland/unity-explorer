@@ -69,6 +69,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_Text creationPanelContentPolicyAndCodeOfEthicsText = null!;
         [SerializeField] private GameObject creationPanelModerationErrorModalsContainer = null!;
         [SerializeField] private GameObject creationPanelComplianceErrorModal = null!;
+        [SerializeField] private TMP_Text creationPanelComplianceErrorModalDclGuidelinesText = null!;
         [SerializeField] private TMP_Text creationPanelComplianceErrorModalErrorText = null!;
         [SerializeField] private Button creationPanelComplianceErrorModalCancelButton = null!;
         [SerializeField] private Button creationPanelComplianceErrorModalEditCommunityButton = null!;
@@ -113,6 +114,7 @@ namespace DCL.Communities.CommunityCreation
             creationPanelPlacesDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
 
             creationPanelContentPolicyAndCodeOfEthicsText.ConvertUrlsToClickeableLinks(OpenContentPolicyAndCodeOfEthicsLink);
+            creationPanelComplianceErrorModalDclGuidelinesText.ConvertUrlsToClickeableLinks(OpenContentPolicyAndCodeOfEthicsLink);
         }
 
         private void Start()

@@ -899,7 +899,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'The following content has been flagged as violating <color=#FF2D55><b><u><link=DECENTRALAN_GUIDELINES_LINK_ID>Decentraland''s
+  m_text: 'The following content has been flagged as violating <color=#FF2D55><b><u><link=CODE_AND_ETHICS_LINK_ID>Decentraland''s
     Guidelines</link></u></b></color>:'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
