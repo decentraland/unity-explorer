@@ -62,10 +62,10 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
     float2 UV_coords = (worldSpaceCoord + 4096.0f) / 8192.0f;
 
     // Check occupancy
-    float fOccupancy = GetOccupancy(UV_coords, TerrainBounds, parcelSize, OccupancyTexture, samplerOccupancyTexture);
+    float fDistanceFieldScale = 16;
 
     // Get Height
-    float height = CalculateHeightFromHeightmap(UV_coords, TerrainHeight, fOccupancy, HeightMapTexture, HeightMapTexturePointClampSampler);
+    float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, HeightMapTexturePointClampSampler, OccupancyTexture, samplerOccupancyTexture);
 
     // Check the texture
     half4 terrainColour = SplatmapMix(UV_coords * 8.0f, TerrainBlendTexture, samplerTerrainBlendTexture,
@@ -76,7 +76,7 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
     float fScale = 1.0f + hash_int_to_float(corner0 + gridPosition);
     perInst.position = float4(random_X, height, random_Z, fScale);
 
-    float3 normalWS = CalculateNormalFromHeightmap(UV_coords, TerrainHeight, fOccupancy, HeightMapTexture, samplerHeightMapTexture);
+    float3 normalWS = CalculateNormalFromHeightmap(UV_coords, fDistanceFieldScale,  HeightMapTexture, samplerHeightMapTexture, OccupancyTexture, samplerOccupancyTexture);
     perInst.quatRotation = CreateGrassRotationQuaternion(normalWS, hash_int_to_float(corner0 + gridPosition) * 2.0f);
     perInst.colour = float4(1.0, 1.0, 1.0, 1.0);
 

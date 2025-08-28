@@ -30,7 +30,7 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     else
     {
         // Calculate normalized height first
-        float normalizedHeight = (fOccupancy - minValue) / (1 - minValue);
+        float normalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
 
         float noiseH = GetHeight(input.positionWS.x, input.positionWS.z);
 

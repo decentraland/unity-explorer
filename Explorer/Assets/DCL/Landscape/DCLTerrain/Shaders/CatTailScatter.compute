@@ -99,12 +99,12 @@ void CatTailScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, 
         float2 UV_coords = (worldSpaceCoord + 4096.0f) / 8192.0f;
 
         // Check occupancy
-        float fOccupancy = GetOccupancy(UV_coords, TerrainBounds, parcelSize, OccupancyTexture, samplerOccupancyTexture);
+        float fDistanceFieldScale = 16;
 
         // Get Height
-        float height = CalculateHeightFromHeightmap(UV_coords, TerrainHeight, fOccupancy, HeightMapTexture, HeightMapTexturePointClampSampler);
+        float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, HeightMapTexturePointClampSampler, OccupancyTexture, samplerOccupancyTexture);
         float fScale = 1.0f + hash_int_to_float(currentGridPosition + localId.x);
-        float3 normalWS = CalculateNormalFromHeightmap(UV_coords, TerrainHeight, fOccupancy, HeightMapTexture, samplerHeightMapTexture);
+        float3 normalWS = CalculateNormalFromHeightmap(UV_coords, fDistanceFieldScale,  HeightMapTexture, samplerHeightMapTexture, OccupancyTexture, samplerOccupancyTexture);
 
         perInst.position = float4(currentGridPosition.x + random_X, height, currentGridPosition.y + random_Z, fScale);
         perInst.quatRotation = CreateGrassRotationQuaternion(normalWS, hash_int_to_float(currentGridPosition + localId.x));

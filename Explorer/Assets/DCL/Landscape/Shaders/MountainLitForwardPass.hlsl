@@ -305,22 +305,6 @@ void CalculateNormalFromHeightmap(float2 uv, out float3 normalWS, out float3 tan
     averageNormal /= (float)validCount;
     normalWS = averageNormal;
     
-    // // Calculate face normals (using right-hand rule for consistent winding)
-    // normal0 = normalize(cross(vec1, vec0)); // Face: center-1-0
-    // normal1 = normalize(cross(vec2, vec1)); // Face: center-2-1
-    // normal2 = normalize(cross(vec5, vec2)); // Face: center-5-2
-    // normal3 = normalize(cross(vec8, vec5)); // Face: center-8-5
-    // normal4 = normalize(cross(vec7, vec8)); // Face: center-7-8
-    // normal5 = normalize(cross(vec6, vec7)); // Face: center-6-7
-    // normal6 = normalize(cross(vec3, vec6)); // Face: center-3-6
-    // normal7 = normalize(cross(vec0, vec3)); // Face: center-0-3
-    //
-    // // Average all the face normals
-    // float3 averageNormal = (normal0 + normal1 + normal2 + normal3 + normal4 + normal5 + normal6 + normal7) / 8.0f;
-    //
-    // // Normalize the averaged result
-    // normalWS = normalize(averageNormal);
-    //
     float3 worldTangent = float3(1.0f, 0.0f, 0.0f);
     
     // Remove the component of worldTangent that's parallel to the normal
