@@ -68,7 +68,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly ISplashScreen splashScreenAnimator;
+        private readonly SplashScreen splashScreen;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly BuildData buildData;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
@@ -96,7 +96,7 @@ namespace DCL.AuthenticationScreenFlow
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            ISplashScreen splashScreenAnimator,
+            SplashScreen splashScreen,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
@@ -110,7 +110,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.splashScreenAnimator = splashScreenAnimator;
+            this.splashScreen = splashScreen;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.buildData = buildData;
@@ -231,7 +231,8 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.Hide();
+            if (splashScreen != null) // Splash screen is destroyed after first login
+                splashScreen.Hide();
         }
 
         private void ShowRestrictedUserPopup()

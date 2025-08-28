@@ -1,6 +1,7 @@
 ﻿using DCL.Landscape.Utils;
 using System;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.Landscape.Settings
 {
@@ -51,5 +52,11 @@ namespace DCL.Landscape.Settings
             EDGE,
             CORNER,
         }
+    }
+
+    [Serializable]
+    public class LandscapeDataRef : AssetReferenceT<LandscapeData>
+    {
+        public LandscapeDataRef(string guid) : base(guid) { }
     }
 }

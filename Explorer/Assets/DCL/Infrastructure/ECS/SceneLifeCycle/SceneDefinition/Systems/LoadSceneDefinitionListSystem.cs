@@ -19,6 +19,7 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
+using UnityEngine.Scripting;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -103,6 +104,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 new SceneDefinitions(intention.TargetCollection));
         }
 
+        [Preserve]
         private sealed class SceneMetadataConverter : JsonConverter
         {
             public override bool CanConvert(Type objectType) =>
