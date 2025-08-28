@@ -41,6 +41,8 @@ namespace DCL.SDKComponents.AvatarShape.Systems
                 return;
 
             UpdateInterpolationMovement(in sdkAvatarShapeComponent, in transform, false, false);
+
+            sdkTransform.IsDirty = false;
         }
 
         [Query]

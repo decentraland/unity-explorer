@@ -74,13 +74,8 @@ namespace DCL.Character.CharacterMotion.Systems
                 Mathf.MoveTowards(movementSpeed, RUN_SPEED, deltaTime * RUN_SPEED * 10) :
                 Mathf.MoveTowards(movementSpeed, WALK_SPEED, deltaTime * RUN_SPEED * 30);
 
-            Vector3 flattenDirection = characterInterpolationMovementComponent.LastPosition.GetYFlattenDirection(characterInterpolationMovementComponent.TargetPosition);
-            Vector3 delta = flattenDirection.normalized * (movementSpeed * deltaTime);
             Vector3 directionVector = characterInterpolationMovementComponent.LastPosition.GetDirection(characterInterpolationMovementComponent.TargetPosition);
-
-            // If we overshoot targetPosition, we adjust the delta value accordingly
-            if (delta.sqrMagnitude > Vector3.SqrMagnitude(directionVector))
-                delta = directionVector;
+            Vector3 delta = directionVector.normalized * (movementSpeed * deltaTime);
 
             characterTransformComponent.Transform.position = characterInterpolationMovementComponent.LastPosition + delta;
         }
