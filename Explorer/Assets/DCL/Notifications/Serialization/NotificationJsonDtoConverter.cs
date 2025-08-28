@@ -31,6 +31,7 @@ namespace DCL.Notifications.Serialization
         private const string COMMUNITY_MEMBER_BANNED_TYPE = "community_member_banned";
         private const string COMMUNITY_RENAMED_TYPE = "community_renamed";
         private const string COMMUNITY_DELETED_TYPE = "community_deleted";
+        private const string OWNER_COMMUNITY_DELETED_TYPE = "owner_community_deleted";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -98,6 +99,7 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_MEMBER_BANNED_TYPE => new CommunityUserBannedNotification(),
                     COMMUNITY_RENAMED_TYPE => new CommunityRenamedNotification(),
                     COMMUNITY_DELETED_TYPE => new CommunityDeletedNotification(),
+                    OWNER_COMMUNITY_DELETED_TYPE => new OwnerCommunityDeletedNotification(),
                     _ => null,
                 };
 
