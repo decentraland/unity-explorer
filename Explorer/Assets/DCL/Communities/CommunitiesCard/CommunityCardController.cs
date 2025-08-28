@@ -142,7 +142,6 @@ namespace DCL.Communities.CommunitiesCard
 
             notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, OnOpenCommunityCardFromNotification);
             notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_SENT, OnOpenCommunityCardFromNotification);
-            //COMMUNITY_USER_INVITED type is handled in ExplorePanelController for circular dependency reasons, just like REWARD_ASSIGNMENT
             notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_ACCEPTED, OnOpenCommunityCardFromNotification);
         }
 
