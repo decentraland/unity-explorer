@@ -359,9 +359,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Please ensure Community content follows Decentraland's <color=#FF2D55><b><u><link=CONTENT_POLICY_LINK_ID>Content
-    Policy</link></u></b></color> and <color=#FF2D55><b><u><link=CODE_AND_ETHICS_LINK_ID>Code
-    of Ethics</link></u></b></color>.
+  m_text: <color=#FCFCFC80>Please ensure Community content follows Decentraland's</color>
+    <color=#FF2D55><b><u><link=CONTENT_POLICY_LINK_ID>Content Policy.</link></u></b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
