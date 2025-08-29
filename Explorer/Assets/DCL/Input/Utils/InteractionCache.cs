@@ -49,8 +49,9 @@ namespace DCL.Input.Utils
 
             if (isCanvasButton)
             {
-                interactionCache.Add(gameObject, true);
-                return true;
+                bool isInteractable = isCanvasButton.IsInteractable();
+                interactionCache.Add(gameObject, isInteractable);
+                return isInteractable;
             }
 
             PanelEventHandler? eventHandler = gameObject.GetComponent<PanelEventHandler>();
