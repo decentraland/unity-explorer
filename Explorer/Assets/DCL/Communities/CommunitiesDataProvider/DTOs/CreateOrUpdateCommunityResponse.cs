@@ -5,13 +5,6 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     [Serializable]
     public class CreateOrUpdateCommunityResponse
     {
-        public enum ComplianceStatus
-        {
-            APPROVED,
-            REJECTED,
-            VALIDATION_NOT_AVAILABLE,
-        }
-
         [Serializable]
         public struct CommunityData
         {
