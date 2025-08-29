@@ -541,9 +541,9 @@ namespace DCL.Communities.CommunityCreation
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES,
                                                 exceptionToResult: exception =>
                                                 {
-                                                    if (exception is UnityWebRequestException { ResponseCode: WebRequestUtils.BAD_REQUEST })
+                                                    if (exception is UnityWebRequestException { ResponseCode: WebRequestUtils.BAD_REQUEST } unityWebRequestException)
                                                     {
-                                                        var moderationResponse = JsonUtility.FromJson<CommunityModerationResponse>((exception as UnityWebRequestException)?.Text);
+                                                        var moderationResponse = JsonUtility.FromJson<CommunityModerationResponse>(unityWebRequestException.Text);
                                                         return Result<CreateOrUpdateCommunityResponse>.SuccessResult(new CreateOrUpdateCommunityResponse { moderationData = moderationResponse });
                                                     }
 
@@ -569,25 +569,7 @@ namespace DCL.Communities.CommunityCreation
                 mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, thumbnailLoader!.Cache)), openCommunityCardAfterCreationCts.Token).Forget();
             }
             else
-            {
-                string formattedErrorMessage = string.Empty;
-                if (result.Value.moderationData.data != null)
-                {
-                    if (result.Value.moderationData.data.issues.name is { Length: > 0 })
-                        formattedErrorMessage += $"COMMUNITY NAME: {string.Join(", ", result.Value.moderationData.data.issues.name.Select(s => $"[{s}]"))}\n\n";
-
-                    if (result.Value.moderationData.data.issues.image is { Length: > 0 })
-                        formattedErrorMessage += $"COMMUNITY IMAGE: {string.Join(", ", result.Value.moderationData.data.issues.image.Select(s => $"[{s}]"))}\n\n";
-
-                    if (result.Value.moderationData.data.issues.description is { Length: > 0 })
-                        formattedErrorMessage += $"COMMUNITY DESCRIPTION: {string.Join(", ", result.Value.moderationData.data.issues.description.Select(s => $"[{s}]"))}\n";
-                }
-
-                viewInstance.ShowComplianceErrorModal(
-                    showErrorModal: true,
-                    errorMessage: formattedErrorMessage,
-                    isApiAvailable: !result.Value.moderationData.communityContentValidationUnavailable);
-            }
+                ShowModerationErrorModal(result.Value.moderationData);
         }
 
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
@@ -622,7 +604,17 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetCommunityCreationInProgress(true);
 
             var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, privacy, ct)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES,
+                                                exceptionToResult: exception =>
+                                                {
+                                                    if (exception is UnityWebRequestException { ResponseCode: WebRequestUtils.BAD_REQUEST } unityWebRequestException)
+                                                    {
+                                                        var moderationResponse = JsonUtility.FromJson<CommunityModerationResponse>(unityWebRequestException.Text);
+                                                        return Result<CreateOrUpdateCommunityResponse>.SuccessResult(new CreateOrUpdateCommunityResponse { moderationData = moderationResponse });
+                                                    }
+
+                                                    return Result.ErrorResult(exception.Message);
+                                                });
 
             if (ct.IsCancellationRequested)
                 return;
@@ -638,14 +630,40 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
+            if (result.Value.moderationData == null)
             {
-                thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
-                isProfileThumbnailDirty = false;
-                lastSelectedProfileThumbnail = null;
+                if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
+                {
+                    thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                    isProfileThumbnailDirty = false;
+                    lastSelectedProfileThumbnail = null;
+                }
+
+                closeTaskCompletionSource.TrySetResult();
+            }
+            else
+                ShowModerationErrorModal(result.Value.moderationData);
+        }
+
+        private void ShowModerationErrorModal(CommunityModerationResponse communityModerationData)
+        {
+            string formattedErrorMessage = string.Empty;
+            if (communityModerationData.data != null)
+            {
+                if (communityModerationData.data.issues.name is { Length: > 0 })
+                    formattedErrorMessage += $"COMMUNITY NAME: {string.Join(", ", communityModerationData.data.issues.name.Select(s => $"[{s}]"))}\n\n";
+
+                if (communityModerationData.data.issues.image is { Length: > 0 })
+                    formattedErrorMessage += $"COMMUNITY IMAGE: {string.Join(", ", communityModerationData.data.issues.image.Select(s => $"[{s}]"))}\n\n";
+
+                if (communityModerationData.data.issues.description is { Length: > 0 })
+                    formattedErrorMessage += $"COMMUNITY DESCRIPTION: {string.Join(", ", communityModerationData.data.issues.description.Select(s => $"[{s}]"))}\n";
             }
 
-            closeTaskCompletionSource.TrySetResult();
+            viewInstance!.ShowComplianceErrorModal(
+                showErrorModal: true,
+                errorMessage: formattedErrorMessage,
+                isApiAvailable: !communityModerationData.communityContentValidationUnavailable);
         }
 
         private void OpenContentPolicyAndCodeOfEthicsLink(string id)
