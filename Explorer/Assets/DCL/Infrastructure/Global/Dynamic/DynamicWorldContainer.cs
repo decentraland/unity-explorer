@@ -468,7 +468,7 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 staticContainer.CharacterContainer);
 
-            IRealmNavigator realmNavigator = realmNavigatorContainer.WithMainScreenFallback(initializationFlowContainer.InitializationFlow, playerEntity, globalWorld);
+            IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
