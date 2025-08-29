@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace DCL.Prefs
 {
     public static class DCLPrefKeys
@@ -61,5 +63,7 @@ namespace DCL.Prefs
 
         public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
         public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
+        
+        public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";
     }
 }

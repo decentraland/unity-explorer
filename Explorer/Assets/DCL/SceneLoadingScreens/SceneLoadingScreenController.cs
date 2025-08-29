@@ -112,6 +112,7 @@ namespace DCL.SceneLoadingScreens
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Music_Volume);
 
             viewInstance.ClearTips();
             tips.Release();

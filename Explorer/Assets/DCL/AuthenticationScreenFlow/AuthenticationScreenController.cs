@@ -22,6 +22,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Prefs;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -143,10 +144,8 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
-            viewInstance.MuteButton.Button.onClick.AddListener(ToggleMute);
+            viewInstance.MuteButton.Button.onClick.AddListener(OnMuteButtonClicked);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-
-            InitMuteIcon();
             
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildData.InstallSource}"
@@ -174,6 +173,7 @@ namespace DCL.AuthenticationScreenFlow
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
+            InitMusicMute();
         }
 
         protected override void OnViewClose()
@@ -489,17 +489,28 @@ namespace DCL.AuthenticationScreenFlow
             ExitUtils.Exit();
         }
 
-        private void ToggleMute()
+        private void InitMusicMute()
         {
-            bool isMuted = volumeBus.GetMusicAndSFXMuteValue();
-            volumeBus.SetMusicAndSFXMute(!isMuted);
-            viewInstance?.MuteButton.SetIcon(!isMuted);
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
+
+            if (isMuted)
+                audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Music_Volume);
+            
+            viewInstance?.MuteButton.SetIcon(isMuted);
         }
 
-        private void InitMuteIcon()
+        private void OnMuteButtonClicked()
         {
-            bool isGloballyMuted = volumeBus.GetMusicAndSFXMuteValue();
-            viewInstance?.MuteButton.SetIcon(isGloballyMuted);
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
+            
+            if (isMuted)
+                audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Music_Volume);
+            else
+                audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Music_Volume);
+            
+            viewInstance?.MuteButton.SetIcon(!isMuted);
+            
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, !isMuted, save: true);
         }
 
         private void CancelVerificationCountdown()
