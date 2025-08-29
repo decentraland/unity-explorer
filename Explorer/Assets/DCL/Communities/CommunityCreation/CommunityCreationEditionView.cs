@@ -76,6 +76,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private GameObject creationPanelModerationAPIUnavailableModal = null!;
         [SerializeField] private Button creationPanelModerationAPIUnavailableModalCancelButton = null!;
         [SerializeField] private Button creationPanelModerationAPIUnavailableModalRetryButton = null!;
+        [SerializeField] private GameObject creationPanelPointerClicksBlocker = null!;
 
         [field: Header("Common")]
         [field: SerializeField] public WarningNotificationView WarningNotificationView { get; private set; } = null!;
@@ -184,6 +185,7 @@ namespace DCL.Communities.CommunityCreation
 
         public void SetCommunityCreationInProgress(bool isInProgress)
         {
+            creationPanelPointerClicksBlocker.SetActive(isInProgress);
             creationPanelModerationLoading.SetActive(isInProgress);
             creationPanelCreateButton.gameObject.SetActive(!isInProgress);
             creationPanelCancelButton.gameObject.SetActive(!isInProgress);

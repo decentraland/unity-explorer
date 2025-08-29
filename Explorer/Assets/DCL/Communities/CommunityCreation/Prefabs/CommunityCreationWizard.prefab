@@ -279,6 +279,7 @@ MonoBehaviour:
   creationPanelModerationAPIUnavailableModal: {fileID: 5751194402901073248}
   creationPanelModerationAPIUnavailableModalCancelButton: {fileID: 235681737501799066}
   creationPanelModerationAPIUnavailableModalRetryButton: {fileID: 644132754378292322}
+  creationPanelPointerClicksBlocker: {fileID: 6764609575438496850}
   <WarningNotificationView>k__BackingField: {fileID: 4847848383146126928}
 --- !u!1 &1501630461376916409
 GameObject:
@@ -1687,6 +1688,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &6764609575438496850 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 796183200277241565, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+  m_PrefabInstance: {fileID: 6263421827064736399}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &6832696990180888932 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 594115891378256875, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
