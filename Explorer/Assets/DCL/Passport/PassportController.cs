@@ -532,6 +532,11 @@ namespace DCL.Passport
                 if (EnumUtils.HasFlag(alreadyLoadedSections, sectionToLoad))
                     return;
 
+                // Ensure the view is initialized before fetching the profile to prevent rendering artifacts
+                // that may appear while the profile is still loading
+                if (sectionToLoad == PassportSection.OVERVIEW)
+                    characterPreviewController!.OnBeforeShow();
+
                 // Load user profile
                 Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
 
@@ -658,7 +663,10 @@ namespace DCL.Passport
             previewGO.SetActive(visible);
 
             if (visible)
+            {
+                characterPreviewController?.OnBeforeShow();
                 characterPreviewController?.OnShow(triggerOnShowBusEvent);
+            }
             else
                 characterPreviewController?.OnHide(triggerOnShowBusEvent);
         }
