@@ -204,6 +204,7 @@ namespace DCL.Backpack
             backpackSections[currentSection].Activate();
 
             view.gameObject.SetActive(true);
+            backpackCharacterPreviewController.OnBeforeShow();
             backpackCharacterPreviewController.OnShow();
 
             foreach ((BackpackSections section, TabSelectorView? tab) in tabsBySections)
