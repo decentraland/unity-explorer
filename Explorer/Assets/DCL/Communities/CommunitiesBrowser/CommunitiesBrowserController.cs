@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
@@ -8,8 +9,9 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
@@ -24,11 +26,12 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const int COMMUNITIES_PER_PAGE = 20;
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
-        private const string MY_GENERAL_RESULTS_TITLE = "Browse Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
+        private const string STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Streaming Communities. Please try again.";
+
         private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
@@ -42,7 +45,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly ICommunityCallOrchestrator orchestrator;
         private readonly ISpriteCache spriteCache;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
         private CancellationTokenSource? loadResultsCts;
@@ -70,7 +75,9 @@ namespace DCL.Communities.CommunitiesBrowser
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileDataProvider,
             ISelfProfile selfProfile,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider,
+            ICommunityCallOrchestrator orchestrator,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -82,12 +89,19 @@ namespace DCL.Communities.CommunitiesBrowser
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
+            this.orchestrator = orchestrator;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             spriteCache = new SpriteCache(webRequestController);
 
+            view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
+            view.SetCommunitiesBrowserState(new CommunitiesBrowserStateService());
+
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
-            view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
+
+            view.InitializeStreamingResultsGrid(0);
+
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
@@ -99,6 +113,23 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened += OpenCommunityProfile;
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
+            view.JoinStream += JoinStream;
+        }
+
+        private void JoinStream(string communityId)
+        {
+            //If we already joined, we cannot join again
+            if (orchestrator.CurrentCommunityId.Value == communityId) return;
+
+            JoinStreamAsync().Forget();
+            return;
+
+            async UniTaskVoid JoinStreamAsync()
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(false));
+                await UniTask.Delay(500);
+                orchestrator.JoinCommunityVoiceChat(communityId, CancellationToken.None, true);
+            }
         }
 
         public void Activate()
@@ -170,7 +201,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         private void ConfigureMyCommunitiesList() =>
-            view.InitializeMyCommunitiesList(0, spriteCache);
+            view.InitializeMyCommunitiesList(0);
 
         private void ConfigureResultsGrid()
         {
@@ -208,7 +239,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ViewAllMyCommunitiesResults()
         {
             ClearSearchBar();
-            view.SetResultsBackButtonVisible(true);
+            view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
 
             loadResultsCts = loadResultsCts.SafeRestart();
@@ -218,22 +249,54 @@ namespace DCL.Communities.CommunitiesBrowser
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
-
         }
 
         private void LoadAllCommunitiesResults()
         {
             ClearSearchBar();
             loadResultsCts = loadResultsCts.SafeRestart();
+            view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
+            LoadStreamingCommunitiesAsync(loadResultsCts.Token).Forget();
             LoadResultsAsync(
                 name: string.Empty,
                 onlyMemberOf: false,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
+        }
 
-            view.SetResultsBackButtonVisible(false);
-            view.SetResultsTitleText(MY_GENERAL_RESULTS_TITLE);
+        private async UniTaskVoid LoadStreamingCommunitiesAsync(CancellationToken ct)
+        {
+            view.ClearStreamingResultsItems();
+
+            view.SetStreamingResultsAsLoading(true);
+
+            var result = await dataProvider.GetUserCommunitiesAsync(
+                string.Empty,
+                false,
+                1,
+                7,
+                ct,
+                true
+                ).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                return;
+            }
+
+            if (result.Value.data.results.Length > 0)
+            {
+                view.AddStreamingResultsItems(result.Value.data.results);
+            }
+
+            view.SetStreamingResultsAsLoading(false);
         }
 
         private void LoadMoreResults(Vector2 _)
@@ -331,6 +394,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 LoadAllCommunitiesResults();
             else
             {
+                view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
                 view.SetResultsBackButtonVisible(true);
                 view.SetResultsTitleText(string.Format(SEARCH_RESULTS_TITLE_FORMAT, searchText));
 
@@ -348,7 +412,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void SearchBarCleared()
         {
-            ClearSearchBar();
             LoadAllCommunitiesResults();
         }
 
@@ -445,5 +508,11 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
             dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
         }
+    }
+
+    public enum CommunitiesSections
+    {
+        BROWSE_ALL_COMMUNITIES,
+        FILTERED_COMMUNITIES
     }
 }

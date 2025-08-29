@@ -380,6 +380,12 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    <CommunityVoiceChatContextMenuSettings>k__BackingField:
+      m_AssetGUID: f3988fe058c9e463580d97c75e2b574d
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     <MainUIView>k__BackingField:
       m_AssetGUID: c7887090193b1ec4c994ad22169b86db
       m_SubObjectName: 

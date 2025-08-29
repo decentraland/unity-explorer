@@ -32,12 +32,14 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly RectOffset horizontalLayoutPadding;
         internal readonly Action<UserData, FriendshipStatus> friendButtonClickAction;
         internal readonly bool showProfilePicture;
+        internal readonly bool showWalletSection;
 
-        public UserProfileContextMenuControlSettings(Action<UserData, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null, bool showProfilePicture = true)
+        public UserProfileContextMenuControlSettings(Action<UserData, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null, bool showProfilePicture = true, bool showWalletSection = true)
         {
             this.friendButtonClickAction = friendButtonClickAction;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
             this.showProfilePicture = showProfilePicture;
+            this.showWalletSection = showWalletSection;
         }
 
         public void SetInitialData(UserData data,

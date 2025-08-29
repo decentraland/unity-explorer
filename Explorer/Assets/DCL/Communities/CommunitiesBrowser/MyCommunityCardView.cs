@@ -1,5 +1,6 @@
 using DCL.UI;
 using System;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +19,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private ListenersCountView listenersCountView;
 
         private string currentCommunityId;
+        private readonly StringBuilder stringBuilder = new ();
 
         private void Awake() =>
             mainButton.onClick.AddListener(() =>
@@ -40,6 +42,15 @@ namespace DCL.Communities.CommunitiesBrowser
             userRoleContainer.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             var roleString = role.ToString();
             userRole.text = $"{char.ToUpperInvariant(roleString[0])}{roleString[1..]}";
+        }
+
+        public void ConfigureListenersCount(bool isActive, int listenersCount)
+        {
+            listenersCountView.gameObject.SetActive(isActive);
+
+            stringBuilder.Clear();
+            stringBuilder.Append(listenersCount);
+            listenersCountView.ParticipantCount.text = stringBuilder.ToString();
         }
     }
 }

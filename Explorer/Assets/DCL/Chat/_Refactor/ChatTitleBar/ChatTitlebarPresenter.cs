@@ -1,24 +1,21 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Web3;
 using DG.Tweening;
-using MVC;
-using System.Collections.Generic;
 using System.Linq;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Settings.Settings;
-using DCL.UI.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
+using DCL.VoiceChat;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -39,6 +36,8 @@ namespace DCL.Chat
         private readonly ChatMemberListService chatMemberListService;
         private readonly CancellationTokenSource lifeCts = new ();
         private readonly EventSubscriptionScope scope = new ();
+        private readonly CallButtonController callButtonController;
+
         private CancellationTokenSource profileLoadCts = new ();
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
@@ -56,7 +55,9 @@ namespace DCL.Chat
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
             GetTitlebarViewModelCommand getTitlebarViewModel,
-            DeleteChatHistoryCommand deleteChatHistoryCommand)
+            DeleteChatHistoryCommand deleteChatHistoryCommand,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IChatEventBus chatEventBus)
         {
             this.view = view;
             this.chatConfig = chatConfig;
@@ -76,6 +77,8 @@ namespace DCL.Chat
             view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
 
             chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
+
+            callButtonController = new CallButtonController(view.CallButton, voiceChatOrchestrator, chatEventBus, currentChannelService.CurrentChannelProperty);
 
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
@@ -123,6 +126,8 @@ namespace DCL.Chat
             view.OnCommunityContextMenuRequested -= OnCommunityContextMenuRequested;
             view.OnContextMenuRequested -= OnChatContextMenuRequested;
             chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
+
+            callButtonController.Dispose();
 
             if (contextMenuToggleGroup != null)
                 Object.Destroy(contextMenuToggleGroup);

@@ -47,7 +47,7 @@ namespace DCL.Chat.History
         /// <param name="channelId">The channel id from which to extract the community Id.</param>
         /// <returns>The Id of the community, without prefix or suffix.</returns>
         public static string GetCommunityIdFromChannelId(ChannelId channelId) =>
-            channelId.Id.Substring(COMMUNITY_PREFIX.Length);
+            channelId.Id.Length > COMMUNITY_PREFIX.Length? channelId.Id.Substring(COMMUNITY_PREFIX.Length) : channelId.Id;
 
         /// <summary>
         /// The unique identifier of a chat channel.

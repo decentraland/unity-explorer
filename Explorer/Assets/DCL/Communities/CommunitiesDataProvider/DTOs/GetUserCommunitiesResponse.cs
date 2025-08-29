@@ -25,6 +25,7 @@ namespace DCL.Communities
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
+            public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 
             public void SetAsJoined(bool isJoined)
             {

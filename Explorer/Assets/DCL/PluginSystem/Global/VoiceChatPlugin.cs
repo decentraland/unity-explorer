@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
+using DCL.Communities;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
@@ -9,10 +11,13 @@ using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using DCL.VoiceChat.CommunityVoiceChat;
+using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using AudioSettings = UnityEngine.AudioSettings;
 
 namespace DCL.PluginSystem.Global
 {
@@ -21,58 +26,73 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly IWebRequestController webRequestController;
+        private readonly PlayerParcelTrackerService playerParcelTracker;
+        private readonly VoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
-        private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
-        private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> combinedAudioSource;
-        private VoiceChatSettingsAsset voiceChatSettings;
-        private VoiceChatConfiguration voiceChatConfiguration;
+        private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
+        private VoiceChatPluginSettings voiceChatPluginSettings;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
-        private VoiceChatLivekitRoomHandler? livekitRoomHandler;
-        private VoiceChatController? controller;
+        private VoiceChatTrackManager? trackManager;
+        private VoiceChatRoomManager? roomManager;
+        private PrivateVoiceChatController? privateVoiceChatController;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
+        private CommunityVoiceChatController? communitiesVoiceChatController;
+        private VoiceChatPanelResizeController? voiceChatPanelResizeController;
+        private MicrophoneAudioToggleController? microphoneAudioToggleController;
+        private SceneVoiceChatController? sceneVoiceChatController;
 
         public VoiceChatPlugin(
-            IAssetsProvisioner assetsProvisioner,
             IRoomHub roomHub,
             MainUIView mainUIView,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            VoiceChatContainer voiceChatContainer,
             ProfileRepositoryWrapper profileDataProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             Arch.Core.World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            CommunitiesDataProvider communityDataProvider,
+            IWebRequestController webRequestController,
+            PlayerParcelTrackerService playerParcelTracker, IAssetsProvisioner assetsProvisioner)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.profileDataProvider = profileDataProvider;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.communityDataProvider = communityDataProvider;
+            this.webRequestController = webRequestController;
+            this.playerParcelTracker = playerParcelTracker;
+            this.assetsProvisioner = assetsProvisioner;
+            voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
+            communityVoiceChatCallStatusService = voiceChatContainer.CommunityVoiceChatCallStatusService;
         }
 
         public void Dispose()
         {
-            if (voiceChatHandler == null || livekitRoomHandler == null)
+            if (voiceChatHandler == null || roomManager == null)
             {
                 // Attempted to dispose before initialization - this is expected in some scenarios
                 return;
             }
 
+            voiceChatConfigurations.Dispose();
             microphoneStateManager?.Dispose();
             nametagsHandler?.Dispose();
             voiceChatHandler.Dispose();
-            livekitRoomHandler.Dispose();
-
-            combinedAudioSource.Dispose();
-            microphoneAudioFilter.Dispose();
-            controller?.Dispose();
+            roomManager?.Dispose();
+            microphoneAudioToggleController?.Dispose();
+            privateVoiceChatController?.Dispose();
+            communitiesVoiceChatController?.Dispose();
+            voiceChatOrchestrator?.Dispose();
+            voiceChatPanelResizeController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -83,49 +103,50 @@ namespace DCL.PluginSystem.Global
             audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
             AudioSettings.Reset(audioConfig);
 
-            microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(settings.MicrophoneAudioFilter, ct: ct);
-            AudioSource? microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
+            voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
+            VoiceChatPluginSettings voiceChatPluginSettings = voiceChatConfigurations.Value;
 
-            voiceChatSettings = settings.VoiceChatSettings;
-            voiceChatConfiguration = settings.VoiceChatConfiguration;
+            VoiceChatSettingsAsset voiceChatSettings = voiceChatPluginSettings.VoiceChatSettings;
 
-            microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
-            combinedAudioSource = await assetsProvisioner.ProvideInstanceAsync(settings.CombinedAudioSource, ct: ct);
+            VoiceChatConfiguration voiceChatConfiguration = voiceChatPluginSettings.VoiceChatConfiguration;
 
-            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value);
-            microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatCallStatusService);
+            var combinedAudioSource = voiceChatPluginSettings.CombinedAudioSource;
 
-            livekitRoomHandler = new VoiceChatLivekitRoomHandler(combinedAudioSource.Value, voiceChatHandler, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration, microphoneStateManager);
+            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration);
+            microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
+
+            trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, combinedAudioSource, voiceChatHandler);
+            roomManager = new VoiceChatRoomManager(trackManager, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
 
             nametagsHandler = new VoiceChatNametagsHandler(
                 roomHub.VoiceChatRoom().Room(),
-                voiceChatCallStatusService,
+                voiceChatOrchestrator,
                 entityParticipantTable,
                 world,
                 playerEntity);
 
-            controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            var playerEntry = voiceChatPluginSettings.PlayerEntryView;
+            var muteMicrophoneAudio = voiceChatPluginSettings.MuteMicrophoneAudio;
+            var unmuteMicrophoneAudio = voiceChatPluginSettings.UnmuteMicrophoneAudio;
 
+            voiceChatPanelResizeController = new VoiceChatPanelResizeController(mainUIView.VoiceChatPanelResizeView, voiceChatOrchestrator);
+
+            microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
+
+            privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            sceneVoiceChatController = new SceneVoiceChatController(mainUIView.SceneVoiceChatTitlebarView, communityDataProvider, voiceChatOrchestrator);
         }
 
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: SerializeField] public VoiceChatSettingsAsset VoiceChatSettings { get; private set; }
-            [field: SerializeField] public MicrophoneAudioFilterReference MicrophoneAudioFilter { get; private set; }
-            [field: SerializeField] public CombinedAudioSourceReference CombinedAudioSource { get; private set; }
-            [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; }
+            [field: SerializeField] public VoiceChatConfigurationsReference VoiceChatConfigurations { get; private set; }
 
             [Serializable]
-            public class CombinedAudioSourceReference : ComponentReference<VoiceChatCombinedStreamsAudioSource>
+            public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
             {
-                public CombinedAudioSourceReference(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class MicrophoneAudioFilterReference : ComponentReference<VoiceChatMicrophoneAudioFilter>
-            {
-                public MicrophoneAudioFilterReference(string guid) : base(guid) { }
+                public VoiceChatConfigurationsReference(string guid) : base(guid) { }
             }
         }
     }

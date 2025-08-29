@@ -44,9 +44,8 @@ namespace DCL.Settings.Configuration
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
-            WorldVolumeMacBus worldVolumeMacBus,
-            bool isVoiceChatEnabled)
-        {
+            WorldVolumeMacBus worldVolumeMacBus
+        ){
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
 

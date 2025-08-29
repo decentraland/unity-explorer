@@ -4,6 +4,7 @@ using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -47,6 +48,8 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private MutualFriendsConfig mutualFriends;
         [SerializeField] private ListenersCountView listenersCountView;
 
+        private readonly StringBuilder stringBuilder = new ();
+
         [Serializable]
         internal struct MutualFriendsConfig
         {
@@ -63,7 +66,7 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private string currentCommunityId;
+        private string? currentCommunityId;
         private Tweener? headerTween;
         private Tweener? footerTween;
         private Vector2 originalHeaderSizeDelta;
@@ -77,17 +80,23 @@ namespace DCL.Communities.CommunitiesBrowser
                     MainButtonClicked?.Invoke(currentCommunityId);
             });
 
-            viewCommunityButton.onClick.AddListener(() =>
+            if (viewCommunityButton != null)
             {
-                if (currentCommunityId != null)
-                    ViewCommunityButtonClicked?.Invoke(currentCommunityId);
-            });
+                viewCommunityButton.onClick.AddListener(() =>
+                {
+                    if (currentCommunityId != null)
+                        ViewCommunityButtonClicked?.Invoke(currentCommunityId);
+                });
+            }
 
-            joinCommunityButton.onClick.AddListener(() =>
+            if (joinCommunityButton != null)
             {
-                if (currentCommunityId != null)
-                    JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
-            });
+                joinCommunityButton.onClick.AddListener(() =>
+                {
+                    if (currentCommunityId != null)
+                        JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
+                });
+            }
 
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
@@ -114,6 +123,15 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetDescription(string description) =>
             communityDescription.text = description;
+
+        public void ConfigureListenersCount(bool isActive, int listenersCount)
+        {
+            listenersCountView.gameObject.SetActive(isActive);
+
+            stringBuilder.Clear();
+            stringBuilder.Append(listenersCount);
+            listenersCountView.ParticipantCount.text = stringBuilder.ToString();
+        }
 
         public void SetPrivacy(CommunityPrivacy privacy)
         {
