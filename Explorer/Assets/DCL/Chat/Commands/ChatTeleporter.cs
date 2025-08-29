@@ -102,10 +102,10 @@ namespace DCL.Chat.Commands
 
             return error.State switch
                    {
-                       TaskError.MessageError => $"🔴 {TELEPORT_ERROR_PREFIX} Teleport failed: {error.Message}",
+                       TaskError.MessageError => $"🔴 {TELEPORT_ERROR_PREFIX} {error.Message}",
                        TaskError.Timeout => $"🔴 {TELEPORT_ERROR_PREFIX} Timeout",
                        TaskError.Cancelled => $"🔴 {TELEPORT_ERROR_PREFIX} The operation was canceled!",
-                       TaskError.UnexpectedException => $"🔴 {TELEPORT_ERROR_PREFIX} Teleport failed: {error.Message}",
+                       TaskError.UnexpectedException => $"🔴 {TELEPORT_ERROR_PREFIX} {error.Message}",
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
