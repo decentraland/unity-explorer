@@ -58,41 +58,42 @@ namespace DCL.AvatarRendering.Emotes
 
         public static bool TryParseFromURN(URN urn, out string sceneId, out string emoteHash, out bool loop)
         {
-            string urnStr = urn.ToString();
-            
             sceneId = string.Empty;
             emoteHash = string.Empty;
             loop = false;
 
-            if (string.IsNullOrEmpty(urnStr))
+            ReadOnlySpan<char> urnStr = urn.ToString();
+
+            if (urnStr.IsEmpty)
                 return false;
 
-            string prefixWithColon = $"{SCENE_EMOTE_PREFIX}:";
-            if (!urnStr.StartsWith(prefixWithColon, StringComparison.Ordinal))
+            ReadOnlySpan<char> prefixWithColon = $"{SCENE_EMOTE_PREFIX}:".AsSpan();
+
+            if (!urnStr.StartsWith(prefixWithColon, StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            string payload = urnStr.Substring(prefixWithColon.Length);
+            ReadOnlySpan<char> payload = urnStr.Slice(prefixWithColon.Length);
 
-            // payload format: {sceneId}-{emoteHash}-{loop}
             int lastDash = payload.LastIndexOf('-');
             if (lastDash <= 0 || lastDash == payload.Length - 1)
                 return false;
 
-            string loopStr = payload.Substring(lastDash + 1);
-            if (!bool.TryParse(loopStr, out loop))
+            ReadOnlySpan<char> loopSpan = payload.Slice(lastDash + 1);
+            if (!bool.TryParse(loopSpan, out loop))
                 return false;
 
-            string rest = payload.Substring(0, lastDash);
+            ReadOnlySpan<char> rest = payload.Slice(0, lastDash);
 
             int secondLastDash = rest.LastIndexOf('-');
             if (secondLastDash <= 0 || secondLastDash == rest.Length - 1)
                 return false;
 
-            emoteHash = rest.Substring(secondLastDash + 1);
-            sceneId = rest.Substring(0, secondLastDash);
+            emoteHash = rest.Slice(secondLastDash + 1).ToString();
+            sceneId = rest.Slice(0, secondLastDash).ToString();
 
             return !string.IsNullOrEmpty(sceneId) && !string.IsNullOrEmpty(emoteHash);
         }
+
 
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
