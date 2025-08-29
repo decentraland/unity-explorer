@@ -124,6 +124,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             ToggleSection(MemberListSections.MEMBERS, false);
             confirmationDialogCts.SafeCancelAndDispose();
+            contextMenuCts.SafeCancelAndDispose();
         }
 
         public void UpdateRequestsCounter(int amount) =>
