@@ -330,6 +330,7 @@ namespace DCL.Communities.CommunitiesCard
             UpdateMemberCount(communityData);
             communityDescription.text = communityData.description;
             communityPrivacyText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(communityData.privacy.ToString());
+
             publicCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@public);
             privateCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@private);
 
