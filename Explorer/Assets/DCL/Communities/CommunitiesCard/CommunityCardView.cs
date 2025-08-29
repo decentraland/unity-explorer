@@ -76,8 +76,6 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; } = null!;
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
-        [field: SerializeField] private Sprite publicCommunityImage { get; set; } = null!;
-        [field: SerializeField] private Sprite privateCommunityImage { get; set; } = null!;
 
         [field: Header("Community interactions")]
         [field: SerializeField] private Button openChatButton { get; set; } = null!;
@@ -94,7 +92,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private TMP_Text communityName { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityMembersNumber { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityPrivacyText { get; set; } = null!;
-        [field: SerializeField] private Image communityPrivacyImage { get; set; } = null!;
+        [field: SerializeField] private GameObject publicCommunityIcon { get; set; } = null!;
+        [field: SerializeField] private GameObject privateCommunityIcon { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityDescription { get; set; } = null!;
         [field: SerializeField] public ImageView CommunityThumbnail { get; private set; } = null!;
 
@@ -331,7 +330,9 @@ namespace DCL.Communities.CommunitiesCard
             UpdateMemberCount(communityData);
             communityDescription.text = communityData.description;
             communityPrivacyText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(communityData.privacy.ToString());
-            communityPrivacyImage.sprite = communityData.privacy == CommunityPrivacy.@public ? publicCommunityImage : privateCommunityImage;
+
+            publicCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@public);
+            privateCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@private);
 
             if (communityData.thumbnails != null)
                 thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
