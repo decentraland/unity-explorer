@@ -1,9 +1,6 @@
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.Utilities;
-using SuperScrollView;
 using System;
-using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,11 +25,14 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action? CreateCommunityButtonClicked;
         public event Action<string>? JoinStream;
 
+        private CommunitiesBrowserStateService browserStateService;
 
         public bool IsResultsScrollPositionAtBottom =>
             filteredCommunitiesView.IsResultsScrollPositionAtBottom(NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE);
 
-        public int CurrentResultsCount => browserStateService.GetFilteredResultsCount();
+
+        //This value will depend on which view is active? is it worth to have the logic centralized??
+        public int CurrentResultsCount => 1;//browserStateService.GetFilteredResultsCount();
 
         [Header("Sections")]
         [SerializeField] private GameObject filteredCommunitiesSection = null!;
@@ -61,9 +61,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [Header("Streaming Section")]
         [SerializeField] private StreamingCommunitiesView streamingCommunitiesView = null!;
 
-        private readonly CommunitiesBrowserStateService browserStateService = new();
-
-        private ThumbnailLoader? thumbnailLoader;
         private CommunitiesSections currentSection = CommunitiesSections.BROWSE_ALL_COMMUNITIES;
 
         private void Awake()
@@ -71,7 +68,7 @@ namespace DCL.Communities.CommunitiesBrowser
             myCommunitiesView.SetStateService(browserStateService);
             myCommunitiesView.ViewAllMyCommunitiesButtonClicked += () => ViewAllMyCommunitiesButtonClicked?.Invoke();
             myCommunitiesView.CommunityProfileOpened += communityId => CommunityProfileOpened?.Invoke(communityId);
-            
+
             searchBar.inputField.onSelect.AddListener(text => SearchBarSelected?.Invoke(text));
             searchBar.inputField.onDeselect.AddListener(text => SearchBarDeselected?.Invoke(text));
             searchBar.inputField.onValueChanged.AddListener(text =>
@@ -180,9 +177,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 searchBar.inputField.onValueChanged = originalEvent;
         }
 
-        public void InitializeMyCommunitiesList(int itemTotalCount, ISpriteCache thumbnailCache)
+        public void InitializeMyCommunitiesList(int itemTotalCount)
         {
-            myCommunitiesView.InitializeMyCommunitiesList(itemTotalCount, thumbnailCache);
+            myCommunitiesView.InitializeMyCommunitiesList(itemTotalCount);
         }
 
         public void ClearMyCommunitiesItems()
@@ -204,13 +201,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void ClearResultsItems()
         {
-            browserStateService.ClearFilteredResults();
             filteredCommunitiesView.ClearResultsItems();
         }
 
         public void AddResultsItems(CommunityData[] communities, bool resetPos)
         {
-            browserStateService.AddFilteredResults(communities);
             filteredCommunitiesView.AddResultsItems(communities, resetPos);
         }
 
@@ -223,8 +218,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 myCommunitiesView.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
             }
 
-            filteredCommunitiesView.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
-            browseAllCommunitiesView.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
+            filteredCommunitiesView.UpdateJoinedCommunity(communityId, isSuccess);
+            browseAllCommunitiesView.UpdateJoinedCommunity(communityId, isSuccess);
         }
 
         public void RemoveOneMemberFromCounter(string communityId)
@@ -243,7 +238,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
-            this.thumbnailLoader = newThumbnailLoader;
             myCommunitiesView.SetThumbnailLoader(newThumbnailLoader);
             streamingCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
             browseAllCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
@@ -257,13 +251,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void AddStreamingResultsItems(CommunityData[] dataResults)
         {
-            browserStateService.AddStreamingResults(dataResults);
+            browserStateService.AddCommunities(dataResults);
             streamingCommunitiesView.AddStreamingResultsItems(dataResults);
         }
 
         public void ClearStreamingResultsItems()
         {
-            browserStateService.ClearStreamingResults();
             streamingCommunitiesView.ClearStreamingResultsItems();
         }
 
@@ -283,13 +276,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void ClearBrowseAllItems()
         {
-            browserStateService.ClearBrowseAllResults();
             browseAllCommunitiesView.ClearBrowseAllItems();
         }
 
         public void AddBrowseAllItems(CommunityData[] communities, bool resetPos)
         {
-            browserStateService.AddBrowseAllResults(communities);
+            browserStateService.AddCommunities(communities);
             browseAllCommunitiesView.AddBrowseAllItems(communities, resetPos);
         }
 
@@ -325,6 +317,15 @@ namespace DCL.Communities.CommunitiesBrowser
             streamingCommunitiesView.SetStreamingResultsAsLoading(false);
             browseAllCommunitiesView.SetBrowseAllAsLoading(false);
             filteredCommunitiesView.SetResultsAsLoading(false);
+        }
+
+        public void SetCommunitiesBrowserState(CommunitiesBrowserStateService communitiesBrowserStateService)
+        {
+            browserStateService = communitiesBrowserStateService;
+            streamingCommunitiesView.SetCommunitiesBrowserState(browserStateService);
+            browseAllCommunitiesView.SetCommunitiesBrowserState(browserStateService);
+            filteredCommunitiesView.SetCommunitiesBrowserState(browserStateService);
+            myCommunitiesView.SetCommunitiesBrowserState(browserStateService);
         }
     }
 }

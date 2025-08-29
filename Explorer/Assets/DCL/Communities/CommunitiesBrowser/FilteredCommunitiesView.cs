@@ -27,11 +27,13 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject resultsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
+        [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        private readonly List<CommunityData> currentResults = new();
+        private readonly List<string> currentFilteredIds = new();
+
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
-        private Sprite defaultThumbnailSprite = null!;
+        private CommunitiesBrowserStateService? browserStateService;
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader, Sprite defaultSprite)
         {
@@ -53,16 +55,21 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void ClearResultsItems()
         {
-            currentResults.Clear();
+            currentFilteredIds.Clear();
             resultLoopGrid.SetListItemCount(0, false);
             SetResultsAsEmpty(true);
         }
 
         public void AddResultsItems(CommunityData[] communities, bool resetPos)
         {
-            currentResults.AddRange(communities);
-            resultLoopGrid.SetListItemCount(currentResults.Count, resetPos);
-            SetResultsAsEmpty(currentResults.Count == 0);
+            browserStateService!.AddCommunities(communities);
+            foreach (CommunityData communityData in communities)
+            {
+                currentFilteredIds.Add(communityData.id);
+            }
+
+            resultLoopGrid.SetListItemCount(currentFilteredIds.Count, resetPos);
+            SetResultsAsEmpty(currentFilteredIds.Count == 0);
 
             if (resetPos)
                 resultLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
@@ -99,48 +106,31 @@ namespace DCL.Communities.CommunitiesBrowser
             resultsLoadingMoreSpinner.SetActive(isActive);
         }
 
-        public void UpdateJoinedCommunity(string communityId, bool isJoined, bool isSuccess)
+        public void UpdateJoinedCommunity(string communityId, bool isSuccess)
         {
             if (isSuccess)
-            {
-                CommunityData? resultCommunityData = GetResultCommunityById(communityId);
-                resultCommunityData?.SetAsJoined(isJoined);
                 RefreshCommunityCardInGrid(communityId);
-            }
         }
 
         public void RemoveOneMemberFromCounter(string communityId)
         {
-            CommunityData? resultCommunityData = GetResultCommunityById(communityId);
-            resultCommunityData?.DecreaseMembersCount();
             RefreshCommunityCardInGrid(communityId);
         }
 
         public bool IsResultsScrollPositionAtBottom(float normalizedOffset = 0.01f) =>
             resultLoopGrid.ScrollRect.verticalNormalizedPosition <= normalizedOffset;
 
-        public int CurrentResultsCount => currentResults.Count;
+        public int CurrentResultsCount => currentFilteredIds.Count;
 
         private void RefreshCommunityCardInGrid(string communityId)
         {
-            for (var i = 0; i < currentResults.Count; i++)
+            for (var i = 0; i < currentFilteredIds.Count; i++)
             {
-                CommunityData communityData = currentResults[i];
-                if (communityData.id != communityId) continue;
+                string id = currentFilteredIds[i];
+                if (id != communityId) continue;
                 resultLoopGrid.RefreshItemByItemIndex(i);
                 break;
             }
-        }
-
-        private CommunityData? GetResultCommunityById(string communityId)
-        {
-            foreach (CommunityData communityData in currentResults)
-            {
-                if (communityData.id == communityId)
-                    return communityData;
-            }
-
-            return null;
         }
 
         private void SetResultsAsEmpty(bool isEmpty)
@@ -151,7 +141,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private LoopGridViewItem SetupCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
-            CommunityData communityData = currentResults[index];
+            CommunityData communityData = browserStateService!.GetCommunityDataById(currentFilteredIds[index]);
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
 
@@ -191,6 +181,11 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             cardView.SetJoiningLoadingActive(true);
             CommunityJoined?.Invoke(communityId);
+        }
+
+        public void SetCommunitiesBrowserState(CommunitiesBrowserStateService browserStateService)
+        {
+            this.browserStateService = browserStateService;
         }
     }
 }

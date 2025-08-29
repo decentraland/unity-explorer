@@ -17,10 +17,11 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject streamingSection = null!;
         [SerializeField] private LoopGridView streamingLoopGrid = null!;
         [SerializeField] private SkeletonLoadingView streamingLoadingSpinner = null!;
+        [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        private readonly List<CommunityData> currentStreamingResults = new();
+        private readonly List<string> streamingResultsIds = new();
         private ThumbnailLoader? thumbnailLoader;
-        private Sprite defaultThumbnailSprite = null!;
+        private CommunitiesBrowserStateService? browserStateService;
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader, Sprite defaultSprite)
         {
@@ -34,18 +35,22 @@ namespace DCL.Communities.CommunitiesBrowser
             streamingLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        public void AddStreamingResultsItems(CommunityData[] dataResults)
+        public void AddStreamingResultsItems(CommunityData[] communities)
         {
             streamingSection.SetActive(true);
-            currentStreamingResults.AddRange(dataResults);
-            streamingLoopGrid.SetListItemCount(currentStreamingResults.Count, true);
-            SetStreamingResultsAsEmpty(currentStreamingResults.Count == 0);
+            foreach (CommunityData communityData in communities)
+            {
+                streamingResultsIds.Add(communityData.id);
+            }
+
+            streamingLoopGrid.SetListItemCount(streamingResultsIds.Count);
+            SetStreamingResultsAsEmpty(streamingResultsIds.Count == 0);
             streamingLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
         public void ClearStreamingResultsItems()
         {
-            currentStreamingResults.Clear();
+            streamingResultsIds.Clear();
             streamingLoopGrid.SetListItemCount(0, false);
             SetStreamingResultsAsEmpty(true);
         }
@@ -65,7 +70,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private LoopGridViewItem SetupStreamingCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
-            CommunityData communityData = currentStreamingResults[index];
+            CommunityData communityData = browserStateService!.GetCommunityDataById(streamingResultsIds[index]);
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             StreamingCommunityResultCardView cardView = gridItem.GetComponent<StreamingCommunityResultCardView>();
 
@@ -83,6 +88,11 @@ namespace DCL.Communities.CommunitiesBrowser
         private void JoinStreamClicked(string communityId)
         {
             JoinStream?.Invoke(communityId);
+        }
+
+        public void SetCommunitiesBrowserState(CommunitiesBrowserStateService browserStateService)
+        {
+            this.browserStateService = browserStateService;
         }
     }
 }

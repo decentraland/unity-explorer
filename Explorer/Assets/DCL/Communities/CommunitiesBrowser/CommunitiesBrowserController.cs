@@ -94,12 +94,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
             spriteCache = new SpriteCache(webRequestController);
 
+            view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
+            view.SetCommunitiesBrowserState(new CommunitiesBrowserStateService());
+
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
 
             view.InitializeStreamingResultsGrid(0);
 
-            view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
@@ -199,7 +201,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         private void ConfigureMyCommunitiesList() =>
-            view.InitializeMyCommunitiesList(0, spriteCache);
+            view.InitializeMyCommunitiesList(0);
 
         private void ConfigureResultsGrid()
         {
