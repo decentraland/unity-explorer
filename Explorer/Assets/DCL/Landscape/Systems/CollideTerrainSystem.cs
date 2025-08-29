@@ -32,7 +32,8 @@ namespace DCL.Landscape.Systems
         private readonly List<ParcelData> freeParcels;
         private readonly List<ParcelData> usedParcels;
         private readonly short[] indexBuffer;
-        private readonly ObjectPool<GameObject>[] treePools;
+        private ObjectPool<GameObject>?[]? treePools;
+        private bool wasTerrainEnabled;
 
         private static readonly VertexAttributeDescriptor[] VERTEX_LAYOUT =
         {
@@ -52,27 +53,42 @@ namespace DCL.Landscape.Systems
             freeParcels = new List<ParcelData>();
             usedParcels = new List<ParcelData>();
             indexBuffer = CreateIndexBuffer(landscapeData.terrainData.parcelSize);
-            treePools = new ObjectPool<GameObject>[landscapeData.terrainData.treeAssets.Length];
-
-            Transform terrainRoot = terrainGenerator.TerrainRoot;
-
-            for (int i = 0; i < treePools.Length; i++)
-            {
-                GameObject? collider = landscapeData.terrainData.treeAssets[i].Collider;
-
-                if (collider == null)
-                    continue;
-
-                treePools[i] = new ObjectPool<GameObject>(
-                    createFunc: () => Object.Instantiate(collider, terrainRoot),
-                    actionOnDestroy: static instance => Object.Destroy(instance));
-            }
         }
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainShown)
+            bool isTerrainEnabled = landscapeData.RenderGround && terrainGenerator.IsTerrainShown;
+
+            if (isTerrainEnabled != wasTerrainEnabled)
+            {
+                wasTerrainEnabled = isTerrainEnabled;
+                SetParcelsEnabled(freeParcels, isTerrainEnabled);
+                SetParcelsEnabled(usedParcels, isTerrainEnabled);
+            }
+
+            if (!isTerrainEnabled)
                 return;
+
+            // Can't put this in the constructor because it runs too early, and TerrainRoot is still
+            // null.
+            if (treePools == null)
+            {
+                treePools = new ObjectPool<GameObject>?[landscapeData.terrainData.treeAssets.Length];
+                Transform terrainRoot = terrainGenerator.TerrainRoot;
+                LandscapeAsset[] treePrototypes = landscapeData.terrainData.treeAssets;
+
+                for (int prototypeIndex = 0; prototypeIndex < treePools.Length; prototypeIndex++)
+                {
+                    GameObject? collider = treePrototypes[prototypeIndex].Collider;
+
+                    if (collider == null)
+                        continue;
+
+                    treePools[prototypeIndex] = new ObjectPool<GameObject>(
+                        createFunc: () => Object.Instantiate(collider, terrainRoot),
+                        actionOnDestroy: static instance => Object.Destroy(instance));
+                }
+            }
 
             ApplyCharacterPositionsQuery(World);
 
@@ -189,10 +205,10 @@ namespace DCL.Landscape.Systems
                             parcel.y * landscapeData.terrainData.parcelSize);
 
                         foreach (TreeInstance tree in parcelData.Trees)
-                            treePools[tree.PrototypeIndex].Release(tree.GameObject);
+                            treePools![tree.PrototypeIndex]!.Release(tree.GameObject);
 
                         parcelData.Trees.Clear();
-                        GenerateTrees(parcel, parcelData);
+                        InstantiateTrees(int2(parcel.x, parcel.y), parcelData);
                     }
                 }
                 else
@@ -214,7 +230,7 @@ namespace DCL.Landscape.Systems
                     dirtyParcels.Add(parcelData);
                     usedParcels.Add(parcelData);
 
-                    GenerateTrees(parcel, parcelData);
+                    InstantiateTrees(int2(parcel.x, parcel.y), parcelData);
                 }
             }
         }
@@ -277,40 +293,30 @@ namespace DCL.Landscape.Systems
             return mesh;
         }
 
-        private static void GenerateTrees(Vector2Int parcel, ParcelData parcelData)
+        private void InstantiateTrees(int2 parcel, ParcelData parcelData)
         {
-            /*if (terrainData.IsOccupied(parcel))
-                return;
+            var instances = terrainGenerator.GetTreeInstances(parcel);
 
-            Random random = terrainData.GetRandom(parcel);
-            ReadOnlySpan<Terrain.TreeInstance> instances = terrainData.GetTreeInstances(parcel);
-
-            for (int i = 0; i < instances.Length; i++)
+            foreach (var instance in instances)
             {
-                if (!terrainData.TryGenerateTree(parcel, instances[i], out float3 position,
-                        out float rotationY, out float scaleXZ, out float scaleY))
-                {
-                    continue;
-                }
+                var pool = treePools![instance.PrototypeIndex];
 
-                Terrain.TreeInstance instance = instances[i];
-                PrefabInstancePool pool = treePools[instance.PrototypeIndex];
-
-                if (!pool.IsCreated)
+                if (pool == null || !terrainGenerator.GetTreeTransform(parcel, instance,
+                        out Vector3 position, out Quaternion rotation, out Vector3 scale))
                     continue;
 
                 var tree = new TreeInstance()
                 {
-                    prototypeIndex = instance.PrototypeIndex,
-                    gameObject = pool.Get()
+                    PrototypeIndex = instance.PrototypeIndex,
+                    GameObject = pool.Get()
                 };
 
-                var t = tree.gameObject.transform;
-                t.SetPositionAndRotation(position, Quaternion.Euler(0f, rotationY, 0f));
-                t.localScale = new Vector3(scaleXZ, scaleY, scaleXZ);
+                Transform treeTransform = tree.GameObject.transform;
+                treeTransform.SetPositionAndRotation(position, rotation);
+                treeTransform.localScale = scale;
 
                 parcelData.Trees.Add(tree);
-            }*/
+            }
         }
 
         private RectInt PositionToParcelRect(float2 center, float radius)
@@ -319,6 +325,15 @@ namespace DCL.Landscape.Systems
             int2 min = (int2)floor((center - radius) * invParcelSize);
             int2 size = (int2)ceil((center + radius) * invParcelSize) - min;
             return new RectInt(min.x, min.y, size.x, size.y);
+        }
+
+        private static void SetParcelsEnabled(List<ParcelData> parcels, bool value)
+        {
+            foreach (ParcelData parcel in parcels)
+            {
+                parcel.Collider.enabled = value;
+                // TODO: Enable/disable trees.
+            }
         }
 
         private sealed class ParcelData
