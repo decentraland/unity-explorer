@@ -1,6 +1,6 @@
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
-using System;
+using DCL.Settings.Utils;
 using UnityEngine;
 
 namespace DCL.Settings.ModuleControllers
@@ -22,17 +22,7 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetWindowModeSettings(int index)
         {
-            Screen.fullScreenMode = index switch
-                                    {
-                                        0 => // Windowed
-                                            FullScreenMode.Windowed,
-                                        1 => // Fullscreen Borderless
-                                            FullScreenMode.FullScreenWindow,
-                                        2 => // Fullscreen
-                                            FullScreenMode.ExclusiveFullScreen,
-                                        _ => throw new ArgumentOutOfRangeException(),
-                                    };
-
+            Screen.fullScreenMode = FullscreenModeUtils.Modes[index];
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE, index, save: true);
         }
 
