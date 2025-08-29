@@ -25,19 +25,12 @@ namespace DCL.RealmNavigation
     {
         private static readonly TimeSpan LIVEKIT_TIMEOUT = TimeSpan.FromSeconds(10f);
 
-        private MainScreenFallbackRealmNavigator? mainScreenFallbackRealmNavigator;
-
         /// <summary>
-        ///     Realm Navigator without main-screen fallback functionality
+        ///     Realm Navigator with core teleport functionality
         /// </summary>
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
 
         private DebugWidgetBuilder? widgetBuilder { get; init; }
-
-        public IRealmNavigator WithMainScreenFallback(IUserInAppInitializationFlow userInAppInitializationFlow, Entity playerEntity, World globalWorld)
-        {
-            return mainScreenFallbackRealmNavigator ??= new MainScreenFallbackRealmNavigator(RealmNavigator, userInAppInitializationFlow, playerEntity, globalWorld);
-        }
 
         public RealmNavigationDebugPlugin CreatePlugin() =>
             new (widgetBuilder);

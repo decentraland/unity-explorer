@@ -22,6 +22,8 @@ namespace DCL.RealmNavigation
     public class RealmNavigator : IRealmNavigator
     {
         private const int MAX_REALM_CHANGE_RETRIES = 3;
+        private const string TELEPORT_NOT_ALLOWED_LOCAL_SCENE =
+            "Teleport is not allowed in local scene development mode";
 
         public event Action<Vector2Int>? NavigationExecuted;
 
@@ -85,6 +87,9 @@ namespace DCL.RealmNavigation
         {
             if (ct.IsCancellationRequested)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.ChangeCancelled);
+
+            if (realmController.RealmData.IsLocalSceneDevelopment)
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.LocalSceneDevelopmentBlocked);
 
             if (CheckIsNewRealm(realm) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.SameRealm);
@@ -191,6 +196,9 @@ namespace DCL.RealmNavigation
         {
             if (ct.IsCancellationRequested)
                 return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+
+            if (!isLocal && realmController.RealmData.IsLocalSceneDevelopment)
+                return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, TELEPORT_NOT_ALLOWED_LOCAL_SCENE);
 
             Result parcelCheckResult = landscape.IsParcelInsideTerrain(parcel, isLocal);
 
