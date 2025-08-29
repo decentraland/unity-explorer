@@ -130,6 +130,8 @@ namespace DCL.Landscape.Systems
                     0, MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontRecalculateBounds);
             }
 
+            vertices.Dispose();
+
             var meshes = new NativeArray<int>(dirtyParcels.Count, Allocator.TempJob,
                 NativeArrayOptions.UninitializedMemory);
 
