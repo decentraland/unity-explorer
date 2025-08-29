@@ -1860,6 +1860,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ComplianceErrorModal
       objectReference: {fileID: 0}
+    - target: {fileID: 3560216253798439992, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5032941443116173388, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
