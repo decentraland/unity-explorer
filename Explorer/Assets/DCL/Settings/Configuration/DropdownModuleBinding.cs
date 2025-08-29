@@ -1,4 +1,6 @@
-﻿using DCL.Friends.UserBlocking;
+﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
@@ -12,7 +14,6 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Configuration
 {
@@ -37,7 +38,7 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(
+        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -52,9 +53,10 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus = null)
+            IAssetsProvisioner  assetsProvisioner,
+            WorldVolumeMacBus worldVolumeMacBus)
         {
-            var viewInstance = Object.Instantiate(View, parent);
+            var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch

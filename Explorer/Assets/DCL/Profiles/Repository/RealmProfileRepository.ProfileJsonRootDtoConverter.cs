@@ -2,11 +2,13 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Scripting;
 
 namespace DCL.Profiles
 {
     public partial class RealmProfileRepository
     {
+        [Preserve]
         private class ProfileJsonRootDtoConverter : JsonConverter<GetProfileJsonRootDto>
         {
             public override void WriteJson(JsonWriter writer, GetProfileJsonRootDto? value, JsonSerializer serializer)

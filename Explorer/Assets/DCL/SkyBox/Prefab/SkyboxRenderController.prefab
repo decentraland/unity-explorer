@@ -44,7 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d23990dbd3b45aa9c6b0068d5998ee9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
   directionalLight: {fileID: 0}
   lightAnimation: {fileID: 7400000, guid: 3b17a8a5ab9ee104899eb22c70935c38, type: 2}
   directionalColorRamp:

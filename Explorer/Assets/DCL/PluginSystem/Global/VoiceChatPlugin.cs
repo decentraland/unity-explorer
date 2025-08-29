@@ -43,6 +43,7 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<PlayerEntryView> playerEntry;
         private ProvidedAsset<AudioClipConfig> muteMicrophoneAudio;
         private ProvidedAsset<AudioClipConfig> unmuteMicrophoneAudio;
+
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatTrackManager? trackManager;
         private VoiceChatRoomManager? roomManager;
@@ -155,12 +156,21 @@ namespace DCL.PluginSystem.Global
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: SerializeField] public VoiceChatConfigurationsReference VoiceChatConfigurations { get; private set; }
+            [field: SerializeField] public VoiceChatSettingsAsset VoiceChatSettings { get; private set; }
+            [field: SerializeField] public MicrophoneAudioFilterReference MicrophoneAudioFilter { get; private set; }
+            [field: SerializeField] public CombinedAudioSourceReference CombinedAudioSource { get; private set; }
+            [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; }
 
             [Serializable]
-            public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
+            public class CombinedAudioSourceReference : ComponentReference<VoiceChatCombinedStreamsAudioSource>
             {
-                public VoiceChatConfigurationsReference(string guid) : base(guid) { }
+                public CombinedAudioSourceReference(string guid) : base(guid) { }
+            }
+
+            [Serializable]
+            public class MicrophoneAudioFilterReference : ComponentReference<VoiceChatMicrophoneAudioFilter>
+            {
+                public MicrophoneAudioFilterReference(string guid) : base(guid) { }
             }
         }
     }
