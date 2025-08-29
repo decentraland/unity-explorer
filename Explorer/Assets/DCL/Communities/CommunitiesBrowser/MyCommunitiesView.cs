@@ -129,7 +129,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCommunitiesBrowserState(CommunitiesBrowserStateService communitiesBrowserStateService)
         {
-            throw new NotImplementedException();
+            browserStateService = communitiesBrowserStateService;
         }
     }
 }
