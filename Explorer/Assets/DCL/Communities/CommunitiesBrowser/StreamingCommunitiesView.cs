@@ -63,45 +63,6 @@ namespace DCL.Communities.CommunitiesBrowser
             streamingSection.SetActive(!isEmpty);
         }
 
-        public void UpdateJoinedCommunity(string communityId, bool isJoined, bool isSuccess)
-        {
-            if (isSuccess)
-            {
-                CommunityData? resultCommunityData = GetStreamingCommunityById(communityId);
-                resultCommunityData?.SetAsJoined(isJoined);
-                RefreshCommunityCardInGrid(communityId);
-            }
-        }
-
-        public void RemoveOneMemberFromCounter(string communityId)
-        {
-            CommunityData? resultCommunityData = GetStreamingCommunityById(communityId);
-            resultCommunityData?.DecreaseMembersCount();
-            RefreshCommunityCardInGrid(communityId);
-        }
-
-        private void RefreshCommunityCardInGrid(string communityId)
-        {
-            for (var i = 0; i < currentStreamingResults.Count; i++)
-            {
-                CommunityData communityData = currentStreamingResults[i];
-                if (communityData.id != communityId) continue;
-                streamingLoopGrid.RefreshItemByItemIndex(i);
-                break;
-            }
-        }
-
-        private CommunityData? GetStreamingCommunityById(string communityId)
-        {
-            foreach (CommunityData communityData in currentStreamingResults)
-            {
-                if (communityData.id == communityId)
-                    return communityData;
-            }
-
-            return null;
-        }
-
         private LoopGridViewItem SetupStreamingCommunityResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             CommunityData communityData = currentStreamingResults[index];
