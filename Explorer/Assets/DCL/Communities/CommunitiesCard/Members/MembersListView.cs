@@ -89,7 +89,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private GenericContextMenuElement? banUserContextMenuElement;
         private GenericContextMenuElement? communityOptionsSeparatorContextMenuElement;
         private GetCommunityResponse.CommunityData? communityData;
-        private CancellationToken cancellationToken;
+        private CancellationTokenSource contextMenuCts = new ();
         private UniTask panelTask;
         private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
 
@@ -132,6 +132,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void OnContextMenuButtonClicked(ICommunityMemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
         {
             lastClickedProfileCtx = profile;
+            contextMenuCts = contextMenuCts.SafeRestart();
             UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
             // Disable all buttons and leave only the unfriend one, as part of the UI/UX decision. The old passed value was:
             // status == UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED ? UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED : status
@@ -156,7 +157,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,
-                           closeTask: panelTask), cancellationToken);
+                           closeTask: panelTask), contextMenuCts.Token);
         }
 
         private void ShowKickConfirmationDialog(ICommunityMemberData profile, string communityName)
@@ -250,10 +251,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.notificationsBus = notificationsBusController;
         }
 
-        public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask, CancellationToken ct)
+        public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask)
         {
             communityData = community;
-            cancellationToken = ct;
             this.panelTask = panelTask;
 
             foreach (var sectionMapping in memberListSectionsElements)

@@ -517,7 +517,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             communityData = community;
             view.SetSectionButtonsActive(communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
             panelLifecycleTask = new UniTaskCompletionSource();
-            view.SetCommunityData(community, panelLifecycleTask!.Task, ct);
+            view.SetCommunityData(community, panelLifecycleTask!.Task);
 
             FetchNewDataAsync(ct).Forget();
 
