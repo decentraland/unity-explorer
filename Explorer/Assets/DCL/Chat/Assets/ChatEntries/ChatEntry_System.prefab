@@ -141,6 +141,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7088210785754902257, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: aspectRatioFitter
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7088210785754902257, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: <skeletonLoadingView>k__BackingField
       value: 
       objectReference: {fileID: 0}

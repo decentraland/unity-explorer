@@ -1,7 +1,6 @@
-
 using System;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
     public class GetUserCommunitiesResponse
@@ -25,6 +24,10 @@ namespace DCL.Communities
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
+
+            public string inviteOrRequestId;
+            public InviteRequestAction pendingActionType;
+            public int requestsReceived;
 
             public void SetAsJoined(bool isJoined)
             {
@@ -58,5 +61,3 @@ namespace DCL.Communities
         public int total;
     }
 }
-
-

@@ -33,5 +33,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         [field: SerializeField] public Sprite BanUserSprite { get; private set; } = null!;
         [field: SerializeField] public string BanUserText { get; private set; } = "Ban";
+
+        [field: SerializeField] public Sprite InviteToCommunitySprite { get; private set; } = null!;
+        [field: SerializeField] public string InviteToCommunityText { get; private set; } = "Invite to Community";
     }
 }

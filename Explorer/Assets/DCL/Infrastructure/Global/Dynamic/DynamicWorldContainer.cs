@@ -20,6 +20,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EventsApi;
@@ -630,7 +631,10 @@ namespace Global.Dynamic
                 friendOnlineStatusCacheProxy,
                 profileRepository,
                 sharedSpaceManager,
-                includeVoiceChat);
+                includeVoiceChat,
+                includeCommunities,
+                communitiesDataProvider,
+                notificationsBusController);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -878,13 +882,15 @@ namespace Global.Dynamic
                     profileChangesBus,
                     includeFriends,
                     includeUserBlocking,
+                    includeCommunities,
                     isNameEditorEnabled,
                     includeVoiceChat,
                     chatEventBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper,
                     voiceChatCallStatusService,
-                    galleryEventBus
+                    galleryEventBus,
+                    communitiesDataProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -1033,7 +1039,8 @@ namespace Global.Dynamic
                     notificationsBusController,
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
-                    identityCache));
+                    identityCache,
+                    notificationsBusController));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

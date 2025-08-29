@@ -8,6 +8,8 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;

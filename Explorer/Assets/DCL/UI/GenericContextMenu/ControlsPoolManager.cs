@@ -85,7 +85,11 @@ namespace DCL.UI.GenericContextMenu
             ObjectPool<T> pool = new (
                 createFunc: createFunc,
                 actionOnGet: component => component.gameObject.SetActive(true),
-                actionOnRelease: component => component?.gameObject.SetActive(false),
+                actionOnRelease: component =>
+                {
+                    component?.gameObject.SetActive(false);
+                    component?.transform.SetParent(controlsParent);
+                },
                 actionOnDestroy: component => Object.Destroy(component.gameObject));
 
             Type type = typeof(T);
@@ -220,13 +224,17 @@ namespace DCL.UI.GenericContextMenu
             return view;
         }
 
+        public void ReleaseControl<T>(T control) where T : GenericContextMenuComponentBase
+        {
+            poolRegistry[control.GetType()].ReleaseAction.Invoke(control);
+            control.UnregisterListeners();
+            currentControls.Remove(control);
+        }
+
         public void ReleaseAllCurrentControls()
         {
-            foreach (GenericContextMenuComponentBase control in currentControls)
-            {
-                control.UnregisterListeners();
-                poolRegistry[control.GetType()].ReleaseAction.Invoke(control);
-            }
+            while(currentControls.Count > 0)
+                ReleaseControl(currentControls[0]);
 
             foreach (var containerView in currentContainers)
                 poolRegistry[typeof(ControlsContainerView)].ReleaseAction.Invoke(containerView);

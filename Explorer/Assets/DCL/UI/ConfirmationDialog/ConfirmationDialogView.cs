@@ -19,7 +19,7 @@ namespace DCL.UI.ConfirmationDialog
         [field: SerializeField] private TMP_Text confirmButtonText { get; set; } = null!;
         [field: SerializeField] private TMP_Text mainText { get; set; } = null!;
         [field: SerializeField] private TMP_Text subText { get; set; } = null!;
-        [field: SerializeField] private Image mainImage { get; set; } = null!;
+        [field: SerializeField] private ImageView mainImage { get; set; } = null!;
         [field: SerializeField] private GameObject quitImage { get; set; } = null!;
         [field: SerializeField] private Image rimImage { get; set; } = null!;
         [field: SerializeField] private ProfilePictureView profilePictureView { get; set; } = null!;
@@ -47,7 +47,7 @@ namespace DCL.UI.ConfirmationDialog
             confirmButtonText.text = dialogData.ConfirmButtonText;
             rimImage.enabled = dialogData.ShowImageRim;
             quitImage.SetActive(dialogData.ShowQuitImage);
-            mainImage.sprite = dialogData.Image;
+            mainImage.SetImage(dialogData.Image, true);
 
             bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.Address);
 

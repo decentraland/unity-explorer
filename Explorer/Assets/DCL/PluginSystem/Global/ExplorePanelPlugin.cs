@@ -42,6 +42,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
 using DCL.FeatureFlags;

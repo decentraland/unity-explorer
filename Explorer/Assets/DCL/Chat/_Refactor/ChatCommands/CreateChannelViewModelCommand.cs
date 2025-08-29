@@ -4,6 +4,7 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
@@ -54,7 +55,7 @@ namespace DCL.Chat.ChatCommands
                     }
                 }
             }
-            
+
             BaseChannelViewModel viewModel = channel.ChannelType switch
             {
                 ChatChannel.ChatChannelType.NEARBY =>
