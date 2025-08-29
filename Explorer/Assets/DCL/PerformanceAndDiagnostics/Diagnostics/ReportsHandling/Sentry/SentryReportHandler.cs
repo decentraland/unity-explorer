@@ -35,7 +35,9 @@ namespace DCL.Diagnostics.Sentry
 
             if (!IsValidConfiguration(options))
             {
+#if !UNITY_EDITOR
                 Debug.LogWarning($"Cannot initialize Sentry due invalid configuration: {options.Dsn}");
+#endif
                 return;
             }
 
