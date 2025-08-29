@@ -22,7 +22,6 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -51,7 +50,6 @@ using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
@@ -63,7 +61,6 @@ using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
 using DCL.NotificationsBusController.NotificationsBus;
-using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
@@ -113,13 +110,11 @@ using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
 using Global.Versioning;
-using DCL.Chat.Services;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
-using UnityEngine.UIElements;
 using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
@@ -911,7 +906,6 @@ namespace Global.Dynamic
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
                 globalPlugins.Add(
                     new VoiceChatPlugin(
-                        assetsProvisioner,
                         roomHub,
                         mainUIView,
                         voiceChatContainer,
@@ -921,7 +915,8 @@ namespace Global.Dynamic
                         playerEntity,
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
-                        playerParcelTracker
+                        playerParcelTracker,
+                        assetsProvisioner
                     )
                 );
 

@@ -376,7 +376,9 @@ namespace DCL.PluginSystem.Global
                 sceneLoadingLimit,
                 settings.VoiceChatSettings,
                 worldVolumeMacBus,
-                upscalingController);
+                upscalingController,
+                assetsProvisioner
+                );
 
             await settingsController.InitializeAsync();
 
