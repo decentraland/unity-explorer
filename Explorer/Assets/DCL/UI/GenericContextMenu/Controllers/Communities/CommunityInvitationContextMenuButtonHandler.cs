@@ -26,14 +26,15 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
         private const string USER_POTENTIAL_INVITATIONS_FAILED_TEXT = "Error loading 'Invite to Community' menu option. Reopen menu to try again.";
         private const int MAXIMUM_HEIGHT_OF_SUBMENU = 600;
         private const int MAXIMUM_WIDTH_OF_SUBMENU = 300;
-        
-        private readonly RectOffset scrollViewPaddings = new RectOffset();
+        private const float SUBMENU_ANCHOR_PADDING = 20;
+
+        private readonly RectOffset scrollViewPaddings = new ();
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INotificationsBusController notificationsBus;
         private readonly int subMenuItemSpacing;
         private string userWalletId;
 
-        private readonly List<string> lastCommunityNames = new List<string>();
+        private readonly List<string> lastCommunityNames = new ();
         private GetInvitableCommunityListResponse.InvitableCommunityData[] lastCommunityData;
         private CancellationTokenSource invitationActionCts;
 
@@ -64,7 +65,8 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
                                                                         buttonIcon,
                                                                         new GenericContextMenuParameter.GenericContextMenu(MAXIMUM_WIDTH_OF_SUBMENU,
                                                                                          elementsSpacing: contextMenu.elementsSpacing,
-                                                                                         offsetFromTarget: contextMenu.offsetFromTarget),
+                                                                                         offsetFromTarget: new Vector2(0, contextMenu.offsetFromTarget.y)),
+                                                                        anchorPadding: SUBMENU_ANCHOR_PADDING,
                                                                         asyncControlSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync,
                                                                         asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync));
         }
