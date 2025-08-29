@@ -514,7 +514,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 519337184439980220, guid: bfb71295165bae94f97b845a9c1d4dad, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 280
+      value: 324
       objectReference: {fileID: 0}
     - target: {fileID: 519337184439980220, guid: bfb71295165bae94f97b845a9c1d4dad, type: 3}
       propertyPath: m_LocalPosition.x
@@ -567,6 +567,10 @@ PrefabInstance:
     - target: {fileID: 6648269962382618181, guid: bfb71295165bae94f97b845a9c1d4dad, type: 3}
       propertyPath: m_Name
       value: ModerationAPIUnavailableModal
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648269962382618181, guid: bfb71295165bae94f97b845a9c1d4dad, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1934,7 +1938,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7646555769306817217, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 444.37
+      value: 490.37
       objectReference: {fileID: 0}
     - target: {fileID: 7646555769306817217, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1997,6 +2001,10 @@ PrefabInstance:
       value: 440
       objectReference: {fileID: 0}
     - target: {fileID: 7976198493423683710, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 46
+      objectReference: {fileID: 0}
+    - target: {fileID: 7976198493423683710, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -304.37
       objectReference: {fileID: 0}
@@ -2014,7 +2022,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8845450897014533149, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 304.37
+      value: 350.37
       objectReference: {fileID: 0}
     - target: {fileID: 8845450897014533149, guid: 62befeb68e1cff84792926b3409655a4, type: 3}
       propertyPath: m_AnchoredPosition.x
