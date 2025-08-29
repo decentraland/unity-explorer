@@ -52,37 +52,75 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
 
     int2 corner0 = (int2)(visibleParcels[groupId.x] * 16.0f);
     half2 parcelGroupingArea = half2(hash_int_to_float(corner0), hash_int_to_float(-corner0));
-    int2 gridPosition = int2((int)((localId.x * 4) % 16), (int)(localId.x / 16) * 4);
-    half2 fGridPosition = gridPosition * 0.25f;
+    int2 gridPosition = int2((int)(localId.x % 8), (int)(localId.x / 8) * 2.0f);
 
-    half random_X = (hash_int_to_float(corner0 + gridPosition) * 2.0f) + fGridPosition.x;
-    half random_Z = (hash_int_to_float(-corner0 + gridPosition) * 2.0f) + fGridPosition.y;
+    float2 worldSpaceCoord_ParcelBlock = corner0 + gridPosition;
+    float2 UV_coords_ParcelBlock = (worldSpaceCoord_ParcelBlock + 4096.0f) / 8192.0f;
 
-    float2 worldSpaceCoord = corner0 + float2(random_X, random_Z);
-    float2 UV_coords = (worldSpaceCoord + 4096.0f) / 8192.0f;
+    // Check the texture
+    half4 terrainColour = SplatmapMix(UV_coords_ParcelBlock * 8.0f,
+        TerrainBlendTexture, samplerTerrainBlendTexture,
+        GroundDetailTexture, samplerGroundDetailTexture,
+        SandDetailTexture, samplerSandDetailTexture, 1);
 
     // Check occupancy
     float fDistanceFieldScale = 16;
-
-    // Get Height
-    float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, HeightMapTexturePointClampSampler, OccupancyTexture, samplerOccupancyTexture);
-
-    // Check the texture
-    half4 terrainColour = SplatmapMix(UV_coords * 8.0f, TerrainBlendTexture, samplerTerrainBlendTexture,
-        GroundDetailTexture, samplerGroundDetailTexture,
-        SandDetailTexture, samplerSandDetailTexture);
-
+    
     PerInst perInst;
-    float fScale = 1.0f + hash_int_to_float(corner0 + gridPosition);
-    perInst.position = float4(random_X, height, random_Z, fScale);
+    
+    if (terrainColour.g < 0.1f)
+    {
+        half random_X_flower0 = (hash_int_to_float(corner0 + gridPosition) * 2.0f);
+        half random_Z_flower0 = (hash_int_to_float(-corner0 + gridPosition) * 2.0f);
 
-    float3 normalWS = CalculateNormalFromHeightmap(UV_coords, fDistanceFieldScale,  HeightMapTexture, samplerHeightMapTexture, OccupancyTexture, samplerOccupancyTexture);
-    perInst.quatRotation = CreateGrassRotationQuaternion(normalWS, hash_int_to_float(corner0 + gridPosition) * 2.0f);
-    perInst.colour = float4(1.0, 1.0, 1.0, 1.0);
+        half random_X_flower1 = random_Z_flower0;
+        half random_Z_flower1 = random_X_flower0;
 
-    InterlockedAdd(drawArgs0[1], 1);
-    InterlockedAdd(drawArgs1[1], 1);
-    flower0Instances[id.x] = perInst;
-    perInst.position.xyz += float3(parcelGroupingArea.x, 0.0f,parcelGroupingArea.y);
-    flower1Instances[id.x] = perInst;
+        random_X_flower0 += gridPosition.x;
+        random_Z_flower0 += gridPosition.y;
+        random_X_flower1 += gridPosition.x; 
+        random_Z_flower1 += gridPosition.y; 
+        
+        // Get Height
+        float2 UV_coords_0 = (corner0 + float2(random_X_flower0, random_Z_flower0) + 4096.0f) / 8192.0f;
+        float height_flower0 = CalculateHeightFromHeightmap(UV_coords_0, fDistanceFieldScale,
+            HeightMapTexture, HeightMapTexturePointClampSampler,
+            OccupancyTexture, samplerOccupancyTexture);
+        float2 UV_coords_1 = (corner0 + float2(random_X_flower1, random_Z_flower1) + 4096.0f) / 8192.0f;
+        float height_flower1 = CalculateHeightFromHeightmap(UV_coords_1, fDistanceFieldScale,
+            HeightMapTexture, HeightMapTexturePointClampSampler,
+            OccupancyTexture, samplerOccupancyTexture);
+    
+        float fScale0 = 1.0f + hash_int_to_float(UV_coords_0);
+        float fScale1 = 1.0f + hash_int_to_float(UV_coords_1);
+        
+        float3 normalWS_0 = CalculateNormalFromHeightmap(UV_coords_0, fDistanceFieldScale,
+            HeightMapTexture, samplerHeightMapTexture,
+            OccupancyTexture, samplerOccupancyTexture);
+        float3 normalWS_1 = CalculateNormalFromHeightmap(UV_coords_1, fDistanceFieldScale,
+            HeightMapTexture, samplerHeightMapTexture,
+            OccupancyTexture, samplerOccupancyTexture);
+        
+        InterlockedAdd(drawArgs0[1], 1);
+        perInst.position = float4(random_X_flower0, height_flower0, random_Z_flower0, fScale0);
+        perInst.quatRotation = CreateGrassRotationQuaternion(normalWS_0, hash_int_to_float(corner0 + gridPosition) * 2.0f);
+        perInst.colour = float4(1.0, 1.0, 1.0, 1.0);
+        flower0Instances[id.x] = perInst;
+        
+        InterlockedAdd(drawArgs1[1], 1);
+        perInst.position = float4(random_X_flower1, height_flower1, random_Z_flower1, fScale1);
+        perInst.quatRotation = CreateGrassRotationQuaternion(normalWS_1, hash_int_to_float(corner0 + gridPosition) * 2.0f);
+        perInst.colour = float4(1.0, 1.0, 1.0, 1.0);
+        flower1Instances[id.x] = perInst;
+    }
+    else
+    {
+        perInst.position = float4(0.0f, -5000.0f, 0.0f, 0.0f);
+        perInst.quatRotation = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        perInst.colour = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        InterlockedAdd(drawArgs0[1], 1);
+        InterlockedAdd(drawArgs1[1], 1);
+        flower0Instances[id.x] = perInst;
+        flower1Instances[id.x] = perInst;
+    }
 }
