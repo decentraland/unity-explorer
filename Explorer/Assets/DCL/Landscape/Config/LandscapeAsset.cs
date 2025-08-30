@@ -6,6 +6,7 @@ namespace DCL.Landscape.Config
     public class LandscapeAsset : ScriptableObject
     {
         public GameObject asset;
+        [field: SerializeField] public GameObject? Collider { get; set; }
 
         /// <summary>
         ///     This radius is used by the placement system, to avoid overlapping with nearby owned scenes

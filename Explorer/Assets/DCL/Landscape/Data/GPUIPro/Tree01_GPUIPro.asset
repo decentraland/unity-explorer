@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
-  m_Name: Tree01
+  m_Name: Tree01_GPUIPro
   m_EditorClassIdentifier: 
-  asset: {fileID: 2214953459268991292, guid: 46ba147d6eb053147b59c469dd34425f, type: 3}
+  asset: {fileID: 2214953459268991292, guid: 728addc693ee92a4c8df66e4c0192c3f, type: 3}
   <Collider>k__BackingField: {fileID: 5394014524136309837, guid: ebf89d35de9c4264596abab1c2b1780d, type: 3}
   noiseData: {fileID: 11400000, guid: 0429db70c8952b8439d3fc344f503cc9, type: 2}
   randomization:

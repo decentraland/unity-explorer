@@ -10,25 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
-  m_Name: Tree01
+  m_Name: Stone03_GPUIPro
   m_EditorClassIdentifier: 
-  asset: {fileID: 2214953459268991292, guid: 46ba147d6eb053147b59c469dd34425f, type: 3}
-  <Collider>k__BackingField: {fileID: 5394014524136309837, guid: ebf89d35de9c4264596abab1c2b1780d, type: 3}
-  noiseData: {fileID: 11400000, guid: 0429db70c8952b8439d3fc344f503cc9, type: 2}
+  asset: {fileID: 7032699715843421857, guid: 8c65518321ca2c3498f55c47edf4b3e6, type: 3}
+  <Collider>k__BackingField: {fileID: 635878743232317063, guid: 82938826505b4aa438dd46a81b3ca872, type: 3}
+  noiseData: {fileID: 11400000, guid: bd5d7320421871c4ea3c07484a9a00df, type: 2}
   randomization:
-    randomRotationX: {x: -5, y: 5}
+    randomRotationX: {x: 0, y: 360}
     randomRotationY: {x: 0, y: 360}
-    randomRotationZ: {x: -5, y: 5}
+    randomRotationZ: {x: 0, y: 360}
     proportionalScale: 1
-    randomScale: {x: 0.75, y: 1.25}
+    randomScale: {x: 1, y: 4}
     randomScaleX: {x: 0, y: 0}
     randomScaleY: {x: 0, y: 0}
     randomScaleZ: {x: 0, y: 0}
-    positionOffsetX: {x: 0, y: 0}
-    positionOffsetY: {x: -0.1, y: -0.2}
-    positionOffsetZ: {x: 0, y: 0}
-  radius: 10
-  secondaryRadius: 2
+    positionOffsetX: {x: -0.5, y: 0.5}
+    positionOffsetY: {x: 0, y: 0}
+    positionOffsetZ: {x: -0.5, y: 0.5}
+  radius: 1
+  secondaryRadius: 0
   TerrainDetailSettings:
     alignToGround: 100
     positionJitter: 50

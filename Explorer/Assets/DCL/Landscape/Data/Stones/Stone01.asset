@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Stone01
   m_EditorClassIdentifier: 
   asset: {fileID: 7088211124069903763, guid: a579994199f719143991a656821e99ba, type: 3}
+  <Collider>k__BackingField: {fileID: 8174627147706388932, guid: f36abe9277848f34dbfa03205aa5cf28, type: 3}
   noiseData: {fileID: 11400000, guid: c5dbc7b58f6967b45ac9c61fbd14666e, type: 2}
   randomization:
     randomRotationX: {x: 0, y: 360}

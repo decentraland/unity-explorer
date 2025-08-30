@@ -18,7 +18,7 @@ MonoBehaviour:
   mapChunk: {fileID: 1448041327893328029, guid: 63b41593f2fa6c04d8772db2b2b61589, type: 3}
   terrainData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
   worldsTerrainData: {fileID: 11400000, guid: 073a968567df25b4988ecaf238256181, type: 2}
-  gpuiAssets: {fileID: 11400000, guid: 4177f048c26079f4296ecc8377c8d7fb, type: 2}
+  gpuiAssets: {fileID: 11400000, guid: 31fff183471b657468eb7aef41a49a38, type: 2}
   detailDistanceValue: 1000
   <GroundMaterial>k__BackingField: {fileID: 2100000, guid: c882e23b0b2b83c45b15f00494fd796c, type: 2}
   <GroundInstanceCapacity>k__BackingField: 80
