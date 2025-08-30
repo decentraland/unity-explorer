@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld, globalTransformPool, sharedDependencies.SceneData, launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment));
-            UpdateAvatarShapeInterpolateMovementSystem.InjectToWorld(ref builder, globalWorld, sharedDependencies.SceneData.SceneShortInfo.BaseParcel);
+            UpdateAvatarShapeInterpolateMovementSystem.InjectToWorld(ref builder, globalWorld);
         }
     }
 }

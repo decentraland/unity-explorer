@@ -38,11 +38,9 @@ namespace ECS.Unity.Transforms.Systems
         [Query]
         private void UpdateTransform(ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
-            if (sdkTransform.IsDirty)
-            {
-                transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
-                sdkTransform.IsDirty = false;
-            }
+            if (!sdkTransform.IsDirty) return;
+
+            transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
         }
     }
 }
