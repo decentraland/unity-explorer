@@ -115,7 +115,7 @@ namespace DCL.PluginSystem.Global
             this.galleryEventBus = galleryEventBus;
             this.notificationsBus = notificationsBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
-            notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
+            notificationHandler = new NotificationHandler(notificationsBusController, realmNavigator);
         }
 
         public void Dispose()
