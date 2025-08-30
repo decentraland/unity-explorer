@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using DG.Tweening;
+using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -22,6 +25,17 @@ namespace DCL.CharacterPreview
 
             OnChangePreviewCategory(AvatarWearableCategoryEnum.Body);
         }
+
+        public void Dispose()
+        {
+            characterPreviewInputEventBus.OnDraggingEvent -= OnDrag;
+            characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
+            characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
+            characterPreviewAvatarContainer.Dispose();
+        }
+
+        public void ResetAvatarMovement() =>
+            characterPreviewAvatarContainer.ResetAvatarMovement();
 
         private void OnChangePreviewCategory(AvatarWearableCategoryEnum categoryEnum)
         {
@@ -65,20 +79,20 @@ namespace DCL.CharacterPreview
                 characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
 
-            characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView = newFieldOfView;
-            characterPreviewAvatarContainer.StopCameraTween();
+            characterPreviewAvatarContainer.StopFOVTween();
+            characterPreviewAvatarContainer.SetFOVTween(newFieldOfView, cameraSettings.fieldOfViewDuration, cameraSettings.fieldOfViewCurve);
         }
 
         private void OnDrag(PointerEventData pointerEventData)
         {
             if (pointerEventData.button == PointerEventData.InputButton.Middle) return;
 
-            characterPreviewAvatarContainer.StopCameraTween();
-
             switch (pointerEventData.button)
             {
                 case PointerEventData.InputButton.Right:
                 {
+                    characterPreviewAvatarContainer.StopFOVTween();
+
                     if (!cameraSettings.dragEnabled) return;
 
                     if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
@@ -100,24 +114,32 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    Vector3 rotation = characterPreviewAvatarContainer.rotationTarget.rotation.eulerAngles;
-                    float rotationModifier = Time.deltaTime * cameraSettings.rotationModifier;
+                    float rotationModifier = cameraSettings.rotationModifier;
+                    float inertia = cameraSettings.rotationInertia;
+                    Ease curve = cameraSettings.rotationInertiaCurve;
+                    float angularVelocity;
 
-                    rotation.y -= pointerEventData.delta.x * rotationModifier;
-                    var quaternion = Quaternion.Euler(rotation);
+                    if (inertia <= 0f)
+                    {
+                        angularVelocity = -pointerEventData.delta.x;
+                    }
+                    else
+                    {
+                        // Frame-rate independent damping
+                        float smoothing = 1f - Mathf.Exp(-inertia * Time.deltaTime);
 
-                    characterPreviewAvatarContainer.rotationTarget.rotation = quaternion;
+                        angularVelocity = Mathf.Lerp(
+                            characterPreviewAvatarContainer.RotationAngularVelocity,
+                            -pointerEventData.delta.x,
+                            smoothing
+                        );
+                    }
+
+                    characterPreviewAvatarContainer.SetRotationTween(angularVelocity, rotationModifier, curve);
+
                     break;
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            characterPreviewInputEventBus.OnDraggingEvent -= OnDrag;
-            characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
-            characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
-            characterPreviewAvatarContainer.Dispose();
         }
     }
 }
