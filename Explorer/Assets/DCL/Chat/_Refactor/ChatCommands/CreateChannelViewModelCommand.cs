@@ -125,7 +125,7 @@ namespace DCL.Chat.ChatCommands
             {
                 viewModel.DisplayName = profile.ValidatedName;
                 viewModel.HasClaimedName = profile.HasClaimedName;
-
+                viewModel.ProfileColor.UpdateValue(profile.UserNameColor);
                 viewModel.ProfilePicture.UpdateValue(viewModel.ProfilePicture.Value.SetColor(profile.UserNameColor));
 
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
