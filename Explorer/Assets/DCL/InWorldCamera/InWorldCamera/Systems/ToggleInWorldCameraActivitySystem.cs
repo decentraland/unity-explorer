@@ -91,6 +91,14 @@ namespace DCL.InWorldCamera.Systems
                     nametagsData.showNameTags = !nametagsData.showNameTags;
             }
 
+            CameraComponent cameraComponent = camera.GetCameraComponent(World);
+            bool sceneControlsCamera = cameraComponent.Mode == CameraMode.SDKCamera;
+            if (sceneControlsCamera)
+            {
+                if (World.Has<InWorldCameraComponent>(camera)) DisableCamera(CameraMode.SDKCamera);
+                return;
+            }
+
             if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
                 ToggleCamera(request.IsEnable, request.TargetCameraMode);
         }
@@ -124,7 +132,7 @@ namespace DCL.InWorldCamera.Systems
 
         private void DisableCamera(CameraMode? targetMode)
         {
-            if(hudController.State == ControllerState.ViewHiding || hudController.State == ControllerState.ViewHidden)
+            if (hudController.State == ControllerState.ViewHiding || hudController.State == ControllerState.ViewHidden)
                 return;
 
             if (debugContainerBuilder?.Container != null)
