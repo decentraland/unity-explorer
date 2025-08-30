@@ -1,6 +1,5 @@
 ﻿using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
-using DCL.Friends.UserBlocking;
 using System.Collections.Generic;
 
 namespace DCL.Chat
@@ -170,6 +169,7 @@ namespace DCL.Chat
             public ChatChannel.ChannelId ChannelId;
         }
 #endregion
+        
 
 #region General Chat Events
         /// <summary>

@@ -3,6 +3,7 @@ using DCL.Chat.History;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
@@ -14,10 +15,21 @@ using Utility.Types;
 
 namespace DCL.Communities
 {
+    public readonly struct CommunityMetadataUpdatedEvent
+    {
+        public ChatChannel.ChannelId ChannelId { get; }
+
+        public CommunityMetadataUpdatedEvent(ChatChannel.ChannelId channelId)
+        {
+            ChannelId = channelId;
+        }
+    }
+    
     public interface ICommunityDataService
     {
         void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> communities);
         bool TryGetCommunity(ChatChannel.ChannelId channelId, out GetUserCommunitiesData.CommunityData communityData);
+        event Action<CommunityMetadataUpdatedEvent> OnCommunityMetadataUpdated;
     }
 
     public class CommunityDataService : ICommunityDataService, IDisposable
@@ -32,7 +44,8 @@ namespace DCL.Communities
         private CancellationTokenSource userAllowedToUseCommunityBusCts;
         private CancellationTokenSource communitiesServiceCts = new();
 
-        public CommunityDataService(IChatHistory chatHistory,
+        public CommunityDataService(
+            IChatHistory chatHistory,
             IMVCManager mvcManager,
             CommunitiesEventBus communitiesEventBus,
             CommunitiesDataProvider communitiesDataProvider,
@@ -47,10 +60,48 @@ namespace DCL.Communities
             communitiesDataProvider.CommunityCreated += OnCommunityCreated;
             communitiesDataProvider.CommunityDeleted += OnCommunityDeleted;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
+            communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
 
             SubscribeToCommunitiesBusEventsAsync().Forget();
         }
 
+        private void OnCommunityUpdated(string communityId)
+        {
+            // Fire-and-forget fetch; keep method sync because the provider callback is sync
+            RefreshCommunityAsync(communityId).Forget();
+        }
+
+        private async UniTaskVoid RefreshCommunityAsync(string communityId)
+        {
+            var ct = (communitiesServiceCts = communitiesServiceCts.SafeRestart()).Token;
+
+            var result = await communitiesDataProvider
+                .GetCommunityAsync(communityId, ct)
+                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested) return;
+
+            if (!result.Success)
+            {
+                ReportHub.LogWarning(ReportCategory.COMMUNITIES, $"Failed to refresh community {communityId}: {result.ErrorMessage}");
+                return;
+            }
+
+            var data = result.Value.data;
+            var channelId = ChatChannel.NewCommunityChannelId(data.id);
+
+            // Update cache atomically
+            communities[channelId] = new GetUserCommunitiesData.CommunityData
+            {
+                id = data.id, thumbnails = data.thumbnails, name = data.name, description = data.description,
+                privacy = data.privacy, role = data.role, ownerAddress = data.ownerAddress, membersCount = data.membersCount
+            };
+
+            // Notify anyone who cares (titlebar, channels list, etc.)
+            OnCommunityMetadataUpdated?.Invoke(new CommunityMetadataUpdatedEvent(channelId));
+
+            ReportHub.Log(ReportCategory.COMMUNITIES, $"Community refreshed: {data.name} ({data.id})");
+        }
 
         private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
         {
@@ -154,11 +205,14 @@ namespace DCL.Communities
             return communities.TryGetValue(channelId, out communityData);
         }
 
+        public event Action<CommunityMetadataUpdatedEvent>? OnCommunityMetadataUpdated;
+
         public void Dispose()
         {
             communitiesDataProvider.CommunityCreated -= OnCommunityCreated;
             communitiesDataProvider.CommunityDeleted -= OnCommunityDeleted;
             communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
+            communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
             
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;

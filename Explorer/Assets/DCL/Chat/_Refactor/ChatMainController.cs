@@ -107,6 +107,7 @@ namespace DCL.Chat
                 chatMemberListService,
                 chatContextMenuService,
                 commandRegistry.GetTitlebarViewModel,
+                commandRegistry.GetCommunityThumbnail,
                 commandRegistry.DeleteChatHistory);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
@@ -114,6 +115,7 @@ namespace DCL.Chat
                 chatEventBus,
                 chatHistory,
                 currentChannelService,
+                communityDataService,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.CloseChannel,
