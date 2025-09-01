@@ -17,10 +17,8 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
-using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -292,8 +290,6 @@ namespace DCL.Communities.CommunitiesCard
                 placesAPIService,
                 thumbnailLoader,
                 mvcManager,
-                viewInstance.warningNotificationView,
-                viewInstance.successNotificationView,
                 clipboard,
                 webBrowser,
                 realmNavigator,
