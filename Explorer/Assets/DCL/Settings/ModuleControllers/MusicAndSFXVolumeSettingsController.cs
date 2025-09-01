@@ -9,33 +9,19 @@ namespace DCL.Settings.ModuleControllers
 	/// </summary>
 	public class MusicAndSFXVolumeSettingsController : SettingsFeatureController
 	{
-		private readonly SettingsSliderModuleView view;
-		private readonly VolumeBus volumeBus;
 		private readonly MusicVolumeSettingsController musicVolumeSettingsController;
 		private readonly WorldSoundsVolumeSettingsController worldSoundsVolumeSettingsController;
 		
 		public MusicAndSFXVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, VolumeBus volumeBus)
 		{
-			this.view = view;
-			this.volumeBus = volumeBus;
-			musicVolumeSettingsController = new MusicVolumeSettingsController(view, generalAudioMixer, volumeBus);
+			musicVolumeSettingsController = new MusicVolumeSettingsController(view, generalAudioMixer);
 			worldSoundsVolumeSettingsController = new WorldSoundsVolumeSettingsController(view, generalAudioMixer, volumeBus);
-			
-			view.SliderView.Slider.onValueChanged.AddListener(OnSliderValueChanged);
-		}
-
-		private void OnSliderValueChanged(float volumePercentage)
-		{
-			if (volumePercentage > 0)
-				volumeBus.SetMusicAndSFXMute(false);
 		}
 
 		public override void Dispose()
 		{
 			musicVolumeSettingsController.Dispose();
 			worldSoundsVolumeSettingsController.Dispose();
-			
-			view.SliderView.Slider.onValueChanged.RemoveListener(OnSliderValueChanged);
 		}
 	}
 }

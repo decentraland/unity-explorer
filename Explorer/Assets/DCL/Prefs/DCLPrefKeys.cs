@@ -50,8 +50,6 @@ namespace DCL.Prefs
         public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
-        public const string SETTINGS_MASTER_MUTED = "Settings_VolumeMuted";
-        public const string SETTINGS_MUSIC_AND_SFX_MUTED = "Settings_MusicAndSFXVolumeMuted";
         public const string SETTINGS_UPSCALER = "Settings_Upscaler";
 
         public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";

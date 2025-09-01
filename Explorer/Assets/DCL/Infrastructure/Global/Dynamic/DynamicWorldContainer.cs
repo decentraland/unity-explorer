@@ -572,7 +572,7 @@ namespace Global.Dynamic
             var upscaleController = new UpscalingController(mvcManager);
 
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
-            var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer, bootstrapContainer.VolumeBus);
+            var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
             var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
 

@@ -70,8 +70,9 @@ namespace DCL.SDKComponents.MediaStream
             //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             this.volumeBus = volumeBus;
-            this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
             this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
+            this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
+            this.volumeBus.OnMusicVolumeChanged += OnMusicVolumeChanged;
             masterVolumePercentage = volumeBus.GetSerializedMasterVolume();
             worldVolumePercentage = volumeBus.GetSerializedWorldVolume();
 #endif
