@@ -211,7 +211,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ConfigureResultsGrid()
         {
-            view.InitializeResultsGrid(0, profileRepositoryWrapper, spriteCache);
+            view.InitializeResultsGrid(0, profileRepositoryWrapper);
             view.ResultsLoopGridScrollChanged += LoadMoreResults;
         }
 

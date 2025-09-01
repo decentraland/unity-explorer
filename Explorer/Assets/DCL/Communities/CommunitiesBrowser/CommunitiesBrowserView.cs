@@ -193,7 +193,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 searchBar.inputField.onValueChanged = originalEvent;
         }
 
-        public void InitializeResultsGrid(int itemTotalCount, ProfileRepositoryWrapper profileDataProvider, ISpriteCache thumbnailCache)
+        public void InitializeResultsGrid(int itemTotalCount, ProfileRepositoryWrapper profileDataProvider)
         {
             filteredCommunitiesView.InitializeResultsGrid(itemTotalCount);
             filteredCommunitiesView.SetProfileRepositoryWrapper(profileDataProvider);
@@ -221,7 +221,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     filteredCommunitiesView.AddResultsItems(communities, resetPos);
                     break;
                 case CommunitiesSections.BROWSE_ALL_COMMUNITIES:
-                    AddBrowseAllItems(communities, resetPos);
+                    browseAllCommunitiesView.AddBrowseAllItems(communities, resetPos);
                     break;
             }
         }
@@ -282,17 +282,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public void InitializeBrowseAllGrid(int itemTotalCount)
         {
             browseAllCommunitiesView.InitializeBrowseAllGrid(itemTotalCount);
-        }
-
-        public void ClearBrowseAllItems()
-        {
-            browseAllCommunitiesView.ClearBrowseAllItems();
-        }
-
-        private void AddBrowseAllItems(CommunityData[] communities, bool resetPos)
-        {
-            browserStateService.AddCommunities(communities);
-            browseAllCommunitiesView.AddBrowseAllItems(communities, resetPos);
         }
 
         private void SetBrowseAllAsLoading(bool isLoading)

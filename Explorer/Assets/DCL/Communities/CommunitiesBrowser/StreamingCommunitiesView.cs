@@ -57,8 +57,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetStreamingResultsAsLoading(bool isLoading)
         {
+            streamingSection.SetActive(true);
+
             if (isLoading)
+            {
                 streamingLoadingSpinner.ShowLoading();
+            }
             else
                 streamingLoadingSpinner.HideLoading();
         }
