@@ -71,14 +71,14 @@ namespace DCL.Chat.ChatCommands
                 Channels = new List<ChatChannel>(chatHistory.Channels.Values)
             });
 
-            // Finalize Initialization
-            await chatUserStateUpdater.InitializeAsync(ct);
-
             // Set default channel after all channels are loaded
             if (chatHistory.Channels.TryGetValue(ChatChannel.NEARBY_CHANNEL_ID, out var nearbyChannel))
                 SetDefaultChannel(nearbyChannel);
-
+            
             chatMemberListService.Start();
+
+            // Finalize Initialization
+            await chatUserStateUpdater.InitializeAsync(ct);
         }
 
         private async UniTask InitializeBaseChannelsAsync(CancellationToken ct)
