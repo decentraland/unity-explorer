@@ -111,7 +111,7 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.CREDITS_GOAL_COMPLETED:
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
                         break;
-                    case NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT:
+                    case NotificationType.INTERNAL_DEFAULT_SUCCESS:
                         await ProcessArrivedNotificationAsync(notification, false);
                         break;
                     default:

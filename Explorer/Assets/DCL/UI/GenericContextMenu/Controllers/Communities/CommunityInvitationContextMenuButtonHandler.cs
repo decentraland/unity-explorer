@@ -23,6 +23,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
     public class CommunityInvitationContextMenuButtonHandler
     {
         private const string INVITATION_FAILED_TEXT = "Error sending invitation. Please try again.";
+        private const string INVITE_SENT_TEXT = "Invite to Community Sent";
         private const string USER_POTENTIAL_INVITATIONS_FAILED_TEXT = "Error loading 'Invite to Community' menu option. Reopen menu to try again.";
         private const int MAXIMUM_HEIGHT_OF_SUBMENU = 600;
         private const int MAXIMUM_WIDTH_OF_SUBMENU = 300;
@@ -127,7 +128,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
             Result<string> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(lastCommunityData[itemIndex].id, userWalletId, InviteRequestAction.invite, invitationActionCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
-                Notifications.NotificationsBusController.Instance.AddNotification(new InvitationToCommunitySentNotification() { Type = NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT });
+                Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(INVITE_SENT_TEXT));
             else
                 Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INVITATION_FAILED_TEXT));
         }
