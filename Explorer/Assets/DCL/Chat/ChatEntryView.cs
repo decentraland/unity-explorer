@@ -93,7 +93,7 @@ namespace DCL.Chat
             if (!viewModel.Message.IsSystemMessage)
                 ProfilePictureView.Bind(viewModel.ProfileData);
             else
-                ProfilePictureView.SetImage(viewModel.ProfileData.Value.Thumbnail.Sprite!, false);
+                ProfilePictureView.SetImage(viewModel.ProfileData.Value.Thumbnail.Sprite!);
 
             profileSubscription?.Dispose();
             profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);

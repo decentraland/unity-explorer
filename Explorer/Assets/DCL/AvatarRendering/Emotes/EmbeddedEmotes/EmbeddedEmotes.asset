@@ -173,6 +173,22 @@ MonoBehaviour:
       removesDefaultHiding: []
       outlineCompatible: 1
       loop: 0
+  - id: handsintheair
+    name: handsintheair
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5d9d324d9b1257f4cbeed858807c2c06, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 1367a4cc5c746844995474c692ce506f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
   - id: headexplode
     name: headexplode
     audioClip: {fileID: 0}
