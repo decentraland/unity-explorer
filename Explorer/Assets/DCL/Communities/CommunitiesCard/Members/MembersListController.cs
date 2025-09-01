@@ -99,7 +99,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             this.view.OpenProfilePassportRequested += OpenProfilePassport;
             this.view.OpenUserChatRequested += OpenChatWithUserAsync;
-            this.view.CallUserRequested += CallUser;
+            this.view.CallUserRequested += CallUserAsync;
             this.view.BlockUserRequested += BlockUserClickedAsync;
             this.view.RemoveModeratorRequested += RemoveModerator;
             this.view.AddModeratorRequested += AddModerator;
@@ -128,7 +128,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             view.OpenProfilePassportRequested -= OpenProfilePassport;
             view.OpenUserChatRequested -= OpenChatWithUserAsync;
-            view.CallUserRequested -= CallUser;
+            view.CallUserRequested -= CallUserAsync;
             view.BlockUserRequested -= BlockUserClickedAsync;
             view.RemoveModeratorRequested -= RemoveModerator;
             view.AddModeratorRequested -= AddModerator;
@@ -366,7 +366,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private async void CallUser(ICommunityMemberData profile)
+        private async void CallUserAsync(ICommunityMemberData profile)
         {
             try
             {
