@@ -121,6 +121,13 @@
       "dependencies": {},
       "url": "https://package.openupm.com"
     },
+    "com.nickkhalow.chrome-devtool-protocol-unity": {
+      "version": "https://github.com/NickKhalow/chrome-devtool-protocol-unity.git?path=/Packages",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "43408d8271ba8800504b8abc47c2b91fff12a972"
+    },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
       "depth": 0,
