@@ -479,12 +479,12 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ForceResolutionAndWindowedMode()
         {
-            Resolution highest = possibleResolutions[0];
+            Resolution current = Screen.currentResolution;
 
-            int targetWidth = (int)(highest.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
-            int targetHeight = (int)(highest.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+            int targetWidth = (int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+            int targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
 
-            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, highest.refreshRateRatio);
+            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, current.refreshRateRatio);
         }
 
         private void RestoreResolutionAndScreenMode()
