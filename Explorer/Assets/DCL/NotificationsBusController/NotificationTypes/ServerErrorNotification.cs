@@ -15,6 +15,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         public ServerErrorNotification(string text)
         {
             headerText = text;
+            Type = NotificationType.INTERNAL_SERVER_ERROR;
         }
     }
 }

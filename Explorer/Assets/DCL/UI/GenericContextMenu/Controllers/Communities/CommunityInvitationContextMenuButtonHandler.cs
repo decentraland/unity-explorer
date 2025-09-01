@@ -96,7 +96,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
             }
             else
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(USER_POTENTIAL_INVITATIONS_FAILED_TEXT){ Type = NotificationType.INTERNAL_SERVER_ERROR });
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(USER_POTENTIAL_INVITATIONS_FAILED_TEXT));
             }
 
             return false;
@@ -127,7 +127,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
             if (result.Success)
                 Notifications.NotificationsBusController.Instance.AddNotification(new InvitationToCommunitySentNotification() { Type = NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT });
             else
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INVITATION_FAILED_TEXT){ Type = NotificationType.INTERNAL_SERVER_ERROR });
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INVITATION_FAILED_TEXT));
         }
     }
 }

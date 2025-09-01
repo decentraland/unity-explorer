@@ -428,7 +428,6 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 webRequestController,
                 inputBlock,
-                explorePanelView.WarningNotificationView,
                 mvcManager,
                 profileRepositoryWrapper,
                 selfProfile,
