@@ -141,9 +141,6 @@ namespace TerrainProto
             return noiseHeight * multiplyValue;
         }
 
-        internal static float3 GetNormal(float x, float z) =>
-            float3(0.0f, 1.0f, 0.0f);
-
 #if !SHADER_TARGET
     }
 }

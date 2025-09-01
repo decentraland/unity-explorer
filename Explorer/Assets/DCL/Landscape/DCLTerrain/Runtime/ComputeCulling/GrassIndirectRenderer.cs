@@ -85,9 +85,6 @@ namespace Decentraland.Terrain
 
         public void Render(TerrainData terrainData, Camera camera, bool renderToAllCameras)
         {
-            if (terrainData.DetailPrototypes.Length == 0)
-                return;
-
             Initialize(terrainData);
 
             RunFrustumCulling(terrainData, camera);
