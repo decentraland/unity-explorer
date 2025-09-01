@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -20,6 +21,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunityCreation
 {
@@ -55,7 +57,6 @@ namespace DCL.Communities.CommunityCreation
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource? createCommunityCts;
         private CancellationTokenSource? loadPanelCts;
-        private CancellationTokenSource? showErrorCts;
         private CancellationTokenSource? openImageSelectionCts;
         private CancellationTokenSource? openCommunityCardAfterCreationCts;
 
@@ -150,7 +151,6 @@ namespace DCL.Communities.CommunityCreation
 
             createCommunityCts?.SafeCancelAndDispose();
             loadPanelCts?.SafeCancelAndDispose();
-            showErrorCts?.SafeCancelAndDispose();
             openImageSelectionCts?.SafeCancelAndDispose();
         }
 
@@ -170,7 +170,6 @@ namespace DCL.Communities.CommunityCreation
 
             createCommunityCts?.SafeCancelAndDispose();
             loadPanelCts?.SafeCancelAndDispose();
-            showErrorCts?.SafeCancelAndDispose();
             openImageSelectionCts?.SafeCancelAndDispose();
             openCommunityCardAfterCreationCts?.SafeCancelAndDispose();
         }
@@ -241,15 +240,10 @@ namespace DCL.Communities.CommunityCreation
                 bool isInvalidImageByResolution = texture.width > MAX_IMAGE_DIMENSION_PIXELS || texture.height > MAX_IMAGE_DIMENSION_PIXELS;
                 if (isInvalidImageByWeight || isInvalidImageByResolution)
                 {
-                    showErrorCts = showErrorCts.SafeRestart();
-                    viewInstance!.WarningNotificationView.AnimatedShowAsync(
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(
                         isInvalidImageByWeight && isInvalidImageByResolution ?
                             INCOMPATIBLE_IMAGE_GENERAL_ERROR :
-                            isInvalidImageByWeight ? INCOMPATIBLE_IMAGE_WEIGHT_ERROR : INCOMPATIBLE_IMAGE_RESOLUTION_ERROR,
-                        WARNING_MESSAGE_DELAY_MS,
-                        showErrorCts.Token)
-                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                                 .Forget();
+                            isInvalidImageByWeight ? INCOMPATIBLE_IMAGE_WEIGHT_ERROR : INCOMPATIBLE_IMAGE_RESOLUTION_ERROR));
                     return;
                 }
 
@@ -278,9 +272,7 @@ namespace DCL.Communities.CommunityCreation
 
                 if (!placesResult.Success)
                 {
-                    showErrorCts = showErrorCts.SafeRestart();
-                    await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_PLACES_ERROR_MESSAGE));
                     return;
                 }
 
@@ -304,9 +296,7 @@ namespace DCL.Communities.CommunityCreation
 
                 if (!worldsResult.Success)
                 {
-                    showErrorCts = showErrorCts.SafeRestart();
-                    await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_WORLDS_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_WORLDS_ERROR_MESSAGE));
                     return;
                 }
 
@@ -352,9 +342,7 @@ namespace DCL.Communities.CommunityCreation
                 }
                 else
                 {
-                    showErrorCts = showErrorCts.SafeRestart();
-                    await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_OWNERS_NAMES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                 }
             }
 
@@ -403,9 +391,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (!getCommunityResult.Success)
             {
-                showErrorCts = showErrorCts.SafeRestart();
-                await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_ERROR_MESSAGE));
                 return;
             }
 
@@ -429,9 +415,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (!getCommunityPlacesResult.Success)
             {
-                showErrorCts = showErrorCts.SafeRestart();
-                await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_PLACES_ERROR_MESSAGE));
                 return;
             }
 
@@ -446,9 +430,7 @@ namespace DCL.Communities.CommunityCreation
 
                 if (!getPlacesDetailsResult.Success)
                 {
-                    showErrorCts = showErrorCts.SafeRestart();
-                    await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_PLACES_ERROR_MESSAGE));
                     return;
                 }
 
@@ -469,9 +451,7 @@ namespace DCL.Communities.CommunityCreation
 
                     if (!getAvatarsDetailsResult.Success)
                     {
-                        showErrorCts = showErrorCts.SafeRestart();
-                        await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_OWNERS_NAMES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                        Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                     }
 
                     foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.data)
@@ -540,9 +520,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (!result.Success)
             {
-                showErrorCts = showErrorCts.SafeRestart();
-                await viewInstance.WarningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CREATE_COMMUNITY_ERROR_MESSAGE));
                 viewInstance.SetCommunityCreationInProgress(false);
                 return;
             }
@@ -591,11 +569,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (!result.Success)
             {
-                showErrorCts = showErrorCts.SafeRestart();
-
-                await viewInstance.WarningNotificationView.AnimatedShowAsync(UPDATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(UPDATE_COMMUNITY_ERROR_MESSAGE));
                 viewInstance.SetCommunityCreationInProgress(false);
                 return;
             }
