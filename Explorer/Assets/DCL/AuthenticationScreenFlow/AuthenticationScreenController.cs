@@ -71,7 +71,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
-        private readonly VolumeBus volumeBus;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -99,8 +98,7 @@ namespace DCL.AuthenticationScreenFlow
             BuildData buildData,
             World world,
             AuthScreenEmotesSettings emotesSettings,
-            IInputBlock inputBlock,
-            VolumeBus volumeBus)
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -115,7 +113,6 @@ namespace DCL.AuthenticationScreenFlow
             this.world = world;
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
-            this.volumeBus = volumeBus;
         }
 
         public override void Dispose()

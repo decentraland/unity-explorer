@@ -37,7 +37,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly IInputBlock inputBlock;
-        private readonly VolumeBus volumeBus;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -56,7 +55,6 @@ namespace DCL.PluginSystem.Global
             AudioMixerVolumesController audioMixerVolumesController,
             IInputBlock inputBlock,
             CharacterPreviewEventBus characterPreviewEventBus,
-            VolumeBus volumeBus,
             Arch.Core.World world
         )
         {
@@ -73,7 +71,6 @@ namespace DCL.PluginSystem.Global
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.inputBlock = inputBlock;
             this.characterPreviewEventBus = characterPreviewEventBus;
-            this.volumeBus = volumeBus;
             this.world = world;
         }
 
@@ -84,7 +81,7 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, volumeBus);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock);
             mvcManager.RegisterController(authenticationScreenController);
         }
 
