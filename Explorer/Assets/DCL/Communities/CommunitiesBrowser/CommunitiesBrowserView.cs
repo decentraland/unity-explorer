@@ -12,7 +12,6 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
-        public event Action? ViewAllMyCommunitiesButtonClicked;
         public event Action? ResultsBackButtonClicked;
         public event Action<string>? SearchBarSelected;
         public event Action<string>? SearchBarDeselected;
@@ -33,6 +32,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         //This value will depend on which view is active? is it worth to have the logic centralized??
         public int CurrentResultsCount => 1;//browserStateService.GetFilteredResultsCount();
+
+        public MyCommunitiesView MyCommunitiesView => myCommunitiesView;
 
         [Header("Sections")]
         [SerializeField] private GameObject filteredCommunitiesSection = null!;
@@ -65,9 +66,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            myCommunitiesView.SetStateService(browserStateService);
-            myCommunitiesView.ViewAllMyCommunitiesButtonClicked += () => ViewAllMyCommunitiesButtonClicked?.Invoke();
-            myCommunitiesView.CommunityProfileOpened += communityId => CommunityProfileOpened?.Invoke(communityId);
+            MyCommunitiesView.CommunityProfileOpened += communityId => CommunityProfileOpened?.Invoke(communityId);
 
             searchBar.inputField.onSelect.AddListener(text => SearchBarSelected?.Invoke(text));
             searchBar.inputField.onDeselect.AddListener(text => SearchBarDeselected?.Invoke(text));
@@ -106,7 +105,6 @@ namespace DCL.Communities.CommunitiesBrowser
             filteredCommunitiesView.ResultsBackButtonClicked -= () => ResultsBackButtonClicked?.Invoke();
             filteredCommunitiesView.CommunityProfileOpened -= communityId => CommunityProfileOpened?.Invoke(communityId);
             filteredCommunitiesView.CommunityJoined -= communityId => CommunityJoined?.Invoke(communityId);
-            myCommunitiesView.ViewAllMyCommunitiesButtonClicked -= () => ViewAllMyCommunitiesButtonClicked?.Invoke();
         }
 
         public void SetViewActive(bool isActive) =>
@@ -126,11 +124,6 @@ namespace DCL.Communities.CommunitiesBrowser
             headerAnimator.Update(0);
         }
 
-        public void SetMyCommunitiesAsLoading(bool isLoading)
-        {
-            myCommunitiesView.SetMyCommunitiesAsLoading(isLoading);
-        }
-
         public void SetResultsAsLoading(bool isLoading)
         {
             switch (currentSection)
@@ -147,6 +140,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetActiveSection(CommunitiesSections activeSection)
         {
+            currentSection = activeSection;
             browseAllCommunitiesSection.SetActive(activeSection == CommunitiesSections.BROWSE_ALL_COMMUNITIES);
             filteredCommunitiesSection.SetActive(activeSection == CommunitiesSections.FILTERED_COMMUNITIES);
         }
@@ -177,21 +171,6 @@ namespace DCL.Communities.CommunitiesBrowser
                 searchBar.inputField.onValueChanged = originalEvent;
         }
 
-        public void InitializeMyCommunitiesList(int itemTotalCount)
-        {
-            myCommunitiesView.InitializeMyCommunitiesList(itemTotalCount);
-        }
-
-        public void ClearMyCommunitiesItems()
-        {
-            myCommunitiesView.ClearMyCommunitiesItems();
-        }
-
-        public void AddMyCommunitiesItems(CommunityData[] communities, bool resetPos)
-        {
-            myCommunitiesView.AddMyCommunitiesItems(communities, resetPos);
-        }
-
         public void InitializeResultsGrid(int itemTotalCount, ProfileRepositoryWrapper profileDataProvider, ISpriteCache thumbnailCache)
         {
             filteredCommunitiesView.InitializeResultsGrid(itemTotalCount);
@@ -212,12 +191,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public void UpdateJoinedCommunity(string communityId, bool isJoined, bool isSuccess)
         {
             browserStateService.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
-
-            if (isSuccess)
-            {
-                myCommunitiesView.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
-            }
-
             filteredCommunitiesView.UpdateJoinedCommunity(communityId, isSuccess);
             browseAllCommunitiesView.UpdateJoinedCommunity(communityId, isSuccess);
         }
@@ -238,7 +211,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
-            myCommunitiesView.SetThumbnailLoader(newThumbnailLoader);
             streamingCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
             browseAllCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
             filteredCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
@@ -325,7 +297,6 @@ namespace DCL.Communities.CommunitiesBrowser
             streamingCommunitiesView.SetCommunitiesBrowserState(browserStateService);
             browseAllCommunitiesView.SetCommunitiesBrowserState(browserStateService);
             filteredCommunitiesView.SetCommunitiesBrowserState(browserStateService);
-            myCommunitiesView.SetCommunitiesBrowserState(browserStateService);
         }
     }
 }

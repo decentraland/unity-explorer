@@ -4,7 +4,7 @@ using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class CommunitiesBrowserStateService
+    public class CommunitiesBrowserStateService : IDisposable
     {
         private readonly Dictionary<string, CommunityData> allCommunities = new();
 
@@ -27,24 +27,17 @@ namespace DCL.Communities.CommunitiesBrowser
             community.SetAsJoined(isJoined);
         }
 
-        /*if (isJoined)
-        {
-            if (!myCommunitiesIds.Contains(communityId))
-            {
-                myCommunitiesIds.Add(communityId);
-            }
-        }
-        else
-        {
-            myCommunitiesIds.Remove(communityId);
-        }*/
-
         public void RemoveOneMemberFromCounter(string communityId)
         {
             if (allCommunities.TryGetValue(communityId, out CommunityData? community))
             {
                 community.DecreaseMembersCount();
             }
+        }
+
+        public void Dispose()
+        {
+            allCommunities.Clear();
         }
     }
 }
