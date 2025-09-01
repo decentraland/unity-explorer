@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
+      "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
     "avprovideo": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",

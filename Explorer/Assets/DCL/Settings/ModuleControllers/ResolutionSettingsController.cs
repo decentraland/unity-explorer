@@ -30,6 +30,7 @@ namespace DCL.Settings.ModuleControllers
                 for (var index = 0; index < possibleResolutions.Count; index++)
                 {
                     Resolution resolution = possibleResolutions[index];
+
                     if (!ResolutionUtils.IsDefaultResolution(resolution))
                         continue;
 
@@ -46,49 +47,17 @@ namespace DCL.Settings.ModuleControllers
         {
             view.DropdownView.Dropdown.options.Clear();
 
-            // By design, we want the list to be inverted so the biggest resolutions stay on top
-            for (int index = Screen.resolutions.Length - 1; index >= 0; index--)
+            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
+
+            for (int i = 0; i < possibleResolutions.Count; i++)
             {
-                Resolution resolution = Screen.resolutions[index];
-
-                // Exclude all resolutions that are not 16:9 or 16:10
-                if (!ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 9) &&
-                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 10) &&
-                    //Check for vertical monitors as well
-                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 9, 16) &&
-                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 10, 16))
-                    continue;
-
-                // Exclude all resolutions width less than 1024 (same for height in case of vertical monitors)
-                if (Mathf.Min(resolution.width, resolution.height) <= 1024)
-                    continue;
-
-                // Exclude possible duplicates
-                // Equals is not defined in Resolution class. LINQ used only in constructor to mimic a custom Equals
-                if (possibleResolutions.Any(res => res.height == resolution.height
-                                                   && res.width == resolution.width
-                                                   && ((int) Math.Round(res.refreshRateRatio.value)).Equals((int) Math.Round(resolution.refreshRateRatio.value))))
-                    continue;
-
-                AddResolution(resolution);
-            }
-
-            //Adds a fallback resolution if no other resolution is available
-            if (possibleResolutions.Count == 0)
-            {
-                var resolution = new Resolution
-                {
-                    width = 1920,
-                    height = 1080
-                };
-                AddResolution(resolution);
-            }
-
-            void AddResolution(Resolution resolution)
-            {
-                possibleResolutions.Add(resolution);
-                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData
-                    { text = ResolutionUtils.FormatResolutionDropdownOption(resolution) });
+                Resolution resolution = possibleResolutions[i];
+                view.DropdownView.Dropdown.options.Add(
+                    new TMP_Dropdown.OptionData
+                    {
+                        text = ResolutionUtils.FormatResolutionDropdownOption(resolution)
+                    }
+                );
             }
         }
 
