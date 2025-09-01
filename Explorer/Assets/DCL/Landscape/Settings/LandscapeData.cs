@@ -1,7 +1,6 @@
 ﻿using Decentraland.Terrain;
 using System;
 using UnityEngine;
-using TerrainData = Decentraland.Terrain.TerrainData;
 using UnityEngine.AddressableAssets;
 
 namespace DCL.Landscape.Settings
@@ -40,14 +39,13 @@ namespace DCL.Landscape.Settings
         }
 
         public bool RenderGround { get; set; } = true;
-        [field: SerializeField] public Material GroundMaterial { get; private set; } = null!;
+        [field: SerializeField] public Material? GroundMaterial { get; private set; }
         [field: SerializeField] public int GroundInstanceCapacity { get; set; }
         [field: SerializeField] public int TerrainHeight { get; private set; }
-        [field: SerializeField] public GrassIndirectRenderer GrassIndirectRenderer { get; private set; }
-        [field: SerializeField] public TerrainData TerrainData { get; private set; }
+        [field: SerializeField] public GrassIndirectRenderer? GrassIndirectRenderer { get; private set; }
 
         [field: SerializeField] [field: Utils.EnumIndexedArray(typeof(GroundMeshPiece))]
-        public Mesh[] GroundMeshes { get; private set; } = null!;
+        public Mesh?[] GroundMeshes { get; private set; } = null!;
 
         private enum GroundMeshPiece
         {

@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: Grass_GPUIPro
   m_EditorClassIdentifier: 
   asset: {fileID: 1333259486307050118, guid: b1bede3144f61a64fb0af44417463bca, type: 3}
-  <Collider>k__BackingField: {fileID: 0}
   noiseData: {fileID: 11400000, guid: b2d9f65dd060ad643876b5c080de30fa, type: 2}
   randomization:
     randomRotationX: {x: 0, y: 0}
@@ -27,9 +26,12 @@ MonoBehaviour:
     positionOffsetX: {x: 0, y: 0}
     positionOffsetY: {x: 0, y: 0}
     positionOffsetZ: {x: 0, y: 0}
+  <Collider>k__BackingField: {fileID: 0}
   radius: 1
   secondaryRadius: 0
   TerrainDetailSettings:
+    <Mesh>k__BackingField: {fileID: 8666578268043267355, guid: 396ff52ab0b0210408b55a00b0c3cd57, type: 3}
+    <Material>k__BackingField: {fileID: 2100000, guid: 38341d1fc709afc4284c0def19ef13d7, type: 2}
     alignToGround: 100
     positionJitter: 50
     minWidth: 1

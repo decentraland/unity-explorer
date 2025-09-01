@@ -77,7 +77,10 @@ namespace DCL.Landscape
             {
                 IMemoryProfiler memoryProfiler = new Profiler();
                 gen = new TerrainGenerator(memoryProfiler, true, clearCache);
-                gen.Initialize(ScriptableObject.CreateInstance<MountainsTerrainData>(), genData, ref emptyParcels, ref ownedParcels, "", false, new MockGPUIWrapper(), new CPUTerrainDetailSetter(), 13);
+
+                gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "", false,
+                    new MockGPUIWrapper(), new CPUTerrainDetailSetter(), 13);
+
                 await gen.GenerateGenesisTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
             }
 

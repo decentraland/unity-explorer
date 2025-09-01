@@ -12,24 +12,19 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
-using Decentraland.Terrain;
 using GPUInstancerPro;
 using System.IO;
-using System.Linq;
 using System.Text;
 using TerrainProto;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.Collections.LowLevel.Unsafe;
-using UnityEditor;
 using UnityEngine;
 using Utility;
 using static Unity.Mathematics.math;
 using JobHandle = Unity.Jobs.JobHandle;
 using TerrainData = UnityEngine.TerrainData;
-using TreePrototype = UnityEngine.TreePrototype;
 
 namespace DCL.Landscape
 {
@@ -96,7 +91,6 @@ namespace DCL.Landscape
         private NativeArray<byte> occupancyMapData;
         private int occupancyMapSize;
         private float terrainHeight;
-        private Decentraland.Terrain.TerrainData newTerrainData;
         private int2 treeMinParcel;
         private int2 treeMaxParcel;
         private NativeArray<int> treeIndices;
@@ -143,11 +137,10 @@ namespace DCL.Landscape
             activeChunk = chunkIndex;
         }
 
-        public void Initialize(Decentraland.Terrain.TerrainData newTerrainData, TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter,
-            float terrainHeight)
+        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
+            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone,
+            IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter, float terrainHeight)
         {
-            this.newTerrainData = newTerrainData;
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
@@ -269,9 +262,6 @@ namespace DCL.Landscape
 
                         occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
                         occupancyMapSize = OccupancyMap.width; // width == height
-
-                        newTerrainData.OccupancyMap = OccupancyMap;
-                        newTerrainData.OccupancyFloor = OccupancyFloor;
 
                         Ocean = factory.CreateOcean(TerrainRoot);
                         Wind = factory.CreateWind();
@@ -912,6 +902,46 @@ namespace DCL.Landscape
             return (occupancyMapData[index] - OccupancyFloor) / (255f - OccupancyFloor) * terrainHeight;
         }
 
+        public float GetParcelNoiseHeight(float x, float z)
+        {
+            float occupancy;
+
+            if (occupancyMapSize > 0)
+            {
+                // Take the bounds of the terrain, put a single pixel border around it, increase the
+                // size to the next power of two, map xz=0,0 to uv=0.5,0.5 and parcelSize to pixel size,
+                // and that's the occupancy map.
+                float2 uv = ((float2(x, z) / ParcelSize) + (occupancyMapSize * 0.5f)) / occupancyMapSize;
+                occupancy = SampleBilinearClamp(occupancyMapData, int2(occupancyMapSize, occupancyMapSize), uv);
+            }
+            else
+                occupancy = 0f;
+
+            // float height = SAMPLE_TEXTURE2D_LOD(HeightMap, HeightMap.samplerstate, uv, 0.0).r;
+            float minValue = OccupancyFloor / 255.0f; // 0.68
+
+            if (occupancy <= minValue) return 0f;
+
+            const float SATURATION_FACTOR = 20;
+            float normalizedHeight = (occupancy - minValue) / (1 - minValue);
+            return (normalizedHeight * MaxHeight) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
+        }
+
+        private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
+        {
+            uv = (uv * textureSize) - 0.5f;
+            var min = (int2)floor(uv);
+
+            // A quick prayer for Burst to SIMD this. 🙏
+            int4 index = (clamp(min.y + int4(1, 1, 0, 0), 0, textureSize.y - 1) * textureSize.x) +
+                         clamp(min.x + int4(0, 1, 1, 0), 0, textureSize.x - 1);
+
+            float2 t = frac(uv);
+            float top = lerp(texture[index.w], texture[index.z], t.x);
+            float bottom = lerp(texture[index.x], texture[index.y], t.x);
+            return lerp(top, bottom, t.y) * (1f / 255f);
+        }
+
         public ReadOnlySpan<TreeInstanceData> GetTreeInstances(int2 parcel)
         {
             // If tree data has not been loaded, minParcel == maxParcel, and so this is false, and we
@@ -945,7 +975,7 @@ namespace DCL.Landscape
                 return false;
             }
 
-            position.y = GetParcelBaseHeight(parcel) + MountainsNoise.GetHeight(position.x, position.z);
+            position.y = GetParcelBaseHeight(parcel) + GetParcelNoiseHeight(position.x, position.z);
             rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
 
             scale = terrainGenData.treeAssets[instance.PrototypeIndex]

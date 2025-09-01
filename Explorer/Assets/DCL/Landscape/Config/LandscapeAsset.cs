@@ -6,7 +6,6 @@ namespace DCL.Landscape.Config
     public class LandscapeAsset : ScriptableObject
     {
         public GameObject asset;
-        [field: SerializeField] public GameObject? Collider { get; set; }
 
         /// <summary>
         ///     This radius is used by the placement system, to avoid overlapping with nearby owned scenes
@@ -18,6 +17,8 @@ namespace DCL.Landscape.Config
         /// </summary>
         [Header("Settings when used as tree")]
         public ObjectRandomization randomization;
+
+        [field: SerializeField] public GameObject? Collider { get; set; }
 
         [Tooltip("This radius is being used for this asset to not overlap with the same asset type")]
         public float radius;

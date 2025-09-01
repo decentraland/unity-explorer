@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: Flower2_GPUIPro
   m_EditorClassIdentifier: 
   asset: {fileID: 8770045540823553937, guid: 35e8c0b12967be5489aca58b379f1d10, type: 3}
-  <Collider>k__BackingField: {fileID: 0}
   noiseData: {fileID: 11400000, guid: 6406502bce6346d42874c1caffa6720c, type: 2}
   randomization:
     randomRotationX: {x: 0, y: 0}
@@ -27,9 +26,12 @@ MonoBehaviour:
     positionOffsetX: {x: 0, y: 0}
     positionOffsetY: {x: 0, y: 0}
     positionOffsetZ: {x: 0, y: 0}
+  <Collider>k__BackingField: {fileID: 0}
   radius: 1
   secondaryRadius: 0
   TerrainDetailSettings:
+    <Mesh>k__BackingField: {fileID: -4829891079021562753, guid: 7ed3350f6d079f145bb5be4027b94476, type: 3}
+    <Material>k__BackingField: {fileID: 2100000, guid: 03efd8931a9f2fe4fa2b0c15338798a9, type: 2}
     alignToGround: 15.9
     positionJitter: 50
     minWidth: 1

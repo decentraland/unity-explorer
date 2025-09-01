@@ -116,8 +116,9 @@ namespace DCL.PluginSystem.Global
             CheckGPUIFF();
             gpuiWrapper.SetupLandscapeData(landscapeData.Value);
 
-            terrainGenerator.Initialize(landscapeData.Value.TerrainData, landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
-                parcelChecksum, isZone, gpuiWrapper, gpuiWrapper.GetDetailSetter(), landscapeData.Value.TerrainHeight);
+            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels,
+                ref ownedParcels, parcelChecksum, isZone, gpuiWrapper, gpuiWrapper.GetDetailSetter(),
+                landscapeData.Value.TerrainHeight);
 
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, new CPUTerrainDetailSetter());
         }

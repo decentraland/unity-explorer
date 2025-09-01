@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera;
@@ -27,7 +26,7 @@ namespace DCL.Landscape.Systems
     {
         private readonly LandscapeData landscapeData;
         private readonly TerrainGenerator terrainGenerator;
-        private MaterialPropertyBlock materialProperties;
+        private MaterialPropertyBlock? materialProperties;
         private readonly GrassIndirectRenderer grassIndirectRenderer;
 
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
@@ -56,7 +55,15 @@ namespace DCL.Landscape.Systems
                 Camera camera = cinemachinePreset!.Brain.OutputCamera;
 
                 RenderGroundInternal(camera);
-                grassIndirectRenderer.Render(landscapeData.TerrainData, camera, true);
+
+#if UNITY_EDITOR
+                const bool RENDER_TO_ALL_CAMERAS = true;
+#else
+                const bool RENDER_TO_ALL_CAMERAS = false;
+#endif
+
+                grassIndirectRenderer.Render(landscapeData, terrainGenerator, camera,
+                    RENDER_TO_ALL_CAMERAS);
             }
         }
 
