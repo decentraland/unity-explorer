@@ -108,6 +108,7 @@ namespace DCL.Communities.CommunitiesBrowser
             ConfigureResultsGrid();
 
             view.InitializeStreamingResultsGrid(0);
+            view.InitializeBrowseAllGrid(0);
 
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
             view.SearchBarSelected += DisableShortcutsInput;
@@ -232,9 +233,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadAllCommunitiesResults()
         {
+            view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
             ClearSearchBar();
             loadResultsCts = loadResultsCts.SafeRestart();
-            view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
             LoadStreamingCommunitiesAsync(loadResultsCts.Token).Forget();
             LoadResultsAsync(
                 name: string.Empty,
@@ -280,6 +281,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadMoreResults(Vector2 _)
         {
+            //TODO FRAN: We need to handle loading more results here for the BROWSE ALL view, but we need to listen to its scroll
             if (isGridResultsLoadingItems ||
                 view.CurrentResultsCount >= currentResultsTotalAmount ||
                 !view.IsResultsScrollPositionAtBottom)
@@ -300,8 +302,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (pageNumber == 1)
             {
-                view.ClearResultsItems();
-                view.SetResultsAsLoading(true);
+                view.ClearItems();
+                view.SetAsLoading(true);
             }
             else
                 view.SetResultsLoadingMoreActive(true);
@@ -327,13 +329,13 @@ namespace DCL.Communities.CommunitiesBrowser
             if (result.Value.data.results.Length > 0)
             {
                 currentPageNumberFilter = pageNumber;
-                view.AddResultsItems(result.Value.data.results, pageNumber == 1);
+                view.AddItems(result.Value.data.results, pageNumber == 1);
             }
 
             currentResultsTotalAmount = result.Value.data.total;
 
             if (pageNumber == 1)
-                view.SetResultsAsLoading(false);
+                view.SetAsLoading(false);
 
             view.SetResultsLoadingMoreActive(false);
             view.SetResultsCountText(currentResultsTotalAmount);
