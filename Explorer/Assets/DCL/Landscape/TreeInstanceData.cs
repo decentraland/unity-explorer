@@ -14,7 +14,6 @@ namespace DCL.Landscape
         public readonly byte ScaleXZ;
         public readonly byte ScaleY;
 
-#if UNITY_EDITOR
         public TreeInstanceData(UnityEngine.TreeInstance instance, Vector3 position,
             int parcelSize, LandscapeAsset[] prototypes)
         {
@@ -27,6 +26,5 @@ namespace DCL.Landscape
             ScaleXZ = (byte)round((instance.widthScale - min.x) / (max.x - min.x) * 255f);
             ScaleY = (byte)round((instance.heightScale - min.y) / (max.y - min.y) * 255f);
         }
-#endif
     }
 }
