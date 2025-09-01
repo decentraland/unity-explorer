@@ -82,7 +82,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             ExtractMissingPointersAndResolvedEmotes(in intention, pointersToRequest!, resolvedEmotesTmp);
 
-            if (intention.Timeout.IsTimeout(dt))
+            if (intention.IsTimeout(dt))
             {
                 var pointersStrLog = string.Join(",", intention.Pointers);
                 ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
