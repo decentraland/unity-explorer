@@ -366,10 +366,18 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void CallUser(ICommunityMemberData profile)
+        private async void CallUser(ICommunityMemberData profile)
         {
-            //TODO: call user in private conversation
-            throw new NotImplementedException();
+            try
+            {
+                //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+                await UniTask.Delay(500);
+                chatEventBus.StartCallInCurrentConversation();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
         }
 
         private async void OpenChatWithUserAsync(ICommunityMemberData profile)
