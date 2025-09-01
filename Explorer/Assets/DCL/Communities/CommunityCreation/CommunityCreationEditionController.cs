@@ -14,6 +14,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunityCreation
@@ -127,6 +129,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.AddPlaceButtonClicked += AddCommunityPlace;
             viewInstance.RemovePlaceButtonClicked += RemoveCommunityPlace;
             viewInstance.ContentPolicyAndCodeOfEthicsLinksClicked += OpenContentPolicyAndCodeOfEthicsLink;
+            viewInstance.GoBackToCreationEditionButtonClicked += GoBackToCreationEditionModal;
         }
 
         protected override void OnBeforeViewShow()
@@ -167,6 +170,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.AddPlaceButtonClicked -= AddCommunityPlace;
             viewInstance.RemovePlaceButtonClicked -= RemoveCommunityPlace;
             viewInstance.ContentPolicyAndCodeOfEthicsLinksClicked -= OpenContentPolicyAndCodeOfEthicsLink;
+            viewInstance.GoBackToCreationEditionButtonClicked -= GoBackToCreationEditionModal;
 
             createCommunityCts?.SafeCancelAndDispose();
             loadPanelCts?.SafeCancelAndDispose();
@@ -504,6 +508,7 @@ namespace DCL.Communities.CommunityCreation
 
         private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
         {
+            viewInstance!.ShowComplianceErrorModal(false);
             createCommunityCts = createCommunityCts.SafeRestart();
             CreateCommunityAsync(name, description, lands, worlds, privacy, createCommunityCts.Token).Forget();
         }
@@ -513,7 +518,17 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetCommunityCreationInProgress(true);
 
             var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, privacy, ct)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES,
+                                                exceptionToResult: exception =>
+                                                {
+                                                    if (exception is UnityWebRequestException { ResponseCode: WebRequestUtils.BAD_REQUEST } unityWebRequestException)
+                                                    {
+                                                        var moderationResponse = JsonUtility.FromJson<CommunityModerationResponse>(unityWebRequestException.Text);
+                                                        return Result<CreateOrUpdateCommunityResponse>.SuccessResult(new CreateOrUpdateCommunityResponse { moderationData = moderationResponse });
+                                                    }
+
+                                                    return Result.ErrorResult(exception.Message);
+                                                });
 
             if (ct.IsCancellationRequested)
                 return;
@@ -525,14 +540,19 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            closeTaskCompletionSource.TrySetResult();
-
-            openCommunityCardAfterCreationCts = openCommunityCardAfterCreationCts.SafeRestart();
-            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, thumbnailLoader!.Cache)), openCommunityCardAfterCreationCts.Token).Forget();
+            if (result.Value.moderationData == null)
+            {
+                closeTaskCompletionSource.TrySetResult();
+                openCommunityCardAfterCreationCts = openCommunityCardAfterCreationCts.SafeRestart();
+                mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, thumbnailLoader!.Cache)), openCommunityCardAfterCreationCts.Token).Forget();
+            }
+            else
+                ShowModerationErrorModal(result.Value.moderationData);
         }
 
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, CommunityPrivacy privacy)
         {
+            viewInstance!.ShowComplianceErrorModal(false);
             createCommunityCts = createCommunityCts.SafeRestart();
             UpdateCommunityAsync(
                 inputData.CommunityId,
@@ -562,7 +582,17 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetCommunityCreationInProgress(true);
 
             var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, privacy, ct)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES,
+                                                exceptionToResult: exception =>
+                                                {
+                                                    if (exception is UnityWebRequestException { ResponseCode: WebRequestUtils.BAD_REQUEST } unityWebRequestException)
+                                                    {
+                                                        var moderationResponse = JsonUtility.FromJson<CommunityModerationResponse>(unityWebRequestException.Text);
+                                                        return Result<CreateOrUpdateCommunityResponse>.SuccessResult(new CreateOrUpdateCommunityResponse { moderationData = moderationResponse });
+                                                    }
+
+                                                    return Result.ErrorResult(exception.Message);
+                                                });
 
             if (ct.IsCancellationRequested)
                 return;
@@ -574,14 +604,40 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
+            if (result.Value.moderationData == null)
             {
-                thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
-                isProfileThumbnailDirty = false;
-                lastSelectedProfileThumbnail = null;
+                if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
+                {
+                    thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                    isProfileThumbnailDirty = false;
+                    lastSelectedProfileThumbnail = null;
+                }
+
+                closeTaskCompletionSource.TrySetResult();
+            }
+            else
+                ShowModerationErrorModal(result.Value.moderationData);
+        }
+
+        private void ShowModerationErrorModal(CommunityModerationResponse communityModerationData)
+        {
+            string formattedErrorMessage = string.Empty;
+            if (communityModerationData.data != null)
+            {
+                if (communityModerationData.data.issues.name is { Length: > 0 })
+                    formattedErrorMessage += $"COMMUNITY NAME: {string.Join(", ", communityModerationData.data.issues.name.Select(s => $"[{s}]"))}\n\n";
+
+                if (communityModerationData.data.issues.image is { Length: > 0 })
+                    formattedErrorMessage += $"COMMUNITY IMAGE: {string.Join(", ", communityModerationData.data.issues.image.Select(s => $"[{s}]"))}\n\n";
+
+                if (communityModerationData.data.issues.description is { Length: > 0 })
+                    formattedErrorMessage += $"COMMUNITY DESCRIPTION: {string.Join(", ", communityModerationData.data.issues.description.Select(s => $"[{s}]"))}\n";
             }
 
-            closeTaskCompletionSource.TrySetResult();
+            viewInstance!.ShowComplianceErrorModal(
+                showErrorModal: true,
+                errorMessage: formattedErrorMessage,
+                isApiAvailable: !communityModerationData.communityContentValidationUnavailable);
         }
 
         private void OpenContentPolicyAndCodeOfEthicsLink(string id)
@@ -597,6 +653,12 @@ namespace DCL.Communities.CommunityCreation
             }
 
             viewInstance!.PlayOnLinkClickAudio();
+        }
+
+        private void GoBackToCreationEditionModal()
+        {
+            viewInstance!.SetCommunityCreationInProgress(false);
+            viewInstance!.ShowComplianceErrorModal(false);
         }
     }
 }
