@@ -7,7 +7,8 @@ using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.Requests;
-using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.UI;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -41,7 +42,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -74,7 +74,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
-            WarningNotificationView inWorldWarningNotificationView,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache) : base(view, PAGE_SIZE)
@@ -83,7 +82,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
@@ -148,8 +146,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(MANAGE_REQUEST_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MANAGE_REQUEST_ERROR_TEXT));
                     return;
                 }
 
@@ -234,8 +231,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(BAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(BAN_USER_ERROR_TEXT));
                     return;
                 }
 
@@ -267,8 +263,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(KICK_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(KICK_USER_ERROR_TEXT));
                     return;
                 }
 
@@ -308,8 +303,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(ADD_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ADD_MODERATOR_ERROR_TEXT));
                     return;
                 }
 
@@ -345,8 +339,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(REMOVE_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REMOVE_MODERATOR_ERROR_TEXT));
                     return;
                 }
 
@@ -570,8 +563,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(UNBAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(UNBAN_USER_ERROR_TEXT));
                     return;
                 }
 

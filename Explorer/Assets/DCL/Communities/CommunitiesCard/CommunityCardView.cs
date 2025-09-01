@@ -72,8 +72,6 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private Image backgroundImage { get; set; } = null!;
         [field: SerializeField] public Color BackgroundColor { get; private set; }
-        [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; } = null!;
-        [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; } = null!;
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
 

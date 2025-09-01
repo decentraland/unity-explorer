@@ -6,10 +6,10 @@ using DCL.CommunicationData.URLHelpers;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
-using DCL.UI;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -21,6 +21,7 @@ using Utility.Types;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -35,7 +36,6 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const int PAGE_SIZE = 10;
         private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
         private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
@@ -54,8 +54,6 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly SectionFetchData<PlaceData> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
-        private readonly WarningNotificationView inWorldSuccessNotificationView;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
@@ -76,8 +74,6 @@ namespace DCL.Communities.CommunitiesCard.Places
             ThumbnailLoader thumbnailLoader,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IPlacesAPIService placesAPIService,
-            WarningNotificationView inWorldWarningNotificationView,
-            WarningNotificationView inWorldSuccessNotificationView,
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
@@ -87,8 +83,6 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
             this.placesAPIService = placesAPIService;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
-            this.inWorldSuccessNotificationView = inWorldSuccessNotificationView;
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.clipboard = clipboard;
@@ -153,8 +147,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
                 if (!result.Success)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE));
                     return;
                 }
 
@@ -191,9 +184,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             clipboard.Set(GetPlaceCopyLink(place));
 
-            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken)
-                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                                          .Forget();
+            Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private static string GetPlaceCopyLink(PlaceInfo place)
@@ -222,8 +213,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(FAVORITE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_PLACE_ERROR_MESSAGE));
                 }
 
                 placeInfo.user_favorite = favoriteValue;
@@ -247,8 +237,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetDislikeToggle(!dislikeValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(DISLIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DISLIKE_PLACE_ERROR_MESSAGE));
 
                     return;
                 }
@@ -279,8 +268,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetLikeToggle(!likeValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(LIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LIKE_PLACE_ERROR_MESSAGE));
 
                     return;
                 }
@@ -321,8 +309,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             if (!response.Success || !response.Value.ok)
             {
                 placesFetchData.PageNumber--;
-                await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
                 return placesFetchData.TotalToFetch;
             }
 
@@ -337,8 +324,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!getAvatarsDetailsResult.Success)
-                    await inWorldWarningNotificationView.AnimatedShowAsync(GET_OWNERS_NAMES_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                 else
                     foreach (var avatarDetails in getAvatarsDetailsResult.Value)
                     {
