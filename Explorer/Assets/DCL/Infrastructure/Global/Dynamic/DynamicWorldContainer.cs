@@ -481,7 +481,6 @@ namespace Global.Dynamic
                         eventsApiService,
                         mapPathEventBus,
                         staticContainer.MapPinsEventBus,
-                        notificationsBusController,
                         realmNavigator,
                         staticContainer.RealmData,
                         sharedNavmapCommandBus,
@@ -1036,7 +1035,6 @@ namespace Global.Dynamic
                     galleryEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
-                    notificationsBusController,
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache));

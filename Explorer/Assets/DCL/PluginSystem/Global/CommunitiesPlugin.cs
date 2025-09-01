@@ -84,7 +84,6 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             LambdasProfilesProvider lambdasProfilesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache)
@@ -111,7 +110,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
-            notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
+            notificationHandler = new NotificationHandler(NotificationsBusController.NotificationsBus.NotificationsBusController.Instance, mvcManager, realmNavigator);
         }
 
         public void Dispose()

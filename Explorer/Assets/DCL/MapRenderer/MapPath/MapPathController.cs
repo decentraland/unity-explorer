@@ -3,9 +3,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -25,7 +23,6 @@ namespace DCL.MapRenderer
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly MapPathRenderer mapPathRenderer;
         private readonly IMapCullingController cullingController;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly IObjectPool<PinMarkerObject> objectsPool;
         private readonly DestinationReachedNotification destinationReachedNotification = new()
             { Type = NotificationType.INTERNAL_ARRIVED_TO_DESTINATION };
@@ -42,15 +39,13 @@ namespace DCL.MapRenderer
             IMapPathEventBus mapPathEventBus,
             MapPathRenderer mapPathRenderer,
             ICoordsUtils coordsUtils,
-            IMapCullingController cullingController,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController) : base(instantiationParent, coordsUtils, cullingController)
+            IMapCullingController cullingController) : base(instantiationParent, coordsUtils, cullingController)
         {
             this.mapPathEventBus = mapPathEventBus;
             this.mapPathRenderer = mapPathRenderer;
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.cullingController = cullingController;
-            this.notificationsBusController = notificationsBusController;
         }
 
         public void Initialize()
@@ -72,7 +67,7 @@ namespace DCL.MapRenderer
                 if (CheckIfArrivedToDestination(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint))
                 {
                     mapPathEventBus.ArrivedToDestination();
-                    notificationsBusController.AddNotification(destinationReachedNotification);
+                    NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.AddNotification(destinationReachedNotification);
                 }
                 else
                 {
