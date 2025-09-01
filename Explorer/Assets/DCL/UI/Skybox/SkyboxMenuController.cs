@@ -44,6 +44,15 @@ namespace DCL.UI.Skybox
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
+        public void SetInteractable(bool isInteractable)
+        {
+            if (viewInstance == null)
+                return;
+
+            viewInstance.TimeProgressionToggle.interactable = isInteractable;
+            viewInstance.TimeSlider.interactable = isInteractable;
+        }
+
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             ViewShowingComplete?.Invoke(this);

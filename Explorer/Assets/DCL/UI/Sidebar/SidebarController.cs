@@ -200,10 +200,7 @@ namespace DCL.UI.Sidebar
                 bool isRestricted = restriction.Action == SceneRestrictionsAction.APPLIED;
                 if (viewInstance)
                 {
-                    if (isRestricted)
-                        skyboxMenuController.HideViewAsync(CancellationToken.None).Forget();
-
-                    viewInstance.skyboxButton.interactable = !isRestricted;
+                    skyboxMenuController.SetInteractable(!isRestricted);
                 }
                 else
                     pendingSkyboxInteractableState = !isRestricted;
