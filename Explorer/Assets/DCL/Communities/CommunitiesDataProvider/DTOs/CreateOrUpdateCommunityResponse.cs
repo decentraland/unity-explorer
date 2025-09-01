@@ -19,6 +19,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
 
         public string message;
         public CommunityData data;
+        public CommunityModerationResponse moderationData;
     }
 }
 
