@@ -155,9 +155,9 @@ namespace DCL.PluginSystem.Global
             if (!enableLandscape) return;
 
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings, landscapeData.Value);
-            LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+            //LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
+            //LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
             RenderGroundSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             CollideTerrainSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
 
