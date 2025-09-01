@@ -35,14 +35,9 @@ namespace DCL.SDKComponents.AvatarShape.Systems
 
         [Query]
         [None(typeof(SDKTweenComponent))]
-        private void UpdateAvatarInterpolationMovement(in SDKAvatarShapeComponent sdkAvatarShapeComponent, in SDKTransform sdkTransform, in TransformComponent transform)
+        private void UpdateAvatarInterpolationMovement(in SDKAvatarShapeComponent sdkAvatarShapeComponent, in TransformComponent transform)
         {
-            if (!sdkTransform.IsDirty)
-                return;
-
             UpdateInterpolationMovement(in sdkAvatarShapeComponent, in transform, false, false);
-
-            sdkTransform.IsDirty = false;
         }
 
         [Query]
@@ -75,8 +70,8 @@ namespace DCL.SDKComponents.AvatarShape.Systems
             if (!hasCharacterInterpolationMovement)
                 return;
 
-            characterInterpolationMovementComponent.TargetPosition = transform.Cached.WorldPosition;
-            characterInterpolationMovementComponent.TargetRotation = transform.Cached.WorldRotation;
+            characterInterpolationMovementComponent.TargetPosition = transform.Transform.position;
+            characterInterpolationMovementComponent.TargetRotation = transform.Transform.rotation;
             characterInterpolationMovementComponent.IsPositionManagedByTween = isPositionManagedByTween;
             characterInterpolationMovementComponent.IsRotationManagedByTween = isRotationManagedByTween;
         }

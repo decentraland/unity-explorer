@@ -48,53 +48,55 @@ namespace DCL.Character.CharacterMotion.Systems
             UpdatePosition(deltaTime, characterTransformComponent, in characterInterpolationMovementComponent);
             UpdateRotation(deltaTime, characterTransformComponent, in characterInterpolationMovementComponent);
             UpdateAnimations(deltaTime, view, in characterInterpolationMovementComponent, ref animationComponent);
+
             characterInterpolationMovementComponent.LastPosition = characterTransformComponent.Transform.position;
         }
 
         private static void UpdatePosition(
             float deltaTime,
-            CharacterTransform characterTransformComponent,
-            in CharacterInterpolationMovementComponent characterInterpolationMovementComponent)
+            CharacterTransform transformComponent,
+            in CharacterInterpolationMovementComponent movementComponent)
         {
-            float distanceToTarget = Vector3.Distance(characterInterpolationMovementComponent.TargetPosition, characterInterpolationMovementComponent.LastPosition);
+            float distanceToTarget = Vector3.Distance(movementComponent.TargetPosition, movementComponent.LastPosition);
 
             if (distanceToTarget < DISTANCE_EPSILON)
             {
-                characterTransformComponent.Transform.position = characterInterpolationMovementComponent.TargetPosition;
-                UpdateRotation(deltaTime, characterTransformComponent, characterInterpolationMovementComponent.TargetRotation);
+                transformComponent.Transform.position = movementComponent.TargetPosition;
+                UpdateRotation(deltaTime, transformComponent, movementComponent.TargetRotation);
                 return;
             }
 
             // If the AvatarShape movement is already controlled by a tween, we skip it here
-            if (characterInterpolationMovementComponent.IsPositionManagedByTween)
+            if (movementComponent.IsPositionManagedByTween)
                 return;
 
+            Vector3 directionVector = movementComponent.LastPosition.GetDirection(movementComponent.TargetPosition);
+
             float movementSpeed = WALK_SPEED;
-            movementSpeed = distanceToTarget >= WALK_DISTANCE ?
-                Mathf.MoveTowards(movementSpeed, RUN_SPEED, deltaTime * RUN_SPEED * 10) :
-                Mathf.MoveTowards(movementSpeed, WALK_SPEED, deltaTime * RUN_SPEED * 30);
+            movementSpeed = distanceToTarget >= WALK_DISTANCE ? Mathf.MoveTowards(movementSpeed, RUN_SPEED, deltaTime * RUN_SPEED * 10) : Mathf.MoveTowards(movementSpeed, WALK_SPEED, deltaTime * RUN_SPEED * 30);
 
-            Vector3 directionVector = characterInterpolationMovementComponent.LastPosition.GetDirection(characterInterpolationMovementComponent.TargetPosition);
-            Vector3 delta = directionVector.normalized * (movementSpeed * deltaTime);
+            float distanceToMove = movementSpeed * deltaTime;
+            if (distanceToMove * distanceToMove > directionVector.sqrMagnitude)
+                distanceToMove = directionVector.magnitude;
 
-            characterTransformComponent.Transform.position = characterInterpolationMovementComponent.LastPosition + delta;
+            transformComponent.Transform.position = movementComponent.LastPosition + (directionVector.normalized * distanceToMove);
         }
 
         private static void UpdateRotation(
             float deltaTime,
-            CharacterTransform characterTransformComponent,
-            in CharacterInterpolationMovementComponent characterInterpolationMovementComponent)
+            CharacterTransform transformComponent,
+            in CharacterInterpolationMovementComponent movementComponent)
         {
             // If the AvatarShape rotation is already controlled by a tween, we skip it here
-            if (characterInterpolationMovementComponent.IsRotationManagedByTween)
+            if (movementComponent.IsRotationManagedByTween)
                 return;
 
-            var flattenDirection = characterInterpolationMovementComponent.LastPosition.GetYFlattenDirection(characterTransformComponent.Transform.position);
+            var flattenDirection = movementComponent.LastPosition.GetYFlattenDirection(movementComponent.TargetPosition);
             if (flattenDirection == Vector3.zero)
                 return;
 
             Quaternion targetRotation = Quaternion.LookRotation(flattenDirection, Vector3.up);
-            UpdateRotation(deltaTime, characterTransformComponent, targetRotation);
+            UpdateRotation(deltaTime, transformComponent, targetRotation);
         }
 
         private static void UpdateRotation(float deltaTime, CharacterTransform characterTransformComponent, Quaternion targetRotation)
@@ -102,7 +104,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (Quaternion.Dot(characterTransformComponent.Transform.rotation, targetRotation) > DOT_THRESHOLD)
                 return;
 
-            characterTransformComponent.Transform.rotation = Quaternion.Slerp(characterTransformComponent.Transform.rotation, targetRotation, ROTATION_SPEED * deltaTime);
+            characterTransformComponent.Transform.rotation = Quaternion.Slerp(characterTransformComponent.Transform.localRotation, targetRotation, ROTATION_SPEED * deltaTime);
         }
 
         private static void UpdateAnimations(
@@ -114,7 +116,7 @@ namespace DCL.Character.CharacterMotion.Systems
             float distanceToTarget = Vector3.Distance(characterInterpolationMovementComponent.TargetPosition, characterInterpolationMovementComponent.LastPosition);
             float movementBlendValue = 0;
 
-            if (distanceToTarget > 0)
+            if (distanceToTarget >= DISTANCE_EPSILON)
             {
                 float speed = Mathf.Round(distanceToTarget / deltaTime * 1000f) / 1000f;
                 movementBlendValue = RemotePlayerUtils.GetBlendValueFromSpeed(speed);
