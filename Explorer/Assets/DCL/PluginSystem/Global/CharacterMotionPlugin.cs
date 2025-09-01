@@ -21,22 +21,19 @@ namespace DCL.PluginSystem.Global
 {
     public class CharacterMotionPlugin : IDCLGlobalPlugin<CharacterMotionSettings>
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
-        private ProvidedAsset<CharacterControllerSettings> settings;
+        private CharacterControllerSettings settings;
 
         public CharacterMotionPlugin(
-            IAssetsProvisioner assetsProvisioner,
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
             ISceneReadinessReportQueue sceneReadinessReportQueue)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
@@ -45,12 +42,12 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            settings.Dispose();
         }
 
-        public async UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
         {
-            this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.controllerSettings, ct);
+            this.settings = settings.controllerSettings;
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -60,7 +57,7 @@ namespace DCL.PluginSystem.Global
             // Add Motion components
             world.Add(arguments.PlayerEntity,
                 new CharacterRigidTransform(),
-                (ICharacterControllerSettings)settings.Value,
+                (ICharacterControllerSettings)settings,
                 characterObject,
                 characterObject.Controller,
                 new CharacterAnimationComponent(),
@@ -82,7 +79,7 @@ namespace DCL.PluginSystem.Global
             CalculateCameraFovSystem.InjectToWorld(ref builder);
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings.Value);
+            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
         }

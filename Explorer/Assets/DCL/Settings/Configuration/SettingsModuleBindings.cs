@@ -1,4 +1,6 @@
-﻿using DCL.Audio;
+﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
@@ -22,7 +24,7 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public abstract class SettingsModuleBindingBase
     {
-        public abstract SettingsFeatureController CreateModule(
+        public abstract UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -37,6 +39,7 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
+            IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             bool isVoiceChatEnabled);
     }
@@ -48,12 +51,18 @@ namespace DCL.Settings.Configuration
         where TControllerType : Enum
     {
         [field: SerializeField]
-        public TView View { get; private set; }
+        public ViewRef View { get; private set; }
 
         [field: SerializeField]
         public TConfig Config { get; private set; }
 
         [field: SerializeField]
         public TControllerType Feature { get; private set; }
+
+        [Serializable]
+        public class ViewRef : ComponentReference<TView>
+        {
+            public ViewRef(string guid) : base(guid) { }
+        }
     }
 }

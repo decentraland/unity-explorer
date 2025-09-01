@@ -12,30 +12,30 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
 {
     public class AdaptivePerformancePlugin : IDCLGlobalPlugin<AdaptivePerformanceSettings>
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly Profiler profiler;
         private readonly ILoadingStatus loadingStatus;
 
-        private ProvidedAsset<AdaptivePhysicsSettings> physicsSettings;
+        private AdaptivePhysicsSettings physicsSettings;
 
-        public AdaptivePerformancePlugin(IAssetsProvisioner assetsProvisioner, Profiler profiler, ILoadingStatus loadingStatus)
+        public AdaptivePerformancePlugin(Profiler profiler, ILoadingStatus loadingStatus)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.profiler = profiler;
             this.loadingStatus = loadingStatus;
         }
 
-        public async UniTask InitializeAsync(AdaptivePerformanceSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(AdaptivePerformanceSettings settings, CancellationToken ct)
         {
-            physicsSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.phyiscsSettings, ct);
+            physicsSettings = settings.phyiscsSettings;
 
-            Physics.simulationMode = physicsSettings.Value.Mode == PhysSimulationMode.MANUAL ? SimulationMode.Script : SimulationMode.FixedUpdate;
+            Physics.simulationMode = physicsSettings.Mode == PhysSimulationMode.MANUAL ? SimulationMode.Script : SimulationMode.FixedUpdate;
+
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            UpdatePhysicsSimulationSystem.InjectToWorld(ref builder, profiler, physicsSettings.Value, loadingStatus);
-            AdaptPhysicsSystem.InjectToWorld(ref builder, profiler, physicsSettings.Value, loadingStatus);
+            UpdatePhysicsSimulationSystem.InjectToWorld(ref builder, profiler, physicsSettings, loadingStatus);
+            AdaptPhysicsSystem.InjectToWorld(ref builder, profiler, physicsSettings, loadingStatus);
         }
 
         public void Dispose()

@@ -82,6 +82,8 @@ namespace MVC
             viewInstance.SetDrawOrder(ordering);
             OnBeforeViewShow();
 
+            State = ControllerState.ViewShowing;
+
             await viewInstance.ShowAsync(ct);
 
             State = ControllerState.ViewFocused;

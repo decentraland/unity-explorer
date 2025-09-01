@@ -42,7 +42,6 @@ namespace Global.Tests.PlayMode
     {
         private const string GLOBAL_CONTAINER_ADDRESS = "Integration Tests Global Container";
         private const string WORLD_CONTAINER_ADDRESS = "Integration Tests World Container";
-        private const string SCENES_UI_ADDRESS = "ScenesUIRootCanvas";
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
@@ -50,7 +49,6 @@ namespace Global.Tests.PlayMode
 
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
-            UIDocument scenesUI = (await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ADDRESS)).GetComponent<UIDocument>(); // This is / should be the only place where we load this via Addressables
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
             IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
@@ -96,7 +94,6 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
-                scenesUI,
                 new ObjectProxy<IProfileRepository>(),
                 ct,
                 hasDebugFlag: false,

@@ -46,7 +46,7 @@ namespace Global.Dynamic
         private readonly DebugSettings.DebugSettings debugSettings;
         private readonly RealmUrls realmUrls;
         private readonly IAppArgs appArgs;
-        private readonly ISplashScreen splashScreen;
+        private readonly SplashScreen splashScreen;
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
@@ -63,7 +63,7 @@ namespace Global.Dynamic
         public Bootstrap(
             DebugSettings.DebugSettings debugSettings,
             IAppArgs appArgs,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             RealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
@@ -82,13 +82,9 @@ namespace Global.Dynamic
             this.world = world;
         }
 
-        public async UniTask PreInitializeSetupAsync(UIDocument cursorRoot,
-            UIDocument debugUiRoot,
-            CancellationToken token)
+        public async UniTask PreInitializeSetupAsync(CancellationToken token)
         {
             splashScreen.Show();
-
-            cursorRoot.EnsureNotNull();
 
             string realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
@@ -104,7 +100,6 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            UIDocument sceneUIRoot,
             bool hasDebugFlag,
             CancellationToken ct
         ) =>
@@ -128,7 +123,6 @@ namespace Global.Dynamic
                 bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
-                sceneUIRoot,
                 profileRepositoryProxy,
                 ct,
                 hasDebugFlag
@@ -140,16 +134,12 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot,
-            UIDocument scenesUIRoot,
-            UIDocument cursorRoot,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
-            WarningNotificationView showUINotificationView,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -159,9 +149,6 @@ namespace Global.Dynamic
                 bootstrapContainer.AssetsProvisioner,
                 staticContainer,
                 scenePluginSettingsContainer,
-                uiToolkitRoot,
-                scenesUIRoot,
-                cursorRoot,
                 dynamicSettings,
                 bootstrapContainer.Web3Authenticator,
                 bootstrapContainer.IdentityCache,
@@ -193,7 +180,6 @@ namespace Global.Dynamic
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
-                showUINotificationView,
                 ct);
 
             if (tuple.container != null)

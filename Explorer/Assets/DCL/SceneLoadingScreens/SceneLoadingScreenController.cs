@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Prefs;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
 using MVC;
@@ -10,12 +11,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
+using UnityEngine.Pool;
 using Utility;
 using Utility.Storage;
-using DCL.Prefs;
-using UnityEngine.Pool;
 
 namespace DCL.SceneLoadingScreens
 {
@@ -25,17 +24,14 @@ namespace DCL.SceneLoadingScreens
         private readonly TimeSpan minimumDisplayDuration;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly IInputBlock inputBlock;
-
-        private readonly AudioMixerGroup audioMixerGroupController;
         private readonly List<UniTask> fadingTasks = new ();
+        private readonly PersistentSetting<int> currentTip =
+            PersistentSetting.CreateInt(DCLPrefKeys.SCENE_LOADING_LAST_TIP_INDEX, 0);
 
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
         private CancellationTokenSource? tipsFadeCancellationToken;
         private IntVariable? progressLabel;
-
-        private readonly PersistentSetting<int> currentTip =
-            PersistentSetting.CreateInt(DCLPrefKeys.SCENE_LOADING_LAST_TIP_INDEX, 0);
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
