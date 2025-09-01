@@ -35,6 +35,17 @@ namespace DCL.Communities.CommunitiesBrowser
         private ThumbnailLoader? thumbnailLoader;
         private CommunitiesBrowserStateService? browserStateService;
 
+        private void Awake()
+        {
+            resultsBackButton.onClick.AddListener(OnResultsBackButtonClicked);
+            return;
+
+            void OnResultsBackButtonClicked()
+            {
+                ResultsBackButtonClicked?.Invoke();
+            }
+        }
+
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader, Sprite defaultSprite)
         {
             thumbnailLoader = newThumbnailLoader;

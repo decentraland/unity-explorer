@@ -12,7 +12,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action? ViewAllMyCommunitiesButtonClicked;
         public event Action? ErrorLoadingMyCommunities;
 
-
         private readonly MyCommunitiesView view;
         private readonly CommunitiesDataProvider dataProvider;
         private readonly CommunitiesBrowserStateService browserStateService;
@@ -30,7 +29,12 @@ namespace DCL.Communities.CommunitiesBrowser
             this.browserStateService = browserStateService;
 
             view.SetDependencies(browserStateService, thumbnailLoader);
-            view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesButtonClicked;
+            view.ViewAllMyCommunitiesButtonClicked += OnViewAllMyCommunitiesClicked;
+        }
+
+        private void OnViewAllMyCommunitiesClicked()
+        {
+            ViewAllMyCommunitiesButtonClicked?.Invoke();
         }
 
         private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
