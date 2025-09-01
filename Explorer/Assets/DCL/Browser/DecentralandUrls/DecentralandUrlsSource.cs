@@ -20,9 +20,9 @@ namespace DCL.Browser.DecentralandUrls
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
-            Environment = environment;
-            DecentralandDomain = environment.ToString()!.ToLower();
             this.launchMode = launchMode;
+            Environment = environment;
+            DecentralandDomain = environment.ToString().ToLower();
 
             if (environment == DecentralandEnvironment.Today)
             {
@@ -34,14 +34,14 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.AssetBundlesCDN);
                 CONTENT_URL_OVERRIDE = "https://peer-testing.decentraland.org/content/";
                 LAMBDAS_URL_OVERRIDE = "https://peer-testing.decentraland.org/lambdas/";
-                DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
+                Environment = DecentralandEnvironment.Org;
+                DecentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
             }
             else
             {
                 CONTENT_URL_OVERRIDE = "NO_CONTENT_URL_OVERRIDE";
                 LAMBDAS_URL_OVERRIDE = "NO_LAMBDAS_URL_OVERRIDE";
             }
-
         }
 
         public string Url(DecentralandUrl decentralandUrl)
