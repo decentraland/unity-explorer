@@ -56,6 +56,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public event Action ScreenshotDownloaded;
         public event Action<int> MaxThumbnailsUpdated;
 
+        public bool EnableContextMenuButton
+        {
+            set
+            {
+                if (optionButtonController != null)
+                    optionButtonController.enableContextMenuButton = value;
+            }
+        }
+
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
@@ -75,7 +84,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly Dictionary<CameraReelResponseCompact, Texture> reelThumbnailCache = new ();
         private readonly CameraReelOptionButtonController? optionButtonController;
         private readonly Rect elementMaskRect;
-        private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
+        private readonly CameraReelGalleryMessagesConfiguration? reelGalleryStringMessages;
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
 
@@ -103,7 +112,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             ISystemClipboard? systemClipboard = null,
-            ReelGalleryStringMessages? reelGalleryStringMessages = null,
+            CameraReelGalleryMessagesConfiguration? reelGalleryStringMessages = null,
             IMVCManager? mvcManager = null)
         {
             this.view = view;
@@ -125,7 +134,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view.scrollRect.SetScrollSensitivityBasedOnPlatform();
 
             if (optionButtonView is not null)
-                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!);
+                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!, reelGalleryConfigParams.EnableDeleteOption);
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
                 view.unusedGridViewObject, cameraReelScreenshotsStorage,
@@ -643,23 +652,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         }
     }
 
-    public struct ReelGalleryStringMessages
-    {
-        public readonly string? ShareToXMessage;
-        public readonly string? PhotoSuccessfullyDeletedMessage;
-        public readonly string? PhotoSuccessfullyUpdatedMessage;
-        public readonly string? PhotoSuccessfullyDownloadedMessage;
-        public readonly string? LinkCopiedMessage;
-
-        public ReelGalleryStringMessages(string? shareToXMessage, string? photoSuccessfullyDeletedMessage, string? photoSuccessfullyUpdatedMessage, string? photoSuccessfullyDownloadedMessage, string? linkCopiedMessage)
-        {
-            ShareToXMessage = shareToXMessage;
-            PhotoSuccessfullyDeletedMessage = photoSuccessfullyDeletedMessage;
-            PhotoSuccessfullyUpdatedMessage = photoSuccessfullyUpdatedMessage;
-            PhotoSuccessfullyDownloadedMessage = photoSuccessfullyDownloadedMessage;
-            LinkCopiedMessage = linkCopiedMessage;
-        }
-    }
     public struct ReelGalleryConfigParams
     {
         public readonly int GridLayoutFixedColumnCount;
@@ -667,14 +659,16 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public readonly int ThumbnailWidth;
         public readonly bool GridShowMonth;
         public readonly bool GroupByMonth;
+        public readonly bool EnableDeleteOption;
 
-        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth)
+        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth, bool enableDeleteOption = true)
         {
             GridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             ThumbnailHeight = thumbnailHeight;
             ThumbnailWidth = thumbnailWidth;
             GridShowMonth = gridShowMonth;
             GroupByMonth = groupByMonth;
+            EnableDeleteOption = enableDeleteOption;
         }
     }
 }
