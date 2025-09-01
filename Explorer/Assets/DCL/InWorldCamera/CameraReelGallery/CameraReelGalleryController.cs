@@ -152,7 +152,42 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 this.optionButtonController.CopyPictureLinkRequested += CopyPictureLink;
                 this.optionButtonController.DownloadRequested += DownloadReelLocally;
                 this.optionButtonController.DeletePictureRequested += DeleteReel;
+
+                if (reelGalleryConfigParams.HideReelOnPrivateSet)
+                    this.optionButtonController.SetPublicRequested += HideReelIfSetPrivate;
             }
+        }
+
+        public void Dispose()
+        {
+            OnDisable();
+            view.Disable -= OnDisable;
+            ThumbnailClicked = null;
+            StorageUpdated = null;
+            ScreenshotDeleted = null;
+            view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
+            view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
+            downloadScreenshotCts.SafeCancelAndDispose();
+
+            optionButtonController?.Dispose();
+
+            if (this.optionButtonController != null)
+            {
+                this.optionButtonController.SetPublicRequested -= SetReelPublic;
+                this.optionButtonController.ShareToXRequested -= ShareToX;
+                this.optionButtonController.CopyPictureLinkRequested -= CopyPictureLink;
+                this.optionButtonController.DownloadRequested -= DownloadReelLocally;
+                this.optionButtonController.DeletePictureRequested -= DeleteReel;
+
+                this.optionButtonController.SetPublicRequested -= HideReelIfSetPrivate;
+            }
+        }
+
+        private void HideReelIfSetPrivate(CameraReelResponseCompact response, bool isPublic)
+        {
+            if (isPublic) return;
+
+            HideReelFromList(response);
         }
 
         private void DeleteReel(CameraReelResponseCompact response)
@@ -627,29 +662,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
             galleryEventBus.ReelPublicStateChangeEvent -= OnReelPublicStateChange;
             galleryEventBus.ReelDeletedEvent -= OnReelDeletionSignal;
         }
-
-        public void Dispose()
-        {
-            OnDisable();
-            view.Disable -= OnDisable;
-            ThumbnailClicked = null;
-            StorageUpdated = null;
-            ScreenshotDeleted = null;
-            view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
-            view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
-            downloadScreenshotCts.SafeCancelAndDispose();
-
-            optionButtonController?.Dispose();
-
-            if (this.optionButtonController != null)
-            {
-                this.optionButtonController.SetPublicRequested -= SetReelPublic;
-                this.optionButtonController.ShareToXRequested -= ShareToX;
-                this.optionButtonController.CopyPictureLinkRequested -= CopyPictureLink;
-                this.optionButtonController.DownloadRequested -= DownloadReelLocally;
-                this.optionButtonController.DeletePictureRequested -= DeleteReel;
-            }
-        }
     }
 
     public struct ReelGalleryConfigParams
@@ -660,8 +672,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public readonly bool GridShowMonth;
         public readonly bool GroupByMonth;
         public readonly bool EnableDeleteOption;
+        public readonly bool HideReelOnPrivateSet;
 
-        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth, bool enableDeleteOption = true)
+        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth, bool enableDeleteOption = true, bool hideReelOnPrivateSet = false)
         {
             GridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             ThumbnailHeight = thumbnailHeight;
@@ -669,6 +682,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             GridShowMonth = gridShowMonth;
             GroupByMonth = groupByMonth;
             EnableDeleteOption = enableDeleteOption;
+            HideReelOnPrivateSet = hideReelOnPrivateSet;
         }
     }
 }
