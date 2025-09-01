@@ -52,7 +52,7 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
 
     int2 corner0 = (int2)(visibleParcels[groupId.x] * 16.0f);
     half2 parcelGroupingArea = half2(hash_int_to_float(corner0), hash_int_to_float(-corner0));
-    int2 gridPosition = int2((int)(localId.x % 8), (int)(localId.x / 8) * 2.0f);
+    int2 gridPosition = int2((int)(localId.x % 8), (int)(localId.x / 8)) * 2.0f;
 
     float2 worldSpaceCoord_ParcelBlock = corner0 + gridPosition;
     float2 UV_coords_ParcelBlock = (worldSpaceCoord_ParcelBlock + 4096.0f) / 8192.0f;
@@ -68,7 +68,7 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
     
     PerInst perInst;
     
-    if (terrainColour.g < 0.1f)
+    if (terrainColour.g < 0.08f)
     {
         half random_X_flower0 = (hash_int_to_float(corner0 + gridPosition) * 2.0f);
         half random_Z_flower0 = (hash_int_to_float(-corner0 + gridPosition) * 2.0f);
