@@ -1,8 +1,9 @@
 namespace DCL.NotificationsBusController.NotificationTypes
 {
+    // SERIOUS WARNING: Changing the order of the elements in the enum will break the selection of icons for specific notifications
+    //                  Take a look at the NotificationIcons asset.
     public enum NotificationType
     {
-        //Notification types coming from BE
         BID_ACCEPTED,
         BID_RECEIVED,
         EVENTS_STARTED,
@@ -30,6 +31,17 @@ namespace DCL.NotificationsBusController.NotificationTypes
         BADGE_GRANTED,
         SOCIAL_SERVICE_FRIENDSHIP_REQUEST,
         SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED,
+        INTERNAL_ARRIVED_TO_DESTINATION,
+        CREDITS_GOAL_COMPLETED,
+        STREAMING_KEY_RESET,
+        STREAMING_KEY_REVOKE,
+        STREAMING_KEY_EXPIRED,
+        STREAMING_TIME_EXCEEDED,
+        STREAMING_PLACE_UPDATED,
+        REFERRAL_INVITED_USERS_ACCEPTED,
+        REFERRAL_NEW_TIER_REACHED,
+        INTERNAL_INVITATION_TO_COMMUNITY_SENT,
+        INTERNAL_SERVER_ERROR,
         COMMUNITY_EVENT_CREATED,
         COMMUNITY_EVENT_ABOUT_TO_START,
         COMMUNITY_MEMBER_REMOVED,
@@ -39,22 +51,5 @@ namespace DCL.NotificationsBusController.NotificationTypes
         COMMUNITY_USER_JOIN_REQUEST_SENT,
         COMMUNITY_USER_INVITED,
         COMMUNITY_USER_JOIN_REQUEST_ACCEPTED,
-
-        //Internal notification types
-        INTERNAL_ARRIVED_TO_DESTINATION,
-        CREDITS_GOAL_COMPLETED,
-
-        //Streaming feature notification types,
-        STREAMING_KEY_RESET,
-        STREAMING_KEY_REVOKE,
-        STREAMING_KEY_EXPIRED,
-        STREAMING_TIME_EXCEEDED,
-        STREAMING_PLACE_UPDATED,
-
-        // Referral
-        REFERRAL_INVITED_USERS_ACCEPTED,
-        REFERRAL_NEW_TIER_REACHED,
-        INTERNAL_INVITATION_TO_COMMUNITY_SENT,
-        INTERNAL_SERVER_ERROR
     }
 }

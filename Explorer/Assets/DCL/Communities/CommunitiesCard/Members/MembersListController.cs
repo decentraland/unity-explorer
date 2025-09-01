@@ -98,7 +98,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             this.view.OpenProfilePassportRequested += OpenProfilePassport;
             this.view.OpenUserChatRequested += OpenChatWithUserAsync;
-            this.view.CallUserRequested += CallUser;
+            this.view.CallUserRequested += CallUserAsync;
             this.view.BlockUserRequested += BlockUserClickedAsync;
             this.view.RemoveModeratorRequested += RemoveModerator;
             this.view.AddModeratorRequested += AddModerator;
@@ -126,7 +126,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             view.OpenProfilePassportRequested -= OpenProfilePassport;
             view.OpenUserChatRequested -= OpenChatWithUserAsync;
-            view.CallUserRequested -= CallUser;
+            view.CallUserRequested -= CallUserAsync;
             view.BlockUserRequested -= BlockUserClickedAsync;
             view.RemoveModeratorRequested -= RemoveModerator;
             view.AddModeratorRequested -= AddModerator;
@@ -364,10 +364,18 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void CallUser(ICommunityMemberData profile)
+        private async void CallUserAsync(ICommunityMemberData profile)
         {
-            //TODO: call user in private conversation
-            throw new NotImplementedException();
+            try
+            {
+                //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+                await UniTask.Delay(500);
+                chatEventBus.StartCallInCurrentConversation();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
         }
 
         private async void OpenChatWithUserAsync(ICommunityMemberData profile)
@@ -515,7 +523,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             communityData = community;
             view.SetSectionButtonsActive(communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
             panelLifecycleTask = new UniTaskCompletionSource();
-            view.SetCommunityData(community, panelLifecycleTask!.Task, ct);
+            view.SetCommunityData(community, panelLifecycleTask!.Task);
 
             FetchNewDataAsync(ct).Forget();
 

@@ -448,6 +448,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     viewInstance.JumpIntoWorldButton.interactable = true;
+                    characterPreviewController?.OnBeforeShow();
                     characterPreviewController?.OnShow();
 
                     break;
