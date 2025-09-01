@@ -19,7 +19,7 @@ namespace DCL.Landscape.Settings
 
 #if GPUI_PRO_PRESENT
         public GPUIAssets gpuiAssets;
-        public const bool LOAD_TREES_FROM_STREAMINGASSETS = false;
+        public const bool LOAD_TREES_FROM_STREAMINGASSETS = true;
 #else
         public const bool LOAD_TREES_FROM_STREAMINGASSETS = false;
 #endif
@@ -39,7 +39,7 @@ namespace DCL.Landscape.Settings
             }
         }
 
-        public bool RenderGround { get; set; }
+        public bool RenderGround { get; set; } = true;
         [field: SerializeField] public Material GroundMaterial { get; private set; } = null!;
         [field: SerializeField] public int GroundInstanceCapacity { get; set; }
         [field: SerializeField] public int TerrainHeight { get; private set; }

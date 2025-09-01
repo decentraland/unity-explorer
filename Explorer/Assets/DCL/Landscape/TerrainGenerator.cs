@@ -17,6 +17,7 @@ using GPUInstancerPro;
 using System.IO;
 using System.Linq;
 using System.Text;
+using TerrainProto;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -272,14 +273,12 @@ namespace DCL.Landscape
                         newTerrainData.OccupancyMap = OccupancyMap;
                         newTerrainData.OccupancyFloor = OccupancyFloor;
 
-                        if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
-                            await LoadTreesAsync();
-
-                        Ocean = factory.CreateOcean(rootGo);
+                        Ocean = factory.CreateOcean(TerrainRoot);
                         Wind = factory.CreateWind();
 
                         Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
                         boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
+
                         await loadTrees;
                         InstantiateTrees();
                     }
@@ -419,6 +418,8 @@ namespace DCL.Landscape
                 (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(
                     chunkModel.TerrainData, TerrainRoot.transform, chunkModel.MinParcel * ParcelSize,
                     terrainGenData.terrainMaterial);
+
+                terrain.gameObject.SetActive(false);
 
                 chunkModel.terrain = terrain;
                 terrains.Add(terrain);
@@ -944,7 +945,7 @@ namespace DCL.Landscape
                 return false;
             }
 
-            position.y = GetParcelBaseHeight(parcel); // + NoiseHeight
+            position.y = GetParcelBaseHeight(parcel) + MountainsNoise.GetHeight(position.x, position.z);
             rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
 
             scale = terrainGenData.treeAssets[instance.PrototypeIndex]
