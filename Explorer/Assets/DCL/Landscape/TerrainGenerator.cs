@@ -250,29 +250,6 @@ namespace DCL.Landscape
                         boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
                     }
 
-                    if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
-                    {
-                        UniTask loadTrees = LoadTreesAsync();
-
-                        OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
-                        OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
-
-                        // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
-                        OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-
-                        occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
-                        occupancyMapSize = OccupancyMap.width; // width == height
-
-                        Ocean = factory.CreateOcean(TerrainRoot);
-                        Wind = factory.CreateWind();
-
-                        Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
-                        boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
-
-                        await loadTrees;
-                        InstantiateTrees();
-                    }
-
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Load Local Cache")))
                         await localCache.LoadAsync(forceCacheRegen);
 
@@ -281,6 +258,24 @@ namespace DCL.Landscape
                         TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel, ref emptyParcels, ref ownedParcels);
                         await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
                     }
+
+                    OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+                    OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+
+                    // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
+                    OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+
+                    occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                    occupancyMapSize = OccupancyMap.width; // width == height
+
+                    Ocean = factory.CreateOcean(TerrainRoot);
+                    Wind = factory.CreateWind();
+
+                    Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
+                    boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
+
+                    await LoadTreesAsync();
+                    InstantiateTrees();
 
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
 
