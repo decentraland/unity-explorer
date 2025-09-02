@@ -37,14 +37,14 @@ namespace DCL.ECSComponents {
             "YWRpdXNfdG9wGAEgASgCSACIAQESGgoNcmFkaXVzX2JvdHRvbRgCIAEoAkgB",
             "iAEBQg0KC19yYWRpdXNfdG9wQhAKDl9yYWRpdXNfYm90dG9tGgsKCVBsYW5l",
             "TWVzaBoMCgpTcGhlcmVNZXNoQgYKBG1lc2hCEQoPX2NvbGxpc2lvbl9tYXNr",
-            "KrMCCg1Db2xsaWRlckxheWVyEgsKB0NMX05PTkUQABIOCgpDTF9QT0lOVEVS",
+            "KsQCCg1Db2xsaWRlckxheWVyEgsKB0NMX05PTkUQABIOCgpDTF9QT0lOVEVS",
             "EAESDgoKQ0xfUEhZU0lDUxACEhAKDENMX1JFU0VSVkVEMRAEEhAKDENMX1JF",
             "U0VSVkVEMhAIEhAKDENMX1JFU0VSVkVEMxAQEhAKDENMX1JFU0VSVkVENBAg",
             "EhAKDENMX1JFU0VSVkVENRBAEhEKDENMX1JFU0VSVkVENhCAARIPCgpDTF9D",
             "VVNUT00xEIACEg8KCkNMX0NVU1RPTTIQgAQSDwoKQ0xfQ1VTVE9NMxCACBIP",
             "CgpDTF9DVVNUT000EIAQEg8KCkNMX0NVU1RPTTUQgCASDwoKQ0xfQ1VTVE9N",
-            "NhCAQBIQCgpDTF9DVVNUT003EICAARIQCgpDTF9DVVNUT004EICAAkIUqgIR",
-            "RENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "NhCAQBIQCgpDTF9DVVNUT003EICAARIQCgpDTF9DVVNUT004EICAAhIPCglD",
+            "TF9QTEFZRVIQgIAEQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.ColliderLayer), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -88,6 +88,7 @@ namespace DCL.ECSComponents {
     [pbr::OriginalName("CL_CUSTOM6")] ClCustom6 = 8192,
     [pbr::OriginalName("CL_CUSTOM7")] ClCustom7 = 16384,
     [pbr::OriginalName("CL_CUSTOM8")] ClCustom8 = 32768,
+    [pbr::OriginalName("CL_PLAYER")] ClPlayer = 65536,
   }
 
   #endregion
