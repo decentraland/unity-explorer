@@ -21,7 +21,7 @@ namespace DCL.Audio
 			OnMasterVolumeChanged?.Invoke(volume);
 		}
 
-		public float GetWorldVolume()
+		public float GetSerializedWorldVolume()
 		{
 			if (DCLPlayerPrefs.HasKey(WORLD_VOLUME_DATA_STORE_KEY))
 				return DCLPlayerPrefs.GetFloat(WORLD_VOLUME_DATA_STORE_KEY) / 100;
@@ -29,7 +29,7 @@ namespace DCL.Audio
 			return 1f;
 		}
 
-		public float GetMasterVolume()
+		public float GetSerializedMasterVolume()
 		{
 			if (DCLPlayerPrefs.HasKey(MASTER_VOLUME_DATA_STORE_KEY))
 				return DCLPlayerPrefs.GetFloat(MASTER_VOLUME_DATA_STORE_KEY) / 100;
