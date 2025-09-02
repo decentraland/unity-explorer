@@ -13,10 +13,9 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class FilteredCommunitiesView : MonoBehaviour
     {
-        public event Action? ResultsBackButtonClicked;
+        public event Action? BackButtonClicked;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
-        public event Action<Vector2>? ResultsLoopGridScrollChanged;
 
         [Header("Filtered Results Section")]
         [SerializeField] private Button resultsBackButton = null!;
@@ -42,7 +41,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             void OnResultsBackButtonClicked()
             {
-                ResultsBackButtonClicked?.Invoke();
+                BackButtonClicked?.Invoke();
             }
         }
 

@@ -22,8 +22,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
         public event Action? CreateCommunityButtonClicked;
-        public event Action<string>? JoinStream;
-        public event Action? ViewAllStreamingCommunitiesButtonClicked;
 
         private CommunitiesBrowserStateService browserStateService;
 
@@ -35,6 +33,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public int CurrentResultsCount => 1;//browserStateService.GetFilteredResultsCount();
 
         public MyCommunitiesView MyCommunitiesView => myCommunitiesView;
+        public StreamingCommunitiesView StreamingCommunitiesView => streamingCommunitiesView;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator = null!;
@@ -71,20 +70,12 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.inputField.onSubmit.AddListener(text => SearchBarSubmit?.Invoke(text));
             searchBar.clearSearchButton.onClick.AddListener(() => SearchBarClearButtonClicked?.Invoke());
             createCommunityButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke());
-            streamingCommunitiesView.JoinStream += communityId => JoinStream?.Invoke(communityId);
-            streamingCommunitiesView.ViewAllStreamingCommunitiesButtonClicked += StreamingCommunitiesViewOnViewAllStreamingCommunitiesButtonClicked;
 
-            filteredCommunitiesView.ResultsBackButtonClicked += () => ResultsBackButtonClicked?.Invoke();
+            filteredCommunitiesView.BackButtonClicked += () => ResultsBackButtonClicked?.Invoke();
             filteredCommunitiesView.CommunityProfileOpened += communityId => CommunityProfileOpened?.Invoke(communityId);
             filteredCommunitiesView.CommunityJoined += communityId => CommunityJoined?.Invoke(communityId);
 
             scrollRect.onValueChanged.AddListener(pos => ResultsLoopGridScrollChanged?.Invoke(pos));
-            return;
-
-            void StreamingCommunitiesViewOnViewAllStreamingCommunitiesButtonClicked()
-            {
-                ViewAllStreamingCommunitiesButtonClicked?.Invoke();
-            }
         }
 
         private void OnDestroy()
@@ -95,7 +86,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.inputField.onSubmit.RemoveAllListeners();
             searchBar.clearSearchButton.onClick.RemoveAllListeners();
             createCommunityButton.onClick.RemoveAllListeners();
-            streamingCommunitiesView.JoinStream -= communityId => JoinStream?.Invoke(communityId);
+
             filteredCommunitiesView.CommunityProfileOpened -= communityId => CommunityProfileOpened?.Invoke(communityId);
             filteredCommunitiesView.CommunityJoined -= communityId => CommunityJoined?.Invoke(communityId);
         }
@@ -119,16 +110,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetAsLoading(bool isLoading)
         {
-            switch (currentSection)
-            {
-                case CommunitiesSections.BROWSE_ALL_COMMUNITIES:
-                    SetBrowseAllAsLoading(isLoading);
-                    break;
-                case CommunitiesSections.FILTERED_COMMUNITIES:
-                    filteredCommunitiesView.SetAsLoading(isLoading);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
+            filteredCommunitiesView.SetAsLoading(isLoading);
         }
 
         public void SetActiveSection(CommunitiesSections activeSection)
@@ -200,9 +182,6 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.clearSearchButton.gameObject.SetActive(isActive);
 
 
-        private bool streamingIsLoading;
-        private bool browseAllIsLoading;
-
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
             streamingCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
@@ -216,40 +195,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void AddStreamingResultsItems(CommunityData[] dataResults)
         {
-            browserStateService.AddCommunities(dataResults);
             streamingCommunitiesView.AddStreamingResultsItems(dataResults);
         }
 
         public void ClearStreamingResultsItems()
         {
             streamingCommunitiesView.ClearStreamingResultsItems();
-        }
-
-        public void SetStreamingResultsAsLoading(bool isLoading)
-        {
-            streamingIsLoading = isLoading;
-            if (isLoading)
-                streamingCommunitiesView.SetAsLoading(isLoading);
-            else
-                TryDisableLoading();
-        }
-
-        private void SetBrowseAllAsLoading(bool isLoading)
-        {
-            browseAllIsLoading = isLoading;
-
-            if (isLoading)
-                filteredCommunitiesView.SetAsLoading(isLoading);
-            else
-                TryDisableLoading();
-        }
-
-        private void TryDisableLoading()
-        {
-            if (streamingIsLoading || browseAllIsLoading) return;
-
-            streamingCommunitiesView.SetAsLoading(false);
-            filteredCommunitiesView.SetAsLoading(false);
         }
 
         public void SetCommunitiesBrowserState(CommunitiesBrowserStateService communitiesBrowserStateService)

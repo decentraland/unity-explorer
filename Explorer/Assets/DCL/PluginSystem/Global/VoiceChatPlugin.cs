@@ -18,6 +18,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using AudioSettings = UnityEngine.AudioSettings;
+using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -104,13 +105,13 @@ namespace DCL.PluginSystem.Global
             AudioSettings.Reset(audioConfig);
 
             voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
-            VoiceChatPluginSettings voiceChatPluginSettings = voiceChatConfigurations.Value;
+            VoiceChatPluginSettings configurations = voiceChatConfigurations.Value;
 
-            VoiceChatSettingsAsset voiceChatSettings = voiceChatPluginSettings.VoiceChatSettings;
+            VoiceChatSettingsAsset voiceChatSettings = configurations.VoiceChatSettings;
 
-            VoiceChatConfiguration voiceChatConfiguration = voiceChatPluginSettings.VoiceChatConfiguration;
+            VoiceChatConfiguration voiceChatConfiguration = configurations.VoiceChatConfiguration;
 
-            var combinedAudioSource = voiceChatPluginSettings.CombinedAudioSource;
+            var combinedAudioSource = Object.Instantiate(configurations.CombinedAudioSource);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
@@ -125,9 +126,9 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
 
-            var playerEntry = voiceChatPluginSettings.PlayerEntryView;
-            var muteMicrophoneAudio = voiceChatPluginSettings.MuteMicrophoneAudio;
-            var unmuteMicrophoneAudio = voiceChatPluginSettings.UnmuteMicrophoneAudio;
+            var playerEntry = configurations.PlayerEntryView;
+            var muteMicrophoneAudio = configurations.MuteMicrophoneAudio;
+            var unmuteMicrophoneAudio = configurations.UnmuteMicrophoneAudio;
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(mainUIView.VoiceChatPanelResizeView, voiceChatOrchestrator);
 

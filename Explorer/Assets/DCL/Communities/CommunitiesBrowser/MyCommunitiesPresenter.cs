@@ -7,7 +7,7 @@ using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class MyCommunitiesController : IDisposable
+    public class MyCommunitiesPresenter : IDisposable
     {
         public event Action? ViewAllMyCommunitiesButtonClicked;
         public event Action? ErrorLoadingMyCommunities;
@@ -18,7 +18,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private CancellationTokenSource? loadMyCommunitiesCts;
 
-        public MyCommunitiesController(
+        public MyCommunitiesPresenter(
             MyCommunitiesView view,
             CommunitiesDataProvider dataProvider,
             CommunitiesBrowserStateService browserStateService,
@@ -30,6 +30,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.SetDependencies(browserStateService, thumbnailLoader);
             view.ViewAllMyCommunitiesButtonClicked += OnViewAllMyCommunitiesClicked;
+            view.InitializeMyCommunitiesList(0);
         }
 
         private void OnViewAllMyCommunitiesClicked()
@@ -66,11 +67,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public void Dispose()
         {
             loadMyCommunitiesCts.SafeCancelAndDispose();
-        }
-
-        public void Initialize()
-        {
-            view.InitializeMyCommunitiesList(0);
         }
 
         public void LoadMyCommunities()

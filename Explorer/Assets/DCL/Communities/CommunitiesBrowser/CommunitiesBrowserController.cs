@@ -26,12 +26,13 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const int COMMUNITIES_PER_PAGE = 20;
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
+        private const string STREAMING_COMMUNITIES_RESULTS_TITLE = "All Streaming Communities";
+        private const string BROWSE_COMMUNITIES_TITLE = "Browse Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
         private const string STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Streaming Communities. Please try again.";
-
         private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
@@ -48,7 +49,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly ISpriteCache spriteCache;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly MyCommunitiesController myCommunitiesController;
+
+        private readonly MyCommunitiesPresenter myCommunitiesPresenter;
+        private readonly StreamingCommunitiesPresenter streamingCommunitiesPresenter;
 
         private CancellationTokenSource? loadResultsCts;
         private CancellationTokenSource? searchCancellationCts;
@@ -100,10 +103,14 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetThumbnailLoader(thumbnailLoader);
             view.SetCommunitiesBrowserState(browserStateService);
 
-            myCommunitiesController = new MyCommunitiesController(view.MyCommunitiesView, dataProvider, browserStateService, thumbnailLoader);
-            myCommunitiesController.Initialize();
-            myCommunitiesController.ErrorLoadingMyCommunities += OnErrorLoadingMyCommunities;
-            myCommunitiesController.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
+            myCommunitiesPresenter = new MyCommunitiesPresenter(view.MyCommunitiesView, dataProvider, browserStateService, thumbnailLoader);
+            myCommunitiesPresenter.ErrorLoadingMyCommunities += OnErrorLoadingMyCommunities;
+            myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
+
+            streamingCommunitiesPresenter = new StreamingCommunitiesPresenter(view.StreamingCommunitiesView, dataProvider, browserStateService);
+            streamingCommunitiesPresenter.ErrorLoadingMyCommunities += OnErrorLoadingMyCommunities;
+            streamingCommunitiesPresenter.JoinStream += OnJoinStream;
+            streamingCommunitiesPresenter.ViewAllStreamingCommunitiesButtonClicked += OnViewAllStreamingCommunities;
 
             ConfigureResultsGrid();
 
@@ -118,11 +125,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened += OpenCommunityProfile;
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
-            view.JoinStream += JoinStream;
-            view.ViewAllStreamingCommunitiesButtonClicked += ViewAllStreamingCommunities;
         }
 
-        private void JoinStream(string communityId)
+        private void OnJoinStream(string communityId)
         {
             //If we already joined, we cannot join again
             if (orchestrator.CurrentCommunityId.Value == communityId) return;
@@ -160,7 +165,7 @@ namespace DCL.Communities.CommunitiesBrowser
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
             spriteCache.Clear();
-            myCommunitiesController.Deactivate();
+            myCommunitiesPresenter.Deactivate();
 
             UnsubscribeDataProviderEvents();
         }
@@ -187,14 +192,14 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityJoined -= JoinCommunity;
             view.CreateCommunityButtonClicked -= CreateCommunity;
 
-            myCommunitiesController.ErrorLoadingMyCommunities -= OnErrorLoadingMyCommunities;
-            myCommunitiesController.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
+            myCommunitiesPresenter.ErrorLoadingMyCommunities -= OnErrorLoadingMyCommunities;
+            myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
 
             UnsubscribeDataProviderEvents();
 
             browserStateService.Dispose();
 
-            myCommunitiesController.Dispose();
+            myCommunitiesPresenter.Dispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
@@ -205,7 +210,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ReloadBrowser()
         {
             // Each time we open the Communities section, we load both my communities and Decentraland communities
-            myCommunitiesController.LoadMyCommunities();
+            myCommunitiesPresenter.LoadMyCommunities();
             LoadAllCommunitiesResults();
         }
 
@@ -231,11 +236,11 @@ namespace DCL.Communities.CommunitiesBrowser
                 ct: loadResultsCts.Token).Forget();
         }
 
-        private void ViewAllStreamingCommunities()
+        private void OnViewAllStreamingCommunities()
         {
             ClearSearchBar();
             view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
-            view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
+            view.SetResultsTitleText(STREAMING_COMMUNITIES_RESULTS_TITLE);
 
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
@@ -251,48 +256,28 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
             view.SetResultsBackButtonVisible(false);
             ClearSearchBar();
-            loadResultsCts = loadResultsCts.SafeRestart();
-            LoadStreamingCommunitiesAsync(loadResultsCts.Token).Forget();
-            LoadResultsAsync(
-                name: string.Empty,
-                onlyMemberOf: false,
-                pageNumber: 1,
-                elementsPerPage: COMMUNITIES_PER_PAGE,
-                ct: loadResultsCts.Token).Forget();
-        }
 
-        private async UniTaskVoid LoadStreamingCommunitiesAsync(CancellationToken ct)
-        {
-            view.ClearStreamingResultsItems();
+            LoadAllCommunitiesResultsAsync().Forget();
+            return;
 
-            view.SetStreamingResultsAsLoading(true);
-
-            var result = await dataProvider.GetUserCommunitiesAsync(
-                string.Empty,
-                false,
-                1,
-                7,
-                ct,
-                true
-                ).SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-            if (ct.IsCancellationRequested)
-                return;
-
-            if (!result.Success)
+            async UniTaskVoid LoadAllCommunitiesResultsAsync()
             {
-                showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                return;
+                loadResultsCts = loadResultsCts.SafeRestart();
+
+                await UniTask.WhenAll(
+                    streamingCommunitiesPresenter.LoadStreamingCommunitiesAsync(loadResultsCts.Token),
+                    LoadResultsAsync(
+                        name: string.Empty,
+                        onlyMemberOf: false,
+                        pageNumber: 1,
+                        elementsPerPage: COMMUNITIES_PER_PAGE,
+                        ct: loadResultsCts.Token)
+                );
+
+                streamingCommunitiesPresenter.SetAsLoading(false);
+                view.SetAsLoading(false);
             }
 
-            if (result.Value.data.results.Length > 0)
-            {
-                view.AddStreamingResultsItems(result.Value.data.results);
-            }
-
-            view.SetStreamingResultsAsLoading(false);
         }
 
         private void LoadMoreResults(Vector2 _)
@@ -311,7 +296,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 ct: loadResultsCts.Token).Forget();
         }
 
-        private async UniTaskVoid LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
+        private async UniTask LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             isGridResultsLoadingItems = true;
 
@@ -476,17 +461,32 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
+        private void OnErrorLoadingStreamingCommunities()
+        {
+            OnErrorLoadingMyCommunitiesAsync().Forget();
+            return;
+
+            async UniTaskVoid OnErrorLoadingMyCommunitiesAsync()
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+
+                await warningNotificationView.AnimatedShowAsync(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            }
+        }
+
+
         private void OnCommunityUpdated(string _) =>
             ReloadBrowser();
 
         private void OnCommunityJoined(string communityId, bool success)
         {
-            myCommunitiesController.OnCommunityJoined(communityId, true, success);
+            myCommunitiesPresenter.OnCommunityJoined(communityId, true, success);
             view.UpdateJoinedCommunity(communityId, true, success);
         }
         private void OnCommunityLeft(string communityId, bool success)
         {
-            myCommunitiesController.OnCommunityJoined(communityId, false, success);
+            myCommunitiesPresenter.OnCommunityJoined(communityId, false, success);
             view.UpdateJoinedCommunity(communityId, false, success);
         }
 
