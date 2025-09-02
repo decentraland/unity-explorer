@@ -58,7 +58,7 @@ namespace DCL.CharacterPreview
             float newFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
             float originalFieldOfView = newFieldOfView;
 
-            newFieldOfView -= pointerEventData.scrollDelta.y * Time.deltaTime * cameraSettings.scrollModifier;
+            newFieldOfView -= pointerEventData.scrollDelta.y * cameraSettings.scrollModifier;
 
             if (newFieldOfView < cameraSettings.fieldOfViewLimits.y) newFieldOfView = cameraSettings.fieldOfViewLimits.y;
             else if (newFieldOfView > cameraSettings.fieldOfViewLimits.x) newFieldOfView = cameraSettings.fieldOfViewLimits.x;

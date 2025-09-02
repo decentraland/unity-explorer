@@ -22,7 +22,7 @@ MonoBehaviour:
     <minVerticalOffset>k__BackingField: -0.84
     <maxVerticalOffset>k__BackingField: 0.5
     <scrollEnabled>k__BackingField: 1
-    <scrollModifier>k__BackingField: 6
+    <scrollModifier>k__BackingField: 1
     <fieldOfViewThresholdForPanning>k__BackingField: 32
     <fieldOfViewThresholdForReCentering>k__BackingField: 10
     <fieldOfViewLimits>k__BackingField: {x: 40, y: 16}

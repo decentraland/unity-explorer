@@ -34,14 +34,14 @@ MonoBehaviour:
     <minVerticalOffset>k__BackingField: -0.84
     <maxVerticalOffset>k__BackingField: 0.5
     <scrollEnabled>k__BackingField: 1
-    <scrollModifier>k__BackingField: 10
+    <scrollModifier>k__BackingField: 1
     <fieldOfViewThresholdForPanning>k__BackingField: 18
     <fieldOfViewThresholdForReCentering>k__BackingField: 10
     <fieldOfViewLimits>k__BackingField: {x: 27, y: 8}
     <fieldOfViewCurve>k__BackingField: 6
     <fieldOfViewDuration>k__BackingField: 0.2
     <rotationEnabled>k__BackingField: 1
-    <rotationModifier>k__BackingField: 1
+    <rotationModifier>k__BackingField: 1.5
     <rotationInertia>k__BackingField: 1
     <rotationInertiaCurve>k__BackingField: 6
   <cursorSettings>k__BackingField:
