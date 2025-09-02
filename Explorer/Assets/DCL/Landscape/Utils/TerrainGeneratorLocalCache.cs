@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace DCL.Landscape.Utils
 {
@@ -50,13 +51,11 @@ namespace DCL.Landscape.Utils
         private const string DICTIONARY_PATH = "/terrain_cache_dictionaries/";
         private const string ZONE_MODIFIER = "_zone";
 
-
         public const string ALPHA_MAPS = "alphaMaps";
         public const string HEIGHTS = "heights";
         public const string TREES = "trees";
         public const string DETAIL_LAYER = "detailLayer";
         public const string HOLES = "holes";
-
 
         public static readonly BinaryFormatter FORMATTER = new();
 
@@ -207,6 +206,7 @@ namespace DCL.Landscape.Utils
 
     }
 
+    [Preserve]
     public class TerrainGeneratorLocalCache
     {
         private TerrainLocalCache localCache;
@@ -378,12 +378,12 @@ namespace DCL.Landscape.Utils
             localCache.maxHeight = maxHeightIndex;
         }
 
-        private static (T[] array, int row, int col) Flatten<T>(T[,] array)
+        private static (int[] array, int row, int col) Flatten(int[,] array)
         {
             int rowCount = array.GetLength(0);
             int colCount = array.GetLength(1);
 
-            var flattenedArray = new T[rowCount * colCount];
+            var flattenedArray = new int[rowCount * colCount];
 
             for (var i = 0; i < rowCount; i++)
             for (var j = 0; j < colCount; j++)
@@ -395,13 +395,47 @@ namespace DCL.Landscape.Utils
             return (flattenedArray, rowCount, colCount);
         }
 
-        private static (T[] array, int x, int y, int z) Flatten<T>(T[,,] array)
+        private static (bool[] array, int row, int col) Flatten(bool[,] array)
+        {
+            int rowCount = array.GetLength(0);
+            int colCount = array.GetLength(1);
+
+            var flattenedArray = new bool[rowCount * colCount];
+
+            for (var i = 0; i < rowCount; i++)
+            for (var j = 0; j < colCount; j++)
+            {
+                int index = (i * colCount) + j;
+                flattenedArray[index] = array[i, j];
+            }
+
+            return (flattenedArray, rowCount, colCount);
+        }
+
+        private static (float[] array, int row, int col) Flatten(float[,] array)
+        {
+            int rowCount = array.GetLength(0);
+            int colCount = array.GetLength(1);
+
+            var flattenedArray = new float[rowCount * colCount];
+
+            for (var i = 0; i < rowCount; i++)
+            for (var j = 0; j < colCount; j++)
+            {
+                int index = (i * colCount) + j;
+                flattenedArray[index] = array[i, j];
+            }
+
+            return (flattenedArray, rowCount, colCount);
+        }
+
+        private static (float[] array, int x, int y, int z) Flatten(float[,,] array)
         {
             int dim1 = array.GetLength(0);
             int dim2 = array.GetLength(1);
             int dim3 = array.GetLength(2);
 
-            var flattenedArray = new T[dim1 * dim2 * dim3];
+            var flattenedArray = new float[dim1 * dim2 * dim3];
 
             for (var i = 0; i < dim1; i++)
             for (var j = 0; j < dim2; j++)
@@ -414,9 +448,9 @@ namespace DCL.Landscape.Utils
             return (flattenedArray, dim1, dim2, dim3);
         }
 
-        private static T[,] UnFlatten<T>(IReadOnlyList<T> flattenedArray, int rowCount, int colCount)
+        private static int[,] UnFlatten(int[] flattenedArray, int rowCount, int colCount)
         {
-            var array = new T[rowCount, colCount];
+            var array = new int[rowCount, colCount];
 
             for (var i = 0; i < rowCount; i++)
             for (var j = 0; j < colCount; j++)
@@ -428,9 +462,37 @@ namespace DCL.Landscape.Utils
             return array;
         }
 
-        private static T[,,] UnFlatten<T>(IReadOnlyList<T> flattenedArray, int dim1, int dim2, int dim3)
+        private static float[,] UnFlatten(float[] flattenedArray, int rowCount, int colCount)
         {
-            var array = new T[dim1, dim2, dim3];
+            var array = new float[rowCount, colCount];
+
+            for (var i = 0; i < rowCount; i++)
+            for (var j = 0; j < colCount; j++)
+            {
+                int index = (i * colCount) + j;
+                array[i, j] = flattenedArray[index];
+            }
+
+            return array;
+        }
+
+        private static bool[,] UnFlatten(bool[] flattenedArray, int rowCount, int colCount)
+        {
+            var array = new bool[rowCount, colCount];
+
+            for (var i = 0; i < rowCount; i++)
+            for (var j = 0; j < colCount; j++)
+            {
+                int index = (i * colCount) + j;
+                array[i, j] = flattenedArray[index];
+            }
+
+            return array;
+        }
+
+        private static float[,,] UnFlatten(float[] flattenedArray, int dim1, int dim2, int dim3)
+        {
+            var array = new float[dim1, dim2, dim3];
 
             for (var i = 0; i < dim1; i++)
             for (var j = 0; j < dim2; j++)

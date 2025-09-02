@@ -6,11 +6,15 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Prefs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
@@ -54,6 +58,8 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private const int ANIMATION_DELAY = 300;
+        private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
+        private const FullScreenMode DEFAULT_SCREEN_MODE = FullScreenMode.FullScreenWindow;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -62,18 +68,20 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly ISplashScreen splashScreenAnimator;
+        private readonly SplashScreen splashScreen;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly BuildData buildData;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
+        private readonly List<Resolution> possibleResolutions = new ();
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
+        private IInputBlock inputBlock;
         private float originalWorldAudioVolume;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
@@ -88,12 +96,13 @@ namespace DCL.AuthenticationScreenFlow
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            ISplashScreen splashScreenAnimator,
+            SplashScreen splashScreen,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
             World world,
-            AuthScreenEmotesSettings emotesSettings)
+            AuthScreenEmotesSettings emotesSettings,
+            IInputBlock inputBlock)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -101,12 +110,15 @@ namespace DCL.AuthenticationScreenFlow
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.splashScreenAnimator = splashScreenAnimator;
+            this.splashScreen = splashScreen;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.buildData = buildData;
             this.world = world;
             this.emotesSettings = emotesSettings;
+            this.inputBlock = inputBlock;
+
+            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
 
         public override void Dispose()
@@ -152,6 +164,7 @@ namespace DCL.AuthenticationScreenFlow
             base.OnBeforeViewShow();
 
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
+            BlockUnwantedInputs();
         }
 
         protected override void OnViewShow()
@@ -218,7 +231,8 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.Hide();
+            if (splashScreen != null) // Splash screen is destroyed after first login
+                splashScreen.Hide();
         }
 
         private void ShowRestrictedUserPopup()
@@ -254,8 +268,11 @@ namespace DCL.AuthenticationScreenFlow
         private void StartLoginFlowUntilEnd()
         {
             CancelLoginProcess();
+            ForceResolutionAndWindowedMode();
+
             loginCancellationToken = new CancellationTokenSource();
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
+
             return;
 
             async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
@@ -291,15 +308,35 @@ namespace DCL.AuthenticationScreenFlow
                     }
                 }
                 catch (OperationCanceledException) { SwitchState(ViewState.Login); }
-                catch (SignatureExpiredException) { SwitchState(ViewState.Login); }
-                catch (Web3SignatureException) { SwitchState(ViewState.Login); }
-                catch (CodeVerificationException) { SwitchState(ViewState.Login); }
-                catch (ProfileNotFoundException) { SwitchState(ViewState.Login); }
+                catch (SignatureExpiredException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (Web3SignatureException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (CodeVerificationException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (ProfileNotFoundException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
                 catch (Exception e)
                 {
                     SwitchState(ViewState.Login);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     ShowConnectionErrorPopup();
+                }
+                finally
+                {
+                    RestoreResolutionAndScreenMode();
                 }
             }
         }
@@ -329,6 +366,7 @@ namespace DCL.AuthenticationScreenFlow
 
             // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;
+
             // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
             profile.HasConnectedWeb3 = true;
 
@@ -366,10 +404,15 @@ namespace DCL.AuthenticationScreenFlow
             async UniTaskVoid AnimateAndAwaitAsync()
             {
                 await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
+
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
+
+                // Restore inputs before transitioning to world
+                UnblockUnwantedInputs();
+
                 lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
             }
@@ -435,6 +478,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     viewInstance.JumpIntoWorldButton.interactable = true;
+                    characterPreviewController?.OnBeforeShow();
                     characterPreviewController?.OnShow();
 
                     break;
@@ -448,6 +492,65 @@ namespace DCL.AuthenticationScreenFlow
             animator.Rebind();
             animator.Update(0f);
             animator.gameObject.SetActive(false);
+        }
+
+        private void ForceResolutionAndWindowedMode()
+        {
+            Resolution current = Screen.currentResolution;
+
+            int targetWidth = (int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+            int targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+
+            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, current.refreshRateRatio);
+        }
+
+        private void RestoreResolutionAndScreenMode()
+        {
+            Resolution targetResolution = GetTargetResolution();
+            FullScreenMode targetScreenMode = GetTargetScreenMode();
+            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
+        }
+
+        private Resolution GetTargetResolution()
+        {
+            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION)
+                ? GetSavedResolution()
+                : GetDefaultResolution();
+
+            Resolution GetSavedResolution()
+            {
+                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
+                return possibleResolutions[index];
+            }
+
+            Resolution GetDefaultResolution()
+            {
+                int defaultIndex = 0;
+
+                for (var index = 0; index < possibleResolutions.Count; index++)
+                {
+                    Resolution resolution = possibleResolutions[index];
+
+                    if (!ResolutionUtils.IsDefaultResolution(resolution))
+                        continue;
+
+                    defaultIndex = index;
+                    break;
+                }
+
+                return possibleResolutions[defaultIndex];
+            }
+        }
+
+        private FullScreenMode GetTargetScreenMode()
+        {
+            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE) ? GetSavedScreenMode() : DEFAULT_SCREEN_MODE;
+
+            FullScreenMode GetSavedScreenMode()
+            {
+                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
+                return FullscreenModeUtils.Modes[index];
+            }
         }
 
         private void CancelLoginProcess()
@@ -473,11 +576,16 @@ namespace DCL.AuthenticationScreenFlow
         private void RequestAlphaAccess() =>
             webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
 
-
         private void CloseErrorPopup() =>
             viewInstance!.ErrorPopupRoot.SetActive(false);
 
         private void ShowConnectionErrorPopup() =>
             viewInstance!.ErrorPopupRoot.SetActive(true);
+
+        private void BlockUnwantedInputs() =>
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+
+        private void UnblockUnwantedInputs() =>
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
     }
 }

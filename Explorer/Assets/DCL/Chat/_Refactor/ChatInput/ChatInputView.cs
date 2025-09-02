@@ -17,7 +17,6 @@ namespace DCL.Chat.ChatInput
         {
             [field: SerializeField] internal EmojiPanelConfigurationSO emojiPanelConfiguration { get; private set; }
             [field: SerializeField] internal EmojiButton emojiButtonPrefab { get; private set; }
-            [field: SerializeField] internal TextAsset emojiMappingJson { get; private set; }
             [field: SerializeField] internal EmojiSectionView emojiSectionViewPrefab { get; private set; }
             [field: SerializeField] internal EmojiButtonView emojiPanelButton { get; private set; }
             [field: SerializeField] internal EmojiPanelView emojiPanel { get; private set; }
@@ -61,7 +60,7 @@ namespace DCL.Chat.ChatInput
 
         private string previousText = string.Empty;
         private ChatConfig.ChatConfig chatConfig;
-        
+
         public void ApplyFocusStyle()
         {
             outlineObject.SetActive(true);
@@ -90,7 +89,7 @@ namespace DCL.Chat.ChatInput
             {
                 previousText = string.Empty;
             }
-            
+
             inputField.text = string.Empty;
             inputField.DeactivateInputField();
         }
@@ -100,7 +99,7 @@ namespace DCL.Chat.ChatInput
             characterCounter.SetMaximumLength(inputField.characterLimit);
             this.chatConfig = chatConfig;
         }
-        
+
         public void InsertTextAtCaretPosition(string text)
         {
             inputField.InsertTextAtCaretPosition(text);

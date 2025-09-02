@@ -36,12 +36,12 @@ namespace DCL.PluginSystem.World
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IComponentPool<UITransformComponent> transformsPool;
         private readonly IInputBlock inputBlock;
-        private UIDocument? canvas;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, UIDocument sceneUIRoot)
+        private UIDocument uiDocument = null!;
+
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.canvas = sceneUIRoot;
             this.inputBlock = inputBlock;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
@@ -60,24 +60,23 @@ namespace DCL.PluginSystem.World
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            StyleSheet scenesUIStyleSheet = (await assetsProvisioner.ProvideMainAssetAsync(settings.StyleSheet, ct)).Value;
+            uiDocument = (await assetsProvisioner.ProvideInstanceAsync(settings.ScenesUIDocument, ct: ct)).Value;
 
-            canvas.rootVisualElement.styleSheets.Add(scenesUIStyleSheet);
-            canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
-            canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
+            uiDocument.rootVisualElement.AddToClassList("sceneUIMainCanvas");
+            uiDocument.rootVisualElement.pickingMode = PickingMode.Ignore;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             // Add a regular UITransformComponent to the root entity so we can treat with the common scheme
             UITransformComponent? rootUiTransform = transformsPool.Get();
-            rootUiTransform.InitializeAsRoot(canvas!.rootVisualElement);
+            rootUiTransform.InitializeAsRoot(uiDocument.rootVisualElement);
             builder.World.Add(persistentEntities.SceneRoot, rootUiTransform);
 
-            UITransformInstantiationSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
+            UITransformInstantiationSystem.InjectToWorld(ref builder, uiDocument, componentPoolsRegistry);
             UITransformParentingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
             UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
-            sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, canvas, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot));
+            sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot));
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
@@ -97,9 +96,7 @@ namespace DCL.PluginSystem.World
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: Header(nameof(SceneUIPlugin) + "." + nameof(Settings))]
-            [field: SerializeField]
-            public AssetReferenceStyleSheet StyleSheet { get; private set; } = null!;
+            [field: SerializeField] public UIDocumentRef ScenesUIDocument { get; private set; } = null!;
         }
     }
 }

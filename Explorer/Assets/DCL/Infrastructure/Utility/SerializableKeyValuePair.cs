@@ -7,5 +7,11 @@ namespace Utility
     {
         public TKey key;
         public TValue value;
+
+        public SerializableKeyValuePair(TKey key, TValue value)
+        {
+            this.key = key;
+            this.value = value;
+        }
     }
 }

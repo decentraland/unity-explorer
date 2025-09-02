@@ -1,49 +1,36 @@
-using TMPro;
 using UnityEngine;
-using Utility.Animations;
+using UnityEngine.UI;
 
 namespace DCL.SceneLoadingScreens.SplashScreen
 {
-    public class SplashScreen : ISplashScreen
+    public class SplashScreen : MonoBehaviour
     {
-        private readonly Animator splashScreenAnimation;
-        private readonly GameObject splashRoot;
-        private readonly TMP_Text text;
-        private readonly bool showSplash;
+        [SerializeField] private Sprite[] logoSprites;
+        [SerializeField] private Image logoImage;
+        [SerializeField] private Animator splashScreenAnimation;
 
-        public SplashScreen(Animator splashScreenAnimation, GameObject splashRoot, bool showSplash, TMP_Text text)
+        private int frame;
+        private float timer;
+
+        public void Show() =>
+            gameObject.SetActive(true);
+
+        public void Hide() =>
+            gameObject.SetActive(false);
+
+        private void Update()
         {
-            this.splashScreenAnimation = splashScreenAnimation;
-            this.splashRoot = splashRoot;
-            this.showSplash = showSplash;
-            this.text = text;
-            RemoveText();
-        }
+            const float FPS = 30f;
 
-        public void Show(string? message = null)
-        {
-            splashRoot.SetActive(showSplash);
-            splashScreenAnimation.transform.SetSiblingIndex(1);
-            splashScreenAnimation.SetBool(AnimationHashes.ENABLE, true);
+            timer += Time.deltaTime;
 
-            if (message == null) RemoveText();
-            else PutText(message);
-        }
+            if (timer >= 1f / FPS)
+            {
+                timer = 0f;
 
-        public void Hide()
-        {
-            splashScreenAnimation.SetBool(AnimationHashes.ENABLE, false);
-            RemoveText();
-        }
-
-        private void PutText(string message)
-        {
-            text.text = message;
-        }
-
-        private void RemoveText()
-        {
-            text.text = string.Empty;
+                frame = (frame + 1) % logoSprites.Length;
+                logoImage.sprite = logoSprites[frame];
+            }
         }
     }
 }
