@@ -126,7 +126,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                     if (visibleWearable.IsLoading) continue;
                     if (CreateAssetPromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
-                    if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
 
                     successfulResults++;
 
