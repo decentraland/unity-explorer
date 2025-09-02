@@ -17,3 +17,7 @@ MonoBehaviour:
     m_Color: {r: 0.44313726, g: 0.41960785, b: 0.4862745, a: 1}
   - m_Name: Green
     m_Color: {r: 0.1882353, g: 0.8039216, b: 0, a: 1}
+  - m_Name: Ruby
+    m_Color: {r: 1, g: 0.1764706, b: 0.33333334, a: 1}
+  - m_Name: Snow
+    m_Color: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}

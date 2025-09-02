@@ -12,16 +12,30 @@ namespace DCL.Communities.CommunitiesBrowser
     public class StreamingCommunitiesView : MonoBehaviour
     {
         public event Action<string>? JoinStream;
+        public event Action? ViewAllStreamingCommunitiesButtonClicked;
 
         [Header("Streaming Section")]
         [SerializeField] private GameObject streamingSection = null!;
         [SerializeField] private LoopGridView streamingLoopGrid = null!;
         [SerializeField] private SkeletonLoadingView streamingLoadingSpinner = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
+        [SerializeField] private Button viewAllButton = null!;
 
         private readonly List<string> streamingResultsIds = new();
         private ThumbnailLoader? thumbnailLoader;
         private CommunitiesBrowserStateService? browserStateService;
+
+        private void Awake()
+        {
+            viewAllButton.onClick.AddListener(OnViewAllButtonClicked);
+            return;
+
+            void OnViewAllButtonClicked()
+            {
+                ViewAllStreamingCommunitiesButtonClicked?.Invoke();
+            }
+        }
+
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader, Sprite defaultSprite)
         {
