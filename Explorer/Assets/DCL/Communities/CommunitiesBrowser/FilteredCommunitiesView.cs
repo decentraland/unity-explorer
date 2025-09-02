@@ -61,7 +61,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            resultLoopGrid.ScrollRect.onValueChanged.AddListener(pos => ResultsLoopGridScrollChanged?.Invoke(pos));
         }
 
         public void ClearResultsItems()
@@ -86,7 +85,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 resultLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
-        public void SetResultsAsLoading(bool isLoading)
+        public void SetAsLoading(bool isLoading)
         {
             if (isLoading)
             {

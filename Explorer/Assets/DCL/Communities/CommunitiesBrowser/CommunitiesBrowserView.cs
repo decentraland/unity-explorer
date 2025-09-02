@@ -23,6 +23,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string>? CommunityJoined;
         public event Action? CreateCommunityButtonClicked;
         public event Action<string>? JoinStream;
+        public event Action? ViewAllStreamingCommunitiesButtonClicked;
 
         private CommunitiesBrowserStateService browserStateService;
 
@@ -34,10 +35,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public int CurrentResultsCount => 1;//browserStateService.GetFilteredResultsCount();
 
         public MyCommunitiesView MyCommunitiesView => myCommunitiesView;
-
-        [Header("Sections")]
-        [SerializeField] private GameObject filteredCommunitiesSection = null!;
-        [SerializeField] private GameObject browseAllCommunitiesSection = null!;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator = null!;
@@ -53,14 +50,10 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private MyCommunitiesView myCommunitiesView = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        [Header("Filtered Results Section")]
+        [Header("Right Side Section")]
         [SerializeField] private FilteredCommunitiesView filteredCommunitiesView = null!;
-
-        [Header("Browse All Section")]
-        [SerializeField] private BrowseAllCommunitiesView browseAllCommunitiesView = null!;
-
-        [Header("Streaming Section")]
         [SerializeField] private StreamingCommunitiesView streamingCommunitiesView = null!;
+        [SerializeField] private ScrollRect scrollRect;
 
         private CommunitiesSections currentSection = CommunitiesSections.BROWSE_ALL_COMMUNITIES;
 
@@ -79,17 +72,20 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.clearSearchButton.onClick.AddListener(() => SearchBarClearButtonClicked?.Invoke());
             createCommunityButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke());
             streamingCommunitiesView.JoinStream += communityId => JoinStream?.Invoke(communityId);
-
-            browseAllCommunitiesView.CommunityProfileOpened += communityId => CommunityProfileOpened?.Invoke(communityId);
-            browseAllCommunitiesView.CommunityJoined += (communityId, cardView) => CommunityJoined?.Invoke(communityId);
+            streamingCommunitiesView.ViewAllStreamingCommunitiesButtonClicked += StreamingCommunitiesViewOnViewAllStreamingCommunitiesButtonClicked;
 
             filteredCommunitiesView.ResultsBackButtonClicked += () => ResultsBackButtonClicked?.Invoke();
             filteredCommunitiesView.CommunityProfileOpened += communityId => CommunityProfileOpened?.Invoke(communityId);
             filteredCommunitiesView.CommunityJoined += communityId => CommunityJoined?.Invoke(communityId);
-        }
 
-        private void Start() =>
-            filteredCommunitiesView.ResultsLoopGridScrollChanged += pos => ResultsLoopGridScrollChanged?.Invoke(pos);
+            scrollRect.onValueChanged.AddListener(pos => ResultsLoopGridScrollChanged?.Invoke(pos));
+            return;
+
+            void StreamingCommunitiesViewOnViewAllStreamingCommunitiesButtonClicked()
+            {
+                ViewAllStreamingCommunitiesButtonClicked?.Invoke();
+            }
+        }
 
         private void OnDestroy()
         {
@@ -100,9 +96,6 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.clearSearchButton.onClick.RemoveAllListeners();
             createCommunityButton.onClick.RemoveAllListeners();
             streamingCommunitiesView.JoinStream -= communityId => JoinStream?.Invoke(communityId);
-            browseAllCommunitiesView.CommunityProfileOpened -= communityId => CommunityProfileOpened?.Invoke(communityId);
-            browseAllCommunitiesView.CommunityJoined -= (communityId, cardView) => CommunityJoined?.Invoke(communityId);
-            filteredCommunitiesView.ResultsBackButtonClicked -= () => ResultsBackButtonClicked?.Invoke();
             filteredCommunitiesView.CommunityProfileOpened -= communityId => CommunityProfileOpened?.Invoke(communityId);
             filteredCommunitiesView.CommunityJoined -= communityId => CommunityJoined?.Invoke(communityId);
         }
@@ -132,7 +125,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     SetBrowseAllAsLoading(isLoading);
                     break;
                 case CommunitiesSections.FILTERED_COMMUNITIES:
-                    filteredCommunitiesView.SetResultsAsLoading(isLoading);
+                    filteredCommunitiesView.SetAsLoading(isLoading);
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
@@ -141,8 +134,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetActiveSection(CommunitiesSections activeSection)
         {
             currentSection = activeSection;
-            browseAllCommunitiesSection.SetActive(activeSection == CommunitiesSections.BROWSE_ALL_COMMUNITIES);
-            filteredCommunitiesSection.SetActive(activeSection == CommunitiesSections.FILTERED_COMMUNITIES);
+            if (activeSection == CommunitiesSections.FILTERED_COMMUNITIES)
+                streamingCommunitiesView.ClearStreamingResultsItems();
         }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>
@@ -153,30 +146,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetResultsCountText(int count)
         {
-            switch (currentSection)
-            {
-                case CommunitiesSections.BROWSE_ALL_COMMUNITIES:
-                    browseAllCommunitiesView.SetBrowseAllCountText(count);
-                    break;
-                case CommunitiesSections.FILTERED_COMMUNITIES:
-                    filteredCommunitiesView.SetResultsCountText(count);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
+            filteredCommunitiesView.SetResultsCountText(count);
         }
 
         public void SetResultsLoadingMoreActive(bool isActive)
         {
-            switch (currentSection)
-            {
-                case CommunitiesSections.BROWSE_ALL_COMMUNITIES:
-                    browseAllCommunitiesView.SetBrowseAllLoadingMoreActive(isActive);
-                    break;
-                case CommunitiesSections.FILTERED_COMMUNITIES:
-                    filteredCommunitiesView.SetResultsLoadingMoreActive(isActive);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
+            filteredCommunitiesView.SetResultsLoadingMoreActive(isActive);
         }
 
         public void CleanSearchBar(bool raiseOnChangeEvent = true)
@@ -197,47 +172,28 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             filteredCommunitiesView.InitializeResultsGrid(itemTotalCount);
             filteredCommunitiesView.SetProfileRepositoryWrapper(profileDataProvider);
-            browseAllCommunitiesView.SetProfileRepositoryWrapper(profileDataProvider);
         }
 
         public void ClearItems()
         {
-            switch (currentSection)
-            {
-                case CommunitiesSections.FILTERED_COMMUNITIES:
-                    filteredCommunitiesView.ClearResultsItems();
-                    break;
-                case CommunitiesSections.BROWSE_ALL_COMMUNITIES:
-                    browseAllCommunitiesView.ClearBrowseAllItems();
-                    break;
-            }
+            filteredCommunitiesView.ClearResultsItems();
         }
 
         public void AddItems(CommunityData[] communities, bool resetPos)
         {
-            switch (currentSection)
-            {
-                case CommunitiesSections.FILTERED_COMMUNITIES:
-                    filteredCommunitiesView.AddResultsItems(communities, resetPos);
-                    break;
-                case CommunitiesSections.BROWSE_ALL_COMMUNITIES:
-                    browseAllCommunitiesView.AddBrowseAllItems(communities, resetPos);
-                    break;
-            }
+            filteredCommunitiesView.AddResultsItems(communities, resetPos);
         }
 
         public void UpdateJoinedCommunity(string communityId, bool isJoined, bool isSuccess)
         {
             browserStateService.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
             filteredCommunitiesView.UpdateJoinedCommunity(communityId, isSuccess);
-            browseAllCommunitiesView.UpdateJoinedCommunity(communityId, isSuccess);
         }
 
         public void RemoveOneMemberFromCounter(string communityId)
         {
             browserStateService.RemoveOneMemberFromCounter(communityId);
             filteredCommunitiesView.RemoveOneMemberFromCounter(communityId);
-            browseAllCommunitiesView.RemoveOneMemberFromCounter(communityId);
         }
 
         private void SetSearchBarClearButtonActive(bool isActive) =>
@@ -250,7 +206,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
             streamingCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
-            browseAllCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
             filteredCommunitiesView.SetThumbnailLoader(newThumbnailLoader, defaultThumbnailSprite);
         }
 
@@ -274,14 +229,9 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             streamingIsLoading = isLoading;
             if (isLoading)
-                streamingCommunitiesView.SetStreamingResultsAsLoading(isLoading);
+                streamingCommunitiesView.SetAsLoading(isLoading);
             else
                 TryDisableLoading();
-        }
-
-        public void InitializeBrowseAllGrid(int itemTotalCount)
-        {
-            browseAllCommunitiesView.InitializeBrowseAllGrid(itemTotalCount);
         }
 
         private void SetBrowseAllAsLoading(bool isLoading)
@@ -289,7 +239,7 @@ namespace DCL.Communities.CommunitiesBrowser
             browseAllIsLoading = isLoading;
 
             if (isLoading)
-                browseAllCommunitiesView.SetBrowseAllAsLoading(isLoading);
+                filteredCommunitiesView.SetAsLoading(isLoading);
             else
                 TryDisableLoading();
         }
@@ -298,15 +248,14 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (streamingIsLoading || browseAllIsLoading) return;
 
-            streamingCommunitiesView.SetStreamingResultsAsLoading(false);
-            browseAllCommunitiesView.SetBrowseAllAsLoading(false);
+            streamingCommunitiesView.SetAsLoading(false);
+            filteredCommunitiesView.SetAsLoading(false);
         }
 
         public void SetCommunitiesBrowserState(CommunitiesBrowserStateService communitiesBrowserStateService)
         {
             browserStateService = communitiesBrowserStateService;
             streamingCommunitiesView.SetCommunitiesBrowserState(browserStateService);
-            browseAllCommunitiesView.SetCommunitiesBrowserState(browserStateService);
             filteredCommunitiesView.SetCommunitiesBrowserState(browserStateService);
         }
     }

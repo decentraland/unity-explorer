@@ -69,7 +69,7 @@ namespace DCL.Communities.CommunitiesBrowser
             SetStreamingResultsAsEmpty(true);
         }
 
-        public void SetStreamingResultsAsLoading(bool isLoading)
+        public void SetAsLoading(bool isLoading)
         {
             if (isLoading)
             {

@@ -108,7 +108,6 @@ namespace DCL.Communities.CommunitiesBrowser
             ConfigureResultsGrid();
 
             view.InitializeStreamingResultsGrid(0);
-            view.InitializeBrowseAllGrid(0);
 
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
             view.SearchBarSelected += DisableShortcutsInput;
@@ -120,6 +119,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
             view.JoinStream += JoinStream;
+            view.ViewAllStreamingCommunitiesButtonClicked += ViewAllStreamingCommunities;
         }
 
         private void JoinStream(string communityId)
@@ -231,9 +231,25 @@ namespace DCL.Communities.CommunitiesBrowser
                 ct: loadResultsCts.Token).Forget();
         }
 
+        private void ViewAllStreamingCommunities()
+        {
+            ClearSearchBar();
+            view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
+            view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
+
+            loadResultsCts = loadResultsCts.SafeRestart();
+            LoadResultsAsync(
+                name: string.Empty,
+                onlyMemberOf: false,
+                pageNumber: 1,
+                elementsPerPage: COMMUNITIES_PER_PAGE,
+                ct: loadResultsCts.Token).Forget();
+        }
+
         private void LoadAllCommunitiesResults()
         {
             view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
+            view.SetResultsBackButtonVisible(false);
             ClearSearchBar();
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadStreamingCommunitiesAsync(loadResultsCts.Token).Forget();
@@ -281,7 +297,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadMoreResults(Vector2 _)
         {
-            //TODO FRAN: We need to handle loading more results here for the BROWSE ALL view, but we need to listen to its scroll
             if (isGridResultsLoadingItems ||
                 view.CurrentResultsCount >= currentResultsTotalAmount ||
                 !view.IsResultsScrollPositionAtBottom)

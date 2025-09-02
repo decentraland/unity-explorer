@@ -733,6 +733,7 @@ MonoBehaviour:
   streamingLoopGrid: {fileID: 6850908348933031452}
   streamingLoadingSpinner: {fileID: 5025362042081686217}
   defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
+  viewAllButton: {fileID: 8310566576812799615}
 --- !u!114 &6283280887940843002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1195,6 +1196,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6783026385342557771, guid: ec922bcb8101b0c41a655a7c6e3c366f, type: 3}
   m_PrefabInstance: {fileID: 488516249041783066}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8310566576812799615 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8472008351512624997, guid: ec922bcb8101b0c41a655a7c6e3c366f, type: 3}
+  m_PrefabInstance: {fileID: 488516249041783066}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &884612308539772198
 PrefabInstance:
   m_ObjectHideFlags: 0
