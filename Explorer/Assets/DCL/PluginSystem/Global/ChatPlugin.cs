@@ -299,6 +299,17 @@ namespace DCL.PluginSystem.Global
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
 
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
+
+            ChatConversationsToolbarViewItem itemNearbyPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ItemNearbyPrefab, ct: ct)).GetComponent<ChatConversationsToolbarViewItem>();
+            PrivateChatConversationsToolbarViewItem itemPrivatePrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ItemPrivatePrefab, ct: ct)).GetComponent<PrivateChatConversationsToolbarViewItem>();
+            CommunityChatConversationsToolbarViewItem itemCommunityPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ItemCommunityPrefab, ct: ct)).GetComponent<CommunityChatConversationsToolbarViewItem>();
+
+            ChatConversationsToolbarViewItemPool.Initialize(new ChatConversationsToolbarViewItemPool(
+                mainUIView.ChatView2.ConversationToolbarView2.ItemsContainer,
+                itemNearbyPrefab,
+                itemPrivatePrefab,
+                itemCommunityPrefab
+            ));
         }
 
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
@@ -358,5 +369,10 @@ namespace DCL.PluginSystem.Global
 
         [Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
+
+        [Header("Prefabs")]
+        [field: SerializeField] public AssetReferenceGameObject ItemNearbyPrefab;
+        [field: SerializeField] public AssetReferenceGameObject ItemPrivatePrefab;
+        [field: SerializeField] public AssetReferenceGameObject ItemCommunityPrefab;
     }
 }

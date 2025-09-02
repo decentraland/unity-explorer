@@ -932,6 +932,24 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
+        ItemNearbyPrefab:
+          m_AssetGUID: 918d043c7a901cd458ff04ab88561f38
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        ItemPrivatePrefab:
+          m_AssetGUID: 9aa01414a8609a74d9e7a38295a6ba1f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        ItemCommunityPrefab:
+          m_AssetGUID: 954dae08a8ee75d449d12698e42bf923
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 7621844642437005315
       type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

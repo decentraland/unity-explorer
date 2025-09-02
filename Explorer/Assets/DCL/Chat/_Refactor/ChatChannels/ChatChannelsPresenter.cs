@@ -157,7 +157,7 @@ namespace DCL.Chat
         {
             if (!isInitialized) return;
             viewModels.Remove(removedChannel);
-            view.RemoveConversation(removedChannel);
+            view.TryRemoveConversation(removedChannel);
 
             if (currentChannelService.CurrentChannelId.Equals(removedChannel))
                 selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID, lifeCts.Token);
@@ -186,7 +186,7 @@ namespace DCL.Chat
         private void OnChannelLeft(ChatEvents.ChannelLeftEvent evt)
         {
             viewModels.Remove(evt.Channel.Id);
-            view.RemoveConversation(evt.Channel);
+            view.TryRemoveConversation(evt.Channel);
         }
 
         private void AddChannelToView(ChatChannel channel)
