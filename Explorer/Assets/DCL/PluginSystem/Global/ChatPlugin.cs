@@ -36,6 +36,7 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.Translation.Service;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -88,6 +89,9 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private CommandRegistry commandRegistry;
+        private ITranslationSettings translationSettings;
+        private ITranslationMemory translationMemory;
+        private ITranslationService translationService;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -187,6 +191,20 @@ namespace DCL.PluginSystem.Global
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
+
+            translationSettings = new PlayerPrefsTranslationSettings();
+            var toggleAutoTranslateCommand = new ToggleAutoTranslateCommand(translationSettings);
+            var translationPolicy = new ConversationTranslationPolicy(translationSettings);
+            var translationProvider = new MockTranslationProvider();
+            var translationCache = new InMemoryTranslationCache();
+            translationMemory = new InMemoryTranslationMemory();
+
+            translationService = new ChatTranslationService(translationProvider,
+                translationCache,
+                translationPolicy,
+                translationSettings,
+                eventBus,
+                translationMemory);
 
             var viewInstance = mainUIView.ChatView2;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
