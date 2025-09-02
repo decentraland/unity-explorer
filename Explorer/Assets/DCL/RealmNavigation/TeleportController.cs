@@ -44,6 +44,14 @@ namespace DCL.RealmNavigation
             retrieveScene = null;
         }
 
+        public WaitForSceneReadiness TeleportToSceneSpawnPoint(SceneEntityDefinition sceneDef, CancellationToken ct)
+        {
+            Vector2Int parcel = sceneDef.metadata.scene.DecodedBase;
+            var loadReport = AsyncLoadProcessReport.Create(ct);
+            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, Vector3.zero, ct, loadReport));
+            return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
+        }
+
         /// <summary>
         ///     If current scene is still loading it will block the teleport until its assets are resolved or timed out
         /// </summary>
@@ -67,7 +75,7 @@ namespace DCL.RealmNavigation
 
             SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
-            if (sceneDef != null && !TeleportUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
+            if (sceneDef != null && !TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
 

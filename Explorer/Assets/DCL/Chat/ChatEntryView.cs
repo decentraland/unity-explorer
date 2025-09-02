@@ -3,6 +3,8 @@ using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
 using System.Globalization;
+using DCL.Chat.ChatViewModels;
+using DCL.Utilities;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +21,7 @@ namespace DCL.Chat
         public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
 
         public ChatEntryClickedDelegate? ChatEntryClicked;
+        private Action<string, ChatEntryView>? onMessageContextMenuClicked;
 
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
@@ -35,8 +38,17 @@ namespace DCL.Chat
 
         [field: SerializeField] private CanvasGroup usernameElementCanvas;
 
+        private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel.WithColor>? profileSubscription;
+
         private ChatMessage chatMessage;
         private readonly Vector3[] cornersCache = new Vector3[4];
+
+        private void Awake()
+        {
+            profileButton.onClick.AddListener(OnProfileButtonClicked);
+            usernameElement.UserNameClicked += OnUsernameClicked;
+            messageBubbleElement.messageOptionsButton.onClick.AddListener(() => onMessageContextMenuClicked?.Invoke(chatMessage.Message, this));
+        }
 
         public void AnimateChatEntry()
         {
@@ -53,7 +65,7 @@ namespace DCL.Chat
             dateDividerElement.gameObject.SetActive(showDateDivider);
 
             if (showDateDivider)
-                dateDividerText.text = GetDateRepresentation(DateTime.FromOADate(data.SentTimestamp).Date);
+                dateDividerText.text = GetDateRepresentation(data.SentTimestamp!.Value.Date);
 
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
         }
@@ -70,10 +82,21 @@ namespace DCL.Chat
                 return date.ToString("ddd, d MMM, yyyy", CultureInfo.InvariantCulture);
         }
 
-        private void Awake()
+        public void SetItemData(ChatMessageViewModel viewModel, Action<string, ChatEntryView> onMessageContextMenuClicked, ChatEntryClickedDelegate? onProfileContextMenuClicked)
         {
-            profileButton.onClick.AddListener(OnProfileButtonClicked);
-            usernameElement.UserNameClicked += OnUsernameClicked;
+            SetItemData(viewModel.Message, viewModel.ShowDateDivider);
+
+            this.onMessageContextMenuClicked = onMessageContextMenuClicked;
+            ChatEntryClicked = onProfileContextMenuClicked;
+
+            // Binding is done for non-system messages only
+            if (!viewModel.Message.IsSystemMessage)
+                ProfilePictureView.Bind(viewModel.ProfileData);
+            else
+                ProfilePictureView.SetImage(viewModel.ProfileData.Value.Thumbnail.Sprite!, false);
+
+            profileSubscription?.Dispose();
+            profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
         }
 
         private void OnProfileButtonClicked()

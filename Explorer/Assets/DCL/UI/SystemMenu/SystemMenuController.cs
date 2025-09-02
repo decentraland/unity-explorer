@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationGuards;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
@@ -117,6 +118,12 @@ namespace DCL.UI.SystemMenu
         {
             async UniTaskVoid LogoutAsync(CancellationToken ct)
             {
+                if (web3IdentityCache.Identity == null)
+                {
+                    ReportHub.LogError(ReportCategory.UI, "Cannot logout. Identity is null.");
+                    return;
+                }
+
                 Web3Address address = web3IdentityCache.Identity!.Address;
 
                 await web3Authenticator.LogoutAsync(ct);

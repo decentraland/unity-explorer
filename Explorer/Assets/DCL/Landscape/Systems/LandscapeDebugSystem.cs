@@ -40,14 +40,16 @@ namespace DCL.Landscape.Systems
             lastCullDistanceApplied = (int)landscapeData.DetailDistance;
 
             debugBuilder.TryAddWidget("Landscape")
-                        ?.AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
+                       ?.AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels,
+                             "Set Load Radius", OnLoadRadiusConfirm)
                         .AddIntSliderField("LOD bias %", lodBias, 1, 250)
                         .AddIntSliderField("Detail Density %", detailDensity, 0, 100)
                         .AddIntSliderField("Grass Distance", detailDistance, 0, 300)
                         .AddIntSliderField("Chunk Cull Distance", cullDistance, 1, 10000)
                         .AddToggleField("Terrain", OnTerrainToggle, landscapeData.drawTerrain)
                         .AddToggleField("Details", OnDetailToggle, landscapeData.drawTerrainDetails)
-                        .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.showSatelliteView);
+                        .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.showSatelliteView)
+                        .AddToggleField("Ground", OnGroundToggle, landscapeData.RenderGround);
         }
 
         private void OnTerrainToggle(ChangeEvent<bool> evt)
@@ -63,6 +65,11 @@ namespace DCL.Landscape.Systems
         private void OnSatelliteToggle(ChangeEvent<bool> evt)
         {
             floor.SwitchVisibilitySetting(evt.newValue);
+        }
+
+        private void OnGroundToggle(ChangeEvent<bool> evt)
+        {
+            landscapeData.RenderGround = evt.newValue;
         }
 
         private void OnLoadRadiusConfirm(int value)

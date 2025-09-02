@@ -52,6 +52,7 @@ MonoBehaviour:
   - rid: 3511243270148325472
   - rid: 6144113899072913496
   - rid: 648265872610426982
+  - rid: 657752310186246267
   references:
     version: 2
     RefIds:
@@ -60,6 +61,15 @@ MonoBehaviour:
       data:
         <ConfirmationDialogPrefab>k__BackingField:
           m_AssetGUID: 7b075576ea612439bb40436f7c0fdff0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 657752310186246267
+      type: {class: DebugMenuSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        UiDocumentPrefab:
+          m_AssetGUID: 8521b529ac852454480e3f6596bca3ba
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -102,8 +112,8 @@ MonoBehaviour:
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <hoverCanvasSettings>k__BackingField:
-          <HoverCanvasAsset>k__BackingField:
-            m_AssetGUID: 8fd0fd0188702304689c461c6aacc7c5
+          <HoverUIDocument>k__BackingField:
+            m_AssetGUID: 6cfe7986a3d81484d96b5962ae4f300f
             m_SubObjectName: 
             m_SubObjectType: 
             m_SubObjectGUID: 
@@ -111,49 +121,49 @@ MonoBehaviour:
           <InputButtons>k__BackingField:
           - PlayerInputAction: {fileID: 8483188427658457040, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
-            Icon: {fileID: 21300000, guid: 1298933c0a6b35a499063fcfb805f66b, type: 3}
+            IconClass: sprite-interaction__icon-mouse-left
           - PlayerInputAction: {fileID: 2589752990516661850, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: E
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: -4117738799243451851, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: F
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: -6174129951794055311, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: Any
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: 3239514346835642328, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: W
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: 3427618249405714940, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: S
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: -1652773021623687720, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: D
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: 8119733991161362085, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
-            Icon: {fileID: 21300000, guid: 0c1f94bccfacc415f8b7916a4f3ae512, type: 3}
+            IconClass: sprite-interaction__icon-mouse-right
           - PlayerInputAction: {fileID: -273270698691252620, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: SPACE BAR
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: -1806294599963264830, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: LSHIFT
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: 8129677363630674292, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 1
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: 8017425544309595397, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 2
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: 238014444060475990, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 3
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: 1953896829860503287, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 4
-            Icon: {fileID: 0}
+            IconClass: 
           - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
-            Icon: {fileID: 21300000, guid: 0c1f94bccfacc415f8b7916a4f3ae512, type: 3}
+            IconClass: sprite-interaction__icon-mouse-right
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -240,60 +250,25 @@ MonoBehaviour:
         - tektonik
         - tik
         - confettipopper
-        <SettingsMenuConfiguration>k__BackingField:
-          m_AssetGUID: b47b66eab8da46b4cbcc30100e4194e0
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <RealmPartitionSettings>k__BackingField:
-          m_AssetGUID: 7899019423f09d049a8463a0751037a5
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <VoiceChatSettings>k__BackingField:
-          m_AssetGUID: 88538076b054b4504b11b87773e7393f
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <VideoPrioritizationSettings>k__BackingField:
-          m_AssetGUID: 12f48d0297bd3f746b92a97878478086
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
+        <VideoPrioritizationSettings>k__BackingField: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <QualitySettingsAsset>k__BackingField:
-          m_AssetGUID: 58ab8549017bacb42b310dbb452a2f6e
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ControlsSettingsAsset>k__BackingField:
-          m_AssetGUID: 26489687fb2f3419886df8e49f34b006
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ChatSettingsAsset>k__BackingField:
-          m_AssetGUID: a358ab6eb8d31ca488364e13b54f5f9c
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <QualitySettingsAsset>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
+        <ControlsSettingsAsset>k__BackingField: {fileID: 11400000, guid: 26489687fb2f3419886df8e49f34b006, type: 2}
+        <ChatSettingsAsset>k__BackingField: {fileID: 11400000, guid: a358ab6eb8d31ca488364e13b54f5f9c, type: 2}
         <CategoryMappingSO>k__BackingField:
           m_AssetGUID: bda7566751d4243fb842e1a272cb9f83
           m_SubObjectName: 
@@ -370,18 +345,8 @@ MonoBehaviour:
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
         <QualitySettings>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
-        <RealmPartitionSettings>k__BackingField:
-          m_AssetGUID: 7899019423f09d049a8463a0751037a5
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <VideoPrioritizationSettings>k__BackingField:
-          m_AssetGUID: 12f48d0297bd3f746b92a97878478086
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <VideoPrioritizationSettings>k__BackingField: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
         <LODSettingAsset>k__BackingField:
           m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
@@ -403,24 +368,9 @@ MonoBehaviour:
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
-        AnalyticsConfigRef:
-          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ReportHandlingSettingsDevelopment>k__BackingField:
-          m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ReportHandlingSettingsProduction>k__BackingField:
-          m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        AnalyticsConfig: {fileID: 11400000, guid: 134b7bf082a11ae499e9e62958051ca7, type: 2}
+        <ReportHandlingSettingsDevelopment>k__BackingField: {fileID: 11400000, guid: 0dd75559898ca8d4db9fc8ab99ac2269, type: 2}
+        <ReportHandlingSettingsProduction>k__BackingField: {fileID: 11400000, guid: 6c1c35a66af59874a8373ebcd51572a4, type: 2}
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
     - rid: 2799748311381442562
       type: {class: ErrorPopupPlugin/ErrorPopupSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -497,12 +447,7 @@ MonoBehaviour:
     - rid: 3022170012058910723
       type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        realmPartitionSettings:
-          m_AssetGUID: 7899019423f09d049a8463a0751037a5
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        realmPartitionSettings: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
         landscapeData:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
@@ -518,12 +463,20 @@ MonoBehaviour:
     - rid: 3511243270148325472
       type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <VoiceChatConfigurations>k__BackingField:
-          m_AssetGUID: dc4b9a0eb614c2c45a09fa14de92fcd8
+        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
+        <MicrophoneAudioFilter>k__BackingField:
+          m_AssetGUID: fa9a67059d8a204408ce435cc8827612
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <CombinedAudioSource>k__BackingField:
+          m_AssetGUID: 13e534245f7a87d498ae850d58b9115f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <VoiceChatConfiguration>k__BackingField: {fileID: 11400000, guid: 96f7b8dc6c27e3047a1b56bcf3779c47, type: 2}
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -587,12 +540,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <SettingsAsset>k__BackingField:
-          m_AssetGUID: 9891b090dc6dc574d9415313003375f0
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <SettingsAsset>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
         ControlsPanelPrefab:
           m_AssetGUID: 542424588a68b46f688ef5c667aa0c68
           m_SubObjectName: 
@@ -624,8 +572,8 @@ MonoBehaviour:
     - rid: 4132209997426458630
       type: {class: InputSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <CrosshairCanvasAsset>k__BackingField:
-          m_AssetGUID: bf82184de91c3944b8de02d57d7dd151
+        <CrosshairUIDocument>k__BackingField:
+          m_AssetGUID: fb7327249a7554d50afaf729d15aa697
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -644,6 +592,12 @@ MonoBehaviour:
             Culture=neutral, PublicKeyToken=null
           m_SubObjectGUID: 
           m_EditorAssetChanged: 1
+        <ShowUIToast>k__BackingField:
+          m_AssetGUID: 4a21ec4cd76d144a5bce86b3ac4cc9d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 4340256219339423747
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -824,17 +778,13 @@ MonoBehaviour:
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
-        <SettingsRef>k__BackingField:
-          m_AssetGUID: 9891b090dc6dc574d9415313003375f0
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <Settings>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
     - rid: 6156380652633325570
       type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <spatialStateSettings>k__BackingField:
-          m_AssetGUID: 495d936d8dfe78444abfd5ff3e260159
+        <MovementSettings>k__BackingField: {fileID: 11400000, guid: 495d936d8dfe78444abfd5ff3e260159, type: 2}
+        <LandscapeData>k__BackingField:
+          m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -869,18 +819,8 @@ MonoBehaviour:
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <PartitionSettings>k__BackingField:
-          m_AssetGUID: 8d266ff458e71f2439f9c30bd7e68d4a
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <RealmPartitionSettings>k__BackingField:
-          m_AssetGUID: 7899019423f09d049a8463a0751037a5
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
+        <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
@@ -902,26 +842,26 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <controlsSettingsAsset>k__BackingField:
-          m_AssetGUID: 26489687fb2f3419886df8e49f34b006
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <controlsSettingsAsset>k__BackingField: {fileID: 11400000, guid: 26489687fb2f3419886df8e49f34b006, type: 2}
     - rid: 6784895265412481027
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <controllerSettings>k__BackingField:
-          m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
+        <controllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
+    - rid: 6849204606292983808
+      type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ScreencaptureHud>k__BackingField:
+          m_AssetGUID: 73f988cecacd42e48920937e996e446d
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 6849204606292983808
-      type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <ScreencaptureHud>k__BackingField: {fileID: 405257682719442044, guid: 73f988cecacd42e48920937e996e446d, type: 3}
-        <FollowTarget>k__BackingField: {fileID: 9209778991738672599, guid: ace53bd2bc5e2b8439785bb3122b12e3, type: 3}
+        <FollowTarget>k__BackingField:
+          m_AssetGUID: ace53bd2bc5e2b8439785bb3122b12e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <TransitionSettings>k__BackingField: {fileID: 11400000, guid: 230436585dd166a4e98f1c0953e3a5f6, type: 2}
         <MovementSettings>k__BackingField: {fileID: 11400000, guid: 9c104547ad3a8454baeb79e1bb45ce4c, type: 2}
         <PhotoDetailPrefab>k__BackingField:
@@ -950,12 +890,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ChatEntryConfiguration>k__BackingField:
-          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -990,12 +924,14 @@ MonoBehaviour:
     - rid: 7621844642437005314
       type: {class: ChatPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ChatSettingsAsset>k__BackingField:
-          m_AssetGUID: a358ab6eb8d31ca488364e13b54f5f9c
+        <ChatSettingsAsset>k__BackingField: {fileID: 11400000, guid: a358ab6eb8d31ca488364e13b54f5f9c, type: 2}
+        <ChatConfig>k__BackingField:
+          m_AssetGUID: 4359e32789e7f914c8e7e12d16286b76
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
     - rid: 7621844642437005315
       type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1014,12 +950,7 @@ MonoBehaviour:
     - rid: 8449516130764587014
       type: {class: AdaptivePerformanceSettings, ns: DCL.Optimization.AdaptivePerformance.Systems, asm: DCL.Plugins}
       data:
-        <phyiscsSettings>k__BackingField:
-          m_AssetGUID: b68ba436e63c39949b58b7aac96c291c
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <phyiscsSettings>k__BackingField: {fileID: 11400000, guid: b68ba436e63c39949b58b7aac96c291c, type: 2}
     - rid: 8813103964372074592
       type: {class: MarketplaceCreditsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

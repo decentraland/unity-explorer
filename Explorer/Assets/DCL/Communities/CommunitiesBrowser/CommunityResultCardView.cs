@@ -45,6 +45,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button joinCommunityButton = null!;
         [SerializeField] private GameObject joiningLoading = null!;
         [SerializeField] private MutualFriendsConfig mutualFriends;
+        [SerializeField] private ListenersCountView listenersCountView;
 
         [Serializable]
         internal struct MutualFriendsConfig

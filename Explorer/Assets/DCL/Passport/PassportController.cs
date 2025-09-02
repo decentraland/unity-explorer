@@ -54,7 +54,7 @@ using Utility.Types;
 
 namespace DCL.Passport
 {
-    public partial class PassportController : ControllerBase<PassportView, PassportController.Params>
+    public partial class PassportController : ControllerBase<PassportView, PassportController.Params>, IBlocksChat
     {
         private enum OpenBadgeSectionOrigin
         {
@@ -511,6 +511,11 @@ namespace DCL.Passport
                 if (EnumUtils.HasFlag(alreadyLoadedSections, sectionToLoad))
                     return;
 
+                // Ensure the view is initialized before fetching the profile to prevent rendering artifacts
+                // that may appear while the profile is still loading
+                if (sectionToLoad == PassportSection.OVERVIEW)
+                    characterPreviewController!.OnBeforeShow();
+
                 // Load user profile
                 Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
 
@@ -586,17 +591,14 @@ namespace DCL.Passport
                 return;
 
             photoLoadingCts = photoLoadingCts.SafeRestart();
+            characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
 
             cameraReelGalleryController!.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
 
             currentSection = PassportSection.PHOTOS;
             viewInstance!.OpenSection(currentSection);
 
-            if (!viewInstance.CharacterPreviewView.gameObject.activeSelf)
-            {
-                viewInstance.CharacterPreviewView.gameObject.SetActive(true);
-                characterPreviewController?.OnShow();
-            }
+            SetCharacterPreviewVisible(true);
         }
 
         private void OpenOverviewSection()
@@ -610,7 +612,7 @@ namespace DCL.Passport
             currentSection = PassportSection.OVERVIEW;
             viewInstance!.OpenSection(currentSection);
 
-            characterPreviewController?.OnShow();
+            SetCharacterPreviewVisible(true);
         }
 
         private void OpenBadgesSection(string? badgeIdSelected = null)
@@ -624,9 +626,28 @@ namespace DCL.Passport
             currentSection = PassportSection.BADGES;
             viewInstance!.OpenSection(currentSection);
 
-            characterPreviewController?.OnHide(false);
+            SetCharacterPreviewVisible(false, false);
+
             bool isOwnPassport = ownProfile?.UserId == currentUserId;
             BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, OpenBadgeSectionOrigin.BUTTON.ToString());
+        }
+
+        private void SetCharacterPreviewVisible(bool visible, bool triggerOnShowBusEvent = true)
+        {
+            GameObject previewGO = viewInstance.CharacterPreviewView.gameObject;
+
+            if (previewGO.activeSelf == visible)
+                return;
+
+            previewGO.SetActive(visible);
+
+            if (visible)
+            {
+                characterPreviewController?.OnBeforeShow();
+                characterPreviewController?.OnShow(triggerOnShowBusEvent);
+            }
+            else
+                characterPreviewController?.OnHide(triggerOnShowBusEvent);
         }
 
         private void OnBadgeNotificationReceived(INotification notification) =>
@@ -701,40 +722,52 @@ namespace DCL.Passport
 
             async UniTaskVoid FetchFriendshipStatusAndShowInteractionAsync(CancellationToken ct)
             {
-                // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                // Dont show any interaction for our own user
-                if (ownProfile?.UserId == inputData.UserId) return;
-
-                FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
-
-                switch (friendshipStatus)
+                try
                 {
-                    case FriendshipStatus.NONE:
-                        viewInstance!.AddFriendButton.gameObject.SetActive(true);
-                        break;
-                    case FriendshipStatus.FRIEND:
-                        viewInstance!.RemoveFriendButton.gameObject.SetActive(true);
-                        break;
-                    case FriendshipStatus.REQUEST_SENT:
-                        viewInstance!.CancelFriendButton.gameObject.SetActive(true);
-                        break;
-                    case FriendshipStatus.REQUEST_RECEIVED:
-                        viewInstance!.AcceptFriendButton.gameObject.SetActive(true);
-                        break;
-                    case FriendshipStatus.BLOCKED:
-                        viewInstance!.UnblockFriendButton.gameObject.SetActive(true);
-                        break;
+                    // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                    // Dont show any interaction for our own user
+                    if (ownProfile?.UserId == inputData.UserId) return;
+
+                    FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
+
+                    switch (friendshipStatus)
+                    {
+                        case FriendshipStatus.NONE:
+                            viewInstance!.AddFriendButton.gameObject.SetActive(true);
+                            break;
+                        case FriendshipStatus.FRIEND:
+                            viewInstance!.RemoveFriendButton.gameObject.SetActive(true);
+                            break;
+                        case FriendshipStatus.REQUEST_SENT:
+                            viewInstance!.CancelFriendButton.gameObject.SetActive(true);
+                            break;
+                        case FriendshipStatus.REQUEST_RECEIVED:
+                            viewInstance!.AcceptFriendButton.gameObject.SetActive(true);
+                            break;
+                        case FriendshipStatus.BLOCKED:
+                            viewInstance!.UnblockFriendButton.gameObject.SetActive(true);
+                            break;
+                    }
+
+                    bool friendOnlineStatus = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
+                    viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
+
+                    //TODO FRAN: We need to add here the other reasons why this button could be disabled. For now, only if blocked or blocked by.
+                    viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY);
+
+                    await SetupContextMenuAsync(friendshipStatus, ct);
                 }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.PROFILE);
 
-                bool friendOnlineStatus = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
-                viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
-
-                //TODO FRAN: We need to add here the other reasons why this button could be disabled. For now, only if blocked or blocked by.
-                viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY);
-
-                await SetupContextMenuAsync(friendshipStatus, ct);
+                    viewInstance!.ChatButton.gameObject.SetActive(false);
+                    viewInstance!.JumpInButton.gameObject.SetActive(false);
+                    viewInstance!.ContextMenuButton.gameObject.SetActive(false);
+                }
             }
         }
 
