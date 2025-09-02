@@ -81,7 +81,7 @@ namespace DCL.Chat
             view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
             view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
 
-            communityDataService.OnCommunityMetadataUpdated += OnCommunityMetadataUpdated;
+            communityDataService.CommunityMetadataUpdated += CommunityMetadataUpdated;
             chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
@@ -102,7 +102,7 @@ namespace DCL.Chat
             InitializeChannelContextMenu();
         }
 
-        private void OnCommunityMetadataUpdated(CommunityMetadataUpdatedEvent evt)
+        private void CommunityMetadataUpdated(CommunityMetadataUpdatedEvent evt)
         {
             // Only care if we’re viewing a Community channel and it matches
             if (currentViewModel == null || currentViewModel.ViewMode != TitlebarViewMode.Community)
