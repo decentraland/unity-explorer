@@ -55,7 +55,7 @@ MonoBehaviour:
   m_MinHeight: 892
   m_PreferredWidth: -1
   m_PreferredHeight: 892
-  m_FlexibleWidth: -1
+  m_FlexibleWidth: 1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
 --- !u!114 &4979891323416324664
@@ -77,6 +77,7 @@ MonoBehaviour:
   browseAllEmptyContainer: {fileID: 1329240631728106132}
   browseAllLoadingSpinner: {fileID: 5534048270618266013}
   browseAllLoadingMoreSpinner: {fileID: 1972701702536864114}
+  defaultThumbnailSprite: {fileID: 0}
 --- !u!1001 &1362038011312496042
 PrefabInstance:
   m_ObjectHideFlags: 0
