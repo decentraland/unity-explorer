@@ -134,7 +134,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view.scrollRect.SetScrollSensitivityBasedOnPlatform();
 
             if (optionButtonView is not null)
-                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!, reelGalleryConfigParams.EnableDeleteOption);
+                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!, reelGalleryConfigParams.EnableDeleteContextOption);
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
                 view.unusedGridViewObject, cameraReelScreenshotsStorage,
@@ -671,17 +671,17 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public readonly int ThumbnailWidth;
         public readonly bool GridShowMonth;
         public readonly bool GroupByMonth;
-        public readonly bool EnableDeleteOption;
+        public readonly bool EnableDeleteContextOption;
         public readonly bool HideReelOnPrivateSet;
 
-        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth, bool enableDeleteOption = true, bool hideReelOnPrivateSet = false)
+        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth, bool enableDeleteContextOption = true, bool hideReelOnPrivateSet = false)
         {
             GridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             ThumbnailHeight = thumbnailHeight;
             ThumbnailWidth = thumbnailWidth;
             GridShowMonth = gridShowMonth;
             GroupByMonth = groupByMonth;
-            EnableDeleteOption = enableDeleteOption;
+            EnableDeleteContextOption = enableDeleteContextOption;
             HideReelOnPrivateSet = hideReelOnPrivateSet;
         }
     }

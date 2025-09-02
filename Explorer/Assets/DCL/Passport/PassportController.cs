@@ -325,7 +325,7 @@ namespace DCL.Passport
                     thumbnailWidth,
                     gridShowMonth: false,
                     groupByMonth: false,
-                    enableDeleteOption: false,
+                    enableDeleteContextOption: false,
                     hideReelOnPrivateSet: true),
                 useSignedRequest: false,
                 galleryEventBus,
