@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
+using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using Utility.Multithreading;
 using Utility.Storage;
@@ -33,9 +34,9 @@ namespace DCL.WebRequests.Analytics
             IWeb3IdentityCache web3IdentityProvider,
             IDebugContainerBuilder debugContainerBuilder,
             IDecentralandUrlsSource urlsSource,
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
             int coreBudget,
-            int sceneBudget,
-            bool ktxEnabled
+            int sceneBudget
         )
         {
             var options = new ElementBindingOptions();
@@ -59,13 +60,13 @@ namespace DCL.WebRequests.Analytics
 
             var requestHub = new RequestHub(urlsSource);
 
-            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub)
+            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient)
                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                             .WithLog()
                                                             .WithArtificialDelay(options)
                                                             .WithBudget(coreBudget, coreAvailableBudget);
 
-            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub)
+            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient)
                                                              .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                              .WithLog()
                                                              .WithArtificialDelay(options)
