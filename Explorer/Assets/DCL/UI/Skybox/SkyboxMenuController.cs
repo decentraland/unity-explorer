@@ -132,10 +132,7 @@ namespace DCL.UI.Skybox
         private void OnSceneRestrictionChanged(SceneRestriction restriction)
         {
             if (restriction.Type == SceneRestrictions.SKYBOX_TIME_UI_BLOCKED)
-            {
-                bool isRestricted = restriction.Action == SceneRestrictionsAction.APPLIED;
-                SetInteractable(!isRestricted);
-            }
+                SetInteractable(restriction.Action != SceneRestrictionsAction.APPLIED);
         }
 
         private void SetInteractable(bool isInteractable)
