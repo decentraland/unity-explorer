@@ -80,7 +80,7 @@ void CatTailScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, 
     GroupMemoryBarrierWithGroupSync();
 
     PerInst perInst;
-    if (foundCount <= 0)
+    if (foundCount <= 1)
     {
         perInst.position = float4(0.0f, -5000.0f, 0.0f, 0.0f);
         perInst.quatRotation = float4(0.0f, 0.0f, 0.0f, 0.0f);
