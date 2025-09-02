@@ -1,8 +1,5 @@
 using DCL.Diagnostics;
 using DCL.Web3.Abstract;
-using Nethereum.Signer;
-using System;
-using UnityEngine;
 
 namespace DCL.Web3.Accounts
 {
@@ -58,6 +55,18 @@ namespace DCL.Web3.Accounts
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"Web3Account Verify result: {result} for {message} with {signature}");
+            return result;
+        }
+
+        public bool Verify(string message, string signature, Web3Address address)
+        {
+            ReportHub
+               .WithReport(ReportCategory.PROFILE)
+               .Log($"Web3Account Verify requested: {message} with {signature} address {address}");
+            bool result = origin.Verify(message, signature, address);
+            ReportHub
+               .WithReport(ReportCategory.PROFILE)
+               .Log($"Web3Account Verify result: {result} for {message} with {signature} address {address}");
             return result;
         }
     }

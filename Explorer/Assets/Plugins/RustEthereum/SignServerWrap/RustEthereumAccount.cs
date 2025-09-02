@@ -51,6 +51,9 @@ namespace Plugins.RustEthereum.SignServerWrap
         public bool Verify(string message, string signature) =>
             verifierAccount.Verify(message, signature);
 
+        public bool Verify(string message, string signature, Web3Address address) =>
+            verifierAccount.Verify(message, signature, address);
+
         public static string ToHex(ReadOnlySpan<byte> value, bool prefix = false)
         {
             string currentPrefix = prefix ? "0x" : "";

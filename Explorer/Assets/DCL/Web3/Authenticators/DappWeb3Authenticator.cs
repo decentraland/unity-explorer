@@ -198,6 +198,16 @@ namespace DCL.Web3.Authenticators
 
                 AuthChain authChain = CreateAuthChain(response, ephemeralMessage);
 
+                // These validations ensure that the signature is valid as received from the authentication server,
+                // to prevent unauthorized requests caused by inconsistencies with the signer's address
+                if (authChain.TryGet(AuthLinkType.ECDSA_EPHEMERAL, out var ecdsaEphemeral))
+                    if (!ephemeralAccount.Verify(ecdsaEphemeral.payload, ecdsaEphemeral.signature!, new Web3Address(response.sender)))
+                        throw new InvalidSignatureException();
+
+                if (authChain.TryGet(AuthLinkType.ECDSA_EIP_1654_EPHEMERAL, out var ecdsaEip1654))
+                    if (!ephemeralAccount.Verify(ecdsaEip1654.payload, ecdsaEip1654.signature!, new Web3Address(response.sender)))
+                        throw new InvalidSignatureException();
+
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 return new DecentralandIdentity(new Web3Address(response.sender),
                     ephemeralAccount, sessionExpiration, authChain);
@@ -390,7 +400,12 @@ namespace DCL.Web3.Authenticators
             var authChain = AuthChain.Create();
 
             // To keep cohesiveness between the platform, convert the user address to lower case
-            authChain.SetSigner(response.sender.ToLower());
+            authChain.Set(new AuthLink
+            {
+                type = AuthLinkType.SIGNER,
+                payload = response.sender.ToLower(),
+                signature = "",
+            });
 
             string signature = response.result;
 

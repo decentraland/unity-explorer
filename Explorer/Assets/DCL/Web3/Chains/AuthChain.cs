@@ -45,16 +45,6 @@ namespace DCL.Web3.Chains
         public void Set(AuthLink link) =>
             chain[link.type] = link;
 
-        public void SetSigner(string signerAddress)
-        {
-            Set(new AuthLink
-            {
-                type = AuthLinkType.SIGNER,
-                payload = signerAddress,
-                signature = "",
-            });
-        }
-
         public IEnumerator<AuthLink> GetEnumerator() =>
             ((IEnumerable<AuthLink>)chain.Values).GetEnumerator();
 
