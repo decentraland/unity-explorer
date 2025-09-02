@@ -313,11 +313,6 @@ namespace DCL.AuthenticationScreenFlow
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     SwitchState(ViewState.Login);
                 }
-                catch (InvalidSignatureException e)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
-                }
                 catch (Web3SignatureException e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));

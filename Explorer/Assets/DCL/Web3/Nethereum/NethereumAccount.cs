@@ -25,9 +25,6 @@ namespace DCL.Web3.Accounts
             SIGNER.EncodeUTF8AndSign(message, key);
 
         public bool Verify(string message, string signature) =>
-            Verify(message, signature, Address);
-
-        public bool Verify(string message, string signature, Web3Address address) =>
-            SIGNER.EncodeUTF8AndEcRecover(message, signature) == address;
+            SIGNER.EncodeUTF8AndEcRecover(message, signature) == Address;
     }
 }

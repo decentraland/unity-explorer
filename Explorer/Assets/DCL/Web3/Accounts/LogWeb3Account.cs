@@ -57,17 +57,5 @@ namespace DCL.Web3.Accounts
                .Log($"Web3Account Verify result: {result} for {message} with {signature}");
             return result;
         }
-
-        public bool Verify(string message, string signature, Web3Address address)
-        {
-            ReportHub
-               .WithReport(ReportCategory.PROFILE)
-               .Log($"Web3Account Verify requested: {message} with {signature} address {address}");
-            bool result = origin.Verify(message, signature, address);
-            ReportHub
-               .WithReport(ReportCategory.PROFILE)
-               .Log($"Web3Account Verify result: {result} for {message} with {signature} address {address}");
-            return result;
-        }
     }
 }
