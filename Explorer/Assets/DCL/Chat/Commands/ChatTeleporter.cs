@@ -17,7 +17,6 @@ namespace DCL.Chat.Commands
     public class ChatTeleporter
     {
         private const string WORLD_SUFFIX = ".dcl.eth";
-        private const string TELEPORT_ERROR_PREFIX = "Error:";
 
         private readonly IRealmNavigator realmNavigator;
         private readonly Dictionary<string, string> paramUrls;
@@ -81,9 +80,9 @@ namespace DCL.Chat.Commands
                    {
                        ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {realm} world!",
                        ChangeRealmError.SameRealm => $"🟡 You are already in {realm}!",
-                       ChangeRealmError.NotReachable => $"🔴 {TELEPORT_ERROR_PREFIX} The world {realm} doesn't exist or not reachable!",
-                       ChangeRealmError.ChangeCancelled => $"🔴 {TELEPORT_ERROR_PREFIX} The operation was canceled!",
-                       ChangeRealmError.LocalSceneDevelopmentBlocked => $"🔴 {TELEPORT_ERROR_PREFIX} Realm changes are not allowed in local scene development mode",
+                       ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
+                       ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
+                       ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
@@ -102,10 +101,10 @@ namespace DCL.Chat.Commands
 
             return error.State switch
                    {
-                       TaskError.MessageError => $"🔴 {TELEPORT_ERROR_PREFIX} {error.Message}",
-                       TaskError.Timeout => $"🔴 {TELEPORT_ERROR_PREFIX} Timeout",
-                       TaskError.Cancelled => $"🔴 {TELEPORT_ERROR_PREFIX} The operation was canceled!",
-                       TaskError.UnexpectedException => $"🔴 {TELEPORT_ERROR_PREFIX} {error.Message}",
+                       TaskError.MessageError => $"🔴 Error: {error.Message}",
+                       TaskError.Timeout => "🔴 Error: Timeout",
+                       TaskError.Cancelled => "🔴 Error: The operation was canceled!",
+                       TaskError.UnexpectedException => $"🔴 Error: {error.Message}",
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
