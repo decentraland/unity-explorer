@@ -53,7 +53,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         public bool IsContextMenuOpen() => isContextMenuOpen;
 
-        public void Show(CameraReelResponseCompact cameraReelResponse, Transform parent, Vector3 offsetPosition = default)
+        public void TryShow(CameraReelResponseCompact cameraReelResponse, Transform parent, Vector3 offsetPosition = default)
         {
             if (!enableContextMenuButton) return;
 

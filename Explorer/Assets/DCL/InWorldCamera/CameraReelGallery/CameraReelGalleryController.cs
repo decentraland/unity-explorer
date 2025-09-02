@@ -56,15 +56,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public event Action ScreenshotDownloaded;
         public event Action<int> MaxThumbnailsUpdated;
 
-        public bool EnableContextMenuButton
-        {
-            set
-            {
-                if (optionButtonController != null)
-                    optionButtonController.enableContextMenuButton = value;
-            }
-        }
-
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
@@ -181,6 +172,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 this.optionButtonController.SetPublicRequested -= HideReelIfSetPrivate;
             }
+        }
+
+        public void TryEnableContextMenuButton(bool enable)
+        {
+            if (optionButtonController != null)
+                optionButtonController.enableContextMenuButton = enable;
         }
 
         private void HideReelIfSetPrivate(CameraReelResponseCompact response, bool isPublic)
@@ -664,7 +661,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         }
     }
 
-    public struct ReelGalleryConfigParams
+    public readonly struct ReelGalleryConfigParams
     {
         public readonly int GridLayoutFixedColumnCount;
         public readonly int ThumbnailHeight;
