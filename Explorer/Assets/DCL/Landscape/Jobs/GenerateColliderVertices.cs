@@ -9,7 +9,9 @@ namespace DCL.Landscape.Jobs
     [BurstCompile]
     public struct GenerateColliderVertices : IJobParallelForBatch
     {
-        public float MaxHeight;
+        public int MaxHeight;
+        public int OccupancyFloor;
+        public float TerrainHeight;
         [ReadOnly] public NativeArray<byte> OccupancyMap;
         public int OccupancyMapSize;
         [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int2> Parcels;
@@ -35,7 +37,9 @@ namespace DCL.Landscape.Jobs
                 {
                     int x = (vertexIndex - meshStart) % sideVertexCount;
                     int z = (vertexIndex - meshStart) / sideVertexCount;
-                    float y = GetHeight(x + parcelOriginXZ.x, z + parcelOriginXZ.y);
+
+                    float y = TerrainGenerator.GetHeight(x + parcelOriginXZ.x, z + parcelOriginXZ.y,
+                        ParcelSize, OccupancyMap, OccupancyMapSize, OccupancyFloor, TerrainHeight, MaxHeight);
 
                     var vertex = new GroundColliderVertex() { Position = float3(x, y, z) };
 #if UNITY_EDITOR // Only needed for drawing gizmos.
@@ -48,54 +52,6 @@ namespace DCL.Landscape.Jobs
 
                 meshIndex++;
             }
-        }
-
-        public float GetHeight(float x, float z)
-        {
-            float occupancy;
-
-            if (OccupancyMapSize > 0)
-            {
-                // Take the bounds of the terrain, put a single pixel border around it, increase the
-                // size to the next power of two, map xz=0,0 to uv=0.5,0.5 and parcelSize to pixel size,
-                // and that's the occupancy map.
-                float2 uv = ((float2(x, z) / ParcelSize) + (OccupancyMapSize * 0.5f)) / OccupancyMapSize;
-                occupancy = SampleBilinearClamp(OccupancyMap, int2(OccupancyMapSize, OccupancyMapSize), uv);
-            }
-            else
-            {
-                occupancy = 0f;
-            }
-
-            // float height = SAMPLE_TEXTURE2D_LOD(HeightMap, HeightMap.samplerstate, uv, 0.0).r;
-            float minValue = 175.0f / 255.0f; // 0.68
-
-            // In the "worst case", if occupancy is 0.25, it can mean that the current vertex is on a
-            // corner between one occupied parcel and three free ones, and height must be zero.
-            if (occupancy <= minValue)
-            {
-                return 0f;
-            }
-            else
-            {
-                float normalizedHeight = (occupancy - minValue) / (1 - minValue);
-                return normalizedHeight * MaxHeight;// + noiseH * transitionFactor;
-            }
-        }
-
-        private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
-        {
-            uv = (uv * textureSize) - 0.5f;
-            int2 min = (int2)floor(uv);
-
-            // A quick prayer for Burst to SIMD this. 🙏
-            int4 index = (clamp(min.y + int4(1, 1, 0, 0), 0, textureSize.y - 1) * textureSize.x) +
-                         clamp(min.x + int4(0, 1, 1, 0), 0, textureSize.x - 1);
-
-            float2 t = frac(uv);
-            float top = lerp(texture[index.w], texture[index.z], t.x);
-            float bottom = lerp(texture[index.x], texture[index.y], t.x);
-            return lerp(top, bottom, t.y) * (1f / 255f);
         }
     }
 

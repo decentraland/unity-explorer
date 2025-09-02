@@ -90,7 +90,7 @@ namespace DCL.Landscape
         private IGPUIWrapper gpuiWrapper;
         private NativeArray<byte> occupancyMapData;
         private int occupancyMapSize;
-        private float terrainHeight;
+        public float TerrainHeight { get; private set; }
         private int2 treeMinParcel;
         private int2 treeMaxParcel;
         private NativeArray<int> treeIndices;
@@ -144,7 +144,7 @@ namespace DCL.Landscape
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
-            this.terrainHeight = terrainHeight;
+            this.TerrainHeight = terrainHeight;
 
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
@@ -890,14 +890,16 @@ namespace DCL.Landscape
             return occupancyMapData[index] == 0;
         }
 
-        private float GetParcelBaseHeight(int2 parcel)
+        private static float GetParcelBaseHeight(int2 parcel, NativeArray<byte> occupancyMapData,
+            int occupancyMapSize, int occupancyFloor, float terrainHeight)
         {
             parcel += occupancyMapSize / 2;
             int index = (parcel.y * occupancyMapSize) + parcel.x;
-            return (occupancyMapData[index] - OccupancyFloor) / (255f - OccupancyFloor) * terrainHeight;
+            return (occupancyMapData[index] - occupancyFloor) / (255f - occupancyFloor) * terrainHeight;
         }
 
-        public float GetParcelNoiseHeight(float x, float z)
+        private static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
+            int occupancyMapSize, int parcelSize, int occupancyFloor, int maxHeight)
         {
             float occupancy;
 
@@ -906,20 +908,29 @@ namespace DCL.Landscape
                 // Take the bounds of the terrain, put a single pixel border around it, increase the
                 // size to the next power of two, map xz=0,0 to uv=0.5,0.5 and parcelSize to pixel size,
                 // and that's the occupancy map.
-                float2 uv = ((float2(x, z) / ParcelSize) + (occupancyMapSize * 0.5f)) / occupancyMapSize;
+                float2 uv = ((float2(x, z) / parcelSize) + (occupancyMapSize * 0.5f)) / occupancyMapSize;
                 occupancy = SampleBilinearClamp(occupancyMapData, int2(occupancyMapSize, occupancyMapSize), uv);
             }
             else
                 occupancy = 0f;
 
             // float height = SAMPLE_TEXTURE2D_LOD(HeightMap, HeightMap.samplerstate, uv, 0.0).r;
-            float minValue = OccupancyFloor / 255.0f; // 0.68
+            float minValue = occupancyFloor / 255.0f; // 0.68
 
             if (occupancy <= minValue) return 0f;
 
             const float SATURATION_FACTOR = 20;
             float normalizedHeight = (occupancy - minValue) / (1 - minValue);
-            return (normalizedHeight * MaxHeight) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
+            return (normalizedHeight * maxHeight) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
+        }
+
+        public static float GetHeight(float x, float z, int parcelSize,
+            NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor,
+            float terrainHeight, int maxHeight)
+        {
+            int2 parcel = (int2)floor(float2(x, z) / parcelSize);
+            return GetParcelBaseHeight(parcel, occupancyMapData, occupancyMapSize, occupancyFloor, terrainHeight)
+                   + GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor, maxHeight);
         }
 
         private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
@@ -970,7 +981,9 @@ namespace DCL.Landscape
                 return false;
             }
 
-            position.y = GetParcelBaseHeight(parcel) + GetParcelNoiseHeight(position.x, position.z);
+            position.y = GetParcelBaseHeight(parcel, occupancyMapData, occupancyMapSize, OccupancyFloor, TerrainHeight)
+                         + GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor, MaxHeight);
+
             rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
 
             scale = terrainGenData.treeAssets[instance.PrototypeIndex]

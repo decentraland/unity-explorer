@@ -113,6 +113,8 @@ namespace DCL.Landscape.Systems
             var generateColliderVerticesJob = new GenerateColliderVertices()
             {
                 MaxHeight = terrainGenerator.MaxHeight,
+                OccupancyFloor = terrainGenerator.OccupancyFloor,
+                TerrainHeight = terrainGenerator.TerrainHeight,
                 OccupancyMap = terrainGenerator.OccupancyMap.GetRawTextureData<byte>(),
                 OccupancyMapSize =  terrainGenerator.OccupancyMap.width,
                 Parcels = parcels,
