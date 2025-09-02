@@ -1148,7 +1148,7 @@ namespace DCL.Landscape
 
             for (int i = 0; i < treeIndices.Length; i++)
             {
-                int2 parcel = int2(i % stride, i / stride);
+                int2 parcel = int2(i % stride, i / stride) + treeMinParcel;
                 ReadOnlySpan<TreeInstanceData> instances = GetTreeInstances(parcel);
 
                 foreach (var instance in instances)
