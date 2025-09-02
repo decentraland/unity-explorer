@@ -352,34 +352,15 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
         }
 
-        public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)
-        {
-            ref WearableAssets results = ref wearable.WearableAssetResults[bodyShape];
-            results.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[1];
-
-            results.Results[MAIN_ASSET_INDEX] = new StreamableLoadingResult<AttachmentAssetBase>(attachmentRegularAsset);
-        }
-
         public static bool HasEssentialAssetsResolved(this IWearable wearable, BodyShape bodyShape)
         {
-            StreamableLoadingResult<AttachmentAssetBase>?[] results = wearable.WearableAssetResults[bodyShape].Results ?? Array.Empty<StreamableLoadingResult<AttachmentAssetBase>?>();
+            StreamableLoadingResult<AttachmentAssetBase>?[] results = wearable.WearableAssetResults[bodyShape].Results;
 
-            if (wearable.Type == WearableType.FacialFeature)
-            {
-                if (results.Length <= 0) return false;
-
-                // Exclude texture mask from required assets
-                StreamableLoadingResult<AttachmentAssetBase>? mainFileAsset = results[0];
-                return mainFileAsset is { Succeeded: true };
-            }
-
-            for (var i = 0; i < results.Length; i++)
-            {
-                StreamableLoadingResult<AttachmentAssetBase>? r = results[i];
-
-                if (r is not { IsInitialized: true })
-                    return false;
-            }
+            // We only care for the result in 0
+            // If its a regular wearbale, the asset that we need to check the initialization its at 0 (MAIN_ASSET_INDEX)
+            // If its a facial feature, we care about the asset at 0, not the mask at 1 (MASK_ASSET_INDEX)
+            if (results?[0] is not { IsInitialized: true })
+                return false;
 
             return true;
         }
