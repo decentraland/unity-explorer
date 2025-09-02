@@ -141,8 +141,8 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
 
             notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, OnOpenCommunityCardFromNotification);
-            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_SENT, OnOpenCommunityCardFromNotification);
-            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_JOIN_REQUEST_ACCEPTED, OnOpenCommunityCardFromNotification);
+            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
+            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
         }
 
         public override void Dispose()

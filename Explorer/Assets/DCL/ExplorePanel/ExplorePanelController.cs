@@ -79,7 +79,7 @@ namespace DCL.ExplorePanel
             dclInput = DCLInput.Instance;
             this.profileMenuController = profileMenuController;
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_USER_INVITED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
