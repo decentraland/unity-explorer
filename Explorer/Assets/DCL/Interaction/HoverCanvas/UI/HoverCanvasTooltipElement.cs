@@ -1,6 +1,4 @@
-﻿using JetBrains.Annotations;
-using UnityEngine;
-using UnityEngine.UIElements;
+﻿using UnityEngine.UIElements;
 using Utility.UIToolkit;
 
 namespace DCL.Interaction.HoverCanvas.UI
@@ -28,7 +26,7 @@ namespace DCL.Interaction.HoverCanvas.UI
             initialized = true;
         }
 
-        public void SetData(string? hintText, string? actionKeyText, Sprite? icon)
+        public void SetData(string? hintText, string? actionKeyText, string? iconClass)
         {
             Initialize();
 
@@ -46,9 +44,10 @@ namespace DCL.Interaction.HoverCanvas.UI
             }
             else keyRoot.SetDisplayed(false);
 
-            if (icon != null)
+            if (!string.IsNullOrEmpty(iconClass))
             {
-                inputIcon.sprite = icon;
+                inputIcon.RemoveSprites();
+                inputIcon.AddToClassList(iconClass);
                 inputIcon.SetDisplayed(true);
             }
             else inputIcon.SetDisplayed(false);

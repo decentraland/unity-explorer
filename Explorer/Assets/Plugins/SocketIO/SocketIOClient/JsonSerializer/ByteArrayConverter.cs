@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using UnityEngine.Scripting;
 
 namespace SocketIOClient.JsonSerializer
 {
+    [Preserve]
     internal class ByteArrayConverter : JsonConverter<byte[]>
     {
         public ByteArrayConverter()

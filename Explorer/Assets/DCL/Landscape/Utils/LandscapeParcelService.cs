@@ -12,9 +12,11 @@ using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace DCL.Landscape.Utils
 {
+    [Preserve]
     public class Vector2Converter : JsonConverter<Vector2[]>
     {
         public override void WriteJson(JsonWriter writer, Vector2[]? value, JsonSerializer serializer)
