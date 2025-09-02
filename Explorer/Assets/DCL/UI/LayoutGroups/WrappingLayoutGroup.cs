@@ -6,8 +6,8 @@ namespace UI.LayoutGroups
     [AddComponentMenu("Layout/Wrapping Layout Group")]
     public class WrappingLayoutGroup : LayoutGroup
     {
-        public float SpacingX = 10f;
-        public float SpacingY = 10f;
+        [field: SerializeField] public float SpacingX {get; set;} = 10f;
+        [field: SerializeField] public float SpacingY {get; set;} = 10f;
 
         public override void CalculateLayoutInputHorizontal()
         {
