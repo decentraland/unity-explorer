@@ -25,15 +25,15 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdHJpZ2dlcl9hcmVhLnBy",
-            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMiggEKDVBCVHJpZ2dl",
-            "ckFyZWESOAoEbWVzaBgBIAEoDjIlLmRlY2VudHJhbGFuZC5zZGsuY29tcG9u",
-            "ZW50cy5NZXNoVHlwZUgAiAEBEhsKDmNvbGxpc2lvbl9tYXNrGAIgASgNSAGI",
-            "AQFCBwoFX21lc2hCEQoPX2NvbGxpc2lvbl9tYXNrKiUKCE1lc2hUeXBlEgoK",
-            "Bk1UX0JPWBAAEg0KCU1UX1NQSEVSRRABQhSqAhFEQ0wuRUNTQ29tcG9uZW50",
-            "c2IGcHJvdG8z"));
+            "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMijQEKDVBCVHJpZ2dl",
+            "ckFyZWESQwoEbWVzaBgBIAEoDjIwLmRlY2VudHJhbGFuZC5zZGsuY29tcG9u",
+            "ZW50cy5UcmlnZ2VyQXJlYU1lc2hUeXBlSACIAQESGwoOY29sbGlzaW9uX21h",
+            "c2sYAiABKA1IAYgBAUIHCgVfbWVzaEIRCg9fY29sbGlzaW9uX21hc2sqNAoT",
+            "VHJpZ2dlckFyZWFNZXNoVHlwZRIMCghUQU1UX0JPWBAAEg8KC1RBTVRfU1BI",
+            "RVJFEAFCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.MeshType), }, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TriggerAreaMeshType), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerArea), global::DCL.ECSComponents.PBTriggerArea.Parser, new[]{ "Mesh", "CollisionMask" }, new[]{ "Mesh", "CollisionMask" }, null, null, null)
           }));
     }
@@ -41,9 +41,9 @@ namespace DCL.ECSComponents {
 
   }
   #region Enums
-  public enum MeshType {
-    [pbr::OriginalName("MT_BOX")] MtBox = 0,
-    [pbr::OriginalName("MT_SPHERE")] MtSphere = 1,
+  public enum TriggerAreaMeshType {
+    [pbr::OriginalName("TAMT_BOX")] TamtBox = 0,
+    [pbr::OriginalName("TAMT_SPHERE")] TamtSphere = 1,
   }
 
   #endregion
@@ -106,14 +106,14 @@ namespace DCL.ECSComponents {
 
     /// <summary>Field number for the "mesh" field.</summary>
     public const int MeshFieldNumber = 1;
-    private global::DCL.ECSComponents.MeshType mesh_;
+    private global::DCL.ECSComponents.TriggerAreaMeshType mesh_;
     /// <summary>
     /// default: MT_BOX
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::DCL.ECSComponents.MeshType Mesh {
-      get { if ((_hasBits0 & 1) != 0) { return mesh_; } else { return global::DCL.ECSComponents.MeshType.MtBox; } }
+    public global::DCL.ECSComponents.TriggerAreaMeshType Mesh {
+      get { if ((_hasBits0 & 1) != 0) { return mesh_; } else { return global::DCL.ECSComponents.TriggerAreaMeshType.TamtBox; } }
       set {
         _hasBits0 |= 1;
         mesh_ = value;
@@ -280,7 +280,7 @@ namespace DCL.ECSComponents {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 8: {
-            Mesh = (global::DCL.ECSComponents.MeshType) input.ReadEnum();
+            Mesh = (global::DCL.ECSComponents.TriggerAreaMeshType) input.ReadEnum();
             break;
           }
           case 16: {
@@ -303,7 +303,7 @@ namespace DCL.ECSComponents {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 8: {
-            Mesh = (global::DCL.ECSComponents.MeshType) input.ReadEnum();
+            Mesh = (global::DCL.ECSComponents.TriggerAreaMeshType) input.ReadEnum();
             break;
           }
           case 16: {
