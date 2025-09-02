@@ -30,7 +30,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         [JsonProperty("communityId")]
         public string CommunityId { get; set; }
 
-        [JsonProperty("userName")]
+        [JsonProperty("memberName")]
         public string UserName { get; set; }
 
         [JsonProperty("thumbnailUrl")]
