@@ -26,11 +26,10 @@ namespace DCL.Communities.CommunitiesBrowser
         private CommunitiesBrowserStateService browserStateService;
 
         public bool IsResultsScrollPositionAtBottom =>
-            filteredCommunitiesView.IsResultsScrollPositionAtBottom(NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE);
-
+            scrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
 
         //This value will depend on which view is active? is it worth to have the logic centralized??
-        public int CurrentResultsCount => 1;//browserStateService.GetFilteredResultsCount();
+        public int CurrentResultsCount => filteredCommunitiesView.CurrentResultsCount;
 
         public MyCommunitiesView MyCommunitiesView => myCommunitiesView;
         public StreamingCommunitiesView StreamingCommunitiesView => streamingCommunitiesView;
@@ -116,8 +115,16 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetActiveSection(CommunitiesSections activeSection)
         {
             currentSection = activeSection;
+
             if (activeSection == CommunitiesSections.FILTERED_COMMUNITIES)
+            {
                 streamingCommunitiesView.ClearStreamingResultsItems();
+                filteredCommunitiesView.SetResultsBackButtonVisible(true);
+            }
+            else
+            {
+                filteredCommunitiesView.SetResultsBackButtonVisible(false);
+            }
         }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>

@@ -181,7 +181,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Dispose()
         {
-            view.ResultsLoopGridScrollChanged -= LoadMoreResults;
+            view.ResultsLoopGridScrollChanged -= TryLoadMoreResults;
             view.ResultsBackButtonClicked -= LoadAllCommunitiesResults;
             view.SearchBarSelected -= DisableShortcutsInput;
             view.SearchBarDeselected -= RestoreInput;
@@ -217,7 +217,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ConfigureResultsGrid()
         {
             view.InitializeResultsGrid(0, profileRepositoryWrapper);
-            view.ResultsLoopGridScrollChanged += LoadMoreResults;
+            view.ResultsLoopGridScrollChanged += TryLoadMoreResults;
         }
 
         //Shows all "My Communities" in the Filtered Communities View
@@ -254,8 +254,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private void LoadAllCommunitiesResults()
         {
             view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
-            view.SetResultsBackButtonVisible(false);
             ClearSearchBar();
+
+            view.SetResultsTitleText(BROWSE_COMMUNITIES_TITLE);
 
             LoadAllCommunitiesResultsAsync().Forget();
             return;
@@ -280,7 +281,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         }
 
-        private void LoadMoreResults(Vector2 _)
+        private void TryLoadMoreResults(Vector2 _)
         {
             if (isGridResultsLoadingItems ||
                 view.CurrentResultsCount >= currentResultsTotalAmount ||

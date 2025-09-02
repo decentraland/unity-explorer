@@ -126,8 +126,6 @@ namespace DCL.Communities.CommunitiesBrowser
             RefreshCommunityCardInGrid(communityId);
         }
 
-        public bool IsResultsScrollPositionAtBottom(float normalizedOffset = 0.01f) =>
-            resultLoopGrid.ScrollRect.verticalNormalizedPosition <= normalizedOffset;
 
         public int CurrentResultsCount => currentFilteredIds.Count;
 

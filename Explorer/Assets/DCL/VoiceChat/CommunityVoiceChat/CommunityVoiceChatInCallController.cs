@@ -67,7 +67,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void SetCommunityData(GetCommunityResponse communityData)
         {
             view.SetCommunityName(communityData.data.name);
-            thumbnailController.RequestImage(communityData.data.thumbnails.Value.raw);
+            if (communityData.data.thumbnails != null)
+                thumbnailController.RequestImage(communityData.data.thumbnails.Value.raw);
         }
 
         public void SetTalkingStatus(int speakingCount, string username)
