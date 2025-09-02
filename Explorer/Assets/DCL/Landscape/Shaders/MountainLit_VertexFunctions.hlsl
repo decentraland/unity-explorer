@@ -32,19 +32,16 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
         // Calculate normalized height first
         float normalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
 
-        float noiseH = GetHeight(input.positionWS.x, input.positionWS.z);
+        /// Value taken from generating HeightMap via TerrainGeneratorWithAnalysis. 
+        float min = -4.135159f; // min value of the GeoffNoise.GetHeight
+        float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
 
-        if (_UseHeightMap > 0)
-        {
-            /// Value taken from generating HeightMap via TerrainGeneratorWithAnalysis. 
-            float min = -4.135159f; // min value of the GeoffNoise.GetHeight
-            float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
-            
-            noiseH = fHeightMapValue * range + min;
-        }
+        // the result from the heightmap should be equal to this function
+        // float noiseH = GetHeight(input.positionWS.x, input.positionWS.z);
+        float noiseH = fHeightMapValue * range + min;
         
         float saturationFactor = 20;
-        input.positionWS.y = normalizedHeight * _DistanceFieldScale + noiseH * saturate( normalizedHeight * saturationFactor);
+        input.positionWS.y = (normalizedHeight * _DistanceFieldScale) + (noiseH * saturate( normalizedHeight * saturationFactor));
 
         // Ensure no negative heights
         if (input.positionWS.y < 0.0)

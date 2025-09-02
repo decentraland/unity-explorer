@@ -921,7 +921,7 @@ namespace DCL.Landscape
 
             const float SATURATION_FACTOR = 20;
             float normalizedHeight = (occupancy - minValue) / (1 - minValue);
-            return (normalizedHeight * maxHeight) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
+            return (normalizedHeight * 16) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
         }
 
         public static float GetHeight(float x, float z, int parcelSize,
@@ -929,8 +929,7 @@ namespace DCL.Landscape
             float terrainHeight, int maxHeight)
         {
             int2 parcel = (int2)floor(float2(x, z) / parcelSize);
-            return GetParcelBaseHeight(parcel, occupancyMapData, occupancyMapSize, occupancyFloor, terrainHeight)
-                   + GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor, maxHeight);
+            return GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor, maxHeight);
         }
 
         private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
@@ -981,8 +980,7 @@ namespace DCL.Landscape
                 return false;
             }
 
-            position.y = GetParcelBaseHeight(parcel, occupancyMapData, occupancyMapSize, OccupancyFloor, TerrainHeight)
-                         + GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor, MaxHeight);
+            position.y = GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor, MaxHeight);
 
             rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
 
