@@ -114,19 +114,20 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    float rotationModifier = cameraSettings.rotationModifier;
-                    float inertia = cameraSettings.rotationInertia;
-                    Ease curve = cameraSettings.rotationInertiaCurve;
                     float angularVelocity;
 
-                    if (inertia <= 0f)
+                    float rotationModifier = cameraSettings.rotationModifier;
+                    float rotationInertia = cameraSettings.rotationInertia;
+                    Ease curve = cameraSettings.rotationInertiaCurve;
+
+                    if (rotationInertia <= 0f)
                     {
                         angularVelocity = -pointerEventData.delta.x;
                     }
                     else
                     {
-                        // Frame-rate independent damping
-                        float smoothing = 1f - Mathf.Exp(-inertia * Time.deltaTime);
+                        float currentFrameRate = 1f / Time.deltaTime;
+                        float smoothing = 1f - Mathf.Exp(-rotationInertia * (1f / currentFrameRate));
 
                         angularVelocity = Mathf.Lerp(
                             characterPreviewAvatarContainer.RotationAngularVelocity,
@@ -135,7 +136,7 @@ namespace DCL.CharacterPreview
                         );
                     }
 
-                    characterPreviewAvatarContainer.SetRotationTween(angularVelocity, rotationModifier, curve);
+                    characterPreviewAvatarContainer.SetRotationTween(angularVelocity, rotationModifier, rotationInertia, curve);
 
                     break;
                 }

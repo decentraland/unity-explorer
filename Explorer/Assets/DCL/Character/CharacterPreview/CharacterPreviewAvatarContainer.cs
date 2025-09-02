@@ -14,9 +14,9 @@ namespace DCL.CharacterPreview
     /// </summary>
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
-        private const float MAX_ANGULAR_VELOCITY = 100f;
-        private const float ANGULAR_VELOCITY_DIVISOR = 15f;
-        private const float MIN_DURATION = .2f;
+        private const float MAX_ANGULAR_VELOCITY = 20f;
+        private const float MIN_DURATION_WITH_INERTIA = .2f;
+        private const float DURATION_SCALE = .1f;
 
         private Tween? fovTween;
         private Tween? rotationTween;
@@ -82,7 +82,7 @@ namespace DCL.CharacterPreview
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
 
-        public void SetRotationTween(float angularVelocity, float rotationModifier, Ease curve)
+        public void SetRotationTween(float angularVelocity, float rotationModifier, float rotationInertia, Ease curve)
         {
             rotationAngularVelocity = Mathf.Clamp(
                 angularVelocity,
@@ -90,10 +90,9 @@ namespace DCL.CharacterPreview
                 MAX_ANGULAR_VELOCITY
             );
 
-            float duration = Mathf.Max(
-                MIN_DURATION,
-                Mathf.Abs(rotationAngularVelocity) / ANGULAR_VELOCITY_DIVISOR
-            );
+            float duration = rotationInertia > 0
+                ? Mathf.Max(Mathf.Abs(rotationAngularVelocity) * rotationInertia * DURATION_SCALE, MIN_DURATION_WITH_INERTIA)
+                : 0f;
 
             StopRotationTween();
 
@@ -107,7 +106,7 @@ namespace DCL.CharacterPreview
                                    .OnUpdate(() =>
                                     {
                                         Vector3 rotation = rotationTarget.rotation.eulerAngles;
-                                        rotation.y += rotationAngularVelocity * rotationModifier * Time.deltaTime;
+                                        rotation.y += rotationAngularVelocity * rotationModifier;
                                         rotationTarget.rotation = Quaternion.Euler(rotation);
                                     })
                                    .OnComplete(() =>
