@@ -2,6 +2,7 @@ using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -26,10 +27,13 @@ namespace DCL.AvatarRendering.Emotes
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
 
+        private AssetBundleManifestVersion SceneAssetBundleManifestVersion;
+
         public LoadTimeout Timeout { get; private set; }
 
         public GetSceneEmoteFromRealmIntention(
             string sceneId,
+            AssetBundleManifestVersion sceneAssetBundleManifestVersion,
             string emoteHash,
             bool loop,
             BodyShape bodyShape,
@@ -44,6 +48,7 @@ namespace DCL.AvatarRendering.Emotes
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
             Timeout = new LoadTimeout(timeout, 0);
+            SceneAssetBundleManifestVersion = sceneAssetBundleManifestVersion;
         }
 
         public bool Equals(GetSceneEmoteFromRealmIntention other) =>
@@ -96,8 +101,8 @@ namespace DCL.AvatarRendering.Emotes
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(typeof(GameObject),
                     this.EmoteHash + PlatformUtils.GetCurrentPlatform(),
-                    assetBundleManifestVersion: emote.DTO.assetBundleManifestVersion,
-                    parentEntityID: emote.DTO.id,
+                    assetBundleManifestVersion: SceneAssetBundleManifestVersion,
+                    parentEntityID: SceneId,
                     permittedSources: this.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory.Value,
                     cancellationTokenSource: this.CancellationTokenSource),
