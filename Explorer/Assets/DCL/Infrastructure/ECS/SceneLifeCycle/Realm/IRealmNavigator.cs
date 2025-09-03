@@ -13,6 +13,7 @@ namespace ECS.SceneLifeCycle.Realm
         ChangeCancelled,
         SameRealm,
         NotReachable,
+        LocalSceneDevelopmentBlocked
     }
 
     public static class ChangeRealmErrors
@@ -24,6 +25,7 @@ namespace ECS.SceneLifeCycle.Realm
                 ChangeRealmError.ChangeCancelled => TaskError.Cancelled,
                 ChangeRealmError.SameRealm => TaskError.MessageError,
                 ChangeRealmError.NotReachable => TaskError.MessageError,
+                ChangeRealmError.LocalSceneDevelopmentBlocked => TaskError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
 
@@ -38,7 +40,7 @@ namespace ECS.SceneLifeCycle.Realm
             };
 
         public static bool IsRecoverable(this ChangeRealmError error) =>
-            error is ChangeRealmError.SameRealm or ChangeRealmError.NotReachable;
+            error is ChangeRealmError.SameRealm or ChangeRealmError.NotReachable or ChangeRealmError.LocalSceneDevelopmentBlocked;
     }
 
     public interface IRealmNavigator

@@ -77,8 +77,11 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             if (globalPlayerCRDTEntity.SceneFacade != currentScene)
             {
-                // if previous scene is valid remove
-                RemoveComponent(globalPlayerCRDTEntity.SceneWorldEntity, ref globalPlayerCRDTEntity, false);
+                // Only try to remove component if we have a valid scene world entity
+                if (globalPlayerCRDTEntity.SceneWorldEntity != Entity.Null)
+                {
+                    RemoveComponent(globalPlayerCRDTEntity.SceneWorldEntity, ref globalPlayerCRDTEntity, false);
+                }
 
                 if (newSceneIsValid)
                 {
@@ -110,13 +113,16 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         private void RemoveComponent(Entity entity, ref PlayerCRDTEntity playerCRDTEntity, bool noLongerExists)
         {
-            if (playerCRDTEntity.AssignedToScene)
+            if (playerCRDTEntity.AssignedToScene && playerCRDTEntity.SceneFacade != null)
             {
-                SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade!.EcsExecutor;
+                SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
 
                 // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
                 // as the scene-level Writer systems need it to know which CRDT Entity to affect
-                sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
+                if (playerCRDTEntity.SceneWorldEntity != Entity.Null)
+                {
+                    sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
+                }
 
                 if (noLongerExists)
                     FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
