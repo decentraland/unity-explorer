@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using DCL.DebugUtilities;
 using DCL.PluginSystem.Global;
+using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.GenericDelete;
 
 namespace DCL.WebRequests.Analytics
@@ -10,18 +11,20 @@ namespace DCL.WebRequests.Analytics
     {
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
-        public WebRequestsPlugin(IWebRequestsAnalyticsContainer analyticsContainer, IDebugContainerBuilder debugContainerBuilder)
+        public WebRequestsPlugin(IWebRequestsAnalyticsContainer analyticsContainer, IDebugContainerBuilder debugContainerBuilder, ChromeDevtoolProtocolClient chromeDevtoolProtocolClient)
         {
             this.analyticsContainer = analyticsContainer;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer, debugContainerBuilder, new ShowWebRequestsAnalyticsSystem.RequestType[]
+            ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer, debugContainerBuilder, chromeDevtoolProtocolClient, new ShowWebRequestsAnalyticsSystem.RequestType[]
             {
                 new (typeof(GetAssetBundleWebRequest), "Asset Bundle"),
                 new (typeof(GenericGetRequest), "Get"),
