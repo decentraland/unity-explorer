@@ -23,7 +23,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button myCommunitiesViewAllButton = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        private readonly List<string> myCommunitiesIds = new();
+        private readonly List<string> communitiesIds = new();
 
         private CommunitiesBrowserStateService browserStateService = null!;
         private ThumbnailLoader? thumbnailLoader;
@@ -41,7 +41,7 @@ namespace DCL.Communities.CommunitiesBrowser
             myCommunitiesViewAllButton.onClick.RemoveAllListeners();
         }
 
-        public void SetMyCommunitiesAsLoading(bool isLoading)
+        public void SetAsLoading(bool isLoading)
         {
             if (isLoading)
                 myCommunitiesLoadingSpinner.ShowLoading();
@@ -49,15 +49,15 @@ namespace DCL.Communities.CommunitiesBrowser
                 myCommunitiesLoadingSpinner.HideLoading();
         }
 
-        public void InitializeMyCommunitiesList(int itemTotalCount)
+        public void InitializeCommunitiesList(int itemTotalCount)
         {
-            myCommunitiesLoopList.InitListView(itemTotalCount, SetupMyCommunityCardByIndex);
+            myCommunitiesLoopList.InitListView(itemTotalCount, SetupCommunityCardByIndex);
             myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
+        private LoopListViewItem2 SetupCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
-            CommunityData communityData = browserStateService.GetCommunityDataById(myCommunitiesIds[index]);
+            CommunityData communityData = browserStateService.GetCommunityDataById(communitiesIds[index]);
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             MyCommunityCardView cardView = listItem.GetComponent<MyCommunityCardView>();
 
@@ -74,20 +74,20 @@ namespace DCL.Communities.CommunitiesBrowser
             return listItem;
         }
 
-        public void ClearMyCommunitiesItems()
+        public void ClearCommunitiesItems()
         {
-            myCommunitiesIds.Clear();
+            communitiesIds.Clear();
             myCommunitiesLoopList.SetListItemCount(0, false);
-            SetMyCommunitiesAsEmpty(true);
+            SetAsEmpty(true);
         }
 
-        public void AddMyCommunitiesItems(CommunityData[] communities, bool resetPos)
+        public void AddCommunitiesItems(CommunityData[] communities, bool resetPos)
         {
             foreach (var community in communities)
-                myCommunitiesIds.Add(community.id);
+                communitiesIds.Add(community.id);
 
-            myCommunitiesLoopList.SetListItemCount(myCommunitiesIds.Count, resetPos);
-            SetMyCommunitiesAsEmpty(myCommunitiesIds.Count == 0);
+            myCommunitiesLoopList.SetListItemCount(communitiesIds.Count, resetPos);
+            SetAsEmpty(communitiesIds.Count == 0);
             myCommunitiesLoopList.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
@@ -95,20 +95,20 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (isJoined)
             {
-                if (!myCommunitiesIds.Contains(communityId))
-                    myCommunitiesIds.Add(communityId);
+                if (!communitiesIds.Contains(communityId))
+                    communitiesIds.Add(communityId);
             }
             else
-                myCommunitiesIds.Remove(communityId);
+                communitiesIds.Remove(communityId);
 
             if (isSuccess)
             {
-                myCommunitiesLoopList.SetListItemCount(myCommunitiesIds.Count, false);
-                SetMyCommunitiesAsEmpty(myCommunitiesIds.Count == 0);
+                myCommunitiesLoopList.SetListItemCount(communitiesIds.Count, false);
+                SetAsEmpty(communitiesIds.Count == 0);
             }
         }
 
-        private void SetMyCommunitiesAsEmpty(bool isEmpty)
+        private void SetAsEmpty(bool isEmpty)
         {
             myCommunitiesEmptyContainer.SetActive(isEmpty);
             myCommunitiesMainContainer.SetActive(!isEmpty);
@@ -117,7 +117,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetDependencies(CommunitiesBrowserStateService communitiesBrowserStateService, ThumbnailLoader newThumbnailLoader)
         {
             browserStateService = communitiesBrowserStateService;
-            this.thumbnailLoader = newThumbnailLoader;
+            thumbnailLoader = newThumbnailLoader;
         }
     }
 }

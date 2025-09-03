@@ -248,14 +248,14 @@ namespace DCL.Communities.CommunitiesBrowser
                 onlyMemberOf: false,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
-                ct: loadResultsCts.Token).Forget();
+                ct: loadResultsCts.Token,
+                true).Forget();
         }
 
         private void LoadAllCommunitiesResults()
         {
-            view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
             ClearSearchBar();
-
+            view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
             view.SetResultsTitleText(BROWSE_COMMUNITIES_TITLE);
 
             LoadAllCommunitiesResultsAsync().Forget();
@@ -297,7 +297,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 ct: loadResultsCts.Token).Forget();
         }
 
-        private async UniTask LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
+        private async UniTask LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool isStreaming = false)
         {
             isGridResultsLoadingItems = true;
 
@@ -314,7 +314,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 onlyMemberOf,
                 pageNumber,
                 elementsPerPage,
-                ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                ct,
+                isStreaming).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
                 return;

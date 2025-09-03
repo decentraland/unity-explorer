@@ -37,8 +37,7 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
-        private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
-        private VoiceChatPluginSettings voiceChatPluginSettings;
+        private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatTrackManager? trackManager;
         private VoiceChatRoomManager? roomManager;
@@ -84,7 +83,7 @@ namespace DCL.PluginSystem.Global
                 return;
             }
 
-            voiceChatConfigurations.Dispose();
+            voiceChatPluginSettingsAsset.Dispose();
             microphoneStateManager?.Dispose();
             nametagsHandler?.Dispose();
             voiceChatHandler.Dispose();
@@ -92,7 +91,7 @@ namespace DCL.PluginSystem.Global
             microphoneAudioToggleController?.Dispose();
             privateVoiceChatController?.Dispose();
             communitiesVoiceChatController?.Dispose();
-            voiceChatOrchestrator?.Dispose();
+            sceneVoiceChatController?.Dispose();
             voiceChatPanelResizeController?.Dispose();
         }
 
@@ -104,14 +103,13 @@ namespace DCL.PluginSystem.Global
             audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
             AudioSettings.Reset(audioConfig);
 
-            voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
-            VoiceChatPluginSettings configurations = voiceChatConfigurations.Value;
+            voiceChatPluginSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
+            var pluginSettings = this.voiceChatPluginSettingsAsset.Value;
 
-            VoiceChatSettingsAsset voiceChatSettings = configurations.VoiceChatSettings;
+            VoiceChatSettingsAsset voiceChatSettings = pluginSettings.VoiceChatSettings;
+            VoiceChatConfiguration voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
 
-            VoiceChatConfiguration voiceChatConfiguration = configurations.VoiceChatConfiguration;
-
-            var combinedAudioSource = Object.Instantiate(configurations.CombinedAudioSource);
+            var combinedAudioSource = Object.Instantiate(pluginSettings.CombinedAudioSource);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
@@ -126,9 +124,9 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
 
-            var playerEntry = configurations.PlayerEntryView;
-            var muteMicrophoneAudio = configurations.MuteMicrophoneAudio;
-            var unmuteMicrophoneAudio = configurations.UnmuteMicrophoneAudio;
+            var playerEntry = pluginSettings.PlayerEntryView;
+            var muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
+            var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(mainUIView.VoiceChatPanelResizeView, voiceChatOrchestrator);
 

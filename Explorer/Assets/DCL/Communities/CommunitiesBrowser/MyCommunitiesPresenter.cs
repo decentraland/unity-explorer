@@ -30,7 +30,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.SetDependencies(browserStateService, thumbnailLoader);
             view.ViewAllMyCommunitiesButtonClicked += OnViewAllMyCommunitiesClicked;
-            view.InitializeMyCommunitiesList(0);
+            view.InitializeCommunitiesList(0);
         }
 
         private void OnViewAllMyCommunitiesClicked()
@@ -40,8 +40,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
         {
-            view.ClearMyCommunitiesItems();
-            view.SetMyCommunitiesAsLoading(true);
+            view.ClearCommunitiesItems();
+            view.SetAsLoading(true);
 
             var result = await dataProvider.GetUserCommunitiesAsync(
                 name: string.Empty,
@@ -60,8 +60,8 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             browserStateService.AddCommunities(result.Value.data.results);
-            view.AddMyCommunitiesItems(result.Value.data.results, true);
-            view.SetMyCommunitiesAsLoading(false);
+            view.AddCommunitiesItems(result.Value.data.results, true);
+            view.SetAsLoading(false);
         }
 
         public void Dispose()
