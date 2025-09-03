@@ -1,6 +1,14 @@
 ﻿#ifndef SCATTER_FUNCTIONS_INCLUDED
 #define SCATTER_FUNCTIONS_INCLUDED
 
+SamplerState samplerHeightMapTexture : register(s0);
+SamplerState samplerOccupancyTexture : register(s1);
+SamplerState HeightMapTexturePointClampSampler : register(s2);
+SamplerState samplerTerrainBlendTexture : register(s3);
+SamplerState TerrainBlendPointRepeatSampler : register(s4);
+SamplerState samplerGroundDetailTexture : register(s5);
+SamplerState samplerSandDetailTexture : register(s6);
+
 inline uint hash_int(uint x)
 {
     x ^= x >> 16;
@@ -76,43 +84,45 @@ float4 QuaternionMultiply(float4 q1, float4 q2)
     );
 }
 
-float CalculateHeightFromHeightmap(float2 uv, float _DistanceFieldScale,
-    in Texture2D _heightMapTexture, in SamplerState _heightMapSampler,
-    in Texture2D _occupancyTexture, in SamplerState _occupancySampler)
+float CalculateHeightFromHeightmap(float2 uv, float _fDistanceFieldScale,
+    in Texture2D _heightMapTexture, in Texture2D _occupancyTexture)
 {
-    float _Heightmap_TexelSize = 1.0f / 8192.0f;
+    const float fHeightmap_TexelSize = 1.0f / 8192.0f;
 
     // Sample the height at neighboring pixels
-    float fHeight00 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + float2(0, 0), 0).r;
-    float fHeight10 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + float2(_Heightmap_TexelSize, 0), 0).r;
-    float fHeight01 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + float2(0, _Heightmap_TexelSize), 0).r;
-    float fHeight11 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + float2(_Heightmap_TexelSize, _Heightmap_TexelSize), 0).r;
+    const float fHeight00 = _heightMapTexture.SampleLevel(HeightMapTexturePointClampSampler, uv + float2(0, 0), 0).r;
+    const float fHeight10 = _heightMapTexture.SampleLevel(HeightMapTexturePointClampSampler, uv + float2(fHeightmap_TexelSize, 0), 0).r;
+    const float fHeight01 = _heightMapTexture.SampleLevel(HeightMapTexturePointClampSampler, uv + float2(0, fHeightmap_TexelSize), 0).r;
+    const float fHeight11 = _heightMapTexture.SampleLevel(HeightMapTexturePointClampSampler, uv + float2(fHeightmap_TexelSize, fHeightmap_TexelSize), 0).r;
 
-    float fHeight = (fHeight00 + fHeight10 + fHeight01 + fHeight11) * 0.25f;
+    const float fHeight = (fHeight00 + fHeight10 + fHeight01 + fHeight11) * 0.25f;
     
-    float fOccupancy00 = _occupancyTexture.SampleLevel(_occupancySampler, uv + float2(0, 0), 0).r;
-    float fOccupancy10 = _occupancyTexture.SampleLevel(_occupancySampler, uv + float2(_Heightmap_TexelSize, 0), 0).r;
-    float fOccupancy01 = _occupancyTexture.SampleLevel(_occupancySampler, uv + float2(0, _Heightmap_TexelSize), 0).r;
-    float fOccupancy11 = _occupancyTexture.SampleLevel(_occupancySampler, uv + float2(_Heightmap_TexelSize, _Heightmap_TexelSize), 0).r;
+    const float fOccupancy00 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(0, 0), 0).r;
+    const float fOccupancy10 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(fHeightmap_TexelSize, 0), 0).r;
+    const float fOccupancy01 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(0, fHeightmap_TexelSize), 0).r;
+    const float fOccupancy11 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(fHeightmap_TexelSize, fHeightmap_TexelSize), 0).r;
     
-    float fOccupancy = (fOccupancy00 + fOccupancy10 + fOccupancy01 + fOccupancy11) * 0.25f;
-    float minValue = 155.0f / 255.0f;
+    const float fOccupancy = (fOccupancy00 + fOccupancy10 + fOccupancy01 + fOccupancy11) * 0.25f;
+    const float minValue = 155.0f / 255.0f;
 
+    float result = 0.0f;
+    
     if (fOccupancy <= minValue)
     {
         // Flat surface (occupied parcels and above minValue threshold)
-        return  0.0f;
+        result = 0.0f;
     }
     
-    float normalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
+    const float fNormalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
 
-    float min = -4.135159f; // min value of the GeoffNoise.GetHeight
-    float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
+    const float min = -4.135159f; // min value of the GeoffNoise.GetHeight
+    const float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
             
-    float fHeightNoise = fHeight * range + min;
+    const float fHeightNoise = fHeight * range + min;
 
-    float saturationFactor = 20.0f;
-    return max(0.0f, normalizedHeight * _DistanceFieldScale + fHeightNoise * saturate( normalizedHeight * saturationFactor));
+    const float fSaturationFactor = 20.0f;
+    result = max(0.0f, fNormalizedHeight * _fDistanceFieldScale + fHeightNoise * saturate( fNormalizedHeight * fSaturationFactor));
+    return result;
 }
 
 // float3 CalculateNormalFromHeightmap(float2 uv, float terrainHeight, float fOccupancy, in Texture2D _heightMapTexture, in SamplerState _heightMapSampler)
@@ -144,16 +154,14 @@ float4 CreateGrassRotationQuaternion(float3 terrainNormal, float yRotationAngle)
     return QuaternionMultiply(terrainAlignment, yRotation);
 }
 
-half4 SplatmapMix(float2 uv, in Texture2D _terrainBlendTexture, in SamplerState _terrainBlendSampler,
-    in Texture2D _groundDetailTexture, in SamplerState _groundDetailSampler,
-    in Texture2D _sandDetailTexture, in SamplerState _sandDetailSampler,
-    uint mipLevel = 0)
+half4 SplatmapMix(float2 uv, in Texture2D _terrainBlendTexture,
+    in Texture2D _groundDetailTexture, in Texture2D _sandDetailTexture, uint mipLevel = 0)
 {
-    half4 splatControl = half4(_terrainBlendTexture.SampleLevel(_terrainBlendSampler, uv, mipLevel).rgb, 1.0f);
+    half4 splatControl = half4(_terrainBlendTexture.SampleLevel(samplerTerrainBlendTexture, uv, mipLevel).rgb, 1.0f);
     half4 diffAlbedo[4];
 
-    diffAlbedo[0] = float4(_groundDetailTexture.SampleLevel(_groundDetailSampler, uv, 0).rgb, 1.0f);
-    diffAlbedo[1] = float4(_sandDetailTexture.SampleLevel(_sandDetailSampler, uv, 0).rgb, 1.0f);
+    diffAlbedo[0] = float4(_groundDetailTexture.SampleLevel(samplerGroundDetailTexture, uv, 0).rgb, 1.0f);
+    diffAlbedo[1] = float4(_sandDetailTexture.SampleLevel(samplerSandDetailTexture, uv, 0).rgb, 1.0f);
     diffAlbedo[2] = 1.0f;
     diffAlbedo[3] = 1.0f;
 
@@ -174,7 +182,7 @@ half4 SplatmapMix(float2 uv, in Texture2D _terrainBlendTexture, in SamplerState 
     float4 _DiffuseRemapScale2 = float4(1.0f, 1.0f, 1.0f, 1.0f);
     float4 _DiffuseRemapScale3 = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    int _NumLayersCount = 2;
+    const int _NumLayersCount = 2;
     if(_NumLayersCount <= 4)
     {
         // 20.0 is the number of steps in inputAlphaMask (Density mask. We decided 20 empirically)
@@ -191,9 +199,7 @@ half4 SplatmapMix(float2 uv, in Texture2D _terrainBlendTexture, in SamplerState 
     return mixedDiffuse;
 }
 
-float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale,
-    in Texture2D _heightMapTexture, in SamplerState _heightMapSampler,
-    in Texture2D _occupancyTexture, in SamplerState _occupancySampler)
+float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale, in Texture2D _heightMapTexture, in Texture2D _occupancyTexture)
 {
     float _Heightmap_TexelSize = 1.0f / 8192.0f;
     
@@ -213,15 +219,15 @@ float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale,
     float2 offset8 = float2(1.0f, 1.0f);
 
     // Sample the height at neighboring pixels
-    float height0 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset0 * _Heightmap_TexelSize), 0).r;
-    float height1 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset1 * _Heightmap_TexelSize), 0).r;
-    float height2 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset2 * _Heightmap_TexelSize), 0).r;
-    float height3 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset3 * _Heightmap_TexelSize), 0).r;
-    float height4 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset4 * _Heightmap_TexelSize), 0).r;
-    float height5 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset5 * _Heightmap_TexelSize), 0).r;
-    float height6 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset6 * _Heightmap_TexelSize), 0).r;
-    float height7 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset7 * _Heightmap_TexelSize), 0).r;
-    float height8 = _heightMapTexture.SampleLevel(_heightMapSampler, uv + (offset8 * _Heightmap_TexelSize), 0).r;
+    float height0 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset0 * _Heightmap_TexelSize), 0).r;
+    float height1 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset1 * _Heightmap_TexelSize), 0).r;
+    float height2 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset2 * _Heightmap_TexelSize), 0).r;
+    float height3 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset3 * _Heightmap_TexelSize), 0).r;
+    float height4 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset4 * _Heightmap_TexelSize), 0).r;
+    float height5 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset5 * _Heightmap_TexelSize), 0).r;
+    float height6 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset6 * _Heightmap_TexelSize), 0).r;
+    float height7 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset7 * _Heightmap_TexelSize), 0).r;
+    float height8 = _heightMapTexture.SampleLevel(samplerHeightMapTexture, uv + (offset8 * _Heightmap_TexelSize), 0).r;
 
     /// Value taken from generating HeightMap via TerrainGeneratorWithAnalysis. 
     float min = -4.135159f; // min value of the GeoffNoise.GetHeight
@@ -238,17 +244,17 @@ float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale,
     height8 = height8 * range + min;
     
     // Sample occupancy
-    float fOccupancy0 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset0 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy1 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset1 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy2 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset2 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy3 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset3 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy4 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset4 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy5 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset5 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy6 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset6 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy7 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset7 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy8 = _occupancyTexture.SampleLevel(_occupancySampler, uv + (offset8 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy0 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset0 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy1 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset1 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy2 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset2 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy3 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset3 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy4 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset4 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy5 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset5 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy6 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset6 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy7 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset7 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy8 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset8 * _Heightmap_TexelSize), 0).r;
 
-    float minValue = 175.0 / 255.0;
+    float minValue = 175.0f / 255.0f;
 
     fOccupancy0 = (fOccupancy0 <= minValue) ? 0.0f : (fOccupancy0 - minValue) / (1.0f - minValue);
     fOccupancy1 = (fOccupancy1 <= minValue) ? 0.0f : (fOccupancy1 - minValue) / (1.0f - minValue);
@@ -318,9 +324,10 @@ float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale,
     
     // If terrain is essentially flat, return up vector
     float flatThreshold = 0.01f; // Adjust this value based on your terrain scale
+    float3 result;
     if (heightVariance < flatThreshold)
     {
-        return float3(0.0f, 1.0f, 0.0f); // Up vector in Unity
+        result = float3(0.0f, 1.0f, 0.0f); // Up vector in Unity
     }
 
     // Calculate face normals (using right-hand rule for consistent winding)
@@ -352,7 +359,7 @@ float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale,
     // If we don't have enough valid normals, return up vector
     if (validCount < 3)
     {
-        return float3(0.0f, 1.0f, 0.0f); // Up vector in Unity
+        result = float3(0.0f, 1.0f, 0.0f); // Up vector in Unity
     }
 
     // Average only the valid normals
@@ -362,7 +369,8 @@ float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale,
         averageNormal += validNormals[j];
     }
     averageNormal /= (float)validCount;
-    return averageNormal;
+    result = averageNormal;
+    return result;
     
     // float3 worldTangent = float3(1.0f, 0.0f, 0.0f);
     //
