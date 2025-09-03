@@ -79,6 +79,7 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
+    <decelerationCoefficient>k__BackingField: 3
   <cursorSettings>k__BackingField:
   - inputAction: 1
     cursorSprite: {fileID: 21300000, guid: d34aedda08e64344091b34deada8211e, type: 3}

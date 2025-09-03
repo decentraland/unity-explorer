@@ -118,9 +118,7 @@ namespace DCL.CharacterPreview
                     characterPreviewAvatarContainer.SetRotationTween(
                         pointerEventData.delta.x,
                         cameraSettings.rotationModifier,
-                        cameraSettings.rotationInertia,
-                        cameraSettings.accelerationCurve,
-                        cameraSettings.decelerationCurve
+                        cameraSettings.rotationInertia
                     );
 
                     break;

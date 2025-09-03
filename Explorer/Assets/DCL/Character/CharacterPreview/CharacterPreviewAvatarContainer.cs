@@ -16,14 +16,14 @@ namespace DCL.CharacterPreview
     {
         private Tween? fovTween;
 
-        // Rotation system variables - minimized for efficiency
+        // Rotation system variables - simplified linear system
         private float angularVelocity; // degrees per second
         private float rotationModifier;
         private float rotationInertia;
-        private AnimationCurve decelerationCurve;
         private bool isDragging = false;
         private float lastDragTime = 0f;
         private const float DRAG_TIMEOUT = 0.1f; // seconds
+        private const float MAX_ANGULAR_VELOCITY = 400f; // degrees per second
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -84,26 +84,23 @@ namespace DCL.CharacterPreview
         public void SetRotationTween(
             float inputDeltaX,
             float rotationModifier,
-            float rotationInertia,
-            AnimationCurve accelerationCurve,
-            AnimationCurve decelerationCurve
+            float rotationInertia
         )
         {
             // Store current settings
             this.rotationModifier = rotationModifier;
             this.rotationInertia = rotationInertia;
-            this.decelerationCurve = decelerationCurve;
 
             // Set dragging state and update last drag time
             isDragging = true;
             lastDragTime = Time.time;
 
-            // Convert input delta (pixels per frame) to angular velocity (degrees per second)
+                        // Convert input delta (pixels per frame) to angular velocity (degrees per second)
             // This is framerate-independent: inputDeltaX is pixels moved this frame
             // We want degrees per second, so we divide by deltaTime to get the rate
             float targetVelocity = -inputDeltaX / Time.deltaTime;
 
-            // Apply inertia when accelerating/decelerating
+            // Apply linear acceleration with inertia
             if (rotationInertia <= 0f)
             {
                 // No inertia - instant response
@@ -111,21 +108,13 @@ namespace DCL.CharacterPreview
             }
             else
             {
-                // Use inertia curve to control acceleration/deceleration
-                float velocityDifference = targetVelocity - angularVelocity;
-                float maxVelocity = Mathf.Max(Mathf.Abs(targetVelocity), Mathf.Abs(angularVelocity));
-                float curveInput = maxVelocity > 0f ? Mathf.Abs(velocityDifference) / maxVelocity : 0f;
-
-                float accelerationFactor = accelerationCurve.Evaluate(curveInput);
-                float lerpSpeed = accelerationFactor * rotationInertia * Time.deltaTime;
-
-                angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, lerpSpeed);
+                // Linear acceleration: higher inertia = slower acceleration
+                float accelerationRate = (1f / rotationInertia) * Time.deltaTime;
+                angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, accelerationRate);
             }
-        }
 
-        public void StopDragging()
-        {
-            isDragging = false;
+            // Cap angular velocity to maximum
+            angularVelocity = Mathf.Clamp(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
         }
 
         private void Update()
@@ -146,20 +135,24 @@ namespace DCL.CharacterPreview
                 }
                 else
                 {
-                    // Use inertia curve for deceleration
-                    // Evaluate curve based on current velocity (0 = stopped, 1 = max speed)
+                    // Linear deceleration: higher inertia = faster deceleration
+                    float decelerationRate = rotationInertia * Time.deltaTime;
+                    float velocitySign = Mathf.Sign(angularVelocity);
                     float velocityMagnitude = Mathf.Abs(angularVelocity);
-                    float maxVelocity = 100f; // Reasonable maximum for curve evaluation
-                    float curveInput = Mathf.Clamp01(velocityMagnitude / maxVelocity);
 
-                    float decelerationFactor = decelerationCurve.Evaluate(curveInput);
-                    float lerpSpeed = decelerationFactor * rotationInertia * Time.deltaTime;
+                    // Reduce velocity by deceleration rate
+                    velocityMagnitude -= decelerationRate;
 
-                    angularVelocity = Mathf.Lerp(angularVelocity, 0f, lerpSpeed);
-
-                    // Force stop when velocity is very small to avoid floating point precision issues
-                    if (Mathf.Abs(angularVelocity) < 0.01f)
+                    // If we've reached zero or gone past it, stop completely
+                    if (velocityMagnitude <= 0f)
+                    {
                         angularVelocity = 0f;
+                    }
+                    else
+                    {
+                        // Maintain direction but with reduced magnitude
+                        angularVelocity = velocitySign * velocityMagnitude;
+                    }
                 }
             }
 
