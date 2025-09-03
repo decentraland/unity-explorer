@@ -65,7 +65,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             List<URN> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get()!;
             List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get()!;
 
-            var successfulResults = 0;
+            var resolvedResults = 0;
             int finishedDTOs = 0;
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
@@ -118,7 +118,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (hideWearablesResolution.VisibleWearables == null)
                     WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, ref hideWearablesResolution);
 
-                successfulResults += wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count;
+                resolvedResults += wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count;
 
                 for (var i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
                 {
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     if (CreateAssetPromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
                     if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
 
-                    successfulResults++;
+                    resolvedResults++;
 
                     // Reference must be added only once when the wearable is resolved
                     if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
@@ -143,7 +143,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             // If there are no missing pointers, we release the list
             WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
 
-            if (successfulResults == wearablesByPointersIntention.Pointers.Count)
+            if (resolvedResults == wearablesByPointersIntention.Pointers.Count)
             {
                 //One last safeguard in case the dto was successfull but the assets failed
                 WearableComponentsUtils.ConfirmWearableVisibility(wearablesByPointersIntention.BodyShape, ref hideWearablesResolution);
