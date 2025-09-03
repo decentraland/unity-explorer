@@ -135,7 +135,7 @@ namespace DCL.MarketplaceCreditsAPIService
             }
             catch (UnityWebRequestException webRequestException)
             {
-                // Only checking for the specific `email already registered` error
+                // `email already registered` and `Email domain not allowed` errors are passed under that code
                 if (webRequestException.ResponseCode == 400)
                 {
                     try
