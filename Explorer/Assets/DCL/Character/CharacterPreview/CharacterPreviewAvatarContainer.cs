@@ -34,8 +34,6 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
         [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
 
-        public float RotationAngularVelocity => angularVelocity;
-
         public void Dispose()
         {
             StopFOVTween();
