@@ -13,5 +13,6 @@ namespace DCL.Ipfs
 
         public string GetLogSceneName() =>
             logSceneName ??= $"{metadata.scene?.DecodedBase} - {id}";
+
     }
 }

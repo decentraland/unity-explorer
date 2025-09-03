@@ -15,6 +15,7 @@ using System.Threading;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using DCL.Multiplayer.Profiles.Bunches;
+using ECS.StreamableLoading.AssetBundles;
 using Utility;
 
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;

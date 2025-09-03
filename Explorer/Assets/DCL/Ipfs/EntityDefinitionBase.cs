@@ -32,5 +32,11 @@ namespace DCL.Ipfs
         }
 
         public override string ToString() => id ?? string.Empty;
+
+        public bool SupportsStaticScene()
+        {
+            //TODO (JUANI): FOr now, we hardcoded it only for GP. We will later check it with manifest
+            return id.Equals("bafkreicboazl7vyrwx7xujne53e63di6khbcfoi4vabafomar4u5mznpzy");
+        }
     }
 }

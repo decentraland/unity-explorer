@@ -13,6 +13,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using DCL.Interaction.Utility;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
@@ -43,6 +44,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             StartLoadingQuery(World);
             ReconfigureGltfContainerQuery(World);
         }
+
 
         [Query]
         [None(typeof(GltfContainerComponent))]

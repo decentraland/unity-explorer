@@ -1,5 +1,6 @@
 ﻿using DCL.Platforms;
 using System;
+using UnityEngine;
 
 namespace DCL.Ipfs
 {
@@ -10,7 +11,7 @@ namespace DCL.Ipfs
         pending
     }
 
-    public class AssetBundleManifestVersion
+   public class AssetBundleManifestVersion
     {
         //From v25 onwards, the asset bundle path contains the sceneID in the hash
         //This was done to solve cache issues

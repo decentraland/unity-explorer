@@ -6,6 +6,7 @@ using DCL.Interaction.Utility;
 using DCL.Time;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System.Collections.Generic;
