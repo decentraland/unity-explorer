@@ -10,19 +10,11 @@ namespace DCL.Backpack
         public GameObject HideHeader { get; private set; }
 
         [field: SerializeField]
-        public HideRowRef HideRow { get; private set; }
-
-        [field: SerializeField]
         public HideCategoryRef HideCategory { get; private set; }
 
         [field: SerializeField]
-        internal Transform HideCategoryRowsContainer { get; private set; }
-
-        [Serializable]
-        public class HideRowRef : ComponentReference<HideCategoryRowView>
-        {
-            public HideRowRef(string guid) : base(guid) { }
-        }
+        internal Transform HideCategoriesContainer { get; private set; }
+        
 
         [Serializable]
         public class HideCategoryRef : ComponentReference<HideCategoryView>
