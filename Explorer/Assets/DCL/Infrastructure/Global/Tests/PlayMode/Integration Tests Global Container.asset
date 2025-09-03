@@ -27,13 +27,58 @@ MonoBehaviour:
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <hoverCanvasSettings>k__BackingField:
-          <HoverCanvasAsset>k__BackingField:
-            m_AssetGUID: 8fd0fd0188702304689c461c6aacc7c5
+          <HoverUIDocument>k__BackingField:
+            m_AssetGUID: 6cfe7986a3d81484d96b5962ae4f300f
             m_SubObjectName: 
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
-          <InputButtons>k__BackingField: []
+          <InputButtons>k__BackingField:
+          - PlayerInputAction: {fileID: 8483188427658457040, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 
+            IconClass: sprite-interaction__icon-mouse-left
+          - PlayerInputAction: {fileID: 2589752990516661850, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: E
+            IconClass: 
+          - PlayerInputAction: {fileID: -4117738799243451851, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: F
+            IconClass: 
+          - PlayerInputAction: {fileID: -6174129951794055311, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: Any
+            IconClass: 
+          - PlayerInputAction: {fileID: 3239514346835642328, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: W
+            IconClass: 
+          - PlayerInputAction: {fileID: 3427618249405714940, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: S
+            IconClass: 
+          - PlayerInputAction: {fileID: -1652773021623687720, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: D
+            IconClass: 
+          - PlayerInputAction: {fileID: 8119733991161362085, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 
+            IconClass: sprite-interaction__icon-mouse-right
+          - PlayerInputAction: {fileID: -273270698691252620, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: SPACE BAR
+            IconClass: 
+          - PlayerInputAction: {fileID: -1806294599963264830, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: LSHIFT
+            IconClass: 
+          - PlayerInputAction: {fileID: 8129677363630674292, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 1
+            IconClass: 
+          - PlayerInputAction: {fileID: 8017425544309595397, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 2
+            IconClass: 
+          - PlayerInputAction: {fileID: 238014444060475990, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 3
+            IconClass: 
+          - PlayerInputAction: {fileID: 1953896829860503287, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 4
+            IconClass: 
+          - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 
+            IconClass: sprite-interaction__icon-mouse-right
     - rid: 1841402216112979968
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -49,18 +94,8 @@ MonoBehaviour:
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
         <QualitySettings>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
-        <RealmPartitionSettings>k__BackingField:
-          m_AssetGUID: 7899019423f09d049a8463a0751037a5
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <VideoPrioritizationSettings>k__BackingField:
-          m_AssetGUID: 12f48d0297bd3f746b92a97878478086
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <VideoPrioritizationSettings>k__BackingField: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
         <LODSettingAsset>k__BackingField:
           m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
@@ -91,18 +126,8 @@ MonoBehaviour:
     - rid: 6784895265395441664
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <PartitionSettings>k__BackingField:
-          m_AssetGUID: 8d266ff458e71f2439f9c30bd7e68d4a
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <RealmPartitionSettings>k__BackingField:
-          m_AssetGUID: 7899019423f09d049a8463a0751037a5
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
+        <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
@@ -119,23 +144,13 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <cinemachineCameraAudioSettingsReference>k__BackingField:
-          m_AssetGUID: 
+          m_AssetGUID: 86a5a8acd91f6994788c37e301d06c56
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <controlsSettingsAsset>k__BackingField:
-          m_AssetGUID: 
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <controlsSettingsAsset>k__BackingField: {fileID: 11400000, guid: 26489687fb2f3419886df8e49f34b006, type: 2}
     - rid: 6784895265412481025
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <controllerSettings>k__BackingField:
-          m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <controllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}

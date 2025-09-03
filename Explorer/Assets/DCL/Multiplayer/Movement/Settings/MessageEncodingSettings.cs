@@ -6,8 +6,6 @@ namespace DCL.Multiplayer.Movement.Settings
 {
     public class MessageEncodingSettings : ScriptableObject
     {
-        public LandscapeData landscapeData;
-
         public const int TWO_BITS_MASK = 0x3;
 
         public const int PARCEL_BITS = 17;

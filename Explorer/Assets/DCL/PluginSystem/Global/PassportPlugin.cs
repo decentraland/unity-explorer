@@ -9,6 +9,7 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.EventBus;
+using DCL.Clipboard;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -31,6 +32,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -75,6 +77,7 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly ISystemClipboard systemClipboard;
 
         private PassportController? passportController;
 
@@ -115,7 +118,8 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             GalleryEventBus galleryEventBus,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            ISystemClipboard systemClipboard)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -154,6 +158,7 @@ namespace DCL.PluginSystem.Global
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
+            this.systemClipboard = systemClipboard;
         }
 
         public void Dispose()
@@ -216,7 +221,9 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 voiceChatCallStatusService,
                 passport3DPreviewCamera,
-                galleryEventBus
+                galleryEventBus,
+                systemClipboard,
+                passportSettings.CameraReelGalleryMessages
             );
 
             mvcManager.RegisterController(passportController);
@@ -261,6 +268,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceGameObject NameEditorPrefab;
+
+            [field: SerializeField]
+            public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }
         }
     }
 }

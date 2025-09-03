@@ -409,6 +409,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 5048879491243901675}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1001 &6772688781097931731
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -531,6 +534,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5321243243872904382, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5750795568307202879, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5750795568307202879, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+      propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6176497728483893500, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
@@ -766,6 +777,10 @@ PrefabInstance:
     - target: {fileID: 3813969249028053400, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
       propertyPath: m_Colors.m_NormalColor.a
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4734613736382104757, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 5316031541966112930, guid: 3842f9478470e446ba63a9a79780d4fe, type: 3}
       propertyPath: m_Name

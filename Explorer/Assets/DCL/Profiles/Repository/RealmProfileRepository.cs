@@ -105,7 +105,7 @@ namespace DCL.Profiles
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };
 
-        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct)
+        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true)
         {
             if (string.IsNullOrEmpty(id)) return null;
 
@@ -114,7 +114,9 @@ namespace DCL.Profiles
             if (ongoingRequests.TryGetValue(id, out UniTaskCompletionSource ongoingTask))
                 await ongoingTask.Task.AttachExternalCancellation(ct);
 
-            if (TryProfileFromCache(id, version, out Profile? profileInCache)) return profileInCache;
+            if (getFromCacheIfPossible)
+                if (TryProfileFromCache(id, version, out Profile? profileInCache))
+                    return profileInCache;
 
             Assert.IsTrue(realm.Configured, "Can't get profile if the realm is not configured");
 

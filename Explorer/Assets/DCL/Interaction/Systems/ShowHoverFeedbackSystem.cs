@@ -65,15 +65,15 @@ namespace DCL.Interaction.HoverCanvas.Systems
                     HoverFeedbackComponent.Tooltip tooltipInfo = hoverFeedbackComponent.Tooltips[i];
 
                     string? actionKeyText = null;
-                    Sprite? icon = null;
+                    string? iconClass = null;
 
                     if (inputButtonSettingsMap.TryGetValue(tooltipInfo.Action.id, out HoverCanvasSettings.InputButtonSettings settings))
                     {
                         actionKeyText = settings.Key;
-                        icon = settings.Icon;
+                        iconClass = settings.IconClass;
                     }
 
-                    hoverCanvasInstance.SetTooltip(tooltipInfo.Text, actionKeyText, icon, i);
+                    hoverCanvasInstance.SetTooltip(tooltipInfo.Text, actionKeyText, iconClass, i);
                 }
 
                 hoverCanvasInstance.SetTooltipsCount(hoverFeedbackComponent.Tooltips.Count);

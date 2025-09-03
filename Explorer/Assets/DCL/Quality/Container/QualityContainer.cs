@@ -4,11 +4,14 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Landscape.Settings;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Quality.Debug;
 using DCL.Quality.Runtime;
 using DCL.SDKComponents.LightSource;
+using DCL.SDKComponents.MediaStream.Settings;
+using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,8 +38,6 @@ namespace DCL.Quality
         {
             Settings settings = pluginSettingsContainer.GetSettings<Settings>();
 
-            var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, CancellationToken.None);
-            var videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, CancellationToken.None);
             var lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, CancellationToken.None);
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, CancellationToken.None);
             var lightSourceSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourceSettings, CancellationToken.None);
@@ -45,8 +46,8 @@ namespace DCL.Quality
             IQualityLevelController controller = QualityRuntimeFactory.Create(
                 rendererFeaturesCache,
                 settings.QualitySettings,
-                realmPartitionSettings.Value,
-                videoPrioritizationSettings.Value,
+                settings.RealmPartitionSettings,
+                settings.VideoPrioritizationSettings,
                 lodSettingsAsset.Value,
                 landscapeData.Value,
                 lightSourceSettings.Value);
@@ -111,16 +112,16 @@ namespace DCL.Quality
             public QualitySettingsAsset QualitySettings { get; private set; }
 
             [field: SerializeField]
-            public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+            public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; }
 
             [field: SerializeField]
-            public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings { get; private set; }
+            public VideoPrioritizationSettings VideoPrioritizationSettings { get; private set; }
 
             [field: SerializeField]
             public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }
 
             [field: SerializeField]
-            public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
+            public LandscapeDataRef LandscapeData { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceT<LightSourceSettings> LightSourceSettings { get; private set; }

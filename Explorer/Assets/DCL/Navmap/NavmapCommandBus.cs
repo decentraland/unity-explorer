@@ -46,7 +46,8 @@ namespace DCL.Navmap
             this.placesAPIService = placesAPIService;
         }
 
-        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false)
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct,
+            bool isFromSearchResults = false, Vector2Int? originalParcel = null)
         {
             INavmapCommand<AdditionalParams> command = showPlaceInfoFactory.Invoke(place);
 
@@ -54,7 +55,7 @@ namespace DCL.Navmap
                 ClearPlacesFromMap();
 
             MoveCameraTo(place.Positions[0], CAMERA_MOVE_SPEED);
-            await command.ExecuteAsync(new AdditionalParams(isFromSearchResults), ct);
+            await command.ExecuteAsync(new AdditionalParams(isFromSearchResults, originalParcel), ct);
 
             AddCommand(command);
         }
@@ -66,7 +67,7 @@ namespace DCL.Navmap
             // TODO: show empty parcel
             if (place == null) place = new PlacesData.PlaceInfo(parcel);
 
-            await SelectPlaceAsync(place, ct, isFromSearchResults);
+            await SelectPlaceAsync(place, ct, isFromSearchResults, parcel);
         }
 
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)

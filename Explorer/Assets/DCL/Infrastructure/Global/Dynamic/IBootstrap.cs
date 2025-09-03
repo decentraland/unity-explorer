@@ -11,7 +11,6 @@ using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
-using DCL.Utilities;
 using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
@@ -20,7 +19,7 @@ namespace Global.Dynamic
 {
     public interface IBootstrap
     {
-        UniTask PreInitializeSetupAsync(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct);
+        UniTask PreInitializeSetupAsync(CancellationToken ct);
 
         UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
             BootstrapContainer bootstrapContainer,
@@ -28,7 +27,6 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            UIDocument scenesUIRoot,
             bool hasDebugFlag,
             CancellationToken ct
         );
@@ -39,9 +37,6 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot,
-            UIDocument scenesUIRoot,
-            UIDocument cursorRoot,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,

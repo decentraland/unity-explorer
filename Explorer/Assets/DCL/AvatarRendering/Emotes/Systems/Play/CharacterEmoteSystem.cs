@@ -24,12 +24,15 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
+using ECS.SceneLifeCycle;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Play
 {
@@ -44,6 +47,7 @@ namespace DCL.AvatarRendering.Emotes.Play
     {
         // todo: use this to add nice Debug UI to trigger any emote?
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly IScenesCache scenesCache;
 
         private readonly IEmoteStorage emoteStorage;
         private readonly EmotePlayer emotePlayer;
@@ -57,11 +61,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             AudioSource audioSource,
             IDebugContainerBuilder debugContainerBuilder,
             bool localSceneDevelopment,
-            IAppArgs appArgs) : base(world)
+            IAppArgs appArgs,
+            IScenesCache scenesCache) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.scenesCache = scenesCache;
             emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
         }
 
@@ -233,7 +239,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 else
                 {
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
-                    World.Create(CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape));
+                    CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
                 }
 
             }
@@ -269,12 +275,22 @@ namespace DCL.AvatarRendering.Emotes.Play
             characterController.enabled = !emoteComponent.IsPlayingEmote;
         }
 
-        private EmotePromise CreateEmotePromise(URN urn, BodyShape bodyShape)
+        private void CreateEmotePromise(URN urn, BodyShape bodyShape)
         {
             loadEmoteBuffer[0] = urn;
 
-            return EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
-                PartitionComponent.TOP_PRIORITY);
+            if (GetSceneEmoteFromRealmIntention.TryParseFromURN(urn, out string sceneId, out string emoteHash, out bool loop))
+            {
+                if (!scenesCache.TryGetBySceneId(sceneId, out ISceneFacade? scene)) return;
+                    
+                SceneEmoteFromRealmPromise.Create(World,
+                    new GetSceneEmoteFromRealmIntention(sceneId, scene!.SceneData.AssetBundleManifest, emoteHash, loop, bodyShape),
+                    PartitionComponent.TOP_PRIORITY);
+            }
+            else
+                EmotePromise.Create(World,
+                    EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
+                    PartitionComponent.TOP_PRIORITY);
         }
     }
 }

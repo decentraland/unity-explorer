@@ -1,7 +1,6 @@
 ﻿using DCL.Diagnostics;
 using Segment.Analytics;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics

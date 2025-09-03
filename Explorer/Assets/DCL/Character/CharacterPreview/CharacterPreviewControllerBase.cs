@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
+using DCL.Diagnostics;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,8 @@ namespace DCL.CharacterPreview
         private CancellationTokenSource? updateModelCancellationToken;
         private Color profileColor;
         private Vector3 avatarPosition;
+
+        private RenderTexture? currentRenderTexture;
 
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
@@ -65,7 +68,7 @@ namespace DCL.CharacterPreview
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
 
-            isPlayingEmoteDelegate = () => previewController!.Value.IsPlayingEmote();
+            isPlayingEmoteDelegate = () => previewController?.IsPlayingEmote() ?? false;
         }
 
         public virtual void Initialize(Avatar avatar, Vector3 position)
@@ -87,20 +90,20 @@ namespace DCL.CharacterPreview
             if (initialized) return;
 
             //Temporal solution to fix issue with render format in Mac VS Windows
-            Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
+            Vector2 sizeDelta = view.RawImage.rectTransform!.sizeDelta;
 
-            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
+            currentRenderTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
                 antiAliasing = 4,
                 useDynamicScale = true,
             };
 
-            newTexture.Create();
+            currentRenderTexture.Create();
 
-            view.RawImage.texture = newTexture;
+            view.RawImage.texture = currentRenderTexture;
 
-            previewController = previewFactory.Create(world, view.RawImage.rectTransform, newTexture,
+            previewController = previewFactory.Create(world, view.RawImage.rectTransform, currentRenderTexture,
                 inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
 
@@ -120,6 +123,14 @@ namespace DCL.CharacterPreview
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
             cursorController.Dispose();
             updateModelCancellationToken.SafeCancelAndDispose();
+        }
+
+        private void ReleaseRenderTexture()
+        {
+            if (!currentRenderTexture) return;
+            currentRenderTexture.Release();
+            UnityEngine.Object.Destroy(currentRenderTexture);
+            currentRenderTexture = null;
         }
 
         private void OnPointerEnter(PointerEventData pointerEventData)
@@ -166,8 +177,17 @@ namespace DCL.CharacterPreview
                     case PointerEventData.InputButton.Left when view.EnableRotating:
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
                         break;
+                    case PointerEventData.InputButton.Middle:
+                    default:
+                        ReportHub.LogError(ReportCategory.UI, nameof(InvalidOperationException));
+                        break;
                 }
             }
+        }
+
+        public void OnBeforeShow()
+        {
+            EnableSpinner();
         }
 
         /// <summary>
@@ -202,6 +222,7 @@ namespace DCL.CharacterPreview
                 previewController?.Dispose();
                 previewController = null;
                 initialized = false;
+                ReleaseRenderTexture();
             }
 
             if (triggerOnHideBusEvent)
@@ -230,7 +251,6 @@ namespace DCL.CharacterPreview
         protected void OnModelUpdated()
         {
             updateModelCancellationToken = updateModelCancellationToken.SafeRestart();
-
             UpdateModelAsync(updateModelCancellationToken.Token).Forget();
             return;
 

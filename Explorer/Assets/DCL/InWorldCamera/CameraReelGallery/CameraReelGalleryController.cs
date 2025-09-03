@@ -14,6 +14,7 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -74,7 +75,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly Dictionary<CameraReelResponseCompact, Texture> reelThumbnailCache = new ();
         private readonly CameraReelOptionButtonController? optionButtonController;
         private readonly Rect elementMaskRect;
-        private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
+        private readonly CameraReelGalleryMessagesConfiguration? reelGalleryStringMessages;
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
 
@@ -102,7 +103,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             ISystemClipboard? systemClipboard = null,
-            ReelGalleryStringMessages? reelGalleryStringMessages = null,
+            CameraReelGalleryMessagesConfiguration? reelGalleryStringMessages = null,
             IMVCManager? mvcManager = null)
         {
             this.view = view;
@@ -124,7 +125,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view.scrollRect.SetScrollSensitivityBasedOnPlatform();
 
             if (optionButtonView is not null)
-                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!);
+                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!, reelGalleryConfigParams.EnableDeleteContextOption);
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
                 view.unusedGridViewObject, cameraReelScreenshotsStorage,
@@ -142,7 +143,48 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 this.optionButtonController.CopyPictureLinkRequested += CopyPictureLink;
                 this.optionButtonController.DownloadRequested += DownloadReelLocally;
                 this.optionButtonController.DeletePictureRequested += DeleteReel;
+
+                if (reelGalleryConfigParams.HideReelOnPrivateSet)
+                    this.optionButtonController.SetPublicRequested += HideReelIfSetPrivate;
             }
+        }
+
+        public void Dispose()
+        {
+            OnDisable();
+            view.Disable -= OnDisable;
+            ThumbnailClicked = null;
+            StorageUpdated = null;
+            ScreenshotDeleted = null;
+            view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
+            view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
+            downloadScreenshotCts.SafeCancelAndDispose();
+
+            optionButtonController?.Dispose();
+
+            if (this.optionButtonController != null)
+            {
+                this.optionButtonController.SetPublicRequested -= SetReelPublic;
+                this.optionButtonController.ShareToXRequested -= ShareToX;
+                this.optionButtonController.CopyPictureLinkRequested -= CopyPictureLink;
+                this.optionButtonController.DownloadRequested -= DownloadReelLocally;
+                this.optionButtonController.DeletePictureRequested -= DeleteReel;
+
+                this.optionButtonController.SetPublicRequested -= HideReelIfSetPrivate;
+            }
+        }
+
+        public void TryEnableContextMenuButton(bool enable)
+        {
+            if (optionButtonController != null)
+                optionButtonController.enableContextMenuButton = enable;
+        }
+
+        private void HideReelIfSetPrivate(CameraReelResponseCompact response, bool isPublic)
+        {
+            if (isPublic) return;
+
+            HideReelFromList(response);
         }
 
         private void DeleteReel(CameraReelResponseCompact response)
@@ -251,7 +293,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             try
             {
                 CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(reelToDeleteInfo.Id, ct);
-
+                galleryEventBus.ReelDeleted(reelToDeleteInfo.Id);
                 RemoveThumbnailFromList(reelToDeleteInfo.Id, reelToDeleteInfo.Datetime);
 
                 ScreenshotDeleted?.Invoke();
@@ -276,6 +318,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void RemoveThumbnailFromList(string reelId, string dateTime)
         {
             int indexToRemove = -1;
+            // This loop finds removed item index and moves all following elements by -1 index to avoid holes in the array.
             for (int i = 0; i < currentSize; i++)
             {
                 if (indexToRemove >= 0)
@@ -288,6 +331,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 }
             }
 
+            // Return if reel was not present in the array (it can happen when it's called multiple times, e.g. when more
+            // than one gallery is open at the time.
+            if (indexToRemove < 0)
+                return;
+
+            // Finally: clear repeated element
             thumbnailImages[currentSize - 1] = null;
             currentSize--;
             ResetThumbnailsVisibility();
@@ -318,6 +367,18 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
+        private void OnReelDeletionSignal(string reelId)
+        {
+            for (int i = pagedCameraReelManager.AllOrderedResponses.Count - 1; i >= 0; i--)
+            {
+                var thumbnail = pagedCameraReelManager.AllOrderedResponses[i];
+                if (thumbnail.id != reelId) continue;
+
+                HideReelFromList(thumbnail);
+                return;
+            }
+        }
+
         private void PrepareShowGallery(CancellationToken ct)
         {
             view.loadingSpinner.SetActive(true);
@@ -335,6 +396,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             view.loadingSpinner.SetActive(false);
             galleryEventBus.ReelPublicStateChangeEvent += OnReelPublicStateChange;
+            galleryEventBus.ReelDeletedEvent += OnReelDeletionSignal;
         }
 
         public async UniTask ShowWalletGalleryAsync(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
@@ -595,64 +657,29 @@ namespace DCL.InWorldCamera.CameraReelGallery
             optionButtonController?.HideControl();
 
             galleryEventBus.ReelPublicStateChangeEvent -= OnReelPublicStateChange;
-        }
-
-        public void Dispose()
-        {
-            OnDisable();
-            view.Disable -= OnDisable;
-            ThumbnailClicked = null;
-            StorageUpdated = null;
-            ScreenshotDeleted = null;
-            view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
-            view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
-            downloadScreenshotCts.SafeCancelAndDispose();
-
-            optionButtonController?.Dispose();
-
-            if (this.optionButtonController != null)
-            {
-                this.optionButtonController.SetPublicRequested -= SetReelPublic;
-                this.optionButtonController.ShareToXRequested -= ShareToX;
-                this.optionButtonController.CopyPictureLinkRequested -= CopyPictureLink;
-                this.optionButtonController.DownloadRequested -= DownloadReelLocally;
-                this.optionButtonController.DeletePictureRequested -= DeleteReel;
-            }
+            galleryEventBus.ReelDeletedEvent -= OnReelDeletionSignal;
         }
     }
 
-    public struct ReelGalleryStringMessages
-    {
-        public readonly string? ShareToXMessage;
-        public readonly string? PhotoSuccessfullyDeletedMessage;
-        public readonly string? PhotoSuccessfullyUpdatedMessage;
-        public readonly string? PhotoSuccessfullyDownloadedMessage;
-        public readonly string? LinkCopiedMessage;
-
-        public ReelGalleryStringMessages(string? shareToXMessage, string? photoSuccessfullyDeletedMessage, string? photoSuccessfullyUpdatedMessage, string? photoSuccessfullyDownloadedMessage, string? linkCopiedMessage)
-        {
-            ShareToXMessage = shareToXMessage;
-            PhotoSuccessfullyDeletedMessage = photoSuccessfullyDeletedMessage;
-            PhotoSuccessfullyUpdatedMessage = photoSuccessfullyUpdatedMessage;
-            PhotoSuccessfullyDownloadedMessage = photoSuccessfullyDownloadedMessage;
-            LinkCopiedMessage = linkCopiedMessage;
-        }
-    }
-    public struct ReelGalleryConfigParams
+    public readonly struct ReelGalleryConfigParams
     {
         public readonly int GridLayoutFixedColumnCount;
         public readonly int ThumbnailHeight;
         public readonly int ThumbnailWidth;
         public readonly bool GridShowMonth;
         public readonly bool GroupByMonth;
+        public readonly bool EnableDeleteContextOption;
+        public readonly bool HideReelOnPrivateSet;
 
-        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth)
+        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth, bool enableDeleteContextOption = true, bool hideReelOnPrivateSet = false)
         {
             GridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             ThumbnailHeight = thumbnailHeight;
             ThumbnailWidth = thumbnailWidth;
             GridShowMonth = gridShowMonth;
             GroupByMonth = groupByMonth;
+            EnableDeleteContextOption = enableDeleteContextOption;
+            HideReelOnPrivateSet = hideReelOnPrivateSet;
         }
     }
 }

@@ -66,7 +66,6 @@ namespace DCL.PluginSystem.World
 
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
-            VideoPrioritizationSettings videoPrioritizationSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct: ct)).Value;
             mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value.GetComponent<MediaPlayer>();
 
             mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(
@@ -78,7 +77,7 @@ namespace DCL.PluginSystem.World
                 worldVolumeMacBus,
                 exposedCameraData,
                 settings.FadeSpeed,
-                videoPrioritizationSettings,
+                settings.VideoPrioritizationSettings,
                 roomHub
             );
         }
@@ -91,7 +90,7 @@ namespace DCL.PluginSystem.World
 
             [field: SerializeField] public float FadeSpeed { get; private set; } = 1f;
 
-            public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings;
+            public VideoPrioritizationSettings VideoPrioritizationSettings;
         }
     }
 }

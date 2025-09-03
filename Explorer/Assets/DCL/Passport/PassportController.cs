@@ -7,6 +7,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -47,6 +48,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -54,7 +56,7 @@ using Utility.Types;
 
 namespace DCL.Passport
 {
-    public partial class PassportController : ControllerBase<PassportView, PassportController.Params>
+    public partial class PassportController : ControllerBase<PassportView, PassportController.Params>, IBlocksChat
     {
         private enum OpenBadgeSectionOrigin
         {
@@ -114,6 +116,8 @@ namespace DCL.Passport
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -191,7 +195,9 @@ namespace DCL.Passport
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
-            GalleryEventBus galleryEventBus) : base(viewFactory)
+            GalleryEventBus galleryEventBus,
+            ISystemClipboard systemClipboard,
+            CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -232,6 +238,8 @@ namespace DCL.Passport
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.galleryEventBus = galleryEventBus;
+            this.systemClipboard = systemClipboard;
+            this.cameraReelGalleryMessagesConfiguration = cameraReelGalleryMessagesConfiguration;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -315,10 +323,18 @@ namespace DCL.Passport
                     gridLayoutFixedColumnCount,
                     thumbnailHeight,
                     thumbnailWidth,
-                    false,
-                    false),
-                false,
-                galleryEventBus);
+                    gridShowMonth: false,
+                    groupByMonth: false,
+                    enableDeleteContextOption: false,
+                    hideReelOnPrivateSet: true),
+                useSignedRequest: false,
+                galleryEventBus,
+                viewInstance.CameraReelGalleryContextMenuView,
+                webBrowser,
+                decentralandUrlsSource,
+                systemClipboard,
+                cameraReelGalleryMessagesConfiguration,
+                mvcManager);
 
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             badgesPassportModules.Add(badgesDetailsPassportModuleController);
@@ -511,6 +527,11 @@ namespace DCL.Passport
                 if (EnumUtils.HasFlag(alreadyLoadedSections, sectionToLoad))
                     return;
 
+                // Ensure the view is initialized before fetching the profile to prevent rendering artifacts
+                // that may appear while the profile is still loading
+                if (sectionToLoad == PassportSection.OVERVIEW)
+                    characterPreviewController!.OnBeforeShow();
+
                 // Load user profile
                 Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
 
@@ -588,7 +609,8 @@ namespace DCL.Passport
             photoLoadingCts = photoLoadingCts.SafeRestart();
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
 
-            cameraReelGalleryController!.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
+            cameraReelGalleryController!.TryEnableContextMenuButton(isOwnProfile);
+            cameraReelGalleryController.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
 
             currentSection = PassportSection.PHOTOS;
             viewInstance!.OpenSection(currentSection);
@@ -637,7 +659,10 @@ namespace DCL.Passport
             previewGO.SetActive(visible);
 
             if (visible)
+            {
+                characterPreviewController?.OnBeforeShow();
                 characterPreviewController?.OnShow(triggerOnShowBusEvent);
+            }
             else
                 characterPreviewController?.OnHide(triggerOnShowBusEvent);
         }

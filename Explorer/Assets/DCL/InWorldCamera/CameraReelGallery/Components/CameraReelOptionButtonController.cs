@@ -26,12 +26,15 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         public event Action<CameraReelResponseCompact>? DownloadRequested;
         public event Action<CameraReelResponseCompact>? DeletePictureRequested;
 
+        internal bool enableContextMenuButton { get; set; } = true;
+
         private bool isContextMenuOpen;
         private CameraReelResponseCompact currentReelData;
         private UniTaskCompletionSource? closeContextMenuTask;
 
         public CameraReelOptionButtonController(CameraReelOptionButtonView view,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            bool enableDeleteReel)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -45,13 +48,15 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                .AddControl(new ButtonContextMenuControlSettings(view.shareButtonText, view.shareButtonSprite, () => ShareToXRequested?.Invoke(currentReelData)))
                .AddControl(new ButtonContextMenuControlSettings(view.copyButtonText, view.copyButtonSprite, () => CopyPictureLinkRequested?.Invoke(currentReelData)))
                .AddControl(new ButtonContextMenuControlSettings(view.downloadButtonText, view.downloadButtonSprite, () => DownloadRequested?.Invoke(currentReelData)))
-               .AddControl(new ButtonContextMenuControlSettings(view.deleteButtonText, view.deleteButtonSprite, () => DeletePictureRequested?.Invoke(currentReelData)));
+               .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.deleteButtonText, view.deleteButtonSprite, () => DeletePictureRequested?.Invoke(currentReelData)), enableDeleteReel));
         }
 
         public bool IsContextMenuOpen() => isContextMenuOpen;
 
-        public void Show(CameraReelResponseCompact cameraReelResponse, Transform parent, Vector3 offsetPosition = default)
+        public void TryShow(CameraReelResponseCompact cameraReelResponse, Transform parent, Vector3 offsetPosition = default)
         {
+            if (!enableContextMenuButton) return;
+
             view.transform.SetParent(parent);
             view.transform.localPosition = offsetPosition;
             view.gameObject.SetActive(true);

@@ -145,8 +145,8 @@ namespace DCL.PluginSystem.Global
         {
             this.settings = settings;
 
-            hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
-            followTarget = factory.CreateFollowTarget(settings.FollowTarget);
+            hud = factory.CreateScreencaptureHud(await assetsProvisioner.ProvideMainAssetValueAsync(settings.ScreencaptureHud, ct: ct));
+            followTarget = factory.CreateFollowTarget(await assetsProvisioner.ProvideMainAssetValueAsync(settings.FollowTarget, ct: ct));
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
@@ -213,8 +213,8 @@ namespace DCL.PluginSystem.Global
         public class InWorldCameraSettings : IDCLPluginSettings
         {
             [field: Header(nameof(InWorldCameraSettings))]
-            [field: SerializeField] internal GameObject ScreencaptureHud { get; private set; }
-            [field: SerializeField] internal GameObject FollowTarget { get; private set; }
+            [field: SerializeField] internal AssetReferenceGameObject ScreencaptureHud { get; private set; }
+            [field: SerializeField] internal AssetReferenceGameObject FollowTarget { get; private set; }
 
             [field: Header("Configs")]
             [field: SerializeField] internal InWorldCameraTransitionSettings TransitionSettings { get; private set; }
@@ -231,7 +231,6 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
 
             [field: SerializeField] internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
-            [field: SerializeField] internal AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
         }
     }
 }
