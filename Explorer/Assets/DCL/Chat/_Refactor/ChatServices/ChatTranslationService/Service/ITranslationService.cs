@@ -6,7 +6,7 @@ namespace DCL.Translation.Service
 {
     public interface ITranslationService
     {
-        void ProcessIncomingMessage(ChatMessage message);
+        void ProcessIncomingMessage(string channelId, ChatMessage message);
         UniTask TranslateManualAsync(string messageId, CancellationToken ct);
         void RevertToOriginal(string messageId);
     }

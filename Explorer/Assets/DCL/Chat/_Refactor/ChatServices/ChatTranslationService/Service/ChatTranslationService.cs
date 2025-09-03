@@ -4,6 +4,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Translation.Events;
 using DCL.Translation.Models;
+using DCL.Translation.Service.Cache;
+using DCL.Translation.Service.Memory;
+using DCL.Translation.Service.Policy;
+using DCL.Translation.Service.Provider;
+using DCL.Translation.Settings;
 using Utility;
 
 namespace DCL.Translation.Service
@@ -32,9 +37,9 @@ namespace DCL.Translation.Service
             this.translationMemory = translationMemory;
         }
 
-        public void ProcessIncomingMessage(ChatMessage message)
+        public void ProcessIncomingMessage(string channelId, ChatMessage message)
         {
-            if (!policy.ShouldAutoTranslate(message, message.ChannelId.Id, settings.PreferredLanguage))
+            if (!policy.ShouldAutoTranslate(message, channelId, settings.PreferredLanguage))
             {
                 // We don't even need to store it; the default is no translation.
                 return;
@@ -45,14 +50,14 @@ namespace DCL.Translation.Service
                 State = TranslationState.Pending
             };
 
-            translationMemory.Set(message.MessageId, newTranslation);
+            translationMemory.Set(channelId, newTranslation);
 
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
-                MessageId = message.MessageId
+                // MessageId = message.MessageId
             });
 
-            TranslateInternalAsync(message.MessageId, CancellationToken.None).Forget();
+            TranslateInternalAsync("", CancellationToken.None).Forget();
         }
 
         public UniTask TranslateManualAsync(string messageId, CancellationToken ct)

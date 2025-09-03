@@ -2,7 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Translation.Models;
 
-namespace DCL.Translation.Service
+namespace DCL.Translation.Service.Provider
 {
     /// <summary>
     ///     Role: The low-level adapter that communicates with an external API or Mock

@@ -1,6 +1,6 @@
 ﻿using DCL.Translation.Models;
 
-namespace DCL.Translation.Service
+namespace DCL.Translation.Settings
 {
     /// <summary>
     ///     Role: A central, read-only source of configuration data.

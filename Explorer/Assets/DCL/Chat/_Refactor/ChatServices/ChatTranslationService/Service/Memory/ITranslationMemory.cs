@@ -1,6 +1,6 @@
 ﻿using DCL.Translation.Models;
 
-namespace DCL.Translation.Service
+namespace DCL.Translation.Service.Memory
 {
     public interface ITranslationMemory
     {

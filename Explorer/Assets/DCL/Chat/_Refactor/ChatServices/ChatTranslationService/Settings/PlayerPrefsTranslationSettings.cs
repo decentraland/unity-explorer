@@ -1,7 +1,7 @@
 ﻿using DCL.Prefs;
 using DCL.Translation.Models;
 
-namespace DCL.Translation.Service
+namespace DCL.Translation.Settings
 {
     public class PlayerPrefsTranslationSettings : ITranslationSettings
     {

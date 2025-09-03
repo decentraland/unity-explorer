@@ -1,6 +1,6 @@
 ﻿using DCL.Translation.Models;
 
-namespace DCL.Translation.Service
+namespace DCL.Translation.Service.Cache
 {
     /// <summary>
     ///     Role: Prevents redundant API calls, saving time and money.

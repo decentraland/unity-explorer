@@ -37,6 +37,11 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Translation.Service;
+using DCL.Translation.Service.Cache;
+using DCL.Translation.Service.Memory;
+using DCL.Translation.Service.Policy;
+using DCL.Translation.Service.Provider;
+using DCL.Translation.Settings;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -193,7 +198,7 @@ namespace DCL.PluginSystem.Global
             }
 
             translationSettings = new PlayerPrefsTranslationSettings();
-            var toggleAutoTranslateCommand = new ToggleAutoTranslateCommand(translationSettings);
+            var toggleAutoTranslateCommand = new ToggleAutoTranslateCommand(translationSettings, eventBus);
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
             var translationProvider = new MockTranslationProvider();
             var translationCache = new InMemoryTranslationCache();
