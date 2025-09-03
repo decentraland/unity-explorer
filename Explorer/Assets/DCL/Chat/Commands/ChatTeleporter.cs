@@ -80,8 +80,9 @@ namespace DCL.Chat.Commands
                    {
                        ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {realm} world!",
                        ChangeRealmError.SameRealm => $"🟡 You are already in {realm}!",
-                       ChangeRealmError.NotReachable => $"🔴 Error. The world {realm} doesn't exist or not reachable!",
-                       ChangeRealmError.ChangeCancelled => "🔴 Error. The operation was canceled!",
+                       ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
+                       ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
+                       ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
@@ -100,10 +101,10 @@ namespace DCL.Chat.Commands
 
             return error.State switch
                    {
-                       TaskError.MessageError => $"🔴 Error. Teleport failed: {error.Message}",
-                       TaskError.Timeout => "🔴 Error. Timeout",
-                       TaskError.Cancelled => "🔴 Error. The operation was canceled!",
-                       TaskError.UnexpectedException => $"🔴 Error. Teleport failed: {error.Message}",
+                       TaskError.MessageError => $"🔴 Error: {error.Message}",
+                       TaskError.Timeout => "🔴 Error: Timeout",
+                       TaskError.Cancelled => "🔴 Error: The operation was canceled!",
+                       TaskError.UnexpectedException => $"🔴 Error: {error.Message}",
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }

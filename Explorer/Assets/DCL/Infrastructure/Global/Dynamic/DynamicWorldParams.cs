@@ -22,13 +22,10 @@ namespace Global.Dynamic
         public readonly IAssetsProvisioner AssetsProvisioner;
         public readonly StaticContainer StaticContainer;
         public readonly IPluginSettingsContainer SettingsContainer;
-        public readonly UIDocument RootUIDocument;
-        public readonly UIDocument ScenesUIDocument;
-        public readonly UIDocument CursorUIDocument;
         public readonly DynamicSettings DynamicSettings;
         public readonly IWeb3VerifiedAuthenticator Web3Authenticator;
         public readonly IWeb3IdentityCache Web3IdentityCache;
-        public readonly ISplashScreen SplashScreen;
+        public readonly SplashScreen SplashScreen;
         public readonly WorldInfoTool WorldInfoTool;
 
         public DynamicWorldDependencies(
@@ -37,13 +34,10 @@ namespace Global.Dynamic
             IAssetsProvisioner assetsProvisioner,
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
-            UIDocument rootUIDocument,
-            UIDocument scenesUIRoot,
-            UIDocument cursorUIDocument,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
             IWeb3IdentityCache web3IdentityCache,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             WorldInfoTool worldInfoTool
         )
         {
@@ -52,9 +46,6 @@ namespace Global.Dynamic
             AssetsProvisioner = assetsProvisioner;
             StaticContainer = staticContainer;
             SettingsContainer = settingsContainer;
-            RootUIDocument = rootUIDocument;
-            ScenesUIDocument = scenesUIRoot;
-            CursorUIDocument = cursorUIDocument;
             DynamicSettings = dynamicSettings;
             Web3Authenticator = web3Authenticator;
             Web3IdentityCache = web3IdentityCache;

@@ -12,22 +12,23 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarker : IPinMarker
     {
-        private const float NAVMAP_PIN_DEFAULT_SCALE = 35;
-        private const float MINIMAP_MIN_SIZE_FOR_PIN = 45;
+        private const float NAVMAP_PIN_MIN_SCALE = 35;
+        private const float MINIMAP_PIN_MIN_SCALE = 45;
+        private const float PIN_SIZE_MULTIPLIER = 0.6f;
         private const float ANIMATION_DURATION = 0.4f;
         private static readonly Vector2 TARGET_ANIMATION_SCALE = new (1.2f, 1.2f);
 
         private readonly IMapCullingController cullingController;
 
-        private MapMarkerPoolableBehavior<PinMarkerObject> poolableBehavior;
-        private float currentNewScale = MINIMAP_MIN_SIZE_FOR_PIN;
+        private MapMarkerPoolableBehavior<PinMarkerObject> poolablePin;
+        private float currentTargetScale = MINIMAP_PIN_MIN_SCALE;
         private CancellationTokenSource pulseCancellationTokenSource;
         private CancellationTokenSource selectionCancellationTokenSource;
 
-        public Vector3 CurrentPosition => poolableBehavior.currentPosition;
-        public Sprite? CurrentSprite => poolableBehavior.instance?.mapPinIcon.sprite;
+        public Vector3 CurrentPosition => poolablePin.currentPosition;
+        public Sprite? CurrentSprite => poolablePin.instance?.mapPinIcon.sprite;
 
-        public bool IsVisible => poolableBehavior.isVisible;
+        public bool IsVisible => poolablePin.isVisible;
         public bool IsDestination { get; private set; }
         public bool IsSelected { get; private set; }
         public string Title { get; private set; }
@@ -41,7 +42,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public PinMarker(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController)
         {
-            poolableBehavior = new MapMarkerPoolableBehavior<PinMarkerObject>(objectsPool);
+            poolablePin = new MapMarkerPoolableBehavior<PinMarkerObject>(objectsPool);
             this.cullingController = cullingController;
         }
 
@@ -58,7 +59,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
             selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
             ParcelPosition = parcelPosition;
-            poolableBehavior.SetCurrentPosition(position);
+            poolablePin.SetCurrentPosition(position);
         }
 
         public async UniTaskVoid AnimateSelectionAsync(CancellationToken ct)
@@ -67,10 +68,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestartLinked(ct);
             IsSelected = true;
 
-            if (poolableBehavior.instance != null)
+            if (poolablePin.instance != null)
             {
                 selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
-                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, TARGET_ANIMATION_SCALE, ANIMATION_DURATION, Ease.OutBack, selectionCancellationTokenSource.Token);
+                await MarkerHelper.ScaleToAsync(poolablePin.instance.selectionScalingParent, TARGET_ANIMATION_SCALE, ANIMATION_DURATION, Ease.OutBack, selectionCancellationTokenSource.Token);
             }
         }
 
@@ -79,8 +80,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
             SetIconOutline(false);
             pulseCancellationTokenSource.SafeCancelAndDispose();
             selectionCancellationTokenSource.SafeCancelAndDispose();
-            if (poolableBehavior.instance != null)
-                poolableBehavior.instance.selectionScalingParent.localScale = Vector3.one;
+            if (poolablePin.instance != null)
+                poolablePin.instance.selectionScalingParent.localScale = Vector3.one;
             ResetScale(scaleType);
             IsSelected = false;
         }
@@ -91,10 +92,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestartLinked(ct);
             IsSelected = false;
 
-            if (poolableBehavior.instance != null)
+            if (poolablePin.instance != null)
             {
                 selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
-                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, Vector3.one, 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
+                await MarkerHelper.ScaleToAsync(poolablePin.instance.selectionScalingParent, Vector3.one, 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
                 //We dont reset the ct in this case because it was already restarted and linked to the ct of AnimateDeselectionAsync
                 ResetPulseAnimation(false);
             }
@@ -103,16 +104,16 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void SetAsDestination(bool isDestination)
         {
             IsDestination = isDestination;
-            if (poolableBehavior.instance != null)
+            if (poolablePin.instance != null)
             {
-                poolableBehavior.instance.SetAsDestination(IsDestination);
+                poolablePin.instance.SetAsDestination(IsDestination);
                 ResetPulseAnimation();
             }
         }
 
         public void SetIconOutline(bool isActive)
         {
-            poolableBehavior.instance?.mapPinIconOutline.gameObject.SetActive(isActive);
+            poolablePin.instance?.mapPinIconOutline.gameObject.SetActive(isActive);
         }
 
         public void SetData(string title, string description)
@@ -125,15 +126,15 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void SetTexture(Texture2D? texture)
         {
             icon = texture;
-            poolableBehavior.instance?.SetTexture(texture);
+            poolablePin.instance?.SetTexture(texture);
         }
 
         public void OnBecameVisible()
         {
-            poolableBehavior.OnBecameVisible();
-            poolableBehavior.instance?.SetTexture(icon);
-            poolableBehavior.instance?.SetAsDestination(IsDestination);
-            poolableBehavior.instance?.SetScale(currentNewScale);
+            poolablePin.OnBecameVisible();
+            poolablePin.instance?.SetTexture(icon);
+            poolablePin.instance?.SetAsDestination(IsDestination);
+            poolablePin.instance?.SetScale(currentTargetScale);
             ResetPulseAnimation();
         }
 
@@ -141,40 +142,40 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
             selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
-            poolableBehavior.OnBecameInvisible();
+            poolablePin.OnBecameInvisible();
         }
 
         public void SetZoom(float baseScale, float baseZoom, float zoom)
         {
-            currentBaseScale = Math.Max(baseScale, NAVMAP_PIN_DEFAULT_SCALE);
-            currentNewScale = Math.Max(zoom / baseZoom * currentBaseScale, currentBaseScale);
-            poolableBehavior.instance?.SetScale(currentNewScale);
+            currentBaseScale = Math.Max(baseScale, NAVMAP_PIN_MIN_SCALE);
+            currentTargetScale = Math.Max(zoom / baseZoom * currentBaseScale * PIN_SIZE_MULTIPLIER, currentBaseScale);
+            poolablePin.instance?.SetScale(currentTargetScale);
         }
 
         public void ResetScale(IPinMarker.ScaleType type)
         {
-            currentNewScale = type == IPinMarker.ScaleType.MINIMAP ? MINIMAP_MIN_SIZE_FOR_PIN : NAVMAP_PIN_DEFAULT_SCALE;
-            poolableBehavior.instance?.SetScale(currentNewScale);
+            currentTargetScale = type == IPinMarker.ScaleType.MINIMAP ? MINIMAP_PIN_MIN_SCALE : NAVMAP_PIN_MIN_SCALE;
+            poolablePin.instance?.SetScale(currentTargetScale);
         }
 
         private void ResetPulseAnimation(bool resetCt = true)
         {
             if (resetCt) pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
-            if (!IsDestination && !IsSelected && poolableBehavior.instance != null) MarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
+            if (!IsDestination && !IsSelected && poolablePin.instance != null) MarkerHelper.PulseScaleAsync(poolablePin.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
         }
 
         public void Show(Action? onFinish = null)
         {
-            poolableBehavior.instance?.SetVisibility(true, onFinish);
+            poolablePin.instance?.SetVisibility(true, onFinish);
         }
 
         public void Hide(Action? onFinish)
         {
-            poolableBehavior.instance?.SetVisibility(false, onFinish);
+            poolablePin.instance?.SetVisibility(false, onFinish);
         }
 
         public GameObject? GetGameObject() =>
-            poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
+            poolablePin.instance != null ? poolablePin.instance.gameObject : null;
 
         public Vector2Int? GetParcelPosition() =>
             ParcelPosition;

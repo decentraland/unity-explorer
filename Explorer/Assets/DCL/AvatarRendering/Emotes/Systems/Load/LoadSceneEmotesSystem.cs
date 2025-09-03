@@ -71,8 +71,8 @@ namespace DCL.AvatarRendering.Emotes.Load
         ) where TIntention : struct, IEmoteAssetIntention
         {
             URN urn = intention.NewSceneEmoteURN();
-
-            if (intention.Timeout.IsTimeout(dt))
+            
+            if (intention.IsTimeout(dt))
             {
                 if (!World.Has<StreamableResult>(entity))
                 {
