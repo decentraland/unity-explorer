@@ -50,8 +50,8 @@ inline void UnpackTwoBytes(half packedValue, out uint value1, out uint value2)
 // Create quaternion from Y-axis rotation
 float4 QuaternionFromYRotation(float angleRadians)
 {
-    float halfAngle = angleRadians * 0.5;
-    return float4(0, sin(halfAngle), 0, cos(halfAngle));
+    float halfAngle = angleRadians * 0.5f;
+    return float4(0.0f, sin(halfAngle), 0.0f, cos(halfAngle));
 }
 
 // Calculate quaternion from terrain normal
@@ -59,9 +59,9 @@ inline float4 QuaternionFromToRotation(float3 from, float3 to)
 {
     float3 cross_vec = cross(from, to);
     float dot_product = dot(from, to);
-    float s = sqrt((1.0 + dot_product) * 2.0);
+    float s = sqrt((1.0f + dot_product) * 2.0f);
     float3 xyz = cross_vec / s;
-    float w = s * 0.5;
+    float w = s * 0.5f;
     return float4(xyz, w);
 }
 
@@ -111,7 +111,7 @@ float CalculateHeightFromHeightmap(float2 uv, float _DistanceFieldScale,
             
     float fHeightNoise = fHeight * range + min;
 
-    float saturationFactor = 20;
+    float saturationFactor = 20.0f;
     return max(0.0f, normalizedHeight * _DistanceFieldScale + fHeightNoise * saturate( normalizedHeight * saturationFactor));
 }
 
@@ -137,7 +137,7 @@ float CalculateHeightFromHeightmap(float2 uv, float _DistanceFieldScale,
 float4 CreateGrassRotationQuaternion(float3 terrainNormal, float yRotationAngle)
 {
     float4 yRotation = QuaternionFromYRotation(yRotationAngle);
-    float3 up = float3(0, 1, 0);
+    float3 up = float3(0.0f, 1.0f, 0.0f);
     float4 terrainAlignment = QuaternionFromToRotation(up, terrainNormal);
 
     // Apply Y rotation first, then terrain alignment
@@ -261,7 +261,7 @@ float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale,
     fOccupancy8 = (fOccupancy8 <= minValue) ? 0.0f : (fOccupancy8 - minValue) / (1.0f - minValue);
 
     // Calculate occupied heights
-    float saturationFactor = 20;
+    float saturationFactor = 20.0f;
     float fOccupiedHeight0 = fOccupancy0 * _DistanceFieldScale + height0 * saturate( fOccupancy0 * saturationFactor);
     float fOccupiedHeight1 = fOccupancy1 * _DistanceFieldScale + height1 * saturate( fOccupancy1 * saturationFactor);
     float fOccupiedHeight2 = fOccupancy2 * _DistanceFieldScale + height2 * saturate( fOccupancy2 * saturationFactor);

@@ -99,7 +99,7 @@ void CatTailScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, 
         float2 UV_coords = (worldSpaceCoord + 4096.0f) / 8192.0f;
 
         // Check occupancy
-        float fDistanceFieldScale = 16;
+        float fDistanceFieldScale = 16.0f;
 
         // Get Height
         float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale,
