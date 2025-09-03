@@ -55,7 +55,7 @@ namespace DCL.WebRequests.Analytics
 
             DebugWidgetBuilder? widget = debugContainerBuilder
                                         .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS)
-                                       ?.AddSingleButton("Open Chrome DevTools", () => chromeDevtoolProtocolClient.Start())
+                                       ?.AddSingleButton("Open Chrome DevTools", () => chromeDevtoolProtocolClient.StartAndOpen())
                                         .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
 
             foreach (RequestType requestType in requestTypes)

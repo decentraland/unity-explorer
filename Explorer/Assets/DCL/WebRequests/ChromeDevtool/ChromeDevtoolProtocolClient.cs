@@ -38,12 +38,12 @@ namespace DCL.WebRequests.ChromeDevtool
             ChromeDevtoolProtocolClient newInstance = new ChromeDevtoolProtocolClient(bridge);
 
             if (startOnCreation)
-                newInstance.Start();
+                newInstance.StartAndOpen();
 
             return newInstance;
         }
 
-        public BridgeStartResult Start()
+        public BridgeStartResult StartAndOpen()
         {
             BridgeStartResult result = bridge.Start();
 

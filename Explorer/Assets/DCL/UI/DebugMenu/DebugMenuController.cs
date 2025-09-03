@@ -169,7 +169,7 @@ namespace DCL.UI.DebugMenu
 
         private void OnChromeDevtoolsProtocolButton()
         {
-            BridgeStartResult result = chromeDevtoolProtocolClient!.Start();
+            BridgeStartResult result = chromeDevtoolProtocolClient!.StartAndOpen();
             //TODO show toast if error
         }
 
