@@ -155,7 +155,6 @@ RectTransform:
   - {fileID: 7441986765818555740}
   - {fileID: 9198923278300892484}
   - {fileID: 3145996397629250463}
-  - {fileID: 3573135781194891034}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -280,7 +279,6 @@ MonoBehaviour:
   creationPanelModerationAPIUnavailableModalCancelButton: {fileID: 235681737501799066}
   creationPanelModerationAPIUnavailableModalRetryButton: {fileID: 644132754378292322}
   creationPanelPointerClicksBlocker: {fileID: 6764609575438496850}
-  <WarningNotificationView>k__BackingField: {fileID: 4847848383146126928}
 --- !u!1 &1501630461376916409
 GameObject:
   m_ObjectHideFlags: 0

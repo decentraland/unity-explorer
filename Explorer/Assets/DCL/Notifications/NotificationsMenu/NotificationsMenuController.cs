@@ -32,13 +32,13 @@ namespace DCL.Notifications.NotificationsMenu
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
             NotificationType.INTERNAL_ARRIVED_TO_DESTINATION,
-            NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT,
+            NotificationType.INTERNAL_DEFAULT_SUCCESS,
             NotificationType.INTERNAL_SERVER_ERROR
         };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
         private readonly NftTypeIconSO rarityBackgroundMapping;
@@ -59,7 +59,7 @@ namespace DCL.Notifications.NotificationsMenu
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
             NftTypeIconSO rarityBackgroundMapping,

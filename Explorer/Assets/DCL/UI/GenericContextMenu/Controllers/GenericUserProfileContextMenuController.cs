@@ -10,7 +10,6 @@ using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connectivity;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
@@ -88,8 +87,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             ISharedSpaceManager sharedSpaceManager,
             bool includeVoiceChat,
             bool includeCommunities,
-            CommunitiesDataProvider communitiesDataProvider,
-            INotificationsBusController notificationsBus)
+            CommunitiesDataProvider communitiesDataProvider)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -130,7 +128,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             if (includeCommunities)
             {
-                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, notificationsBus, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
                 invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
             }
         }

@@ -2,7 +2,6 @@
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities.Extensions;
@@ -11,6 +10,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Types;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.UI.GenericContextMenu.Controllers.Communities
 {
@@ -23,6 +23,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
     public class CommunityInvitationContextMenuButtonHandler
     {
         private const string INVITATION_FAILED_TEXT = "Error sending invitation. Please try again.";
+        private const string INVITE_SENT_TEXT = "Invite to Community Sent";
         private const string USER_POTENTIAL_INVITATIONS_FAILED_TEXT = "Error loading 'Invite to Community' menu option. Reopen menu to try again.";
         private const int MAXIMUM_HEIGHT_OF_SUBMENU = 600;
         private const int MAXIMUM_WIDTH_OF_SUBMENU = 300;
@@ -30,7 +31,6 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
 
         private readonly RectOffset scrollViewPaddings = new ();
         private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly INotificationsBusController notificationsBus;
         private readonly int subMenuItemSpacing;
         private string userWalletId;
 
@@ -42,13 +42,11 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
         /// Main constructor.
         /// </summary>
         /// <param name="communitiesDataProvider">The source of the data related to users and invitations.</param>
-        /// <param name="notificationsBus">A way to show feedback to the user on the screen.</param>
         /// <param name="subMenuItemSpacing">The distance among items in the submenu.</param>
-        public CommunityInvitationContextMenuButtonHandler(CommunitiesDataProvider communitiesDataProvider, INotificationsBusController notificationsBus, int subMenuItemSpacing)
+        public CommunityInvitationContextMenuButtonHandler(CommunitiesDataProvider communitiesDataProvider, int subMenuItemSpacing)
         {
             this.communitiesDataProvider = communitiesDataProvider;
             this.subMenuItemSpacing = subMenuItemSpacing;
-            this.notificationsBus = notificationsBus;
         }
 
         /// <summary>
@@ -101,7 +99,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
             }
             else
             {
-                notificationsBus.AddNotification(new ServerErrorNotification(USER_POTENTIAL_INVITATIONS_FAILED_TEXT){ Type = NotificationType.INTERNAL_SERVER_ERROR });
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(USER_POTENTIAL_INVITATIONS_FAILED_TEXT));
             }
 
             return false;
@@ -130,9 +128,9 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
             Result<string> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(lastCommunityData[itemIndex].id, userWalletId, InviteRequestAction.invite, invitationActionCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
-                notificationsBus.AddNotification(new InvitationToCommunitySentNotification() { Type = NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT });
+                Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(INVITE_SENT_TEXT));
             else
-                notificationsBus.AddNotification(new ServerErrorNotification(INVITATION_FAILED_TEXT){ Type = NotificationType.INTERNAL_SERVER_ERROR });
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INVITATION_FAILED_TEXT));
         }
     }
 }

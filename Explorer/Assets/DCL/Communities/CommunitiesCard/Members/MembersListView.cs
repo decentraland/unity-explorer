@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Friends.UI.FriendPanel;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
@@ -95,7 +94,6 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
-        private INotificationsBusController? notificationsBus;
 
         private void Awake()
         {
@@ -150,7 +148,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             if (invitationButtonHandler == null)
             {
-                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, notificationsBus, contextMenuSettings.ElementsSpacing);
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, contextMenuSettings.ElementsSpacing);
                 invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, contextMenuSettings.InviteToCommunityText, contextMenuSettings.InviteToCommunitySprite);
             }
 
@@ -245,11 +243,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         public void SetCommunitiesDataProvider(CommunitiesDataProvider.CommunitiesDataProvider dataProvider)
         {
             this.communitiesDataProvider = dataProvider;
-        }
-
-        public void SetNotificationsBusController(INotificationsBusController notificationsBusController)
-        {
-            this.notificationsBus = notificationsBusController;
         }
 
         public void SetCommunityData(GetCommunityResponse.CommunityData community, UniTask panelTask)

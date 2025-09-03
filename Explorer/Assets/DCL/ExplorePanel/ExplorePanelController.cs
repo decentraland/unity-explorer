@@ -65,7 +65,7 @@ namespace DCL.ExplorePanel
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
-            INotificationsBusController notificationBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
             IInputBlock inputBlock,
             bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)

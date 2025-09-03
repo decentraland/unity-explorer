@@ -78,9 +78,6 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private Button creationPanelModerationAPIUnavailableModalRetryButton = null!;
         [SerializeField] private GameObject creationPanelPointerClicksBlocker = null!;
 
-        [field: Header("Common")]
-        [field: SerializeField] public WarningNotificationView WarningNotificationView { get; private set; } = null!;
-
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
 
         private bool isEditionMode;
@@ -167,7 +164,6 @@ namespace DCL.Communities.CommunityCreation
                 CleanCreationPanel();
 
             creationPanelScrollRect.verticalNormalizedPosition = 1f;
-            WarningNotificationView.Hide(true);
         }
 
         public void ConvertGetNameDescriptionUrlsToClickableLinks(Action<string> onLinkClicked) =>

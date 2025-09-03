@@ -1,13 +1,13 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities
 {
@@ -17,12 +17,11 @@ namespace DCL.Communities
 
         private CancellationTokenSource eventStartsCts = new ();
 
-        public NotificationHandler(INotificationsBusController notificationsBusController,
-            IRealmNavigator realmNavigator)
+        public NotificationHandler(IRealmNavigator realmNavigator)
         {
             this.realmNavigator = realmNavigator;
 
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_ABOUT_TO_START, EventStartSoonClicked);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_ABOUT_TO_START, EventStartSoonClicked);
         }
 
         public void Dispose() =>
