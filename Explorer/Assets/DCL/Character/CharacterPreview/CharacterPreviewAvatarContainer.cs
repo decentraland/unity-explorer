@@ -15,12 +15,15 @@ namespace DCL.CharacterPreview
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
         private const float MAX_ANGULAR_VELOCITY = 20f;
-        private const float MIN_DURATION_WITH_INERTIA = .2f;
-        private const float DURATION_SCALE = .1f;
+        private const float MAX_ROTATION_PER_FRAME = 10f;
 
         private Tween? fovTween;
-        private Tween? rotationTween;
         private float rotationAngularVelocity;
+        private float currentRotationModifier;
+        private float currentRotationInertia;
+        private bool isDragging = false;
+        private float lastDragTime = 0f;
+
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -76,44 +79,74 @@ namespace DCL.CharacterPreview
         public void StopFOVTween() =>
             fovTween?.Kill();
 
-        public void StopRotationTween() =>
-            rotationTween?.Kill();
+        public void StopRotationTween()
+        {
+            // rotationCancellationTokenSource?.Cancel();
+            // rotationTask = null;
+        }
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
 
         public void SetRotationTween(float angularVelocity, float rotationModifier, float rotationInertia, Ease curve)
         {
+            // Update the current angular velocity
             rotationAngularVelocity = Mathf.Clamp(
                 angularVelocity,
                 -MAX_ANGULAR_VELOCITY,
                 MAX_ANGULAR_VELOCITY
             );
 
-            float duration = rotationInertia > 0
-                ? Mathf.Max(Mathf.Abs(rotationAngularVelocity) * rotationInertia * DURATION_SCALE, MIN_DURATION_WITH_INERTIA)
-                : 0f;
+            // Store parameters for inertia calculation
+            currentRotationModifier = rotationModifier;
+            currentRotationInertia = rotationInertia;
 
-            StopRotationTween();
+            // Mark that we're currently dragging and update last drag time
+            isDragging = true;
+            lastDragTime = Time.time;
+        }
 
-            rotationTween = DOTween.To(
-                                        () => rotationAngularVelocity,
-                                        x => rotationAngularVelocity = x,
-                                        0f,
-                                        duration
-                                    )
-                                   .SetEase(curve)
-                                   .OnUpdate(() =>
-                                    {
-                                        Vector3 rotation = rotationTarget.rotation.eulerAngles;
-                                        rotation.y += rotationAngularVelocity * rotationModifier;
-                                        rotationTarget.rotation = Quaternion.Euler(rotation);
-                                    })
-                                   .OnComplete(() =>
-                                    {
-                                        rotationAngularVelocity = 0f;
-                                        rotationTween.Kill();
-                                    });
+        private void Update()
+        {
+            // Check if drag has ended (no SetRotationTween called for a few frames)
+            if (isDragging && Time.time - lastDragTime > 0.1f) // 100ms threshold
+            {
+                isDragging = false;
+            }
+
+            // Early exit if no rotation is happening
+            if (Mathf.Abs(rotationAngularVelocity) < 0.01f && !isDragging)
+            {
+                return;
+            }
+
+            // Apply rotation if there's any angular velocity
+            if (Mathf.Abs(rotationAngularVelocity) > 0.01f)
+            {
+                Vector3 rotation = rotationTarget.rotation.eulerAngles;
+                float rotationAmount = rotationAngularVelocity * currentRotationModifier;
+
+                // Limit rotation per frame to prevent super-fast spinning
+                rotationAmount = Mathf.Clamp(rotationAmount, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
+
+                rotation.y += rotationAmount;
+                rotationTarget.rotation = Quaternion.Euler(rotation);
+            }
+
+            // Apply inertia when not dragging
+            if (!isDragging && currentRotationInertia > 0)
+            {
+                // Gradually reduce angular velocity based on inertia
+                // Higher inertia = slower deceleration (takes longer to slow down)
+                float inertiaDecay = Time.deltaTime * (1f / currentRotationInertia);
+                rotationAngularVelocity = Mathf.Lerp(rotationAngularVelocity, 0f, inertiaDecay);
+
+                // Stop when velocity is very low
+                if (Mathf.Abs(rotationAngularVelocity) < 0.01f)
+                {
+                    rotationAngularVelocity = 0f;
+                }
+            }
         }
 
         public void SetFOVTween(float targetFOV, float duration, Ease curve)
