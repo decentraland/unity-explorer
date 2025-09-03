@@ -52,7 +52,6 @@ namespace DCL.Communities.CommunitiesCard
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
         private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
         private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -86,7 +85,6 @@ namespace DCL.Communities.CommunitiesCard
         private ISpriteCache? spriteCache;
         private bool isSpriteCacheExternal;
         private readonly ThumbnailLoader thumbnailLoader;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBus;
 
         private GetCommunityResponse.CommunityData communityData;
         private string[] communityPlaceIds;
@@ -138,9 +136,9 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
 
-            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, OnOpenCommunityCardFromNotification);
-            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
-            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
         }
 
         public override void Dispose()

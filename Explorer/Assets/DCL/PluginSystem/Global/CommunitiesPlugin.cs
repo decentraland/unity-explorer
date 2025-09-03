@@ -110,7 +110,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
-            notificationHandler = new NotificationHandler(NotificationsBusController.NotificationsBus.NotificationsBusController.Instance, realmNavigator);
+            notificationHandler = new NotificationHandler(realmNavigator);
         }
 
         public void Dispose()
