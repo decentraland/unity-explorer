@@ -837,7 +837,7 @@ namespace Global.Dynamic
                     entityParticipantTable,
                     staticContainer.RealmData,
                     remoteMetadata),
-                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
+                new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(
                     assetsProvisioner,

@@ -35,6 +35,7 @@ namespace DCL.Audio
 
         private GameObjectPool<AudioSource> audioSourcePool;
         private CancellationTokenSource mainCancellationTokenSource;
+        private AudioMixerVolumesController mixerVolumesController;
 
         public void Dispose()
         {
@@ -56,13 +57,15 @@ namespace DCL.Audio
             audioSourcePool?.Dispose();
         }
 
-        public void Initialize()
+        public void Initialize(AudioMixerVolumesController mixerVolumesController)
         {
+            this.mixerVolumesController = mixerVolumesController;
             UIAudioEventsBus.Instance.PlayUIAudioEvent += OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent += OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent += OnStopContinuousUIAudioEvent;
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
             mainCancellationTokenSource = new CancellationTokenSource();
+            Application.quitting += OnApplicationQuitting;
         }
 
         private CancellationTokenSource CreateLinkedCancellationTokenSource() =>
@@ -235,6 +238,43 @@ namespace DCL.Audio
             audioSource.outputAudioMixerGroup = settings.MixerGroup;
             audioSource.spatialBlend = 0;
             return audioSource;
+        }
+
+        // Unity sometimes unmutes AudioMixer groups on application quit for a split second, this method disables audio
+        // sources to prevent this bleaching.
+        private void OnApplicationQuitting()
+        {
+            foreach (var audioClipPair in audioDataPerAudioClipConfig)
+            {
+                switch(audioClipPair.Key.Category)
+                {
+                    case AudioCategory.UI:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.UI_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.Chat:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.Chat_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.World:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.World_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.Avatar:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.Avatar_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.Music:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.Music_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.None:
+                    default:
+                        continue;
+                }
+                
+                audioClipPair.Value.AudioSource.mute = true;
+            }
         }
 
         private struct ContinuousPlaybackAudioData
