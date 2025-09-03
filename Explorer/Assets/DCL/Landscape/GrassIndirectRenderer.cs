@@ -80,7 +80,7 @@ namespace Decentraland.Terrain
 
             indirectRenderingBounds.SetMinMax(
                 new Vector3(terrainGenerator.TerrainModel.MinInUnits.x, 0f, terrainGenerator.TerrainModel.MinInUnits.y),
-                new Vector3(terrainGenerator.TerrainModel.MaxInUnits.x, terrainGenerator.MaxHeight, terrainGenerator.TerrainModel.MaxInUnits.y));
+                new Vector3(terrainGenerator.TerrainModel.MaxInUnits.x, TerrainGenerator.MAX_HEIGHT, terrainGenerator.TerrainModel.MaxInUnits.y));
 
             GenerateQuadTree();
             SetupComputeBuffers();
@@ -302,7 +302,7 @@ namespace Decentraland.Terrain
                 terrainGenerator.TerrainModel.MinParcel.y, terrainGenerator.TerrainModel.MaxParcel.y + 1);
 
             ScatterGrassShader.SetVector("TerrainBounds", terrainBounds);
-            ScatterGrassShader.SetFloat("TerrainHeight", terrainGenerator.MaxHeight);
+            ScatterGrassShader.SetFloat("TerrainHeight", TerrainGenerator.MAX_HEIGHT);
             ScatterGrassShader.SetTexture(kernelIndex, "HeightMapTexture", HeightMapTexture);
             ScatterGrassShader.SetTexture(kernelIndex, "TerrainBlendTexture", TerrainBlendTexture);
             ScatterGrassShader.SetTexture(kernelIndex, "GroundDetailTexture", GroundDetailTexture);

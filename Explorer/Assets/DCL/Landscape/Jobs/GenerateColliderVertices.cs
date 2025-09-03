@@ -9,9 +9,7 @@ namespace DCL.Landscape.Jobs
     [BurstCompile]
     public struct GenerateColliderVertices : IJobParallelForBatch
     {
-        public int MaxHeight;
         public int OccupancyFloor;
-        public float TerrainHeight;
         [ReadOnly] public NativeArray<byte> OccupancyMap;
         public int OccupancyMapSize;
         [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int2> Parcels;
@@ -39,7 +37,7 @@ namespace DCL.Landscape.Jobs
                     int z = (vertexIndex - meshStart) / sideVertexCount;
 
                     float y = TerrainGenerator.GetHeight(x + parcelOriginXZ.x, z + parcelOriginXZ.y,
-                        ParcelSize, OccupancyMap, OccupancyMapSize, OccupancyFloor, TerrainHeight, MaxHeight);
+                        ParcelSize, OccupancyMap, OccupancyMapSize, OccupancyFloor);
 
                     var vertex = new GroundColliderVertex() { Position = float3(x, y, z) };
 #if UNITY_EDITOR // Only needed for drawing gizmos.

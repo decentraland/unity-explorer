@@ -41,13 +41,19 @@ namespace DCL.Landscape
         private const float PROGRESS_COUNTER_DIG_HOLES = 0.5f;
         private const float PROGRESS_SPAWN_TERRAIN = 0.25f;
         private const float PROGRESS_SPAWN_RE_ENABLE_TERRAIN = 0.25f;
+
+        public const int MAX_HEIGHT = 16;
+
+        private const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
+        private const int TREE_INSTANCE_LIMIT = 262144; // 2^18 trees
+
         private readonly NoiseGeneratorCache noiseGenCache;
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
         private readonly IMemoryProfiler profilingProvider;
-        public bool forceCacheRegen;
         private readonly List<Terrain> terrains;
         private readonly List<Collider> terrainChunkColliders;
+        public bool forceCacheRegen;
 
         private TerrainGenerationData terrainGenData;
         private TerrainGeneratorLocalCache localCache;
@@ -59,18 +65,27 @@ namespace DCL.Landscape
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashSet<int2> ownedParcels;
-        public int MaxHeight { get; private set; }
+
         private bool hideTrees;
         private bool hideDetails;
         private bool withHoles;
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private float terrainDataCount;
-
-        public Transform TerrainRoot { get; private set; }
         private GrassColorMapRenderer grassRenderer;
         private bool isInitialized;
         private int activeChunk = -1;
+
+        private ITerrainDetailSetter terrainDetailSetter;
+        private IGPUIWrapper gpuiWrapper;
+        private NativeArray<byte> occupancyMapData;
+        private int occupancyMapSize;
+        private int2 treeMinParcel;
+        private int2 treeMaxParcel;
+        private NativeArray<int> treeIndices;
+        private NativeArray<TreeInstanceData> treeInstances;
+
+        public Transform TerrainRoot { get; private set; }
 
         public int ParcelSize { get; private set; }
         public Transform Ocean { get; private set; }
@@ -85,19 +100,9 @@ namespace DCL.Landscape
         public TerrainModel TerrainModel { get; private set; }
         public Texture2D OccupancyMap { get; private set; }
         public int OccupancyFloor { get; private set; }
-
-        private ITerrainDetailSetter terrainDetailSetter;
-        private IGPUIWrapper gpuiWrapper;
-        private NativeArray<byte> occupancyMapData;
-        private int occupancyMapSize;
         public float TerrainHeight { get; private set; }
-        private int2 treeMinParcel;
-        private int2 treeMaxParcel;
-        private NativeArray<int> treeIndices;
-        private NativeArray<TreeInstanceData> treeInstances;
 
-        private const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
-        private const int TREE_INSTANCE_LIMIT = 262144; // 2^18 trees
+        private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
@@ -112,6 +117,39 @@ namespace DCL.Landscape
             // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
             terrains = new List<Terrain>();
             terrainChunkColliders = new List<Collider>();
+        }
+
+        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
+            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone,
+            IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter, float terrainHeight)
+        {
+            this.ownedParcels = ownedParcels;
+            this.emptyParcels = emptyParcels;
+            this.terrainGenData = terrainGenData;
+            TerrainHeight = terrainHeight;
+
+            ParcelSize = terrainGenData.parcelSize;
+            factory = new TerrainFactory(terrainGenData);
+
+            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize,
+                CACHE_VERSION, parcelChecksum, isZone);
+
+            chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
+            boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
+
+            this.terrainDetailSetter = terrainDetailSetter;
+            this.gpuiWrapper = gpuiWrapper;
+            gpuiWrapper.SetupLocalCache(localCache);
+
+            isInitialized = true;
+        }
+
+        public void Dispose()
+        {
+            if (!isInitialized) return;
+
+            if (TerrainRoot != null)
+                UnityObjectUtils.SafeDestroy(TerrainRoot);
         }
 
         // TODO : pre-calculate once and re-use
@@ -137,44 +175,12 @@ namespace DCL.Landscape
             activeChunk = chunkIndex;
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone,
-            IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter, float terrainHeight)
-        {
-            this.ownedParcels = ownedParcels;
-            this.emptyParcels = emptyParcels;
-            this.terrainGenData = terrainGenData;
-            this.TerrainHeight = terrainHeight;
-
-            ParcelSize = terrainGenData.parcelSize;
-            factory = new TerrainFactory(terrainGenData);
-            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize,
-                CACHE_VERSION, parcelChecksum, isZone);
-
-            chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
-            boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
-
-            this.terrainDetailSetter = terrainDetailSetter;
-            this.gpuiWrapper = gpuiWrapper;
-            gpuiWrapper.SetupLocalCache(localCache);
-
-            isInitialized = true;
-        }
-
         public bool Contains(Vector2Int parcel)
         {
             if (IsTerrainGenerated)
                 return TerrainModel.IsInsideBounds(parcel);
 
             return true;
-        }
-
-        public void Dispose()
-        {
-            if (!isInitialized) return;
-
-            if (TerrainRoot != null)
-                UnityObjectUtils.SafeDestroy(TerrainRoot);
         }
 
         public int GetChunkSize() =>
@@ -191,7 +197,7 @@ namespace DCL.Landscape
 
             ReEnableChunksDetails();
 
-            if(grassRenderer)
+            if (grassRenderer)
                 grassRenderer.Render();
 
             await ReEnableTerrainAsync(postRealmLoadReport);
@@ -208,8 +214,9 @@ namespace DCL.Landscape
             {
                 TerrainRoot.gameObject.SetActive(false);
 
-                foreach (var collider in terrainChunkColliders)
-                    if (collider.enabled) collider.enabled = false;
+                foreach (Collider? collider in terrainChunkColliders)
+                    if (collider.enabled)
+                        collider.enabled = false;
 
                 IsTerrainShown = false;
             }
@@ -328,6 +335,7 @@ namespace DCL.Landscape
                 ownedParcels.Dispose();
 
                 float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+
                 ReportHub.Log(ReportCategory.LANDSCAPE,
                     $"The landscape cleaning process cleaned {afterCleaning - beforeCleaning}MB of memory");
             }
@@ -346,6 +354,7 @@ namespace DCL.Landscape
 
             // we enable them one by batches to avoid a super hiccup
             var i = 0;
+
             while (i < terrains.Count)
             {
                 await UniTask.Yield();
@@ -354,7 +363,7 @@ namespace DCL.Landscape
                 for (int j = i; j < Math.Min(i + batch, terrains.Count); j++)
                 {
                     terrains[j].enabled = true;
-                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + j / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
+                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + (j / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN));
                 }
 
                 i += batch;
@@ -373,25 +382,20 @@ namespace DCL.Landscape
 
         private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
         {
-            if (localCache.IsValid())
-                MaxHeight = localCache.GetMaxHeight();
-            else
-            {
-                JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
-                    ref emptyParcelsData, ref emptyParcelsNeighborData,
-                    emptyParcels.AsArray(), ref ownedParcels,
-                    terrainModel.MinParcel, terrainModel.MaxParcel,
-                    terrainGenData.heightScaleNerf);
+            JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
+                ref emptyParcelsData, ref emptyParcelsNeighborData,
+                emptyParcels.AsArray(), ref ownedParcels,
+                terrainModel.MinParcel, terrainModel.MaxParcel,
+                terrainGenData.heightScaleNerf);
 
-                await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+            await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
 
-                // Calculate this outside the jobs since they are Parallel
-                foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelsData)
-                    if (emptyParcelHeight.Value > MaxHeight)
-                        MaxHeight = emptyParcelHeight.Value;
+            // // Calculate this outside the jobs since they are Parallel
+            // foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelsData)
+            //     if (emptyParcelHeight.Value > MAX_HEIGHT)
+            //         MAX_HEIGHT = emptyParcelHeight.Value;
 
-                localCache.SetMaxHeight(MaxHeight);
-            }
+            localCache.SetMaxHeight(MAX_HEIGHT);
         }
 
         private async UniTask SpawnTerrainObjectsAsync(TerrainModel terrainModel, AsyncLoadProcessReport processReport, CancellationToken cancellationToken)
@@ -412,7 +416,7 @@ namespace DCL.Landscape
 
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;
-                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN);
+                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + (spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN));
             }
         }
 
@@ -422,11 +426,11 @@ namespace DCL.Landscape
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, MaxHeight);
+                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, MAX_HEIGHT);
 
                 var tasks = new List<UniTask>
                 {
-                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, MaxHeight, ParcelSize,
+                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, MAX_HEIGHT, ParcelSize,
                         chunkModel.TerrainData, worldSeed, cancellationToken),
                     chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * ParcelSize,
                         chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
@@ -439,7 +443,7 @@ namespace DCL.Landscape
                     !hideTrees
                         ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits,
                             chunkModel.TerrainData, worldSeed, cancellationToken)
-                        : UniTask.CompletedTask
+                        : UniTask.CompletedTask,
                 };
 
                 if (withHoles)
@@ -476,7 +480,7 @@ namespace DCL.Landscape
                 await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
 
                 processedTerrainDataCount++;
-                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA + processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
+                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA + (processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA));
             }
         }
 
@@ -493,7 +497,7 @@ namespace DCL.Landscape
                 {
                     foreach ((int2 key, TerrainData value) in terrainDatas)
                     {
-                        var holes = await localCache.GetHolesAsync(key.x, key.y);
+                        bool[,]? holes = await localCache.GetHolesAsync(key.x, key.y);
                         value.SetHoles(0, 0, holes);
                         await UniTask.Yield(cancellationToken);
                     }
@@ -612,11 +616,11 @@ namespace DCL.Landscape
             int2 maxParcel, int padding)
         {
             int2 terrainSize = maxParcel - minParcel + 1;
-            int2 citySize = terrainSize - padding * 2;
+            int2 citySize = terrainSize - (padding * 2);
             int textureSize = ceilpow2(cmax(terrainSize) + 2);
             int textureHalfSize = textureSize / 2;
 
-            Texture2D occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false,
+            var occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false,
                 true);
 
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
@@ -806,6 +810,7 @@ namespace DCL.Landscape
             for (int x = texMinX; x <= texMaxX; x++)
             {
                 int i = (y * w) + x;
+
                 if (src[i] != 0 && dist[i] < INF && dist[i] > maxD)
                     maxD = dist[i]; // Check white pixels
             }
@@ -890,16 +895,8 @@ namespace DCL.Landscape
             return occupancyMapData[index] == 0;
         }
 
-        private static float GetParcelBaseHeight(int2 parcel, NativeArray<byte> occupancyMapData,
-            int occupancyMapSize, int occupancyFloor, float terrainHeight)
-        {
-            parcel += occupancyMapSize / 2;
-            int index = (parcel.y * occupancyMapSize) + parcel.x;
-            return (occupancyMapData[index] - occupancyFloor) / (255f - occupancyFloor) * terrainHeight;
-        }
-
         private static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
-            int occupancyMapSize, int parcelSize, int occupancyFloor, int maxHeight)
+            int occupancyMapSize, int parcelSize, int occupancyFloor)
         {
             float occupancy;
 
@@ -921,15 +918,14 @@ namespace DCL.Landscape
 
             const float SATURATION_FACTOR = 20;
             float normalizedHeight = (occupancy - minValue) / (1 - minValue);
-            return (normalizedHeight * 16) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
+            return (normalizedHeight * MAX_HEIGHT) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
         }
 
         public static float GetHeight(float x, float z, int parcelSize,
-            NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor,
-            float terrainHeight, int maxHeight)
+            NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor)
         {
-            int2 parcel = (int2)floor(float2(x, z) / parcelSize);
-            return GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor, maxHeight);
+            var parcel = (int2)floor(float2(x, z) / parcelSize);
+            return GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor);
         }
 
         private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
@@ -952,10 +948,7 @@ namespace DCL.Landscape
             // If tree data has not been loaded, minParcel == maxParcel, and so this is false, and we
             // don't need to check if treeInstances is empty or anything like that.
             if (parcel.x < treeMinParcel.x || parcel.x >= treeMaxParcel.x
-                                           || parcel.y < treeMinParcel.y || parcel.y >= treeMaxParcel.y)
-            {
-                return ReadOnlySpan<TreeInstanceData>.Empty;
-            }
+                                           || parcel.y < treeMinParcel.y || parcel.y >= treeMaxParcel.y) { return ReadOnlySpan<TreeInstanceData>.Empty; }
 
             int index = ((parcel.y - treeMinParcel.y) * (treeMaxParcel.x - treeMinParcel.x))
                 + parcel.x - treeMinParcel.x;
@@ -975,12 +968,12 @@ namespace DCL.Landscape
                     terrainGenData.treeAssets[instance.PrototypeIndex].radius))
             {
                 position.y = 0f;
-                rotation = default;
-                scale = default;
+                rotation = default(Quaternion);
+                scale = default(Vector3);
                 return false;
             }
 
-            position.y = GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor, MaxHeight);
+            position.y = GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor);
 
             rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
 
@@ -994,7 +987,7 @@ namespace DCL.Landscape
 
         private bool OverlapsOccupiedParcel(float2 position, float radius)
         {
-            int2 parcel = (int2)floor(position * (1f / ParcelSize));
+            var parcel = (int2)floor(position * (1f / ParcelSize));
 
             if (IsParcelOccupied(parcel))
                 return true;
@@ -1051,8 +1044,6 @@ namespace DCL.Landscape
 
             return false;
         }
-
-        private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
 
         private static void SaveTrees(ChunkModel[] chunks, TerrainGenerationData terrainData)
         {
@@ -1121,7 +1112,7 @@ namespace DCL.Landscape
         }
 
         private static unsafe void ReadReliably<T>(BinaryReader reader, NativeArray<T> array)
-            where T : unmanaged
+            where T: unmanaged
         {
             var buffer = new Span<byte>(array.GetUnsafePtr(), array.Length * sizeof(T));
 
@@ -1143,15 +1134,15 @@ namespace DCL.Landscape
             int stride = treeMaxParcel.x - treeMinParcel.x;
             var transforms = new List<Matrix4x4>[prototypes.Length];
 
-            for (int i = 0; i < transforms.Length; i++)
+            for (var i = 0; i < transforms.Length; i++)
                 transforms[i] = new List<Matrix4x4>();
 
-            for (int i = 0; i < treeIndices.Length; i++)
+            for (var i = 0; i < treeIndices.Length; i++)
             {
                 int2 parcel = int2(i % stride, i / stride) + treeMinParcel;
                 ReadOnlySpan<TreeInstanceData> instances = GetTreeInstances(parcel);
 
-                foreach (var instance in instances)
+                foreach (TreeInstanceData instance in instances)
                 {
                     if (GetTreeTransform(parcel, instance,
                             out Vector3 position, out Quaternion rotation, out Vector3 scale))
@@ -1162,9 +1153,9 @@ namespace DCL.Landscape
                 }
             }
 
-            int[] rendererKeys = new int[terrainGenData.treeAssets.Length];
+            var rendererKeys = new int[terrainGenData.treeAssets.Length];
 
-            for (int prototypeIndex = 0; prototypeIndex < terrainGenData.treeAssets.Length;
+            for (var prototypeIndex = 0; prototypeIndex < terrainGenData.treeAssets.Length;
                  prototypeIndex++)
             {
                 GPUICoreAPI.RegisterRenderer(TerrainRoot, terrainGenData.treeAssets[prototypeIndex].asset,

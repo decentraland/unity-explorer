@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using ECS.Abstract;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -24,6 +25,7 @@ namespace DCL.Landscape.Systems
     /// </summary>
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [Obsolete]
     public partial class LandscapeTerrainCullingSystem : BaseUnityLoopSystem
     {
         private readonly LandscapeData landscapeData;

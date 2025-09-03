@@ -82,7 +82,7 @@ namespace DCL.Landscape.Systems
             terrainBounds.Min.y = -landscapeData.terrainData.minHeight;
             terrainBounds.Min.z = terrainGenerator.TerrainModel.MinInUnits.y;
             terrainBounds.Max.x = terrainGenerator.TerrainModel.MaxInUnits.x;
-            terrainBounds.Max.y = terrainGenerator.MaxHeight - landscapeData.terrainData.minHeight;
+            terrainBounds.Max.y = TerrainGenerator.MAX_HEIGHT - landscapeData.terrainData.minHeight;
             terrainBounds.Max.z = terrainGenerator.TerrainModel.MaxInUnits.y;
 
             if (!cameraFrustum.Overlaps(terrainBounds))

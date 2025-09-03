@@ -112,9 +112,7 @@ namespace DCL.Landscape.Systems
 
             var generateColliderVerticesJob = new GenerateColliderVertices()
             {
-                MaxHeight = terrainGenerator.MaxHeight,
                 OccupancyFloor = terrainGenerator.OccupancyFloor,
-                TerrainHeight = terrainGenerator.TerrainHeight,
                 OccupancyMap = terrainGenerator.OccupancyMap.GetRawTextureData<byte>(),
                 OccupancyMapSize =  terrainGenerator.OccupancyMap.width,
                 Parcels = parcels,
@@ -290,7 +288,7 @@ namespace DCL.Landscape.Systems
             mesh.SetSubMesh(0, new SubMeshDescriptor(0, indexBuffer.Length), FLAGS);
 
             Vector3 parcelMax = new Vector3(landscapeData.terrainData.parcelSize,
-                terrainGenerator.MaxHeight, landscapeData.terrainData.parcelSize);
+                TerrainGenerator.MAX_HEIGHT, landscapeData.terrainData.parcelSize);
 
             mesh.bounds = new Bounds(parcelMax * 0.5f, parcelMax);
 
