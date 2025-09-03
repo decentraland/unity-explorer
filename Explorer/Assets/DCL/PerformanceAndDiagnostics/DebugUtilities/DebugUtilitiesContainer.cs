@@ -31,8 +31,6 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.PERFORMANCE,
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.MEMORY_LIMITS,
-                        IDebugContainerBuilder.Categories.WEB_REQUESTS,
-                        IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
                     };
                 }
                 else
