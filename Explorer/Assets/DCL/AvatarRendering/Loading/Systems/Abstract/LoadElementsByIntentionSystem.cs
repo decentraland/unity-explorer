@@ -12,6 +12,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
+using System.Buffers;
 using System.Threading;
 using Utility.Multithreading;
 
@@ -75,12 +76,13 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         )
                     );
 
-                foreach (var element in lambdaResponse.Page)
-                {
-                    //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
-                    //Could be removed when the asset bundle manifest registry is battle tested
-                    await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, element.Entity, partition, ct);
-                }
+                // Run fallback checks in parallel for better performance. This should go away when we get an endpoint in the registry that returns the AssetBundleManifest verison  in the response
+                //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
+                //Could be removed when the asset bundle manifest registry is battle tested
+                var tasks = new UniTask[lambdaResponse.Page.Count];
+                for (int i = 0; i < lambdaResponse.Page.Count; i++)
+                    tasks[i] = AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, lambdaResponse.Page[i].Entity, partition, ct);
+                await UniTask.WhenAll(tasks);
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                     Load(ref intention, lambdaResponse);
