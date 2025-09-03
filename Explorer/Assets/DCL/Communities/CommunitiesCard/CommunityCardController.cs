@@ -139,6 +139,7 @@ namespace DCL.Communities.CommunitiesCard
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
         }
 
         public override void Dispose()
@@ -591,7 +592,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE));
                 }
 
                 if (communityData.privacy == CommunityPrivacy.@public)
@@ -630,6 +631,15 @@ namespace DCL.Communities.CommunitiesCard
 
                 CloseController();
             }
+        }
+
+        private void OnJoinRequestAccepted(INotification notification)
+        {
+            if (!viewInstance!.isActiveAndEnabled)
+                return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData(inputData.CommunityId);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
