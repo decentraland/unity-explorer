@@ -275,12 +275,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
-          in @decentraland right now and join me!
-        <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
-        <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
-        <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
-        <LinkCopiedMessage>k__BackingField: Link copied!
+        <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
         <GridLayoutFixedColumnCount>k__BackingField: 6
         <ThumbnailHeight>k__BackingField: 230
@@ -429,6 +424,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
     - rid: 2872862648882692099
       type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -463,12 +459,20 @@ MonoBehaviour:
     - rid: 3511243270148325472
       type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <VoiceChatConfigurations>k__BackingField:
-          m_AssetGUID: 5918cd70698040249a590ac41e1dfeb9
+        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
+        <MicrophoneAudioFilter>k__BackingField:
+          m_AssetGUID: fa9a67059d8a204408ce435cc8827612
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <CombinedAudioSource>k__BackingField:
+          m_AssetGUID: 13e534245f7a87d498ae850d58b9115f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <VoiceChatConfiguration>k__BackingField: {fileID: 11400000, guid: 96f7b8dc6c27e3047a1b56bcf3779c47, type: 2}
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

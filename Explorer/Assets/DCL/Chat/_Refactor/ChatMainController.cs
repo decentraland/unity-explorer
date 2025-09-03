@@ -125,15 +125,18 @@ namespace DCL.Chat
                 chatMemberListService,
                 chatContextMenuService,
                 commandRegistry.GetTitlebarViewModel,
+                commandRegistry.GetCommunityThumbnail,
                 commandRegistry.DeleteChatHistory,
                 voiceChatOrchestrator,
                 chatEventBus);
+
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
                 chatEventBus,
                 chatHistory,
                 currentChannelService,
+                communityDataService,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.CloseChannel,
