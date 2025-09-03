@@ -25,7 +25,6 @@ namespace DCL.AvatarRendering.Emotes
         public bool Loop { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
-        public bool IsAssetBundleProcessed { get; set; }
 
         public LoadTimeout Timeout { get; private set; }
 

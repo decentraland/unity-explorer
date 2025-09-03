@@ -282,9 +282,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (GetSceneEmoteFromRealmIntention.TryParseFromURN(urn, out string sceneId, out string emoteHash, out bool loop))
             {
                 if (!scenesCache.TryGetBySceneId(sceneId, out ISceneFacade? scene)) return;
-                    
+
                 SceneEmoteFromRealmPromise.Create(World,
-                    new GetSceneEmoteFromRealmIntention(sceneId, scene!.SceneData.AssetBundleManifest, emoteHash, loop, bodyShape),
+                    new GetSceneEmoteFromRealmIntention(sceneId, emoteHash, loop, bodyShape),
                     PartitionComponent.TOP_PRIORITY);
             }
             else

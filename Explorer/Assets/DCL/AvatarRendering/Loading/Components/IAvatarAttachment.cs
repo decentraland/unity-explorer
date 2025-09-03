@@ -145,14 +145,5 @@ namespace DCL.AvatarRendering.Loading.Components
             return false;
         }
 
-        public static void UpdateManifest(this IAvatarAttachment avatarAttachment)
-        {
-            avatarAttachment.UpdateLoadingStatus(false);
-        }
-
-        public static void ResetManifest(this IAvatarAttachment avatarAttachment)
-        {
-            avatarAttachment.UpdateLoadingStatus(false);
-        }
     }
 }
