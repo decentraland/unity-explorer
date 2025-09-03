@@ -31,14 +31,6 @@ Texture2D<float4> SandDetailTexture : register(t4);
 StructuredBuffer<int2> visibleParcels : register(t5);
 StructuredBuffer<uint> visibleParcelCount : register(t6);
 
-SamplerState samplerHeightMapTexture : register(s0);
-SamplerState samplerOccupancyTexture : register(s1);
-SamplerState HeightMapTexturePointClampSampler : register(s2);
-SamplerState samplerTerrainBlendTexture : register(s3);
-SamplerState TerrainBlendPointRepeatSampler : register(s4);
-SamplerState samplerGroundDetailTexture : register(s5);
-SamplerState samplerSandDetailTexture : register(s6);
-
 RWStructuredBuffer<PerInst> flower0Instances : register(u0);
 RWStructuredBuffer<PerInst> flower1Instances : register(u1);
 shared RWStructuredBuffer<uint> drawArgs0 : register(u2);
@@ -58,10 +50,7 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
     float2 UV_coords_ParcelBlock = (worldSpaceCoord_ParcelBlock + 4096.0f) / 8192.0f;
 
     // Check the texture
-    half4 terrainColour = SplatmapMix(UV_coords_ParcelBlock * 8.0f,
-        TerrainBlendTexture, samplerTerrainBlendTexture,
-        GroundDetailTexture, samplerGroundDetailTexture,
-        SandDetailTexture, samplerSandDetailTexture, 1);
+    half4 terrainColour = SplatmapMix(UV_coords_ParcelBlock * 8.0f, TerrainBlendTexture, GroundDetailTexture, SandDetailTexture, 1);
 
     // Check occupancy
     float fDistanceFieldScale = 16;
@@ -83,23 +72,15 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
         
         // Get Height
         float2 UV_coords_0 = (corner0 + float2(random_X_flower0, random_Z_flower0) + 4096.0f) / 8192.0f;
-        float height_flower0 = CalculateHeightFromHeightmap(UV_coords_0, fDistanceFieldScale,
-            HeightMapTexture, HeightMapTexturePointClampSampler,
-            OccupancyTexture, samplerOccupancyTexture);
+        float height_flower0 = CalculateHeightFromHeightmap(UV_coords_0, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
         float2 UV_coords_1 = (corner0 + float2(random_X_flower1, random_Z_flower1) + 4096.0f) / 8192.0f;
-        float height_flower1 = CalculateHeightFromHeightmap(UV_coords_1, fDistanceFieldScale,
-            HeightMapTexture, HeightMapTexturePointClampSampler,
-            OccupancyTexture, samplerOccupancyTexture);
+        float height_flower1 = CalculateHeightFromHeightmap(UV_coords_1, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
     
         float fScale0 = 1.0f + hash_int_to_float(UV_coords_0);
         float fScale1 = 1.0f + hash_int_to_float(UV_coords_1);
         
-        float3 normalWS_0 = CalculateNormalFromHeightmap(UV_coords_0, fDistanceFieldScale,
-            HeightMapTexture, samplerHeightMapTexture,
-            OccupancyTexture, samplerOccupancyTexture);
-        float3 normalWS_1 = CalculateNormalFromHeightmap(UV_coords_1, fDistanceFieldScale,
-            HeightMapTexture, samplerHeightMapTexture,
-            OccupancyTexture, samplerOccupancyTexture);
+        float3 normalWS_0 = CalculateNormalFromHeightmap(UV_coords_0, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
+        float3 normalWS_1 = CalculateNormalFromHeightmap(UV_coords_1, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
         
         InterlockedAdd(drawArgs0[1], 1);
         perInst.position = float4(random_X_flower0, height_flower0, random_Z_flower0, fScale0);
