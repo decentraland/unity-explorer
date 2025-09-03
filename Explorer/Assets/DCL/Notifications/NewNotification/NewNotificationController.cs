@@ -22,7 +22,7 @@ namespace DCL.Notifications.NewNotification
         private static readonly TimeSpan TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN = TimeSpan.FromSeconds(5f);
         private const float ANIMATION_DURATION = 0.5f;
 
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
@@ -37,7 +37,7 @@ namespace DCL.Notifications.NewNotification
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
             IWebRequestController webRequestController) : base(viewFactory)
@@ -111,7 +111,7 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.CREDITS_GOAL_COMPLETED:
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
                         break;
-                    case NotificationType.INTERNAL_INVITATION_TO_COMMUNITY_SENT:
+                    case NotificationType.INTERNAL_DEFAULT_SUCCESS:
                         await ProcessArrivedNotificationAsync(notification, false);
                         break;
                     default:

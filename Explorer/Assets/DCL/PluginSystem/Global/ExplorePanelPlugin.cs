@@ -106,7 +106,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
@@ -166,7 +166,7 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IProfileCache profileCache,
             URLDomain assetBundleURL,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             IBackpackEventBus backpackEventBus,
@@ -428,7 +428,6 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 webRequestController,
                 inputBlock,
-                explorePanelView.WarningNotificationView,
                 mvcManager,
                 profileRepositoryWrapper,
                 selfProfile,

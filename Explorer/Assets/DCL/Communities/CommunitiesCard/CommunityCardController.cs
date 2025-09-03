@@ -17,7 +17,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -36,6 +35,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Types;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard
 {
@@ -52,7 +52,6 @@ namespace DCL.Communities.CommunitiesCard
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
         private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
         private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -86,7 +85,6 @@ namespace DCL.Communities.CommunitiesCard
         private ISpriteCache? spriteCache;
         private bool isSpriteCacheExternal;
         private readonly ThumbnailLoader thumbnailLoader;
-        private readonly INotificationsBusController notificationsBus;
 
         private GetCommunityResponse.CommunityData communityData;
         private string[] communityPlaceIds;
@@ -109,8 +107,7 @@ namespace DCL.Communities.CommunitiesCard
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             LambdasProfilesProvider lambdasProfilesProvider,
-            GalleryEventBus galleryEventBus,
-            INotificationsBusController notificationsBus)
+            GalleryEventBus galleryEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -132,7 +129,6 @@ namespace DCL.Communities.CommunitiesCard
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.galleryEventBus = galleryEventBus;
             this.thumbnailLoader = new ThumbnailLoader(null);
-            this.notificationsBus = notificationsBus;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -140,9 +136,9 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
 
-            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, OnOpenCommunityCardFromNotification);
-            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
-            notificationsBus.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
         }
 
         public override void Dispose()
@@ -249,8 +245,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(DELETE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DELETE_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -300,18 +295,14 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
-                viewInstance.warningNotificationView,
                 sharedSpaceManager,
                 chatEventBus,
-                web3IdentityCache,
-                notificationsBus);
+                web3IdentityCache);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,
                 communitiesDataProvider,
                 placesAPIService,
-                viewInstance.warningNotificationView,
-                viewInstance.successNotificationView,
                 realmNavigator,
                 mvcManager,
                 clipboard,
@@ -323,8 +314,6 @@ namespace DCL.Communities.CommunitiesCard
                 placesAPIService,
                 thumbnailLoader,
                 mvcManager,
-                viewInstance.warningNotificationView,
-                viewInstance.successNotificationView,
                 clipboard,
                 webBrowser,
                 realmNavigator,
@@ -367,8 +356,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!getCommunityResult.Success)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -410,9 +398,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!getUserInviteRequestResult.Success)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT));
                     return false;
                 }
 
@@ -495,8 +481,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(JOIN_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -528,8 +513,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LEAVE_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -556,8 +540,9 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success)
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
+                }
 
                 communityData.SetPendingInviteOrRequestId(result.Value);
                 communityData.SetPendingAction(InviteRequestAction.request_to_join);
@@ -580,8 +565,9 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
+                }
 
                 communityData.SetPendingInviteOrRequestId(null);
                 communityData.SetPendingAction(InviteRequestAction.none);
@@ -604,8 +590,9 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
+                }
 
                 if (communityData.privacy == CommunityPrivacy.@public)
                 {
@@ -637,8 +624,9 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
+                }
 
                 CloseController();
             }

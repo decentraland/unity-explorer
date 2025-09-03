@@ -2,20 +2,20 @@
 namespace DCL.NotificationsBusController.NotificationTypes
 {
     /// <summary>
-    /// An internal notification used to let the user know that a request to the server failed.
+    /// An internal notification used to let the user know that an operation was successful.
     /// It will appear at the top of the screen, and not in the notifications feed.
     /// </summary>
-    public class ServerErrorNotification : NotificationBase
+    public class DefaultSuccessNotification : NotificationBase
     {
         private readonly string headerText;
 
         public override string GetHeader() =>
             headerText;
 
-        public ServerErrorNotification(string text)
+        public DefaultSuccessNotification(string text)
         {
             headerText = text;
-            Type = NotificationType.INTERNAL_SERVER_ERROR;
+            Type = NotificationType.INTERNAL_DEFAULT_SUCCESS;
         }
     }
 }

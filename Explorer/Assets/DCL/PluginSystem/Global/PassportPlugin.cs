@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
@@ -95,7 +95,7 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
@@ -228,8 +228,7 @@ namespace DCL.PluginSystem.Global
                 voiceChatCallStatusService,
                 passport3DPreviewCamera,
                 galleryEventBus,
-                communitiesDataProvider,
-                notificationsBusController
+                communitiesDataProvider
             );
 
             mvcManager.RegisterController(passportController);

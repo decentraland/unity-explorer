@@ -18,10 +18,10 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly IWebRequestController webRequestController;
 
-        public RewardPanelPlugin(IMVCManager mvcManager, IAssetsProvisioner assetsProvisioner, INotificationsBusController notificationsBusController, IWebRequestController webRequestController)
+        public RewardPanelPlugin(IMVCManager mvcManager, IAssetsProvisioner assetsProvisioner, NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController, IWebRequestController webRequestController)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
