@@ -41,9 +41,8 @@ MonoBehaviour:
     <fieldOfViewCurve>k__BackingField: 6
     <fieldOfViewDuration>k__BackingField: 0.2
     <rotationEnabled>k__BackingField: 1
-    <rotationModifier>k__BackingField: 1.5
+    <rotationModifier>k__BackingField: 1
     <rotationInertia>k__BackingField: 1
-    <rotationInertiaCurve>k__BackingField: 6
   <cursorSettings>k__BackingField:
   - inputAction: 0
     cursorSprite: {fileID: 21300000, guid: a0dd824ee2daadd46a4437a4e3145c9e, type: 3}

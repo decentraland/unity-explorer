@@ -14,16 +14,16 @@ namespace DCL.CharacterPreview
     /// </summary>
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
-        private Tween? fovTween;
+        private const float DRAG_TIMEOUT = 0.1f;
+        private const float MAX_ANGULAR_VELOCITY = 900f;
+        private const float ANGULAR_VELOCITY_DECELERATION_COEFF = 900f;
 
-        // Rotation system variables - simplified linear system
-        private float angularVelocity; // degrees per second
+        private Tween? fovTween;
+        private float angularVelocity;
         private float rotationModifier;
         private float rotationInertia;
-        private bool isDragging = false;
-        private float lastDragTime = 0f;
-        private const float DRAG_TIMEOUT = 0.1f; // seconds
-        private const float MAX_ANGULAR_VELOCITY = 400f; // degrees per second
+        private bool isDragging;
+        private float lastDragTime;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -46,8 +46,6 @@ namespace DCL.CharacterPreview
             transform.position = position;
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
-
-            // Initialize rotation system
             angularVelocity = 0f;
             isDragging = false;
             lastDragTime = 0f;
@@ -87,20 +85,14 @@ namespace DCL.CharacterPreview
             float rotationInertia
         )
         {
-            // Store current settings
             this.rotationModifier = rotationModifier;
             this.rotationInertia = rotationInertia;
 
-            // Set dragging state and update last drag time
             isDragging = true;
             lastDragTime = Time.time;
 
-                        // Convert input delta (pixels per frame) to angular velocity (degrees per second)
-            // This is framerate-independent: inputDeltaX is pixels moved this frame
-            // We want degrees per second, so we divide by deltaTime to get the rate
             float targetVelocity = -inputDeltaX / Time.deltaTime;
 
-            // Apply linear acceleration with inertia
             if (rotationInertia <= 0f)
             {
                 // No inertia - instant response
@@ -113,17 +105,20 @@ namespace DCL.CharacterPreview
                 angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, accelerationRate);
             }
 
-            // Cap angular velocity to maximum
             angularVelocity = Mathf.Clamp(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
         }
 
         private void Update()
         {
+            UpdateRotation();
+            UpdateFOV();
+        }
+
+        private void UpdateRotation()
+        {
             // Check if dragging has timed out (no drag input for DRAG_TIMEOUT seconds)
             if (isDragging && Time.time - lastDragTime > DRAG_TIMEOUT)
-            {
                 isDragging = false;
-            }
 
             // When not dragging, decelerate towards zero
             if (!isDragging)
@@ -136,7 +131,7 @@ namespace DCL.CharacterPreview
                 else
                 {
                     // Linear deceleration: higher inertia = faster deceleration
-                    float decelerationRate = rotationInertia * Time.deltaTime;
+                    float decelerationRate = rotationInertia * ANGULAR_VELOCITY_DECELERATION_COEFF * Time.deltaTime;
                     float velocitySign = Mathf.Sign(angularVelocity);
                     float velocityMagnitude = Mathf.Abs(angularVelocity);
 
@@ -144,10 +139,7 @@ namespace DCL.CharacterPreview
                     velocityMagnitude -= decelerationRate;
 
                     // If we've reached zero or gone past it, stop completely
-                    if (velocityMagnitude <= 0f)
-                    {
-                        angularVelocity = 0f;
-                    }
+                    if (velocityMagnitude <= 0f) { angularVelocity = 0f; }
                     else
                     {
                         // Maintain direction but with reduced magnitude
@@ -161,13 +153,16 @@ namespace DCL.CharacterPreview
             {
                 Vector3 rotation = rotationTarget.rotation.eulerAngles;
 
-                // Apply rotation: degrees per second * deltaTime * modifier
-                // This is framerate-independent because we're using degrees per second
                 float rotationAmount = angularVelocity * rotationModifier * Time.deltaTime;
 
                 rotation.y += rotationAmount;
                 rotationTarget.rotation = Quaternion.Euler(rotation);
             }
+        }
+
+        private void UpdateFOV()
+        {
+            // TODO convert from tween
         }
 
         public void SetFOVTween(float targetFOV, float duration, Ease curve)
