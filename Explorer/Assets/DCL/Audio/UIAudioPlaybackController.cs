@@ -2,13 +2,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DG.Tweening;
-using DG.Tweening.Core;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.ApplicationGuards;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Audio
@@ -65,7 +63,7 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent += OnStopContinuousUIAudioEvent;
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
             mainCancellationTokenSource = new CancellationTokenSource();
-            Application.quitting += OnApplicationQuitting;
+            ExitUtils.BeforeApplicationQuitting += OnBeforeApplicationQuitting;
         }
 
         private CancellationTokenSource CreateLinkedCancellationTokenSource() =>
@@ -242,7 +240,7 @@ namespace DCL.Audio
 
         // Unity sometimes unmutes AudioMixer groups on application quit for a split second, this method disables audio
         // sources to prevent this bleaching.
-        private void OnApplicationQuitting()
+        private void OnBeforeApplicationQuitting()
         {
             foreach (var audioClipPair in audioDataPerAudioClipConfig)
             {
