@@ -8,6 +8,7 @@ using ECS;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using System;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -23,16 +24,16 @@ namespace Global.Dynamic.Landscapes
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly bool landscapeEnabled;
-        private readonly bool isLocalSceneDevelopment;
 
-        public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled, bool isLocalSceneDevelopment)
+        public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled)
         {
             this.realmController = realmController;
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
             this.landscapeEnabled = landscapeEnabled;
-            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
+
+        private ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() ? genesisTerrain : worldsTerrain;
 
         public async UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
@@ -66,15 +67,14 @@ namespace Global.Dynamic.Landscapes
             return EnumResult<LandscapeError>.SuccessResult();
         }
 
-        //TODO should it accept isLocal instead of encapsulating it?
-        public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal)
-        {
-            IContainParcel terrain = isLocal && !realmController.RealmData.IsGenesis() ? worldsTerrain : genesisTerrain;
+        public float GetHeight(float x, float z) =>
+            CurrentTerrain.GetHeight(x, z);
 
-            return !terrain.Contains(parcel)
+        //TODO should it accept isLocal instead of encapsulating it?
+        public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal) =>
+            !CurrentTerrain.Contains(parcel)
                 ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
                 : Result.SuccessResult();
-        }
 
         private async UniTask GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {

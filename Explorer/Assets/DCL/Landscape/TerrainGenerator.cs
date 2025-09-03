@@ -28,7 +28,7 @@ using TerrainData = UnityEngine.TerrainData;
 
 namespace DCL.Landscape
 {
-    public class TerrainGenerator : IDisposable, IContainParcel
+    public class TerrainGenerator : IDisposable, ITerrain
     {
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
@@ -920,6 +920,9 @@ namespace DCL.Landscape
             float normalizedHeight = (occupancy - minValue) / (1 - minValue);
             return (normalizedHeight * MAX_HEIGHT) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
         }
+
+        public float GetHeight(float x, float z) =>
+            GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor);
 
         public static float GetHeight(float x, float z, int parcelSize,
             NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor)

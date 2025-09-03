@@ -34,7 +34,7 @@ namespace Global.Dynamic
 
             return new TerrainContainer
             {
-                Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, enableLandscape, localSceneDevelopemnt),
+                Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, enableLandscape),
                 GenesisTerrain = genesisTerrain,
                 worldsTerrain = worldsTerrain,
                 landscapeEnabled = enableLandscape,
