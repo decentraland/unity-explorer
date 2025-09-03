@@ -5,7 +5,6 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -89,7 +88,7 @@ namespace DCL.Communities.CommunitiesBrowser
             ProfileRepositoryWrapper profileDataProvider,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
-            INotificationsBusController notificationsBusController)
+            Notifications.NotificationsBusController notificationsBusController)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
