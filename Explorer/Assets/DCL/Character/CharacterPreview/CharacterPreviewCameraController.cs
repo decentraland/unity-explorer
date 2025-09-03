@@ -114,29 +114,13 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    float angularVelocity;
-
-                    float rotationModifier = cameraSettings.rotationModifier;
-                    float rotationInertia = cameraSettings.rotationInertia;
-                    Ease curve = cameraSettings.rotationInertiaCurve;
-
-                    if (rotationInertia <= 0f)
-                    {
-                        angularVelocity = -pointerEventData.delta.x;
-                    }
-                    else
-                    {
-                        float currentFrameRate = 1f / Time.deltaTime;
-                        float smoothing = 1f - Mathf.Exp(-rotationInertia * (1f / currentFrameRate));
-
-                        angularVelocity = Mathf.Lerp(
-                            characterPreviewAvatarContainer.RotationAngularVelocity,
-                            -pointerEventData.delta.x,
-                            smoothing
-                        );
-                    }
-
-                    characterPreviewAvatarContainer.SetRotationTween(angularVelocity, rotationModifier, rotationInertia, curve);
+                    // Simply pass raw input data to SetRotationTween for processing
+                    characterPreviewAvatarContainer.SetRotationTween(
+                        pointerEventData.delta.x,
+                        cameraSettings.rotationModifier,
+                        cameraSettings.rotationInertia,
+                        cameraSettings.inertiaCurve
+                    );
 
                     break;
                 }

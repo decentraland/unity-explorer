@@ -14,16 +14,16 @@ namespace DCL.CharacterPreview
     /// </summary>
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
-        private const float MAX_ANGULAR_VELOCITY = 20f;
-        private const float MAX_ROTATION_PER_FRAME = 10f;
-
         private Tween? fovTween;
-        private float rotationAngularVelocity;
-        private float currentRotationModifier;
-        private float currentRotationInertia;
+        
+        // Rotation system variables - minimized for efficiency
+        private float angularVelocity; // degrees per second
+        private float rotationModifier;
+        private float rotationInertia;
+        private AnimationCurve inertiaCurve;
         private bool isDragging = false;
         private float lastDragTime = 0f;
-
+        private const float DRAG_TIMEOUT = 0.1f; // seconds
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -34,11 +34,11 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
         [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
 
-        public float RotationAngularVelocity => rotationAngularVelocity;
+        public float RotationAngularVelocity => angularVelocity;
 
         public void Dispose()
         {
-            StopCameraTweens();
+            StopFOVTween();
         }
 
         public void Initialize(RenderTexture targetTexture, Vector3 position)
@@ -46,6 +46,11 @@ namespace DCL.CharacterPreview
             transform.position = position;
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
+            
+            // Initialize rotation system
+            angularVelocity = 0f;
+            isDragging = false;
+            lastDragTime = 0f;
 
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
 
@@ -70,82 +75,104 @@ namespace DCL.CharacterPreview
                               .OnComplete(() => fovTween = null);
         }
 
-        public void StopCameraTweens()
-        {
-            StopFOVTween();
-            StopRotationTween();
-        }
-
         public void StopFOVTween() =>
             fovTween?.Kill();
-
-        public void StopRotationTween()
-        {
-            // rotationCancellationTokenSource?.Cancel();
-            // rotationTask = null;
-        }
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
 
-        public void SetRotationTween(float angularVelocity, float rotationModifier, float rotationInertia, Ease curve)
+        public void SetRotationTween(
+            float inputDeltaX,
+            float rotationModifier,
+            float rotationInertia,
+            AnimationCurve inertiaCurve
+        )
         {
-            // Update the current angular velocity
-            rotationAngularVelocity = Mathf.Clamp(
-                angularVelocity,
-                -MAX_ANGULAR_VELOCITY,
-                MAX_ANGULAR_VELOCITY
-            );
-
-            // Store parameters for inertia calculation
-            currentRotationModifier = rotationModifier;
-            currentRotationInertia = rotationInertia;
-
-            // Mark that we're currently dragging and update last drag time
+            // Store current settings
+            this.rotationModifier = rotationModifier;
+            this.rotationInertia = rotationInertia;
+            this.inertiaCurve = inertiaCurve;
+            
+            // Set dragging state and update last drag time
             isDragging = true;
             lastDragTime = Time.time;
+            
+            // Convert input delta (pixels per frame) to angular velocity (degrees per second)
+            // This is framerate-independent: inputDeltaX is pixels moved this frame
+            // We want degrees per second, so we divide by deltaTime to get the rate
+            float targetVelocity = -inputDeltaX / Time.deltaTime;
+            
+            // Apply inertia when accelerating/decelerating
+            if (rotationInertia <= 0f)
+            {
+                // No inertia - instant response
+                angularVelocity = targetVelocity;
+            }
+            else
+            {
+                // Use inertia curve to control acceleration/deceleration
+                float velocityDifference = targetVelocity - angularVelocity;
+                float maxVelocity = Mathf.Max(Mathf.Abs(targetVelocity), Mathf.Abs(angularVelocity));
+                float curveInput = maxVelocity > 0f ? Mathf.Abs(velocityDifference) / maxVelocity : 0f;
+                
+                float accelerationFactor = inertiaCurve.Evaluate(curveInput);
+                float lerpSpeed = accelerationFactor * rotationInertia * Time.deltaTime;
+                
+                angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, lerpSpeed);
+            }
+        }
+
+        public void StopDragging()
+        {
+            isDragging = false;
         }
 
         private void Update()
         {
-            // Check if drag has ended (no SetRotationTween called for a few frames)
-            if (isDragging && Time.time - lastDragTime > 0.1f) // 100ms threshold
+            // Check if dragging has timed out (no drag input for DRAG_TIMEOUT seconds)
+            if (isDragging && Time.time - lastDragTime > DRAG_TIMEOUT)
             {
                 isDragging = false;
             }
 
-            // Early exit if no rotation is happening
-            if (Mathf.Abs(rotationAngularVelocity) < 0.01f && !isDragging)
+            // When not dragging, decelerate towards zero
+            if (!isDragging)
             {
-                return;
+                if (rotationInertia <= 0f)
+                {
+                    // No inertia - instant stop
+                    angularVelocity = 0f;
+                }
+                else
+                {
+                    // Use inertia curve for deceleration
+                    // Evaluate curve based on current velocity (0 = stopped, 1 = max speed)
+                    float velocityMagnitude = Mathf.Abs(angularVelocity);
+                    float maxVelocity = 100f; // Reasonable maximum for curve evaluation
+                    float curveInput = Mathf.Clamp01(velocityMagnitude / maxVelocity);
+                    
+                    float decelerationFactor = inertiaCurve.Evaluate(curveInput);
+                    float lerpSpeed = decelerationFactor * rotationInertia * Time.deltaTime;
+                    
+                    angularVelocity = Mathf.Lerp(angularVelocity, 0f, lerpSpeed);
+                    
+                    // Force stop when velocity is very small to avoid floating point precision issues
+                    if (Mathf.Abs(angularVelocity) < 0.01f)
+                        angularVelocity = 0f;
+                }
             }
 
             // Apply rotation if there's any angular velocity
-            if (Mathf.Abs(rotationAngularVelocity) > 0.01f)
+            if (Mathf.Abs(angularVelocity) > 0.001f)
             {
                 Vector3 rotation = rotationTarget.rotation.eulerAngles;
-                float rotationAmount = rotationAngularVelocity * currentRotationModifier;
-
-                // Limit rotation per frame to prevent super-fast spinning
-                rotationAmount = Mathf.Clamp(rotationAmount, -MAX_ROTATION_PER_FRAME, MAX_ROTATION_PER_FRAME);
-
+                
+                // Apply rotation: degrees per second * deltaTime * modifier
+                // This is framerate-independent because we're using degrees per second
+                float rotationAmount = angularVelocity * rotationModifier * Time.deltaTime;
+                
                 rotation.y += rotationAmount;
                 rotationTarget.rotation = Quaternion.Euler(rotation);
-            }
-
-            // Apply inertia when not dragging
-            if (!isDragging && currentRotationInertia > 0)
-            {
-                // Gradually reduce angular velocity based on inertia
-                // Higher inertia = slower deceleration (takes longer to slow down)
-                float inertiaDecay = Time.deltaTime * (1f / currentRotationInertia);
-                rotationAngularVelocity = Mathf.Lerp(rotationAngularVelocity, 0f, inertiaDecay);
-
-                // Stop when velocity is very low
-                if (Mathf.Abs(rotationAngularVelocity) < 0.01f)
-                {
-                    rotationAngularVelocity = 0f;
-                }
             }
         }
 
@@ -165,9 +192,11 @@ namespace DCL.CharacterPreview
 
         public void ResetAvatarMovement()
         {
-            StopCameraTweens();
+            StopFOVTween();
             rotationTarget.rotation = Quaternion.identity;
-            rotationAngularVelocity = 0f;
+            angularVelocity = 0f;
+            isDragging = false;
+            lastDragTime = 0f;
         }
     }
 
