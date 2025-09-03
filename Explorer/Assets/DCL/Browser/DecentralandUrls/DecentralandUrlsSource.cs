@@ -15,7 +15,6 @@ namespace DCL.Browser.DecentralandUrls
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly ILaunchMode launchMode;
         private readonly string DecentralandDomain;
-        private bool requiresAboutOverride;
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
@@ -33,7 +32,6 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.AssetBundlesCDN);
                 CONTENT_URL_OVERRIDE = "https://peer-testing.decentraland.org/content/";
                 LAMBDAS_URL_OVERRIDE = "https://peer-testing.decentraland.org/lambdas/";
-                requiresAboutOverride = true;
                 DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
             }
             else
@@ -62,9 +60,6 @@ namespace DCL.Browser.DecentralandUrls
                 LaunchMode.LocalSceneDevelopment => "localhost", //TODO should this behaviour be extracted to Url() call?
                 _ => throw new ArgumentOutOfRangeException()
             };
-
-        public bool RequiresAboutOverride() =>
-            requiresAboutOverride;
 
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch

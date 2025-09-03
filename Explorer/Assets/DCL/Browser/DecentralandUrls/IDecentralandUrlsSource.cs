@@ -7,6 +7,5 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         const string LEGACY_LAUNCHER_DOWNLOAD_URL = "https://explorer-artifacts.decentraland.org/launcher/dcl";
         string Url(DecentralandUrl decentralandUrl);
         string GetHostnameForFeatureFlag();
-        bool RequiresAboutOverride();
     }
 }
