@@ -171,7 +171,7 @@ namespace SceneRuntime
             IWeb3IdentityCache web3IdentityCache
         )
         {
-            sceneRuntime.Register("UnitySignedFetch", new SignedFetchWrap(webRequestController, decentralandUrlsSource, sceneData, realmData, web3IdentityCache, sceneRuntime.isDisposingTokenSource));
+            sceneRuntime.Register("UnitySignedFetch", new SignedFetchWrap(webRequestController, decentralandUrlsSource.Environment, sceneData, realmData, web3IdentityCache, sceneRuntime.isDisposingTokenSource));
         }
 
         private static void RegisterRestrictedActionsApi(this ISceneRuntime sceneRuntime, IRestrictedActionsAPI api)

@@ -46,6 +46,7 @@ namespace DCL.Chat.MessageBus
             string serverEnv = decentralandUrlsSource.Environment switch
                                {
                                    DecentralandEnvironment.Org => "prd",
+                                   DecentralandEnvironment.Today => "prd",
                                    DecentralandEnvironment.Zone => "dev",
                                    _ => "local"
                                };
