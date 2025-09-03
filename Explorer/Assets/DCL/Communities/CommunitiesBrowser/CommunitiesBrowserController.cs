@@ -128,9 +128,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityInvitationRejected += RejectCommunityInvitation;
             view.CreateCommunityButtonClicked += CreateCommunity;
 
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_USER_JOIN_REQUEST_SENT, OnJoinRequestReceived);
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_USER_INVITED, OnInvitationReceived);
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_USER_JOIN_REQUEST_ACCEPTED, OnJoinRequestAccepted);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnJoinRequestReceived);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_INVITE_RECEIVED, OnInvitationReceived);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
         }
 
         public void Activate()
