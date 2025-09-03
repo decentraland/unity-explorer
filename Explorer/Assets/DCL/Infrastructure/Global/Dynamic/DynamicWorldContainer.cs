@@ -466,7 +466,7 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 staticContainer.CharacterContainer);
 
-            IRealmNavigator realmNavigator = realmNavigatorContainer.WithMainScreenFallback(initializationFlowContainer.InitializationFlow, playerEntity, globalWorld);
+            IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
@@ -487,22 +487,6 @@ namespace Global.Dynamic
                         ct
                     );
 
-            var minimap = new MinimapController(
-                mainUIView.MinimapView.EnsureNotNull(),
-                mapRendererContainer.MapRenderer,
-                mvcManager,
-                placesAPIService,
-                staticContainer.RealmData,
-                realmNavigator,
-                staticContainer.ScenesCache,
-                mapPathEventBus,
-                staticContainer.SceneRestrictionBusController,
-                dynamicWorldParams.StartParcel.Peek(),
-                sharedSpaceManager,
-                clipboard,
-                bootstrapContainer.DecentralandUrlsSource
-            );
-
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
                 staticContainer.CharacterContainer.CharacterObject
@@ -516,6 +500,8 @@ namespace Global.Dynamic
 
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
+            var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
+
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -523,7 +509,7 @@ namespace Global.Dynamic
                 new WorldChatCommand(chatTeleporter),
                 new DebugPanelChatCommand(debugBuilder),
                 new ShowEntityChatCommand(worldInfoHub),
-                new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment),
+                reloadSceneChatCommand,
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new VersionChatCommand(dclVersion),
@@ -545,6 +531,24 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
+
+            var minimap = new MinimapController(
+                mainUIView.MinimapView.EnsureNotNull(),
+                mapRendererContainer.MapRenderer,
+                mvcManager,
+                placesAPIService,
+                staticContainer.RealmData,
+                realmNavigator,
+                staticContainer.ScenesCache,
+                mapPathEventBus,
+                staticContainer.SceneRestrictionBusController,
+                dynamicWorldParams.StartParcel.Peek(),
+                sharedSpaceManager,
+                clipboard,
+                bootstrapContainer.DecentralandUrlsSource,
+                chatMessagesBus,
+                reloadSceneChatCommand
+            );
 
             var coreBackpackEventBus = new BackpackEventBus();
 
@@ -884,7 +888,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     profileRepositoryWrapper,
                     voiceChatCallStatusService,
-                    galleryEventBus
+                    galleryEventBus,
+                    clipboard
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),

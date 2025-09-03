@@ -115,7 +115,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             if (!imageLoaded) return;
 
             view.transform.DOScale(Vector3.one * view.scaleFactorOnHover, view.scaleAnimationDuration);
-            optionButton?.Show(CameraReelResponse, view.optionButtonContainer.transform, view.optionButtonOffset);
+            optionButton?.TryShow(CameraReelResponse, view.optionButtonContainer.transform, view.optionButtonOffset);
             view.outline.SetActive(true);
         }
 
