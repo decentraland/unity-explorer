@@ -64,7 +64,7 @@ namespace SceneRuntime
             ISceneApi sceneApi,
             IWebRequestController webRequestController,
             IRestrictedActionsAPI restrictedActionsAPI,
-            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment dclEnvironment,
             IRuntime runtime,
             IEthereumApi ethereumApi,
             IWebSocketApi webSocketApi,
@@ -82,7 +82,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
             sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
-            sceneRuntime.RegisterSignedFetch(webRequestController, decentralandUrlsSource, sceneData, realmData, web3IdentityCache);
+            sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
             sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
@@ -107,7 +107,7 @@ namespace SceneRuntime
             IEthereumApi ethereumApi,
             IWebSocketApi webSocketApi,
             IWeb3IdentityCache web3IdentityCache,
-            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment dclEnvironment,
             ICommunicationsControllerAPI communicationsControllerAPI,
             IInstancePoolsProvider instancePoolsProvider,
             ISimpleFetchApi simpleFetchApi,
@@ -121,7 +121,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
             sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
-            sceneRuntime.RegisterSignedFetch(webRequestController, decentralandUrlsSource, sceneData, realmData, web3IdentityCache);
+            sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
             sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
@@ -165,13 +165,13 @@ namespace SceneRuntime
         private static void RegisterSignedFetch(
             this ISceneRuntime sceneRuntime,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment dclEnvironment,
             ISceneData sceneData,
             IRealmData realmData,
             IWeb3IdentityCache web3IdentityCache
         )
         {
-            sceneRuntime.Register("UnitySignedFetch", new SignedFetchWrap(webRequestController, decentralandUrlsSource.Environment, sceneData, realmData, web3IdentityCache, sceneRuntime.isDisposingTokenSource));
+            sceneRuntime.Register("UnitySignedFetch", new SignedFetchWrap(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache, sceneRuntime.isDisposingTokenSource));
         }
 
         private static void RegisterRestrictedActionsApi(this ISceneRuntime sceneRuntime, IRestrictedActionsAPI api)

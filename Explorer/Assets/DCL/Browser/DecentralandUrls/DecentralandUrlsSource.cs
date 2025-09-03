@@ -15,12 +15,10 @@ namespace DCL.Browser.DecentralandUrls
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly ILaunchMode launchMode;
         private readonly string DecentralandDomain;
-
-        public DecentralandEnvironment Environment { get; }
+        private bool requiresAboutOverride;
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
-            Environment = environment;
             DecentralandDomain = environment.ToString()!.ToLower();
             this.launchMode = launchMode;
 
@@ -35,6 +33,7 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.AssetBundlesCDN);
                 CONTENT_URL_OVERRIDE = "https://peer-testing.decentraland.org/content/";
                 LAMBDAS_URL_OVERRIDE = "https://peer-testing.decentraland.org/lambdas/";
+                requiresAboutOverride = true;
                 DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
             }
             else
@@ -65,7 +64,7 @@ namespace DCL.Browser.DecentralandUrls
             };
 
         public bool RequiresAboutOverride() =>
-            Environment == DecentralandEnvironment.Today;
+            requiresAboutOverride;
 
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
