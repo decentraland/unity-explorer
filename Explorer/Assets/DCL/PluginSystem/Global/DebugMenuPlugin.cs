@@ -7,6 +7,8 @@ using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.DebugMenu;
 using DCL.UI.DebugMenu.LogHistory;
 using DCL.UI.DebugMenu.MessageBus;
+using DCL.Utilities.Extensions;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.SceneLifeCycle.CurrentScene;
 using LiveKit.Proto;
 using System;
@@ -26,14 +28,24 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomsStatus roomsStatus;
         private DebugMenuController? debugMenuController;
         private readonly DebugUtilities.IDebugContainerBuilder debugContainerBuilder;
+        private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
-        public DebugMenuPlugin(DiagnosticsContainer diagnostics, IInputBlock inputBlock, IAssetsProvisioner assetsProvisioner, ICurrentSceneInfo currentSceneInfo, IRoomsStatus roomsStatus, DebugUtilities.IDebugContainerBuilder debugContainerBuilder)
+        public DebugMenuPlugin(
+            DiagnosticsContainer diagnostics,
+            IInputBlock inputBlock,
+            IAssetsProvisioner assetsProvisioner,
+            ICurrentSceneInfo currentSceneInfo,
+            IRoomsStatus roomsStatus,
+            DebugUtilities.IDebugContainerBuilder debugContainerBuilder,
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
+        )
         {
             this.inputBlock = inputBlock;
             this.assetsProvisioner = assetsProvisioner;
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
 
             logEntriesBus = new DebugMenuConsoleLogEntryBus();
             diagnostics.AddDebugConsoleHandler(logEntriesBus);
@@ -41,9 +53,11 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(DebugMenuSettings settings, CancellationToken ct)
         {
-            debugMenuController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<DebugMenuController>();
-            debugMenuController.SetInputBlock(inputBlock);
-            debugMenuController.SetDebugContainerBuilder(debugContainerBuilder);
+            debugMenuController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct))!
+                                        .GetComponent<DebugMenuController>()
+                                        .EnsureNotNull(nameof(debugMenuController));
+
+            debugMenuController.Initialize(inputBlock, debugContainerBuilder, chromeDevtoolProtocolClient);
 
             currentSceneInfo.SceneStatus.OnUpdate += OnSceneStatusUpdate;
             roomsStatus.ConnectionQualityScene.OnUpdate += OnSceneConnectionQualityUpdate;

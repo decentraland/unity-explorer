@@ -1062,7 +1062,9 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     currentSceneInfo,
                     roomsStatus,
-                    debugBuilder));
+                    debugBuilder,
+                    staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient
+                ));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,

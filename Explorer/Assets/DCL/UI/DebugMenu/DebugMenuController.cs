@@ -1,6 +1,8 @@
+using CDPBridges;
 using DCL.Input;
 using DCL.DebugUtilities;
 using DCL.UI.DebugMenu.LogHistory;
+using DCL.WebRequests.ChromeDevtool;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,10 +22,12 @@ namespace DCL.UI.DebugMenu
         private DebugPanelView visiblePanel;
 
         private IInputBlock inputBlock;
+        private ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
         private Button consoleButton;
         private Button debugPanelButton;
         private Button connectionButton;
+        private Button chromeDevtoolsProtocolButton;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -40,9 +44,11 @@ namespace DCL.UI.DebugMenu
             consoleButton = root.Q<Button>("ConsoleButton");
             connectionButton = root.Q<Button>("ConnectionButton");
             debugPanelButton = root.Q<Button>("DebugPanelButton");
+            chromeDevtoolsProtocolButton = root.Q<Button>("ChromeDevtoolsProtocolButton");
 
             consoleButton.clicked += OnConsoleButtonClicked;
             connectionButton.clicked += OnConnectionButtonClicked;
+            chromeDevtoolsProtocolButton.clicked += OnChromeDevtoolsProtocolButton;
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
@@ -67,7 +73,14 @@ namespace DCL.UI.DebugMenu
                 }
         }
 
-        public void SetDebugContainerBuilder(IDebugContainerBuilder builder)
+        public void Initialize(IInputBlock newInputBlock, IDebugContainerBuilder newBuilder, ChromeDevtoolProtocolClient newChromeDevtoolProtocolClient)
+        {
+            SetInputBlock(newInputBlock);
+            SetDebugContainerBuilder(newBuilder);
+            chromeDevtoolProtocolClient = newChromeDevtoolProtocolClient;
+        }
+
+        private void SetDebugContainerBuilder(IDebugContainerBuilder builder)
         {
             debugContainerBuilder = builder;
 
@@ -81,7 +94,7 @@ namespace DCL.UI.DebugMenu
             shouldHideDebugPanelOwnToggle = true;
         }
 
-        public void SetInputBlock(IInputBlock block)
+        private void SetInputBlock(IInputBlock block)
         {
             this.inputBlock = block;
             consolePanelView.SetInputBlock(block);
@@ -153,6 +166,12 @@ namespace DCL.UI.DebugMenu
 
         private void OnConnectionButtonClicked() =>
             TogglePanel(connectionPanelView);
+
+        private void OnChromeDevtoolsProtocolButton()
+        {
+            BridgeStartResult result = chromeDevtoolProtocolClient!.Start();
+            //TODO show toast if error
+        }
 
         private void TogglePanel(DebugPanelView panelView)
         {

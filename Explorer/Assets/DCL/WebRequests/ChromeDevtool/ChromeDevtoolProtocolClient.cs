@@ -30,24 +30,30 @@ namespace DCL.WebRequests.ChromeDevtool
 
         public static ChromeDevtoolProtocolClient New(bool startOnCreation)
         {
-            // TODO activation via debug panel, tracking status of activation
             Bridge bridge = new Bridge(
                 browser: new NativeBrowser(),
                 logger: new UnityLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL)
             );
 
+            ChromeDevtoolProtocolClient newInstance = new ChromeDevtoolProtocolClient(bridge);
+
             if (startOnCreation)
-            {
-                BridgeStartResult result = bridge.Start();
+                newInstance.Start();
 
-                if (result.IsBridgeStartError(out BridgeStartError? error))
-                    ReportHub.LogError(
-                        ReportCategory.CHROME_DEVTOOL_PROTOCOL,
-                        $"Cannot start bridge on creation: {error!.Value}"
-                    );
-            }
+            return newInstance;
+        }
 
-            return new ChromeDevtoolProtocolClient(bridge);
+        public BridgeStartResult Start()
+        {
+            BridgeStartResult result = bridge.Start();
+
+            if (result.IsBridgeStartError(out BridgeStartError? error))
+                ReportHub.LogError(
+                    ReportCategory.CHROME_DEVTOOL_PROTOCOL,
+                    $"Cannot start bridge on creation: {error!.Value}"
+                );
+
+            return result;
         }
 
         /// <summary>

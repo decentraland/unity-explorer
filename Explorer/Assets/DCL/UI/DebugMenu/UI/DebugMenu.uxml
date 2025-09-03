@@ -37,5 +37,6 @@
         <ui:Button name="ConsoleButton" class="sidebar__button sidebar__button--console dcl-clickable" />
         <ui:Button name="DebugPanelButton" class="sidebar__button sidebar__button--debug dcl-clickable" style="display: none;" />
         <ui:Button name="ConnectionButton" class="sidebar__button sidebar__button--connection dcl-clickable" />
+        <ui:Button name="ChromeDevtoolsProtocolButton" class="sidebar__button sidebar__button--connection dcl-clickable" />
     </ui:VisualElement>
 </ui:UXML>

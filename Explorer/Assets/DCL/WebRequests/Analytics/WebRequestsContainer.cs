@@ -20,13 +20,18 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
+        public ChromeDevtoolProtocolClient ChromeDevtoolProtocolClient { get; }
+
         private WebRequestsContainer(
             IWebRequestController webRequestController,
             IWebRequestController sceneWebRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer)
+            IWebRequestsAnalyticsContainer analyticsContainer,
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
+        )
         {
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
+            ChromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
             SceneWebRequestController = sceneWebRequestController;
         }
 
@@ -76,19 +81,19 @@ namespace DCL.WebRequests.Analytics
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer);
+            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer, chromeDevtoolProtocolClient);
 
             void CreateWebRequestsMetricsDebugUtility()
             {
                 debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS)
-                                     ?.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
-                                         DebugLongMarkerDef.Unit.NoFormat)
+                                    ?.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
+                                          DebugLongMarkerDef.Unit.NoFormat)
                                      .AddMarker("Requests complete", requestCompleteDebugMetric,
-                                         DebugLongMarkerDef.Unit.NoFormat)
+                                          DebugLongMarkerDef.Unit.NoFormat)
                                      .AddMarker("Core budget", coreAvailableBudget,
-                                         DebugLongMarkerDef.Unit.NoFormat)
+                                          DebugLongMarkerDef.Unit.NoFormat)
                                      .AddMarker("Scene budget", sceneAvailableBudget,
-                                         DebugLongMarkerDef.Unit.NoFormat);
+                                          DebugLongMarkerDef.Unit.NoFormat);
             }
 
             void CreateWebRequestDelayUtility()
@@ -114,7 +119,7 @@ namespace DCL.WebRequests.Analytics
                 var delayBetweenRequests = new ElementBinding<float>(0);
 
                 debugContainerBuilder.TryAddWidget("Web Requests Stress Test")
-                                     ?.AddControlWithLabel("Count:", new DebugIntFieldDef(count))
+                                    ?.AddControlWithLabel("Count:", new DebugIntFieldDef(count))
                                      .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
                                      .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))
                                      .AddControl(
