@@ -689,7 +689,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid CreateCommunityAsync(CancellationToken ct)
         {
-            var canCreate = false;
+            bool canCreate = false;
             var ownProfile = await selfProfile.ProfileAsync(ct);
 
             if (ownProfile != null)
