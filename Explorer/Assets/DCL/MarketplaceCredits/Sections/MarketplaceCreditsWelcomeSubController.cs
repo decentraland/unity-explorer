@@ -130,19 +130,33 @@ namespace DCL.MarketplaceCredits.Sections
 
         private async UniTaskVoid RegisterInTheProgramWithNewEmailAsync(string email, CancellationToken ct)
         {
+            const string ERROR_MESSAGE = "There was an error registering in the Credits Program. Please try again!";
+            
             try
             {
                 subView.SetAsLoading(true);
-                await marketplaceCreditsAPIClient.SubscribeEmailAsync(email, ct);
-                currentCreditsProgramProgress.user.email = email;
-                currentCreditsProgramProgress.user.isEmailConfirmed = false;
-                RedirectToSection(ignoreHasUserStartedProgramFlag: true);
-                marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
+                var result = await marketplaceCreditsAPIClient.SubscribeEmailAsync(email, ct);
+                if (result.Success)
+                {
+                    currentCreditsProgramProgress.user.email = email;
+                    currentCreditsProgramProgress.user.isEmailConfirmed = false;
+                    RedirectToSection(ignoreHasUserStartedProgramFlag: true);
+                    marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
+                }
+                else if (result.Error!.Value.State == EmailSubscriptionError.HandledError)
+                {
+                    marketplaceCreditsMenuController.ShowErrorNotification(result.Error!.Value.Message);
+                }
+                else
+                {
+                    marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
+                    ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {result.Error!.Value.Message}");
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error registering in the Credits Program. Please try again!";
+                //const string ERROR_MESSAGE = "There was an error registering in the Credits Program. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }

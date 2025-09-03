@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
+using Utility.Types;
 
 namespace DCL.MarketplaceCreditsAPIService
 {
@@ -112,7 +113,7 @@ namespace DCL.MarketplaceCreditsAPIService
             return claimCreditsResponseData;
         }
 
-        public async UniTask SubscribeEmailAsync(string email, CancellationToken ct)
+        public async UniTask<EnumResult<EmailSubscriptionError>> SubscribeEmailAsync(string email, CancellationToken ct)
         {
             var url = $"{emailSubscriptionsBaseUrl}/set-email";
             string jsonBody = JsonUtility.ToJson(new EmailSubscriptionBody
@@ -121,8 +122,46 @@ namespace DCL.MarketplaceCreditsAPIService
                 isCreditsWorkflow = true,
             });
 
-            await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
-                                      .WithNoOpAsync();
+            try
+            {
+                await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
+                    .WithNoOpAsync();
+
+                return EnumResult<EmailSubscriptionError>.SuccessResult();
+            }
+            catch (OperationCanceledException)
+            {
+                return EnumResult<EmailSubscriptionError>.ErrorResult(EmailSubscriptionError.Cancelled, "Operation was cancelled");
+            }
+            catch (UnityWebRequestException webRequestException)
+            {
+                // Only checking for the specific `email already registered` error
+                if (webRequestException.ResponseCode == 400)
+                {
+                    try
+                    {
+                        var errorResponse = JsonUtility.FromJson<EmailSubscriptionErrorResponse>(webRequestException.Text);
+
+                        if (!string.IsNullOrEmpty(errorResponse?.message))
+                        {
+                            return EnumResult<EmailSubscriptionError>.ErrorResult(
+                                EmailSubscriptionError.HandledError, 
+                                errorResponse.message);
+                        }
+                    }
+                    catch (ArgumentException)
+                    {
+                        // JSON parsing failed, fall through to generic error
+                    }
+                }
+        
+                // All other errors return generic error
+                return EnumResult<EmailSubscriptionError>.ErrorResult(EmailSubscriptionError.EmptyError);
+            }
+            catch (Exception)
+            {
+                return EnumResult<EmailSubscriptionError>.ErrorResult(EmailSubscriptionError.EmptyError);
+            }
         }
 
         private async UniTask<EmailSubscriptionResponse> GetEmailSubscriptionInfoAsync(CancellationToken ct)
