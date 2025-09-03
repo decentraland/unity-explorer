@@ -888,7 +888,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     profileRepositoryWrapper,
                     voiceChatCallStatusService,
-                    galleryEventBus
+                    galleryEventBus,
+                    clipboard
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
