@@ -26,6 +26,28 @@ namespace DCL.Communities
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
 
+            public CommunityData()
+            {
+            }
+            public CommunityData(string id,
+                CommunityThumbnails? thumbnails,
+                string name,
+                string description,
+                CommunityPrivacy privacy,
+                CommunityMemberRole role,
+                string ownerAddress,
+                int membersCount)
+            {
+                this.id = id;
+                this.thumbnails = thumbnails;
+                this.name = name;
+                this.description = description;
+                this.privacy = privacy;
+                this.role = role;
+                this.ownerAddress = ownerAddress;
+                this.membersCount = membersCount;
+            }
+            
             public void SetAsJoined(bool isJoined)
             {
                 // Change the role
