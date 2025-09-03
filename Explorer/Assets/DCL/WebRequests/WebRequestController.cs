@@ -73,7 +73,7 @@ namespace DCL.WebRequests
                         int statusCode = (int)request.UnityWebRequest.responseCode;
 
                         // TODO avoid allocation?
-                        Dictionary<string, string> responseHeaders = request.UnityWebRequest.GetResponseHeaders()!;
+                        Dictionary<string, string>? responseHeaders = request.UnityWebRequest.GetResponseHeaders();
 
                         string mimeType = request.UnityWebRequest.GetRequestHeader("Content-Type") ?? "application/octet-stream";
                         int encodedDataLength = (int)request.UnityWebRequest.downloadedBytes;

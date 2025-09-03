@@ -1,3 +1,16 @@
-﻿{
-  "name": "DCL.Native.Processes"
+{
+    "name": "DCL.Native.Processes",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1087662aaf1c5462baa91fb9484296fd"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

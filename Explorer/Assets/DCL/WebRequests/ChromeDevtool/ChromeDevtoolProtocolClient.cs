@@ -30,9 +30,9 @@ namespace DCL.WebRequests.ChromeDevtool
 
         public static ChromeDevtoolProtocolClient New(bool startOnCreation)
         {
-            // TODO il2cpp friendly process browser
+            // TODO activation via debug panel, tracking status of activation
             Bridge bridge = new Bridge(
-                browser: new ProcessBrowser(),
+                browser: new NativeBrowser(),
                 logger: new UnityLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL)
             );
 
@@ -114,11 +114,14 @@ namespace DCL.WebRequests.ChromeDevtool
             this.token = token;
         }
 
-        public async UniTaskVoid NotifyFinishAsync(int status, Dictionary<string, string> headers, string mimeType, int encodedDataLength)
+        public async UniTaskVoid NotifyFinishAsync(int status, Dictionary<string, string>? headers, string mimeType, int encodedDataLength)
         {
             // create a copy to don't mess up lifetimes and pooling
             using var _ = ThreadSafeDictionaryPool<string, string>.SHARED.Get(out Dictionary<string, string> headersCopy);
-            foreach ((string key, string value) in headers) headersCopy.Add(key, value);
+
+            if (headers != null)
+                foreach ((string key, string value) in headers)
+                    headersCopy.Add(key, value);
 
             TimeSinceEpoch epochTimestamp = TimeSinceEpoch.Now;
 
