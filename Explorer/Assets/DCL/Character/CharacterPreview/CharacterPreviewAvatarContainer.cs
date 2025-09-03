@@ -15,12 +15,12 @@ namespace DCL.CharacterPreview
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
         private Tween? fovTween;
-        
+
         // Rotation system variables - minimized for efficiency
         private float angularVelocity; // degrees per second
         private float rotationModifier;
         private float rotationInertia;
-        private AnimationCurve inertiaCurve;
+        private AnimationCurve decelerationCurve;
         private bool isDragging = false;
         private float lastDragTime = 0f;
         private const float DRAG_TIMEOUT = 0.1f; // seconds
@@ -46,7 +46,7 @@ namespace DCL.CharacterPreview
             transform.position = position;
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
-            
+
             // Initialize rotation system
             angularVelocity = 0f;
             isDragging = false;
@@ -85,23 +85,24 @@ namespace DCL.CharacterPreview
             float inputDeltaX,
             float rotationModifier,
             float rotationInertia,
-            AnimationCurve inertiaCurve
+            AnimationCurve accelerationCurve,
+            AnimationCurve decelerationCurve
         )
         {
             // Store current settings
             this.rotationModifier = rotationModifier;
             this.rotationInertia = rotationInertia;
-            this.inertiaCurve = inertiaCurve;
-            
+            this.decelerationCurve = decelerationCurve;
+
             // Set dragging state and update last drag time
             isDragging = true;
             lastDragTime = Time.time;
-            
+
             // Convert input delta (pixels per frame) to angular velocity (degrees per second)
             // This is framerate-independent: inputDeltaX is pixels moved this frame
             // We want degrees per second, so we divide by deltaTime to get the rate
             float targetVelocity = -inputDeltaX / Time.deltaTime;
-            
+
             // Apply inertia when accelerating/decelerating
             if (rotationInertia <= 0f)
             {
@@ -114,10 +115,10 @@ namespace DCL.CharacterPreview
                 float velocityDifference = targetVelocity - angularVelocity;
                 float maxVelocity = Mathf.Max(Mathf.Abs(targetVelocity), Mathf.Abs(angularVelocity));
                 float curveInput = maxVelocity > 0f ? Mathf.Abs(velocityDifference) / maxVelocity : 0f;
-                
-                float accelerationFactor = inertiaCurve.Evaluate(curveInput);
+
+                float accelerationFactor = accelerationCurve.Evaluate(curveInput);
                 float lerpSpeed = accelerationFactor * rotationInertia * Time.deltaTime;
-                
+
                 angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, lerpSpeed);
             }
         }
@@ -150,12 +151,12 @@ namespace DCL.CharacterPreview
                     float velocityMagnitude = Mathf.Abs(angularVelocity);
                     float maxVelocity = 100f; // Reasonable maximum for curve evaluation
                     float curveInput = Mathf.Clamp01(velocityMagnitude / maxVelocity);
-                    
-                    float decelerationFactor = inertiaCurve.Evaluate(curveInput);
+
+                    float decelerationFactor = decelerationCurve.Evaluate(curveInput);
                     float lerpSpeed = decelerationFactor * rotationInertia * Time.deltaTime;
-                    
+
                     angularVelocity = Mathf.Lerp(angularVelocity, 0f, lerpSpeed);
-                    
+
                     // Force stop when velocity is very small to avoid floating point precision issues
                     if (Mathf.Abs(angularVelocity) < 0.01f)
                         angularVelocity = 0f;
@@ -163,14 +164,14 @@ namespace DCL.CharacterPreview
             }
 
             // Apply rotation if there's any angular velocity
-            if (Mathf.Abs(angularVelocity) > 0.001f)
+            if (Mathf.Abs(angularVelocity) > 0.01f)
             {
                 Vector3 rotation = rotationTarget.rotation.eulerAngles;
-                
+
                 // Apply rotation: degrees per second * deltaTime * modifier
                 // This is framerate-independent because we're using degrees per second
                 float rotationAmount = angularVelocity * rotationModifier * Time.deltaTime;
-                
+
                 rotation.y += rotationAmount;
                 rotationTarget.rotation = Quaternion.Euler(rotation);
             }

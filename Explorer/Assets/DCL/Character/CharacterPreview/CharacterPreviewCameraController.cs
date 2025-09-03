@@ -119,7 +119,8 @@ namespace DCL.CharacterPreview
                         pointerEventData.delta.x,
                         cameraSettings.rotationModifier,
                         cameraSettings.rotationInertia,
-                        cameraSettings.inertiaCurve
+                        cameraSettings.accelerationCurve,
+                        cameraSettings.decelerationCurve
                     );
 
                     break;
