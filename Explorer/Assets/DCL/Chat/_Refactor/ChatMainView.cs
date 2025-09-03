@@ -40,8 +40,6 @@ namespace DCL.Chat
         [field: Header("Voice Chat")]
         [field: SerializeField] public CommunityStreamSubTitleButtonView CommunityStreamSubTitleButton { get; private set; }
 
-        [field: SerializeField] public CanvasGroup CommunitySubTitleBarCanvasGroup { get; private set; }
-
         public void Dispose()
         {
         }
