@@ -140,6 +140,8 @@ namespace DCL.Communities.CommunitiesCard
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.OWNER_COMMUNITY_DELETED, OnCommunityDeleted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
         }
 
         public override void Dispose()
@@ -200,6 +202,35 @@ namespace DCL.Communities.CommunitiesCard
                 ResetSubControllers();
                 SetDefaultsAndLoadData(communityId);
             }
+        }
+
+        private void OnJoinRequestAccepted(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden || notification is not CommunityUserRequestToJoinAcceptedNotification acceptedNotification)
+                return;
+
+            if (communityData.id != acceptedNotification.Metadata.CommunityId)
+                return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData(acceptedNotification.Metadata.CommunityId);
+        }
+
+        private void OnCommunityDeleted(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden)
+                return;
+
+            string communityId = notification switch
+                                 {
+                                     CommunityDeletedNotification communityDeletedNotification => communityDeletedNotification.Metadata.CommunityId,
+                                     OwnerCommunityDeletedNotification ownerCommunityDeletedNotification => ownerCommunityDeletedNotification.Metadata.CommunityId,
+                                     _ => string.Empty
+                                 };
+
+            if (communityId == string.Empty || communityId != communityData.id) return;
+
+            CloseController();
         }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
@@ -631,15 +662,6 @@ namespace DCL.Communities.CommunitiesCard
 
                 CloseController();
             }
-        }
-
-        private void OnJoinRequestAccepted(INotification notification)
-        {
-            if (!viewInstance!.isActiveAndEnabled)
-                return;
-
-            ResetSubControllers();
-            SetDefaultsAndLoadData(inputData.CommunityId);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
