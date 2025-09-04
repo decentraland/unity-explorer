@@ -352,6 +352,8 @@ namespace Decentraland.Terrain
             var GroundDetailTextureSize = new int2(2048, 2048);
             var SandDetailTextureSize = new int2(1024, 1024);
 
+            ScatterFlowersShader.EnableKeyword("THREADS_16");
+            ScatterFlowersShader.SetInt("nThreads", 16);
             ScatterFlowersShader.SetVector("TerrainBounds", terrainBounds);
             ScatterFlowersShader.SetFloat("TerrainHeight", 4.0f);
             ScatterFlowersShader.SetInts("HeightTextureSize", HeightTextureSize[0]);
@@ -360,6 +362,9 @@ namespace Decentraland.Terrain
             ScatterFlowersShader.SetInts("GroundDetailTextureSize", GroundDetailTextureSize[0]);
             ScatterFlowersShader.SetInts("SandDetailTextureSize", SandDetailTextureSize[0]);
             ScatterFlowersShader.SetInt("parcelSize", 16);
+            ScatterFlowersShader.SetFloat("fDistanceFieldScale", 16.0f);
+            ScatterFlowersShader.SetFloat("nHeightMapSize", 8192.0f);
+            ScatterFlowersShader.SetFloat("fSplatMapTiling", 8.0f);
             ScatterFlowersShader.SetTexture(kernelIndex, "HeightMapTexture", HeightMapTexture);
             ScatterFlowersShader.SetTexture(kernelIndex, "TerrainBlendTexture", TerrainBlendTexture);
             ScatterFlowersShader.SetTexture(kernelIndex, "GroundDetailTexture", GroundDetailTexture);
@@ -508,10 +513,12 @@ namespace Decentraland.Terrain
 
             renderParams.material = flower0Material;
             renderParams.matProps.SetBuffer("_PerInstanceBuffer", flower0InstancesComputeBuffer);
+            renderParams.matProps.SetFloat("_batchingBlockSize", 16.0f);
             Graphics.RenderMeshIndirect(renderParams, flower0Mesh, flower0DrawArgs);
 
             renderParams.material = flower1Material;
             renderParams.matProps.SetBuffer("_PerInstanceBuffer", flower1InstancesComputeBuffer);
+            renderParams.matProps.SetFloat("_batchingBlockSize", 16.0f);
             Graphics.RenderMeshIndirect(renderParams, flower1Mesh, flower1DrawArgs);
 
             renderParams.material = flower2Material;

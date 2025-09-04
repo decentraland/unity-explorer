@@ -21,6 +21,10 @@ cbuffer ConstBuffer : register(b0)
     int2 SandDetailTextureSize;
     float TerrainHeight;
     int parcelSize;
+    int nThreads;
+    float fDistanceFieldScale;
+    float nHeightMapSize;
+    float fSplatMapTiling;
 }
 
 Texture2D<float4> HeightMapTexture : register(t0);
@@ -36,48 +40,54 @@ RWStructuredBuffer<PerInst> flower1Instances : register(u1);
 shared RWStructuredBuffer<uint> drawArgs0 : register(u2);
 shared RWStructuredBuffer<uint> drawArgs1 : register(u3);
 
+#pragma multi_compile THREADS_64 THREADS_16
+
+#if THREADS_64
 [numthreads(64, 1, 1)]
+#elif THREADS_16
+[numthreads(16, 1, 1)]
+#endif
 void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint3 localId : SV_GroupThreadID)
 {
     if (groupId.x >= visibleParcelCount[0])
         return;
 
-    int2 corner0 = (int2)(visibleParcels[groupId.x] * 16.0f);
+    const int nAxisLength = sqrt(nThreads);
+    const int nMetrePerGrid = (float)parcelSize / nAxisLength;
+
+    int2 corner0 = (int2)(visibleParcels[groupId.x] * parcelSize);
     half2 parcelGroupingArea = half2(hash_int_to_float(corner0), hash_int_to_float(-corner0));
-    int2 gridPosition = int2((int)(localId.x % 8), (int)(localId.x / 8)) * 2.0f;
+    int2 gridPosition = int2((int)(localId.x % nAxisLength), (int)(localId.x / nAxisLength)) * nMetrePerGrid;
 
     float2 worldSpaceCoord_ParcelBlock = corner0 + gridPosition;
-    float2 UV_coords_ParcelBlock = (worldSpaceCoord_ParcelBlock + 4096.0f) / 8192.0f;
+    float2 UV_coords_ParcelBlock = (worldSpaceCoord_ParcelBlock + (nHeightMapSize/2.0f)) / nHeightMapSize;
 
     // Check the texture
-    half4 terrainColour = SplatmapMix(UV_coords_ParcelBlock * 8.0f, TerrainBlendTexture, GroundDetailTexture, SandDetailTexture, 1);
+    half4 terrainColour = SplatmapMix(UV_coords_ParcelBlock * fSplatMapTiling, TerrainBlendTexture, GroundDetailTexture, SandDetailTexture, nMetrePerGrid>>1);
 
-    // Check occupancy
-    float fDistanceFieldScale = 16;
-    
     PerInst perInst;
     
     if (terrainColour.g < 0.08f)
     {
-        half random_X_flower0 = (hash_int_to_float(corner0 + gridPosition) * 2.0f);
-        half random_Z_flower0 = (hash_int_to_float(-corner0 + gridPosition) * 2.0f);
+        half random_X_flower0 = (hash_int_to_float(corner0 + gridPosition) * nMetrePerGrid);
+        half random_Z_flower0 = (hash_int_to_float(-corner0 + gridPosition) * nMetrePerGrid);
 
         half random_X_flower1 = random_Z_flower0;
         half random_Z_flower1 = random_X_flower0;
 
-        random_X_flower0 *= 8.0f;
-        random_Z_flower0 *= 8.0f;
-        random_X_flower1 *= 8.0f; 
-        random_Z_flower1 *= 8.0f; 
+        random_X_flower0 *= nAxisLength;
+        random_Z_flower0 *= nAxisLength;
+        random_X_flower1 *= nAxisLength; 
+        random_Z_flower1 *= nAxisLength; 
         
         // Get Height
-        float2 UV_coords_0 = (corner0 + float2(random_X_flower0, random_Z_flower0) + 4096.0f) / 8192.0f;
+        float2 UV_coords_0 = (corner0 + float2(random_X_flower0, random_Z_flower0) + (nHeightMapSize/2.0f)) / nHeightMapSize;
         float height_flower0 = CalculateHeightFromHeightmap(UV_coords_0, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
-        float2 UV_coords_1 = (corner0 + float2(random_X_flower1, random_Z_flower1) + 4096.0f) / 8192.0f;
+        float2 UV_coords_1 = (corner0 + float2(random_X_flower1, random_Z_flower1) + (nHeightMapSize/2.0f)) / nHeightMapSize;
         float height_flower1 = CalculateHeightFromHeightmap(UV_coords_1, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
     
-        float fScale0 = 1.0f + (1.0f * hash_int_to_float(corner0 + float2(random_X_flower0, random_Z_flower0) + localId.x));
-        float fScale1 = 1.0f + (1.0f * hash_int_to_float(corner0 + float2(random_X_flower1, random_Z_flower1) + localId.x));
+        float fScale0 = 1.0f + (2.0f * hash_int_to_float(corner0 + float2(random_X_flower0, random_Z_flower0) + localId.x));
+        float fScale1 = 1.0f + (2.0f * hash_int_to_float(corner0 + float2(random_X_flower1, random_Z_flower1) + localId.x));
         
         float3 normalWS_0 = CalculateNormalFromHeightmap(UV_coords_0, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
         float3 normalWS_1 = CalculateNormalFromHeightmap(UV_coords_1, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
