@@ -118,12 +118,10 @@ namespace DCL.CharacterPreview
             if (isDragging && Time.time - lastDragTime > DRAG_TIMEOUT)
                 isDragging = false;
 
-            // When not dragging, decelerate towards zero
             if (!isDragging)
             {
                 if (rotationInertia <= 0f)
                 {
-                    // No inertia - instant stop
                     angularVelocity = 0f;
                 }
                 else
@@ -133,16 +131,12 @@ namespace DCL.CharacterPreview
                     float velocitySign = Mathf.Sign(angularVelocity);
                     float velocityMagnitude = Mathf.Abs(angularVelocity);
 
-                    // Reduce velocity by deceleration rate
                     velocityMagnitude -= decelerationRate;
 
-                    // If we've reached zero or gone past it, stop completely
-                    if (velocityMagnitude <= 0f) { angularVelocity = 0f; }
+                    if (velocityMagnitude <= 0f)
+                        angularVelocity = 0f;
                     else
-                    {
-                        // Maintain direction but with reduced magnitude
                         angularVelocity = velocitySign * velocityMagnitude;
-                    }
                 }
             }
 

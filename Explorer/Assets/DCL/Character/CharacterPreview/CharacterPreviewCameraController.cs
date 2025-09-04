@@ -114,7 +114,6 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    // Simply pass raw input data to SetRotationTween for processing
                     characterPreviewAvatarContainer.SetRotationTween(
                         pointerEventData.delta.x,
                         cameraSettings.rotationModifier,
