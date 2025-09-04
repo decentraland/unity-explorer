@@ -68,8 +68,6 @@ namespace DCL.CharacterPreview
             {
                 case PointerEventData.InputButton.Right:
                 {
-                    characterPreviewAvatarContainer.StopFOVTween();
-
                     if (!cameraSettings.dragEnabled) return;
 
                     if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
@@ -100,14 +98,18 @@ namespace DCL.CharacterPreview
 
         private void CalculateFOV(PointerEventData pointerEventData)
         {
-            float newFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
-            float originalFieldOfView = newFieldOfView;
+            float currentFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
+            float originalFieldOfView = currentFieldOfView;
 
-            newFieldOfView -= pointerEventData.scrollDelta.y * cameraSettings.scrollModifier;
+            // Framerate-independent scroll calculation using Time.deltaTime
+            float scrollDelta = pointerEventData.scrollDelta.y * cameraSettings.scrollModifier * Time.deltaTime;
+            float newFieldOfView = currentFieldOfView - scrollDelta;
 
+            // Clamp to limits
             if (newFieldOfView < cameraSettings.fieldOfViewLimits.y) newFieldOfView = cameraSettings.fieldOfViewLimits.y;
             else if (newFieldOfView > cameraSettings.fieldOfViewLimits.x) newFieldOfView = cameraSettings.fieldOfViewLimits.x;
 
+            // Handle camera position adjustment for recentering
             if (newFieldOfView > originalFieldOfView && newFieldOfView > cameraSettings.fieldOfViewThresholdForReCentering)
             {
                 Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
@@ -124,6 +126,7 @@ namespace DCL.CharacterPreview
                 characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
 
+            // Set target FOV for framerate-independent interpolation
             characterPreviewAvatarContainer.TargetFOV = newFieldOfView;
         }
 

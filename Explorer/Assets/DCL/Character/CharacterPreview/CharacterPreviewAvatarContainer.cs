@@ -1,6 +1,5 @@
 using Cinemachine;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -16,8 +15,7 @@ namespace DCL.CharacterPreview
     {
         private const float DRAG_TIMEOUT = 0.1f;
         private const float ANGULAR_VELOCITY_DECELERATION_COEFF = 900f;
-
-        private Tween? fovTween;
+        private const float FOV_SPEED_COEFF = 300f;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -37,7 +35,6 @@ namespace DCL.CharacterPreview
 
         public void Dispose()
         {
-            StopFOVTween();
         }
 
         public void Initialize(RenderTexture targetTexture, Vector3 position)
@@ -48,6 +45,7 @@ namespace DCL.CharacterPreview
             AngularVelocity = 0f;
             IsDragging = false;
             LastDragTime = 0f;
+            TargetFOV = freeLookCamera.m_Lens.FieldOfView; // Initialize target FOV to current FOV
 
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
 
@@ -65,15 +63,9 @@ namespace DCL.CharacterPreview
             if (cameraTarget != null)
                 cameraTarget.localPosition = preset.verticalPosition;
 
-            StopFOVTween();
-
-            fovTween = DOTween.To(() => freeLookCamera.m_Lens.FieldOfView, x => freeLookCamera.m_Lens.FieldOfView = x, preset.cameraFieldOfView, 1)
-                              .SetEase(Ease.OutQuad)
-                              .OnComplete(() => fovTween = null);
+            // Use framerate-independent interpolation instead of tween
+            TargetFOV = preset.cameraFieldOfView;
         }
-
-        public void StopFOVTween() =>
-            fovTween?.Kill();
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
@@ -126,30 +118,24 @@ namespace DCL.CharacterPreview
 
         private void UpdateFOV()
         {
-            // TODO convert from tween
-        }
+            float currentFOV = freeLookCamera.m_Lens.FieldOfView;
 
-        public void SetFOVTween(float targetFOV, float duration, Ease curve)
-        {
-            StopFOVTween();
+            // Early return if already at target
+            if (Mathf.Abs(currentFOV - TargetFOV) <= 0.01f)
+                return;
 
-            fovTween = DOTween.To(
-                                   () => freeLookCamera.m_Lens.FieldOfView,
-                                   x => freeLookCamera.m_Lens.FieldOfView = x,
-                                   targetFOV,
-                                   duration
-                               )
-                              .SetEase(curve)
-                              .OnComplete(() => { fovTween?.Kill(); });
+            // Framerate-independent interpolation using MoveTowards
+            float newFOV = Mathf.MoveTowards(currentFOV, TargetFOV, FOV_SPEED_COEFF * Time.deltaTime);
+            freeLookCamera.m_Lens.FieldOfView = newFOV;
         }
 
         public void ResetAvatarMovement()
         {
-            StopFOVTween();
             rotationTarget.rotation = Quaternion.identity;
             AngularVelocity = 0f;
             IsDragging = false;
             LastDragTime = 0f;
+            TargetFOV = freeLookCamera.m_Lens.FieldOfView; // Reset target FOV to current FOV
         }
     }
 
