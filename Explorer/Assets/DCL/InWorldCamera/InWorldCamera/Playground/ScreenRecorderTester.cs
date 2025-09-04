@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if UNITY_INCLUDE_TESTS
+
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
@@ -53,7 +55,6 @@ namespace DCL.InWorldCamera.Playground
             hud.Screenshot = Texture;
         }
 
-
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
         {
@@ -104,3 +105,5 @@ namespace DCL.InWorldCamera.Playground
         }
     }
 }
+
+#endif
