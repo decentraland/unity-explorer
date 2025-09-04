@@ -76,52 +76,63 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         )
                     );
 
-                // Run fallback checks in parallel for better performance. This should go away when we get an endpoint in the registry that returns the AssetBundleManifest verison  in the response
-                //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
-                //Could be removed when the asset bundle manifest registry is battle tested
-                var tasks = new UniTask[lambdaResponse.Page.Count];
-                for (int i = 0; i < lambdaResponse.Page.Count; i++)
-                    tasks[i] = AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, lambdaResponse.Page[i].Entity, partition, ct);
-                await UniTask.WhenAll(tasks);
-
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
-                    Load(ref intention, lambdaResponse);
+                {
+                    //TODO (JUANI): This complexity can go away once the fallback helper is no longer needed; returning to the LOAD method that was here before
+                    intention.SetTotal(lambdaResponse.TotalAmount);
+
+                    // Process elements in parallel for better performance
+                    var pageElements = lambdaResponse.Page;
+                    var elementTasks = new UniTask<TAvatarElement>[pageElements.Count];
+
+                    for (int i = 0; i < pageElements.Count; i++)
+                    {
+                        var element = pageElements[i];
+                        elementTasks[i] = ProcessElementAsync(element, partition, ct);
+                    }
+
+                    // Wait for all elements to be processed and add results to intention
+                    var processedWearables = await UniTask.WhenAll(elementTasks);
+                    for (int i = 0; i < processedWearables.Length; i++)
+                    {
+                        intention.AppendToResult(processedWearables[i]);
+                    }
+                }
             }
+
 
             return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
         }
 
-        private void Load<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
+        private async UniTask<TAvatarElement> ProcessElementAsync(ILambdaResponseElement<TAvatarElementDTO> element, IPartitionComponent partition, CancellationToken ct)
         {
-            intention.SetTotal(lambdaResponse.TotalAmount);
+            var elementDTO = element.Entity;
+            var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
 
-            foreach (var element in lambdaResponse.Page)
+            // Run the asset bundle fallback check in parallel
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, wearable.DTO, partition, ct);
+
+            // Process individual data (this part needs to remain sequential per element for thread safety)
+            foreach (var individualData in element.IndividualData)
             {
-                var elementDTO = element.Entity;
+                // Probably a base wearable, wrongly return individual data. Skip it
+                if (elementDTO.Metadata.id == individualData.id) continue;
 
-                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
+                long.TryParse(individualData.transferredAt, out long transferredAt);
+                decimal.TryParse(individualData.price, out decimal price);
 
-                foreach (var individualData in element.IndividualData)
-                {
-                    // Probably a base wearable, wrongly return individual data. Skip it
-                    if (elementDTO.Metadata.id == individualData.id) continue;
-
-                    long.TryParse(individualData.transferredAt, out long transferredAt);
-                    decimal.TryParse(individualData.price, out decimal price);
-
-                    avatarElementStorage.SetOwnedNft(
-                        elementDTO.Metadata.id,
-                        new NftBlockchainOperationEntry(
-                            individualData.id,
-                            individualData.tokenId,
-                            DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
-                            price
-                        )
-                    );
-                }
-
-                intention.AppendToResult(wearable);
+                avatarElementStorage.SetOwnedNft(
+                    elementDTO.Metadata.id,
+                    new NftBlockchainOperationEntry(
+                        individualData.id,
+                        individualData.tokenId,
+                        DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
+                        price
+                    )
+                );
             }
+
+            return wearable;
         }
 
         private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>> lambdaResponse)
