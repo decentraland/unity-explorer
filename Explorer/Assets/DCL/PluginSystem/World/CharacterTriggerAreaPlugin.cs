@@ -14,6 +14,7 @@ using DCL.ResourcesUnloading;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
 using DCL.SDKComponents.CameraModeArea.Systems;
+using DCL.SDKComponents.TriggerArea.Systems;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.LifeCycle;
@@ -82,6 +83,7 @@ namespace DCL.PluginSystem.World
 
             finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
             finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
+            finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(ref builder, globalWorld));
             finalizeWorldSystems.Add(CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!));
         }
 

@@ -272,6 +272,7 @@ namespace Global
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, hasDebugFlag),
                 new PrimaryPointerInfoPlugin(globalWorld),
+                // new TriggerAreaPlugin(),
                 promisesAnalyticsPlugin,
                 new SkyboxTimePlugin(),
 #if UNITY_EDITOR

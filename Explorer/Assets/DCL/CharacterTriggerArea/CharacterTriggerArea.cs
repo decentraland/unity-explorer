@@ -8,7 +8,7 @@ namespace DCL.CharacterTriggerArea
     {
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
 
-        private readonly HashSet<Transform> currentAvatarsInside = new ();
+        internal readonly HashSet<Transform> currentAvatarsInside = new ();
         internal readonly HashSet<Transform> enteredAvatarsToBeProcessed = new ();
         internal readonly HashSet<Transform> exitedAvatarsToBeProcessed = new ();
         [NonSerialized] public Transform TargetTransform;
