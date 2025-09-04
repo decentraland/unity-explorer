@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using DCL.Platforms;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -57,9 +58,25 @@ namespace ECS.StreamableLoading.AssetBundles
             SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), RetryPolicy.WithRetries(1)), ct, reportCategory)
                                                               .CreateFromJson<SceneAbDto>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchBackToMainThread);
 
-            AssetValidation.ValidateSceneAbDto(sceneAbDto.Version, hash);
+            CheckSceneAbDTO(sceneAbDto.Version, hash);
 
             return new SceneAssetBundleManifest(sceneAbDto.Version, sceneAbDto.Date);
+        }
+
+
+        private const int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
+        private const int AB_MIN_SUPPORTED_VERSION_MAC = 16;
+
+        private void CheckSceneAbDTO(string version, string hash)
+        {
+            if (string.IsNullOrEmpty(version))
+                ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version missing for {hash}");
+
+            var intVersion = int.Parse(version.AsSpan().Slice(1));
+            int supportedVersion  = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? AB_MIN_SUPPORTED_VERSION_WINDOWS : AB_MIN_SUPPORTED_VERSION_MAC;
+
+            if (intVersion < supportedVersion)
+                ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version {intVersion} is not supported. Minimum supported version is {supportedVersion}, Asset bundle {hash} requires rebuild");
         }
     }
 }
