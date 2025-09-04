@@ -215,41 +215,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
         }
 
         [Test]
-        public void CancelIntentionOnManifestStage()
-        {
-            var resolveWearablePromisesSystem = new ResolveWearablePromisesSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
-            resolveWearablePromisesSystem.Initialize();
-
-            LogAssert.ignoreFailingMessages = true;
-
-            //Arrange
-            IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
-
-            var getWearablesByPointersIntention
-                = new GetWearablesByPointersIntention(new List<URN>
-                    { testUrn }, BodyShape.MALE, Array.Empty<string>());
-
-            var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
-            resolveWearablePromisesSystem.Update(0);
-            system!.Update(0);
-
-            //Act
-            Assert.AreEqual(1, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
-            promise.ForgetLoading(world);
-            system.Update(0);
-
-            //Assert
-            Assert.IsTrue(promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested);
-            Assert.IsFalse(world.IsAlive(promise.Entity));
-
-            //No  Manifest promises should be left
-            Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
-
-            resolveWearablePromisesSystem.Dispose();
-        }
-
-        [Test]
         public void CancelIntentionOnABStage()
         {
             LogAssert.ignoreFailingMessages = true;

@@ -94,7 +94,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             {
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
                 //Could be removed when the asset bundle manifest registry is battle tested
-                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, entityDefinitionBase, partitionComponent, ct);
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, entityDefinitionBase, partitionComponent, ct);
             }
 
             lock (results) { results.AddRange(dtoPooledList.Value); }

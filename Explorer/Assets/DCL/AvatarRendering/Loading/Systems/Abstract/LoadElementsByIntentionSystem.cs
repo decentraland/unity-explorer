@@ -110,7 +110,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
 
             // Run the asset bundle fallback check in parallel
-            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallback(World, wearable.DTO, partition, ct);
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.DTO, partition, ct);
 
             // Process individual data (this part needs to remain sequential per element for thread safety)
             foreach (var individualData in element.IndividualData)
