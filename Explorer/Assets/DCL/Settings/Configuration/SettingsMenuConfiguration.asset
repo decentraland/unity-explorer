@@ -66,6 +66,7 @@ MonoBehaviour:
       - rid: 4494877371389181952
       - rid: 1708279571579404288
       - rid: 1708279571579404289
+      - rid: 2659808844961546333
   references:
     version: 2
     RefIds:
@@ -108,6 +109,26 @@ MonoBehaviour:
           - All Chats
           defaultOptionIndex: 2
         <Feature>k__BackingField: 10
+    - rid: 2659808844961546333
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Preffered Translation Language
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Don't Translate
+          - ES
+          - DE
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 12
     - rid: 3126482891795070976
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

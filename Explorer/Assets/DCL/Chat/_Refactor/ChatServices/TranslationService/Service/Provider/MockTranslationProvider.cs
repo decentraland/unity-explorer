@@ -12,7 +12,7 @@ namespace DCL.Translation.Service.Provider
 
         public UniTask<LanguageCode> DetectLanguageAsync(string text, CancellationToken ct)
         {
-            return UniTask.FromResult(LanguageCode.En);
+            return UniTask.FromResult(LanguageCode.EN);
         }
 
         public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode source, LanguageCode target, CancellationToken ct)
@@ -29,7 +29,7 @@ namespace DCL.Translation.Service.Provider
 
             // NOTE: Create a fake "translation"
             string translatedText = $"[{target.ToString().ToLower()}] {text}";
-            var detectedSource = source == LanguageCode.AutoDetect ? LanguageCode.En : source;
+            var detectedSource = source == LanguageCode.AutoDetect ? LanguageCode.EN : source;
 
             return new TranslationResult(translatedText, detectedSource, false);
         }

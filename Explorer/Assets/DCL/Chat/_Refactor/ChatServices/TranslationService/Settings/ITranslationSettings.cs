@@ -10,7 +10,7 @@ namespace DCL.Translation.Settings
     public interface ITranslationSettings
     {
         bool IsGloballyEnabled { get; }
-        LanguageCode PreferredLanguage { get; set; }
+        LanguageCode PreferredLanguage { get; }
         float TranslationTimeoutSeconds { get; }
         int MaxRetries { get; }
         bool GetAutoTranslateForConversation(string conversationId);

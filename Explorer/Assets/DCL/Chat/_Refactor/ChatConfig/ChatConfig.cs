@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.Translation.Models;
 using DCL.UI.Communities;
 using DG.Tweening;
 using UnityEngine;
@@ -82,7 +83,12 @@ namespace DCL.Chat.ChatConfig
 
         [Tooltip("Profile fetch error message.")]
         public string ProfileFetchErrorMessage = "Couldn't fetch user profile. Please try again later.";
-        
+
+        [field: Header("Translations")]
+        [field: SerializeField] public bool ForceEnableTranslations = true;
+        [field: SerializeField] public LanguageCode DefaultLanguage = LanguageCode.ES;
+        [field: SerializeField] public int TranslationMaxRetries { get; set; } = 1;
+        [field: SerializeField] public float TranslationTimeoutSeconds { get; set; } = 3.0f;
         
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }

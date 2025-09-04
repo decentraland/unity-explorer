@@ -11,6 +11,8 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
+using DCL.Translation.Service;
+using DCL.Translation.Settings;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -38,6 +40,7 @@ namespace DCL.Chat.ChatCommands
         public ResetChatCommand ResetChat { get; }
         public RestartChatServicesCommand RestartChatServices { get; }
         public ResolveInputStateCommand ResolveInputStateCommand { get; }
+        public ToggleAutoTranslateCommand ToggleAutoTranslateCommand { get; }
 
         public CommandRegistry(
             ChatConfig.ChatConfig chatConfig,
@@ -59,7 +62,8 @@ namespace DCL.Chat.ChatCommands
             ISpriteCache spriteCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             AudioClipConfig sendMessageSound,
-            GetParticipantProfilesCommand getParticipantProfilesCommand)
+            GetParticipantProfilesCommand getParticipantProfilesCommand,
+            ITranslationSettings translationSettings)
         {
             RestartChatServices = new RestartChatServicesCommand(
                 privateConversationUserStateService,
@@ -144,7 +148,11 @@ namespace DCL.Chat.ChatCommands
                 GetUserChatStatusCommand,
                 GetCommunityThumbnail);
 
-            ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand, currentChannelService);
+            ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand,
+                currentChannelService);
+
+            ToggleAutoTranslateCommand = new ToggleAutoTranslateCommand(translationSettings,
+                eventBus);
         }
 
         public void Dispose()

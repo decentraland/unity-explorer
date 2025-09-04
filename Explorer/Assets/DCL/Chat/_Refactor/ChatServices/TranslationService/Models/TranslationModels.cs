@@ -2,14 +2,14 @@
 {
     public enum LanguageCode
     {
-        En,
-        Es,
-        Pt,
-        Zh,
-        Ja,
-        Ko,
-        Fr,
-        De,
+        EN,
+        ES,
+        PT,
+        ZH,
+        JA,
+        KO,
+        FR,
+        DE,
         AutoDetect,
         DontTranslate
     }

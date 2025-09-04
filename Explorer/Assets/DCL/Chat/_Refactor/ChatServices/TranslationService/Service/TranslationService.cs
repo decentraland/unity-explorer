@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatConfig;
 using DCL.Chat.History;
 using DCL.Translation.Events;
 using DCL.Translation.Models;
@@ -13,7 +14,7 @@ using Utility;
 
 namespace DCL.Translation.Service
 {
-    public class ChatTranslationService : ITranslationService
+    public class TranslationService : ITranslationService
     {
         private readonly ITranslationProvider provider;
         private readonly ITranslationCache cache;
@@ -22,7 +23,7 @@ namespace DCL.Translation.Service
         private readonly IEventBus eventBus;
         private readonly ITranslationMemory translationMemory;
 
-        public ChatTranslationService(ITranslationProvider provider,
+        public TranslationService(ITranslationProvider provider,
             ITranslationCache cache,
             IConversationTranslationPolicy policy,
             ITranslationSettings settings,
@@ -37,9 +38,9 @@ namespace DCL.Translation.Service
             this.translationMemory = translationMemory;
         }
 
-        public void ProcessIncomingMessage(string channelId, ChatMessage message)
+        public void ProcessIncomingMessage(ChatMessage message)
         {
-            if (!policy.ShouldAutoTranslate(message, channelId, settings.PreferredLanguage))
+            if (!policy.ShouldAutoTranslate(message, message.MessageId, settings.PreferredLanguage))
             {
                 // We don't even need to store it; the default is no translation.
                 return;
@@ -50,11 +51,11 @@ namespace DCL.Translation.Service
                 State = TranslationState.Pending
             };
 
-            translationMemory.Set(channelId, newTranslation);
+            translationMemory.Set(message.MessageId, newTranslation);
 
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
-                // MessageId = message.MessageId
+                MessageId = message.MessageId
             });
 
             TranslateInternalAsync("", CancellationToken.None).Forget();

@@ -34,6 +34,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.ChatServices.ChatTranslationService.Tests;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Translation.Service;
@@ -197,19 +198,23 @@ namespace DCL.PluginSystem.Global
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
-            translationSettings = new PlayerPrefsTranslationSettings();
-            var toggleAutoTranslateCommand = new ToggleAutoTranslateCommand(translationSettings, eventBus);
+            translationSettings = new PlayerPrefsTranslationSettings(chatConfig);
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
             var translationProvider = new MockTranslationProvider();
             var translationCache = new InMemoryTranslationCache();
             translationMemory = new InMemoryTranslationMemory();
 
-            translationService = new ChatTranslationService(translationProvider,
+            translationService = new TranslationService(translationProvider,
                 translationCache,
                 translationPolicy,
                 translationSettings,
                 eventBus,
                 translationMemory);
+
+            var translationTester = new GameObject("_TranslationTester")
+                .AddComponent<TranslationTester>();
+            
+            translationTester.Initialize(translationService);
 
             var viewInstance = mainUIView.ChatView2;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
@@ -281,8 +286,8 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
-                getParticipantProfilesCommand
-            );
+                getParticipantProfilesCommand,
+                translationSettings);
 
             pluginScope.Add(commandRegistry);
 

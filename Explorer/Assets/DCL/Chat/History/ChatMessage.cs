@@ -5,8 +5,9 @@ namespace DCL.Chat.History
     public readonly struct ChatMessage : IEquatable<ChatMessage>
     {
         private const string DCL_SYSTEM_SENDER = "DCL System";
-
+        
         public readonly string Message;
+        public readonly string MessageId;
         public readonly string SenderValidatedName;
         public readonly string SenderWalletId;
         public readonly string SenderWalletAddress;
@@ -22,6 +23,7 @@ namespace DCL.Chat.History
         public readonly DateTime? SentTimestamp;
 
         public ChatMessage(
+            string messageId,
             string message,
             string senderValidatedName,
             string senderWalletAddress,
@@ -31,6 +33,7 @@ namespace DCL.Chat.History
             bool isMention = false,
             bool isSystemMessage = false)
         {
+            MessageId = messageId;
             Message = message;
             SenderValidatedName = senderValidatedName;
             SenderWalletAddress = senderWalletAddress;
@@ -44,6 +47,7 @@ namespace DCL.Chat.History
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
             new (newMessage,
+                chatMessage.MessageId,
                 chatMessage.SenderValidatedName,
                 chatMessage.SenderWalletAddress,
                 chatMessage.IsSentByOwnUser,
@@ -53,35 +57,41 @@ namespace DCL.Chat.History
                 false);
 
         public static ChatMessage NewFromSystem(string message) =>
-            new (message, DCL_SYSTEM_SENDER, string.Empty, true,
+            new (Guid.NewGuid().ToString(),message, DCL_SYSTEM_SENDER, string.Empty, true,
                 null, DateTime.UtcNow.ToOADate(), false, true);
 
-        public bool Equals(ChatMessage other)
-        {
-            if (IsSystemMessage != other.IsSystemMessage)
-                return false;
-            if (IsSystemMessage)
-                return Message == other.Message;
-
-            return Message == other.Message &&
-                   SenderValidatedName == other.SenderValidatedName &&
-                   SenderWalletId == other.SenderWalletId &&
-                   SenderWalletAddress == other.SenderWalletAddress &&
-                   IsSentByOwnUser == other.IsSentByOwnUser &&
-                   IsMention == other.IsMention;
-        }
-
-        public override bool Equals(object? obj) =>
-            obj is ChatMessage other && Equals(other);
-
-        public override int GetHashCode()
-        {
-            if (IsSystemMessage)
-                return HashCode.Combine(Message, true);
-
-            return HashCode.Combine(Message, SenderValidatedName, SenderWalletId,
-                SenderWalletAddress, IsSentByOwnUser, IsMention);
-        }
+        public bool Equals(ChatMessage other) => MessageId == other.MessageId;
+        public override bool Equals(object? obj) => obj is ChatMessage other && Equals(other);
+        public override int GetHashCode() => (MessageId != null ? MessageId.GetHashCode() : 0);
+        
+        #region DELETE AFTER WE GET REAL MESSAGE ID FROM SERVER
+        // public bool Equals(ChatMessage other)
+        // {
+        //     if (IsSystemMessage != other.IsSystemMessage)
+        //         return false;
+        //     if (IsSystemMessage)
+        //         return Message == other.Message;
+        //
+        //     return Message == other.Message &&
+        //            SenderValidatedName == other.SenderValidatedName &&
+        //            SenderWalletId == other.SenderWalletId &&
+        //            SenderWalletAddress == other.SenderWalletAddress &&
+        //            IsSentByOwnUser == other.IsSentByOwnUser &&
+        //            IsMention == other.IsMention;
+        // }
+        //
+        // public override bool Equals(object? obj) =>
+        //     obj is ChatMessage other && Equals(other);
+        //
+        // public override int GetHashCode()
+        // {
+        //     if (IsSystemMessage)
+        //         return HashCode.Combine(Message, true);
+        //
+        //     return HashCode.Combine(Message, SenderValidatedName, SenderWalletId,
+        //         SenderWalletAddress, IsSentByOwnUser, IsMention);
+        // }
+        #endregion
 
         public override string ToString() =>
             IsSystemMessage ? $"[System] {Message}" :
