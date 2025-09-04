@@ -49,6 +49,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly ICharacterObject characterObject;
         private readonly ExposedTransform characterExposedTransform;
         private readonly StartParcel startParcel;
+        private readonly bool isLocalSceneDevelopment;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -68,7 +69,8 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appArgs,
             ICharacterObject characterObject,
             ExposedTransform characterExposedTransform,
-            StartParcel startParcel)
+            StartParcel startParcel,
+            bool isLocalSceneDevelopment)
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
@@ -78,6 +80,7 @@ namespace DCL.UserInAppInitializationFlow
             this.appArgs = appArgs;
             this.characterObject = characterObject;
             this.startParcel = startParcel;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.characterExposedTransform = characterExposedTransform;
 
             this.loadingStatus = loadingStatus;
@@ -163,11 +166,24 @@ namespace DCL.UserInAppInitializationFlow
                             else
                             {
                                 //Wait for livekit to end handshake
-                                operationResult = await livekitHandshake;
+                                var livekitOperationResult = await livekitHandshake;
 
-                                if (operationResult.Success)
+                                if (isLocalSceneDevelopment)
+                                {
+                                    // Fix: https://github.com/decentraland/unity-explorer/issues/5250
+                                    // Prevent creators to be stuck at loading screen due to livekit issues
+                                    // Local scene development doesn't strictly need livekit to run
                                     parentLoadReport.SetProgress(
                                         loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                                }
+                                else
+                                {
+                                    operationResult = livekitOperationResult;
+
+                                    if (operationResult.Success)
+                                        parentLoadReport.SetProgress(
+                                            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                                }
                             }
 
                             return operationResult;
