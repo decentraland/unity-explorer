@@ -65,10 +65,10 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
         half random_X_flower1 = random_Z_flower0;
         half random_Z_flower1 = random_X_flower0;
 
-        random_X_flower0 += gridPosition.x;
-        random_Z_flower0 += gridPosition.y;
-        random_X_flower1 += gridPosition.x; 
-        random_Z_flower1 += gridPosition.y; 
+        random_X_flower0 *= 8.0f;
+        random_Z_flower0 *= 8.0f;
+        random_X_flower1 *= 8.0f; 
+        random_Z_flower1 *= 8.0f; 
         
         // Get Height
         float2 UV_coords_0 = (corner0 + float2(random_X_flower0, random_Z_flower0) + 4096.0f) / 8192.0f;
@@ -76,8 +76,8 @@ void FlowerScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, u
         float2 UV_coords_1 = (corner0 + float2(random_X_flower1, random_Z_flower1) + 4096.0f) / 8192.0f;
         float height_flower1 = CalculateHeightFromHeightmap(UV_coords_1, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
     
-        float fScale0 = 1.0f + hash_int_to_float(UV_coords_0);
-        float fScale1 = 1.0f + hash_int_to_float(UV_coords_1);
+        float fScale0 = 1.0f + (1.0f * hash_int_to_float(corner0 + float2(random_X_flower0, random_Z_flower0) + localId.x));
+        float fScale1 = 1.0f + (1.0f * hash_int_to_float(corner0 + float2(random_X_flower1, random_Z_flower1) + localId.x));
         
         float3 normalWS_0 = CalculateNormalFromHeightmap(UV_coords_0, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
         float3 normalWS_1 = CalculateNormalFromHeightmap(UV_coords_1, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
