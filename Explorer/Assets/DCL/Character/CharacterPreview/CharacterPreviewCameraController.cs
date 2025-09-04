@@ -114,7 +114,7 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    characterPreviewAvatarContainer.SetRotationTween(
+                    characterPreviewAvatarContainer.SetAngularVelocity(
                         pointerEventData.delta.x,
                         cameraSettings.rotationModifier,
                         cameraSettings.rotationInertia

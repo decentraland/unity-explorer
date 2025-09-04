@@ -77,7 +77,7 @@ namespace DCL.CharacterPreview
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
 
-        public void SetRotationTween(
+        public void SetAngularVelocity(
             float inputDeltaX,
             float rotationModifier,
             float rotationInertia
@@ -118,6 +118,7 @@ namespace DCL.CharacterPreview
             if (isDragging && Time.time - lastDragTime > DRAG_TIMEOUT)
                 isDragging = false;
 
+            // If not dragging, decelerate
             if (!isDragging)
             {
                 if (rotationInertia <= 0f)
