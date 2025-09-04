@@ -13,6 +13,7 @@ using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
 using GPUInstancerPro;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using TerrainProto;
@@ -51,6 +52,7 @@ namespace DCL.Landscape
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
         private readonly IMemoryProfiler profilingProvider;
+        [Obsolete]
         private readonly List<Terrain> terrains;
         private readonly List<Collider> terrainChunkColliders;
         public bool forceCacheRegen;
@@ -72,6 +74,7 @@ namespace DCL.Landscape
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private float terrainDataCount;
+        [Obsolete]
         private GrassColorMapRenderer grassRenderer;
         private bool isInitialized;
         private int activeChunk = -1;
@@ -153,6 +156,7 @@ namespace DCL.Landscape
         }
 
         // TODO : pre-calculate once and re-use
+        [Obsolete]
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
         {
             if (TerrainModel == null) return;
@@ -193,7 +197,7 @@ namespace DCL.Landscape
             if (TerrainRoot != null)
                 TerrainRoot.gameObject.SetActive(true);
 
-            UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
             ReEnableChunksDetails();
 
@@ -201,6 +205,9 @@ namespace DCL.Landscape
                 grassRenderer.Render();
 
             await ReEnableTerrainAsync(postRealmLoadReport);
+
+            ShowGPUInstancerInstances();
+
             IsTerrainShown = true;
 
             postRealmLoadReport.SetProgress(1f);
@@ -218,6 +225,8 @@ namespace DCL.Landscape
                     if (collider.enabled)
                         collider.enabled = false;
 
+                HideGPUInstancerInstances();
+
                 IsTerrainShown = false;
             }
         }
@@ -227,7 +236,7 @@ namespace DCL.Landscape
             bool withHoles = true,
             bool hideTrees = false,
             bool hideDetails = false,
-            AsyncLoadProcessReport processReport = null,
+            AsyncLoadProcessReport? processReport = null,
             CancellationToken cancellationToken = default)
         {
             if (!isInitialized) return;
@@ -1130,7 +1139,30 @@ namespace DCL.Landscape
             }
         }
 
-#if GPUI_PRO_PRESENT
+        private int[]? gpuInstancerRendererKeys;
+        private int[]? gpuInstancerInstanceCounts;
+
+        [Conditional("GPUI_PRO_PRESENT")]
+        private void ShowGPUInstancerInstances()
+        {
+            if (gpuInstancerRendererKeys == null || gpuInstancerInstanceCounts == null)
+                return;
+
+            for (var i = 0; i < gpuInstancerRendererKeys.Length; i++)
+                GPUICoreAPI.SetInstanceCount(gpuInstancerRendererKeys[i], gpuInstancerInstanceCounts[i]);
+        }
+
+        [Conditional("GPUI_PRO_PRESENT")]
+        private void HideGPUInstancerInstances()
+        {
+            if (gpuInstancerRendererKeys == null)
+                return;
+
+            for (var i = 0; i < gpuInstancerRendererKeys.Length; i++)
+                GPUICoreAPI.SetInstanceCount(gpuInstancerRendererKeys[i], 0);
+        }
+
+        [Conditional("GPUI_PRO_PRESENT")]
         private void InstantiateTrees()
         {
             LandscapeAsset[] prototypes = terrainGenData.treeAssets;
@@ -1156,18 +1188,22 @@ namespace DCL.Landscape
                 }
             }
 
-            var rendererKeys = new int[terrainGenData.treeAssets.Length];
+            gpuInstancerRendererKeys = new int[terrainGenData.treeAssets.Length];
+            gpuInstancerInstanceCounts = new int[gpuInstancerRendererKeys.Length];
 
             for (var prototypeIndex = 0; prototypeIndex < terrainGenData.treeAssets.Length;
                  prototypeIndex++)
             {
                 GPUICoreAPI.RegisterRenderer(TerrainRoot, terrainGenData.treeAssets[prototypeIndex].asset,
-                    out rendererKeys[prototypeIndex]);
+                    out gpuInstancerRendererKeys[prototypeIndex]);
 
-                GPUIRenderingSystem.SetTransformBufferData(rendererKeys[prototypeIndex],
-                    transforms[prototypeIndex], 0, 0, transforms[prototypeIndex].Count);
+                List<Matrix4x4> matrices = transforms[prototypeIndex];
+
+                gpuInstancerInstanceCounts[prototypeIndex] = matrices.Count;
+
+                GPUICoreAPI.SetTransformBufferData(gpuInstancerRendererKeys[prototypeIndex],
+                    matrices, 0, 0, matrices.Count);
             }
         }
-#endif
     }
 }

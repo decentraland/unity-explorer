@@ -454,7 +454,7 @@ namespace Decentraland.Terrain
             return false;
         }
 
-        public void RenderGrass(Camera camera)
+        public void RenderGrass(Camera? camera)
         {
             if (grassDrawArgs == null || visibleParcelsComputeBuffer == null || grassInstancesComputeBuffer == null)
                 return;
