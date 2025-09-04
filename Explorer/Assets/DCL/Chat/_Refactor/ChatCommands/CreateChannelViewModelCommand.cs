@@ -161,5 +161,16 @@ namespace DCL.Chat.ChatCommands
                 ViewModel = viewModel,
             });
         }
+
+        public async UniTask UpdateCommunityThumbnailAsync(CommunityChannelViewModel vm, CancellationToken ct)
+        {
+            var sprite = await getCommunityThumbnailCommand.ExecuteAsync(vm.ImageUrl, ct);
+            if (ct.IsCancellationRequested) return;
+            vm.Thumbnail = sprite;
+            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+            {
+                ViewModel = vm
+            });
+        }
     }
 }

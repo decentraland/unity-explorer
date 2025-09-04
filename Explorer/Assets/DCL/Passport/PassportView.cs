@@ -1,5 +1,6 @@
 using DCL.CharacterPreview;
 using DCL.InWorldCamera.CameraReelGallery;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
@@ -53,6 +54,9 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public CameraReelGalleryView CameraReelGalleryModuleView { get; private set; }
+
+        [field: SerializeField]
+        public CameraReelOptionButtonView CameraReelGalleryContextMenuView { get; private set; }
 
         [field: SerializeField]
         public RectTransform MainContainer { get; private set; }
