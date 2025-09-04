@@ -10,8 +10,6 @@ namespace DCL.VoiceChat
 {
     public class CommunityVoiceChatSubTitleButtonController : IDisposable
     {
-        private const string TAG = nameof(CommunityVoiceChatSubTitleButtonController);
-
         private readonly IDisposable statusSubscription;
         private readonly IDisposable currentChannelSubscription;
 
@@ -21,7 +19,6 @@ namespace DCL.VoiceChat
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
 
         private CancellationTokenSource communityCts = new ();
-        private CancellationTokenSource joinCallCts = new ();
         private IDisposable? currentCommunityCallStatusSubscription;
 
         private bool isMemberListVisible;
@@ -45,9 +42,8 @@ namespace DCL.VoiceChat
 
         private void OnJoinStreamButtonClicked()
         {
-            joinCallCts = joinCallCts.SafeRestart();
             string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
-            communityCallOrchestrator.JoinCommunityVoiceChat(communityId, joinCallCts.Token, true);
+            communityCallOrchestrator.JoinCommunityVoiceChat(communityId, true);
         }
 
         public void Dispose()

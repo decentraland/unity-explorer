@@ -2,14 +2,12 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Audio;
 using DCL.Communities;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
@@ -33,9 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly PlayerParcelTrackerService playerParcelTracker;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -59,7 +55,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
-            PlayerParcelTrackerService playerParcelTracker, IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner)
         {
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
@@ -69,10 +65,8 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
-            this.playerParcelTracker = playerParcelTracker;
             this.assetsProvisioner = assetsProvisioner;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
-            communityVoiceChatCallStatusService = voiceChatContainer.CommunityVoiceChatCallStatusService;
         }
 
         public void Dispose()
@@ -134,13 +128,13 @@ namespace DCL.PluginSystem.Global
 
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
-            sceneVoiceChatController = new SceneVoiceChatController(mainUIView.SceneVoiceChatTitlebarView, communityDataProvider, voiceChatOrchestrator);
+            sceneVoiceChatController = new SceneVoiceChatController(mainUIView.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
         }
 
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: SerializeField] public VoiceChatConfigurationsReference VoiceChatConfigurations { get; private set; }
+            [field: SerializeField] public VoiceChatConfigurationsReference VoiceChatConfigurations { get; private set; } = null!;
 
             [Serializable]
             public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>

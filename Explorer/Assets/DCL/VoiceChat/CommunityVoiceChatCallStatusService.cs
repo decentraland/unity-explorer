@@ -350,7 +350,7 @@ namespace DCL.VoiceChat
 
                 // We only show notification if we are part of the community, and we didn't start the stream ourselves
                 if (communityUpdate.IsMember && communityUpdate.CommunityId != locallyStartedCommunityId)
-                    notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage,communityUpdate.CommunityId));
+                    notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage, communityUpdate.CommunityId));
             }
         }
 

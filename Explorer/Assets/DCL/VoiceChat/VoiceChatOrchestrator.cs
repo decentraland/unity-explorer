@@ -6,7 +6,9 @@ using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
 using System;
+using System.Net;
 using System.Threading;
+using Utility;
 
 namespace DCL.VoiceChat
 {
@@ -29,6 +31,7 @@ namespace DCL.VoiceChat
 
         private VoiceChatCallStatusServiceBase activeCallStatusService;
         private IVoiceChatOrchestrator voiceChatOrchestratorImplementation;
+        private CancellationTokenSource joinCallCts;
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
@@ -89,7 +92,7 @@ namespace DCL.VoiceChat
                 return;
 
             CommunityVoiceChatStartedNotification notification = (CommunityVoiceChatStartedNotification)parameters[0];
-            JoinCommunityVoiceChat(notification.CommunityId, default);
+            JoinCommunityVoiceChat(notification.CommunityId, true);
         }
 
         public void StartCall(string callId, VoiceChatType callType)
@@ -214,10 +217,12 @@ namespace DCL.VoiceChat
             currentVoiceChatPanelSize.Value = panelSize;
         }
 
-        public void JoinCommunityVoiceChat(string communityId, CancellationToken ct, bool force = false)
+        public void JoinCommunityVoiceChat(string communityId, bool force = false)
         {
+            joinCallCts = joinCallCts.SafeRestart();
+
             if (!VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
-                communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
+                communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, joinCallCts.Token).Forget();
             else if (force)
                 HangUpAndStartCallAsync().Forget();
 
@@ -226,8 +231,9 @@ namespace DCL.VoiceChat
             async UniTaskVoid HangUpAndStartCallAsync()
             {
                 HangUp();
-                await UniTask.Delay(100, cancellationToken: ct);
-                communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
+                await UniTask.Delay(100, cancellationToken: joinCallCts.Token);
+                if (!joinCallCts.IsCancellationRequested)
+                    communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, joinCallCts.Token).Forget();
             }
         }
 

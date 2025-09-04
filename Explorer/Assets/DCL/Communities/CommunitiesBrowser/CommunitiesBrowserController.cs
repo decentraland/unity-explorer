@@ -138,8 +138,9 @@ namespace DCL.Communities.CommunitiesBrowser
             async UniTaskVoid JoinStreamAsync()
             {
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(false));
+                //We wait until the panel has disappeared before starting the call, so the UX is better.
                 await UniTask.Delay(500);
-                orchestrator.JoinCommunityVoiceChat(communityId, CancellationToken.None, true);
+                orchestrator.JoinCommunityVoiceChat(communityId, true);
             }
         }
 

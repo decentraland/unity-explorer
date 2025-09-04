@@ -920,7 +920,6 @@ namespace Global.Dynamic
                         playerEntity,
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
-                        playerParcelTracker,
                         assetsProvisioner
                     )
                 );

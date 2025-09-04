@@ -44,7 +44,7 @@ namespace DCL.Communities.CommunitiesCard
         private void JoinStream()
         {
             ClosePanel?.Invoke();
-            voiceChatOrchestrator.JoinCommunityVoiceChat(currentCommunityId, new CancellationToken(), true);
+            voiceChatOrchestrator.JoinCommunityVoiceChat(currentCommunityId,true);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.StartStreamAudio);
             SetPanelStatus(true, false, currentCommunityId);
         }

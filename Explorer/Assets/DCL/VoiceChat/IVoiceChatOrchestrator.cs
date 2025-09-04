@@ -67,7 +67,7 @@ namespace DCL.VoiceChat
 
     public interface ICommunityCallActions
     {
-        void JoinCommunityVoiceChat(string communityId, CancellationToken ct, bool force = false);
+        void JoinCommunityVoiceChat(string communityId, bool force = false);
         void RequestToSpeakInCurrentCall();
         void LowerHandInCurrentCall();
         void PromoteToSpeakerInCurrentCall(string walletId);

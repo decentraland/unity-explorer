@@ -63,8 +63,8 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
             marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
-            communityThumbnailImageController = new ImageController(viewInstance.CommunityNotificationView.NotificationImage, webRequestController);
-            viewInstance.CommunityNotificationView.NotificationClicked += ClickedNotification;
+            communityThumbnailImageController = new ImageController(viewInstance.CommunityVoiceChatNotificationView.NotificationImage, webRequestController);
+            viewInstance.CommunityVoiceChatNotificationView.NotificationClicked += ClickedNotification;
         }
 
         private void StopAnimation()
@@ -126,10 +126,11 @@ namespace DCL.Notifications.NewNotification
 
         private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
         {
-            viewInstance!.CommunityNotificationView.HeaderText.text = notification.GetHeader();
-            viewInstance.CommunityNotificationView.TitleText.text = notification.GetTitle();
-            viewInstance.CommunityNotificationView.NotificationType = notification.Type;
-            viewInstance.CommunityNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+            viewInstance!.CommunityVoiceChatNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.CommunityVoiceChatNotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.CommunityVoiceChatNotificationView.NotificationType = notification.Type;
+            viewInstance.CommunityVoiceChatNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+            viewInstance.CommunityVoiceChatNotificationView.Notification = notification;
 
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
                 communityThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
