@@ -112,6 +112,7 @@ namespace DCL.Chat
                 chatContextMenuService,
                 translationSettings,
                 commandRegistry.GetTitlebarViewModel,
+                commandRegistry.GetCommunityThumbnail,
                 commandRegistry.DeleteChatHistory,
                 commandRegistry.ToggleAutoTranslateCommand);
 
@@ -120,6 +121,7 @@ namespace DCL.Chat
                 chatEventBus,
                 chatHistory,
                 currentChannelService,
+                communityDataService,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.CloseChannel,
