@@ -11,6 +11,8 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
+using DCL.Clipboard;
+using DCL.Translation.Commands;
 using DCL.Translation.Service;
 using DCL.Translation.Settings;
 using DCL.Web3.Identities;
@@ -41,6 +43,9 @@ namespace DCL.Chat.ChatCommands
         public RestartChatServicesCommand RestartChatServices { get; }
         public ResolveInputStateCommand ResolveInputStateCommand { get; }
         public ToggleAutoTranslateCommand ToggleAutoTranslateCommand { get; }
+        public TranslateMessageCommand TranslateMessageCommand { get; }
+        public RevertToOriginalCommand RevertToOriginalCommand { get; }
+        public CopyMessageCommand CopyMessageCommand { get; }
 
         public CommandRegistry(
             ChatConfig.ChatConfig chatConfig,
@@ -63,6 +68,8 @@ namespace DCL.Chat.ChatCommands
             ObjectProxy<IFriendsService> friendsServiceProxy,
             AudioClipConfig sendMessageSound,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
+            ClipboardManager clipboardManager,
+            ITranslationService translationService,
             ITranslationSettings translationSettings)
         {
             RestartChatServices = new RestartChatServicesCommand(
@@ -138,8 +145,8 @@ namespace DCL.Chat.ChatCommands
                 sendMessageSound,
                 chatSettings);
 
-            CloseChannel = new CloseChannelCommand(chatHistory
-                , identityCache);
+            CloseChannel = new CloseChannelCommand(chatHistory,
+                identityCache);
 
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
                 communityDataService,
@@ -153,6 +160,10 @@ namespace DCL.Chat.ChatCommands
 
             ToggleAutoTranslateCommand = new ToggleAutoTranslateCommand(translationSettings,
                 eventBus);
+
+            TranslateMessageCommand = new TranslateMessageCommand(translationService);
+            RevertToOriginalCommand = new RevertToOriginalCommand(translationService);
+            CopyMessageCommand = new CopyMessageCommand(clipboardManager);
         }
 
         public void Dispose()

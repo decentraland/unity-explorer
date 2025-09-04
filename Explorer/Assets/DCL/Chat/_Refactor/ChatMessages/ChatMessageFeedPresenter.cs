@@ -13,8 +13,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Clipboard;
+using DCL.Translation.Commands;
 using DCL.Translation.Events;
 using DCL.Translation.Service.Memory;
+using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 using Utility;
 
@@ -31,8 +35,12 @@ namespace DCL.Chat.ChatMessages
         private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
         private readonly MarkMessagesAsReadCommand markMessagesAsReadCommand;
         private readonly ITranslationMemory translationMemory;
+        private readonly TranslateMessageCommand translateMessageCommand;
+        private readonly RevertToOriginalCommand revertToOriginalCommand;
+        private readonly CopyMessageCommand copyMessageCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
         private readonly EventSubscriptionScope scope = new ();
+        private readonly ChatConfig.ChatConfig chatConfig;
 
         private readonly List<ChatMessageViewModel> viewModels = new (500);
 
@@ -57,22 +65,30 @@ namespace DCL.Chat.ChatMessages
         public ChatMessageFeedPresenter(ChatMessageFeedView view,
             IEventBus eventBus,
             IChatHistory chatHistory,
+            ChatConfig.ChatConfig chatConfig,
             CurrentChannelService currentChannelService,
             ChatContextMenuService contextMenuService,
             ITranslationMemory translationMemory,
             GetMessageHistoryCommand getMessageHistoryCommand,
             CreateMessageViewModelCommand createMessageViewModelCommand,
-            MarkMessagesAsReadCommand markMessagesAsReadCommand)
+            MarkMessagesAsReadCommand markMessagesAsReadCommand,
+            TranslateMessageCommand translateMessageCommand,
+            RevertToOriginalCommand revertToOriginalCommand,
+            CopyMessageCommand copyMessageCommand)
         {
             this.view = view;
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
+            this.chatConfig = chatConfig;
             this.currentChannelService = currentChannelService;
             this.contextMenuService = contextMenuService;
+            this.translationMemory = translationMemory;
             this.getMessageHistoryCommand = getMessageHistoryCommand;
             this.createMessageViewModelCommand = createMessageViewModelCommand;
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
-            this.translationMemory = translationMemory;
+            this.translateMessageCommand = translateMessageCommand;
+            this.revertToOriginalCommand = revertToOriginalCommand;
+            this.copyMessageCommand = copyMessageCommand;
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -219,12 +235,63 @@ namespace DCL.Chat.ChatMessages
             contextMenuService.ShowUserProfileMenuAsync(request).Forget();
         }
 
-        private void OnChatContextMenuRequested(string message, ChatEntryView? chatEntry)
+        private void OnChatContextMenuRequested(string messageId, ChatEntryView? chatEntry)
         {
-            var request = new ChatEntryMenuPopupData(chatEntry.messageBubbleElement.PopupPosition,
-                message, chatEntry.messageBubbleElement.HideOptionsButton);
+            // var request = new ChatEntryMenuPopupData(chatEntry.messageBubbleElement.PopupPosition,
+            //     message, chatEntry.messageBubbleElement.HideOptionsButton);
+            //
+            // contextMenuService.ShowChatOptionsAsync(request).Forget();
 
-            contextMenuService.ShowChatOptionsAsync(request).Forget();
+            // Find the ViewModel associated with this message ID
+            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            if (viewModel == null) return;
+
+            // 1. Create a new, empty context menu configuration.
+            // We can reuse settings from ChatConfig if available, or use defaults.
+            var contextMenu = new GenericContextMenu(
+                chatConfig.chatContextMenuSettings.ContextMenuWidth,
+                chatConfig.chatContextMenuSettings.OffsetFromTarget,
+                chatConfig.chatContextMenuSettings.VerticalPadding,
+                chatConfig.chatContextMenuSettings.ElementsSpacing,
+                anchorPoint: ContextMenuOpenDirection.TOP_LEFT);
+
+            // 2. Add the "Copy" button. Its text depends on the translation state.
+            string textToCopy = viewModel.IsTranslated ? viewModel.TranslatedText : viewModel.Message.Message;
+            contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                "Copy",
+                chatConfig.ClearChatHistoryContextMenuIcon,
+                () => copyMessageCommand.Execute(this, textToCopy)
+            ));
+
+            // 3. DYNAMICALLY add the "Translate" or "See Original" button.
+            if (viewModel.IsTranslated)
+            {
+                // If it's already translated, add a "See Original" button.
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                    "See Original",
+                    chatConfig.ClearChatHistoryContextMenuIcon,
+                    () => revertToOriginalCommand.Execute(viewModel.Message.MessageId)
+                ));
+            }
+            else
+            {
+                // If it's not translated, add a "Translate" button.
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                    "Translate",
+                    chatConfig.ClearChatHistoryContextMenuIcon,
+                    () => translateMessageCommand.Execute(viewModel.Message.MessageId)
+                ));
+            }
+
+            var request = new ShowContextMenuRequest
+            {
+                MenuConfiguration = contextMenu, Position = chatEntry.messageBubbleElement.PopupPosition
+            };
+
+            // 5. Ask the ChatContextMenuService to show it.
+            contextMenuService
+                .ShowCommunityContextMenuAsync(request)
+                .Forget();
         }
 
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)

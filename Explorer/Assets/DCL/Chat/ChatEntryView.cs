@@ -49,7 +49,13 @@ namespace DCL.Chat
         {
             profileButton.onClick.AddListener(OnProfileButtonClicked);
             usernameElement.UserNameClicked += OnUsernameClicked;
-            messageBubbleElement.messageOptionsButton.onClick.AddListener(() => onMessageContextMenuClicked?.Invoke(chatMessage.Message, this));
+            messageBubbleElement.messageOptionsButton.onClick.AddListener(() =>
+            {
+                if (currentViewModel != null)
+                {
+                    onMessageContextMenuClicked?.Invoke(currentViewModel.Message.MessageId, this);
+                }
+            });
         }
 
         public void AnimateChatEntry()

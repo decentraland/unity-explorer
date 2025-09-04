@@ -135,12 +135,16 @@ namespace DCL.Chat
             var messageFeedPresenter = new ChatMessageFeedPresenter(viewInstance.MessageFeedView,
                 eventBus,
                 chatHistory,
+                chatConfig,
                 currentChannelService,
                 chatContextMenuService,
                 translationMemory,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,
-                commandRegistry.MarkMessagesAsRead);
+                commandRegistry.MarkMessagesAsRead,
+                commandRegistry.TranslateMessageCommand,
+                commandRegistry.RevertToOriginalCommand,
+                commandRegistry.CopyMessageCommand);
 
             var inputPresenter = new ChatInputPresenter(
                 viewInstance.InputView,

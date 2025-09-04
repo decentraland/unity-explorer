@@ -35,6 +35,7 @@ using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatServices.ChatTranslationService.Tests;
+using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Translation.Service;
@@ -55,6 +56,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IChatHistory chatHistory;
+        private readonly ClipboardManager clipboardManager;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
@@ -104,6 +106,7 @@ namespace DCL.PluginSystem.Global
             IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
+            ClipboardManager clipboardManager,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             MainUIView mainUIView,
@@ -138,6 +141,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
+            this.clipboardManager = clipboardManager;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.mainUIView = mainUIView;
@@ -287,6 +291,8 @@ namespace DCL.PluginSystem.Global
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
                 getParticipantProfilesCommand,
+                clipboardManager,
+                translationService,
                 translationSettings);
 
             pluginScope.Add(commandRegistry);
