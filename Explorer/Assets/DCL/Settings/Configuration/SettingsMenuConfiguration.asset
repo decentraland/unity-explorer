@@ -119,7 +119,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Preffered Translation Language
+          <ModuleName>k__BackingField: Translate Messages To
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
