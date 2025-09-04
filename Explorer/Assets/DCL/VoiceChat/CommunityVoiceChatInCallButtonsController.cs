@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Chat.History;
 using DCL.Utilities;
 using System;
 using System.Threading;
@@ -8,22 +7,21 @@ using Utility;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
-    public class CommunityVoiceChatInCallFooterController : IDisposable
+    public class CommunityVoiceChatInCallButtonsController : IDisposable
     {
         private readonly IDisposable isSpeakerSubscription;
         private readonly IDisposable isRequestingToSpeakSubscription;
         private readonly IDisposable callStateSubscription;
         private readonly IDisposable microphoneStateSubscription;
 
-        private readonly CommunityVoiceChatInCallFooterView view;
+        private readonly CommunityVoiceChatInCallButtonsView view;
         private readonly ICommunityCallOrchestrator orchestrator;
-        private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
         private CancellationTokenSource cts = new ();
 
-        public CommunityVoiceChatInCallFooterController(
-            CommunityVoiceChatInCallFooterView view,
+        public CommunityVoiceChatInCallButtonsController(
+            CommunityVoiceChatInCallButtonsView view,
             ICommunityCallOrchestrator orchestrator,
             VoiceChatMicrophoneHandler microphoneHandler)
         {
@@ -31,8 +29,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.orchestrator = orchestrator;
             this.microphoneHandler = microphoneHandler;
 
+            this.view.LeaveStageButton?.onClick.AddListener(OnLeaveStageButtonClicked);
+
             this.view.EndCallButton.onClick.AddListener(OnEndCallButtonClicked);
-            this.view.LeaveStageButton.onClick.AddListener(OnLeaveStageButtonClicked);
             this.view.RaiseHandButton.onClick.AddListener(OnRaiseHandButtonClicked);
             this.view.LowerHandButton.onClick.AddListener(OnLowerHandButtonClicked);
             this.view.MicrophoneButton.MicButton.onClick.AddListener(OnMicrophoneButtonClicked);
@@ -44,7 +43,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             microphoneStateSubscription = microphoneHandler.IsMicrophoneEnabled.Subscribe(OnMicrophoneStateChanged);
 
             view.MicrophoneButton.SetMicrophoneStatus(microphoneHandler.IsMicrophoneEnabled.Value);
-            view.LeaveStageButton.gameObject.SetActive(false);
+            view.LeaveStageButton?.gameObject.SetActive(false);
             view.MicrophoneButton.gameObject.SetActive(false);
             view.RaiseHandButton.gameObject.SetActive(false);
             view.LowerHandButton.gameObject.SetActive(false);
@@ -82,7 +81,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             void OnIsSpeakerChangedInternal()
             {
-                view.LeaveStageButton.gameObject.SetActive(isSpeaker);
+                view.LeaveStageButton?.gameObject.SetActive(isSpeaker);
                 view.MicrophoneButton.gameObject.SetActive(isSpeaker);
                 view.RaiseHandButton.gameObject.SetActive(!isSpeaker);
                 view.LowerHandButton.gameObject.SetActive(false);
@@ -123,11 +122,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
-            isSpeakerSubscription?.Dispose();
-            isRequestingToSpeakSubscription?.Dispose();
-            callStateSubscription?.Dispose();
-            microphoneStateSubscription?.Dispose();
-            cts?.Dispose();
+            cts.SafeCancelAndDispose();
+            isSpeakerSubscription.Dispose();
+            isRequestingToSpeakSubscription.Dispose();
+            callStateSubscription.Dispose();
+            microphoneStateSubscription.Dispose();
         }
 
         private void OnRaiseHandButtonClicked()
@@ -151,7 +150,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnEndCallButtonClicked()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.GenericButtonAudio);
-            cts = cts?.SafeRestart();
+            cts = cts.SafeRestart();
             orchestrator.HangUp();
         }
 

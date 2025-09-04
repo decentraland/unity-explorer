@@ -1,8 +1,11 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.UI;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
@@ -38,8 +41,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public GameObject FooterPanel { get; private set; }
 
+        [field: FormerlySerializedAs("<InCallFooterView>k__BackingField")]
         [field: SerializeField]
-        public CommunityVoiceChatInCallFooterView InCallFooterView { get; private set; }
+        public CommunityVoiceChatInCallButtonsView InCallButtonsView { get; private set; }
 
         [field: SerializeField]
         public GameObject RaiseHandTooltip { get; private set; }
@@ -54,7 +58,26 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public Button OpenListenersSectionButton  { get; private set; }
 
         [field: SerializeField]
-        public TalkingStatusView talkingStatusView { get; private set; }
+        public GameObject CollapseButtonImage  { get; private set; }
+
+        [field: SerializeField]
+        public GameObject ExpandButtonImage  { get; private set; }
+
+        [field: SerializeField]
+        public Button CollapseButton  { get; private set; }
+
+
+
+        [field: FormerlySerializedAs("<talkingStatusView>k__BackingField")]
+        [field: SerializeField]
+        public TalkingStatusView TalkingStatusView { get; private set; } = null!;
+
+        [field: SerializeField] public CommunityVoiceChatInCallButtonsView CollapsedPanelInCallButtonsView { get; private set; } = null!;
+        [field: SerializeField] public GameObject CollapsedPanelRightLayoutContainer { get; private set; } = null!;
+        [field: SerializeField] public GameObject ExpandedPanelRightLayoutContainer { get; private set; } = null!;
+
+        [field: SerializeField] public AudioClipConfig EndStreamAudio { get; private set; } = null!;
+
 
         public void SetCommunityName(string communityName)
         {
@@ -63,7 +86,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void SetParticipantCount(int participantCount)
         {
-            ParticipantCount.text = string.Format("{0}", participantCount);
+            ParticipantCount.text = $"{participantCount}";
         }
 
         public async UniTaskVoid ShowRaiseHandTooltipAndWaitAsync(string playerName, CancellationToken ct)
@@ -72,6 +95,17 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             RaiseHandTooltip.SetActive(true);
             await UniTask.Delay(5000, cancellationToken: ct);
             RaiseHandTooltip.SetActive(false);
+        }
+
+        public void SetCollapsedState(bool isCollapsed)
+        {
+            CollapsedPanelRightLayoutContainer.SetActive(isCollapsed);
+            ExpandedPanelRightLayoutContainer.SetActive(!isCollapsed);
+            CollapseButtonImage.SetActive(!isCollapsed);
+            ExpandButtonImage.SetActive(isCollapsed);
+            ContentPanel.SetActive(!isCollapsed);
+            FooterPanel.SetActive(!isCollapsed);
+            OpenListenersSectionButton.gameObject.SetActive(!isCollapsed);
         }
     }
 }

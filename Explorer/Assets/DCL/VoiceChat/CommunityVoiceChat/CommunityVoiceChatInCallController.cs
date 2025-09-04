@@ -1,5 +1,7 @@
+using DCL.Audio;
 using DCL.Communities;
 using DCL.UI;
+using DCL.Utilities;
 using DCL.WebRequests;
 using System;
 using System.Threading;
@@ -11,27 +13,44 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     public class CommunityVoiceChatInCallController : IDisposable
     {
         private readonly CommunityVoiceChatInCallView view;
-        private readonly CommunityVoiceChatInCallFooterController footerController;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly CommunityVoiceChatInCallButtonsController buttonsController;
         private readonly ImageController thumbnailController;
+        private readonly IReadonlyReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize;
 
-        public event Action EndStream;
-        public event Action CommunityButtonClicked;
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct;
 
         public CommunityVoiceChatInCallController(
             CommunityVoiceChatInCallView view,
-            IVoiceChatOrchestrator orchestrator,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
             IWebRequestController webRequestController)
         {
             this.view = view;
-            footerController = new CommunityVoiceChatInCallFooterController(view.InCallFooterView, orchestrator, microphoneHandler);
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            buttonsController = new CommunityVoiceChatInCallButtonsController(view.InCallButtonsView, voiceChatOrchestrator, microphoneHandler);
 
+            currentVoiceChatPanelSize = voiceChatOrchestrator.CurrentVoiceChatPanelSize;
             thumbnailController = new ImageController(view.CommunityThumbnail, webRequestController);
-            view.EndStreamButton.onClick.AddListener(() => EndStream?.Invoke());
-            view.CommunityButton.onClick.AddListener(() => CommunityButtonClicked?.Invoke());
-            ct = new CancellationTokenSource();
+            view.EndStreamButton.onClick.AddListener(OnEndStreamButtonClicked);
+            view.CommunityButton.onClick.AddListener(OnCommunityButtonClicked);
+            view.CollapseButton.onClick.AddListener(OnCollapsedButtonClicked);
+        }
+
+        private void OnCommunityButtonClicked()
+        {
+            string communityId = voiceChatOrchestrator.CurrentCommunityId.Value;
+            if (!string.IsNullOrEmpty(communityId))
+            {
+                VoiceChatCommunityCardBridge.OpenCommunityCard(communityId);
+            }
+        }
+
+        private void OnEndStreamButtonClicked()
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.EndStreamAudio);
+            voiceChatOrchestrator.EndStreamInCurrentCall();
         }
 
         public void SetEndStreamButtonStatus(bool isActive) =>
@@ -39,7 +58,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
-            footerController.Dispose();
+            buttonsController.Dispose();
+            view.EndStreamButton.onClick.RemoveListener(OnEndStreamButtonClicked);
+            view.CommunityButton.onClick.RemoveListener(OnCommunityButtonClicked);
+            view.CollapseButton.onClick.RemoveListener(OnCollapsedButtonClicked);
         }
 
         public void AddSpeaker(PlayerEntryView entryView)
@@ -50,7 +72,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void RefreshCounter()
         {
-            view.SpeakersCount.text = string.Format("({0})", SpeakersParent.transform.childCount);
+            view.SpeakersCount.text = $"({SpeakersParent.transform.childCount})";
         }
 
         public void SetParticipantCount(int participantCount)
@@ -73,7 +95,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void SetTalkingStatus(int speakingCount, string username)
         {
-            view.talkingStatusView.SetSpeakingStatus(speakingCount, username);
+            view.TalkingStatusView.SetSpeakingStatus(speakingCount, username);
+        }
+
+        private void OnCollapsedButtonClicked()
+        {
+            bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.DEFAULT;
+            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.DEFAULT);
+            view.SetCollapsedState(isPanelCollapsed);
         }
     }
 }

@@ -1,8 +1,5 @@
-#nullable enable
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.Communities;
-using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
@@ -31,10 +28,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly CommunityVoiceChatInCallController inCallController;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly IDisposable? voiceChatTypeSubscription;
-
         private readonly Dictionary<string, string> currentlySpeakingUsers = new();
 
-        private bool isPanelCollapsed;
+        private CancellationTokenSource cts = new ();
 
         public CommunityVoiceChatController(
             CommunityVoiceChatTitlebarView view,
@@ -55,16 +51,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
             inCallController = new CommunityVoiceChatInCallController(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController);
 
-            inCallController.EndStream += OnEndStream;
-            inCallController.CommunityButtonClicked += OnCommunityButtonClicked;
-
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
             voiceChatOrchestrator.CommunityCallStatus.OnUpdate += OnCommunityCallStatusUpdate;
             voiceChatOrchestrator.CurrentCommunityId.OnUpdate += UpdateCommunityHeader;
 
-            this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
             this.roomManager.ConnectionEstablished += OnConnectionEstablished;
             this.view.ApproveSpeaker += PromoteToSpeaker;
             this.view.DenySpeaker += DenySpeaker;
@@ -106,18 +98,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             }
         }
 
-        private void OnEndStream()
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.EndStreamAudio);
-            voiceChatOrchestrator.EndStreamInCurrentCall();
-        }
-
         public void Dispose()
         {
             roomManager.ConnectionEstablished -= OnConnectionEstablished;
-            inCallController.CommunityButtonClicked -= OnCommunityButtonClicked;
 
-            view.CollapseButtonClicked -= OnCollapsedButtonClicked;
             view.ApproveSpeaker -= PromoteToSpeaker;
             view.DenySpeaker -= DenySpeaker;
 
@@ -227,8 +211,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             RefreshCounters();
         }
 
-        private CancellationTokenSource cts = new ();
-
         private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
         {
             switch (voiceChatType)
@@ -261,13 +243,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void Hide()
         {
             view.gameObject.SetActive(false);
-        }
-
-        private void OnCollapsedButtonClicked()
-        {
-            isPanelCollapsed = !isPanelCollapsed;
-            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.DEFAULT : VoiceChatPanelSize.EXPANDED);
-            view.SetCollapsedButtonState(isPanelCollapsed);
         }
 
         private void AddSpeaker(VoiceChatParticipantsStateService.ParticipantState participantState)
@@ -317,7 +292,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             else
                 currentlySpeakingUsers.Remove(walletId);
 
-            inCallController.SetTalkingStatus(currentlySpeakingUsers.Count, currentlySpeakingUsers.Count == 1 ? currentlySpeakingUsers.First().Value : String.Empty);
+            inCallController.SetTalkingStatus(currentlySpeakingUsers.Count, currentlySpeakingUsers.Count == 1 ? currentlySpeakingUsers.First().Value : string.Empty);
         }
 
         private void SetUserRequestingToSpeak(bool isRequestingToSpeak, PlayerEntryView entryView, string playerName)
@@ -367,15 +342,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1);
             inCallController.RefreshCounter();
             communityVoiceChatSearchController.RefreshCounters();
-        }
-
-        private void OnCommunityButtonClicked()
-        {
-            string communityId = voiceChatOrchestrator.CurrentCommunityId.Value;
-            if (!string.IsNullOrEmpty(communityId))
-            {
-                VoiceChatCommunityCardBridge.OpenCommunityCard(communityId);
-            }
         }
     }
 }

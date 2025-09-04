@@ -5,7 +5,6 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
@@ -14,31 +13,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private const float SHOW_HIDE_ANIMATION_DURATION = 0.5f;
 
-        public event Action CollapseButtonClicked;
-
         [field: SerializeField]
         public CanvasGroup VoiceChatCanvasGroup { get; private set; }
 
         [field: SerializeField]
         public GameObject VoiceChatContainer { get; private set; }
 
-        [field: SerializeField]
-        public Button CollapseButton  { get; private set; }
-
-        [field: SerializeField]
-        public GameObject CollapseButtonImage  { get; private set; }
-
-        [field: SerializeField]
-        public GameObject ExpandButtonImage  { get; private set; }
-
-        [field: SerializeField]
-        public RectTransform HeaderContainer { get; private set; }
-
-        [field: SerializeField]
-        public RectTransform ContentContainer { get; private set; }
-
-        [field: SerializeField]
-        public RectTransform FooterContainer { get; private set; }
 
         [field: SerializeField]
         public CommunityVoiceChatInCallView CommunityVoiceChatInCallView { get; private set; }
@@ -54,11 +34,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public event Action<string> ApproveSpeaker;
         public event Action<string> DenySpeaker;
-
-        private void Start()
-        {
-            CollapseButton.onClick.AddListener(() => CollapseButtonClicked?.Invoke());
-        }
 
         private void OnContextMenuButtonClicked(VoiceChatParticipantsStateService.ParticipantState participant, Vector2 buttonPosition, PlayerEntryView elementView)
         {
@@ -80,15 +55,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             entryView.SubscribeToInteractions(OnContextMenuButtonClicked, ApproveSpeaker, DenySpeaker);
             entryView.SetUserProfile(participantState, localParticipantState);
-        }
-
-        public void SetCollapsedButtonState(bool isCollapsed)
-        {
-            ContentContainer.gameObject.SetActive(!isCollapsed);
-            FooterContainer.gameObject.SetActive(!isCollapsed);
-            CommunityVoiceChatInCallView.OpenListenersSectionButton.gameObject.SetActive(!isCollapsed);
-            CollapseButtonImage.SetActive(!isCollapsed);
-            ExpandButtonImage.SetActive(isCollapsed);
         }
 
         public void Show()
