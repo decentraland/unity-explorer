@@ -126,7 +126,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b5c62dc352488686ecb85a0fa6f93ae87931993e"
+      "hash": "90178421556969aff8a8df0225f093ea780ff097"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
