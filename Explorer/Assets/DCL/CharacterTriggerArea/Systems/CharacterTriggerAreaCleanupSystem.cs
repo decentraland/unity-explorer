@@ -40,7 +40,7 @@ namespace DCL.CharacterTriggerArea.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea))]
+        [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea), typeof(PBTriggerArea))]
         private void HandleComponentRemoval(Entity entity, ref CharacterTriggerAreaComponent component)
         {
             component.TryRelease(poolRegistry);

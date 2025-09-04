@@ -9,7 +9,9 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using ECS.Unity.Transforms.Components;
 using System;
+using UnityEngine;
 
 namespace DCL.SDKComponents.TriggerArea.Systems
 {
@@ -26,15 +28,16 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
         protected override void Update(float t)
         {
-
+            SetupTriggerAreaQuery(World);
         }
 
         [Query]
-        [None(typeof(SDKTriggerAreaComponent))]
+        [None(typeof(CharacterTriggerAreaComponent), typeof(SDKTriggerAreaComponent))]
+        [All(typeof(TransformComponent))]
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
             // TODO: make the CharacterTriggerAreaComponent more versatile, to accept scene entity colliders
-            World.Add(entity, new SDKTriggerAreaComponent(), new CharacterTriggerAreaComponent());
+            World.Add(entity, new SDKTriggerAreaComponent(), new CharacterTriggerAreaComponent(areaSize: Vector3.zero, targetOnlyMainPlayer: true));
         }
 
         [Query]
@@ -98,5 +101,6 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
     }
 }
+
 
 

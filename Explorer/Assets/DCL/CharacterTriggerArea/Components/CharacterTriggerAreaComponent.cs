@@ -50,20 +50,22 @@ namespace DCL.CharacterTriggerArea.Components
             if (IsDirty == false) return;
             IsDirty = false;
 
+            bool useTransformScaleAsAreaSize = AreaSize == Vector3.zero;
+
             if (!hasMonoBehaviour)
             {
                 SetMonoBehaviour(pool.Get());
 
                 if (targetOnlyMainPlayer)
-                    monoBehaviour.TargetTransform = mainPlayerTransform;
+                    monoBehaviour!.TargetTransform = mainPlayerTransform;
 
-                Transform triggerAreaTransform = monoBehaviour.transform;
-                triggerAreaTransform.SetParent(transformComponent.Transform);
+                Transform triggerAreaTransform = monoBehaviour!.transform;
+                triggerAreaTransform.SetParent(transformComponent.Transform, worldPositionStays: !useTransformScaleAsAreaSize);
                 triggerAreaTransform.localPosition = Vector3.zero;
                 triggerAreaTransform.localRotation = Quaternion.identity;
             }
 
-            monoBehaviour!.BoxCollider.size = AreaSize;
+            monoBehaviour!.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
             monoBehaviour.BoxCollider.enabled = true;
         }
 
