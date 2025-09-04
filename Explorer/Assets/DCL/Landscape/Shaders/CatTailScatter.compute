@@ -21,6 +21,10 @@ cbuffer ConstBuffer : register(b0)
     int2 SandDetailTextureSize;
     float TerrainHeight;
     int parcelSize;
+    int nThreads;
+    float fDistanceFieldScale;
+    float nHeightMapSize;
+    float fSplatMapTiling;
 }
 
 Texture2D<float4> HeightMapTexture : register(t0);
@@ -37,7 +41,13 @@ shared RWStructuredBuffer<uint> drawArgs2 : register(u1);
 groupshared int2 gridPositions[256];
 groupshared uint foundCount;
 
+#pragma multi_compile THREADS_64 THREADS_16
+
+#if THREADS_64
 [numthreads(64, 1, 1)]
+#elif THREADS_16
+[numthreads(16, 1, 1)]
+#endif
 void CatTailScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint3 localId : SV_GroupThreadID)
 {
     if (groupId.x >= visibleParcelCount[0])
@@ -49,14 +59,17 @@ void CatTailScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, 
     // ALL threads must hit this sync point
     GroupMemoryBarrierWithGroupSync();
 
-    int2 corner0 = (int2)(visibleParcels[groupId.x] * 16.0f);
-    int2 gridPosition = int2((int)(localId.x % 8), (int)(localId.x / 8)) * 2.0f;
+    const int nAxisLength = sqrt(nThreads);
+    const int nMetrePerGrid = (float)parcelSize / nAxisLength;
 
-    float2 worldSpaceCoord_ParcelBlock = corner0 + gridPosition;
-    float2 UV_coords_ParcelBlock = (worldSpaceCoord_ParcelBlock + 4096.0f) / 8192.0f;
+    const int2 corner0 = (int2)(visibleParcels[groupId.x] * parcelSize);
+    const int2 gridPosition = int2((int)(localId.x % nAxisLength), (int)(localId.x / nAxisLength)) * nMetrePerGrid;
+
+    const float2 worldSpaceCoord_ParcelBlock = corner0 + gridPosition;
+    const float2 UV_coords_ParcelBlock = (worldSpaceCoord_ParcelBlock + (nHeightMapSize/2.0f)) / nHeightMapSize;
 
     // Check the texture
-    half4 terrainColour = SplatmapMix(UV_coords_ParcelBlock * 8.0f, TerrainBlendTexture, GroundDetailTexture, SandDetailTexture, 1);
+    const half4 terrainColour = SplatmapMix(UV_coords_ParcelBlock * fSplatMapTiling, TerrainBlendTexture, GroundDetailTexture, SandDetailTexture, nMetrePerGrid>>1);
 
     if (terrainColour.g > 0.1f)
     {
@@ -79,20 +92,17 @@ void CatTailScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, 
     }
     else
     {
-        uint perPlotCount = ceil(64.0f / foundCount);
-        int2 currentGridPosition = gridPositions[floor(localId.x / perPlotCount)];
+        const uint perPlotCount = ceil((float)nThreads / foundCount);
+        const int2 currentGridPosition = gridPositions[floor(localId.x / perPlotCount)];
 
-        half random_X = hash_int_to_float(currentGridPosition + localId.x) * 2.0f;
-        half random_Z = hash_int_to_float(-currentGridPosition + localId.x) * 2.0f;
-        float2 worldSpaceCoord = corner0 + currentGridPosition + float2(random_X, random_Z);
-        float2 UV_coords = (worldSpaceCoord + 4096.0f) / 8192.0f;
-
-        // Check occupancy
-        float fDistanceFieldScale = 16.0f;
+        const half random_X = hash_int_to_float(currentGridPosition + localId.x) * nMetrePerGrid;
+        const half random_Z = hash_int_to_float(-currentGridPosition + localId.x) * nMetrePerGrid;
+        const float2 worldSpaceCoord = corner0 + currentGridPosition + float2(random_X, random_Z);
+        const float2 UV_coords = (worldSpaceCoord + (nHeightMapSize/2.0f)) / nHeightMapSize;
 
         // Get Height
-        float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
-        float fScale = 1.0f + hash_int_to_float(currentGridPosition + localId.x);
+        const float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
+        const float fScale = 1.0f + hash_int_to_float(currentGridPosition + localId.x);
         const float3 normalWS = CalculateNormalFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
 
         perInst.position = float4(currentGridPosition.x + random_X, height, currentGridPosition.y + random_Z, fScale);

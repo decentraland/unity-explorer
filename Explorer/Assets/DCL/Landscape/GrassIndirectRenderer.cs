@@ -408,6 +408,8 @@ namespace Decentraland.Terrain
             var GroundDetailTextureSize = new int2(2048, 2048);
             var SandDetailTextureSize = new int2(1024, 1024);
 
+            ScatterCatTailsShader.EnableKeyword("THREADS_16");
+            ScatterCatTailsShader.SetInt("nThreads", 16);
             ScatterCatTailsShader.SetVector("TerrainBounds", terrainBounds);
             ScatterCatTailsShader.SetFloat("TerrainHeight", 4.0f);
             ScatterCatTailsShader.SetInts("HeightTextureSize", HeightTextureSize[0]);
@@ -416,6 +418,9 @@ namespace Decentraland.Terrain
             ScatterCatTailsShader.SetInts("GroundDetailTextureSize", GroundDetailTextureSize[0]);
             ScatterCatTailsShader.SetInts("SandDetailTextureSize", SandDetailTextureSize[0]);
             ScatterCatTailsShader.SetInt("parcelSize", 16);
+            ScatterCatTailsShader.SetFloat("fDistanceFieldScale", 16.0f);
+            ScatterCatTailsShader.SetFloat("nHeightMapSize", 8192.0f);
+            ScatterCatTailsShader.SetFloat("fSplatMapTiling", 8.0f);
             ScatterCatTailsShader.SetTexture(kernelIndex, "HeightMapTexture", HeightMapTexture);
             ScatterCatTailsShader.SetTexture(kernelIndex, "TerrainBlendTexture", TerrainBlendTexture);
             ScatterCatTailsShader.SetTexture(kernelIndex, "GroundDetailTexture", GroundDetailTexture);
@@ -498,7 +503,7 @@ namespace Decentraland.Terrain
 
             renderParams.matProps = new MaterialPropertyBlock();
             renderParams.matProps.SetBuffer("_PerParcelBuffer", visibleParcelsComputeBuffer);
-            renderParams.matProps.SetFloat("_batchingBlockSize", 64);
+            renderParams.matProps.SetFloat("_batchingBlockSize", 64.0f);
             renderParams.shadowCastingMode = ShadowCastingMode.Off;
 
             renderParams.material = flower0Material;
@@ -511,6 +516,7 @@ namespace Decentraland.Terrain
 
             renderParams.material = flower2Material;
             renderParams.matProps.SetBuffer("_PerInstanceBuffer", flower2InstancesComputeBuffer);
+            renderParams.matProps.SetFloat("_batchingBlockSize", 16.0f);
             Graphics.RenderMeshIndirect(renderParams, flower2Mesh, flower2DrawArgs);
         }
 
