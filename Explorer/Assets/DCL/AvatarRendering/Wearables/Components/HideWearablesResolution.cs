@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using static DCL.AvatarRendering.Wearables.Helpers.WearableComponentsUtils;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
@@ -18,6 +20,15 @@ namespace DCL.AvatarRendering.Wearables.Components
             ForceRender = forceRender;
             VisibleWearables = null;
             HiddenCategories = null;
+        }
+
+        public void Release()
+        {
+            if (VisibleWearables != null)
+                WEARABLES_POOL.Release(VisibleWearables);
+
+            if (HiddenCategories != null)
+                CATEGORIES_POOL.Release(HiddenCategories);
         }
     }
 }

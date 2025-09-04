@@ -14,22 +14,20 @@ namespace DCL.Browser.DecentralandUrls
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly ILaunchMode launchMode;
-
-        public string DecentralandDomain { get; }
-        public DecentralandEnvironment Environment { get; }
+        private readonly string DecentralandDomain;
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
-            Environment = environment;
             DecentralandDomain = environment.ToString()!.ToLower();
             this.launchMode = launchMode;
 
             if (environment == DecentralandEnvironment.Today)
             {
-                //The today environemnt is a mixture of the org and today enviroments.
-                //We want to fetch pointers from org, but asset bundles from today. To achieve this, we fill the cache with `.today` for those two urls and then go back to org.
-                //Also, we override the content and lambdas url to a dedicate testing catalyst.
-                //Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
+                // The today environemnt is a mixture of the org and today enviroments.
+                // Asset delivery (registry and S3) are used with the `.today` extension
+                // Content and lambdas url are hardcoded to a particular catalyst
+                // All of the remaining urls should use the `Org` domain, thats why we change the domain to forcefully `.org`
+                // Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
                 Url(DecentralandUrl.AssetBundleRegistry);
                 Url(DecentralandUrl.AssetBundlesCDN);
                 CONTENT_URL_OVERRIDE = "https://peer-testing.decentraland.org/content/";
@@ -62,9 +60,6 @@ namespace DCL.Browser.DecentralandUrls
                 LaunchMode.LocalSceneDevelopment => "localhost", //TODO should this behaviour be extracted to Url() call?
                 _ => throw new ArgumentOutOfRangeException()
             };
-
-        public bool RequiresAboutOverride() =>
-            Environment == DecentralandEnvironment.Today;
 
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
