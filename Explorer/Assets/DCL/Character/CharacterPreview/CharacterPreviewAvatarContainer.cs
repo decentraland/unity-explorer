@@ -123,21 +123,20 @@ namespace DCL.CharacterPreview
                 if (rotationInertia <= 0f)
                 {
                     angularVelocity = 0f;
+                    return;
                 }
+
+                // Linear deceleration: higher inertia = faster deceleration
+                float decelerationRate = rotationInertia * ANGULAR_VELOCITY_DECELERATION_COEFF * Time.deltaTime;
+                float velocitySign = Mathf.Sign(angularVelocity);
+                float velocityMagnitude = Mathf.Abs(angularVelocity);
+
+                velocityMagnitude -= decelerationRate;
+
+                if (velocityMagnitude <= 0f)
+                    angularVelocity = 0f;
                 else
-                {
-                    // Linear deceleration: higher inertia = faster deceleration
-                    float decelerationRate = rotationInertia * ANGULAR_VELOCITY_DECELERATION_COEFF * Time.deltaTime;
-                    float velocitySign = Mathf.Sign(angularVelocity);
-                    float velocityMagnitude = Mathf.Abs(angularVelocity);
-
-                    velocityMagnitude -= decelerationRate;
-
-                    if (velocityMagnitude <= 0f)
-                        angularVelocity = 0f;
-                    else
-                        angularVelocity = velocitySign * velocityMagnitude;
-                }
+                    angularVelocity = velocitySign * velocityMagnitude;
             }
 
             // Apply rotation if there's any angular velocity
