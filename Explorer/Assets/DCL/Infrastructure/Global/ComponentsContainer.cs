@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Pool;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace Global
@@ -135,7 +134,17 @@ namespace Global
                .Add(SDKComponentBuilder<PBMainCamera>.Create(ComponentID.MAIN_CAMERA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBVirtualCamera>.Create(ComponentID.VIRTUAL_CAMERA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBLightSource>.Create(ComponentID.LIGHT_SOURCE).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBPrimaryPointerInfo>.Create(ComponentID.PRIMARY_POINTER_INFO).AsProtobufResult())
+               .Add(SDKComponentBuilder<PBPrimaryPointerInfo>
+                   .Create(ComponentID.PRIMARY_POINTER_INFO)
+                   .WithProtobufSerializer()
+                   .WithPool(
+                        (pbe) =>
+                        {
+                            pbe.Initialize();
+                        }
+                        )
+                       .AsResult()
+                   .Build())
                .Add(SDKComponentBuilder<PBSkyboxTime>.Create(ComponentID.SKYBOX_TIME).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBGltfNodeModifiers>.Create(ComponentID.GLTF_NODE_MODIFIERS).AsProtobufComponent());
 

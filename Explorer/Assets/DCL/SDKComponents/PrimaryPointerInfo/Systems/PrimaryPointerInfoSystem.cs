@@ -25,6 +25,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private Vector2 previousPosition = Vector2.zero;
         private Vector2 deltaPos;
+        private Vector3 worldRayDirection;
         private Camera cachedCamera;
         private readonly ISceneStateProvider sceneStateProvider;
 
@@ -48,6 +49,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
             inputPoint = DCLInput.Instance.Camera.Point;
 
+            worldRayDirection = new Vector3();
+
             UpdatePointerInfo(Vector2.zero);
         }
 
@@ -65,17 +68,18 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
             var ray = cachedCamera.ScreenPointToRay(pointerPos);
 
-            var worldRayDirection = new Vector3
-            {
-                X = ray.direction.x,
-                Y = ray.direction.y,
-                Z = ray.direction.z,
-            };
+            worldRayDirection.X = ray.direction.x;
+            worldRayDirection.Y = ray.direction.y;
+            worldRayDirection.Z = ray.direction.z;
 
             ecsToCRDTWriter.PutMessage<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, Vector3 rayDir)>(static (component, data) =>
             {
-                component.ScreenCoordinates = new Decentraland.Common.Vector2 { X = data.pos.x, Y = data.pos.y };
-                component.ScreenDelta = new Decentraland.Common.Vector2 { X = data.delta.x, Y = data.delta.y };
+                component.ScreenCoordinates.X = data.pos.x;
+                component.ScreenCoordinates.Y = data.pos.y;
+
+                component.ScreenDelta.X = data.delta.x;
+                component.ScreenDelta.Y = data.delta.y;
+
                 component.WorldRayDirection = data.rayDir;
             }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (pointerPos, deltaPos, worldRayDirection));
         }
