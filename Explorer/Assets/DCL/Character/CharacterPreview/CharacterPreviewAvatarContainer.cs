@@ -15,7 +15,12 @@ namespace DCL.CharacterPreview
     {
         private const float DRAG_TIMEOUT = 0.1f;
         private const float ANGULAR_VELOCITY_DECELERATION_COEFF = 900f;
-        private const float FOV_SPEED_COEFF = 300f;
+        private const float FOV_SPEED_COEFF = 3.5f;
+        private const float FOV_SMOOTH_TIME = 0.6f;
+
+        private float fovTransitionStartTime;
+        private float fovTransitionStartValue;
+        private bool isFOVTransitioning;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -41,11 +46,18 @@ namespace DCL.CharacterPreview
         {
             transform.position = position;
             camera.targetTexture = targetTexture;
+
+            // Rotation
             rotationTarget.rotation = Quaternion.identity;
             AngularVelocity = 0f;
             IsDragging = false;
             LastDragTime = 0f;
-            TargetFOV = freeLookCamera.m_Lens.FieldOfView; // Initialize target FOV to current FOV
+
+            // FOV
+            TargetFOV = freeLookCamera.m_Lens.FieldOfView;
+            fovTransitionStartTime = Time.time;
+            fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
+            isFOVTransitioning = false;
 
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
 
@@ -63,8 +75,15 @@ namespace DCL.CharacterPreview
             if (cameraTarget != null)
                 cameraTarget.localPosition = preset.verticalPosition;
 
-            // Use framerate-independent interpolation instead of tween
-            TargetFOV = preset.cameraFieldOfView;
+            StartFOVTransition(preset.cameraFieldOfView);
+        }
+
+        public void StartFOVTransition(float targetFOV)
+        {
+            TargetFOV = targetFOV;
+            fovTransitionStartTime = Time.time;
+            fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
+            isFOVTransitioning = true;
         }
 
         public void SetPreviewPlatformActive(bool isActive) =>
@@ -78,7 +97,7 @@ namespace DCL.CharacterPreview
 
         private void UpdateRotation()
         {
-            // Check if dragging has timed out (no drag input for DRAG_TIMEOUT seconds)
+            // Check if dragging has timed out
             if (IsDragging && Time.time - LastDragTime > DRAG_TIMEOUT)
                 IsDragging = false;
 
@@ -91,7 +110,7 @@ namespace DCL.CharacterPreview
                     return;
                 }
 
-                // Linear deceleration: higher inertia = faster deceleration
+                // Deceleration, higher inertia = faster deceleration
                 float decelerationRate = RotationInertia * ANGULAR_VELOCITY_DECELERATION_COEFF * Time.deltaTime;
                 float velocitySign = Mathf.Sign(AngularVelocity);
                 float velocityMagnitude = Mathf.Abs(AngularVelocity);
@@ -122,20 +141,51 @@ namespace DCL.CharacterPreview
 
             // Early return if already at target
             if (Mathf.Abs(currentFOV - TargetFOV) <= 0.01f)
+            {
+                isFOVTransitioning = false;
                 return;
+            }
 
-            // Framerate-independent interpolation using MoveTowards
-            float newFOV = Mathf.MoveTowards(currentFOV, TargetFOV, FOV_SPEED_COEFF * Time.deltaTime);
+            float newFOV;
+
+            if (isFOVTransitioning)
+            {
+                // Smooth transition for category changes
+                float elapsedTime = Time.time - fovTransitionStartTime;
+                float normalizedTime = Mathf.Clamp01(elapsedTime / FOV_SMOOTH_TIME);
+
+                float easedTime = Mathf.SmoothStep(0f, 1f, normalizedTime);
+                newFOV = Mathf.Lerp(fovTransitionStartValue, TargetFOV, easedTime);
+
+                if (normalizedTime >= 1f)
+                {
+                    isFOVTransitioning = false;
+                    newFOV = TargetFOV;
+                }
+            }
+            else
+            {
+                // Smooth interpolation for scroll input
+                float t = 1f - Mathf.Exp(-FOV_SPEED_COEFF * Time.deltaTime);
+                newFOV = Mathf.Lerp(currentFOV, TargetFOV, t);
+            }
+
             freeLookCamera.m_Lens.FieldOfView = newFOV;
         }
 
         public void ResetAvatarMovement()
         {
+            // Reset rotation
             rotationTarget.rotation = Quaternion.identity;
             AngularVelocity = 0f;
             IsDragging = false;
             LastDragTime = 0f;
-            TargetFOV = freeLookCamera.m_Lens.FieldOfView; // Reset target FOV to current FOV
+
+            // Reset FOV
+            TargetFOV = freeLookCamera.m_Lens.FieldOfView;
+            fovTransitionStartTime = Time.time;
+            fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
+            isFOVTransitioning = false;
         }
     }
 

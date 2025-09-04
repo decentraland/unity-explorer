@@ -70,18 +70,7 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.dragEnabled) return;
 
-                    if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
-                    {
-                        Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
-                        float dragModifier = Time.deltaTime * cameraSettings.dragMovementModifier;
-
-                        position.y -= pointerEventData.delta.y * dragModifier;
-
-                        if (position.y < cameraSettings.minVerticalOffset) position.y = cameraSettings.minVerticalOffset;
-                        else if (position.y > cameraSettings.maxVerticalOffset) position.y = cameraSettings.maxVerticalOffset;
-
-                        characterPreviewAvatarContainer.cameraTarget.localPosition = position;
-                    }
+                    CalculateCameraTargetPosition(pointerEventData);
 
                     break;
                 }
@@ -101,9 +90,11 @@ namespace DCL.CharacterPreview
             float currentFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
             float originalFieldOfView = currentFieldOfView;
 
-            // Framerate-independent scroll calculation using Time.deltaTime
-            float scrollDelta = pointerEventData.scrollDelta.y * cameraSettings.scrollModifier * Time.deltaTime;
-            float newFieldOfView = currentFieldOfView - scrollDelta;
+            float scrollDelta = pointerEventData.scrollDelta.y * cameraSettings.scrollModifier;
+            float scrollMagnitude = Mathf.Abs(scrollDelta);
+            float scaledScrollDelta = Mathf.Sign(scrollDelta) * Mathf.Pow(scrollMagnitude, 0.7f);
+
+            float newFieldOfView = currentFieldOfView - scaledScrollDelta;
 
             // Clamp to limits
             if (newFieldOfView < cameraSettings.fieldOfViewLimits.y) newFieldOfView = cameraSettings.fieldOfViewLimits.y;
@@ -126,8 +117,23 @@ namespace DCL.CharacterPreview
                 characterPreviewAvatarContainer.cameraTarget.localPosition = position;
             }
 
-            // Set target FOV for framerate-independent interpolation
             characterPreviewAvatarContainer.TargetFOV = newFieldOfView;
+        }
+
+        private void CalculateCameraTargetPosition(PointerEventData pointerEventData)
+        {
+            if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
+            {
+                Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
+                float dragModifier = Time.deltaTime * cameraSettings.dragMovementModifier;
+
+                position.y -= pointerEventData.delta.y * dragModifier;
+
+                if (position.y < cameraSettings.minVerticalOffset) position.y = cameraSettings.minVerticalOffset;
+                else if (position.y > cameraSettings.maxVerticalOffset) position.y = cameraSettings.maxVerticalOffset;
+
+                characterPreviewAvatarContainer.cameraTarget.localPosition = position;
+            }
         }
 
         private void CalculateAngularVelocity(PointerEventData pointerEventData)
@@ -143,12 +149,12 @@ namespace DCL.CharacterPreview
 
             if (cameraSettings.rotationInertia <= 0f)
             {
-                // No inertia - instant response
+                // No inertia, instant response
                 angularVelocity = targetVelocity;
             }
             else
             {
-                // Linear acceleration: higher inertia = slower acceleration
+                // Acceleration, higher inertia = slower acceleration
                 float accelerationRate = (1f / cameraSettings.rotationInertia) * Time.deltaTime;
                 angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, accelerationRate);
             }
