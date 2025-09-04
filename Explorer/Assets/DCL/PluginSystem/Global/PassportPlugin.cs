@@ -9,6 +9,7 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.EventBus;
+using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Input;
@@ -32,6 +33,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -76,6 +78,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly ISystemClipboard systemClipboard;
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
 
@@ -120,6 +123,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             GalleryEventBus galleryEventBus,
+            ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -159,6 +163,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.galleryEventBus = galleryEventBus;
+            this.systemClipboard = systemClipboard;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
         }
@@ -228,6 +233,8 @@ namespace DCL.PluginSystem.Global
                 voiceChatCallStatusService,
                 passport3DPreviewCamera,
                 galleryEventBus,
+                systemClipboard,
+                passportSettings.CameraReelGalleryMessages,
                 communitiesDataProvider
             );
 
@@ -273,6 +280,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceGameObject NameEditorPrefab;
+
+            [field: SerializeField]
+            public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }
         }
     }
 }

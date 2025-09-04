@@ -53,7 +53,6 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -62,7 +61,6 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
         private CancellationTokenSource? referralNotificationCts;
         private CancellationTokenSource checkForCommunitiesFeatureCts;
-        private bool? pendingSkyboxInteractableState;
 
         public event Action? HelpOpened;
 
@@ -86,7 +84,6 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrlsSource)
             : base(viewFactory)
         {
@@ -106,8 +103,6 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            this.sceneRestrictionBusController = sceneRestrictionBusController;
-            this.sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
@@ -117,7 +112,6 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
-            sceneRestrictionBusController?.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
@@ -145,6 +139,7 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
+            viewInstance.skyboxButton.interactable = true;
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
@@ -166,6 +161,7 @@ namespace DCL.UI.Sidebar
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
+
             //chatView.FoldingChanged += OnChatViewFoldingChanged;
 
             mvcManager.RegisterController(skyboxMenuController);
@@ -181,33 +177,10 @@ namespace DCL.UI.Sidebar
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
 
-            if (pendingSkyboxInteractableState.HasValue)
-            {
-                viewInstance.skyboxButton.interactable = pendingSkyboxInteractableState.Value;
-                pendingSkyboxInteractableState = null;
-            }
-
             checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
             CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
 
             OnChatViewFoldingChanged(true);
-        }
-
-        private void OnSceneRestrictionChanged(SceneRestriction restriction)
-        {
-            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_UI_BLOCKED)
-            {
-                bool isRestricted = restriction.Action == SceneRestrictionsAction.APPLIED;
-                if (viewInstance)
-                {
-                    if (isRestricted)
-                        skyboxMenuController.HideViewAsync(CancellationToken.None).Forget();
-
-                    viewInstance.skyboxButton.interactable = !isRestricted;
-                }
-                else
-                    pendingSkyboxInteractableState = !isRestricted;
-            }
         }
 
         private void OnReferralNewTierNotificationClicked(object[] parameters)
@@ -314,6 +287,7 @@ namespace DCL.UI.Sidebar
 
             await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
             var ownProfile = await selfProfile.ProfileAsync(ct);
+
             if (ownProfile == null)
                 return;
 
@@ -323,6 +297,7 @@ namespace DCL.UI.Sidebar
                 ct);
 
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
+
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
         }
@@ -334,8 +309,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
-        #region Sidebar button handlers
-
+#region Sidebar button handlers
         private void OnUnreadMessagesButtonClicked()
         {
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
@@ -412,7 +386,6 @@ namespace DCL.UI.Sidebar
             // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
         }
-
-        #endregion
+#endregion
     }
 }

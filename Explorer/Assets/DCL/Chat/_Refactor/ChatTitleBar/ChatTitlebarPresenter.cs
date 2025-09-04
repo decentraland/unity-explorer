@@ -12,6 +12,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
@@ -19,6 +20,7 @@ using DCL.Settings.Settings;
 using DCL.UI.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -33,6 +35,7 @@ namespace DCL.Chat
         private readonly IEventBus eventBus;
         private readonly CommunityDataService communityDataService;
         private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
+        private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
         private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
         private readonly CurrentChannelService currentChannelService;
         private readonly ChatContextMenuService chatContextMenuService;
@@ -40,6 +43,7 @@ namespace DCL.Chat
         private readonly CancellationTokenSource lifeCts = new ();
         private readonly EventSubscriptionScope scope = new ();
         private CancellationTokenSource profileLoadCts = new ();
+        private CancellationTokenSource thumbCts = new();    
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
         private ChatTitlebarViewModel? currentViewModel;
@@ -56,6 +60,7 @@ namespace DCL.Chat
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
             GetTitlebarViewModelCommand getTitlebarViewModel,
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
             DeleteChatHistoryCommand deleteChatHistoryCommand)
         {
             this.view = view;
@@ -66,6 +71,7 @@ namespace DCL.Chat
             this.currentChannelService = currentChannelService;
             this.chatContextMenuService = chatContextMenuService;
             this.getTitlebarViewModel = getTitlebarViewModel;
+            this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
             this.deleteChatHistoryCommand = deleteChatHistoryCommand;
 
             view.Initialize();
@@ -75,6 +81,7 @@ namespace DCL.Chat
             view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
             view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
 
+            communityDataService.CommunityMetadataUpdated += CommunityMetadataUpdated;
             chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
@@ -95,9 +102,27 @@ namespace DCL.Chat
             InitializeChannelContextMenu();
         }
 
+        private void CommunityMetadataUpdated(CommunityMetadataUpdatedEvent evt)
+        {
+            // Only care if we’re viewing a Community channel and it matches
+            if (currentViewModel == null || currentViewModel.ViewMode != TitlebarViewMode.Community)
+                return;
+
+            if (communityDataService.TryGetCommunity(evt.ChannelId, out var cd))
+            {
+                currentViewModel.Username = cd.name;
+                view.defaultTitlebarView.Setup(currentViewModel);
+                view.membersTitlebarView.SetChannelName(currentViewModel);
+
+                if (cd.thumbnails?.raw != null)
+                    RefreshTitlebarCommunityThumbnailAsync(cd.thumbnails?.raw).Forget();
+            }
+        }
+
         private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)
         {
             profileLoadCts.SafeCancelAndDispose();
+            thumbCts.SafeCancelAndDispose();
             currentViewModel = null;
             view.defaultTitlebarView.Setup(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
             view.membersTitlebarView.SetChannelName(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
@@ -211,11 +236,41 @@ namespace DCL.Chat
             eventBus.Publish(new ChatEvents.ToggleMembersEvent());
         }
 
+
+        private async UniTaskVoid RefreshTitlebarCommunityThumbnailAsync(string? imageUrl)
+        {
+            thumbCts = thumbCts.SafeRestart();
+            var ct = thumbCts.Token;
+
+            if (currentViewModel == null) return;
+
+            if (string.IsNullOrEmpty(imageUrl))
+            {
+                // Optional: clear or set default
+                currentViewModel.SetThumbnail(ProfileThumbnailViewModel.ReadyToLoad());
+                return;
+            }
+
+            var sprite = await getCommunityThumbnailCommand.ExecuteAsync(imageUrl, ct);
+            if (ct.IsCancellationRequested) return;
+
+            // Fallback to your default image if sprite is null
+            var loaded = sprite != null
+                ? ProfileThumbnailViewModel.FromLoaded(sprite, true)
+                : ProfileThumbnailViewModel.ReadyToLoad(); // or build with your default sprite
+
+            currentViewModel.SetThumbnail(loaded);
+
+            // If your view is fully reactive on Thumbnail, no need to call Setup again.
+            // If not, uncomment the next line:
+            // view.defaultTitlebarView.Setup(currentViewModel);
+        }
+        
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
             LoadTitlebarDataAsync(evt.Channel).Forget();
         }
-
+        
         private async UniTaskVoid LoadTitlebarDataAsync(ChatChannel channel)
         {
             profileLoadCts = profileLoadCts.SafeRestart();

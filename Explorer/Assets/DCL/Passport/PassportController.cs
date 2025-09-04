@@ -7,6 +7,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -48,6 +49,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.UI.GenericContextMenu.Controllers.Communities;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -117,6 +119,8 @@ namespace DCL.Passport
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
         private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -198,6 +202,8 @@ namespace DCL.Passport
             IVoiceChatCallStatusService voiceChatCallStatusService,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
             GalleryEventBus galleryEventBus,
+            ISystemClipboard systemClipboard,
+            CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
             CommunitiesDataProvider communitiesDataProvider) : base(viewFactory)
         {
             this.cursor = cursor;
@@ -239,6 +245,8 @@ namespace DCL.Passport
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.galleryEventBus = galleryEventBus;
+            this.systemClipboard = systemClipboard;
+            this.cameraReelGalleryMessagesConfiguration = cameraReelGalleryMessagesConfiguration;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
 
@@ -324,10 +332,18 @@ namespace DCL.Passport
                     gridLayoutFixedColumnCount,
                     thumbnailHeight,
                     thumbnailWidth,
-                    false,
-                    false),
-                false,
-                galleryEventBus);
+                    gridShowMonth: false,
+                    groupByMonth: false,
+                    enableDeleteContextOption: false,
+                    hideReelOnPrivateSet: true),
+                useSignedRequest: false,
+                galleryEventBus,
+                viewInstance.CameraReelGalleryContextMenuView,
+                webBrowser,
+                decentralandUrlsSource,
+                systemClipboard,
+                cameraReelGalleryMessagesConfiguration,
+                mvcManager);
 
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             badgesPassportModules.Add(badgesDetailsPassportModuleController);
@@ -611,7 +627,8 @@ namespace DCL.Passport
             photoLoadingCts = photoLoadingCts.SafeRestart();
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
 
-            cameraReelGalleryController!.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
+            cameraReelGalleryController!.TryEnableContextMenuButton(isOwnProfile);
+            cameraReelGalleryController.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
 
             currentSection = PassportSection.PHOTOS;
             viewInstance!.OpenSection(currentSection);

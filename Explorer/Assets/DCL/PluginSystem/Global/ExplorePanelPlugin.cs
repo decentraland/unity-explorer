@@ -19,7 +19,6 @@ using DCL.Input;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -40,16 +39,14 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
-using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
-using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
-using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
@@ -412,7 +409,7 @@ namespace DCL.PluginSystem.Global
                     galleryEventBus,
                     cameraReelView.CameraReelOptionsButton,
                     webBrowser, decentralandUrlsSource, systemClipboard,
-                    new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
+                    settings.CameraReelGalleryMessages,
                     mvcManager),
                 cameraReelStorageService,
                 web3IdentityCache,
@@ -557,15 +554,8 @@ namespace DCL.PluginSystem.Global
             [field: Header("Camera Reel")]
             [field: SerializeField]
             [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]
-            public string CameraReelGalleryShareToXMessage { get; private set; }
-            [field: SerializeField]
-            public string PhotoSuccessfullyUpdatedMessage { get; private set; }
-            [field: SerializeField]
-            public string PhotoSuccessfullyDeletedMessage { get; private set; }
-            [field: SerializeField]
-            public string PhotoSuccessfullyDownloadedMessage { get; private set; }
-            [field: SerializeField]
-            public string LinkCopiedMessage { get; private set; }
+            public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }
+
             [field: SerializeField]
             public string StorageProgressBarText { get; private set; }
 
