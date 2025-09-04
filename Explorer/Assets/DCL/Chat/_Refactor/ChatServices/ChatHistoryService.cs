@@ -5,6 +5,7 @@ using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using System;
 using System.Runtime.CompilerServices;
+using DCL.Translation.Service;
 
 namespace DCL.Chat.ChatServices
 {
@@ -17,15 +18,22 @@ namespace DCL.Chat.ChatServices
         private readonly IChatHistory chatHistory;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatConfig.ChatConfig chatConfig;
+        private readonly ITranslationService translationService;
         private readonly ChatSettingsAsset chatSettings;
 
-        public ChatHistoryService(IChatMessagesBus chatMessagesBus, IChatHistory chatHistory, ITextFormatter hyperlinkTextFormatter, ChatConfig.ChatConfig chatConfig, ChatSettingsAsset chatSettings)
+        public ChatHistoryService(IChatMessagesBus chatMessagesBus,
+            IChatHistory chatHistory,
+            ITextFormatter hyperlinkTextFormatter,
+            ChatConfig.ChatConfig chatConfig,
+            ChatSettingsAsset chatSettings,
+            ITranslationService translationService)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.chatConfig = chatConfig;
             this.chatSettings = chatSettings;
             this.chatHistory = chatHistory;
+            this.translationService = translationService;
 
             chatMessagesBus.MessageAdded += OnChatMessageAdded;
         }
@@ -42,17 +50,20 @@ namespace DCL.Chat.ChatServices
             if (type == ChatChannel.ChatChannelType.COMMUNITY && !chatHistory.Channels.ContainsKey(channel))
                 return;
 
+            var messageToAdd = message;
             if (!message.IsSystemMessage && !IsCopyOfSystemMessage(message.Message))
             {
                 string formattedText = hyperlinkTextFormatter.FormatText(message.Message);
-                var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, message);
-                chatHistory.AddMessage(channel, type, newChatMessage);
+                messageToAdd = ChatMessage.CopyWithNewMessage(formattedText, message);
             }
-            else
 
-                // The system message is formatted apriori
-                chatHistory.AddMessage(channel, type, message);
+            chatHistory.AddMessage(channel, type, messageToAdd);
 
+            if (!messageToAdd.IsSystemMessage)
+            {
+                translationService.ProcessIncomingMessage(messageToAdd);
+            }
+            
             HandleMessageAudioFeedback(message, channel);
         }
 

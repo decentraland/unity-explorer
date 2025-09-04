@@ -15,6 +15,7 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
+using DCL.Translation.Service.Memory;
 using DCL.Translation.Settings;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine.InputSystem;
@@ -41,6 +42,7 @@ namespace DCL.Chat
         private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ITranslationSettings translationSettings;
+        private readonly ITranslationMemory translationMemory;
         private readonly ChatClickDetectionService chatClickDetectionService;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
@@ -66,8 +68,9 @@ namespace DCL.Chat
             ProfileRepositoryWrapper profileRepositoryWrapper,
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
-            ITranslationSettings translationSettings,
             CommunityDataService communityDataService,
+            ITranslationSettings translationSettings,
+            ITranslationMemory translationMemory,
             ChatClickDetectionService chatClickDetectionService) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
@@ -84,6 +87,7 @@ namespace DCL.Chat
             this.chatContextMenuService = chatContextMenuService;
             this.translationSettings = translationSettings;
             this.communityDataService = communityDataService;
+            this.translationMemory = translationMemory;
             this.chatClickDetectionService = chatClickDetectionService;
         }
 
@@ -133,6 +137,7 @@ namespace DCL.Chat
                 chatHistory,
                 currentChannelService,
                 chatContextMenuService,
+                translationMemory,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,
                 commandRegistry.MarkMessagesAsRead);

@@ -38,6 +38,6 @@ MonoBehaviour:
   ForceEnableTranslations: 0
   DefaultLanguage: 1
   <TranslationMaxRetries>k__BackingField: 1
-  <TranslationTimeoutSeconds>k__BackingField: 3
+  <TranslationTimeoutSeconds>k__BackingField: 12
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}

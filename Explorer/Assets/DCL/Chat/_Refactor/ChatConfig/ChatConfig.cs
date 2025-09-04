@@ -88,7 +88,7 @@ namespace DCL.Chat.ChatConfig
         [field: SerializeField] public bool ForceEnableTranslations = true;
         [field: SerializeField] public LanguageCode DefaultLanguage = LanguageCode.ES;
         [field: SerializeField] public int TranslationMaxRetries { get; set; } = 1;
-        [field: SerializeField] public float TranslationTimeoutSeconds { get; set; } = 3.0f;
+        [field: SerializeField] public float TranslationTimeoutSeconds { get; set; } = 10.0f;
         
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }

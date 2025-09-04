@@ -40,7 +40,7 @@ namespace DCL.Translation.Service
 
         public void ProcessIncomingMessage(ChatMessage message)
         {
-            if (!policy.ShouldAutoTranslate(message, message.MessageId, settings.PreferredLanguage))
+            if (!policy.ShouldAutoTranslate(message, message.SenderWalletAddress, settings.PreferredLanguage))
             {
                 // We don't even need to store it; the default is no translation.
                 return;
@@ -58,7 +58,7 @@ namespace DCL.Translation.Service
                 MessageId = message.MessageId
             });
 
-            TranslateInternalAsync("", CancellationToken.None).Forget();
+            TranslateInternalAsync(message.MessageId, CancellationToken.None).Forget();
         }
 
         public UniTask TranslateManualAsync(string messageId, CancellationToken ct)
@@ -98,13 +98,20 @@ namespace DCL.Translation.Service
                 return;
             }
 
+            CancellationTokenSource timeoutCts = null;
             try
             {
-                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                // 1. Create the CTS without a 'using' statement.
+                // We link it to the incoming cancellation token.
+                timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+                // 2. Schedule the timeout.
                 timeoutCts.CancelAfterSlim(TimeSpan.FromSeconds(settings.TranslationTimeoutSeconds));
 
+                // 3. Await the translation using the new token.
                 var result = await provider.TranslateAsync(translation.OriginalBody, LanguageCode.AutoDetect, targetLang, timeoutCts.Token);
 
+                // 4. Process success.
                 cache.Set(messageId, targetLang, result);
                 translationMemory.SetTranslatedResult(messageId, result);
                 eventBus.Publish(new TranslationEvents.MessageTranslated
@@ -112,13 +119,30 @@ namespace DCL.Translation.Service
                     MessageId = messageId
                 });
             }
+            catch (OperationCanceledException)
+            {
+                // This will be caught if our timeout is triggered OR if the parent 'ct' is canceled.
+                // It's a "normal" failure, not a critical error.
+                translationMemory.UpdateState(messageId, TranslationState.Failed);
+                eventBus.Publish(new TranslationEvents.MessageTranslationFailed
+                {
+                    MessageId = messageId, Error = "Translation timed out."
+                });
+            }
             catch (Exception ex)
             {
+                // This catches other errors, like the mock provider's simulated failure.
                 translationMemory.UpdateState(messageId, TranslationState.Failed);
                 eventBus.Publish(new TranslationEvents.MessageTranslationFailed
                 {
                     MessageId = messageId, Error = ex.Message
                 });
+            }
+            finally
+            {
+                // 5. CRUCIAL: Always dispose of the CTS when we are done.
+                // The 'finally' block guarantees this runs, preventing memory leaks.
+                timeoutCts?.Dispose();
             }
         }
     }

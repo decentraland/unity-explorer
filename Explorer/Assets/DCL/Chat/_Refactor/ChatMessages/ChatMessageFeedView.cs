@@ -102,6 +102,29 @@ namespace DCL.Chat.ChatMessages
             loopList.RefreshAllShownItem();
         }
 
+        public void RefreshItem(int viewModelIndex)
+        {
+            RefreshVisibleElements();
+
+            // // SuperScrollView uses a different index (it includes padding)
+            // int viewIndex = ModelToViewIndex(viewModelIndex);
+            //
+            // // Get the visible item if it exists
+            // LoopListViewItem2 item = loopList.GetShownItemByItemIndex(viewIndex);
+            //
+            // if (item != null)
+            // {
+            //     // If the item is currently visible, just re-run the setup logic on it.
+            //     var itemScript = item.GetComponent<ChatEntryView>();
+            //     var viewModel = viewModels[viewModelIndex];
+            //     itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, /*...*/);
+            // }
+            //
+            // // CRUCIAL: Tell SuperScrollView that the size of this item may have changed.
+            // // It will automatically recalculate the layout and adjust the scroll position.
+            // loopList.SetItemSize(viewIndex, -1); // -1 means "use default prefab size" which forces recalculation.
+        }
+
         /// <summary>
         ///     Reconstructs the scroll view with the data source that was previously set.
         /// </summary>

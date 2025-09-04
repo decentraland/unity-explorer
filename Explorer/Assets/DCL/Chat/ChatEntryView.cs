@@ -4,6 +4,7 @@ using DG.Tweening;
 using System;
 using System.Globalization;
 using DCL.Chat.ChatViewModels;
+using DCL.Translation.Models;
 using DCL.Utilities;
 using TMPro;
 using UnityEngine;
@@ -41,6 +42,7 @@ namespace DCL.Chat
         private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel.WithColor>? profileSubscription;
 
         private ChatMessage chatMessage;
+        private ChatMessageViewModel currentViewModel;
         private readonly Vector3[] cornersCache = new Vector3[4];
 
         private void Awake()
@@ -84,8 +86,17 @@ namespace DCL.Chat
 
         public void SetItemData(ChatMessageViewModel viewModel, Action<string, ChatEntryView> onMessageContextMenuClicked, ChatEntryClickedDelegate? onProfileContextMenuClicked)
         {
-            SetItemData(viewModel.Message, viewModel.ShowDateDivider);
+            currentViewModel = viewModel;
+            chatMessage = viewModel.Message;
+            usernameElement.SetUsername(chatMessage.SenderValidatedName, chatMessage.SenderWalletId);
+            messageBubbleElement.SetMessageData(viewModel.DisplayText, chatMessage);
 
+            dateDividerElement.gameObject.SetActive(viewModel.ShowDateDivider);
+            if (viewModel.ShowDateDivider)
+                dateDividerText.text = GetDateRepresentation(chatMessage.SentTimestamp!.Value.Date);
+
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+            
             this.onMessageContextMenuClicked = onMessageContextMenuClicked;
             ChatEntryClicked = onProfileContextMenuClicked;
 
@@ -97,7 +108,17 @@ namespace DCL.Chat
 
             profileSubscription?.Dispose();
             profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
+
+            // RenderTranslationState(viewModel.TranslationState);
         }
+
+        // private void RenderTranslationState(TranslationState state)
+        // {
+        //     // The null checks are important because you might not have added the UI elements to the prefab yet.
+        //     if (loadingIndicator != null) loadingIndicator.SetActive(state == TranslationState.Pending);
+        //     if (errorIndicator != null) errorIndicator.SetActive(state == TranslationState.Failed);
+        //     if (translatedBadge != null) translatedBadge.SetActive(state == TranslationState.Success);
+        // }
 
         private void OnProfileButtonClicked()
         {

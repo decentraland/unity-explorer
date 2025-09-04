@@ -310,12 +310,18 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 chatMemberService,
                 chatContextMenuService,
-                translationSettings,
                 communityDataService,
+                translationSettings,
+                translationMemory,
                 chatClickDetectionService
             );
 
-            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);
+            chatBusListenerService = new ChatHistoryService(chatMessagesBus,
+                chatHistory,
+                hyperlinkTextFormatter,
+                chatConfig,
+                settings.ChatSettingsAsset,
+                translationService);
 
             pluginScope.Add(chatMainController);
             pluginScope.Add(chatWorldBubbleService);
