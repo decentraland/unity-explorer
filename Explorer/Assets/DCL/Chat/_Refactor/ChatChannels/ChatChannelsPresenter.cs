@@ -231,7 +231,8 @@ namespace DCL.Chat
 
         private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
-            if (addedMessage is { IsSentByOwnUser: true, IsSystemMessage: false }) return;
+            if (addedMessage is { IsSentByOwnUser: true, IsSystemMessage: true })
+                return;
 
             if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
             {
