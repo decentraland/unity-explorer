@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CDPBridges;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -64,29 +65,34 @@ namespace DCL.WebRequests
 
                     using var pooledHeaders = envelope.Headers(out Dictionary<string, string> headers);
                     string method = request.UnityWebRequest.method!;
-                    NotifyWebRequestScope notifyScope = chromeDevtoolProtocolClient.NotifyWebRequestStart(envelope.CommonArguments.URL.Value, method, headers);
+                    NotifyWebRequestScope? notifyScope = chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners
+                        ? chromeDevtoolProtocolClient.NotifyWebRequestStart(envelope.CommonArguments.URL.Value, method, headers)
+                        : null;
 
                     try
                     {
                         await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
 
-                        int statusCode = (int)request.UnityWebRequest.responseCode;
+                        if (notifyScope.HasValue)
+                        {
+                            int statusCode = (int)request.UnityWebRequest.responseCode;
 
-                        // TODO avoid allocation?
-                        Dictionary<string, string>? responseHeaders = request.UnityWebRequest.GetResponseHeaders();
+                            // TODO avoid allocation?
+                            Dictionary<string, string>? responseHeaders = request.UnityWebRequest.GetResponseHeaders();
 
-                        string mimeType = request.UnityWebRequest.GetRequestHeader("Content-Type") ?? "application/octet-stream";
-                        int encodedDataLength = (int)request.UnityWebRequest.downloadedBytes;
-                        notifyScope.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
+                            string mimeType = request.UnityWebRequest.GetRequestHeader("Content-Type") ?? "application/octet-stream";
+                            int encodedDataLength = (int)request.UnityWebRequest.downloadedBytes;
+                            notifyScope.Value.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
+                        }
                     }
                     catch (OperationCanceledException)
                     {
-                        notifyScope.NotifyFailed("Cancelled", true);
+                        notifyScope?.NotifyFailed("Cancelled", true);
                         throw;
                     }
                     catch
                     {
-                        notifyScope.NotifyFailed(request.UnityWebRequest.error!, false);
+                        notifyScope?.NotifyFailed(request.UnityWebRequest.error!, false);
                         throw;
                     }
 

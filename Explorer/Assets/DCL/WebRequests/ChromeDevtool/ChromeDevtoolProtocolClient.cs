@@ -21,6 +21,8 @@ namespace DCL.WebRequests.ChromeDevtool
         private readonly CancellationTokenSource cancellationTokenSource;
         private int atomicRequestIdIncrement;
 
+        public BridgeStatus Status => bridge.Status;
+
         private ChromeDevtoolProtocolClient(IBridge bridge)
         {
             this.bridge = bridge;
