@@ -57,14 +57,20 @@ namespace DCL.Communities.CommunitiesCard
             SetPanelStatus(true, true, currentCommunityId);
         }
 
+        public void Reset()
+        {
+            view.VoiceChatPanel.SetActive(false);
+        }
+
         public void SetPanelStatus(bool isStreamRunning, bool isModOrAdmin, string communityId)
         {
             currentCommunityId = communityId;
+
             view.VoiceChatPanel.SetActive(isStreamRunning || isModOrAdmin);
             view.ModeratorControlPanel.SetActive(!isStreamRunning && isModOrAdmin);
             view.LiveStreamPanel.SetActive(isStreamRunning);
 
-            UpdateJoinLeaveButtonState(currentCommunityId);
+            UpdateJoinLeaveButtonState(voiceChatOrchestrator.CurrentCommunityId.Value);
         }
 
         public void SetListenersCount(int listenersCount)

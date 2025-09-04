@@ -68,7 +68,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
-        private CommunityCardVoiceChatController communityCardVoiceChatController;
+        private CommunityCardVoiceChatController? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
@@ -164,7 +164,7 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
-            communityCardVoiceChatController.Dispose();
+            communityCardVoiceChatController?.Dispose();
         }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
@@ -317,6 +317,8 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
             {
+                communityCardVoiceChatController?.Reset();
+
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
                 viewInstance.MembersListView.SetLoadingStateActive(true);
@@ -341,12 +343,12 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.ResetToggle(true);
 
                 eventListController?.ShowEvents(communityData, ct);
-                communityCardVoiceChatController.SetPanelStatus(
+                communityCardVoiceChatController?.SetPanelStatus(
                     response.data.voiceChatStatus.isActive,
                     response.data.role is CommunityMemberRole.moderator or CommunityMemberRole.owner,
                     response.data.id);
 
-                communityCardVoiceChatController.SetListenersCount(response.data.voiceChatStatus.participantCount);
+                communityCardVoiceChatController?.SetListenersCount(response.data.voiceChatStatus.participantCount);
             }
         }
 
@@ -366,6 +368,7 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Reset();
             placesSectionController?.Reset();
             eventListController?.Reset();
+            communityCardVoiceChatController?.Reset();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index,
