@@ -16,11 +16,8 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly string DecentralandDomain;
 
-        public DecentralandEnvironment Environment { get; }
-
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
-            Environment = environment;
             DecentralandDomain = environment.ToString()!.ToLower();
             this.launchMode = launchMode;
 
@@ -63,9 +60,6 @@ namespace DCL.Browser.DecentralandUrls
                 LaunchMode.LocalSceneDevelopment => "localhost", //TODO should this behaviour be extracted to Url() call?
                 _ => throw new ArgumentOutOfRangeException()
             };
-
-        public bool RequiresAboutOverride() =>
-            Environment == DecentralandEnvironment.Today;
 
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch

@@ -275,12 +275,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
-          in @decentraland right now and join me!
-        <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
-        <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
-        <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
-        <LinkCopiedMessage>k__BackingField: Link copied!
+        <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
         <GridLayoutFixedColumnCount>k__BackingField: 6
         <ThumbnailHeight>k__BackingField: 230
@@ -429,6 +424,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
     - rid: 2872862648882692099
       type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
