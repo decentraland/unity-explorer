@@ -175,7 +175,8 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus newStatus)
         {
-            if (newStatus == VoiceChatStatus.VOICE_CHAT_BUSY) { ShowTooltipWithAutoCloseAsync(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget(); }
+            if (newStatus == VoiceChatStatus.VOICE_CHAT_BUSY)
+                ShowTooltipWithAutoCloseAsync(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget();
         }
 
         public void Dispose()

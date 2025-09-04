@@ -38,6 +38,7 @@ namespace DCL.Chat.ChatCommands
         public ResetChatCommand ResetChat { get; }
         public RestartChatServicesCommand RestartChatServices { get; }
         public ResolveInputStateCommand ResolveInputStateCommand { get; }
+        public GetUserCallStatusCommand GetUserCallStatusCommand { get; }
 
         public CommandRegistry(
             ChatConfig.ChatConfig chatConfig,
@@ -73,7 +74,7 @@ namespace DCL.Chat.ChatCommands
                 privateConversationUserStateService,
                 communityUserStateService,
                 chatMemberListService);
-            
+
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
 
             InitializeChat = new InitializeChatSystemCommand(eventBus,
@@ -145,6 +146,8 @@ namespace DCL.Chat.ChatCommands
                 GetCommunityThumbnail);
 
             ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand, currentChannelService);
+
+            GetUserCallStatusCommand = new GetUserCallStatusCommand(GetUserChatStatusCommand);
         }
 
         public void Dispose()

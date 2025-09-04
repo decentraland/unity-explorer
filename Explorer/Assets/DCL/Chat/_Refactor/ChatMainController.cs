@@ -128,7 +128,8 @@ namespace DCL.Chat
                 commandRegistry.GetCommunityThumbnail,
                 commandRegistry.DeleteChatHistory,
                 voiceChatOrchestrator,
-                chatEventBus);
+                chatEventBus,
+                commandRegistry.GetUserCallStatusCommand);
 
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
