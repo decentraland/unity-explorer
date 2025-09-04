@@ -233,7 +233,7 @@ namespace DCL.Profiling.ECS
         private void UpdateAverageFPSValues()
         {
             ulong lastFrameNs = profiler.LastFrameTimeValueNs;
-            if (lastFrameNs > 0)
+            if (lastFrameNs > 0 && Application.isFocused)
             {
                 if (avgFrameWindowCount < AVG_WINDOW_FRAMES)
                 {
@@ -343,6 +343,8 @@ namespace DCL.Profiling.ECS
 
         private static void SetFPS(ElementBinding<string> elementBinding, long value)
         {
+            if (!Application.isFocused) return;
+
             float frameTimeInMS = value * NS_TO_MS;
             float frameRate = 1 / (value * NS_TO_SEC);
 
