@@ -492,6 +492,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <NotificationDefaultThumbnailsSO>k__BackingField:
+          m_AssetGUID: 594ae6e7cd408424cb8433ddba60315d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
@@ -530,6 +536,12 @@ MonoBehaviour:
       data:
         <NotificationIconTypesSO>k__BackingField:
           m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NotificationDefaultThumbnailsSO>k__BackingField:
+          m_AssetGUID: 594ae6e7cd408424cb8433ddba60315d
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

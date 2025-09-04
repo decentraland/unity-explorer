@@ -24,6 +24,7 @@ namespace DCL.Notifications.NewNotification
 
         private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
+        private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
         private readonly Queue<INotification> notificationQueue = new ();
@@ -39,11 +40,13 @@ namespace DCL.Notifications.NewNotification
             ViewFactoryMethod viewFactory,
             NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
+            NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
             IWebRequestController webRequestController) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
+            this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
             notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
@@ -142,8 +145,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.NotificationView.Notification = notification;
             ProcessCustomMetadata(notification);
 
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                thumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -157,8 +164,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.Notification = notification;
             ProcessCustomMetadata(notification);
 
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                friendsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -176,8 +187,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.BadgeNotificationView.NotificationType = notification.Type;
             viewInstance.BadgeNotificationView.Notification = notification;
 
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                badgeThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             await AnimateBadgeNotificationAsync();
         }
@@ -188,8 +203,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.MarketplaceCreditsNotificationView.SetTitleText(notification.GetTitle());
             viewInstance.MarketplaceCreditsNotificationView.SetNotification(notification.Type, notification);
 
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                marketplaceCreditsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             await AnimateMarketplaceCreditsNotificationAsync();
         }
