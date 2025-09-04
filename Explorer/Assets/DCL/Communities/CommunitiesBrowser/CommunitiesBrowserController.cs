@@ -125,6 +125,7 @@ namespace DCL.Communities.CommunitiesBrowser
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnJoinRequestReceived);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_INVITE_RECEIVED, OnInvitationReceived);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.OWNER_COMMUNITY_DELETED, OnCommunityDeletedByDcl);
         }
 
         public void Activate()
@@ -858,6 +859,17 @@ namespace DCL.Communities.CommunitiesBrowser
                 LoadAllCommunitiesResults(updateInvitations: true);
             else
                 LoadInvitesAndRequestsResults();
+        }
+
+        private void OnCommunityDeletedByDcl(INotification notification)
+        {
+            if (!isSectionActivated)
+                return;
+
+            LoadMyCommunities();
+
+            if (!isInvitesAndRequestsSectionActive)
+                LoadAllCommunitiesResults(updateInvitations: true);
         }
     }
 }
