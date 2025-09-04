@@ -755,6 +755,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 RefreshInvitesCounter(setCounterToZeroAtTheBeginning: false);
                 RemoveCurrentCommunityInviteRequest(communityId);
+                LoadMyCommunities();
             }
         }
 
