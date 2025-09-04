@@ -28,7 +28,6 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomsStatus roomsStatus;
         private DebugMenuController? debugMenuController;
         private readonly DebugUtilities.IDebugContainerBuilder debugContainerBuilder;
-        private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
         public DebugMenuPlugin(
             DiagnosticsContainer diagnostics,
@@ -36,8 +35,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ICurrentSceneInfo currentSceneInfo,
             IRoomsStatus roomsStatus,
-            DebugUtilities.IDebugContainerBuilder debugContainerBuilder,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
+            DebugUtilities.IDebugContainerBuilder debugContainerBuilder
         )
         {
             this.inputBlock = inputBlock;
@@ -45,7 +43,6 @@ namespace DCL.PluginSystem.Global
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
             this.debugContainerBuilder = debugContainerBuilder;
-            this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
 
             logEntriesBus = new DebugMenuConsoleLogEntryBus();
             diagnostics.AddDebugConsoleHandler(logEntriesBus);
@@ -57,7 +54,7 @@ namespace DCL.PluginSystem.Global
                                         .GetComponent<DebugMenuController>()
                                         .EnsureNotNull(nameof(debugMenuController));
 
-            debugMenuController.Initialize(inputBlock, debugContainerBuilder, chromeDevtoolProtocolClient);
+            debugMenuController.Initialize(inputBlock, debugContainerBuilder);
 
             currentSceneInfo.SceneStatus.OnUpdate += OnSceneStatusUpdate;
             roomsStatus.ConnectionQualityScene.OnUpdate += OnSceneConnectionQualityUpdate;

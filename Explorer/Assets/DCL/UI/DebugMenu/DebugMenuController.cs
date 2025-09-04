@@ -22,7 +22,6 @@ namespace DCL.UI.DebugMenu
         private DebugPanelView visiblePanel;
 
         private IInputBlock inputBlock;
-        private ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
         private Button consoleButton;
         private Button debugPanelButton;
@@ -44,11 +43,9 @@ namespace DCL.UI.DebugMenu
             consoleButton = root.Q<Button>("ConsoleButton");
             connectionButton = root.Q<Button>("ConnectionButton");
             debugPanelButton = root.Q<Button>("DebugPanelButton");
-            chromeDevtoolsProtocolButton = root.Q<Button>("ChromeDevtoolsProtocolButton");
 
             consoleButton.clicked += OnConsoleButtonClicked;
             connectionButton.clicked += OnConnectionButtonClicked;
-            chromeDevtoolsProtocolButton.clicked += OnChromeDevtoolsProtocolButton;
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
@@ -73,11 +70,10 @@ namespace DCL.UI.DebugMenu
                 }
         }
 
-        public void Initialize(IInputBlock newInputBlock, IDebugContainerBuilder newBuilder, ChromeDevtoolProtocolClient newChromeDevtoolProtocolClient)
+        public void Initialize(IInputBlock newInputBlock, IDebugContainerBuilder newBuilder)
         {
             SetInputBlock(newInputBlock);
             SetDebugContainerBuilder(newBuilder);
-            chromeDevtoolProtocolClient = newChromeDevtoolProtocolClient;
         }
 
         private void SetDebugContainerBuilder(IDebugContainerBuilder builder)
@@ -166,12 +162,6 @@ namespace DCL.UI.DebugMenu
 
         private void OnConnectionButtonClicked() =>
             TogglePanel(connectionPanelView);
-
-        private void OnChromeDevtoolsProtocolButton()
-        {
-            BridgeStartResult result = chromeDevtoolProtocolClient!.StartAndOpen();
-            //TODO show toast if error
-        }
 
         private void TogglePanel(DebugPanelView panelView)
         {
