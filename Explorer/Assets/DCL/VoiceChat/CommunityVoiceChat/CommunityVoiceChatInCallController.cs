@@ -35,7 +35,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             thumbnailController = new ImageController(view.CommunityThumbnail, webRequestController);
             view.EndStreamButton.onClick.AddListener(OnEndStreamButtonClicked);
             view.CommunityButton.onClick.AddListener(OnCommunityButtonClicked);
-            view.CollapseButton.onClick.AddListener(OnCollapsedButtonClicked);
+            view.CollapseButton.onClick.AddListener(OnToggleCollapseButtonClicked);
+            view.SetCollapsedState(currentVoiceChatPanelSize.Value == VoiceChatPanelSize.DEFAULT);
         }
 
         private void OnCommunityButtonClicked()
@@ -61,7 +62,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             buttonsController.Dispose();
             view.EndStreamButton.onClick.RemoveListener(OnEndStreamButtonClicked);
             view.CommunityButton.onClick.RemoveListener(OnCommunityButtonClicked);
-            view.CollapseButton.onClick.RemoveListener(OnCollapsedButtonClicked);
+            view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);
         }
 
         public void AddSpeaker(PlayerEntryView entryView)
@@ -98,11 +99,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.TalkingStatusView.SetSpeakingStatus(speakingCount, username);
         }
 
-        private void OnCollapsedButtonClicked()
+        private void OnToggleCollapseButtonClicked()
         {
             bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.DEFAULT;
             voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.DEFAULT);
-            view.SetCollapsedState(isPanelCollapsed);
+            view.SetCollapsedState(!isPanelCollapsed);
         }
     }
 }
