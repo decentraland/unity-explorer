@@ -41,9 +41,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public GameObject FooterPanel { get; private set; }
 
+        [field: FormerlySerializedAs("<InCallButtonsView>k__BackingField")]
         [field: FormerlySerializedAs("<InCallFooterView>k__BackingField")]
         [field: SerializeField]
-        public CommunityVoiceChatInCallButtonsView InCallButtonsView { get; private set; }
+        public CommunityVoiceChatInCallButtonsView ExpandedPanelInCallButtonsView { get; private set; }
 
         [field: SerializeField]
         public GameObject RaiseHandTooltip { get; private set; }

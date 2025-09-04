@@ -14,12 +14,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly CommunityVoiceChatInCallView view;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly CommunityVoiceChatInCallButtonsController buttonsController;
+        private readonly CommunityVoiceChatInCallButtonsController expandedPanelButtonsController;
+        private readonly CommunityVoiceChatInCallButtonsController collapsedPanelButtonsController;
         private readonly ImageController thumbnailController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize;
 
         public Transform SpeakersParent => view.SpeakersParent;
-        private CancellationTokenSource ct;
+        private CancellationTokenSource ct = new();
 
         public CommunityVoiceChatInCallController(
             CommunityVoiceChatInCallView view,
@@ -29,14 +30,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            buttonsController = new CommunityVoiceChatInCallButtonsController(view.InCallButtonsView, voiceChatOrchestrator, microphoneHandler);
-
+            expandedPanelButtonsController = new CommunityVoiceChatInCallButtonsController(view.ExpandedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
+            collapsedPanelButtonsController = new CommunityVoiceChatInCallButtonsController(view.CollapsedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
             currentVoiceChatPanelSize = voiceChatOrchestrator.CurrentVoiceChatPanelSize;
             thumbnailController = new ImageController(view.CommunityThumbnail, webRequestController);
             view.EndStreamButton.onClick.AddListener(OnEndStreamButtonClicked);
             view.CommunityButton.onClick.AddListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.AddListener(OnToggleCollapseButtonClicked);
-            view.SetCollapsedState(currentVoiceChatPanelSize.Value == VoiceChatPanelSize.DEFAULT);
         }
 
         private void OnCommunityButtonClicked()
@@ -59,7 +59,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
-            buttonsController.Dispose();
+            expandedPanelButtonsController.Dispose();
+            collapsedPanelButtonsController.Dispose();
             view.EndStreamButton.onClick.RemoveListener(OnEndStreamButtonClicked);
             view.CommunityButton.onClick.RemoveListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);
