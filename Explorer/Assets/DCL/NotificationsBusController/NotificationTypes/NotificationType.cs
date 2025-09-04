@@ -50,5 +50,6 @@ namespace DCL.NotificationsBusController.NotificationTypes
         COMMUNITY_REQUEST_TO_JOIN_RECEIVED,
         COMMUNITY_INVITE_RECEIVED,
         COMMUNITY_REQUEST_TO_JOIN_ACCEPTED,
+        COMMUNITY_DELETED_CONTENT_VIOLATION,
     }
 }

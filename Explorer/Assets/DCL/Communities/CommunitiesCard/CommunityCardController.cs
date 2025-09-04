@@ -139,6 +139,9 @@ namespace DCL.Communities.CommunitiesCard
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
         }
 
         public override void Dispose()
@@ -199,6 +202,35 @@ namespace DCL.Communities.CommunitiesCard
                 ResetSubControllers();
                 SetDefaultsAndLoadData(communityId);
             }
+        }
+
+        private void OnJoinRequestAccepted(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden || notification is not CommunityUserRequestToJoinAcceptedNotification acceptedNotification)
+                return;
+
+            if (communityData.id != acceptedNotification.Metadata.CommunityId)
+                return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData(acceptedNotification.Metadata.CommunityId);
+        }
+
+        private void OnCommunityDeleted(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden)
+                return;
+
+            string communityId = notification switch
+                                 {
+                                     CommunityDeletedNotification communityDeletedNotification => communityDeletedNotification.Metadata.CommunityId,
+                                     CommunityDeletedContenViolationNotification ownerCommunityDeletedNotification => ownerCommunityDeletedNotification.Metadata.CommunityId,
+                                     _ => string.Empty
+                                 };
+
+            if (communityId == string.Empty || communityId != communityData.id) return;
+
+            CloseController();
         }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
@@ -591,7 +623,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE));
                 }
 
                 if (communityData.privacy == CommunityPrivacy.@public)
