@@ -68,6 +68,16 @@ namespace Decentraland.Terrain
         private Material flower2Material;
         private Bounds indirectRenderingBounds;
 
+        private int parcelSize = 16;
+        private float fDistanceFieldScale = 16.0f;
+        private float nHeightMapSize = 8192.0f;
+        private float fSplatMapTiling = 8.0f;
+
+        private int grassInstancesPerParcel = 256;
+        private int flowerInstancesPerParcel = 16;
+        private int maxVisibleParcels = 256;
+        private int parcelGridSingleAxisSize = 512;
+
         public static uint CreateDepth8CornerIndexStart(byte depth, uint cornerIndexStart) =>
             ((uint)depth << 24) | cornerIndexStart;
 
@@ -227,17 +237,18 @@ namespace Decentraland.Terrain
                 return;
 
             quadTreeNodesComputeBuffer = new ComputeBuffer(quadTreeNodes.Length, Marshal.SizeOf<QuadTreeNodeData>());
-            visibleParcelsComputeBuffer = new ComputeBuffer(512 * 512, sizeof(int) * 2);
+            visibleParcelsComputeBuffer = new ComputeBuffer(parcelGridSingleAxisSize * parcelGridSingleAxisSize, sizeof(int) * 2);
             visibleparcelCountComputeBuffer = new ComputeBuffer(1, sizeof(int));
-            grassInstancesComputeBuffer = new ComputeBuffer(256 * 256, Marshal.SizeOf<PerInst>());
-            flower0InstancesComputeBuffer = new ComputeBuffer(64 * 256, Marshal.SizeOf<PerInst>());
-            flower1InstancesComputeBuffer = new ComputeBuffer(64 * 256, Marshal.SizeOf<PerInst>());
-            flower2InstancesComputeBuffer = new ComputeBuffer(64 * 256, Marshal.SizeOf<PerInst>());
+            grassInstancesComputeBuffer = new ComputeBuffer(grassInstancesPerParcel * maxVisibleParcels, Marshal.SizeOf<PerInst>());
+            flower0InstancesComputeBuffer = new ComputeBuffer(flowerInstancesPerParcel * maxVisibleParcels, Marshal.SizeOf<PerInst>());
+            flower1InstancesComputeBuffer = new ComputeBuffer(flowerInstancesPerParcel * maxVisibleParcels, Marshal.SizeOf<PerInst>());
+            flower2InstancesComputeBuffer = new ComputeBuffer(flowerInstancesPerParcel * maxVisibleParcels, Marshal.SizeOf<PerInst>());
             arrInstCount = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 3, sizeof(uint));
             grassDrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: 1, GraphicsBuffer.IndirectDrawIndexedArgs.size);
             flower0DrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: 1, GraphicsBuffer.IndirectDrawIndexedArgs.size);
             flower1DrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: 1, GraphicsBuffer.IndirectDrawIndexedArgs.size);
             flower2DrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: 1, GraphicsBuffer.IndirectDrawIndexedArgs.size);
+
 
             quadTreeNodesComputeBuffer.SetData(quadTreeNodes.ToArray());
         }
@@ -322,7 +333,7 @@ namespace Decentraland.Terrain
                 out threadGroupSizes_Z);
 
             ScatterGrassShader.Dispatch(kernelIndex,
-                Mathf.CeilToInt(65536.0f / threadGroupSizes_X),
+                Mathf.CeilToInt(grassInstancesPerParcel * maxVisibleParcels / threadGroupSizes_X),
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Y),
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Z));
         }
@@ -353,7 +364,7 @@ namespace Decentraland.Terrain
             var SandDetailTextureSize = new int2(1024, 1024);
 
             ScatterFlowersShader.EnableKeyword("THREADS_16");
-            ScatterFlowersShader.SetInt("nThreads", 16);
+            ScatterFlowersShader.SetInt("nThreads", flowerInstancesPerParcel);
             ScatterFlowersShader.SetVector("TerrainBounds", terrainBounds);
             ScatterFlowersShader.SetFloat("TerrainHeight", 4.0f);
             ScatterFlowersShader.SetInts("HeightTextureSize", HeightTextureSize[0]);
@@ -361,10 +372,10 @@ namespace Decentraland.Terrain
             ScatterFlowersShader.SetInts("TerrainBlendTextureSize", TerrainBlendTextureSize[0]);
             ScatterFlowersShader.SetInts("GroundDetailTextureSize", GroundDetailTextureSize[0]);
             ScatterFlowersShader.SetInts("SandDetailTextureSize", SandDetailTextureSize[0]);
-            ScatterFlowersShader.SetInt("parcelSize", 16);
-            ScatterFlowersShader.SetFloat("fDistanceFieldScale", 16.0f);
-            ScatterFlowersShader.SetFloat("nHeightMapSize", 8192.0f);
-            ScatterFlowersShader.SetFloat("fSplatMapTiling", 8.0f);
+            ScatterFlowersShader.SetInt("parcelSize", parcelSize);
+            ScatterFlowersShader.SetFloat("fDistanceFieldScale", fDistanceFieldScale);
+            ScatterFlowersShader.SetFloat("nHeightMapSize", nHeightMapSize);
+            ScatterFlowersShader.SetFloat("fSplatMapTiling", fSplatMapTiling);
             ScatterFlowersShader.SetTexture(kernelIndex, "HeightMapTexture", HeightMapTexture);
             ScatterFlowersShader.SetTexture(kernelIndex, "TerrainBlendTexture", TerrainBlendTexture);
             ScatterFlowersShader.SetTexture(kernelIndex, "GroundDetailTexture", GroundDetailTexture);
@@ -384,7 +395,7 @@ namespace Decentraland.Terrain
             ScatterFlowersShader.GetKernelThreadGroupSizes(kernelIndex, out threadGroupSizes_X, out threadGroupSizes_Y, out threadGroupSizes_Z);
 
             ScatterFlowersShader.Dispatch(kernelIndex,
-                Mathf.CeilToInt(16384.0f / threadGroupSizes_X),
+                Mathf.CeilToInt(flowerInstancesPerParcel * maxVisibleParcels / threadGroupSizes_X),
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Y),
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Z));
         }
@@ -414,7 +425,7 @@ namespace Decentraland.Terrain
             var SandDetailTextureSize = new int2(1024, 1024);
 
             ScatterCatTailsShader.EnableKeyword("THREADS_16");
-            ScatterCatTailsShader.SetInt("nThreads", 16);
+            ScatterCatTailsShader.SetInt("nThreads", flowerInstancesPerParcel);
             ScatterCatTailsShader.SetVector("TerrainBounds", terrainBounds);
             ScatterCatTailsShader.SetFloat("TerrainHeight", 4.0f);
             ScatterCatTailsShader.SetInts("HeightTextureSize", HeightTextureSize[0]);
@@ -422,10 +433,10 @@ namespace Decentraland.Terrain
             ScatterCatTailsShader.SetInts("TerrainBlendTextureSize", TerrainBlendTextureSize[0]);
             ScatterCatTailsShader.SetInts("GroundDetailTextureSize", GroundDetailTextureSize[0]);
             ScatterCatTailsShader.SetInts("SandDetailTextureSize", SandDetailTextureSize[0]);
-            ScatterCatTailsShader.SetInt("parcelSize", 16);
-            ScatterCatTailsShader.SetFloat("fDistanceFieldScale", 16.0f);
-            ScatterCatTailsShader.SetFloat("nHeightMapSize", 8192.0f);
-            ScatterCatTailsShader.SetFloat("fSplatMapTiling", 8.0f);
+            ScatterCatTailsShader.SetInt("parcelSize", parcelSize);
+            ScatterCatTailsShader.SetFloat("fDistanceFieldScale", fDistanceFieldScale);
+            ScatterCatTailsShader.SetFloat("nHeightMapSize", nHeightMapSize);
+            ScatterCatTailsShader.SetFloat("fSplatMapTiling", fSplatMapTiling);
             ScatterCatTailsShader.SetTexture(kernelIndex, "HeightMapTexture", HeightMapTexture);
             ScatterCatTailsShader.SetTexture(kernelIndex, "TerrainBlendTexture", TerrainBlendTexture);
             ScatterCatTailsShader.SetTexture(kernelIndex, "GroundDetailTexture", GroundDetailTexture);
@@ -443,7 +454,7 @@ namespace Decentraland.Terrain
             ScatterCatTailsShader.GetKernelThreadGroupSizes(kernelIndex, out threadGroupSizes_X, out threadGroupSizes_Y, out threadGroupSizes_Z);
 
             ScatterCatTailsShader.Dispatch(kernelIndex,
-                Mathf.CeilToInt(16384.0f / threadGroupSizes_X),
+                Mathf.CeilToInt(flowerInstancesPerParcel * maxVisibleParcels / threadGroupSizes_X),
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Y),
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Z));
         }
@@ -508,22 +519,19 @@ namespace Decentraland.Terrain
 
             renderParams.matProps = new MaterialPropertyBlock();
             renderParams.matProps.SetBuffer("_PerParcelBuffer", visibleParcelsComputeBuffer);
-            renderParams.matProps.SetFloat("_batchingBlockSize", 64.0f);
+            renderParams.matProps.SetFloat("_batchingBlockSize", flowerInstancesPerParcel);
             renderParams.shadowCastingMode = ShadowCastingMode.Off;
 
             renderParams.material = flower0Material;
             renderParams.matProps.SetBuffer("_PerInstanceBuffer", flower0InstancesComputeBuffer);
-            renderParams.matProps.SetFloat("_batchingBlockSize", 16.0f);
             Graphics.RenderMeshIndirect(renderParams, flower0Mesh, flower0DrawArgs);
 
             renderParams.material = flower1Material;
             renderParams.matProps.SetBuffer("_PerInstanceBuffer", flower1InstancesComputeBuffer);
-            renderParams.matProps.SetFloat("_batchingBlockSize", 16.0f);
             Graphics.RenderMeshIndirect(renderParams, flower1Mesh, flower1DrawArgs);
 
             renderParams.material = flower2Material;
             renderParams.matProps.SetBuffer("_PerInstanceBuffer", flower2InstancesComputeBuffer);
-            renderParams.matProps.SetFloat("_batchingBlockSize", 16.0f);
             Graphics.RenderMeshIndirect(renderParams, flower2Mesh, flower2DrawArgs);
         }
 
