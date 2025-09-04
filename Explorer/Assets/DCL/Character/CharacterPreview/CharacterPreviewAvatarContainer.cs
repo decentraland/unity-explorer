@@ -15,15 +15,9 @@ namespace DCL.CharacterPreview
     public class CharacterPreviewAvatarContainer : MonoBehaviour, IDisposable
     {
         private const float DRAG_TIMEOUT = 0.1f;
-        private const float MAX_ANGULAR_VELOCITY = 900f;
         private const float ANGULAR_VELOCITY_DECELERATION_COEFF = 900f;
 
         private Tween? fovTween;
-        private float angularVelocity;
-        private float rotationModifier;
-        private float rotationInertia;
-        private bool isDragging;
-        private float lastDragTime;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -33,6 +27,13 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
         [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
+
+        public float TargetFOV { get; set; }
+        public float RotationModifier { get; set; }
+        public float RotationInertia { get; set; }
+        public bool IsDragging { get; set; }
+        public float LastDragTime { get; set; }
+        public float AngularVelocity { get; set; }
 
         public void Dispose()
         {
@@ -44,9 +45,9 @@ namespace DCL.CharacterPreview
             transform.position = position;
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
-            angularVelocity = 0f;
-            isDragging = false;
-            lastDragTime = 0f;
+            AngularVelocity = 0f;
+            IsDragging = false;
+            LastDragTime = 0f;
 
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
 
@@ -77,35 +78,6 @@ namespace DCL.CharacterPreview
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
 
-        public void SetAngularVelocity(
-            float inputDeltaX,
-            float rotationModifier,
-            float rotationInertia
-        )
-        {
-            this.rotationModifier = rotationModifier;
-            this.rotationInertia = rotationInertia;
-
-            isDragging = true;
-            lastDragTime = Time.time;
-
-            float targetVelocity = -inputDeltaX / Time.deltaTime;
-
-            if (rotationInertia <= 0f)
-            {
-                // No inertia - instant response
-                angularVelocity = targetVelocity;
-            }
-            else
-            {
-                // Linear acceleration: higher inertia = slower acceleration
-                float accelerationRate = (1f / rotationInertia) * Time.deltaTime;
-                angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, accelerationRate);
-            }
-
-            angularVelocity = Mathf.Clamp(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
-        }
-
         private void Update()
         {
             UpdateRotation();
@@ -115,37 +87,37 @@ namespace DCL.CharacterPreview
         private void UpdateRotation()
         {
             // Check if dragging has timed out (no drag input for DRAG_TIMEOUT seconds)
-            if (isDragging && Time.time - lastDragTime > DRAG_TIMEOUT)
-                isDragging = false;
+            if (IsDragging && Time.time - LastDragTime > DRAG_TIMEOUT)
+                IsDragging = false;
 
             // If not dragging, decelerate
-            if (!isDragging)
+            if (!IsDragging)
             {
-                if (rotationInertia <= 0f)
+                if (RotationInertia <= 0f)
                 {
-                    angularVelocity = 0f;
+                    AngularVelocity = 0f;
                     return;
                 }
 
                 // Linear deceleration: higher inertia = faster deceleration
-                float decelerationRate = rotationInertia * ANGULAR_VELOCITY_DECELERATION_COEFF * Time.deltaTime;
-                float velocitySign = Mathf.Sign(angularVelocity);
-                float velocityMagnitude = Mathf.Abs(angularVelocity);
+                float decelerationRate = RotationInertia * ANGULAR_VELOCITY_DECELERATION_COEFF * Time.deltaTime;
+                float velocitySign = Mathf.Sign(AngularVelocity);
+                float velocityMagnitude = Mathf.Abs(AngularVelocity);
 
                 velocityMagnitude -= decelerationRate;
 
                 if (velocityMagnitude <= 0f)
-                    angularVelocity = 0f;
+                    AngularVelocity = 0f;
                 else
-                    angularVelocity = velocitySign * velocityMagnitude;
+                    AngularVelocity = velocitySign * velocityMagnitude;
             }
 
             // Apply rotation if there's any angular velocity
-            if (Mathf.Abs(angularVelocity) > 0.01f)
+            if (Mathf.Abs(AngularVelocity) > 0.01f)
             {
                 Vector3 rotation = rotationTarget.rotation.eulerAngles;
 
-                float rotationAmount = angularVelocity * rotationModifier * Time.deltaTime;
+                float rotationAmount = AngularVelocity * RotationModifier * Time.deltaTime;
 
                 rotation.y += rotationAmount;
                 rotationTarget.rotation = Quaternion.Euler(rotation);
@@ -175,9 +147,9 @@ namespace DCL.CharacterPreview
         {
             StopFOVTween();
             rotationTarget.rotation = Quaternion.identity;
-            angularVelocity = 0f;
-            isDragging = false;
-            lastDragTime = 0f;
+            AngularVelocity = 0f;
+            IsDragging = false;
+            LastDragTime = 0f;
         }
     }
 

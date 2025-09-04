@@ -9,6 +9,8 @@ namespace DCL.CharacterPreview
 {
     public readonly struct CharacterPreviewCameraController : IDisposable
     {
+        private const float MAX_ANGULAR_VELOCITY = 900f;
+
         private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
         private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly CharacterPreviewCameraSettings cameraSettings;
@@ -55,32 +57,7 @@ namespace DCL.CharacterPreview
         {
             if (!cameraSettings.scrollEnabled) return;
 
-            float newFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
-            float originalFieldOfView = newFieldOfView;
-
-            newFieldOfView -= pointerEventData.scrollDelta.y * cameraSettings.scrollModifier;
-
-            if (newFieldOfView < cameraSettings.fieldOfViewLimits.y) newFieldOfView = cameraSettings.fieldOfViewLimits.y;
-            else if (newFieldOfView > cameraSettings.fieldOfViewLimits.x) newFieldOfView = cameraSettings.fieldOfViewLimits.x;
-
-            if (newFieldOfView > originalFieldOfView && newFieldOfView > cameraSettings.fieldOfViewThresholdForReCentering)
-            {
-                Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
-                float t = Mathf.InverseLerp(cameraSettings.fieldOfViewLimits.y, cameraSettings.fieldOfViewLimits.x, newFieldOfView);
-                float smoothedT = Mathf.SmoothStep(0f, 1f, t);
-
-                float vertPos = Mathf.SmoothStep(position.y,
-                    cameraSettings.cameraPositions[0].verticalPosition.y,
-                    smoothedT
-                );
-
-                position.y = vertPos;
-
-                characterPreviewAvatarContainer.cameraTarget.localPosition = position;
-            }
-
-            characterPreviewAvatarContainer.StopFOVTween();
-            characterPreviewAvatarContainer.SetFOVTween(newFieldOfView, cameraSettings.fieldOfViewDuration, cameraSettings.fieldOfViewCurve);
+            CalculateFOV(pointerEventData);
         }
 
         private void OnDrag(PointerEventData pointerEventData)
@@ -114,15 +91,66 @@ namespace DCL.CharacterPreview
                 {
                     if (!cameraSettings.rotationEnabled) return;
 
-                    characterPreviewAvatarContainer.SetAngularVelocity(
-                        pointerEventData.delta.x,
-                        cameraSettings.rotationModifier,
-                        cameraSettings.rotationInertia
-                    );
+                    CalculateAngularVelocity(pointerEventData);
 
                     break;
                 }
             }
+        }
+
+        private void CalculateFOV(PointerEventData pointerEventData)
+        {
+            float newFieldOfView = characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView;
+            float originalFieldOfView = newFieldOfView;
+
+            newFieldOfView -= pointerEventData.scrollDelta.y * cameraSettings.scrollModifier;
+
+            if (newFieldOfView < cameraSettings.fieldOfViewLimits.y) newFieldOfView = cameraSettings.fieldOfViewLimits.y;
+            else if (newFieldOfView > cameraSettings.fieldOfViewLimits.x) newFieldOfView = cameraSettings.fieldOfViewLimits.x;
+
+            if (newFieldOfView > originalFieldOfView && newFieldOfView > cameraSettings.fieldOfViewThresholdForReCentering)
+            {
+                Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
+                float t = Mathf.InverseLerp(cameraSettings.fieldOfViewLimits.y, cameraSettings.fieldOfViewLimits.x, newFieldOfView);
+                float smoothedT = Mathf.SmoothStep(0f, 1f, t);
+
+                float vertPos = Mathf.SmoothStep(position.y,
+                    cameraSettings.cameraPositions[0].verticalPosition.y,
+                    smoothedT
+                );
+
+                position.y = vertPos;
+
+                characterPreviewAvatarContainer.cameraTarget.localPosition = position;
+            }
+
+            characterPreviewAvatarContainer.TargetFOV = newFieldOfView;
+        }
+
+        private void CalculateAngularVelocity(PointerEventData pointerEventData)
+        {
+            characterPreviewAvatarContainer.RotationModifier = cameraSettings.rotationModifier;
+            characterPreviewAvatarContainer.RotationInertia = cameraSettings.rotationInertia;
+
+            characterPreviewAvatarContainer.IsDragging = true;
+            characterPreviewAvatarContainer.LastDragTime = Time.time;
+
+            float angularVelocity = characterPreviewAvatarContainer.AngularVelocity;
+            float targetVelocity = -pointerEventData.delta.x / Time.deltaTime;
+
+            if (cameraSettings.rotationInertia <= 0f)
+            {
+                // No inertia - instant response
+                angularVelocity = targetVelocity;
+            }
+            else
+            {
+                // Linear acceleration: higher inertia = slower acceleration
+                float accelerationRate = (1f / cameraSettings.rotationInertia) * Time.deltaTime;
+                angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, accelerationRate);
+            }
+
+            characterPreviewAvatarContainer.AngularVelocity = Mathf.Clamp(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
         }
     }
 }
