@@ -310,6 +310,7 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 chatMemberService,
                 chatContextMenuService,
+                translationSettings,
                 communityDataService,
                 chatClickDetectionService
             );
