@@ -5,6 +5,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
+using DCL.Platforms;
 using UnityEngine;
 using Utility;
 
@@ -62,7 +63,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
-                assetBundleIntention.Hash = CheckCapitalizationFix(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion.HasHashInPath());
+                assetBundleIntention.Hash = CheckCapitalizationFix(assetBundleIntention.Hash);
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
                 assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate());
@@ -94,10 +95,10 @@ namespace ECS.StreamableLoading.AssetBundles
             return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{hash}"));
         }
 
-        private string CheckCapitalizationFix(string inputHash, bool hasHashInPath)
+        private string CheckCapitalizationFix(string inputHash)
         {
-            // TODO (JUANI): hack, for older Qm assets. Doesnt happen with bafk because they are all lowercase
-            // This has a long due capitalization problem. The hash which is requested should always be lower case, since the output files are lowercase and the
+            // TODO (JUANI): hack, for older Qm assets in Mac. Doesnt happen with bafk because they are all lowercase
+            // This has a long due capitalization problem. The hash in Mac which is requested should always be lower case, since the output files are lowercase and the
             // request to S3 is case sensitive.
             // IE: This works: https://ab-cdn.decentraland.org/v35/Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk/qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_mac
             //     This doesnt: https://ab-cdn.decentraland.org/v35/Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk/QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV_mac
@@ -105,7 +106,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // But we cannot use it anymore since we are not downloading the whole manifest
             // Maybe one day, when `Qm` deployments dont exist anymore, this method can be removed
 
-            if (!hasHashInPath)
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
                 return inputHash;
             
             var span = inputHash.AsSpan();
