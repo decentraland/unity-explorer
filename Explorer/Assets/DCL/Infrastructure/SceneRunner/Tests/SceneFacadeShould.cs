@@ -108,7 +108,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>(),
-                Substitute.For<IRemoteMetadata>());
+                Substitute.For<IRemoteMetadata>(),
+                DecentralandEnvironment.Org);
         }
 
         [OneTimeTearDown]
