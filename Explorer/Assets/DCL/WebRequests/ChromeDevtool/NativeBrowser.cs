@@ -37,13 +37,14 @@ namespace DCL.WebRequests.ChromeDevtool
                     return BrowserOpenResult.FromBrowserOpenError(error);
                 }
 #else
+
                 // Windows: check if Chrome is registered in the registry
                 const string CHROME_KEY = @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";
                 object? path = Microsoft.Win32.Registry.GetValue(CHROME_KEY, "", null);
 
                 if (path is not string chromeExePath || !System.IO.File.Exists(chromeExePath)) { return BrowserOpenResult.ErrorChromeNotInstalled(); }
 
-                DclProcesses.Start(
+                Result result = DclProcesses.Start(
                     "chrome",
                     new[] { url }
                 );
