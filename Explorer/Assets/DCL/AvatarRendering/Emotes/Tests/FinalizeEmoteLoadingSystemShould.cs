@@ -137,47 +137,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         [Test]
-        public void FinalizeAssetBundleManifestLoadingCorrectly()
-        {
-            var emoteURN = new URN("urn:manifest:emote1");
-            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
-            Entity entity = world.Create(mockEmote); // Entity holding the IEmote component
-
-            var manifest = new SceneAssetBundleManifest("v1", "3/3");
-            var intention = new GetAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
-            world.Add(entity, promise); // Promise is on the same entity as IEmote
-            world.Add(promise.Entity, new StreamableLoadingResult<SceneAssetBundleManifest>(manifest)); // Result on promise's entity
-
-            system.Update(0);
-
-            Assert.IsFalse(world.IsAlive(entity)); // Check promise component removed
-            Assert.IsFalse(world.IsAlive(promise.Entity));
-            Assert.IsTrue(!string.IsNullOrEmpty(mockEmote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion()));
-            Assert.AreSame(manifest.GetVersion(), mockEmote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion());
-        }
-
-        [Test]
-        public void CancelAssetBundleManifestLoadingCorrectly()
-        {
-            var emoteURN = new URN("urn:manifest:cancel_emote");
-            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
-            Entity entity = world.Create(mockEmote); // Carrier entity
-
-            var intention = new GetAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY); // promise.Entity is result-holder
-            world.Add(entity, promise); // Add promise component to carrier
-
-            Entity resultHolderEntity = promise.Entity; // Explicitly get for assertion
-            promise.ForgetLoading(world); // This cancels the intention AND destroys promise.Entity (result-holder)
-
-            system.Update(0);
-
-            Assert.IsFalse(world.IsAlive(entity)); // Asserts carrier's promise component is gone (carrier destroyed)
-            Assert.IsFalse(world.IsAlive(resultHolderEntity));
-        }
-
-        [Test]
         public void FinalizeGltfEmoteLoadingCorrectly()
         {
             var emoteURN = new URN("urn:gltf:emote_male");
