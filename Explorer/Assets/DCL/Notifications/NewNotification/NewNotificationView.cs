@@ -41,8 +41,5 @@ namespace DCL.Notifications.NewNotification
 
         [field: SerializeField]
         public CanvasGroup MarketplaceCreditsNotificationViewCanvasGroup { get; private set; }
-
-        [field: SerializeField]
-        public Sprite DefaultCommunityThumbnail { get; private set; }
     }
 }
