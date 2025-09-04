@@ -68,8 +68,7 @@ namespace DCL.Chat
             GetTitlebarViewModelCommand getTitlebarViewModel,
             DeleteChatHistoryCommand deleteChatHistoryCommand,
             ToggleAutoTranslateCommand toggleAutoTranslateCommand,
-            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
-            DeleteChatHistoryCommand deleteChatHistoryCommand)
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
         {
             this.view = view;
             this.chatConfig = chatConfig;

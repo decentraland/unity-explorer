@@ -112,9 +112,9 @@ namespace DCL.Chat
                 chatContextMenuService,
                 translationSettings,
                 commandRegistry.GetTitlebarViewModel,
-                commandRegistry.GetCommunityThumbnail,
                 commandRegistry.DeleteChatHistory,
-                commandRegistry.ToggleAutoTranslateCommand);
+                commandRegistry.ToggleAutoTranslateCommand,
+                commandRegistry.GetCommunityThumbnail);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
