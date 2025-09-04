@@ -125,7 +125,8 @@ namespace DCL.Communities.CommunitiesBrowser
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnJoinRequestReceived);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_INVITE_RECEIVED, OnInvitationReceived);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.OWNER_COMMUNITY_DELETED, OnCommunityDeletedByDcl);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
         }
 
         public void Activate()
@@ -791,7 +792,7 @@ namespace DCL.Communities.CommunitiesBrowser
             ReloadBrowser();
 
         private void OnCommunityDeleted(string communityId) =>
-            ReloadBrowser();
+            RefreshAfterDeletion();
 
         private void OnUserRemovedFromCommunity(string communityId) =>
             view.RemoveOneMemberFromCounter(communityId);
@@ -861,7 +862,10 @@ namespace DCL.Communities.CommunitiesBrowser
                 LoadInvitesAndRequestsResults();
         }
 
-        private void OnCommunityDeletedByDcl(INotification notification)
+        private void OnCommunityDeleted(INotification notification) =>
+            RefreshAfterDeletion();
+
+        private void RefreshAfterDeletion()
         {
             if (!isSectionActivated)
                 return;

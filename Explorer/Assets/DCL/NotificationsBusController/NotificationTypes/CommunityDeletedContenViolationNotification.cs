@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.NotificationsBusController.NotificationTypes
 {
-    public class OwnerCommunityDeletedNotification : NotificationBase
+    public class CommunityDeletedContenViolationNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Your Community Has Been Deleted";
         private const string NOTIFICATION_TITLE = "The <b>[{0}]</b> Community was deleted for violating Decentraland's Guidelines.";

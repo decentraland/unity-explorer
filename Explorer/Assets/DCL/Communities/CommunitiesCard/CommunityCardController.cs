@@ -140,7 +140,7 @@ namespace DCL.Communities.CommunitiesCard
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.OWNER_COMMUNITY_DELETED, OnCommunityDeleted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
         }
 
@@ -224,7 +224,7 @@ namespace DCL.Communities.CommunitiesCard
             string communityId = notification switch
                                  {
                                      CommunityDeletedNotification communityDeletedNotification => communityDeletedNotification.Metadata.CommunityId,
-                                     OwnerCommunityDeletedNotification ownerCommunityDeletedNotification => ownerCommunityDeletedNotification.Metadata.CommunityId,
+                                     CommunityDeletedContenViolationNotification ownerCommunityDeletedNotification => ownerCommunityDeletedNotification.Metadata.CommunityId,
                                      _ => string.Empty
                                  };
 

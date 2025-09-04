@@ -33,7 +33,7 @@ namespace DCL.Notifications.Serialization
         private const string COMMUNITY_REQUEST_TO_JOIN_RECEIVED_TYPE = "community_request_to_join_received";
         private const string COMMUNITY_INVITE_RECEIVED_TYPE = "community_invite_received";
         private const string COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE = "community_request_to_join_accepted";
-        private const string OWNER_COMMUNITY_DELETED_TYPE = "owner_community_deleted";
+        private const string COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE = "community_deleted_content_violation";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -102,7 +102,7 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_REQUEST_TO_JOIN_RECEIVED_TYPE => new CommunityUserRequestToJoinNotification(),
                     COMMUNITY_INVITE_RECEIVED_TYPE => new CommunityUserInvitedNotification(),
                     COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE => new CommunityUserRequestToJoinAcceptedNotification(),
-                    OWNER_COMMUNITY_DELETED_TYPE => new OwnerCommunityDeletedNotification(),
+                    COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE => new CommunityDeletedContenViolationNotification(),
                     _ => null,
                 };
 
