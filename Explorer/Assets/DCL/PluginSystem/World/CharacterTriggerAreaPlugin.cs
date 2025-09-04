@@ -83,7 +83,7 @@ namespace DCL.PluginSystem.World
 
             finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
             finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
-            finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(ref builder, globalWorld));
+            finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sharedDependencies.EntitiesMap, sharedDependencies.EcsToCRDTWriter, componentPoolsRegistry.GetReferenceTypePool<PBTriggerAreaResult>()));
             finalizeWorldSystems.Add(CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!));
         }
 

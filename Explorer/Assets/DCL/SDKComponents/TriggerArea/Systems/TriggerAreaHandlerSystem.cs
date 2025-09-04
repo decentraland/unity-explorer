@@ -1,16 +1,20 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.TriggerArea.Components;
+using DCL.SDKComponents.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TriggerArea.Systems
@@ -20,10 +24,21 @@ namespace DCL.SDKComponents.TriggerArea.Systems
     public partial class TriggerAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly World globalWorld;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+        private readonly IComponentPool<PBTriggerAreaResult> triggerAreaResultPool;
 
-        public TriggerAreaHandlerSystem(World world, World globalWorld) : base(world)
+        public TriggerAreaHandlerSystem(
+            World world,
+            World globalWorld,
+            IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
+            IECSToCRDTWriter ecsToCRDTWriter,
+            IComponentPool<PBTriggerAreaResult> triggerAreaResultPool) : base(world)
         {
             this.globalWorld = globalWorld;
+            this.entitiesMap = entitiesMap;
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.triggerAreaResultPool = triggerAreaResultPool;
         }
 
         protected override void Update(float t)
@@ -38,6 +53,47 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         {
             // TODO: make the CharacterTriggerAreaComponent more versatile, to accept scene entity colliders
             World.Add(entity, new SDKTriggerAreaComponent(), new CharacterTriggerAreaComponent(areaSize: Vector3.zero, targetOnlyMainPlayer: true));
+        }
+
+        [Query]
+        [All(typeof(TransformComponent))]
+        private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in PBTriggerArea pbTriggerArea, in CharacterTriggerAreaComponent triggerAreaComponent)
+        {
+            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
+            {
+                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
+
+                // TODO...
+                var resultComponent = triggerAreaResultPool.Get();
+                resultComponent.EventType = TriggerAreaEventType.TaetExit;
+                resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
+                // resultComponent.Timestamp =
+                // resultComponent.TriggeredEntityPosition =
+                // resultComponent.TriggeredEntityRotation =
+
+                // TODO: should the result component be a GOVS component ??? won't several event step on each other???
+
+                ecsToCRDTWriter.PutMessage(resultComponent, triggerAreaCRDTEntity);
+            }
+            triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+
+            foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
+            {
+                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
+
+                // TODO...
+                var resultComponent = triggerAreaResultPool.Get();
+                resultComponent.EventType = TriggerAreaEventType.TaetEnter;
+                resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
+                // resultComponent.Timestamp =
+                // resultComponent.TriggeredEntityPosition =
+                // resultComponent.TriggeredEntityRotation =
+
+                ecsToCRDTWriter.PutMessage(resultComponent, triggerAreaCRDTEntity);
+            }
+            triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+
+            // TODO: STAY...
         }
 
         [Query]
@@ -98,6 +154,15 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
+        }
+
+        private bool TryGetAvatarEntity(Transform transform, out Entity entity)
+        {
+            entity = Entity.Null;
+            var result = FindAvatarUtils.AvatarWithTransform(globalWorld, transform);
+            if (!result.Success) return false;
+            entity = result.Result;
+            return true;
         }
     }
 }
