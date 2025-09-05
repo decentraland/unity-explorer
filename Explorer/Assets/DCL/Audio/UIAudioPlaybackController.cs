@@ -40,6 +40,7 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.PlayUIAudioEvent -= OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent -= OnStopContinuousUIAudioEvent;
+            ExitUtils.BeforeApplicationQuitting -= OnBeforeApplicationQuitting;
             mainCancellationTokenSource.SafeCancelAndDispose();
 
             foreach (KeyValuePair<AudioClipConfig, ContinuousPlaybackAudioData> audioData in audioDataPerAudioClipConfig)
