@@ -14,7 +14,7 @@ namespace DCL.Landscape
         public readonly byte ScaleXZ;
         public readonly byte ScaleY;
 
-        public TreeInstanceData(UnityEngine.TreeInstance instance, Vector3 position,
+        public TreeInstanceData(TreeInstance instance, Vector3 position,
             int parcelSize, LandscapeAsset[] prototypes)
         {
             PrototypeIndex = (byte)instance.prototypeIndex;
