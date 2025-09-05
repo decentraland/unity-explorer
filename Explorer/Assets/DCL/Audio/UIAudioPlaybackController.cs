@@ -40,6 +40,7 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.PlayUIAudioEvent -= OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent -= OnStopContinuousUIAudioEvent;
+            UIAudioEventsBus.Instance.MuteContinuousUIAudioEvent -= OnMuteContinuousUIAudioEvent;
             ExitUtils.BeforeApplicationQuitting -= OnBeforeApplicationQuitting;
             mainCancellationTokenSource.SafeCancelAndDispose();
 
@@ -62,6 +63,7 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.PlayUIAudioEvent += OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent += OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent += OnStopContinuousUIAudioEvent;
+            UIAudioEventsBus.Instance.MuteContinuousUIAudioEvent += OnMuteContinuousUIAudioEvent;
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
             mainCancellationTokenSource = new CancellationTokenSource();
             ExitUtils.BeforeApplicationQuitting += OnBeforeApplicationQuitting;
@@ -83,7 +85,7 @@ namespace DCL.Audio
             {
                 audioData.FadeTweener.Kill();
                 audioData.CancellationTokenSource.SafeCancelAndDispose();
-
+                
                 audioData.FadeTweener = audioData.AudioSource
                     .DOFade(0, fadeDuration)
                     .SetAutoKill()
@@ -93,6 +95,14 @@ namespace DCL.Audio
                         ReleaseOnFadeOut(audioData, audioClipConfig);
                 });
             }
+        }
+
+        private void OnMuteContinuousUIAudioEvent(AudioClipConfig audioClipConfig, bool isMuted)
+        {
+            if (!audioDataPerAudioClipConfig.TryGetValue(audioClipConfig, out ContinuousPlaybackAudioData audioData))
+                return;
+
+            audioData.AudioSource.mute = isMuted;
         }
 
         private void ReleaseOnFadeOut(ContinuousPlaybackAudioData audioData, AudioClipConfig audioClipConfig)

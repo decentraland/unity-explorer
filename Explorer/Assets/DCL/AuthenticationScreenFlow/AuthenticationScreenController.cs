@@ -76,6 +76,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
         private readonly List<Resolution> possibleResolutions = new ();
+        private readonly AudioClipConfig backgroundMusic;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -103,7 +104,8 @@ namespace DCL.AuthenticationScreenFlow
             BuildData buildData,
             World world,
             AuthScreenEmotesSettings emotesSettings,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            AudioClipConfig backgroundMusic)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -118,6 +120,7 @@ namespace DCL.AuthenticationScreenFlow
             this.world = world;
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
+            this.backgroundMusic = backgroundMusic;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -130,6 +133,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             characterPreviewController?.Dispose();
             web3Authenticator.SetVerificationListener(null);
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
         }
 
         protected override void OnViewInstantiated()
@@ -177,6 +181,9 @@ namespace DCL.AuthenticationScreenFlow
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
+            // Unregistering in case player re-login midgame.
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent += OnContinuousAudioStarted;
             InitMusicMute();
         }
 
@@ -577,12 +584,21 @@ namespace DCL.AuthenticationScreenFlow
             ExitUtils.Exit();
         }
 
+        private void OnContinuousAudioStarted(AudioClipConfig audioClipConfig)
+        {
+            if (audioClipConfig.GetInstanceID() != backgroundMusic.GetInstanceID())
+                return;
+            
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
+            InitMusicMute();
+        }
+
         private void InitMusicMute()
         {
             bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
 
             if (isMuted)
-                audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Music_Volume);
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
             
             viewInstance?.MuteButton.SetIcon(isMuted);
         }
@@ -592,9 +608,9 @@ namespace DCL.AuthenticationScreenFlow
             bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
             
             if (isMuted)
-                audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Music_Volume);
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, false);
             else
-                audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Music_Volume);
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
             
             viewInstance?.MuteButton.SetIcon(!isMuted);
             
