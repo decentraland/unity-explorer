@@ -24,6 +24,7 @@ using MVC.PopupsController.PopupCloser;
 using NSubstitute;
 using System;
 using System.Threading;
+using DCL.Audio;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
 using DCL.WebRequests.Analytics;
@@ -88,7 +89,7 @@ namespace Global.Tests.PlayMode
                 world,
                 new Entity(),
                 new SystemMemoryCap(),
-                new WorldVolumeMacBus(),
+                new VolumeBus(),
                 enableAnalytics: false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),

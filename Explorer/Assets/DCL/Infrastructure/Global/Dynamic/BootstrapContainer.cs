@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -10,7 +11,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -50,7 +50,7 @@ namespace Global.Dynamic
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
-        public WorldVolumeMacBus WorldVolumeMacBus { get; private set; }
+        public VolumeBus VolumeBus { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings;
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
@@ -101,7 +101,7 @@ namespace Global.Dynamic
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
-                WorldVolumeMacBus = new WorldVolumeMacBus(),
+                VolumeBus = new VolumeBus(),
                 Environment = decentralandEnvironment
             };
 

@@ -1,4 +1,5 @@
-﻿using DCL.Prefs;
+﻿using DCL.Audio;
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
@@ -11,13 +12,13 @@ namespace DCL.Settings.ModuleControllers
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
 
-        public WorldSoundsVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, WorldVolumeMacBus worldVolumeMacBus)
+        public WorldSoundsVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, VolumeBus volumeBus)
         {
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WORLD_VOLUME))
                 view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_WORLD_VOLUME);
@@ -32,7 +33,7 @@ namespace DCL.Settings.ModuleControllers
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_WORLD_VOLUME, volumePercentage, save: true);
 
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            worldVolumeMacBus.SetWorldVolume(volumePercentage / 100);
+            volumeBus.SetWorldVolume(volumePercentage / 100);
 #endif
         }
 

@@ -9,6 +9,7 @@ namespace DCL.Audio
         public event Action<AudioClipConfig>? PlayUIAudioEvent;
         public event Action<AudioClipConfig>? PlayContinuousUIAudioEvent;
         public event Action<AudioClipConfig>? StopContinuousUIAudioEvent;
+        public event Action<AudioClipConfig, bool>? MuteContinuousUIAudioEvent;
 
         public void Dispose() { }
 
@@ -28,6 +29,12 @@ namespace DCL.Audio
         {
             if (audioClipConfig != null)
                 StopContinuousUIAudioEvent?.Invoke(audioClipConfig);
+        }
+
+        public void SendMuteContinuousAudioEvent(AudioClipConfig audioClipConfig, bool isMuted)
+        {
+            if(audioClipConfig != null)
+                MuteContinuousUIAudioEvent?.Invoke(audioClipConfig, isMuted);
         }
 
         public PlayAudioScope NewPlayAudioScope(AudioClipConfig config) =>

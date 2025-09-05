@@ -4,10 +4,10 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Settings;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
 #endif
 
         private readonly float audioFadeSpeed;
@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.MediaStream
             ISceneData sceneData,
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             float audioFadeSpeed
         ) : base(world)
         {
@@ -62,11 +62,11 @@ namespace DCL.SDKComponents.MediaStream
             //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
             //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            this.worldVolumeMacBus = worldVolumeMacBus;
-            this.worldVolumeMacBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
-            this.worldVolumeMacBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
-            masterVolumePercentage = worldVolumeMacBus.GetMasterVolume();
-            worldVolumePercentage = worldVolumeMacBus.GetWorldVolume();
+            this.volumeBus = volumeBus;
+            this.volumeBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
+            this.volumeBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
+            masterVolumePercentage = volumeBus.GetSerializedMasterVolume();
+            worldVolumePercentage = volumeBus.GetSerializedWorldVolume();
 #endif
         }
 
@@ -293,8 +293,8 @@ namespace DCL.SDKComponents.MediaStream
         protected override void OnDispose()
         {
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            worldVolumeMacBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
-            worldVolumeMacBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
+            volumeBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
+            volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
 #endif
         }
     }

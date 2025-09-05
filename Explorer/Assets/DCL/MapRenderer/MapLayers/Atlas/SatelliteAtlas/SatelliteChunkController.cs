@@ -100,18 +100,27 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task;
             }
 
+            // Closing this in try catch, because SpriteRenderer on application closing is being disposed before this code executes.
+            try
+            {
+                float pixelsPerUnit = texture.width / chunkWorldSize;
+
+                atlasChunk.MainSpriteRenderer.enabled = true;
+                atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
+                atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
+
+                atlasChunk.MainSpriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
+                    0, SpriteMeshType.FullRect, Vector4.one, false);
+
+                atlasChunk.MainSpriteRenderer.sprite.name = chunkId.ToString();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.UI);
+                throw;
+            }
+
             textureContainer.AddChunk(chunkId, texture);
-
-            float pixelsPerUnit = texture.width / chunkWorldSize;
-
-            atlasChunk.MainSpriteRenderer.enabled = true;
-            atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
-            atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
-
-            atlasChunk.MainSpriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
-                0, SpriteMeshType.FullRect, Vector4.one, false);
-
-            atlasChunk.MainSpriteRenderer.sprite.name = chunkId.ToString();
         }
     }
 }

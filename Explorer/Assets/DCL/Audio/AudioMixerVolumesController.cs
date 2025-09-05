@@ -33,6 +33,13 @@ namespace DCL.Audio
             MuteGroup(AudioMixerExposedParam.Microphone_Volume);
         }
 
+        public bool IsGroupMuted(AudioMixerExposedParam groupParam)
+        {
+            var groupParamString = groupParam.ToString();
+            
+            return mutedGroups.Contains(groupParamString);
+        }
+
         public void MuteGroup(AudioMixerExposedParam groupParam)
         {
             var groupParamString = groupParam.ToString();

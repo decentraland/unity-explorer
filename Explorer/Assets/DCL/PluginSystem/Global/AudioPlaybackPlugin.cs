@@ -16,16 +16,18 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly bool enableLandscape;
         private readonly TerrainGenerator terrainGenerator;
+        private readonly AudioMixerVolumesController mixerVolumesController;
 
         private ProvidedInstance<UIAudioPlaybackController> uiAudioPlaybackController;
         private ProvidedInstance<WorldAudioPlaybackController> worldAudioPlaybackController;
         private ProvidedAsset<LandscapeAudioSystemSettings> landscapeAudioSettings;
 
-        public AudioPlaybackPlugin(TerrainGenerator terrainGenerator, IAssetsProvisioner assetsProvisioner, bool enableLandscape)
+        public AudioPlaybackPlugin(TerrainGenerator terrainGenerator, IAssetsProvisioner assetsProvisioner, bool enableLandscape, AudioMixerVolumesController mixerVolumesController)
         {
             this.terrainGenerator = terrainGenerator;
             this.assetsProvisioner = assetsProvisioner;
             this.enableLandscape = enableLandscape;
+            this.mixerVolumesController = mixerVolumesController;
         }
 
         public void Dispose()
@@ -47,7 +49,7 @@ namespace DCL.PluginSystem.Global
             worldAudioPlaybackController = await assetsProvisioner.ProvideInstanceAsync(settings.WorldAudioPlaybackControllerReference, ct: ct);
             landscapeAudioSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeAudioSettingsReference, ct: ct);
 
-            uiAudioPlaybackController.Value.Initialize();
+            uiAudioPlaybackController.Value.Initialize(mixerVolumesController);
             worldAudioPlaybackController.Value.Initialize();
         }
 

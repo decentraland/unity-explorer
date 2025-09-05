@@ -118,7 +118,7 @@ namespace Global.Dynamic
                 world,
                 playerEntity,
                 memoryCap,
-                bootstrapContainer.WorldVolumeMacBus,
+                bootstrapContainer.VolumeBus,
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
