@@ -18,6 +18,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -38,6 +39,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserErrorNotificationService errorNotificationService;
 
         private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
+        private readonly CommunitiesBrowserStateService browserStateService;
+        private readonly CommunitiesBrowserRightSectionPresenter rightSectionPresenter;
 
         private CancellationTokenSource? searchCancellationCts;
         private CancellationTokenSource? showErrorCts;
@@ -45,8 +48,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private bool isSectionActivated;
         private string currentSearchText = string.Empty;
-        private readonly CommunitiesBrowserStateService browserStateService;
-        private readonly CommunitiesBrowserRightSectionPresenter rightSectionPresenter;
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
@@ -96,6 +97,28 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CreateCommunityButtonClicked += CreateCommunity;
         }
 
+        public void Dispose()
+        {
+            view.SearchBarSelected -= DisableShortcutsInput;
+            view.SearchBarDeselected -= RestoreInput;
+            view.SearchBarValueChanged -= SearchBarValueChanged;
+            view.SearchBarSubmit -= SearchBarSubmit;
+            view.SearchBarClearButtonClicked -= SearchBarCleared;
+            view.CommunityProfileOpened -= OpenCommunityProfile;
+            view.CreateCommunityButtonClicked -= CreateCommunity;
+
+            myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
+
+            UnsubscribeDataProviderEvents();
+
+            browserStateService.Dispose();
+
+            myCommunitiesPresenter.Dispose();
+            searchCancellationCts?.SafeCancelAndDispose();
+            showErrorCts?.SafeCancelAndDispose();
+            openCommunityCreationCts?.SafeCancelAndDispose();
+            spriteCache.Clear();
+        }
 
         public void Activate()
         {
@@ -132,29 +155,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public RectTransform GetRectTransform() =>
             rectTransform;
-
-        public void Dispose()
-        {
-            view.SearchBarSelected -= DisableShortcutsInput;
-            view.SearchBarDeselected -= RestoreInput;
-            view.SearchBarValueChanged -= SearchBarValueChanged;
-            view.SearchBarSubmit -= SearchBarSubmit;
-            view.SearchBarClearButtonClicked -= SearchBarCleared;
-            view.CommunityProfileOpened -= OpenCommunityProfile;
-            view.CreateCommunityButtonClicked -= CreateCommunity;
-
-            myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
-
-            UnsubscribeDataProviderEvents();
-
-            browserStateService.Dispose();
-
-            myCommunitiesPresenter.Dispose();
-            searchCancellationCts?.SafeCancelAndDispose();
-            showErrorCts?.SafeCancelAndDispose();
-            openCommunityCreationCts?.SafeCancelAndDispose();
-            spriteCache.Clear();
-        }
 
         private void ViewAllMyCommunitiesResults()
         {
@@ -195,18 +195,15 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             if (string.IsNullOrEmpty(searchText))
-                rightSectionPresenter.LoadAllCommunitiesResults();
-            else
-            {
-                rightSectionPresenter.LoadSearchResults(searchText);
-            }
+                rightSectionPresenter.LoadAllCommunities();
+            else { rightSectionPresenter.LoadSearchResults(searchText); }
 
             currentSearchText = searchText;
         }
 
         private void SearchBarCleared()
         {
-            rightSectionPresenter.LoadAllCommunitiesResults();
+            rightSectionPresenter.LoadAllCommunities();
         }
 
         private void ClearSearchBar()
@@ -220,7 +217,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid JoinCommunityAsync(string communityId, CancellationToken ct)
         {
-            var result = await dataProvider.JoinCommunityAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<bool> result = await dataProvider.JoinCommunityAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
                 return;
@@ -241,7 +238,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTaskVoid CreateCommunityAsync(CancellationToken ct)
         {
             var canCreate = false;
-            var ownProfile = await selfProfile.ProfileAsync(ct);
+            Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
             if (ownProfile != null)
             {
@@ -250,10 +247,11 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             mvcManager.ShowAsync(
-                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
-                    canCreateCommunities: canCreate,
-                    communityId: string.Empty,
-                    spriteCache)), ct).Forget();
+                           CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                               canCreateCommunities: canCreate,
+                               communityId: string.Empty,
+                               spriteCache)), ct)
+                      .Forget();
         }
 
         private void OnCommunityUpdated(string _) =>
@@ -263,12 +261,13 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             browserStateService.UpdateJoinedCommunity(communityId, true, success);
             myCommunitiesPresenter.UpdateJoinedCommunity(communityId, true, success);
-            rightSectionPresenter.UpdateJoinedCommunity(communityId, true, success);
+            rightSectionPresenter.UpdateJoinedCommunity(communityId, success);
         }
+
         private void OnCommunityLeft(string communityId, bool success)
         {
             myCommunitiesPresenter.UpdateJoinedCommunity(communityId, false, success);
-            rightSectionPresenter.UpdateJoinedCommunity(communityId, false, success);
+            rightSectionPresenter.UpdateJoinedCommunity(communityId, success);
         }
 
         private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity) =>
@@ -312,6 +311,6 @@ namespace DCL.Communities.CommunitiesBrowser
     public enum CommunitiesSections
     {
         BROWSE_ALL_COMMUNITIES,
-        FILTERED_COMMUNITIES
+        FILTERED_COMMUNITIES,
     }
 }

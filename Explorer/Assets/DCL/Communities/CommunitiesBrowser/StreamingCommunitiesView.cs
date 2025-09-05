@@ -3,6 +3,7 @@ using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
@@ -11,9 +12,6 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class StreamingCommunitiesView : MonoBehaviour
     {
-        public event Action<string>? JoinStream;
-        public event Action? ViewAllStreamingCommunitiesButtonClicked;
-
         [Header("Streaming Section")]
         [SerializeField] private GameObject streamingSection = null!;
         [SerializeField] private LoopGridView streamingLoopGrid = null!;
@@ -21,9 +19,9 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
         [SerializeField] private Button viewAllButton = null!;
 
-        private readonly List<string> streamingResultsIds = new();
-        private ThumbnailLoader? thumbnailLoader;
+        private readonly List<string> streamingResultsIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
+        private ThumbnailLoader? thumbnailLoader;
 
         private void Awake()
         {
@@ -35,6 +33,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 ViewAllStreamingCommunitiesButtonClicked?.Invoke();
             }
         }
+
+        public event Action<string>? JoinStream;
+        public event Action? ViewAllStreamingCommunitiesButtonClicked;
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
@@ -50,10 +51,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public void AddStreamingResultsItems(CommunityData[] communities)
         {
             streamingSection.SetActive(true);
-            foreach (CommunityData communityData in communities)
-            {
-                streamingResultsIds.Add(communityData.id);
-            }
+
+            foreach (CommunityData communityData in communities) { streamingResultsIds.Add(communityData.id); }
 
             streamingLoopGrid.SetListItemCount(streamingResultsIds.Count);
             SetStreamingResultsAsEmpty(streamingResultsIds.Count == 0);
@@ -95,7 +94,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
             cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, default).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, default(CancellationToken)).Forget();
 
             cardView.MainButtonClicked -= JoinStreamClicked;
             cardView.MainButtonClicked += JoinStreamClicked;
@@ -108,9 +107,10 @@ namespace DCL.Communities.CommunitiesBrowser
             JoinStream?.Invoke(communityId);
         }
 
-        public void SetCommunitiesBrowserState(CommunitiesBrowserStateService browserStateService)
+        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService)
         {
-            this.browserStateService = browserStateService;
+            browserStateService = communitiesBrowserStateService;
+            thumbnailLoader = newThumbnailLoader;
         }
     }
 }

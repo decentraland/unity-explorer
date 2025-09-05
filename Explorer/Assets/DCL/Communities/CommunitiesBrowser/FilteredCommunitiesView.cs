@@ -4,6 +4,7 @@ using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,10 +14,6 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class FilteredCommunitiesView : MonoBehaviour
     {
-        public event Action? BackButtonClicked;
-        public event Action<string>? CommunityProfileOpened;
-        public event Action<string>? CommunityJoined;
-
         [Header("Filtered Results Section")]
         [SerializeField] private Button resultsBackButton = null!;
         [SerializeField] private TMP_Text resultsTitleText = null!;
@@ -28,11 +25,13 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        private readonly List<string> currentFilteredIds = new();
+        private readonly List<string> currentFilteredIds = new ();
+        private CommunitiesBrowserStateService? browserStateService;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
-        private CommunitiesBrowserStateService? browserStateService;
+
+        public int CurrentResultsCount => currentFilteredIds.Count;
 
         private void Awake()
         {
@@ -45,8 +44,13 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
+        public event Action? BackButtonClicked;
+        public event Action<string>? CommunityProfileOpened;
+        public event Action<string>? CommunityJoined;
+
+        public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService)
         {
+            browserStateService = communitiesBrowserStateService;
             thumbnailLoader = newThumbnailLoader;
         }
 
@@ -71,10 +75,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public void AddResultsItems(CommunityData[] communities, bool resetPos)
         {
             browserStateService!.AddCommunities(communities);
-            foreach (CommunityData communityData in communities)
-            {
-                currentFilteredIds.Add(communityData.id);
-            }
+
+            foreach (CommunityData communityData in communities) { currentFilteredIds.Add(communityData.id); }
 
             resultLoopGrid.SetListItemCount(currentFilteredIds.Count, resetPos);
             SetResultsAsEmpty(currentFilteredIds.Count == 0);
@@ -125,9 +127,6 @@ namespace DCL.Communities.CommunitiesBrowser
             RefreshCommunityCardInGrid(communityId);
         }
 
-
-        public int CurrentResultsCount => currentFilteredIds.Count;
-
         private void RefreshCommunityCardInGrid(string communityId)
         {
             for (var i = 0; i < currentFilteredIds.Count; i++)
@@ -160,7 +159,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, default).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, default(CancellationToken)).Forget();
             cardView.SetJoiningLoadingActive(false);
 
             // Setup card events
