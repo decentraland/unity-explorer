@@ -39,6 +39,9 @@ namespace DCL.Chat.ChatMessages
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
         public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
 
+        public event Action<string> OnTranslateMessageRequested;
+        public event Action<string> OnRevertMessageRequested;
+        
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
@@ -248,6 +251,11 @@ namespace DCL.Chat.ChatMessages
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
                 itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
 
+                itemScript.OnTranslateRequested -= HandleTranslateRequest;
+                itemScript.OnRevertRequested -= HandleRevertRequest;
+                itemScript.OnTranslateRequested += HandleTranslateRequest;
+                itemScript.OnRevertRequested += HandleRevertRequest;
+                
                 float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
 
@@ -271,6 +279,16 @@ namespace DCL.Chat.ChatMessages
             return item;
         }
 
+        private void HandleTranslateRequest(string messageId)
+        {
+            OnTranslateMessageRequested?.Invoke(messageId);
+        }
+
+        private void HandleRevertRequest(string messageId)
+        {
+            OnRevertMessageRequested?.Invoke(messageId);
+        }
+        
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
         {
             OnChatContextMenuRequested?.Invoke(itemDataMessage, itemScript);

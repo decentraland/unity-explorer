@@ -5,7 +5,6 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.UI;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
@@ -13,9 +12,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.Clipboard;
 using DCL.Translation.Commands;
 using DCL.Translation.Events;
+using DCL.Translation.Models;
 using DCL.Translation.Service.Memory;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
@@ -96,6 +95,8 @@ namespace DCL.Chat.ChatMessages
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
             scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
             view.Initialize(viewModels);
+            view.OnTranslateMessageRequested += OnTranslateMessage;
+            view.OnRevertMessageRequested += OnRevertMessage;
         }
 
         private void OnChatReset(ChatEvents.ChatResetEvent obj)
@@ -118,8 +119,30 @@ namespace DCL.Chat.ChatMessages
         {
             scrollToBottomPresenter.Dispose();
             loadChannelCts.SafeCancelAndDispose();
+
+            view.OnTranslateMessageRequested -= OnTranslateMessage;
+            view.OnRevertMessageRequested -= OnRevertMessage;
         }
 
+        private void OnTranslateMessage(string messageId)
+        {
+            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            if (viewModel == null || viewModel.TranslationState == TranslationState.Pending) return;
+
+            // No need to check state here, the view already determined this is the correct action
+            translateMessageCommand.Execute(viewModel.Message.MessageId, viewModel.Message.Message);
+        }
+
+        // NEW: Handler for the revert request
+        private void OnRevertMessage(string messageId)
+        {
+            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            if (viewModel == null) return;
+
+            // No need to check state here
+            revertToOriginalCommand.Execute(viewModel.Message.MessageId);
+        }
+        
         private void OnScrollPositionChanged(Vector2 _)
         {
             if (!separatorIsVisible)

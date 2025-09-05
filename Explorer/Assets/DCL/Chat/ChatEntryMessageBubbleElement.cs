@@ -1,6 +1,7 @@
 using DCL.Chat.History;
 using System;
 using System.Globalization;
+using DCL.Translation.Models;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -25,19 +26,34 @@ namespace DCL.Chat
         [field: SerializeField] internal RectTransform popupPosition { get; private set; }
         [field: SerializeField] internal GameObject mentionedOutline { get; private set; }
         [field: SerializeField] internal TMP_Text timestamp { get; private set; }
+        [field: SerializeField] internal ChatEntryTranslationView translationView { get; private set; }
 
+        public event Action OnTranslateRequest;
+        public event Action OnRevertRequest;
+        public event Action OnPointerEnterEvent;
+        public event Action OnPointerExitEvent;
+        
         private Vector2 backgroundSize;
         private bool popupOpen;
 
+        private void Awake()
+        {
+            translationView.OnTranslateClicked += () => OnTranslateRequest?.Invoke();
+            translationView.OnSeeOriginalClicked += () => OnRevertRequest?.Invoke();
+        }
+        
         public void OnPointerEnter(PointerEventData eventData)
         {
             messageOptionsButton?.gameObject.SetActive(true);
+            OnPointerEnterEvent?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             if (!popupOpen)
                 messageOptionsButton?.gameObject.SetActive(false);
+
+            OnPointerExitEvent?.Invoke();
         }
 
         public Vector3 PopupPosition => popupPosition.position;
@@ -48,7 +64,7 @@ namespace DCL.Chat
             messageOptionsButton?.gameObject.SetActive(false);
         }
 
-        public void SetMessageData(string displayText, ChatMessage originalData)
+        public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
         {
             usernameElement.SetUsername(originalData.SenderValidatedName, originalData.SenderWalletId);
             messageContentElement.SetMessageContent(displayText);
@@ -61,6 +77,8 @@ namespace DCL.Chat
             else
                 timestamp.gameObject.SetActive(false);
 
+            translationView.SetState(translationState);
+            
             backgroundSize = backgroundRectTransform.sizeDelta;
             backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
             backgroundSize.y += timestamp.gameObject.activeSelf ? timestamp.rectTransform.sizeDelta.y : 0.0f;
@@ -77,9 +95,14 @@ namespace DCL.Chat
         /// <param name="data"> a ChatMessage </param>
         public void SetMessageData(ChatMessage data)
         {
-            SetMessageData(data.Message, data);
+            SetMessageData(data.Message, data, TranslationState.Original);
         }
 
+        public void SetTranslationViewVisibility(bool isVisible)
+        {
+            translationView.gameObject.SetActive(isVisible);
+        }
+        
         private void OnMessageOptionsClicked()
         {
             popupOpen = true;

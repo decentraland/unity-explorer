@@ -23,6 +23,8 @@ namespace DCL.Chat
 
         public ChatEntryClickedDelegate? ChatEntryClicked;
         private Action<string, ChatEntryView>? onMessageContextMenuClicked;
+        public event Action<string> OnTranslateRequested;
+        public event Action<string> OnRevertRequested;
 
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
@@ -49,6 +51,10 @@ namespace DCL.Chat
         {
             profileButton.onClick.AddListener(OnProfileButtonClicked);
             usernameElement.UserNameClicked += OnUsernameClicked;
+
+            messageBubbleElement.OnPointerEnterEvent += HandlePointerEnter;
+            messageBubbleElement.OnPointerExitEvent += HandlePointerExit;
+            
             messageBubbleElement.messageOptionsButton.onClick.AddListener(() =>
             {
                 if (currentViewModel != null)
@@ -56,6 +62,18 @@ namespace DCL.Chat
                     onMessageContextMenuClicked?.Invoke(currentViewModel.Message.MessageId, this);
                 }
             });
+
+            messageBubbleElement.OnTranslateRequest += () =>
+            {
+                if (currentViewModel != null)
+                    OnTranslateRequested?.Invoke(currentViewModel.Message.MessageId);
+            };
+
+            messageBubbleElement.OnRevertRequest += () =>
+            {
+                if (currentViewModel != null)
+                    OnRevertRequested?.Invoke(currentViewModel.Message.MessageId);
+            };
         }
 
         public void AnimateChatEntry()
@@ -90,13 +108,16 @@ namespace DCL.Chat
                 return date.ToString("ddd, d MMM, yyyy", CultureInfo.InvariantCulture);
         }
 
-        public void SetItemData(ChatMessageViewModel viewModel, Action<string, ChatEntryView> onMessageContextMenuClicked, ChatEntryClickedDelegate? onProfileContextMenuClicked)
+        public void SetItemData(ChatMessageViewModel viewModel,
+            Action<string, ChatEntryView> onMessageContextMenuClicked,
+            ChatEntryClickedDelegate? onProfileContextMenuClicked)
         {
             currentViewModel = viewModel;
             chatMessage = viewModel.Message;
             usernameElement.SetUsername(chatMessage.SenderValidatedName, chatMessage.SenderWalletId);
-            messageBubbleElement.SetMessageData(viewModel.DisplayText, chatMessage);
-
+            messageBubbleElement.SetMessageData(viewModel.DisplayText, chatMessage, viewModel.TranslationState);
+            messageBubbleElement.SetTranslationViewVisibility(viewModel.TranslationState == TranslationState.Pending);
+            
             dateDividerElement.gameObject.SetActive(viewModel.ShowDateDivider);
             if (viewModel.ShowDateDivider)
                 dateDividerText.text = GetDateRepresentation(chatMessage.SentTimestamp!.Value.Date);
@@ -163,6 +184,37 @@ namespace DCL.Chat
         public void SetUsernameColor(Color newUserNameColor)
         {
             usernameElement.userName.color = newUserNameColor;
+        }
+
+        private void HandlePointerEnter()
+        {
+            if (currentViewModel == null) return;
+
+            // Show the translation view on hover, but NOT if it's already in a pending state
+            if (currentViewModel.TranslationState != TranslationState.Pending)
+            {
+                messageBubbleElement.SetTranslationViewVisibility(true);
+            }
+        }
+
+        private void HandlePointerExit()
+        {
+            if (currentViewModel == null) return;
+
+            // Always hide on exit, UNLESS it's in a pending state (spinner should remain visible)
+            if (currentViewModel.TranslationState != TranslationState.Pending)
+            {
+                messageBubbleElement.SetTranslationViewVisibility(false);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (messageBubbleElement != null)
+            {
+                messageBubbleElement.OnPointerEnterEvent -= HandlePointerEnter;
+                messageBubbleElement.OnPointerExitEvent -= HandlePointerExit;
+            }
         }
     }
 }
