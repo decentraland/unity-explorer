@@ -102,7 +102,6 @@ namespace DCL.PluginSystem.Global
         private readonly List<string> forceRender;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
-        private readonly INotificationsBusController notificationsBusController;
         private readonly URLDomain assetBundleURL;
         private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly IInputBlock inputBlock;
@@ -164,7 +163,6 @@ namespace DCL.PluginSystem.Global
             List<string> forceRender,
             IRealmData realmData,
             IProfileCache profileCache,
-            URLDomain assetBundleURL,
             NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
