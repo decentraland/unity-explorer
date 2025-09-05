@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -150,6 +151,11 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         continue;
 
                     var avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO, false);
+
+                    //Builder items will never have an asset bundle
+                    if (avatarElement.DTO.assetBundleManifestVersion == null)
+                        avatarElement.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateLSDAsset();
+
                     intention.AppendToResult(avatarElement);
                     totalCount++;
                 }

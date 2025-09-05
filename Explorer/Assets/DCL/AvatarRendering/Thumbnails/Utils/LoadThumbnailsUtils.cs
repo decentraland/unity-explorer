@@ -82,7 +82,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
-            if (attachment.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed)
+            if (attachment.DTO.assetBundleManifestVersion.IsLSDAsset || attachment.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed)
             {
                 ReportHub.Log(
                     ReportCategory.THUMBNAILS,

@@ -13,6 +13,7 @@ public class AssetBundleManifestVersion
 
         public AssetBundleManifestVersionPerPlatform assets;
         public bool assetBundleManifestRequestFailed;
+        public bool IsLSDAsset;
 
         public AssetBundleManifestVersion() { }
 
@@ -65,6 +66,13 @@ public class AssetBundleManifestVersion
         {
             AssetBundleManifestVersion assetBundleManifestVersion = new AssetBundleManifestVersion();
             assetBundleManifestVersion.assetBundleManifestRequestFailed = true;
+            return assetBundleManifestVersion;
+        }
+
+        public static AssetBundleManifestVersion CreateLSDAsset()
+        {
+            var assetBundleManifestVersion = new AssetBundleManifestVersion();
+            assetBundleManifestVersion.IsLSDAsset = true;
             return assetBundleManifestVersion;
         }
     }

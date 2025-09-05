@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -30,12 +31,12 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 if (assetBundleManifest.Succeeded)
                 {
-                    Debug.Log($"JUANI SUCCESS GETTING {entityDefinition.id}");
+                    ReportHub.Log(ReportCategory.ALWAYS, $"JUANI SUCCESS GETTING {entityDefinition.id}");
                     entityDefinition.assetBundleManifestVersion = new AssetBundleManifestVersion(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
                 }
                 else
                 {
-                    Debug.Log("JUANI FAILLED GETTING GETTING ");
+                    ReportHub.Log(ReportCategory.ALWAYS, $"JUANI FAILLED GETTING {entityDefinition.id}");
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
                 }
             }

@@ -204,7 +204,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     // emote failed to load? remove intent
-                    if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true })
+                    if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } and { IsLSDAsset: false })
                     {
                         ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
