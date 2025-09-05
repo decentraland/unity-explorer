@@ -115,6 +115,7 @@ using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.Chat.Services;
+using DCL.PluginSystem.World;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -124,6 +125,7 @@ using UnityEngine.UIElements;
 using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
+using MultiplayerPlugin = DCL.PluginSystem.Global.MultiplayerPlugin;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -897,6 +899,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
+                new SmartWearablesGlobalPlugin(backpackEventBus)
             };
 
             if (includeVoiceChat)
