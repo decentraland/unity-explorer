@@ -39,16 +39,16 @@ namespace DCL.WebRequests.ChromeDevtool
 #else
 
                 // Windows: check if Chrome is registered in the registry
-                const string CHROME_KEY = @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";
-                object? path = Microsoft.Win32.Registry.GetValue(CHROME_KEY, "", null);
+                const string CHROME_KEY = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";
+                string? path = WindowsRegistry.ReadString(CHROME_KEY, "");
 
-                if (path is not string chromeExePath || !System.IO.File.Exists(chromeExePath))
+                if (path == null || System.IO.File.Exists(path) == false)
                     return BrowserOpenResult.FromBrowserOpenError(
                         BrowserOpenError.ErrorChromeNotInstalled()
                     );
 
                 Result result = DclProcesses.Start(
-                    "chrome",
+                    path,
                     new[] { url }
                 );
 
