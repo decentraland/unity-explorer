@@ -58,5 +58,6 @@ namespace DCL.Prefs
 
         public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
         public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
+        public const string SETTINGS_TRANSLATION_PREFERRED_LANGUAGE = "Settings_Translation.PreferredLanguage";
     }
 }

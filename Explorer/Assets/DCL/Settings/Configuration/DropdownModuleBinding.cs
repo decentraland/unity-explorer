@@ -34,6 +34,7 @@ namespace DCL.Settings.Configuration
             CHAT_DMS_MODES_FEATURE,
             CHAT_BUBBLES_MODES_FEATURE,
             VOICECHAT_INPUT_DEVICE,
+            CHAT_TRANSLATE_FEATURE
 
             // add other features...
         }
@@ -73,6 +74,7 @@ namespace DCL.Settings.Configuration
                                                        DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
                                                        DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
                                                        DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance, voiceChatSettings),
+                                                       DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,chatSettingsAsset),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
                                                    };

@@ -12,6 +12,7 @@ namespace DCL.Chat.ChatViews
         [SerializeField] public ProfilePictureView communityProfilePictureView;
         [SerializeField] private ChatUsernameView usernameElement;
         [SerializeField] private Button buttonOpenProfile;
+        [SerializeField] private RectTransform autoTranslateIndicator;
 
         public Button ButtonOpenProfile => buttonOpenProfile;
 
@@ -47,6 +48,12 @@ namespace DCL.Chat.ChatViews
             }
         }
 
+        public void SetAutoTranslateIndicator(bool isVisible)
+        {
+            if (autoTranslateIndicator != null)
+                autoTranslateIndicator.gameObject.SetActive(isVisible);
+        }
+        
         public void SetConnectionStatus(bool isOnline, float greyOutOpacity)
         {
             if (userOnlineStatusIndicator != null)

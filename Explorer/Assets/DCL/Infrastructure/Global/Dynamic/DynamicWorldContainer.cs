@@ -722,6 +722,7 @@ namespace Global.Dynamic
                     menusAccessFacade,
                     chatMessagesBus,
                     chatHistory,
+                    clipboardManager,
                     entityParticipantTable,
                     nametagsData,
                     mainUIView,

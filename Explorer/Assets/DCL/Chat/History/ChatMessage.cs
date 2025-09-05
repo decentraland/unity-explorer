@@ -1,12 +1,14 @@
 using System;
+using System.Globalization;
 
 namespace DCL.Chat.History
 {
     public readonly struct ChatMessage : IEquatable<ChatMessage>
     {
         private const string DCL_SYSTEM_SENDER = "DCL System";
-
+        
         public readonly string Message;
+        public readonly string MessageId;
         public readonly string SenderValidatedName;
         public readonly string SenderWalletId;
         public readonly string SenderWalletAddress;
@@ -22,6 +24,7 @@ namespace DCL.Chat.History
         public readonly DateTime? SentTimestamp;
 
         public ChatMessage(
+            string messageId,
             string message,
             string senderValidatedName,
             string senderWalletAddress,
@@ -31,6 +34,11 @@ namespace DCL.Chat.History
             bool isMention = false,
             bool isSystemMessage = false)
         {
+            // NOTE: pseudo-unique ID generation for non-system messages
+            MessageId = isSystemMessage
+                ? Guid.NewGuid().ToString()
+                : GetId(senderWalletAddress, sentTimestamp);
+            
             Message = message;
             SenderValidatedName = senderValidatedName;
             SenderWalletAddress = senderWalletAddress;
@@ -43,7 +51,8 @@ namespace DCL.Chat.History
         }
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
-            new (newMessage,
+            new (chatMessage.MessageId,
+                newMessage,
                 chatMessage.SenderValidatedName,
                 chatMessage.SenderWalletAddress,
                 chatMessage.IsSentByOwnUser,
@@ -53,36 +62,21 @@ namespace DCL.Chat.History
                 false);
 
         public static ChatMessage NewFromSystem(string message) =>
-            new (message, DCL_SYSTEM_SENDER, string.Empty, true,
+            new (Guid.NewGuid().ToString(),message, DCL_SYSTEM_SENDER, string.Empty, true,
                 null, DateTime.UtcNow.ToOADate(), false, true);
 
-        public bool Equals(ChatMessage other)
+        public bool Equals(ChatMessage other) => MessageId == other.MessageId;
+        public override bool Equals(object? obj) => obj is ChatMessage other && Equals(other);
+        public override int GetHashCode() => (MessageId != null ? MessageId.GetHashCode() : 0);
+
+        /// <summary>
+        ///     Creates a composite, pseudo-unique identifier for a chat message.
+        /// </summary>
+        private static string GetId(string walletId, double timestampRaw)
         {
-            if (IsSystemMessage != other.IsSystemMessage)
-                return false;
-            if (IsSystemMessage)
-                return Message == other.Message;
-
-            return Message == other.Message &&
-                   SenderValidatedName == other.SenderValidatedName &&
-                   SenderWalletId == other.SenderWalletId &&
-                   SenderWalletAddress == other.SenderWalletAddress &&
-                   IsSentByOwnUser == other.IsSentByOwnUser &&
-                   IsMention == other.IsMention;
+            return $"{walletId}:{timestampRaw.ToString(CultureInfo.InvariantCulture)}";
         }
-
-        public override bool Equals(object? obj) =>
-            obj is ChatMessage other && Equals(other);
-
-        public override int GetHashCode()
-        {
-            if (IsSystemMessage)
-                return HashCode.Combine(Message, true);
-
-            return HashCode.Combine(Message, SenderValidatedName, SenderWalletId,
-                SenderWalletAddress, IsSentByOwnUser, IsMention);
-        }
-
+        
         public override string ToString() =>
             IsSystemMessage ? $"[System] {Message}" :
             $"[{SenderValidatedName}] {Message}";

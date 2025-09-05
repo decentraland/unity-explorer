@@ -34,8 +34,16 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.ChatServices.ChatTranslationService.Tests;
+using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.Translation.Service;
+using DCL.Translation.Service.Cache;
+using DCL.Translation.Service.Memory;
+using DCL.Translation.Service.Policy;
+using DCL.Translation.Service.Provider;
+using DCL.Translation.Settings;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -48,6 +56,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IChatHistory chatHistory;
+        private readonly ClipboardManager clipboardManager;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
@@ -88,12 +97,16 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private CommandRegistry commandRegistry;
+        private ITranslationSettings translationSettings;
+        private ITranslationMemory translationMemory;
+        private ITranslationService translationService;
 
         public ChatPlugin(
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
+            ClipboardManager clipboardManager,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             MainUIView mainUIView,
@@ -128,6 +141,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
+            this.clipboardManager = clipboardManager;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.mainUIView = mainUIView;
@@ -187,6 +201,24 @@ namespace DCL.PluginSystem.Global
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
+
+            translationSettings = new PlayerPrefsTranslationSettings(chatConfig);
+            var translationPolicy = new ConversationTranslationPolicy(translationSettings);
+            var translationProvider = new MockTranslationProvider();
+            var translationCache = new InMemoryTranslationCache();
+            translationMemory = new InMemoryTranslationMemory();
+
+            translationService = new TranslationService(translationProvider,
+                translationCache,
+                translationPolicy,
+                translationSettings,
+                eventBus,
+                translationMemory);
+
+            var translationTester = new GameObject("_TranslationTester")
+                .AddComponent<TranslationTester>();
+
+            translationTester.Initialize(translationService, translationSettings);
 
             var viewInstance = mainUIView.ChatView2;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
@@ -258,8 +290,10 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
-                getParticipantProfilesCommand
-            );
+                getParticipantProfilesCommand,
+                clipboardManager,
+                translationService,
+                translationSettings);
 
             pluginScope.Add(commandRegistry);
 
@@ -283,10 +317,17 @@ namespace DCL.PluginSystem.Global
                 chatMemberService,
                 chatContextMenuService,
                 communityDataService,
+                translationSettings,
+                translationMemory,
                 chatClickDetectionService
             );
 
-            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);
+            chatBusListenerService = new ChatHistoryService(chatMessagesBus,
+                chatHistory,
+                hyperlinkTextFormatter,
+                chatConfig,
+                settings.ChatSettingsAsset,
+                translationService);
 
             pluginScope.Add(chatMainController);
             pluginScope.Add(chatWorldBubbleService);

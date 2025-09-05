@@ -16,6 +16,7 @@ namespace DCL.Chat
 
         [field: SerializeField] public Sprite DeleteChatHistorySprite { get; private set; } = null!;
         [field: SerializeField] public string DeleteChatHistoryText { get; private set; } = "Delete Chat History";
+        [field: SerializeField] public string AutoTranslateText { get; private set; } = "Auto Translate";
 
         [field: SerializeField] public Sprite NotificationPingSprite { get; private set; } = null!;
         [field: SerializeField] public string NotificationPingText { get; private set; } = "Notification Ping";
