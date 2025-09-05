@@ -6,37 +6,41 @@ using System.Threading;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class StreamingCommunitiesPresenter : IDisposable
+    public class CommunitiesBrowserStreamingCommunitiesPresenter : IDisposable
     {
-        public event Action? ErrorLoadingCommunities;
+        private const string STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Streaming Communities. Please try again.";
+
         public event Action<string>? JoinStream;
-        public event Action? ViewAllButtonClicked;
+        public event Action? ViewAllClicked;
 
         private readonly StreamingCommunitiesView view;
         private readonly CommunitiesDataProvider dataProvider;
         private readonly CommunitiesBrowserStateService browserStateService;
+        private readonly CommunitiesBrowserErrorNotificationService errorNotificationService;
 
-        public StreamingCommunitiesPresenter(
+        public CommunitiesBrowserStreamingCommunitiesPresenter(
             StreamingCommunitiesView view,
             CommunitiesDataProvider dataProvider,
-            CommunitiesBrowserStateService browserStateService)
+            CommunitiesBrowserStateService browserStateService,
+            CommunitiesBrowserErrorNotificationService errorNotificationService)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
+            this.errorNotificationService = errorNotificationService;
+
             view.JoinStream += JoinStreamClicked;
             view.ViewAllStreamingCommunitiesButtonClicked += ViewAllStreamingCommunitiesButtonClicked;
-            return;
+        }
 
-            void JoinStreamClicked(string communityId)
-            {
-                JoinStream?.Invoke(communityId);
-            }
+        private void JoinStreamClicked(string communityId)
+        {
+            JoinStream?.Invoke(communityId);
+        }
 
-            void ViewAllStreamingCommunitiesButtonClicked()
-            {
-                ViewAllButtonClicked?.Invoke();
-            }
+        private void ViewAllStreamingCommunitiesButtonClicked()
+        {
+            ViewAllClicked?.Invoke();
         }
 
         private CancellationTokenSource? loadCts;
@@ -60,7 +64,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
                 if (!result.Success)
                 {
-                    ErrorLoadingCommunities?.Invoke();
+                    errorNotificationService.ShowWarningNotification(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
                     return;
                 }
 
@@ -73,6 +77,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Dispose()
         {
+            view.JoinStream -= JoinStreamClicked;
+            view.ViewAllStreamingCommunitiesButtonClicked -= ViewAllStreamingCommunitiesButtonClicked;
         }
 
         public void SetAsLoading(bool b)

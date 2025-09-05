@@ -8,17 +8,14 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunitiesBrowserRightSectionView : MonoBehaviour
     {
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
-
         public event Action? ResultsBackButtonClicked;
-        public event Action? ResultsLoopGridScrollChanged;
+        public event Action? LoopGridScrollChanged;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
 
         [SerializeField] private FilteredCommunitiesView filteredCommunitiesView = null!;
         [SerializeField] private StreamingCommunitiesView streamingCommunitiesView = null!;
         [SerializeField] private ScrollRect scrollRect = null!;
-
-        private CommunitiesBrowserStateService browserStateService;
 
         public bool IsResultsScrollPositionAtBottom =>
             scrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
@@ -28,10 +25,20 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            scrollRect.onValueChanged.AddListener(_ => ResultsLoopGridScrollChanged?.Invoke());
-            filteredCommunitiesView.BackButtonClicked += () => ResultsBackButtonClicked?.Invoke();
-            filteredCommunitiesView.CommunityProfileOpened += communityId => CommunityProfileOpened?.Invoke(communityId);
-            filteredCommunitiesView.CommunityJoined += communityId => CommunityJoined?.Invoke(communityId);
+            scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            filteredCommunitiesView.BackButtonClicked += OnBackButtonClicked;
+            filteredCommunitiesView.CommunityProfileOpened += OnCommunityJoined;
+            filteredCommunitiesView.CommunityJoined += OnCommunityJoined;
+        }
+
+        private void OnScrollRectValueChanged(Vector2 _)
+        {
+            LoopGridScrollChanged?.Invoke();
+        }
+
+        private void OnBackButtonClicked()
+        {
+            ResultsBackButtonClicked?.Invoke();
         }
 
         public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
@@ -47,15 +54,24 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCommunitiesBrowserState(CommunitiesBrowserStateService communitiesBrowserStateService)
         {
-            browserStateService = communitiesBrowserStateService;
-            streamingCommunitiesView.SetCommunitiesBrowserState(browserStateService);
-            filteredCommunitiesView.SetCommunitiesBrowserState(browserStateService);
+            streamingCommunitiesView.SetCommunitiesBrowserState(communitiesBrowserStateService);
+            filteredCommunitiesView.SetCommunitiesBrowserState(communitiesBrowserStateService);
         }
 
         private void OnDestroy()
         {
-            filteredCommunitiesView.CommunityProfileOpened -= communityId => CommunityProfileOpened?.Invoke(communityId);
-            filteredCommunitiesView.CommunityJoined -= communityId => CommunityJoined?.Invoke(communityId);
+            filteredCommunitiesView.CommunityProfileOpened -= OnCommunityProfileOpened;
+            filteredCommunitiesView.CommunityJoined -= OnCommunityJoined;
+        }
+
+        private void OnCommunityJoined(string communityId)
+        {
+            CommunityJoined?.Invoke(communityId);
+        }
+
+        private void OnCommunityProfileOpened(string communityId)
+        {
+            CommunityProfileOpened?.Invoke(communityId);
         }
 
         public void SetAsLoading(bool isLoading)
@@ -115,7 +131,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void RemoveOneMemberFromCounter(string communityId)
         {
-            browserStateService.RemoveOneMemberFromCounter(communityId);
             filteredCommunitiesView.RemoveOneMemberFromCounter(communityId);
         }
     }

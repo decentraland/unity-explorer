@@ -18,9 +18,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string STREAMING_COMMUNITIES_RESULTS_TITLE = "All Streaming Communities";
         private const string BROWSE_COMMUNITIES_TITLE = "Browse Communities";
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
+        private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
 
-        public event Action? ErrorLoadingStreamingCommunities;
-        public event Action? ErrorLoadingAllCommunities;
         public event Action? ClearSearchBar;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
@@ -30,8 +29,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesDataProvider dataProvider;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ICommunityCallOrchestrator orchestrator;
+        private readonly CommunitiesBrowserErrorNotificationService errorNotificationService;
 
-        private readonly StreamingCommunitiesPresenter streamingCommunitiesPresenter;
+        private readonly CommunitiesBrowserStreamingCommunitiesPresenter streamingCommunitiesPresenter;
 
         private string currentNameFilter = string.Empty;
         private bool currentIsOwnerFilter;
@@ -50,18 +50,19 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunitiesBrowserStateService browserStateService,
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ICommunityCallOrchestrator orchestrator)
+            ICommunityCallOrchestrator orchestrator,
+            CommunitiesBrowserErrorNotificationService errorNotificationService)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.orchestrator = orchestrator;
+            this.errorNotificationService = errorNotificationService;
 
-            streamingCommunitiesPresenter = new StreamingCommunitiesPresenter(view.StreamingCommunitiesView, dataProvider, browserStateService);
-            streamingCommunitiesPresenter.ErrorLoadingCommunities += OnErrorLoadingStreamingCommunities;
+            streamingCommunitiesPresenter = new CommunitiesBrowserStreamingCommunitiesPresenter(view.StreamingCommunitiesView, dataProvider, browserStateService, errorNotificationService);
             streamingCommunitiesPresenter.JoinStream += OnJoinStream;
-            streamingCommunitiesPresenter.ViewAllButtonClicked += OnViewAllStreamingCommunities;
+            streamingCommunitiesPresenter.ViewAllClicked += OnViewAllStreamingCommunities;
 
             view.SetThumbnailLoader(thumbnailLoader);
             view.SetCommunitiesBrowserState(browserStateService);
@@ -72,11 +73,6 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityJoined += OnCommunityJoined;
             view.CommunityProfileOpened += OnCommunityProfileOpened;
             ConfigureResultsGrid();
-        }
-
-        private void OnErrorLoadingStreamingCommunities()
-        {
-            ErrorLoadingStreamingCommunities?.Invoke();
         }
 
         private void OnCommunityJoined(string communityId)
@@ -92,7 +88,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ConfigureResultsGrid()
         {
             view.InitializeResultsGrid(0, profileRepositoryWrapper);
-            view.ResultsLoopGridScrollChanged += TryLoadMoreResults;
+            view.LoopGridScrollChanged += TryLoadMoreResults;
         }
 
 
@@ -218,7 +214,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!result.Success)
             {
-                ErrorLoadingAllCommunities?.Invoke();
+                errorNotificationService.ShowWarningNotification(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
             }
 
             if (result.Value.data.results.Length > 0)
@@ -244,7 +240,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             loadResultsCts?.SafeCancelAndDispose();
 
-            view.ResultsLoopGridScrollChanged -= TryLoadMoreResults;
+            view.LoopGridScrollChanged -= TryLoadMoreResults;
             view.ResultsBackButtonClicked -= LoadAllCommunitiesResults;
         }
 

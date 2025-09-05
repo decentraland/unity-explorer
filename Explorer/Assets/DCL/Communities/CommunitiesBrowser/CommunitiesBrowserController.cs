@@ -24,24 +24,20 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunitiesBrowserController : ISection, IDisposable
     {
         private const int SEARCH_AWAIT_TIME = 1000;
-        private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
-        private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
-        private const string STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Streaming Communities. Please try again.";
         private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
-        private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
         private readonly CommunitiesDataProvider dataProvider;
         private readonly IInputBlock inputBlock;
-        private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ISpriteCache spriteCache;
+        private readonly CommunitiesBrowserErrorNotificationService errorNotificationService;
 
-        private readonly MyCommunitiesPresenter myCommunitiesPresenter;
+        private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
 
         private CancellationTokenSource? searchCancellationCts;
         private CancellationTokenSource? showErrorCts;
@@ -71,26 +67,23 @@ namespace DCL.Communities.CommunitiesBrowser
             this.cursor = cursor;
             this.dataProvider = dataProvider;
             this.inputBlock = inputBlock;
-            this.warningNotificationView = warningNotificationView;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
 
             spriteCache = new SpriteCache(webRequestController);
             browserStateService = new CommunitiesBrowserStateService();
+            errorNotificationService = new CommunitiesBrowserErrorNotificationService(warningNotificationView);
 
             var thumbnailLoader = new ThumbnailLoader(spriteCache);
 
-            myCommunitiesPresenter = new MyCommunitiesPresenter(view.MyCommunitiesView, dataProvider, browserStateService, thumbnailLoader);
-            myCommunitiesPresenter.ErrorLoadingMyCommunities += OnErrorLoadingMyCommunities;
+            myCommunitiesPresenter = new CommunitiesBrowserMyCommunitiesPresenter(view.MyCommunitiesView, dataProvider, browserStateService, thumbnailLoader, errorNotificationService);
             myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
 
             rightSectionPresenter = new CommunitiesBrowserRightSectionPresenter(view.RightSectionView, dataProvider,
-                sharedSpaceManager, browserStateService, thumbnailLoader, profileDataProvider, orchestrator);
+                sharedSpaceManager, browserStateService, thumbnailLoader, profileDataProvider, orchestrator, errorNotificationService);
 
-            rightSectionPresenter.ErrorLoadingStreamingCommunities += OnErrorLoadingStreamingCommunities;
             rightSectionPresenter.ClearSearchBar += ClearSearchBar;
-            rightSectionPresenter.ErrorLoadingAllCommunities += OnErrorLoadingAllCommunities;
             rightSectionPresenter.CommunityProfileOpened += OpenCommunityProfile;
             rightSectionPresenter.CommunityJoined += JoinCommunity;
 
@@ -150,7 +143,6 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened -= OpenCommunityProfile;
             view.CreateCommunityButtonClicked -= CreateCommunity;
 
-            myCommunitiesPresenter.ErrorLoadingMyCommunities -= OnErrorLoadingMyCommunities;
             myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
 
             UnsubscribeDataProviderEvents();
@@ -234,7 +226,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             if (!result.Success || !result.Value)
-                ShowErrorMessageAsync(JOIN_COMMUNITY_ERROR_MESSAGE).Forget();
+                errorNotificationService.ShowWarningNotification(JOIN_COMMUNITY_ERROR_MESSAGE).Forget();
         }
 
         private void OpenCommunityProfile(string communityId) =>
@@ -264,29 +256,6 @@ namespace DCL.Communities.CommunitiesBrowser
                     spriteCache)), ct).Forget();
         }
 
-        private void OnErrorLoadingMyCommunities()
-        {
-            ShowErrorMessageAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
-        }
-
-        private void OnErrorLoadingStreamingCommunities()
-        {
-            ShowErrorMessageAsync(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
-        }
-
-        private void OnErrorLoadingAllCommunities()
-        {
-            ShowErrorMessageAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
-        }
-
-        private async UniTaskVoid ShowErrorMessageAsync(string message)
-        {
-            showErrorCts = showErrorCts.SafeRestart();
-
-            await warningNotificationView.AnimatedShowAsync(message, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                         .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-        }
-
         private void OnCommunityUpdated(string _) =>
             ReloadBrowser();
 
@@ -308,9 +277,11 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityDeleted(string communityId) =>
             ReloadBrowser();
 
-        private void OnUserRemovedFromCommunity(string communityId) =>
+        private void OnUserRemovedFromCommunity(string communityId)
+        {
+            browserStateService.RemoveOneMemberFromCounter(communityId);
             rightSectionPresenter.OnUserRemovedFromCommunity(communityId);
-
+        }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
             OnUserRemovedFromCommunity(communityId);

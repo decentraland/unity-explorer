@@ -7,26 +7,30 @@ using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class MyCommunitiesPresenter : IDisposable
+    public class CommunitiesBrowserMyCommunitiesPresenter : IDisposable
     {
+        private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
+
         public event Action? ViewAllMyCommunitiesButtonClicked;
-        public event Action? ErrorLoadingMyCommunities;
 
         private readonly MyCommunitiesView view;
         private readonly CommunitiesDataProvider dataProvider;
         private readonly CommunitiesBrowserStateService browserStateService;
+        private readonly CommunitiesBrowserErrorNotificationService errorNotificationService;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
 
-        public MyCommunitiesPresenter(
+        public CommunitiesBrowserMyCommunitiesPresenter(
             MyCommunitiesView view,
             CommunitiesDataProvider dataProvider,
             CommunitiesBrowserStateService browserStateService,
-            ThumbnailLoader thumbnailLoader)
+            ThumbnailLoader thumbnailLoader,
+            CommunitiesBrowserErrorNotificationService errorNotificationService)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
+            this.errorNotificationService = errorNotificationService;
 
             view.SetDependencies(browserStateService, thumbnailLoader);
             view.ViewAllMyCommunitiesButtonClicked += OnViewAllMyCommunitiesClicked;
@@ -55,7 +59,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!result.Success)
             {
-                ErrorLoadingMyCommunities?.Invoke();
+                errorNotificationService.ShowWarningNotification(MY_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
                 return;
             }
 
