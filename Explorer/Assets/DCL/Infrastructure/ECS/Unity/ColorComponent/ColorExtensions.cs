@@ -11,8 +11,6 @@ namespace ECS.Unity.ColorComponent
             if (color != null)
                 return new Color(color.R, color.G, color.B);
 
-            ReportHub.LogError(ReportCategory.UNSPECIFIED, "Null color provided, using WHITE instead");
-
             return Color.white;
         }
 
@@ -20,8 +18,6 @@ namespace ECS.Unity.ColorComponent
         {
             if (color != null)
                 return new Color(color.R, color.G, color.B, color.A);
-
-            ReportHub.LogError(ReportCategory.UNSPECIFIED, "Null color provided, using WHITE instead");
 
             return Color.white;
         }
