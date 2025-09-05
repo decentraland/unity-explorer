@@ -355,7 +355,8 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
-                teleportController);
+                teleportController,
+                bootstrapContainer.Environment);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
@@ -522,7 +523,7 @@ namespace Global.Dynamic
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY))
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, bootstrapContainer.Environment)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)

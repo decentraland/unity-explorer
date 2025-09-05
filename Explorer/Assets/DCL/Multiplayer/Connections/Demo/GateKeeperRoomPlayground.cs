@@ -39,7 +39,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var launchMode = ILaunchMode.PLAY;
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, launchMode);
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Zone);
             var character = new ExposedTransform();
             var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource), ChromeDevtoolProtocolClient.New(false)));
             var realmData = new IRealmData.Fake();
