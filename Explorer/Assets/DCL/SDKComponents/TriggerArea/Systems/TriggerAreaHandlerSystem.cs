@@ -44,6 +44,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         protected override void Update(float t)
         {
             SetupTriggerAreaQuery(World);
+            UpdateTriggerAreaQuery(World);
         }
 
         [Query]
@@ -52,31 +53,13 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
             // TODO: make the CharacterTriggerAreaComponent more versatile, to accept scene entity colliders
-            World.Add(entity, new SDKTriggerAreaComponent(), new CharacterTriggerAreaComponent(areaSize: Vector3.zero, targetOnlyMainPlayer: true));
+            World.Add(entity, new SDKTriggerAreaComponent(), new CharacterTriggerAreaComponent(areaSize: Vector3.zero, targetOnlyMainPlayer: false));
         }
 
         [Query]
         [All(typeof(TransformComponent))]
         private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in PBTriggerArea pbTriggerArea, in CharacterTriggerAreaComponent triggerAreaComponent)
         {
-            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
-            {
-                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
-
-                // TODO...
-                var resultComponent = triggerAreaResultPool.Get();
-                resultComponent.EventType = TriggerAreaEventType.TaetExit;
-                resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
-                // resultComponent.Timestamp =
-                // resultComponent.TriggeredEntityPosition =
-                // resultComponent.TriggeredEntityRotation =
-
-                // TODO: should the result component be a GOVS component ??? won't several event step on each other???
-
-                ecsToCRDTWriter.PutMessage(resultComponent, triggerAreaCRDTEntity);
-            }
-            triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
-
             foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
             {
                 if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
@@ -94,6 +77,24 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
 
             // TODO: STAY...
+
+            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
+            {
+                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
+
+                // TODO...
+                var resultComponent = triggerAreaResultPool.Get();
+                resultComponent.EventType = TriggerAreaEventType.TaetExit;
+                resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
+                // resultComponent.Timestamp =
+                // resultComponent.TriggeredEntityPosition =
+                // resultComponent.TriggeredEntityRotation =
+
+                // TODO: should the result component be a GOVS component ??? won't several event step on each other???
+
+                ecsToCRDTWriter.PutMessage(resultComponent, triggerAreaCRDTEntity);
+            }
+            triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
         }
 
         [Query]
