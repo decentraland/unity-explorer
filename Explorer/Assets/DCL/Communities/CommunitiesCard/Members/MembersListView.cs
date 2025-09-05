@@ -19,7 +19,6 @@ using System.Threading;
 using UnityEngine.UI;
 using Utility;
 using Utility.Types;
-using MemberData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -40,6 +39,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string KICK_MEMBER_CONFIRM_TEXT = "KICK";
         private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
         private const string BAN_MEMBER_CONFIRM_TEXT = "BAN";
+
+        private static readonly Vector2 ITEM_CONTEXT_MENU_SUBMENU_OFFSET = new Vector2(0.0f, -26.0f);
 
         [field: SerializeField] private LoopGridView loopGrid { get; set; } = null!;
         [field: SerializeField] private ScrollRect loopListScrollRect { get; set; } = null!;
@@ -149,7 +150,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             if (invitationButtonHandler == null)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, contextMenuSettings.ElementsSpacing);
-                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, contextMenuSettings.InviteToCommunityText, contextMenuSettings.InviteToCommunitySprite);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, ITEM_CONTEXT_MENU_SUBMENU_OFFSET, contextMenuSettings.InviteToCommunityText, contextMenuSettings.InviteToCommunitySprite);
             }
 
             invitationButtonHandler.SetUserToInvite(profile.Address);
