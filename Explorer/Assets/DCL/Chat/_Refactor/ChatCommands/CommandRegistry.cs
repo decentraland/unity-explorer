@@ -11,6 +11,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -73,7 +74,7 @@ namespace DCL.Chat.ChatCommands
                 privateConversationUserStateService,
                 communityUserStateService,
                 chatMemberListService);
-            
+
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
 
             InitializeChat = new InitializeChatSystemCommand(eventBus,

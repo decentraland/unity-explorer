@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -24,7 +25,7 @@ namespace DCL.Communities
             ChannelId = channelId;
         }
     }
-    
+
     public interface ICommunityDataService
     {
         void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> communities);
@@ -37,7 +38,7 @@ namespace DCL.Communities
         private readonly IChatHistory chatHistory;
         private readonly IMVCManager mvcManager;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities = new();
 
@@ -49,7 +50,7 @@ namespace DCL.Communities
             IChatHistory chatHistory,
             IMVCManager mvcManager,
             CommunitiesEventBus communitiesEventBus,
-            CommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.chatHistory = chatHistory;
@@ -192,7 +193,7 @@ namespace DCL.Communities
                 CommunityMemberRole.owner,
                 newCommunity.ownerAddress,
                 1);
-            
+
             chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
         }
 
@@ -201,7 +202,7 @@ namespace DCL.Communities
             var channelId = ChatChannel.NewCommunityChannelId(communityId);
             chatHistory.RemoveChannel(channelId);
         }
-        
+
         public void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> newCommunities)
         {
             communities.Clear();
@@ -215,7 +216,7 @@ namespace DCL.Communities
         {
             return communities.TryGetValue(channelId, out communityData);
         }
-        
+
 
         public void Dispose()
         {
@@ -223,7 +224,7 @@ namespace DCL.Communities
             communitiesDataProvider.CommunityDeleted -= CommunityDeleted;
             communitiesDataProvider.CommunityLeft -= CommunityLeft;
             communitiesDataProvider.CommunityUpdated -= CommunityUpdated;
-            
+
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
 
