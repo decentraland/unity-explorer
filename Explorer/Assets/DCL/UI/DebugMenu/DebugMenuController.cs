@@ -15,7 +15,6 @@ namespace DCL.UI.DebugMenu
         private readonly DebugMenuConsoleLogHistory logsHistory = new ();
 
         private ConsolePanelView consolePanelView;
-        private ConnectionPanelView connectionPanelView;
 
         private DebugPanelView visiblePanel;
 
@@ -23,7 +22,6 @@ namespace DCL.UI.DebugMenu
 
         private Button consoleButton;
         private Button debugPanelButton;
-        private Button connectionButton;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -38,16 +36,13 @@ namespace DCL.UI.DebugMenu
 
             // Sidebar
             consoleButton = root.Q<Button>("ConsoleButton");
-            connectionButton = root.Q<Button>("ConnectionButton");
             debugPanelButton = root.Q<Button>("DebugPanelButton");
 
             consoleButton.clicked += OnConsoleButtonClicked;
-            connectionButton.clicked += OnConnectionButtonClicked;
 
             // Views
             consolePanelView = new ConsolePanelView(root.Q("ConsolePanel"), consoleButton, OnConsoleButtonClicked, logsHistory);
             consolePanelView.SetInputBlock(inputBlock);
-            connectionPanelView = new ConnectionPanelView(root.Q("ConnectionPanel"), connectionButton, OnConnectionButtonClicked);
 
             // Shortcuts
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
@@ -59,10 +54,6 @@ namespace DCL.UI.DebugMenu
                     case ConsolePanelView:
                         consolePanelView.Toggle();
                         visiblePanel = consolePanelView;
-                        break;
-                    case ConnectionPanelView:
-                        connectionPanelView.Toggle();
-                        visiblePanel = connectionPanelView;
                         break;
                 }
         }
@@ -86,15 +77,6 @@ namespace DCL.UI.DebugMenu
             this.inputBlock = block;
             consolePanelView.SetInputBlock(block);
         }
-
-        public void SetSceneStatus(ConnectionStatus status) =>
-            connectionPanelView.SetSceneStatus(status);
-
-        public void SetSceneRoomStatus(ConnectionStatus status) =>
-            connectionPanelView.SetSceneRoomStatus(status);
-
-        public void SetGlobalRoomStatus(ConnectionStatus status) =>
-            connectionPanelView.SetGlobalRoomStatus(status);
 
         private void OnDisable()
         {
@@ -150,9 +132,6 @@ namespace DCL.UI.DebugMenu
 
             debugPanelButton.EnableInClassList(USS_SIDEBAR_BUTTON_SELECTED, debugContainerBuilder.Container.IsPanelVisible());
         }
-
-        private void OnConnectionButtonClicked() =>
-            TogglePanel(connectionPanelView);
 
         private void TogglePanel(DebugPanelView panelView)
         {

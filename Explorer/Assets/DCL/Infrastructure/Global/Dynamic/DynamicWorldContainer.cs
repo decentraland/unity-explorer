@@ -1061,8 +1061,6 @@ namespace Global.Dynamic
                     bootstrapContainer.DiagnosticsContainer,
                     staticContainer.InputBlock,
                     assetsProvisioner,
-                    currentSceneInfo,
-                    roomsStatus,
                     debugBuilder));
 
             var globalWorldFactory = new GlobalWorldFactory(
