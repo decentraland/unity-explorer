@@ -16,7 +16,7 @@ namespace DCL.Roads.Settings
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
         public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups;
-        public List<GPUInstancingLODGroup> PropsAndTiles;
+        public List<CombinedLODGroupData> PropsAndTiles;
 
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
@@ -28,7 +28,7 @@ namespace DCL.Roads.Settings
         public void InitializeInstancingKeywords()
         {
             foreach (var candidate in IndirectLODGroups)
-            foreach (var combinedLodRenderer in candidate.LODGroup.CombinedLodsRenderers)
+            foreach (CombinedLodsRenderer combinedLodRenderer in candidate.CombinedLodsRenderers)
             {
                 if (combinedLodRenderer.SharedMaterial.parent != null)
                 {
@@ -78,18 +78,23 @@ namespace DCL.Roads.Settings
             }
 
             IndirectLODGroups = tempIndirectCandidates
-                               .Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.LODGroup, kvp.Value.ToList()))
-                               .OrderBy(group => group.LODGroup.Name)
+                               .Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.combinedLODGroupData, kvp.Value.ToList()))
+                               .OrderBy(group => group.combinedLODGroupData.Name)
                                .ToList();
 
-            UnityEditor.EditorUtility.SetDirty(this);
+            ExtractSameRenderers();
+
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
-            UnityEditor.AssetDatabase.Refresh();
             return;
 
             bool IsOutOfRange(Vector2Int roadCoordinate) =>
                 roadCoordinate.x < min.x || roadCoordinate.x > max.x ||
                 roadCoordinate.y < min.y || roadCoordinate.y > max.y;
+        }
+
+        public void ExtractSameRenderers()
+        {
+            IndirectLODGroups.AddRange(GPUInstancingMeshExtractor.ExtractSimilarMeshes(IndirectLODGroups));
         }
 
         private Dictionary<string, GPUInstancingPrefabData> LoadAllPrefabs()
@@ -125,22 +130,7 @@ namespace DCL.Roads.Settings
         {
             foreach (GPUInstancingLODGroupWithBuffer myCandidate in sourceCandidates)
             {
-                GPUInstancingLODGroupWithBuffer candidate;
-
-                if (myCandidate.Name.StartsWith("RoadTile"))
-                {
-                    if (roadTileCandidate.LODGroup == null)
-                    {
-                        roadTileCandidate.LODGroup = myCandidate.LODGroup;
-                        roadTileCandidate.LODGroup.Name = "RoadTile";
-                        roadTileCandidate.Name = "RoadTile";
-                    }
-
-                    roadTileCandidate.InstancesBuffer = myCandidate.InstancesBuffer;
-                    candidate = roadTileCandidate;
-                }
-                else
-                    candidate = myCandidate;
+                GPUInstancingLODGroupWithBuffer candidate = HandleRoadTileCase(myCandidate);
 
                 if (!targetDict.TryGetValue(candidate, out HashSet<PerInstanceBuffer> matrices))
                 {
@@ -153,7 +143,18 @@ namespace DCL.Roads.Settings
             }
         }
 
-        private GPUInstancingLODGroupWithBuffer roadTileCandidate = new ();
+        private CombinedLODGroupData roadTileCachedCombinedLODGroupData;
+
+        private GPUInstancingLODGroupWithBuffer HandleRoadTileCase(GPUInstancingLODGroupWithBuffer myCandidate)
+        {
+            if (myCandidate.Name.StartsWith("RoadTile"))
+            {
+                if (roadTileCachedCombinedLODGroupData == null) roadTileCachedCombinedLODGroupData = myCandidate.combinedLODGroupData;
+                return new GPUInstancingLODGroupWithBuffer(roadTileCachedCombinedLODGroupData, myCandidate.InstancesBuffer);
+            }
+
+            return myCandidate;
+        }
 #endif
     }
 }
