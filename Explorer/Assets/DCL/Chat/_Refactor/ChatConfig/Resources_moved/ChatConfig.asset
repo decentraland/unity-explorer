@@ -18,6 +18,9 @@ MonoBehaviour:
   <DefaultProfileThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
   <DefaultCommunityThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
   <ClearChatHistoryContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 1fd5346f8c379443886cb2219a95d139, type: 3}
+  <TranslateChatMessageContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 7220580171224254d9af79abe883291c, type: 3}
+  <SeeOriginalChatMessageContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 7220580171224254d9af79abe883291c, type: 3}
+  <CopyChatMessageContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 72892de2c8c434ade8af95e8181962d9, type: 3}
   <ItemPrefab>k__BackingField: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
   <NearbyConversationIcon>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
   <NearbyConversationName>k__BackingField: Nearby

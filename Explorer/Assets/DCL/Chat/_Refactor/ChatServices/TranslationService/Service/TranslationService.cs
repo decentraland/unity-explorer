@@ -38,33 +38,40 @@ namespace DCL.Translation.Service
             this.translationMemory = translationMemory;
         }
 
-        public void ProcessIncomingMessage(ChatMessage message)
+        public  void ProcessIncomingMessage(string messageId, string originalText, string conversationId)
         {
-            if (!policy.ShouldAutoTranslate(message, message.SenderWalletAddress, settings.PreferredLanguage))
+            if (!policy.ShouldAutoTranslate(originalText, conversationId, settings.PreferredLanguage))
             {
                 // We don't even need to store it; the default is no translation.
                 return;
             }
 
-            var newTranslation = new MessageTranslation(message.Message, settings.PreferredLanguage)
+            var newTranslation = new MessageTranslation(originalText, settings.PreferredLanguage)
             {
                 State = TranslationState.Pending
             };
 
-            translationMemory.Set(message.MessageId, newTranslation);
+            translationMemory.Set(messageId, newTranslation);
 
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
-                MessageId = message.MessageId
+                MessageId = messageId
             });
 
-            TranslateInternalAsync(message.MessageId, CancellationToken.None).Forget();
+            TranslateInternalAsync(messageId, CancellationToken.None).Forget();
         }
 
-        public UniTask TranslateManualAsync(string messageId, CancellationToken ct)
+        public UniTask TranslateManualAsync(string messageId, string originalText, CancellationToken ct)
         {
-            if (!translationMemory.TryGet(messageId, out var translation)) return UniTask.CompletedTask;
+            // The logic is now much cleaner.
+            // 1. Check if a record already exists. If not, create one from the provided text.
+            if (!translationMemory.TryGet(messageId, out var translation))
+            {
+                translation = new MessageTranslation(originalText, settings.PreferredLanguage);
+                translationMemory.Set(messageId, translation);
+            }
 
+            // 2. Set state to Pending and start the translation.
             translation.State = TranslationState.Pending;
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {

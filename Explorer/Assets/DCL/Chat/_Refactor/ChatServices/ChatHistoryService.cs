@@ -61,7 +61,9 @@ namespace DCL.Chat.ChatServices
 
             if (!messageToAdd.IsSystemMessage)
             {
-                translationService.ProcessIncomingMessage(messageToAdd);
+                translationService.ProcessIncomingMessage(messageToAdd.MessageId,
+                    messageToAdd.Message,
+                    channel.Id);
             }
             
             HandleMessageAudioFeedback(message, channel);

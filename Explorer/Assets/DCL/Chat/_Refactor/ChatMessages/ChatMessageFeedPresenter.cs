@@ -237,17 +237,9 @@ namespace DCL.Chat.ChatMessages
 
         private void OnChatContextMenuRequested(string messageId, ChatEntryView? chatEntry)
         {
-            // var request = new ChatEntryMenuPopupData(chatEntry.messageBubbleElement.PopupPosition,
-            //     message, chatEntry.messageBubbleElement.HideOptionsButton);
-            //
-            // contextMenuService.ShowChatOptionsAsync(request).Forget();
-
-            // Find the ViewModel associated with this message ID
             var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
             if (viewModel == null) return;
 
-            // 1. Create a new, empty context menu configuration.
-            // We can reuse settings from ChatConfig if available, or use defaults.
             var contextMenu = new GenericContextMenu(
                 chatConfig.chatContextMenuSettings.ContextMenuWidth,
                 chatConfig.chatContextMenuSettings.OffsetFromTarget,
@@ -255,31 +247,28 @@ namespace DCL.Chat.ChatMessages
                 chatConfig.chatContextMenuSettings.ElementsSpacing,
                 anchorPoint: ContextMenuOpenDirection.TOP_LEFT);
 
-            // 2. Add the "Copy" button. Its text depends on the translation state.
             string textToCopy = viewModel.IsTranslated ? viewModel.TranslatedText : viewModel.Message.Message;
             contextMenu.AddControl(new ButtonContextMenuControlSettings(
                 "Copy",
-                chatConfig.ClearChatHistoryContextMenuIcon,
+                chatConfig.CopyChatMessageContextMenuIcon,
                 () => copyMessageCommand.Execute(this, textToCopy)
             ));
 
-            // 3. DYNAMICALLY add the "Translate" or "See Original" button.
             if (viewModel.IsTranslated)
             {
-                // If it's already translated, add a "See Original" button.
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(
                     "See Original",
-                    chatConfig.ClearChatHistoryContextMenuIcon,
+                    chatConfig.SeeOriginalChatMessageContextMenuIcon,
                     () => revertToOriginalCommand.Execute(viewModel.Message.MessageId)
                 ));
             }
             else
             {
-                // If it's not translated, add a "Translate" button.
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(
                     "Translate",
-                    chatConfig.ClearChatHistoryContextMenuIcon,
-                    () => translateMessageCommand.Execute(viewModel.Message.MessageId)
+                    chatConfig.TranslateChatMessageContextMenuIcon,
+                    () => translateMessageCommand.Execute(viewModel.Message.MessageId,
+                        viewModel.Message.Message)
                 ));
             }
 
@@ -288,7 +277,6 @@ namespace DCL.Chat.ChatMessages
                 MenuConfiguration = contextMenu, Position = chatEntry.messageBubbleElement.PopupPosition
             };
 
-            // 5. Ask the ChatContextMenuService to show it.
             contextMenuService
                 .ShowCommunityContextMenuAsync(request)
                 .Forget();

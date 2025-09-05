@@ -17,6 +17,7 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Settings.Settings;
+using DCL.Translation.Events;
 using DCL.Translation.Settings;
 using DCL.UI.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -97,6 +98,7 @@ namespace DCL.Chat
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
+            scope.Add(this.eventBus.Subscribe<TranslationEvents.ConversationAutoTranslateToggled>(OnAutoTranslateSettingChanged));
 
             var contextMenuSettings = chatConfig.communityChatConversationContextMenuSettings;
             contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
@@ -111,6 +113,34 @@ namespace DCL.Chat
             InitializeChannelContextMenu();
         }
 
+        private void OnAutoTranslateSettingChanged(TranslationEvents.ConversationAutoTranslateToggled evt)
+        {
+            if (evt.ConversationId == currentChannelService.CurrentChannelId.Id)
+            {
+                UpdateAutoTranslateIndicator();
+            }
+        }
+
+        private void UpdateAutoTranslateIndicator()
+        {
+            if (currentViewModel == null) return;
+
+            // 1. Get the current status for the active channel.
+            string currentChannelId = currentChannelService.CurrentChannelId.Id;
+            bool isEnabled = !string.IsNullOrEmpty(currentChannelId) &&
+                             translationSettings.GetAutoTranslateForConversation(currentChannelId);
+
+            // 2. Determine which indicator to show based on the channel type.
+            bool isNearby = currentViewModel.ViewMode == TitlebarViewMode.Nearby;
+            bool isProfileChannel = currentViewModel.ViewMode == TitlebarViewMode.DirectMessage ||
+                                    currentViewModel.ViewMode == TitlebarViewMode.Community;
+
+            // 3. Command the views to set the visibility of their respective indicators.
+            // The indicators will only be shown if auto-translate is enabled AND it's the correct channel type.
+            view.defaultTitlebarView.SetAutoTranslateIndicatorForNearby(isEnabled && isNearby);
+            view.defaultTitlebarView.SetAutoTranslateIndicatorForUserAndCommunities(isEnabled && isProfileChannel);
+        }
+
         private void CommunityMetadataUpdated(CommunityMetadataUpdatedEvent evt)
         {
             // Only care if we’re viewing a Community channel and it matches
@@ -123,6 +153,8 @@ namespace DCL.Chat
                 view.defaultTitlebarView.Setup(currentViewModel);
                 view.membersTitlebarView.SetChannelName(currentViewModel);
 
+                UpdateAutoTranslateIndicator();
+                
                 if (cd.thumbnails?.raw != null)
                     RefreshTitlebarCommunityThumbnailAsync(cd.thumbnails?.raw).Forget();
             }
@@ -318,6 +350,8 @@ namespace DCL.Chat
                 currentViewModel = finalViewModel;
                 view.defaultTitlebarView.Setup(finalViewModel);
                 view.membersTitlebarView.SetChannelName(finalViewModel);
+
+                UpdateAutoTranslateIndicator();
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

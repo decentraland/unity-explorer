@@ -1,21 +1,24 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.Translation.Service;
 
 namespace DCL.Translation.Commands
 {
     public class TranslateMessageCommand
     {
-        private readonly ITranslationService service;
+        private readonly ITranslationService translationService;
 
-        public TranslateMessageCommand(ITranslationService service)
+        public TranslateMessageCommand(ITranslationService translationService)
         {
-            this.service = service;
+            this.translationService = translationService;
         }
 
-        public void Execute(string messageId)
+        public void Execute(string messageId, string originalText)
         {
-            service.TranslateManualAsync(messageId, CancellationToken.None).Forget();
+            translationService
+                .TranslateManualAsync(messageId, originalText, CancellationToken.None)
+                .Forget();
         }
     }
 }

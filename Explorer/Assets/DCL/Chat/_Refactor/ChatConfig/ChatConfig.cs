@@ -23,9 +23,17 @@ namespace DCL.Chat.ChatConfig
 
         [field: SerializeField]
         public Sprite DefaultCommunityThumbnail { get; private set; }
-
         [field: SerializeField]
         public Sprite ClearChatHistoryContextMenuIcon { get; private set; }
+
+        [field: SerializeField]
+        public Sprite TranslateChatMessageContextMenuIcon { get; private set; }
+
+        [field: SerializeField]
+        public Sprite SeeOriginalChatMessageContextMenuIcon { get; private set; }
+
+        [field: SerializeField]
+        public Sprite CopyChatMessageContextMenuIcon { get; private set; }
 
         [field: Header("Prefabs")]
         [field: SerializeField]

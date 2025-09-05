@@ -17,7 +17,7 @@ namespace DCL.Translation.Service.Policy
             this.settings = settings;
         }
 
-        public bool ShouldAutoTranslate(ChatMessage message, string conversationId, LanguageCode preferredLanguage)
+        public bool ShouldAutoTranslate(string message, string conversationId, LanguageCode preferredLanguage)
         {
             // Rule 1: Is the entire feature disabled globally? (Kill Switch)
             if (!settings.IsGloballyEnabled) return false;
@@ -29,7 +29,7 @@ namespace DCL.Translation.Service.Policy
             if (!settings.GetAutoTranslateForConversation(conversationId)) return false;
 
             // Rule 4: Is the message trivial or not translatable text?
-            if (string.IsNullOrWhiteSpace(message.Message) || message.Message.Length < 10 || UrlRegex.IsMatch(message.Message))
+            if (string.IsNullOrWhiteSpace(message) || UrlRegex.IsMatch(message))
                 return false;
 
             // We will add a language detection rule later, but for now, this is the complete policy.

@@ -9,6 +9,6 @@ namespace DCL.Translation.Service.Policy
     /// </summary>
     public interface IConversationTranslationPolicy
     {
-        bool ShouldAutoTranslate(ChatMessage message, string conversationId, LanguageCode preferredLanguage);
+        bool ShouldAutoTranslate(string message, string conversationId, LanguageCode preferredLanguage);
     }
 }

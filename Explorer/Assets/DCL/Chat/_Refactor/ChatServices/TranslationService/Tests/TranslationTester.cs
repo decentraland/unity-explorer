@@ -1,20 +1,28 @@
-﻿using DCL.Chat.History;
+﻿using System;
+using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Translation.Service;
+using DCL.Translation.Settings;
 using UnityEngine;
 
 namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
 {
     public class TranslationTester : MonoBehaviour
     {
+        private const string TEST_CONVERSATION_ID = "test-channel";
+
         private ITranslationService translationService;
+        private ITranslationSettings translationSettings;
         private int messageCounter = 0;
-        
-        public void Initialize(ITranslationService translationService)
+
+        public void Initialize(ITranslationService translationService,
+            ITranslationSettings translationSettings)
         {
             this.translationService = translationService;
+            this.translationSettings = translationSettings;
         }
-        
+
         private ChatMessage CreateTestMessage(string body)
         {
             messageCounter++;
@@ -28,7 +36,7 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
                 "0x12345",
                 false,
                 "TestUserWalletId",
-                System.DateTime.UtcNow.ToOADate()
+                DateTime.UtcNow.ToOADate()
             );
         }
 
@@ -36,8 +44,8 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
         private void TestNormalTranslation()
         {
             var message = CreateTestMessage("Hello world, this is a test of the translation system.");
-            ReportHub.Log(ReportCategory.UNSPECIFIED,$"[TestHarness] Sending message '{message.MessageId}' for translation.");
-            translationService.ProcessIncomingMessage(message);
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Sending message '{message.MessageId}' for translation.");
+            translationService.ProcessIncomingMessage(message.MessageId, message.Message, TEST_CONVERSATION_ID);
             // Now, watch your console for the events (Requested, Translated/Failed)
         }
 
@@ -47,36 +55,45 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             // The MockProvider is set to fail every 5th request.
             // Run the normal test a few times first to increment the counter.
             var message = CreateTestMessage("This message is designed to trigger a simulated failure.");
-            ReportHub.Log(ReportCategory.UNSPECIFIED,$"[TestHarness] Sending message '{message.MessageId}' that should fail.");
-            translationService.ProcessIncomingMessage(message);
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Sending message '{message.MessageId}' that should fail.");
+            translationService.ProcessIncomingMessage(message.MessageId, message.Message, TEST_CONVERSATION_ID);
         }
 
         [ContextMenu("3. Test: A Trivial Message (Should be Skipped by Policy)")]
         private void TestTrivialMessage()
         {
             var message = CreateTestMessage("hi");
-            ReportHub.Log(ReportCategory.UNSPECIFIED,$"[TestHarness] Sending trivial message '{message.MessageId}'. The policy should skip this. No 'Requested' event should fire.");
-            translationService.ProcessIncomingMessage(message);
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Sending trivial message '{message.MessageId}'. The policy should skip this. No 'Requested' event should fire.");
+            translationService.ProcessIncomingMessage(message.MessageId, message.Message, TEST_CONVERSATION_ID);
         }
 
-        // [ContextMenu("4. Test: Manual Translation Trigger")]
-        // private void TestManualTranslation()
-        // {
-        //     var message = CreateTestMessage("This message requires manual translation.");
-        //     // We need to add it to the memory first to simulate it existing in the chat
-        //     var translationMemory = FindObjectOfType<InMemoryTranslationMemory>(); // Quick and dirty for testing
-        //     if (translationMemory != null)
-        //     {
-        //         var newTranslation = new Models.MessageTranslation(message.Message, Models.LanguageCode.Es);
-        //         translationMemory.Set(message.MessageId, newTranslation);
-        //
-        //         ReportHub.Log(ReportCategory.UNSPECIFIED,$"[TestHarness] Manually translating message '{message.MessageId}'.");
-        //         translationService.TranslateManualAsync(message.MessageId, this.GetCancellationTokenOnDestroy()).Forget();
-        //     }
-        //     else
-        //     {
-        //         ReportHub.LogError(ReportCategory.UNSPECIFIED,"Could not find InMemoryTranslationMemory in the scene to run this test.");
-        //     }
-        // }
+        [ContextMenu("4. Test: Manual Translation Trigger")]
+        private void TestManualTranslation()
+        {
+            // --- REWRITTEN AND UNCOMMENTED ---
+            var message = CreateTestMessage("This message should only be translated manually.");
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Manually translating message '{message.MessageId}'. This should work even if auto-translate is OFF.");
+
+            // We call the service directly with the data it needs.
+            // The service itself will handle creating the record in the translation memory.
+            translationService.TranslateManualAsync(message.MessageId, message.Message, this.GetCancellationTokenOnDestroy()).Forget();
+        }
+
+        [ContextMenu("5. Toggle Auto-Translate for Test Channel")]
+        private void ToggleAutoTranslate()
+        {
+            // --- NEW, POWERFUL TEST METHOD ---
+            if (translationSettings == null)
+            {
+                ReportHub.LogError(ReportCategory.UNSPECIFIED, "TranslationSettings not initialized in tester!");
+                return;
+            }
+
+            bool currentStatus = translationSettings.GetAutoTranslateForConversation(TEST_CONVERSATION_ID);
+            bool newStatus = !currentStatus;
+
+            translationSettings.SetAutoTranslateForConversation(TEST_CONVERSATION_ID, newStatus);
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Auto-Translate for channel '{TEST_CONVERSATION_ID}' set to: {newStatus}");
+        }
     }
 }
