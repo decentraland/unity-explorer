@@ -76,9 +76,11 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             browserStateService!.AddCommunities(communities);
 
-            foreach (CommunityData communityData in communities) { currentFilteredIds.Add(communityData.id); }
+            foreach (CommunityData communityData in communities)
+                currentFilteredIds.Add(communityData.id);
 
             resultLoopGrid.SetListItemCount(currentFilteredIds.Count, resetPos);
+
             SetResultsAsEmpty(currentFilteredIds.Count == 0);
 
             if (resetPos)
