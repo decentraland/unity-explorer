@@ -8,9 +8,9 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class StreamingCommunitiesPresenter : IDisposable
     {
-        public event Action? ErrorLoadingMyCommunities;
+        public event Action? ErrorLoadingCommunities;
         public event Action<string>? JoinStream;
-        public event Action? ViewAllStreamingCommunitiesButtonClicked;
+        public event Action? ViewAllButtonClicked;
 
         private readonly StreamingCommunitiesView view;
         private readonly CommunitiesDataProvider dataProvider;
@@ -25,7 +25,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
             view.JoinStream += JoinStreamClicked;
-            view.ViewAllStreamingCommunitiesButtonClicked += StreamingCommunitiesViewOnViewAllStreamingCommunitiesButtonClicked;
+            view.ViewAllStreamingCommunitiesButtonClicked += ViewAllStreamingCommunitiesButtonClicked;
             return;
 
             void JoinStreamClicked(string communityId)
@@ -33,9 +33,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 JoinStream?.Invoke(communityId);
             }
 
-            void StreamingCommunitiesViewOnViewAllStreamingCommunitiesButtonClicked()
+            void ViewAllStreamingCommunitiesButtonClicked()
             {
-                ViewAllStreamingCommunitiesButtonClicked?.Invoke();
+                ViewAllButtonClicked?.Invoke();
             }
         }
 
@@ -60,7 +60,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
                 if (!result.Success)
                 {
-                    ErrorLoadingMyCommunities?.Invoke();
+                    ErrorLoadingCommunities?.Invoke();
                     return;
                 }
 

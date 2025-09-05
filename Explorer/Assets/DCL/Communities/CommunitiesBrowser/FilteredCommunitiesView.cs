@@ -45,10 +45,9 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader, Sprite defaultSprite)
+        public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
             thumbnailLoader = newThumbnailLoader;
-            defaultThumbnailSprite = defaultSprite;
         }
 
         public void SetProfileRepositoryWrapper(ProfileRepositoryWrapper profileDataProvider)

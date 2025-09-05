@@ -80,7 +80,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
         }
 
-        public void OnCommunityJoined(string communityId, bool isJoined, bool isSuccess)
+        public void UpdateJoinedCommunity(string communityId, bool isJoined, bool isSuccess)
         {
             view.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
         }
