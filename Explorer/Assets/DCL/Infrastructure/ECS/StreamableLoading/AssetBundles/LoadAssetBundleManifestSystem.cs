@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -55,7 +56,10 @@ namespace ECS.StreamableLoading.AssetBundles
                       .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
                       .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
 
-            SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), RetryPolicy.WithRetries(1)), ct, reportCategory)
+            URLAddress url = urlBuilder.Build();
+            Debug.Log("JUANI REQUESTING URL " + url);
+
+            SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url, RetryPolicy.WithRetries(1)), ct, reportCategory)
                                                               .CreateFromJson<SceneAbDto>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchBackToMainThread);
 
             CheckSceneAbDTO(sceneAbDto.Version, hash);

@@ -6,6 +6,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System.Threading;
+using UnityEngine;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -28,9 +29,15 @@ namespace ECS.StreamableLoading.AssetBundles
                 StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
                 if (assetBundleManifest.Succeeded)
+                {
+                    Debug.Log($"JUANI SUCCESS GETTING {entityDefinition.id}");
                     entityDefinition.assetBundleManifestVersion = new AssetBundleManifestVersion(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
+                }
                 else
-                    entityDefinition.assetBundleManifestVersion.assetBundleManifestRequestFailed = true;
+                {
+                    Debug.Log("JUANI FAILLED GETTING GETTING ");
+                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
+                }
             }
         }
     }

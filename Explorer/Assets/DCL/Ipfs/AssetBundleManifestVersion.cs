@@ -60,6 +60,13 @@ public class AssetBundleManifestVersion
 
         public bool IsEmpty() =>
             assets.IsEmpty();
+
+        public static AssetBundleManifestVersion CreateFailed()
+        {
+            AssetBundleManifestVersion assetBundleManifestVersion = new AssetBundleManifestVersion();
+            assetBundleManifestVersion.assetBundleManifestRequestFailed = true;
+            return assetBundleManifestVersion;
+        }
     }
 
     public class AssetBundleManifestVersionPerPlatform
