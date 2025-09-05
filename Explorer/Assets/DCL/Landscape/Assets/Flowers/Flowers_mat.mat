@@ -13,9 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ADVANCED_LIGHTING
-  - _GPU_GRASS_BATCHING
-  m_InvalidKeywords:
-  - _ENVIRONMENTREFLECTIONS_ON
+  m_InvalidKeywords: []
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
