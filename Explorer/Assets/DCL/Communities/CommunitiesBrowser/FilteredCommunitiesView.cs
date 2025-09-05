@@ -189,10 +189,5 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetJoiningLoadingActive(true);
             CommunityJoined?.Invoke(communityId);
         }
-
-        public void SetCommunitiesBrowserState(CommunitiesBrowserStateService browserStateService)
-        {
-            this.browserStateService = browserStateService;
-        }
     }
 }

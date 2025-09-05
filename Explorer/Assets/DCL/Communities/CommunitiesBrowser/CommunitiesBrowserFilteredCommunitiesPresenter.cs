@@ -159,7 +159,11 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ct.IsCancellationRequested)
                 return;
 
-            if (!result.Success) { errorNotificationService.ShowWarningNotification(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget(); }
+            if (!result.Success)
+            {
+                errorNotificationService.ShowWarningNotification(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
+                return;
+            }
 
             if (result.Value.data.results.Length > 0)
             {
