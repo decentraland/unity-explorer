@@ -1156,7 +1156,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   buttonClose: {fileID: 8855027581581404490}
-  buttonOpenMembers: {fileID: 2815209892365205130}
+  buttonOpenMembers: {fileID: 7225233756833244029}
   buttonOpenContextMenu: {fileID: 149854274967802627}
   buttonOpenProfileContextMenu: {fileID: 2815209892365205130}
   textChannelName: {fileID: 8676889846607476693}

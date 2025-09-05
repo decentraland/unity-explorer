@@ -105,20 +105,12 @@ namespace DCL.Translation.Service
                 return;
             }
 
-            CancellationTokenSource timeoutCts = null;
             try
             {
-                // 1. Create the CTS without a 'using' statement.
-                // We link it to the incoming cancellation token.
-                timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                // Simplified: We now directly use the passed-in cancellation token.
+                var result = await provider.TranslateAsync(translation.OriginalBody, LanguageCode.AutoDetect, targetLang, ct);
 
-                // 2. Schedule the timeout.
-                timeoutCts.CancelAfterSlim(TimeSpan.FromSeconds(settings.TranslationTimeoutSeconds));
-
-                // 3. Await the translation using the new token.
-                var result = await provider.TranslateAsync(translation.OriginalBody, LanguageCode.AutoDetect, targetLang, timeoutCts.Token);
-
-                // 4. Process success.
+                // Process success
                 cache.Set(messageId, targetLang, result);
                 translationMemory.SetTranslatedResult(messageId, result);
                 eventBus.Publish(new TranslationEvents.MessageTranslated
@@ -128,28 +120,21 @@ namespace DCL.Translation.Service
             }
             catch (OperationCanceledException)
             {
-                // This will be caught if our timeout is triggered OR if the parent 'ct' is canceled.
-                // It's a "normal" failure, not a critical error.
+                // This is now only caught if the calling context cancels the operation.
                 translationMemory.UpdateState(messageId, TranslationState.Failed);
                 eventBus.Publish(new TranslationEvents.MessageTranslationFailed
                 {
-                    MessageId = messageId, Error = "Translation timed out."
+                    MessageId = messageId, Error = "Translation was cancelled."
                 });
             }
             catch (Exception ex)
             {
-                // This catches other errors, like the mock provider's simulated failure.
+                // This catches other provider errors.
                 translationMemory.UpdateState(messageId, TranslationState.Failed);
                 eventBus.Publish(new TranslationEvents.MessageTranslationFailed
                 {
                     MessageId = messageId, Error = ex.Message
                 });
-            }
-            finally
-            {
-                // 5. CRUCIAL: Always dispose of the CTS when we are done.
-                // The 'finally' block guarantees this runs, preventing memory leaks.
-                timeoutCts?.Dispose();
             }
         }
     }

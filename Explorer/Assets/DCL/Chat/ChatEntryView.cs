@@ -25,6 +25,7 @@ namespace DCL.Chat
         private Action<string, ChatEntryView>? onMessageContextMenuClicked;
         public event Action<string> OnTranslateRequested;
         public event Action<string> OnRevertRequested;
+        private bool isPointerInside;
 
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
@@ -116,7 +117,8 @@ namespace DCL.Chat
             chatMessage = viewModel.Message;
             usernameElement.SetUsername(chatMessage.SenderValidatedName, chatMessage.SenderWalletId);
             messageBubbleElement.SetMessageData(viewModel.DisplayText, chatMessage, viewModel.TranslationState);
-            messageBubbleElement.SetTranslationViewVisibility(viewModel.TranslationState == TranslationState.Pending);
+
+            UpdateTranslationViewVisibility();
             
             dateDividerElement.gameObject.SetActive(viewModel.ShowDateDivider);
             if (viewModel.ShowDateDivider)
@@ -135,17 +137,7 @@ namespace DCL.Chat
 
             profileSubscription?.Dispose();
             profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
-
-            // RenderTranslationState(viewModel.TranslationState);
         }
-
-        // private void RenderTranslationState(TranslationState state)
-        // {
-        //     // The null checks are important because you might not have added the UI elements to the prefab yet.
-        //     if (loadingIndicator != null) loadingIndicator.SetActive(state == TranslationState.Pending);
-        //     if (errorIndicator != null) errorIndicator.SetActive(state == TranslationState.Failed);
-        //     if (translatedBadge != null) translatedBadge.SetActive(state == TranslationState.Success);
-        // }
 
         private void OnProfileButtonClicked()
         {
@@ -188,24 +180,30 @@ namespace DCL.Chat
 
         private void HandlePointerEnter()
         {
-            if (currentViewModel == null) return;
-
-            // Show the translation view on hover, but NOT if it's already in a pending state
-            if (currentViewModel.TranslationState != TranslationState.Pending)
-            {
-                messageBubbleElement.SetTranslationViewVisibility(true);
-            }
+            isPointerInside = true;
+            UpdateTranslationViewVisibility();
         }
 
         private void HandlePointerExit()
         {
-            if (currentViewModel == null) return;
+            isPointerInside = false;
+            UpdateTranslationViewVisibility();
+        }
 
-            // Always hide on exit, UNLESS it's in a pending state (spinner should remain visible)
-            if (currentViewModel.TranslationState != TranslationState.Pending)
+        private void UpdateTranslationViewVisibility()
+        {
+            if (currentViewModel == null)
             {
                 messageBubbleElement.SetTranslationViewVisibility(false);
+                return;
             }
+
+            bool isVisible =
+                currentViewModel.TranslationState == TranslationState.Success ||
+                currentViewModel.TranslationState == TranslationState.Pending ||
+                (isPointerInside && (currentViewModel.TranslationState == TranslationState.Original || currentViewModel.TranslationState == TranslationState.Failed));
+
+            messageBubbleElement.SetTranslationViewVisibility(isVisible);
         }
 
         private void OnDestroy()

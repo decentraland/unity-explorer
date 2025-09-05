@@ -24,6 +24,9 @@ namespace DCL.Chat.ChatViewModels
                 viewModel.cancellationTokenSource.SafeCancelAndDispose();
                 viewModel.PendingToAnimate = false;
                 viewModel.ShowDateDivider = false;
+                viewModel.TranslationState = TranslationState.Original;
+                viewModel.TranslatedText = string.Empty;
+                viewModel.TranslationError = string.Empty;
             });
 
         internal static readonly Action<ChatMessageViewModel> RELEASE = viewModel => POOL.Release(viewModel);
