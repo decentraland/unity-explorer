@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Input;
 using DCL.UI;
 using DCL.WebRequests;
 using MVC;
@@ -13,21 +14,26 @@ namespace DCL.RewardPanel
         private readonly NFTColorsSO nftRarityColors;
         private readonly NftTypeIconSO nftRarityBackgrounds;
         private readonly NftTypeIconSO nftCategoryIcons;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        private readonly ICursor cursor;
+
         private ImageController imageController;
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public RewardPanelController(
             ViewFactoryMethod viewFactory,
             IWebRequestController webRequestController,
             NFTColorsSO nftRarityColors,
             NftTypeIconSO nftRarityBackgrounds,
-            NftTypeIconSO nftCategoryIcons
+            NftTypeIconSO nftCategoryIcons,
+            ICursor cursor
         ) : base(viewFactory)
         {
             this.webRequestController = webRequestController;
             this.nftRarityColors = nftRarityColors;
             this.nftRarityBackgrounds = nftRarityBackgrounds;
             this.nftCategoryIcons = nftCategoryIcons;
+            this.cursor = cursor;
         }
 
         protected override void OnViewInstantiated()
@@ -45,6 +51,8 @@ namespace DCL.RewardPanel
             viewInstance.RarityMark.color = nftRarityColors.GetColor(inputData.Rarity);
             viewInstance.RarityBackground.sprite = nftRarityBackgrounds.GetTypeImage(inputData.Rarity);
             viewInstance.CategoryImage.sprite = nftCategoryIcons.GetTypeImage(inputData.Category);
+
+            cursor.Unlock();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
