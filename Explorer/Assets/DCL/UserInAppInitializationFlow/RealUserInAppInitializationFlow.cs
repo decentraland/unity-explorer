@@ -98,7 +98,7 @@ namespace DCL.UserInAppInitializationFlow
 
             EnumResult<TaskError> result = parameters.RecoveryError;
 
-            using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
+            UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
@@ -184,6 +184,8 @@ namespace DCL.UserInAppInitializationFlow
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
+            
+            playAudioScope.Dispose();
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
         }
