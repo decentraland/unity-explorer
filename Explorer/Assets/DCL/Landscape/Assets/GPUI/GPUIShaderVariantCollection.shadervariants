@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: GPUIShaderVariantCollection
+  m_Shaders:
+  - first: {fileID: -6465566751694194690, guid: 7f2bfe2de9f99024383bae22ae477a2a, type: 3}
+    second:
+      variants:
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD LOD_FADE_CROSSFADE
+          _WINDQUALITY_FASTEST
+        passType: 0
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD LOD_FADE_CROSSFADE
+          _WINDQUALITY_NONE
+        passType: 0
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR LOD_FADE_CROSSFADE _WINDQUALITY_BEST
+        passType: 0
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR LOD_FADE_CROSSFADE _WINDQUALITY_FASTEST
+        passType: 0
+      - keywords: BACKFACE_NORMAL_MODE_MIRROR LOD_FADE_CROSSFADE _WINDQUALITY_NONE
+        passType: 0
+  - first: {fileID: 4800000, guid: faed589756dc4bc4c8e7f8c47f32f42a, type: 3}
+    second:
+      variants:
+      - keywords: _ADVANCED_LIGHTING
+        passType: 0
+      - keywords: _ADVANCED_LIGHTING _FADING _SPECULARHIGHLIGHTS_OFF
+        passType: 0
+  - first: {fileID: 4800000, guid: 8478781d80234fa29651593b02782b9d, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 303b28effad14e94871a6cfad2db6615, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: -6465566751694194690, guid: eac608796bf9b9546b3dd3a76bf994aa, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0

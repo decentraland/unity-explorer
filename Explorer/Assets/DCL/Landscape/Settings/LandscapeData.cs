@@ -1,4 +1,6 @@
-﻿using Decentraland.Terrain;
+﻿using DCL.Landscape.Utils;
+using Decentraland.Terrain;
+using GPUInstancerPro;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -7,7 +9,7 @@ namespace DCL.Landscape.Settings
 {
     public class LandscapeData : ScriptableObject
     {
-        public Action<float> OnDetailDistanceChanged;
+        public Action<float>? OnDetailDistanceChanged;
 
         public bool showSatelliteView;
         public bool drawTerrain;
@@ -16,12 +18,12 @@ namespace DCL.Landscape.Settings
         public TerrainGenerationData terrainData;
         public TerrainGenerationData worldsTerrainData;
 
-#if GPUI_PRO_PRESENT
         public GPUIAssets gpuiAssets;
+
+        [field: SerializeField] public GPUIProfile TreesProfile { get; private set; } = null!;
+
+        [Obsolete]
         public const bool LOAD_TREES_FROM_STREAMINGASSETS = true;
-#else
-        public const bool LOAD_TREES_FROM_STREAMINGASSETS = false;
-#endif
 
         [SerializeField] private float detailDistanceValue = 200;
         public float DetailDistance
@@ -34,17 +36,32 @@ namespace DCL.Landscape.Settings
                     return;
 
                 detailDistanceValue = value;
+                ApplyDetailDistanceToTrees(value);
                 OnDetailDistanceChanged?.Invoke(value);
             }
+        }
+
+        private void ApplyDetailDistanceToTrees(float distance)
+        {
+            TreesProfile.minMaxDistance = new Vector2(0, distance);
+            TreesProfile.SetParameterBufferData();
+        }
+
+        private void OnEnable()
+        {
+            if (Application.isPlaying)
+                ApplyDetailDistanceToTrees(detailDistanceValue);
         }
 
         public bool RenderGround { get; set; } = true;
         [field: SerializeField] public Material? GroundMaterial { get; private set; }
         [field: SerializeField] public int GroundInstanceCapacity { get; set; }
+
+        [Obsolete("Terrain Height is hardcoded nowadays")]
         [field: SerializeField] public int TerrainHeight { get; private set; }
         [field: SerializeField] public GrassIndirectRenderer? GrassIndirectRenderer { get; private set; }
 
-        [field: SerializeField] [field: Utils.EnumIndexedArray(typeof(GroundMeshPiece))]
+        [field: SerializeField] [field: EnumIndexedArray(typeof(GroundMeshPiece))]
         public Mesh?[] GroundMeshes { get; private set; } = null!;
 
         private enum GroundMeshPiece

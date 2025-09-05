@@ -46,6 +46,7 @@ namespace DCL.Landscape
         private TerrainGenerationData terrainGenData;
         private TerrainBoundariesGenerator boundariesGenerator;
         private TerrainFactory factory;
+        private GPUIProfile treesProfile;
 
         private NativeList<int2> emptyParcels;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
@@ -82,7 +83,6 @@ namespace DCL.Landscape
         public TerrainModel TerrainModel { get; private set; }
         public Texture2D OccupancyMap { get; private set; }
         public int OccupancyFloor { get; private set; }
-        public float TerrainHeight { get; private set; }
 
         private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
 
@@ -94,13 +94,12 @@ namespace DCL.Landscape
             timeProfiler = new TimeProfiler(measureTime);
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, float terrainHeight)
+        public void Initialize(TerrainGenerationData terrainGenData, GPUIProfile treesProfile, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
-            TerrainHeight = terrainHeight;
+            this.treesProfile = treesProfile;
 
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
@@ -118,7 +117,6 @@ namespace DCL.Landscape
                 UnityObjectUtils.SafeDestroy(TerrainRoot);
         }
 
-        // TODO : pre-calculate once and re-use
         [Obsolete]
         public void SetTerrainCollider(Vector2Int parcel, bool isEnabled) { }
 
@@ -839,8 +837,7 @@ namespace DCL.Landscape
             for (var prototypeIndex = 0; prototypeIndex < terrainGenData.treeAssets.Length;
                  prototypeIndex++)
             {
-                GPUICoreAPI.RegisterRenderer(TerrainRoot, terrainGenData.treeAssets[prototypeIndex].asset,
-                    out gpuInstancerRendererKeys[prototypeIndex]);
+                GPUICoreAPI.RegisterRenderer(TerrainRoot, terrainGenData.treeAssets[prototypeIndex].asset, treesProfile, out gpuInstancerRendererKeys[prototypeIndex]);
 
                 List<Matrix4x4> matrices = transforms[prototypeIndex];
 
