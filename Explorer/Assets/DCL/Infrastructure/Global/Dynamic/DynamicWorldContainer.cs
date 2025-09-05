@@ -20,6 +20,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EventsApi;
@@ -224,7 +225,8 @@ namespace Global.Dynamic
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
 
             var mapPathEventBus = new MapPathEventBus();
-            INotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsBusController.Initialize(notificationsBusController);
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
@@ -480,7 +482,6 @@ namespace Global.Dynamic
                         eventsApiService,
                         mapPathEventBus,
                         staticContainer.MapPinsEventBus,
-                        notificationsBusController,
                         realmNavigator,
                         staticContainer.RealmData,
                         sharedNavmapCommandBus,
@@ -635,7 +636,9 @@ namespace Global.Dynamic
                 friendOnlineStatusCacheProxy,
                 profileRepository,
                 sharedSpaceManager,
-                includeVoiceChat);
+                includeVoiceChat,
+                includeCommunities,
+                communitiesDataProvider);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -884,6 +887,7 @@ namespace Global.Dynamic
                     profileChangesBus,
                     includeFriends,
                     includeUserBlocking,
+                    includeCommunities,
                     isNameEditorEnabled,
                     includeVoiceChat,
                     chatEventBus,
@@ -891,8 +895,9 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     voiceChatCallStatusService,
                     galleryEventBus,
-                    thumbnailProvider,
-                    clipboard
+                    clipboard,
+                    communitiesDataProvider,
+                    thumbnailProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -1037,7 +1042,6 @@ namespace Global.Dynamic
                     galleryEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
-                    notificationsBusController,
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache));
