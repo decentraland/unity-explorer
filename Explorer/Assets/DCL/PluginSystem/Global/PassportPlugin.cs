@@ -71,11 +71,10 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
-        private readonly bool isCallEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ISystemClipboard systemClipboard;
 
@@ -113,11 +112,10 @@ namespace DCL.PluginSystem.Global
             bool enableFriends,
             bool includeUserBlocking,
             bool isNameEditorEnabled,
-            bool isCallEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard)
         {
@@ -152,11 +150,10 @@ namespace DCL.PluginSystem.Global
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            this.isCallEnabled = isCallEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             this.systemClipboard = systemClipboard;
         }
@@ -218,11 +215,10 @@ namespace DCL.PluginSystem.Global
                 enableFriends,
                 includeUserBlocking,
                 isNameEditorEnabled,
-                isCallEnabled,
                 chatEventBus,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
-                voiceChatCallStatusService,
+                voiceChatOrchestrator,
                 passport3DPreviewCamera,
                 galleryEventBus,
                 systemClipboard,

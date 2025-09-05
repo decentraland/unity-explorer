@@ -29,8 +29,6 @@ namespace DCL.Audio
         {
             this.audioMixer = audioMixer;
             allExposedParams = Enum.GetNames(typeof(AudioMixerExposedParam));
-            //We mute microphone by default as we don't want to hear ourselves
-            MuteGroup(AudioMixerExposedParam.Microphone_Volume);
         }
 
         public void MuteGroup(AudioMixerExposedParam groupParam)

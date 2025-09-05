@@ -5,6 +5,8 @@ using DCL.Optimization.Multithreading;
 using DCL.Utilities.Extensions;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using LiveKit.Proto;
+
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.RemoveIntentions
@@ -27,12 +29,12 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         }
 
         // TODO how to remove boiler-plate methods and preserve RoomSource?
-        private void OnConnectionUpdateFromIsland(IRoom room, ConnectionUpdate connectionupdate)
+        private void OnConnectionUpdateFromIsland(IRoom room, ConnectionUpdate connectionupdate, DisconnectReason? disconnectReason = null)
         {
             OnConnectionUpdated(room, connectionupdate, RoomSource.ISLAND);
         }
 
-        private void OnConnectionUpdateFromScene(IRoom room, ConnectionUpdate connectionupdate)
+        private void OnConnectionUpdateFromScene(IRoom room, ConnectionUpdate connectionupdate, DisconnectReason? disconnectReason = null)
         {
             OnConnectionUpdated(room, connectionupdate, RoomSource.GATEKEEPER);
         }

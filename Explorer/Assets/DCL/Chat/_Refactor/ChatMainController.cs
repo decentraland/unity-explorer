@@ -16,6 +16,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
 using DCL.UI.Profiles.Helpers;
+using DCL.VoiceChat;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -35,11 +36,16 @@ namespace DCL.Chat
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IMVCManager mvcManager;
-        private ChatStateMachine? chatStateMachine;
-        private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly CommunitiesDataProvider communityDataProvider;
+
+        private ChatStateMachine? chatStateMachine;
+        private EventSubscriptionScope uiScope;
+        private CommunityVoiceChatSubTitleButtonController communityVoiceChatSubTitleButtonController;
+
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public event Action? PointerEntered;
@@ -65,7 +71,9 @@ namespace DCL.Chat
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
             CommunityDataService communityDataService,
-            ChatClickDetectionService chatClickDetectionService) : base(viewFactory)
+            ChatClickDetectionService chatClickDetectionService,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            CommunitiesDataProvider communityDataProvider) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
@@ -81,6 +89,8 @@ namespace DCL.Chat
             this.chatContextMenuService = chatContextMenuService;
             this.communityDataService = communityDataService;
             this.chatClickDetectionService = chatClickDetectionService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communityDataProvider = communityDataProvider;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -99,7 +109,15 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed += OnUIClose;
 
-            var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
+            communityVoiceChatSubTitleButtonController = new CommunityVoiceChatSubTitleButtonController(
+                viewInstance.CommunityStreamSubTitleButton,
+                voiceChatOrchestrator,
+                currentChannelService.CurrentChannelProperty,
+                communityDataProvider);
+
+
+            var titleBarPresenter = new ChatTitlebarPresenter(
+                viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,
                 communityDataService,
@@ -108,7 +126,11 @@ namespace DCL.Chat
                 chatContextMenuService,
                 commandRegistry.GetTitlebarViewModel,
                 commandRegistry.GetCommunityThumbnail,
-                commandRegistry.DeleteChatHistory);
+                commandRegistry.DeleteChatHistory,
+                voiceChatOrchestrator,
+                chatEventBus,
+                commandRegistry.GetUserCallStatusCommand);
+
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
@@ -164,7 +186,8 @@ namespace DCL.Chat
                 channelListPresenter,
                 messageFeedPresenter,
                 inputPresenter,
-                memberListPresenter);
+                memberListPresenter,
+                communityVoiceChatSubTitleButtonController);
 
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,
@@ -277,6 +300,8 @@ namespace DCL.Chat
             uiScope?.Dispose();
 
             chatMemberListService.Dispose();
+
+            communityVoiceChatSubTitleButtonController?.Dispose();
         }
 
         private void OnMvcViewShowed(IController controller)

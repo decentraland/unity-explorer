@@ -254,13 +254,13 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.13333334, g: 0.12941177, b: 0.14117648, a: 0}
-    m_HighlightedColor: {r: 0.25286132, g: 0.23589355, b: 0.2924528, a: 1}
-    m_PressedColor: {r: 0.13333334, g: 0.12941177, b: 0.14117648, a: 1}
-    m_SelectedColor: {r: 0.2509804, g: 0.23529412, b: 0.29411766, a: 1}
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 0}
+    m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
+    m_PressedColor: {r: 1, g: 1, b: 1, a: 0.011764706}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.03137255}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
+    m_FadeDuration: 0
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
     m_PressedSprite: {fileID: 0}
@@ -292,6 +292,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 9043400043820160296}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &7569102405873697003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -310,6 +313,7 @@ MonoBehaviour:
   connectionStatusIndicator: {fileID: 8077209090936522880}
   connectionStatusIndicatorContainer: {fileID: 7801696642176355698}
   onlineStatusConfiguration: {fileID: 11400000, guid: bbca3b81bc8c54e1fb00e0cc1fa3f195, type: 2}
+  offlineThumbnailGreyOutOpacity: 0.6
 --- !u!114 &1970045264706548885
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -452,7 +456,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7788679684010139741, guid: 7c61cc45e2a65b14599d28751d212427, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 134.91
+      value: 134.02
       objectReference: {fileID: 0}
     - target: {fileID: 7788679684010139741, guid: 7c61cc45e2a65b14599d28751d212427, type: 3}
       propertyPath: m_SizeDelta.y
@@ -618,6 +622,22 @@ PrefabInstance:
     - target: {fileID: 605195446501450412, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_PreferredHeight
       value: 42
+      objectReference: {fileID: 0}
+    - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5181356391986014255, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_SizeDelta.x

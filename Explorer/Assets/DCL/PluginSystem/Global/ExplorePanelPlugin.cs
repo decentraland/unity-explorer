@@ -42,9 +42,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
-using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
-using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -60,6 +58,7 @@ using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
 using UnityEngine;
@@ -139,8 +138,8 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
-        private readonly bool isVoiceChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -195,8 +194,8 @@ namespace DCL.PluginSystem.Global
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
-            bool isVoiceChatEnabled,
-            GalleryEventBus galleryEventBus)
+            GalleryEventBus galleryEventBus,
+            ICommunityCallOrchestrator communityCallOrchestrator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -251,8 +250,8 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
-            this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.galleryEventBus = galleryEventBus;
+            this.communityCallOrchestrator = communityCallOrchestrator;
         }
 
         public void Dispose()
@@ -379,8 +378,8 @@ namespace DCL.PluginSystem.Global
                 settings.VoiceChatSettings,
                 worldVolumeMacBus,
                 upscalingController,
-                isVoiceChatEnabled,
-                assetsProvisioner);
+                assetsProvisioner
+                );
 
             await settingsController.InitializeAsync();
 
@@ -432,7 +431,9 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 profileRepositoryWrapper,
                 selfProfile,
-                nftNamesProvider);
+                nftNamesProvider,
+                communityCallOrchestrator,
+                sharedSpaceManager);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

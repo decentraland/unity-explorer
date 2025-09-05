@@ -459,20 +459,12 @@ MonoBehaviour:
     - rid: 3511243270148325472
       type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <VoiceChatSettings>k__BackingField: {fileID: 11400000, guid: 88538076b054b4504b11b87773e7393f, type: 2}
-        <MicrophoneAudioFilter>k__BackingField:
-          m_AssetGUID: fa9a67059d8a204408ce435cc8827612
+        <VoiceChatConfigurations>k__BackingField:
+          m_AssetGUID: 5918cd70698040249a590ac41e1dfeb9
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <CombinedAudioSource>k__BackingField:
-          m_AssetGUID: 13e534245f7a87d498ae850d58b9115f
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <VoiceChatConfiguration>k__BackingField: {fileID: 11400000, guid: 96f7b8dc6c27e3047a1b56bcf3779c47, type: 2}
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

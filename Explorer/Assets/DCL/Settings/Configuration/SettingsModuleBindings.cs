@@ -14,7 +14,6 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
-using UnityEngine.Serialization;
 
 namespace DCL.Settings.Configuration
 {
@@ -40,8 +39,7 @@ namespace DCL.Settings.Configuration
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
-            WorldVolumeMacBus worldVolumeMacBus,
-            bool isVoiceChatEnabled);
+            WorldVolumeMacBus worldVolumeMacBus);
     }
 
     [Serializable]

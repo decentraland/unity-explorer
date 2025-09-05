@@ -1,6 +1,7 @@
 using DCL.Notifications.NotificationEntry;
 using MVC;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Notifications.NewNotification
 {
@@ -11,6 +12,13 @@ namespace DCL.Notifications.NewNotification
 
         [field: SerializeField]
         public SystemNotificationView SystemNotificationView { get; private set; }
+
+        [field: FormerlySerializedAs("<CommunityNotificationView>k__BackingField")]
+        [field: SerializeField]
+        public CommunityNotificationView CommunityVoiceChatNotificationView { get; private set; }
+
+        [field: SerializeField]
+        public CanvasGroup CommunityNotificationCanvasGroup { get; private set; }
 
         [field: SerializeField]
         public CanvasGroup NotificationViewCanvasGroup { get; private set; }

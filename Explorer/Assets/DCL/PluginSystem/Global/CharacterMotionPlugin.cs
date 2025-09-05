@@ -11,7 +11,9 @@ using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
+using ECS;
 using ECS.ComponentsPooling.Systems;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
@@ -25,6 +27,9 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly PlayerParcelTrackerService parcelTrackerService;
+        private readonly IScenesCache scenesCache;
+        private readonly IRealmData realmData;
 
         private CharacterControllerSettings settings;
 
@@ -32,12 +37,18 @@ namespace DCL.PluginSystem.Global
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
-            ISceneReadinessReportQueue sceneReadinessReportQueue)
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            PlayerParcelTrackerService parcelTrackerService,
+            IScenesCache scenesCache,
+            IRealmData realmData)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.parcelTrackerService = parcelTrackerService;
+            this.scenesCache = scenesCache;
+            this.realmData = realmData;
         }
 
         public void Dispose()
@@ -82,6 +93,7 @@ namespace DCL.PluginSystem.Global
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
+            PlayerParcelTrackingSystem.InjectToWorld(ref builder, arguments.PlayerEntity, parcelTrackerService, scenesCache, realmData);
         }
     }
 }
