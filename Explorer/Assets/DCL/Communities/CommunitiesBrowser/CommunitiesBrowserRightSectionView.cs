@@ -8,6 +8,7 @@ namespace DCL.Communities.CommunitiesBrowser
     public class CommunitiesBrowserRightSectionView : MonoBehaviour
     {
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
+        public event Action? LoopGridScrollChanged;
 
         [SerializeField] private FilteredCommunitiesView filteredCommunitiesView = null!;
         [SerializeField] private StreamingCommunitiesView streamingCommunitiesView = null!;
@@ -22,8 +23,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
         }
-
-        public event Action? LoopGridScrollChanged;
 
         private void OnScrollRectValueChanged(Vector2 _)
         {

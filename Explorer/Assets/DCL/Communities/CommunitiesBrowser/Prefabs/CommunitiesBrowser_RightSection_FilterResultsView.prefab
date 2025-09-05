@@ -57,6 +57,7 @@ MonoBehaviour:
   resultsEmptyContainer: {fileID: 6352372493612380288}
   resultsLoadingSpinner: {fileID: 474747111003394953}
   resultsLoadingMoreSpinner: {fileID: 722558470932215521}
+  defaultThumbnailSprite: {fileID: 0}
 --- !u!1001 &6394177115415988158
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -100,6 +101,10 @@ PrefabInstance:
     - target: {fileID: 1199122395817344702, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726174222724871011, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 21
       objectReference: {fileID: 0}
     - target: {fileID: 2927217380436613747, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
       propertyPath: m_SizeDelta.x
@@ -332,6 +337,10 @@ PrefabInstance:
     - target: {fileID: 8033186325479375711, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8374073726798921821, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+      propertyPath: m_Size
+      value: 0.9516129
       objectReference: {fileID: 0}
     - target: {fileID: 8619147479163852953, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
       propertyPath: m_SizeDelta.x
