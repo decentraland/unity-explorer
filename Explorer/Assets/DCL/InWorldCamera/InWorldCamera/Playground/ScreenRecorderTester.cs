@@ -11,7 +11,6 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -19,7 +18,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Rendering.GPUInstancing;
 using UnityEngine;
 using Utility;
 
