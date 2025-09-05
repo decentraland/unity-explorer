@@ -71,6 +71,14 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 // resultComponent.Timestamp =
                 // resultComponent.TriggeredEntityPosition =
                 // resultComponent.TriggeredEntityRotation =
+                /*resultComponent.Trigger = new PBTriggerAreaResult.Types.Trigger()
+                {
+                    Entity = ,
+                    Layer = ,
+                    Position = ,
+                    Rotation = ,
+                    Scale =
+                }*/
 
                 ecsToCRDTWriter.PutMessage(resultComponent, triggerAreaCRDTEntity);
             }
@@ -89,6 +97,14 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 // resultComponent.Timestamp =
                 // resultComponent.TriggeredEntityPosition =
                 // resultComponent.TriggeredEntityRotation =
+                /*resultComponent.Trigger = new PBTriggerAreaResult.Types.Trigger()
+                {
+                    Entity = ,
+                    Layer = ,
+                    Position = ,
+                    Rotation = ,
+                    Scale =
+                }*/
 
                 // TODO: should the result component be a GOVS component ??? won't several event step on each other???
 

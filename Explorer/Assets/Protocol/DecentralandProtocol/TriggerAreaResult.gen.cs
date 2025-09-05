@@ -26,24 +26,25 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjVkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdHJpZ2dlcl9hcmVhX3Jl",
             "c3VsdC5wcm90bxIbZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzGiFkZWNl",
-            "bnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8iyQMKE1BCVHJpZ2dlckFy",
+            "bnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8ilAQKE1BCVHJpZ2dlckFy",
             "ZWFSZXN1bHQSGAoQdHJpZ2dlcmVkX2VudGl0eRgBIAEoDRI/Chl0cmlnZ2Vy",
             "ZWRfZW50aXR5X3Bvc2l0aW9uGAIgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1v",
             "bi5WZWN0b3IzEkIKGXRyaWdnZXJlZF9lbnRpdHlfcm90YXRpb24YAyABKAsy",
             "Hy5kZWNlbnRyYWxhbmQuY29tbW9uLlF1YXRlcm5pb24SRQoKZXZlbnRfdHlw",
             "ZRgEIAEoDjIxLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5UcmlnZ2Vy",
-            "QXJlYUV2ZW50VHlwZRIRCgl0aW1lc3RhbXAYBSABKA0auAEKB1RyaWdnZXIS",
-            "DgoGZW50aXR5GAEgASgNEg0KBWxheWVyGAIgASgNEi4KCHBvc2l0aW9uGAMg",
-            "ASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEjEKCHJvdGF0aW9u",
-            "GAQgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9uEisKBXNj",
-            "YWxlGAUgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzKkQKFFRy",
-            "aWdnZXJBcmVhRXZlbnRUeXBlEg4KClRBRVRfRU5URVIQABINCglUQUVUX1NU",
-            "QVkQARINCglUQUVUX0VYSVQQAkIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnBy",
-            "b3RvMw=="));
+            "QXJlYUV2ZW50VHlwZRIRCgl0aW1lc3RhbXAYBSABKA0SSQoHdHJpZ2dlchgG",
+            "IAEoCzI4LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlRyaWdnZXJB",
+            "cmVhUmVzdWx0LlRyaWdnZXIauAEKB1RyaWdnZXISDgoGZW50aXR5GAEgASgN",
+            "Eg0KBWxheWVyGAIgASgNEi4KCHBvc2l0aW9uGAMgASgLMhwuZGVjZW50cmFs",
+            "YW5kLmNvbW1vbi5WZWN0b3IzEjEKCHJvdGF0aW9uGAQgASgLMh8uZGVjZW50",
+            "cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9uEisKBXNjYWxlGAUgASgLMhwuZGVj",
+            "ZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzKkQKFFRyaWdnZXJBcmVhRXZlbnRU",
+            "eXBlEg4KClRBRVRfRU5URVIQABINCglUQUVUX1NUQVkQARINCglUQUVUX0VY",
+            "SVQQAkIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TriggerAreaEventType), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerAreaResult), global::DCL.ECSComponents.PBTriggerAreaResult.Parser, new[]{ "TriggeredEntity", "TriggeredEntityPosition", "TriggeredEntityRotation", "EventType", "Timestamp" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger), global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger.Parser, new[]{ "Entity", "Layer", "Position", "Rotation", "Scale" }, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerAreaResult), global::DCL.ECSComponents.PBTriggerAreaResult.Parser, new[]{ "TriggeredEntity", "TriggeredEntityPosition", "TriggeredEntityRotation", "EventType", "Timestamp", "Trigger" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger), global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger.Parser, new[]{ "Entity", "Layer", "Position", "Rotation", "Scale" }, null, null, null, null)})
           }));
     }
     #endregion
@@ -102,6 +103,7 @@ namespace DCL.ECSComponents {
       triggeredEntityRotation_ = other.triggeredEntityRotation_ != null ? other.triggeredEntityRotation_.Clone() : null;
       eventType_ = other.eventType_;
       timestamp_ = other.timestamp_;
+      trigger_ = other.trigger_ != null ? other.trigger_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -186,6 +188,18 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "trigger" field.</summary>
+    public const int TriggerFieldNumber = 6;
+    private global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger trigger_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger Trigger {
+      get { return trigger_; }
+      set {
+        trigger_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -206,6 +220,7 @@ namespace DCL.ECSComponents {
       if (!object.Equals(TriggeredEntityRotation, other.TriggeredEntityRotation)) return false;
       if (EventType != other.EventType) return false;
       if (Timestamp != other.Timestamp) return false;
+      if (!object.Equals(Trigger, other.Trigger)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -218,6 +233,7 @@ namespace DCL.ECSComponents {
       if (triggeredEntityRotation_ != null) hash ^= TriggeredEntityRotation.GetHashCode();
       if (EventType != global::DCL.ECSComponents.TriggerAreaEventType.TaetEnter) hash ^= EventType.GetHashCode();
       if (Timestamp != 0) hash ^= Timestamp.GetHashCode();
+      if (trigger_ != null) hash ^= Trigger.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -256,6 +272,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(40);
         output.WriteUInt32(Timestamp);
       }
+      if (trigger_ != null) {
+        output.WriteRawTag(50);
+        output.WriteMessage(Trigger);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -286,6 +306,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(40);
         output.WriteUInt32(Timestamp);
       }
+      if (trigger_ != null) {
+        output.WriteRawTag(50);
+        output.WriteMessage(Trigger);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -310,6 +334,9 @@ namespace DCL.ECSComponents {
       }
       if (Timestamp != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Timestamp);
+      }
+      if (trigger_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Trigger);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -343,6 +370,12 @@ namespace DCL.ECSComponents {
       }
       if (other.Timestamp != 0) {
         Timestamp = other.Timestamp;
+      }
+      if (other.trigger_ != null) {
+        if (trigger_ == null) {
+          Trigger = new global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger();
+        }
+        Trigger.MergeFrom(other.Trigger);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -385,6 +418,13 @@ namespace DCL.ECSComponents {
             Timestamp = input.ReadUInt32();
             break;
           }
+          case 50: {
+            if (trigger_ == null) {
+              Trigger = new global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger();
+            }
+            input.ReadMessage(Trigger);
+            break;
+          }
         }
       }
     #endif
@@ -424,6 +464,13 @@ namespace DCL.ECSComponents {
           }
           case 40: {
             Timestamp = input.ReadUInt32();
+            break;
+          }
+          case 50: {
+            if (trigger_ == null) {
+              Trigger = new global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger();
+            }
+            input.ReadMessage(Trigger);
             break;
           }
         }
