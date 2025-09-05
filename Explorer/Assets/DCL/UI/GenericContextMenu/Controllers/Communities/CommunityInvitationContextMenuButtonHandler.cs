@@ -28,6 +28,7 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
         private const int MAXIMUM_HEIGHT_OF_SUBMENU = 600;
         private const int MAXIMUM_WIDTH_OF_SUBMENU = 300;
         private const float SUBMENU_ANCHOR_PADDING = 20;
+        private static readonly RectOffset SUBMENU_VERTICAL_PADDINGS = new RectOffset(8, 8, 8, 12);
 
         private readonly RectOffset scrollViewPaddings = new ();
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -55,15 +56,17 @@ namespace DCL.UI.GenericContextMenu.Controllers.Communities
         /// when the user hovers the submenu button.
         /// </summary>
         /// <param name="contextMenu">Any context menu to which to add the button.</param>
+        /// <param name="offsetFromAnchor">The offset to apply to the submenu panel from the parent context menu's anchor.</param>
         /// <param name="buttonText">The text to show in the new button.</param>
         /// <param name="buttonIcon">The icon to show next to the new button.</param>
-        public void AddSubmenuControlToContextMenu(GenericContextMenuParameter.GenericContextMenu contextMenu, string buttonText, Sprite buttonIcon)
+        public void AddSubmenuControlToContextMenu(GenericContextMenuParameter.GenericContextMenu contextMenu, Vector2 offsetFromAnchor, string buttonText, Sprite buttonIcon)
         {
             contextMenu.AddControl(new SubMenuContextMenuButtonSettings(buttonText,
                                                                         buttonIcon,
                                                                         new GenericContextMenuParameter.GenericContextMenu(MAXIMUM_WIDTH_OF_SUBMENU,
                                                                                          elementsSpacing: contextMenu.elementsSpacing,
-                                                                                         offsetFromTarget: new Vector2(0, contextMenu.offsetFromTarget.y)),
+                                                                                         offsetFromTarget: offsetFromAnchor,
+                                                                                         verticalLayoutPadding: SUBMENU_VERTICAL_PADDINGS),
                                                                         anchorPadding: SUBMENU_ANCHOR_PADDING,
                                                                         asyncControlSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync,
                                                                         asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync));

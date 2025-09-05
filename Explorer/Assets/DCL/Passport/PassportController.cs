@@ -74,6 +74,8 @@ namespace DCL.Passport
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
 
+        private static readonly Vector2 CONTEXT_MENU_SUBMENU_OFFSET = new Vector2(0.0f, -26.0f);
+
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
@@ -389,7 +391,7 @@ namespace DCL.Passport
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
-                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, viewInstance.InviteToCommunityText, viewInstance.InviteToCommunitySprite);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, CONTEXT_MENU_SUBMENU_OFFSET, viewInstance.InviteToCommunityText, viewInstance.InviteToCommunitySprite);
             }
         }
 
