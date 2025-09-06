@@ -249,8 +249,9 @@ namespace DCL.Chat.ChatMessages
 
                 item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
+                itemScript.Reset();
                 itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
-
+                
                 itemScript.OnTranslateRequested -= HandleTranslateRequest;
                 itemScript.OnRevertRequested -= HandleRevertRequest;
                 itemScript.OnTranslateRequested += HandleTranslateRequest;

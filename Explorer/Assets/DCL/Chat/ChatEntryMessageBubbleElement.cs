@@ -64,6 +64,11 @@ namespace DCL.Chat
             messageOptionsButton?.gameObject.SetActive(false);
         }
 
+        public void Reset()
+        {
+            messageOptionsButton?.gameObject.SetActive(false);
+        }
+        
         public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
         {
             usernameElement.SetUsername(originalData.SenderValidatedName, originalData.SenderWalletId);

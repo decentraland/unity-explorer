@@ -190,6 +190,13 @@ namespace DCL.Chat
             UpdateTranslationViewVisibility();
         }
 
+
+        public void Reset()
+        {
+            if (!isPointerInside)
+                messageBubbleElement.Reset();
+        }
+        
         private void UpdateTranslationViewVisibility()
         {
             if (currentViewModel == null)
