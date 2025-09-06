@@ -14,6 +14,7 @@ using DCL.Chat.EventBus;
 using DCL.Clipboard;
 using DCL.Translation.Commands;
 using DCL.Translation.Service;
+using DCL.Translation.Service.Memory;
 using DCL.Translation.Settings;
 using DCL.Web3.Identities;
 using Utility;
@@ -70,6 +71,7 @@ namespace DCL.Chat.ChatCommands
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             ClipboardManager clipboardManager,
             ITranslationService translationService,
+            ITranslationMemory translationMemory,
             ITranslationSettings translationSettings)
         {
             RestartChatServices = new RestartChatServicesCommand(
@@ -99,7 +101,9 @@ namespace DCL.Chat.ChatCommands
                 nearbyUserStateService,
                 chatMemberListService);
 
-            CreateMessageViewModel = new CreateMessageViewModelCommand(profileRepositoryWrapper, chatConfig);
+            CreateMessageViewModel = new CreateMessageViewModelCommand(profileRepositoryWrapper,
+                chatConfig,
+                translationMemory);
 
             SelectChannel = new SelectChannelCommand(eventBus,
                 chatEventBus,

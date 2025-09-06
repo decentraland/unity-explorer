@@ -293,6 +293,7 @@ namespace DCL.PluginSystem.Global
                 getParticipantProfilesCommand,
                 clipboardManager,
                 translationService,
+                translationMemory,
                 translationSettings);
 
             pluginScope.Add(commandRegistry);
