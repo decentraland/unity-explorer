@@ -13,7 +13,8 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             MainUIView mainUIView,
             bool isFriendsEnabled,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            bool isLocalSceneDevelopment)
         {
             this.mvcManager = mvcManager;
 
@@ -25,7 +26,8 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 isFriendsEnabled,
-                sharedSpaceManager
+                sharedSpaceManager,
+                isLocalSceneDevelopment
             );
 
             mvcManager.RegisterController(mainUIController);
