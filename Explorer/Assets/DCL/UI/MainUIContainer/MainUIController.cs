@@ -2,6 +2,7 @@
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
+using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
 using DG.Tweening;
@@ -54,6 +55,7 @@ namespace DCL.UI.MainUI
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
+            mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)
             {
