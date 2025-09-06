@@ -60,6 +60,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnContinueClicked()
         {
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, viewInstance.DontShowAgainToggle.isOn, true);
             analytics.Track(AnalyticsEvents.UI.SKIP_MINIMUM_REQUIREMENTS_SCREEN);
             HoldingTask?.TrySetResult();
         }
