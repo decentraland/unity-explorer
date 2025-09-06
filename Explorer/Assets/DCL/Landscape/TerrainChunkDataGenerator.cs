@@ -18,6 +18,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace DCL.Landscape
 {
+    [Obsolete]
     public class TerrainChunkDataGenerator
     {
         private const int UNITY_MAX_COVERAGE_VALUE = 255;

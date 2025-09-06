@@ -40,10 +40,11 @@ namespace Utility
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
             new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
 
-        public static Vector3 WithTerrainOffset(this Vector3 position)
+        // TODO raycasting for worlds,
+        public static Vector3 WithTerrainOffset(this Vector3 position, float terrainHeight)
         {
             const float TERRAIN_HEIGHT_ADAPTATION_OFFSET = 2.0f;
-            position.y = GetNearestSurfaceHeight(position) + TERRAIN_HEIGHT_ADAPTATION_OFFSET;
+            position.y = terrainHeight + TERRAIN_HEIGHT_ADAPTATION_OFFSET;
 
             return position;
         }
@@ -57,9 +58,6 @@ namespace Utility
             const float EPSILON = 0.0001f;
             return position + new Vector3(EPSILON, 0, EPSILON);
         }
-
-        private static float GetNearestSurfaceHeight(Vector3 position) =>
-            Physics.Raycast(position + (Vector3.up * 100), Vector3.down, out RaycastHit hit) ? hit.point.y : position.y;
 
         /// <summary>
         ///     Creates scene geometry from multiple occupied parcels

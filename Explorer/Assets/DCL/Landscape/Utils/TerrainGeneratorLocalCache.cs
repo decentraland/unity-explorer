@@ -13,6 +13,7 @@ using UnityEngine.Scripting;
 namespace DCL.Landscape.Utils
 {
     [Serializable]
+    [Obsolete]
     public struct TreeInstanceDTO
     {
         public float3 position;
@@ -43,6 +44,7 @@ namespace DCL.Landscape.Utils
     }
 
     [Serializable]
+    [Obsolete]
     public class TerrainLocalCache
     {
         private bool isValid;
@@ -207,6 +209,7 @@ namespace DCL.Landscape.Utils
     }
 
     [Preserve]
+    [Obsolete]
     public class TerrainGeneratorLocalCache
     {
         private TerrainLocalCache localCache;

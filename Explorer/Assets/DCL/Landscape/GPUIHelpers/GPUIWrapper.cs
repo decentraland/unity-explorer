@@ -9,6 +9,7 @@ using System;
 
 namespace DCL.Landscape
 {
+    [Obsolete]
     public interface IGPUIWrapper
     {
         void InjectDebugSystem(ref ArchSystemsWorldBuilder<World> worldBuilder, IDebugContainerBuilder debugBuilder);

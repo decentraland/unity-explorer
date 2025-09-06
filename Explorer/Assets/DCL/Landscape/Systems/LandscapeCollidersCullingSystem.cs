@@ -9,11 +9,13 @@ using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
+using System;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Landscape.Systems
 {
+    [Obsolete]
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     [UpdateBefore(typeof(TeleportPositionCalculationSystem))]
     [LogCategory(ReportCategory.LANDSCAPE)]

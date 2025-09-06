@@ -2,14 +2,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
-using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.Landscape.Utils;
 using DCL.MapRenderer.ComponentsFactory;
-using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.WebRequests;
 using ECS;
@@ -18,7 +16,6 @@ using ECS.SceneLifeCycle;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine;
 using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
@@ -36,7 +33,6 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableLandscape;
         private readonly bool isZone;
         private readonly LandscapeParcelService parcelService;
-        private readonly IScenesCache scenesCache;
 
         private RealmPartitionSettingsAsset realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
@@ -45,8 +41,7 @@ namespace DCL.PluginSystem.Global
         private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
 
-        private IGPUIWrapper gpuiWrapper;
-        private readonly bool isGPUIEnabledFF;
+        // private IGPUIWrapper gpuiWrapper;
 
         public LandscapePlugin(IRealmData realmData,
             ILoadingStatus loadingStatus,
@@ -58,23 +53,21 @@ namespace DCL.PluginSystem.Global
             MapRendererTextureContainer textureContainer,
             IWebRequestController webRequestController,
             bool enableLandscape,
-            bool isZone,
-            bool isGpuiEnabledFf)
+            bool isZone)
         {
             this.realmData = realmData;
             this.loadingStatus = loadingStatus;
-            this.scenesCache = sceneCache;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
             this.enableLandscape = enableLandscape;
-            isGPUIEnabledFF = isGpuiEnabledFf;
             this.isZone = isZone;
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
 
             parcelService = new LandscapeParcelService(webRequestController, isZone);
 
+            // gpuiWrapper = new GPUIWrapper();
         }
 
         public void Dispose()
@@ -99,7 +92,6 @@ namespace DCL.PluginSystem.Global
             realmPartitionSettings = settings.realmPartitionSettings;
 
             FetchParcelResult fetchParcelResult = await parcelService.LoadManifestAsync(ct);
-            string parcelChecksum = string.Empty;
 
             if (!fetchParcelResult.Succeeded)
             {
@@ -110,40 +102,14 @@ namespace DCL.PluginSystem.Global
             {
                 emptyParcels = fetchParcelResult.Manifest.GetEmptyParcels();
                 ownedParcels = fetchParcelResult.Manifest.GetOwnedParcels();
-                parcelChecksum = fetchParcelResult.Checksum;
             }
 
-            CheckGPUIFF();
-            gpuiWrapper.SetupLandscapeData(landscapeData.Value);
-            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
-                parcelChecksum, isZone, gpuiWrapper, gpuiWrapper.GetDetailSetter(), landscapeData.Value.TerrainHeight);
+            // gpuiWrapper.SetupLandscapeData(landscapeData.Value);
+
+            terrainGenerator.Initialize(landscapeData.Value.terrainData, landscapeData.Value.TreesProfile,
+                ref emptyParcels, ref ownedParcels);
 
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, new CPUTerrainDetailSetter());
-        }
-
-        private void CheckGPUIFF()
-        {
-#if GPUI_PRO_PRESENT
-            //HACK to be removed
-            //This if should go when we decide to keep GPUI enabled or not.
-            //As of now, if we have to turn it off because of an emergency situation, we need to regenerate the cache.
-            //GPUI cache and regular terrain cache are not compatible
-            //Also, when decision is taken, make `forceCacheRegen` private again
-            int storedGPUIValue = DCLPlayerPrefs.GetInt(DCLPrefKeys.GPUI_ENABLED);
-            bool wasEnabled = storedGPUIValue == 1;
-
-            if (isGPUIEnabledFF != wasEnabled)
-                terrainGenerator.forceCacheRegen = true;
-
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
-
-            if (isGPUIEnabledFF)
-                gpuiWrapper = new GPUIWrapper();
-            else
-                gpuiWrapper = new MockGPUIWrapper();
-#else
-            gpuiWrapper = new MockGPUIWrapper();
-#endif
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -153,12 +119,13 @@ namespace DCL.PluginSystem.Global
             if (!enableLandscape) return;
 
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings, landscapeData.Value);
-            LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+            //LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
+            //LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
             RenderGroundSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+            CollideTerrainSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
 
-            gpuiWrapper.InjectDebugSystem(ref builder, debugContainerBuilder);
+            // gpuiWrapper.InjectDebugSystem(ref builder, debugContainerBuilder);
         }
     }
 }

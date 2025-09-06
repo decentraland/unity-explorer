@@ -51,10 +51,7 @@ struct Varyings
 #ifdef USE_APV_PROBE_OCCLUSION
     float4 probeOcclusion : TEXCOORD9;
 #endif
-
-    float4 heightDerivatives :TEXCOORD10;
-    float occupancy : TEXCOORD11;
-
+    
     float4 positionCS                  : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -135,40 +132,193 @@ void InitializeBakedGIData(Varyings input, inout InputData inputData)
 #endif
 }
 
-void CalculateNormalFromHeightmap(float2 uv, float fOccupancy, out float3 normalWS, out float3 tangentWS, out float3 bitangentWS)
+void CalculateNormalFromHeightmap(float2 uv, out float3 normalWS, out float3 tangentWS, out float3 bitangentWS)
 {
-    float2 _Heightmap_TexelSize = float2(1.0f / 8192.0f, 1.0f / 8192.0f);
+    float _Heightmap_TexelSize = 1.0f / 8192.0f;
+    
+    // Sampling Grid
+    // 0 | 1 | 2
+    // 3 | 4 | 5
+    // 6 | 7 | 8
+    
+    float2 offset0 = float2(-1.0f, -1.0f);
+    float2 offset1 = float2(0.0f, -1.0f);
+    float2 offset2 = float2(1.0f, -1.0f);
+    float2 offset3 = float2(-1.0f, 0.0f);
+    float2 offset4 = float2(0.0f, 0.0f);
+    float2 offset5 = float2(1.0f, 0.0f);
+    float2 offset6 = float2(-1.0f, 1.0f);
+    float2 offset7 = float2(0.0f, 1.0f);
+    float2 offset8 = float2(1.0f, 1.0f);
 
     // Sample the height at neighboring pixels
-    float heightL = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, uv + float2(-_Heightmap_TexelSize.x, 0), 0).r; // Left
-    float heightR = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, uv + float2(_Heightmap_TexelSize.x, 0), 0).r;  // Right
-    float heightD = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, uv + float2(0, -_Heightmap_TexelSize.y), 0).r; // Down
-    float heightU = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, uv + float2(0, _Heightmap_TexelSize.y), 0).r;  // Up
+    float height0 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset0 * _Heightmap_TexelSize), 0).r;
+    float height1 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset1 * _Heightmap_TexelSize), 0).r;
+    float height2 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset2 * _Heightmap_TexelSize), 0).r;
+    float height3 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset3 * _Heightmap_TexelSize), 0).r;
+    float height4 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset4 * _Heightmap_TexelSize), 0).r;
+    float height5 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset5 * _Heightmap_TexelSize), 0).r;
+    float height6 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset6 * _Heightmap_TexelSize), 0).r;
+    float height7 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset7 * _Heightmap_TexelSize), 0).r;
+    float height8 = SAMPLE_TEXTURE2D_LOD(_HeightMap, my_point_clamp_sampler, uv + (offset8 * _Heightmap_TexelSize), 0).r;
 
-    // Get minValue for the new distance field logic (same as in vertex function)
-    float2 rangeUV = float2(16.0 / 512.0, 16.0 / 512.0);
-    float minValue = SAMPLE_TEXTURE2D_LOD(_DistanceFieldMap, sampler_DistanceFieldMap, rangeUV, 0.0).r;
+    /// Value taken from generating HeightMap via TerrainGeneratorWithAnalysis. 
+    float min = -4.135159f; // min value of the GeoffNoise.GetHeight
+    float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
     
-    // Calculate the gradient in world space using new stepped height system
-    // fOccupancy now contains the distance field value (height2)
-    float stepSize = 10.0 / 255.0;
-    float smoothness = 6.0;
-    float transitionFactor = saturate((minValue - fOccupancy) / (stepSize * smoothness));
+    height0 = height0 * range + min;
+    height1 = height1 * range + min;
+    height2 = height2 * range + min;
+    height3 = height3 * range + min;
+    height4 = height4 * range + min;
+    height5 = height5 * range + min;
+    height6 = height6 * range + min;
+    height7 = height7 * range + min;
+    height8 = height8 * range + min;
     
-    // Apply the same attenuation as in vertex shader
-    float heightDiffX = (fOccupancy >= minValue) ? 0.0 : (heightR - heightL) * _terrainHeight * _DistanceFieldScale * transitionFactor;
-    float heightDiffZ = (fOccupancy >= minValue) ? 0.0 : (heightU - heightD) * _terrainHeight * _DistanceFieldScale * transitionFactor;
-    
-    float3 va = float3(2.0, heightDiffX, 0.0); // X direction
-    float3 vb = float3(0.0, heightDiffZ, 2.0); // Z direction
-    // Cross product to get the normal
-    normalWS = normalize(cross(vb, va));
+    // Sample occupancy
+    float fOccupancy0 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset0 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy1 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset1 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy2 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset2 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy3 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset3 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy4 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset4 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy5 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset5 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy6 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset6 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy7 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset7 * _Heightmap_TexelSize), 0).r;
+    float fOccupancy8 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset8 * _Heightmap_TexelSize), 0).r;
 
-    tangentWS = normalize(float3(2.0, heightDiffX, 0.0));
+    float minValue = 175.0 / 255.0;
 
-    // Calculate handedness (for normal mapping)
-    bitangentWS = cross(normalWS, tangentWS);
-    //float handedness = dot(cross(normalWS, tangentWS), vb) < 0.0 ? -1.0 : 1.0;
+    fOccupancy0 = (fOccupancy0 <= minValue) ? 0.0f : (fOccupancy0 - minValue) / (1 - minValue);
+    fOccupancy1 = (fOccupancy1 <= minValue) ? 0.0f : (fOccupancy1 - minValue) / (1 - minValue);
+    fOccupancy2 = (fOccupancy2 <= minValue) ? 0.0f : (fOccupancy2 - minValue) / (1 - minValue);
+    fOccupancy3 = (fOccupancy3 <= minValue) ? 0.0f : (fOccupancy3 - minValue) / (1 - minValue);
+    fOccupancy4 = (fOccupancy4 <= minValue) ? 0.0f : (fOccupancy4 - minValue) / (1 - minValue);
+    fOccupancy5 = (fOccupancy5 <= minValue) ? 0.0f : (fOccupancy5 - minValue) / (1 - minValue);
+    fOccupancy6 = (fOccupancy6 <= minValue) ? 0.0f : (fOccupancy6 - minValue) / (1 - minValue);
+    fOccupancy7 = (fOccupancy7 <= minValue) ? 0.0f : (fOccupancy7 - minValue) / (1 - minValue);
+    fOccupancy8 = (fOccupancy8 <= minValue) ? 0.0f : (fOccupancy8 - minValue) / (1 - minValue);
+
+    // Calculate occupied heights
+    float saturationFactor = 20;
+    float fOccupiedHeight0 = fOccupancy0 * _DistanceFieldScale + height0 * saturate( fOccupancy0 * saturationFactor);
+    float fOccupiedHeight1 = fOccupancy1 * _DistanceFieldScale + height1 * saturate( fOccupancy1 * saturationFactor);
+    float fOccupiedHeight2 = fOccupancy2 * _DistanceFieldScale + height2 * saturate( fOccupancy2 * saturationFactor);
+    float fOccupiedHeight3 = fOccupancy3 * _DistanceFieldScale + height3 * saturate( fOccupancy3 * saturationFactor);
+    float fOccupiedHeight4 = fOccupancy4 * _DistanceFieldScale + height4 * saturate( fOccupancy4 * saturationFactor);
+    float fOccupiedHeight5 = fOccupancy5 * _DistanceFieldScale + height5 * saturate( fOccupancy5 * saturationFactor);
+    float fOccupiedHeight6 = fOccupancy6 * _DistanceFieldScale + height6 * saturate( fOccupancy6 * saturationFactor);
+    float fOccupiedHeight7 = fOccupancy7 * _DistanceFieldScale + height7 * saturate( fOccupancy7 * saturationFactor);
+    float fOccupiedHeight8 = fOccupancy8 * _DistanceFieldScale + height8 * saturate( fOccupancy8 * saturationFactor);
+
+    // Define world space positions of each vertex relative to center
+    // Assuming each vertex is 1 meter apart in world space
+    float3 centerPos = float3(0.0f, fOccupiedHeight4, 0.0f);
+    
+    // Positions of the 8 surrounding vertices in Unity world space (Y up, Z forward, X right)
+    float3 pos0 = float3(-1.0f, fOccupiedHeight0, -1.0f); // Top-left (back-left)
+    float3 pos1 = float3( 0.0f, fOccupiedHeight1, -1.0f); // Top-center (back-center)
+    float3 pos2 = float3( 1.0f, fOccupiedHeight2, -1.0f); // Top-right (back-right)
+    float3 pos3 = float3(-1.0f, fOccupiedHeight3,  0.0f); // Middle-left
+    float3 pos5 = float3( 1.0f, fOccupiedHeight5,  0.0f); // Middle-right
+    float3 pos6 = float3(-1.0f, fOccupiedHeight6,  1.0f); // Bottom-left (forward-left)
+    float3 pos7 = float3( 0.0f, fOccupiedHeight7,  1.0f); // Bottom-center (forward-center)
+    float3 pos8 = float3( 1.0f, fOccupiedHeight8,  1.0f); // Bottom-right (forward-right)
+
+    // Calculate vectors from each surrounding vertex TO the center vertex
+    float3 vec0 = centerPos - pos0;
+    float3 vec1 = centerPos - pos1;
+    float3 vec2 = centerPos - pos2;
+    float3 vec3 = centerPos - pos3;
+    float3 vec5 = centerPos - pos5;
+    float3 vec6 = centerPos - pos6;
+    float3 vec7 = centerPos - pos7;
+    float3 vec8 = centerPos - pos8;
+
+    // For each pair of adjacent vectors, calculate the normal using cross product
+    // We'll calculate normals for triangular faces formed by center + two adjacent surrounding points
+
+    // Check for flat terrain (all heights very similar)
+    float heightVariance = 0.0f;
+    float avgHeight = (fOccupiedHeight0 + fOccupiedHeight1 + fOccupiedHeight2 + fOccupiedHeight3 + 
+                      fOccupiedHeight4 + fOccupiedHeight5 + fOccupiedHeight6 + fOccupiedHeight7 + fOccupiedHeight8) / 9.0f;
+
+    // Calculate variance to detect flat areas
+    heightVariance += abs(fOccupiedHeight0 - avgHeight);
+    heightVariance += abs(fOccupiedHeight1 - avgHeight);
+    heightVariance += abs(fOccupiedHeight2 - avgHeight);
+    heightVariance += abs(fOccupiedHeight3 - avgHeight);
+    heightVariance += abs(fOccupiedHeight4 - avgHeight);
+    heightVariance += abs(fOccupiedHeight5 - avgHeight);
+    heightVariance += abs(fOccupiedHeight6 - avgHeight);
+    heightVariance += abs(fOccupiedHeight7 - avgHeight);
+    heightVariance += abs(fOccupiedHeight8 - avgHeight);
+    heightVariance /= 9.0f;
+    
+    // If terrain is essentially flat, return up vector
+    float flatThreshold = 0.01f; // Adjust this value based on your terrain scale
+    if (heightVariance < flatThreshold)
+    {
+        normalWS = float3(0.0f, 1.0f, 0.0f); // Up vector in Unity
+        return;
+    }
+
+    // Calculate face normals (using right-hand rule for consistent winding)
+    float3 normal0 = cross(vec1, vec0); // Face: center-1-0
+    float3 normal1 = cross(vec2, vec1); // Face: center-2-1
+    float3 normal2 = cross(vec5, vec2); // Face: center-5-2
+    float3 normal3 = cross(vec8, vec5); // Face: center-8-5
+    float3 normal4 = cross(vec7, vec8); // Face: center-7-8
+    float3 normal5 = cross(vec6, vec7); // Face: center-6-7
+    float3 normal6 = cross(vec3, vec6); // Face: center-3-6
+    float3 normal7 = cross(vec0, vec3); // Face: center-0-3
+
+    // Check if any normal is invalid (zero length) and skip it
+    float3 validNormals[8];
+    int validCount = 0;
+    
+    float3 normals[8] = {normal0, normal1, normal2, normal3, normal4, normal5, normal6, normal7};
+    
+    for (int i = 0; i < 8; i++)
+    {
+        float fLength = length(normals[i]);
+        if (fLength > 0.001f) // Only use normals that have sufficient length
+        {
+            validNormals[validCount] = normals[i] / fLength; // Normalize
+            validCount++;
+        }
+    }
+    
+    // If we don't have enough valid normals, return up vector
+    if (validCount < 3)
+    {
+        normalWS = float3(0.0f, 1.0f, 0.0f); // Up vector in Unity
+        return;
+    }
+
+    // Average only the valid normals
+    float3 averageNormal = float3(0, 0, 0);
+    for (int j = 0; j < validCount; j++)
+    {
+        averageNormal += validNormals[j];
+    }
+    averageNormal /= (float)validCount;
+    normalWS = averageNormal;
+    
+    float3 worldTangent = float3(1.0f, 0.0f, 0.0f);
+    
+    // Remove the component of worldTangent that's parallel to the normal
+    // This gives us a tangent that's perpendicular to the normal
+    tangentWS = normalize(worldTangent - dot(worldTangent, normalWS) * normalWS);
+    
+    // Calculate bitangent using cross product (ensures orthogonality)
+    bitangentWS = normalize(cross(normalWS, tangentWS));
+    
+    // // Ensure right-handed coordinate system
+    if (dot(cross(tangentWS, bitangentWS), normalWS) < 0.0f)
+    {
+        bitangentWS = -bitangentWS;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -183,8 +333,8 @@ Varyings LitPassVertexSimple(Attributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-    output.occupancy = 0.0f;
-    VertexPositionInputs vertexInput = GetVertexPositionInputs_Mountain(input.positionOS.xyz, _TerrainBounds, output.occupancy, output.heightDerivatives);
+    float occupancy = 0.0f;
+    VertexPositionInputs vertexInput = GetVertexPositionInputs_Mountain(input.positionOS.xyz, _TerrainBounds, occupancy);
     output.positionWS.xyz = vertexInput.positionWS;
 
     VertexNormalInputs normalInput;
@@ -193,8 +343,8 @@ Varyings LitPassVertexSimple(Attributes input)
     float3 normalWS;
     float3 tangentWS;
     float3 bitangentWS;
-
-    CalculateNormalFromHeightmap(heightUV, output.occupancy, normalWS, tangentWS, bitangentWS);
+    
+    CalculateNormalFromHeightmap(heightUV, normalWS, tangentWS, bitangentWS);
     normalInput.normalWS = normalWS;
     normalInput.tangentWS = tangentWS;
     normalInput.bitangentWS = bitangentWS;

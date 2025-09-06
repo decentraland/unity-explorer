@@ -9,6 +9,7 @@ namespace DCL.Landscape
     /// <summary>
     ///     Helper class to be used with GPUI. If we are using it, we want details to be applied only by the GPUIWrapper, not on the terrainData
     /// </summary>
+    [Obsolete]
     public interface ITerrainDetailSetter
     {
         UniTask ReadApplyTerrainDetailAsync(TerrainData terrainData,
@@ -18,6 +19,7 @@ namespace DCL.Landscape
     }
 
     //This method will later be setted via GPUI
+    [Obsolete]
     public class GPUTerrainDetailSetter : ITerrainDetailSetter
     {
         public UniTask ReadApplyTerrainDetailAsync(TerrainData terrainData, TerrainGeneratorLocalCache localCache, int offsetX, int offsetZ, int i) =>

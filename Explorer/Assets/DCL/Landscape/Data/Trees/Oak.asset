@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Oak
   m_EditorClassIdentifier: 
   asset: {fileID: 2187335638020092438, guid: a5880297cd94bc64697d703509a25311, type: 3}
+  <Collider>k__BackingField: {fileID: 4152372323401247351, guid: e4ba98584996f7b49a5b8b87860c59a3, type: 3}
   noiseData: {fileID: 11400000, guid: 98168fd9bb2b1684da2d788ed0532a5c, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}

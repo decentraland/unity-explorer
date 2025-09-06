@@ -16,6 +16,8 @@ namespace ECS.SceneLifeCycle.Realm
     {
         UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
 
+        float GetHeight(float x, float z);
+
         Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal);
     }
 }
