@@ -24,6 +24,7 @@ namespace DCL.UI.MainUI
 
         private readonly IMVCManager mvcManager;
         private readonly bool isFriendsEnabled;
+        private readonly bool isLocalSceneDevelopment;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private bool waitingToShowSidebar;
@@ -40,11 +41,13 @@ namespace DCL.UI.MainUI
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             bool isFriendsEnabled,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            ISharedSpaceManager sharedSpaceManager,
+            bool isLocalSceneDevelopment) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.isFriendsEnabled = isFriendsEnabled;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         protected override void OnViewInstantiated()
@@ -55,7 +58,9 @@ namespace DCL.UI.MainUI
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
-            mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
+
+            if (!isLocalSceneDevelopment)
+                mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)
             {
