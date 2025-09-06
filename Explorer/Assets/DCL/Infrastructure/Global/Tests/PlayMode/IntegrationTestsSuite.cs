@@ -27,6 +27,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.Dynamic.LaunchModes;
@@ -78,7 +79,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, 1000, 1000, false),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevtoolProtocolClient.New(false), 1000, 1000),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,

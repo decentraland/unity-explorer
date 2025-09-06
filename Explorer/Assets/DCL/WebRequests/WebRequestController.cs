@@ -1,10 +1,13 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CDPBridges;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using Sentry;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
@@ -18,14 +21,21 @@ namespace DCL.WebRequests
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRequestHub requestHub;
+        private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
         IRequestHub IWebRequestController.requestHub => requestHub;
 
-        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache web3IdentityCache, IRequestHub requestHub)
+        public WebRequestController(
+            IWebRequestsAnalyticsContainer analyticsContainer,
+            IWeb3IdentityCache web3IdentityCache,
+            IRequestHub requestHub,
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
+        )
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityCache = web3IdentityCache;
             this.requestHub = requestHub;
+            this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
@@ -53,7 +63,38 @@ namespace DCL.WebRequests
                 {
                     attemptNumber++;
 
-                    await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
+                    using var pooledHeaders = envelope.Headers(out Dictionary<string, string> headers);
+                    string method = request.UnityWebRequest.method!;
+                    NotifyWebRequestScope? notifyScope = chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners
+                        ? chromeDevtoolProtocolClient.NotifyWebRequestStart(envelope.CommonArguments.URL.Value, method, headers)
+                        : null;
+
+                    try
+                    {
+                        await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
+
+                        if (notifyScope.HasValue)
+                        {
+                            int statusCode = (int)request.UnityWebRequest.responseCode;
+
+                            // TODO avoid allocation?
+                            Dictionary<string, string>? responseHeaders = request.UnityWebRequest.GetResponseHeaders();
+
+                            string mimeType = request.UnityWebRequest.GetRequestHeader("Content-Type") ?? "application/octet-stream";
+                            int encodedDataLength = (int)request.UnityWebRequest.downloadedBytes;
+                            notifyScope.Value.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        notifyScope?.NotifyFailed("Cancelled", true);
+                        throw;
+                    }
+                    catch
+                    {
+                        notifyScope?.NotifyFailed(request.UnityWebRequest.error!, false);
+                        throw;
+                    }
 
                     // if no exception is thrown Request is successful and the continuation op can be executed
                     return await op.ExecuteAsync(request, envelope.Ct);

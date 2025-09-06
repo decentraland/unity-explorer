@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using Arch.Core;
 using CRDT;
 using DCL.AssetsProvision;
@@ -71,3 +73,5 @@ namespace DCL.SDKComponents.NFTShape.Demo
         }
     }
 }
+
+#endif

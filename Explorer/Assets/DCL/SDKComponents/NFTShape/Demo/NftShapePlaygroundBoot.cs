@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DemoWorlds;
@@ -29,8 +31,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
 
         private async UniTask LaunchAsync()
         {
-            partitionComponentPool = new ComponentPool.WithDefaultCtor<PartitionComponent>(
-                component => component.Clear());
+            partitionComponentPool = new ComponentPool.WithDefaultCtor<PartitionComponent>(component => component.Clear());
 
             var framesPrefabs = new AssetProvisionerFramePrefabs(new AddressablesProvisioner());
 
@@ -52,3 +53,5 @@ namespace DCL.SDKComponents.NFTShape.Demo
         }
     }
 }
+
+#endif

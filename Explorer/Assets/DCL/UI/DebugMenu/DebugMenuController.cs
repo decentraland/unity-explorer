@@ -1,6 +1,8 @@
+using CDPBridges;
 using DCL.Input;
 using DCL.DebugUtilities;
 using DCL.UI.DebugMenu.LogHistory;
+using DCL.WebRequests.ChromeDevtool;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -24,6 +26,7 @@ namespace DCL.UI.DebugMenu
         private Button consoleButton;
         private Button debugPanelButton;
         private Button connectionButton;
+        private Button chromeDevtoolsProtocolButton;
 
         private bool shouldRefreshConsole;
         private bool shouldHideDebugPanelOwnToggle;
@@ -67,7 +70,13 @@ namespace DCL.UI.DebugMenu
                 }
         }
 
-        public void SetDebugContainerBuilder(IDebugContainerBuilder builder)
+        public void Initialize(IInputBlock newInputBlock, IDebugContainerBuilder newBuilder)
+        {
+            SetInputBlock(newInputBlock);
+            SetDebugContainerBuilder(newBuilder);
+        }
+
+        private void SetDebugContainerBuilder(IDebugContainerBuilder builder)
         {
             debugContainerBuilder = builder;
 
@@ -81,7 +90,7 @@ namespace DCL.UI.DebugMenu
             shouldHideDebugPanelOwnToggle = true;
         }
 
-        public void SetInputBlock(IInputBlock block)
+        private void SetInputBlock(IInputBlock block)
         {
             this.inputBlock = block;
             consolePanelView.SetInputBlock(block);

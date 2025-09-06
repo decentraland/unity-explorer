@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -38,8 +40,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
         {
             var world = World.Create();
 
-            partitionComponentPool = new ComponentPool.WithDefaultCtor<PartitionComponent>(
-                component => component.Clear());
+            partitionComponentPool = new ComponentPool.WithDefaultCtor<PartitionComponent>(component => component.Clear());
 
             var framesPrefabs = new AssetProvisionerFramePrefabs(new AddressablesProvisioner());
             var framesPool = new FramesPool(framesPrefabs);
@@ -70,3 +71,5 @@ namespace DCL.SDKComponents.NFTShape.Demo
             Enum.GetNames(typeof(NftFrameType)).Select(Enum.Parse<NftFrameType>);
     }
 }
+
+#endif

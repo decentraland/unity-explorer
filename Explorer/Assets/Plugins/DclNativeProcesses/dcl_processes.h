@@ -21,4 +21,6 @@ EXPORT char* get_process_name(pid_t pid);
 
 EXPORT void free_name(char* name);
 
+EXPORT int start_process(char* filename, char** args, int argc);
+
 #endif

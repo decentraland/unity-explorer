@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
+using UnityEngine.Pool;
 
 namespace DCL.WebRequests
 {
@@ -124,6 +125,9 @@ namespace DCL.WebRequests
             SignRequest(unityWebRequest, web3IdentityCache);
             SetHeaders(unityWebRequest);
         }
+
+        public PooledObject<Dictionary<string, string>> Headers(out Dictionary<string, string> headers) =>
+            headersInfo.AsPooledDictionary(out headers);
 
         private void AssignDownloadHandler(UnityWebRequest unityWebRequest)
         {

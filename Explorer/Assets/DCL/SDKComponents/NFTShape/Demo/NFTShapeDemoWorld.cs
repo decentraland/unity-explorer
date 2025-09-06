@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using Arch.Core;
 using DCL.Browser.DecentralandUrls;
 using DCL.DemoWorlds;
@@ -81,3 +83,5 @@ namespace DCL.SDKComponents.NFTShape.Demo
             origin.Update();
     }
 }
+
+#endif

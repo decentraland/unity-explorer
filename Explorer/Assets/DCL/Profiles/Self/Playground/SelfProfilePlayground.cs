@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -71,3 +73,5 @@ namespace DCL.Profiles.Self.Playground
         }
     }
 }
+
+#endif

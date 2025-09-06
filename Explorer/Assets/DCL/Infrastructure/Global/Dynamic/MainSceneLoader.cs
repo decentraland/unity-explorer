@@ -48,6 +48,7 @@ using System.Linq;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.UI;
+using DCL.WebRequests.ChromeDevtool;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -172,7 +173,8 @@ namespace Global.Dynamic
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
+            var cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START));
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);

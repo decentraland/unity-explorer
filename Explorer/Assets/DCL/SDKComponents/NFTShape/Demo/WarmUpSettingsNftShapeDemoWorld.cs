@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using Arch.Core;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
@@ -84,3 +86,5 @@ namespace DCL.SDKComponents.NFTShape.Demo
         }
     }
 }
+
+#endif

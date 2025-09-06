@@ -1,9 +1,11 @@
 ﻿using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.WebRequests.CustomDownloadHandlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine.Pool;
 
 namespace DCL.WebRequests
 {
@@ -83,6 +85,17 @@ namespace DCL.WebRequests
 
         public readonly Dictionary<string, string> AsMutableDictionary() =>
             values?.ToDictionary(e => e.Name, e => e.Value) ?? new Dictionary<string, string>();
+
+        public readonly PooledObject<Dictionary<string, string>> AsPooledDictionary(out Dictionary<string, string> headers)
+        {
+            PooledObject<Dictionary<string, string>> pooledObject = ThreadSafeDictionaryPool<string, string>.SHARED.Get(out headers);
+
+            if (values != null)
+                foreach (WebRequestHeader webRequestHeader in values)
+                    headers.Add(webRequestHeader.Name, webRequestHeader.Value);
+
+            return pooledObject;
+        }
 
         public readonly override string ToString()
         {
