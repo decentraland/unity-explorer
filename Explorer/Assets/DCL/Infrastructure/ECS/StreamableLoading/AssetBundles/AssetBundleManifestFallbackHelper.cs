@@ -20,8 +20,8 @@ namespace ECS.StreamableLoading.AssetBundles
             if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty())
             {
                 //Needed to use the Time.realtimeSinceStartup on the intention creation
-                //if (StreamableLoadingDebug.ENABLED)
-                await UniTask.SwitchToMainThread();
+                if (StreamableLoadingDebug.ENABLED)
+                    await UniTask.SwitchToMainThread();
 
                 ReportHub.Log(ReportCategory.ALWAYS, $"JUANI STARTING ASSET BUNDLE MANIFEST REQUEST {entityDefinition.id}");
 
