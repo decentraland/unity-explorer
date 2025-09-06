@@ -208,6 +208,7 @@ namespace DCL.Chat
             bool isVisible =
                 currentViewModel.TranslationState == TranslationState.Success ||
                 currentViewModel.TranslationState == TranslationState.Pending ||
+                currentViewModel.TranslationState == TranslationState.Failed ||
                 (isPointerInside && (currentViewModel.TranslationState == TranslationState.Original || currentViewModel.TranslationState == TranslationState.Failed));
 
             messageBubbleElement.SetTranslationViewVisibility(isVisible);
