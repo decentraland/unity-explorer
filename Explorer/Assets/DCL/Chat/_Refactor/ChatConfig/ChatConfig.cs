@@ -101,5 +101,16 @@ namespace DCL.Chat.ChatConfig
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio { get; private set; }
+
+        [field: Header("Chat Context Menu")]
+        [field: SerializeField] public Vector2 ContextMenuOffset { get; private set; } = new (-220, 100);
+
+        [field: SerializeField] public int ContextMenuWidth { get; private set; } = 218;
+        [field: SerializeField] public int ElementsSpacing { get; private set; } = 5;
+        [field: SerializeField] public RectOffset VerticalPadding { get; private set; } = null!;
+        public string ChatContextMenuCopyText = "Copy";
+        public string ChatContextMenuSeeOriginalText = "See Original";
+        public string ChatContextMenuTranslateText = "Translate";
+        
     }
 }

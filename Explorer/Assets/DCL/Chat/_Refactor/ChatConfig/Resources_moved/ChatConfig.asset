@@ -44,3 +44,11 @@ MonoBehaviour:
   <TranslationTimeoutSeconds>k__BackingField: 12
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
+  <ContextMenuOffset>k__BackingField: {x: -220, y: 100}
+  <ContextMenuWidth>k__BackingField: 218
+  <ElementsSpacing>k__BackingField: 5
+  <VerticalPadding>k__BackingField:
+    m_Left: 10
+    m_Right: 10
+    m_Top: 8
+    m_Bottom: 16

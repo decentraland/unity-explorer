@@ -264,15 +264,15 @@ namespace DCL.Chat.ChatMessages
             if (viewModel == null) return;
 
             var contextMenu = new GenericContextMenu(
-                chatConfig.chatContextMenuSettings.ContextMenuWidth,
-                chatConfig.chatContextMenuSettings.OffsetFromTarget,
-                chatConfig.chatContextMenuSettings.VerticalPadding,
-                chatConfig.chatContextMenuSettings.ElementsSpacing,
+                chatConfig.ContextMenuWidth,
+                chatConfig.ContextMenuOffset,
+                chatConfig.VerticalPadding,
+                chatConfig.ElementsSpacing,
                 anchorPoint: ContextMenuOpenDirection.TOP_LEFT);
 
             string textToCopy = viewModel.IsTranslated ? viewModel.TranslatedText : viewModel.Message.Message;
             contextMenu.AddControl(new ButtonContextMenuControlSettings(
-                "Copy",
+                chatConfig.ChatContextMenuCopyText,
                 chatConfig.CopyChatMessageContextMenuIcon,
                 () => copyMessageCommand.Execute(this, textToCopy)
             ));
@@ -280,7 +280,7 @@ namespace DCL.Chat.ChatMessages
             if (viewModel.IsTranslated)
             {
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(
-                    "See Original",
+                    chatConfig.ChatContextMenuSeeOriginalText,
                     chatConfig.SeeOriginalChatMessageContextMenuIcon,
                     () => revertToOriginalCommand.Execute(viewModel.Message.MessageId)
                 ));
@@ -288,7 +288,7 @@ namespace DCL.Chat.ChatMessages
             else
             {
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(
-                    "Translate",
+                    chatConfig.ChatContextMenuTranslateText,
                     chatConfig.TranslateChatMessageContextMenuIcon,
                     () => translateMessageCommand.Execute(viewModel.Message.MessageId,
                         viewModel.Message.Message)
