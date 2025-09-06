@@ -225,7 +225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding: {x: 0, y: 0, z: 0, w: 0}
-  m_Softness: {x: 0, y: 30}
+  m_Softness: {x: 0, y: 10}
 --- !u!1 &3896279397226279575
 GameObject:
   m_ObjectHideFlags: 0
@@ -351,7 +351,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
+    m_Left: 10
     m_Right: 0
     m_Top: 0
     m_Bottom: 0

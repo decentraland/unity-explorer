@@ -2,6 +2,8 @@
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Prefs;

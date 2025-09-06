@@ -31,7 +31,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         public PersistentFriendPanelOpenerController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IPassportBridge passportBridge,
             IFriendsService friendsService,
             ISharedSpaceManager sharedSpaceManager,
