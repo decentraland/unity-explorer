@@ -1,16 +1,20 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
+using SceneRunner.Scene;
 using System;
 using System.IO;
 using System.Runtime.Serialization;
@@ -19,6 +23,7 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
+using Utility;
 using UnityEngine.Scripting;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
@@ -37,13 +42,18 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
 
         private readonly ProfilerMarker deserializationSampler;
+        private readonly URLBuilder urlBuilder = new ();
+        private readonly URLDomain assetBundleURL;
+
+
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
-            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
+            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, URLDomain assetBundleURL)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.assetBundleURL = assetBundleURL;
 
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
@@ -98,6 +108,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
                     serializer.Populate(jsonReader, intention.TargetCollection);
                 }
+            }
+
+            foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
+            {
+                //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
+                //Could be removed once the asset bundle manifest registry has been battle tested
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(

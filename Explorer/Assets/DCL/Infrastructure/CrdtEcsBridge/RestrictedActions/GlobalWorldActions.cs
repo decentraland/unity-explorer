@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -91,11 +92,12 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 await TriggerSceneEmoteFromRealmAsync(
                     sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
-                    sceneData.AssetBundleManifest, hash, loop, ct);
+                    sceneData.SceneEntityDefinition.assetBundleManifestVersion,
+                    hash, loop, ct);
             }
         }
 
-        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
+        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -103,7 +105,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!avatarShape.IsVisible) return;
 
             var promise = SceneEmotePromise.Create(world,
-                new GetSceneEmoteFromRealmIntention(sceneId, abManifest, emoteHash, loop, avatarShape.BodyShape),
+                new GetSceneEmoteFromRealmIntention(sceneId, sceneAssetBundleManifestVersion, emoteHash, loop, avatarShape.BodyShape),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
