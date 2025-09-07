@@ -2,16 +2,9 @@
 {
     public enum LanguageCode
     {
-        EN,
+        DontTranslate,
         ES,
-        PT,
-        ZH,
-        JA,
-        KO,
-        FR,
-        DE,
-        AutoDetect,
-        DontTranslate
+        DE
     }
 
     public enum TranslationState

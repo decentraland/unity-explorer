@@ -115,6 +115,7 @@ using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.Chat.Services;
+using DCL.Translation.Settings;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -440,6 +441,7 @@ namespace Global.Dynamic
             bool includeFriends = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
             bool includeVoiceChat = includeFriends && includeUserBlocking && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT)));
+            bool includeTranslationChat = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED);
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
@@ -612,6 +614,8 @@ namespace Global.Dynamic
 
             var profileChangesBus = new ProfileChangesBus();
 
+            var translationSettings = new PlayerPrefsTranslationSettings();
+            
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
@@ -650,6 +654,8 @@ namespace Global.Dynamic
 
             var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
+            IEventBus eventBus = new EventBus(true);
+            
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -720,6 +726,7 @@ namespace Global.Dynamic
                     mvcManager,
                     menusAccessFacade,
                     chatMessagesBus,
+                    eventBus,
                     chatHistory,
                     clipboardManager,
                     entityParticipantTable,
@@ -749,9 +756,12 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatCallStatusService,
                     includeVoiceChat,
+                    includeTranslationChat,
                     realmNavigator,
-                    mainUIView.SidebarView.unreadMessagesButton.transform),
+                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    translationSettings),
                 new ExplorePanelPlugin(
+                    eventBus,
                     assetsProvisioner,
                     mvcManager,
                     mapRendererContainer,
@@ -806,6 +816,7 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     realmNftNamesProvider,
                     includeVoiceChat,
+                    includeTranslationChat,
                     galleryEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),

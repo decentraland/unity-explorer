@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.Settings
@@ -51,7 +52,9 @@ namespace DCL.Settings
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
         private readonly bool isVoiceChatEnabled;
+        private readonly bool isTranslationChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IEventBus eventBus;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
@@ -72,7 +75,9 @@ namespace DCL.Settings
             WorldVolumeMacBus worldVolumeMacBus,
             UpscalingController upscalingController,
             bool isVoiceChatEnabled,
-            IAssetsProvisioner assetsProvisioner)
+            bool isTranslationChatEnabled,
+            IAssetsProvisioner assetsProvisioner,
+            IEventBus eventBus)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -90,8 +95,9 @@ namespace DCL.Settings
             this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
             this.isVoiceChatEnabled = isVoiceChatEnabled;
+            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
-
+            this.eventBus = eventBus;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             view.GeneralSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.GENERAL, settingsMenuConfiguration.GeneralSectionConfig.SettingsGroups.Count));
@@ -190,7 +196,9 @@ namespace DCL.Settings
                             upscalingController,
                             assetsProvisioner,
                             worldVolumeMacBus,
-                            isVoiceChatEnabled));
+                            isVoiceChatEnabled,
+                            isTranslationChatEnabled,
+                            eventBus));
             }
         }
 

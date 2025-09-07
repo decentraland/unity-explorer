@@ -15,5 +15,6 @@ namespace DCL.Translation.Settings
         int MaxRetries { get; }
         bool GetAutoTranslateForConversation(string conversationId);
         void SetAutoTranslateForConversation(string conversationId, bool isEnabled);
+        bool IsTranslationFeatureActive();
     }
 }

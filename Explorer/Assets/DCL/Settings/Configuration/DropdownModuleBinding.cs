@@ -14,6 +14,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using Utility;
 
 namespace DCL.Settings.Configuration
 {
@@ -56,7 +57,9 @@ namespace DCL.Settings.Configuration
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
             WorldVolumeMacBus worldVolumeMacBus,
-            bool isVoiceChatEnabled)
+            bool isVoiceChatEnabled,
+            bool isTranslationChatEnabled,
+            IEventBus eventBus)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
@@ -74,7 +77,10 @@ namespace DCL.Settings.Configuration
                                                        DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
                                                        DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
                                                        DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance, voiceChatSettings),
-                                                       DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,chatSettingsAsset),
+                DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,
+                    chatSettingsAsset,
+                    isTranslationChatEnabled,
+                    eventBus),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
                                                    };

@@ -1,7 +1,5 @@
 ﻿using System.Text.RegularExpressions;
-using DCL.Chat.History;
 using DCL.Translation.Models;
-using DCL.Translation.Service;
 using DCL.Translation.Settings;
 
 namespace DCL.Translation.Service.Policy

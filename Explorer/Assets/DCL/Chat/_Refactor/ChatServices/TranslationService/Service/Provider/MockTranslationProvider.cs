@@ -13,7 +13,7 @@ namespace DCL.Translation.Service.Provider
 
         public UniTask<LanguageCode> DetectLanguageAsync(string text, CancellationToken ct)
         {
-            return UniTask.FromResult(LanguageCode.EN);
+            return UniTask.FromResult(LanguageCode.ES);
         }
 
         public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode source, LanguageCode target, CancellationToken ct)
@@ -26,7 +26,7 @@ namespace DCL.Translation.Service.Provider
                 throw new Exception("Mock Provider: Simulated API failure.");
 
             string translatedText = GenerateMockTranslationText(text, target);
-            var detectedSource = source == LanguageCode.AutoDetect ? LanguageCode.EN : source;
+            var detectedSource = LanguageCode.ES;
 
             return new TranslationResult(translatedText, detectedSource, false);
         }

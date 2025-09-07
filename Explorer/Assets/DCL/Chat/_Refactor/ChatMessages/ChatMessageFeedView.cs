@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using DCL.Translation.Settings;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -41,6 +42,7 @@ namespace DCL.Chat.ChatMessages
 
         public event Action<string> OnTranslateMessageRequested;
         public event Action<string> OnRevertMessageRequested;
+        private Func<bool> IsTranslationActivated;
         
         public void Dispose()
         {
@@ -62,10 +64,12 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrollToBottomButtonClicked;
 
         private Sequence? _fadeSequenceTween;
-        
-        public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels)
+
+        public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels,
+            Func<bool> IsTranslationActivated)
         {
             this.viewModels = viewModels;
+            this.IsTranslationActivated = IsTranslationActivated;
 
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked += ChatScrollToBottomToBottomClicked;
@@ -250,7 +254,8 @@ namespace DCL.Chat.ChatMessages
                 item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
                 itemScript.Reset();
-                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
+                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
+                    !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, IsTranslationActivated);
                 
                 itemScript.OnTranslateRequested -= HandleTranslateRequest;
                 itemScript.OnRevertRequested -= HandleRevertRequest;

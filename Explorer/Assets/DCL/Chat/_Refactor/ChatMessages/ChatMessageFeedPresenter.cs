@@ -16,6 +16,7 @@ using DCL.Translation.Commands;
 using DCL.Translation.Events;
 using DCL.Translation.Models;
 using DCL.Translation.Service.Memory;
+using DCL.Translation.Settings;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
@@ -34,6 +35,7 @@ namespace DCL.Chat.ChatMessages
         private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
         private readonly MarkMessagesAsReadCommand markMessagesAsReadCommand;
         private readonly ITranslationMemory translationMemory;
+        private readonly ITranslationSettings translationSettings;
         private readonly TranslateMessageCommand translateMessageCommand;
         private readonly RevertToOriginalCommand revertToOriginalCommand;
         private readonly CopyMessageCommand copyMessageCommand;
@@ -68,6 +70,7 @@ namespace DCL.Chat.ChatMessages
             CurrentChannelService currentChannelService,
             ChatContextMenuService contextMenuService,
             ITranslationMemory translationMemory,
+            ITranslationSettings translationSettings,
             GetMessageHistoryCommand getMessageHistoryCommand,
             CreateMessageViewModelCommand createMessageViewModelCommand,
             MarkMessagesAsReadCommand markMessagesAsReadCommand,
@@ -82,6 +85,7 @@ namespace DCL.Chat.ChatMessages
             this.currentChannelService = currentChannelService;
             this.contextMenuService = contextMenuService;
             this.translationMemory = translationMemory;
+            this.translationSettings = translationSettings;
             this.getMessageHistoryCommand = getMessageHistoryCommand;
             this.createMessageViewModelCommand = createMessageViewModelCommand;
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
@@ -94,7 +98,7 @@ namespace DCL.Chat.ChatMessages
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
             scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
-            view.Initialize(viewModels);
+            view.Initialize(viewModels, translationSettings.IsTranslationFeatureActive);
             view.OnTranslateMessageRequested += OnTranslateMessage;
             view.OnRevertMessageRequested += OnRevertMessage;
         }
@@ -277,22 +281,29 @@ namespace DCL.Chat.ChatMessages
                 () => copyMessageCommand.Execute(this, textToCopy)
             ));
 
-            if (viewModel.IsTranslated)
+            if (translationSettings.IsTranslationFeatureActive())
             {
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(
-                    chatConfig.ChatContextMenuSeeOriginalText,
-                    chatConfig.SeeOriginalChatMessageContextMenuIcon,
-                    () => revertToOriginalCommand.Execute(viewModel.Message.MessageId)
-                ));
+                if (viewModel.IsTranslated)
+                {
+                    contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                        chatConfig.ChatContextMenuSeeOriginalText,
+                        chatConfig.SeeOriginalChatMessageContextMenuIcon,
+                        () => revertToOriginalCommand.Execute(viewModel.Message.MessageId)
+                    ));
+                }
+                else
+                {
+                    contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                        chatConfig.ChatContextMenuTranslateText,
+                        chatConfig.TranslateChatMessageContextMenuIcon,
+                        () => translateMessageCommand.Execute(viewModel.Message.MessageId,
+                            viewModel.Message.Message)
+                    ));
+                }
             }
             else
             {
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(
-                    chatConfig.ChatContextMenuTranslateText,
-                    chatConfig.TranslateChatMessageContextMenuIcon,
-                    () => translateMessageCommand.Execute(viewModel.Message.MessageId,
-                        viewModel.Message.Message)
-                ));
+                //contextMenu.verticalLayoutPadding
             }
 
             var request = new ShowContextMenuRequest

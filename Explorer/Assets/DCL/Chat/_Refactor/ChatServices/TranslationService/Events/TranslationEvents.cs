@@ -9,6 +9,10 @@ namespace DCL.Translation.Events
             public LanguageCode NewLanguage;
         }
 
+        public struct TranslationSettingsChangedEvent
+        {
+        }
+
         public struct ConversationAutoTranslateToggled
         {
             public string ConversationId;

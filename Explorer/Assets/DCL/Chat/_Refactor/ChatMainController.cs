@@ -139,6 +139,7 @@ namespace DCL.Chat
                 currentChannelService,
                 chatContextMenuService,
                 translationMemory,
+                translationSettings,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,
                 commandRegistry.MarkMessagesAsRead,

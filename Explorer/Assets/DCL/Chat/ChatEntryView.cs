@@ -23,6 +23,7 @@ namespace DCL.Chat
 
         public ChatEntryClickedDelegate? ChatEntryClicked;
         private Action<string, ChatEntryView>? onMessageContextMenuClicked;
+        private Func<bool> IsTranslationActivated;
         public event Action<string> OnTranslateRequested;
         public event Action<string> OnRevertRequested;
         private bool isPointerInside;
@@ -108,24 +109,26 @@ namespace DCL.Chat
             else
                 return date.ToString("ddd, d MMM, yyyy", CultureInfo.InvariantCulture);
         }
-
+        
         public void SetItemData(ChatMessageViewModel viewModel,
             Action<string, ChatEntryView> onMessageContextMenuClicked,
-            ChatEntryClickedDelegate? onProfileContextMenuClicked)
+            ChatEntryClickedDelegate? onProfileContextMenuClicked,
+            Func<bool> IsTranslationActivated)
         {
             currentViewModel = viewModel;
+            this.IsTranslationActivated = IsTranslationActivated;
             chatMessage = viewModel.Message;
             usernameElement.SetUsername(chatMessage.SenderValidatedName, chatMessage.SenderWalletId);
             messageBubbleElement.SetMessageData(viewModel.DisplayText, chatMessage, viewModel.TranslationState);
 
             UpdateTranslationViewVisibility();
-            
+
             dateDividerElement.gameObject.SetActive(viewModel.ShowDateDivider);
             if (viewModel.ShowDateDivider)
                 dateDividerText.text = GetDateRepresentation(chatMessage.SentTimestamp!.Value.Date);
 
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
-            
+
             this.onMessageContextMenuClicked = onMessageContextMenuClicked;
             ChatEntryClicked = onProfileContextMenuClicked;
 
@@ -199,7 +202,7 @@ namespace DCL.Chat
         
         private void UpdateTranslationViewVisibility()
         {
-            if (currentViewModel == null)
+            if (currentViewModel == null || !IsTranslationActivated())
             {
                 messageBubbleElement.SetTranslationViewVisibility(false);
                 return;

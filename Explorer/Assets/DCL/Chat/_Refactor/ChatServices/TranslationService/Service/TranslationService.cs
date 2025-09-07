@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatConfig;
-using DCL.Chat.History;
 using DCL.Translation.Events;
 using DCL.Translation.Models;
 using DCL.Translation.Service.Cache;
@@ -40,6 +38,8 @@ namespace DCL.Translation.Service
 
         public  void ProcessIncomingMessage(string messageId, string originalText, string conversationId)
         {
+            if (!settings.IsTranslationFeatureActive()) return;
+            
             if (!policy.ShouldAutoTranslate(originalText, conversationId, settings.PreferredLanguage))
             {
                 // We don't even need to store it; the default is no translation.
@@ -63,6 +63,8 @@ namespace DCL.Translation.Service
 
         public UniTask TranslateManualAsync(string messageId, string originalText, CancellationToken ct)
         {
+            if (!settings.IsTranslationFeatureActive()) return UniTask.CompletedTask;
+            
             // The logic is now much cleaner.
             // 1. Check if a record already exists. If not, create one from the provided text.
             if (!translationMemory.TryGet(messageId, out var translation))
@@ -108,7 +110,7 @@ namespace DCL.Translation.Service
             try
             {
                 // Simplified: We now directly use the passed-in cancellation token.
-                var result = await provider.TranslateAsync(translation.OriginalBody, LanguageCode.AutoDetect, targetLang, ct);
+                var result = await provider.TranslateAsync(translation.OriginalBody, LanguageCode.ES, targetLang, ct);
 
                 // Process success
                 cache.Set(messageId, targetLang, result);

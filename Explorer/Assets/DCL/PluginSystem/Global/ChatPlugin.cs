@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatHistory chatHistory;
         private readonly ClipboardManager clipboardManager;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IEventBus eventBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
         private readonly IInputBlock inputBlock;
@@ -93,10 +94,10 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryService? chatBusListenerService;
         private CommunityUserStateService communityUserStateService;
         private readonly Transform chatViewRectTransform;
-        private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private CommandRegistry commandRegistry;
+        private readonly bool includeTranslationChat;
         private ITranslationSettings translationSettings;
         private ITranslationMemory translationMemory;
         private ITranslationService translationService;
@@ -105,6 +106,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade,
             IChatMessagesBus chatMessagesBus,
+            IEventBus eventBus,
             IChatHistory chatHistory,
             ClipboardManager clipboardManager,
             IReadOnlyEntityParticipantTable entityParticipantTable,
@@ -134,12 +136,15 @@ namespace DCL.PluginSystem.Global
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             bool isCallEnabled,
+            bool includeTranslationChat,
             IRealmNavigator realmNavigator,
-            Transform chatViewRectTransform)
+            Transform chatViewRectTransform,
+            ITranslationSettings translationSettings)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
             this.chatMessagesBus = chatMessagesBus;
+            this.eventBus = eventBus;
             this.chatHistory = chatHistory;
             this.clipboardManager = clipboardManager;
             this.entityParticipantTable = entityParticipantTable;
@@ -168,7 +173,9 @@ namespace DCL.PluginSystem.Global
             this.communitiesEventBus = communitiesEventBus;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.isCallEnabled = isCallEnabled;
+            this.includeTranslationChat = includeTranslationChat;
             this.chatViewRectTransform = chatViewRectTransform;
+            this.translationSettings = translationSettings;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -201,8 +208,7 @@ namespace DCL.PluginSystem.Global
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
-
-            translationSettings = new PlayerPrefsTranslationSettings(chatConfig);
+            
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
             var translationProvider = new MockTranslationProvider();
             var translationCache = new InMemoryTranslationCache();

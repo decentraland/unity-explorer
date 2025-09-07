@@ -42,9 +42,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
-using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
-using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -60,6 +58,7 @@ using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using Utility;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
 using UnityEngine;
@@ -73,6 +72,7 @@ namespace DCL.PluginSystem.Global
 {
     public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
     {
+        private readonly IEventBus eventBus;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
@@ -140,9 +140,11 @@ namespace DCL.PluginSystem.Global
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
         private readonly bool isVoiceChatEnabled;
+        private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
 
-        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
+        public ExplorePanelPlugin(IEventBus eventBus,
+            IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
@@ -196,8 +198,10 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
             bool isVoiceChatEnabled,
+            bool isTranslationChatEnabled,
             GalleryEventBus galleryEventBus)
         {
+            this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -252,6 +256,7 @@ namespace DCL.PluginSystem.Global
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
             this.isVoiceChatEnabled = isVoiceChatEnabled;
+            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.galleryEventBus = galleryEventBus;
         }
 
@@ -380,7 +385,9 @@ namespace DCL.PluginSystem.Global
                 worldVolumeMacBus,
                 upscalingController,
                 isVoiceChatEnabled,
-                assetsProvisioner);
+                isTranslationChatEnabled,
+                assetsProvisioner,
+                eventBus);
 
             await settingsController.InitializeAsync();
 
