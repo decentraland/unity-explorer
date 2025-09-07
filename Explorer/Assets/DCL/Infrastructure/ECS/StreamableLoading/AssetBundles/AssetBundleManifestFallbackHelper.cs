@@ -20,11 +20,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty())
             {
                 //Needed to use the Time.realtimeSinceStartup on the intention creation
-                if (StreamableLoadingDebug.ENABLED)
-                    await UniTask.SwitchToMainThread();
-
-                ReportHub.Log(ReportCategory.ALWAYS, $"JUANI STARTING ASSET BUNDLE MANIFEST REQUEST {entityDefinition.id}");
-
+                await UniTask.SwitchToMainThread();
 
                 var promise = AssetBundleManifestPromise.Create(world,
                     GetAssetBundleManifestIntention.Create(entityDefinition.id, new CommonLoadingArguments(entityDefinition.id)),
@@ -33,15 +29,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
 
                 if (assetBundleManifest.Succeeded)
-                {
-                    ReportHub.Log(ReportCategory.ALWAYS, $"JUANI SUCCESS GETTING {entityDefinition.id}");
                     entityDefinition.assetBundleManifestVersion = new AssetBundleManifestVersion(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
-                }
                 else
-                {
-                    ReportHub.Log(ReportCategory.ALWAYS, $"JUANI FAILLED GETTING {entityDefinition.id}");
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
-                }
             }
         }
     }

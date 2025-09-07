@@ -36,8 +36,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetAssetBundleManifestIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            ReportHub.Log(ReportCategory.ALWAYS, $"JUANI STARTING REQUEST OF SCENE ASSET BUNDLE MANIFEST {intention.Hash}");
-
             SceneAssetBundleManifest sceneAssetBundleManifest =
                     await LoadAssetBundleManifestAsync(
                         intention.Hash,
@@ -59,8 +57,6 @@ namespace ECS.StreamableLoading.AssetBundles
                       .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
 
             URLAddress url = urlBuilder.Build();
-            ReportHub.Log(ReportCategory.ALWAYS, $"JUANI BUILDING URL {url}");
-
             SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url, RetryPolicy.WithRetries(1)), ct, reportCategory)
                                                               .CreateFromJson<SceneAbDto>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchBackToMainThread);
 
