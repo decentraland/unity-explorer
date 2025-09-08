@@ -115,6 +115,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 594ae6e7cd408424cb8433ddba60315d
+    m_Address: Assets/DCL/Notifications/Assets/NotificationDefaultThumbnails.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5de5609d1e6c441b5a7c56a77903cab7
     m_Address: F_Mouth_00
     m_ReadOnly: 0

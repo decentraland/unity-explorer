@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory());
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory(), DecentralandEnvironment.Zone);
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
                 loonCharacterObject,
