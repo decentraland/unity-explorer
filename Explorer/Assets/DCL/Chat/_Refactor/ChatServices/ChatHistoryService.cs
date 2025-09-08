@@ -45,8 +45,6 @@ namespace DCL.Chat.ChatServices
 
         private void OnChatMessageAdded(ChatChannel.ChannelId channel, ChatChannel.ChatChannelType type, ChatMessage message)
         {
-            // Don't create a channel for foreign communities
-            // For our communities the channel should be created on join and on initialization
             if (type == ChatChannel.ChatChannelType.COMMUNITY && !chatHistory.Channels.ContainsKey(channel))
                 return;
 
