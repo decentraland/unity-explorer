@@ -31,10 +31,8 @@ namespace DCL.Landscape
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
-        private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
-        private const float PROGRESS_COUNTER_DIG_HOLES = 0.5f;
-        private const float PROGRESS_SPAWN_TERRAIN = 0.25f;
-        private const float PROGRESS_SPAWN_RE_ENABLE_TERRAIN = 0.25f;
+        private const float PROGRESS_COUNTER_OCCUPANCY_MAP = 0.4f;
+        private const float PROGRESS_COUNTER_TERRAIN_COMPONENTS = 0.8f;
 
         private const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
         private const int TREE_INSTANCE_LIMIT = 262144; // 2^18 trees
@@ -176,6 +174,25 @@ namespace DCL.Landscape
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
                 {
+                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
+                    {
+                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel, ref emptyParcels, ref ownedParcels);
+                        await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
+                    }
+
+                    processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
+
+                    OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+                    OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+
+                    // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
+                    OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+
+                    occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                    occupancyMapSize = OccupancyMap.width; // width == height
+
+                    processReport?.SetProgress(PROGRESS_COUNTER_OCCUPANCY_MAP);
+
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Misc & Cliffs, Border Colliders")))
                     {
                         TerrainRoot = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
@@ -188,35 +205,10 @@ namespace DCL.Landscape
                         boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
                     }
 
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
-                    {
-                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel, ref emptyParcels, ref ownedParcels);
-                        await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
-                    }
-
-                    OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
-                    OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
-
-                    // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
-                    OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-
-                    occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
-                    occupancyMapSize = OccupancyMap.width; // width == height
-
-                    Ocean = factory.CreateOcean(TerrainRoot);
-                    Wind = factory.CreateWind();
-
-                    Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
-                    boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
+                    processReport?.SetProgress(PROGRESS_COUNTER_TERRAIN_COMPONENTS);
 
                     await LoadTreesAsync();
                     InstantiateTrees();
-
-                    // TODO As we don't perform any sequential steps we can't report the progress gradually
-
-                    processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
-
-                    processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
 
                     processReport?.SetProgress(1f);
                 }
