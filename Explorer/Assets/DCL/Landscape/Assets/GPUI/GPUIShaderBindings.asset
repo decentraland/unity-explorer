@@ -17,15 +17,9 @@ MonoBehaviour:
     replacementShaderName: Universal Render Pipeline/Nature/SpeedTree8_PBRLit_GPUIPro
     extensionCode: 
     isUseOriginal: 1
-    modifiedDate: 05/19/2025 11:58:43.411
+    modifiedDate: 09/05/2025 20:04:36.479
   - shaderName: Shader Graphs/Rock_GPUIPro
     replacementShaderName: Shader Graphs/Rock_GPUIPro
     extensionCode: 
     isUseOriginal: 1
-    modifiedDate: 05/19/2025 11:58:43.459
-  - shaderName: GPUInstancerPro/Universal Render Pipeline/Nature/Stylized Grass
-    replacementShaderName: GPUInstancerPro/Universal Render Pipeline/Nature/Stylized
-      Grass
-    extensionCode: 
-    isUseOriginal: 1
-    modifiedDate: 05/19/2025 11:58:43.511
+    modifiedDate: 09/05/2025 20:04:36.599

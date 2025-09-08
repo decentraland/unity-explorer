@@ -18,8 +18,6 @@ namespace DCL.Landscape.Settings
         public TerrainGenerationData terrainData;
         public TerrainGenerationData worldsTerrainData;
 
-        public GPUIAssets gpuiAssets;
-
         [field: SerializeField] public GPUIProfile TreesProfile { get; private set; } = null!;
 
         [Obsolete]
