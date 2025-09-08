@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
 using ECS.SceneLifeCycle.CurrentScene;
 using LiveKit.Proto;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -19,16 +20,19 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly IRoomsStatus roomsStatus;
+        private readonly IMVCManager loadingScreenMVCManager;
         private ConnectionStatusPanelController connectionStatusPanelController;
 
         public ConnectionStatusPanelPlugin(
             IRoomsStatus roomsStatus,
             ICurrentSceneInfo currentSceneInfo,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            IMVCManager loadingScreenMVCManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
+            this.loadingScreenMVCManager = loadingScreenMVCManager;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -38,6 +42,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
         {
             connectionStatusPanelController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<ConnectionStatusPanelController>();
+            connectionStatusPanelController.SetUGUIMVCManager(loadingScreenMVCManager);
 
             OnSceneStatusUpdate(currentSceneInfo.SceneStatus.Value);
             OnSceneConnectionQualityUpdate(roomsStatus.ConnectionQualityScene.Value);

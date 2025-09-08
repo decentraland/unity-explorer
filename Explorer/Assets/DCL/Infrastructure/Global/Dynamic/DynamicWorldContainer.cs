@@ -500,8 +500,6 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner);
-
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
             var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
@@ -721,7 +719,6 @@ namespace Global.Dynamic
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
-                connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
                     mvcManager,
@@ -1069,6 +1066,9 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     assetsProvisioner,
                     debugBuilder));
+
+            if (!localSceneDevelopment)
+                globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, mvcManager));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
