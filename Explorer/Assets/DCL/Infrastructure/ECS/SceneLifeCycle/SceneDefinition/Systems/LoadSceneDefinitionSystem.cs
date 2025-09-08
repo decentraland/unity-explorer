@@ -1,12 +1,13 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -37,8 +38,14 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 
+
+            //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
+            //Could be removed once the asset bundle manifest registry has been battle tested
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct);
+
             // switching back is handled by the base class
             return new StreamableLoadingResult<SceneEntityDefinition>(sceneEntityDefinition);
         }
+
     }
 }

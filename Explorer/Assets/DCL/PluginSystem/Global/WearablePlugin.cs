@@ -15,40 +15,33 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables
 {
-    public class WearablePlugin : IDCLGlobalPlugin<WearablePlugin.WearableSettings>
+    public class WearablePlugin : IDCLGlobalPluginWithoutSettings
     {
         //Should be taken from the catalyst
         private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
         private static readonly URLSubdirectory WEARABLES_COMPLEMENT_URL = URLSubdirectory.FromString("/wearables/");
         private static readonly URLSubdirectory WEARABLES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Wearables/");
-        private readonly URLDomain assetBundleURL;
         private readonly string builderContentURL;
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
         private readonly bool builderCollectionsPreview;
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner,
-            IWebRequestController webRequestController,
+        public WearablePlugin(IWebRequestController webRequestController,
             IRealmData realmData,
-            URLDomain assetBundleURL,
             CacheCleaner cacheCleaner,
             IWearableStorage wearableStorage,
             string builderContentURL,
             bool builderCollectionsPreview)
         {
             this.wearableStorage = wearableStorage;
-            this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
-            this.assetBundleURL = assetBundleURL;
             this.builderContentURL = builderContentURL;
             this.builderCollectionsPreview = builderCollectionsPreview;
 
@@ -57,15 +50,11 @@ namespace DCL.AvatarRendering.Wearables
 
         public void Dispose() { }
 
-        public async UniTask InitializeAsync(WearableSettings settings, CancellationToken ct)
-        {
-        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
-            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
@@ -76,9 +65,5 @@ namespace DCL.AvatarRendering.Wearables
             ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
         }
 
-        [Serializable]
-        public class WearableSettings : IDCLPluginSettings
-        {
-        }
     }
 }

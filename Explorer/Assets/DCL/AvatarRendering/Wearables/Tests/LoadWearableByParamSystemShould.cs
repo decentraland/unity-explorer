@@ -1,8 +1,10 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.Ipfs;
 using ECS;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
@@ -54,7 +56,11 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            wearableStorage.wearablesCache.Add(existingURN, Substitute.For<IWearable>());
+            WearableDTO wearableDTO = new WearableDTO();
+            wearableDTO.id = existingURN;
+            wearableDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback("v18", "2024-05-01T05:41:08.138Z");
+
+            wearableStorage.wearablesCache.Add(existingURN, new FakeWearable(wearableDTO));
             await ConcludeSuccess();
         }
 
