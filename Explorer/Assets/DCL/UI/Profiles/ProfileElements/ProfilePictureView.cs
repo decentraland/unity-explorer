@@ -88,7 +88,7 @@ namespace DCL.UI.ProfileElements
                     break;
                 case ProfileThumbnailViewModel.State.FALLBACK:
                 case ProfileThumbnailViewModel.State.LOADED_FROM_CACHE:
-                    thumbnailImageView.SetImage(model.Sprite!, false);
+                    thumbnailImageView.SetImage(model.Sprite!);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     break;
@@ -96,7 +96,7 @@ namespace DCL.UI.ProfileElements
                     SetThumbnailImageWithAnimationAsync(model.Sprite!, destroyCancellationToken).Forget();
                     break;
                 default:
-                    thumbnailImageView.SetImage(defaultEmptyThumbnail, true);
+                    thumbnailImageView.SetImage(defaultEmptyThumbnail);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     break;
@@ -121,9 +121,9 @@ namespace DCL.UI.ProfileElements
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]
-        public void SetImage(Sprite image, bool fitAndCenterImage = true)
+        public void SetImage(Sprite image)
         {
-            thumbnailImageView.SetImage(image, fitAndCenterImage);
+            thumbnailImageView.SetImage(image);
             SetLoadingState(false);
         }
 
@@ -141,13 +141,13 @@ namespace DCL.UI.ProfileElements
 
         public void SetDefaultThumbnail()
         {
-            thumbnailImageView.SetImage(defaultEmptyThumbnail, true);
+            thumbnailImageView.SetImage(defaultEmptyThumbnail);
             currentUrl = null;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
         {
-            thumbnailImageView.SetImage(sprite, sprite != defaultEmptyThumbnail);
+            thumbnailImageView.SetImage(sprite);
             thumbnailImageView.ImageEnabled = true;
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
@@ -168,7 +168,7 @@ namespace DCL.UI.ProfileElements
 
                 if (sprite != null)
                 {
-                    thumbnailImageView.SetImage(sprite, true);
+                    thumbnailImageView.SetImage(sprite);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     return;

@@ -32,13 +32,16 @@ namespace DCL.Notifications.NotificationsMenu
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
             NotificationType.INTERNAL_ARRIVED_TO_DESTINATION,
-            NotificationType.COMMUNITY_VOICE_CHAT_STARTED
+            NotificationType.COMMUNITY_VOICE_CHAT_STARTED,
+            NotificationType.INTERNAL_DEFAULT_SUCCESS,
+            NotificationType.INTERNAL_SERVER_ERROR,
         };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
+        private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly IWebRequestController webRequestController;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -58,8 +61,9 @@ namespace DCL.Notifications.NotificationsMenu
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
+            NotificationDefaultThumbnails notificationDefaultThumbnails,
             IWebRequestController webRequestController,
             NftTypeIconSO rarityBackgroundMapping,
             IWeb3IdentityCache web3IdentityCache,
@@ -71,6 +75,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.notificationsRequestController = notificationsRequestController;
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
+            this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.webRequestController = webRequestController;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
@@ -200,10 +205,14 @@ namespace DCL.Notifications.NotificationsMenu
 
             notificationView.NotificationImage.SetImage(null);
 
-            if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notificationData.Type);
+
+            if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite, true);
+            else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
+                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts!.Token).Forget();
             else
-                LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts!.Token).Forget();
+                notificationView.NotificationImage.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             return listItem;
         }
@@ -217,7 +226,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.Notification = notificationData;
             notificationView.CloseButton.gameObject.SetActive(false);
             notificationView.UnreadImage.SetActive(!notificationData.Read);
-            notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
+            notificationView.TimeText.text = notificationData.Timestamp != null ? TimestampUtilities.GetRelativeTime(notificationData.Timestamp) : string.Empty;
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
 
@@ -262,7 +271,7 @@ namespace DCL.Notifications.NotificationsMenu
         }
 
         private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
-            CancellationToken ct)
+            DefaultNotificationThumbnail defaultThumbnail, CancellationToken ct)
         {
             if (notificationData.Type == NotificationType.REFERRAL_INVITED_USERS_ACCEPTED)
             {
@@ -278,22 +287,32 @@ namespace DCL.Notifications.NotificationsMenu
                 return;
             }
 
-            IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
-                new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                ct,
-                ReportCategory.UI);
+            Sprite? thumbnailSprite = null;
 
-            Texture2D texture = ownedTexture.Texture;
+            try
+            {
+                IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                    new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
+                    new GetTextureArguments(TextureType.Albedo),
+                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
+                    ct,
+                    ReportCategory.UI);
 
-            Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
-                VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+                Texture2D texture = ownedTexture.Texture;
 
-            //Try add has been added in case it happens that BE returns duplicated notifications id
-            //In that case we will just use the same thumbnail for each notification with the same id
-            notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
-            notificationImage.NotificationImage.SetImage(thumbnailSprite, true);
+                thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+                    VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+
+                //Try add has been added in case it happens that BE returns duplicated notifications id
+                //In that case we will just use the same thumbnail for each notification with the same id
+                notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception) { thumbnailSprite = defaultThumbnail.Thumbnail; }
+            finally
+            {
+                notificationImage.NotificationImage.SetImage(thumbnailSprite, true);
+            }
 
             return;
 

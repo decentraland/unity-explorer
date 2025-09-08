@@ -12,7 +12,6 @@ using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
-using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
 using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
@@ -21,6 +20,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
@@ -96,7 +96,6 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
 using Global.Dynamic.RealmUrl;
-using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -218,7 +217,8 @@ namespace Global.Dynamic
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
 
             var mapPathEventBus = new MapPathEventBus();
-            INotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsBusController.Initialize(notificationsBusController);
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
@@ -476,7 +476,6 @@ namespace Global.Dynamic
                         eventsApiService,
                         mapPathEventBus,
                         staticContainer.MapPinsEventBus,
-                        notificationsBusController,
                         realmNavigator,
                         staticContainer.RealmData,
                         sharedNavmapCommandBus,
@@ -558,7 +557,6 @@ namespace Global.Dynamic
                 socialServiceEventBus,
                 roomHub,
                 identityCache,
-                notificationsBusController,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 playerParcelTracker,
                 realmNavigator,
@@ -643,6 +641,7 @@ namespace Global.Dynamic
                 sharedSpaceManager,
                 communityVoiceChatContextMenuSettingsSo,
                 voiceChatContainer.VoiceChatOrchestrator,
+                includeCommunities,
                 communitiesDataProvider);
 
             ViewDependencies.Initialize(new ViewDependencies(
@@ -893,13 +892,15 @@ namespace Global.Dynamic
                     profileChangesBus,
                     includeFriends,
                     includeUserBlocking,
+                    includeCommunities,
                     isNameEditorEnabled,
                     chatEventBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
                     galleryEventBus,
-                    clipboard
+                    clipboard,
+                    communitiesDataProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -1048,7 +1049,6 @@ namespace Global.Dynamic
                     galleryEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
-                    notificationsBusController,
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,

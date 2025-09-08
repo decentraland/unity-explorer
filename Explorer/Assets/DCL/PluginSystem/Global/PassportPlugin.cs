@@ -10,6 +10,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.EventBus;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -55,7 +56,7 @@ namespace DCL.PluginSystem.Global
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
@@ -77,6 +78,8 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ISystemClipboard systemClipboard;
+        private readonly bool includeCommunities;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private PassportController? passportController;
 
@@ -94,7 +97,7 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
@@ -111,13 +114,15 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
+            bool includeCommunities,
             bool isNameEditorEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            CommunitiesDataProvider communitiesDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -156,6 +161,8 @@ namespace DCL.PluginSystem.Global
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             this.systemClipboard = systemClipboard;
+            this.includeCommunities = includeCommunities;
+            this.communitiesDataProvider = communitiesDataProvider;
         }
 
         public void Dispose()
@@ -214,6 +221,7 @@ namespace DCL.PluginSystem.Global
                 enableCameraReel,
                 enableFriends,
                 includeUserBlocking,
+                includeCommunities,
                 isNameEditorEnabled,
                 chatEventBus,
                 sharedSpaceManager,
@@ -222,7 +230,8 @@ namespace DCL.PluginSystem.Global
                 passport3DPreviewCamera,
                 galleryEventBus,
                 systemClipboard,
-                passportSettings.CameraReelGalleryMessages
+                passportSettings.CameraReelGalleryMessages,
+                communitiesDataProvider
             );
 
             mvcManager.RegisterController(passportController);

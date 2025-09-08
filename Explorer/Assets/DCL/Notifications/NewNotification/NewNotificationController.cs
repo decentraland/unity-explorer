@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Notifications.NewNotification
@@ -21,8 +22,9 @@ namespace DCL.Notifications.NewNotification
         private static readonly TimeSpan TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN = TimeSpan.FromSeconds(5f);
         private const float ANIMATION_DURATION = 0.5f;
 
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
+        private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
         private readonly Queue<INotification> notificationQueue = new ();
@@ -37,13 +39,15 @@ namespace DCL.Notifications.NewNotification
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
+            NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
             IWebRequestController webRequestController) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
+            this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
             notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
@@ -100,6 +104,7 @@ namespace DCL.Notifications.NewNotification
                 switch (notification.Type)
                 {
                     case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
+                    case NotificationType.INTERNAL_SERVER_ERROR:
                         await ProcessArrivedNotificationAsync(notification);
                         break;
                     case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
@@ -114,6 +119,9 @@ namespace DCL.Notifications.NewNotification
                         break;
                     case NotificationType.CREDITS_GOAL_COMPLETED:
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
+                        break;
+                    case NotificationType.INTERNAL_DEFAULT_SUCCESS:
+                        await ProcessArrivedNotificationAsync(notification, false);
                         break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
@@ -138,11 +146,13 @@ namespace DCL.Notifications.NewNotification
             await AnimateNotificationCanvasGroupAsync(viewInstance.CommunityNotificationCanvasGroup);
         }
 
-        private async UniTask ProcessArrivedNotificationAsync(INotification notification)
+        private async UniTask ProcessArrivedNotificationAsync(INotification notification, bool enableCloseButton = true)
         {
             viewInstance!.SystemNotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.SystemNotificationView.NotificationType = notification.Type;
             viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+            viewInstance!.SystemNotificationView.CloseButtonContainer.SetActive(enableCloseButton);
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)viewInstance.transform);
 
             await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
         }
@@ -155,8 +165,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.NotificationView.Notification = notification;
             ProcessCustomMetadata(notification);
 
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                thumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -170,8 +184,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.Notification = notification;
             ProcessCustomMetadata(notification);
 
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                friendsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -189,8 +207,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.BadgeNotificationView.NotificationType = notification.Type;
             viewInstance.BadgeNotificationView.Notification = notification;
 
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                badgeThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             await AnimateBadgeNotificationAsync();
         }
@@ -201,8 +223,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.MarketplaceCreditsNotificationView.SetTitleText(notification.GetTitle());
             viewInstance.MarketplaceCreditsNotificationView.SetNotification(notification.Type, notification);
 
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
             if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                marketplaceCreditsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 
             await AnimateMarketplaceCreditsNotificationAsync();
         }

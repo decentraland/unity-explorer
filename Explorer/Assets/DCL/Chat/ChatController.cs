@@ -10,6 +10,8 @@ using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
 using DCL.FeatureFlags;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;

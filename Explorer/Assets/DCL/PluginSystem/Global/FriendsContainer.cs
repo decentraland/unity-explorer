@@ -78,7 +78,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,

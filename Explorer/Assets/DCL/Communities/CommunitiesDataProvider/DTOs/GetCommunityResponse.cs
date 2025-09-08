@@ -1,7 +1,6 @@
-
 using System;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
     public class GetCommunityResponse
@@ -27,16 +26,29 @@ namespace DCL.Communities
             public int membersCount;
             public VoiceChatStatus voiceChatStatus;
 
+            public string pendingInviteOrRequestId;
+            public InviteRequestAction pendingActionType;
+
             public void DecreaseMembersCount()
             {
                 if (membersCount > 0)
                     membersCount--;
             }
 
-            public void IncreaseMembersCount()
-            {
+            public void IncreaseMembersCount() =>
                 membersCount++;
-            }
+
+            public void SetRole(CommunityMemberRole newRole) =>
+                role = newRole;
+
+            public void SetPendingInviteOrRequestId(string inviteOrRequestId) =>
+                pendingInviteOrRequestId = inviteOrRequestId;
+
+            public void SetPendingAction(InviteRequestAction action) =>
+                pendingActionType = action;
+
+            public bool IsAccessAllowed() =>
+                privacy == CommunityPrivacy.@public || (privacy == CommunityPrivacy.@private && role != CommunityMemberRole.none);
         }
 
         public CommunityData data;

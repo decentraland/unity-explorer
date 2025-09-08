@@ -1,7 +1,6 @@
-
 using System;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
     public class GetUserCommunitiesResponse
@@ -27,6 +26,10 @@ namespace DCL.Communities
             public FriendInCommunity[] friends;
             public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 
+            public string inviteOrRequestId;
+            public InviteRequestAction pendingActionType;
+            public int requestsReceived;
+
             public CommunityData()
             {
             }
@@ -48,7 +51,7 @@ namespace DCL.Communities
                 this.ownerAddress = ownerAddress;
                 this.membersCount = membersCount;
             }
-            
+
             public void SetAsJoined(bool isJoined)
             {
                 // Change the role
@@ -81,5 +84,3 @@ namespace DCL.Communities
         public int total;
     }
 }
-
-

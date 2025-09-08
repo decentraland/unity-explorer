@@ -1,15 +1,24 @@
+using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.Profiles.Helpers;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using DG.Tweening;
+using MVC;
 using System;
 using System.Text;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
+using Utility;
+using Utility.Types;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -18,14 +27,23 @@ namespace DCL.Communities.CommunitiesBrowser
         private Tweener? descriptionTween;
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 45f;
+        private const string DELETE_COMMUNITY_INVITATION_TEXT_FORMAT = "Are you sure you want to delete your invitation to the [{0}] Community?";
+        private const string DELETE_COMMUNITY_INVITATION_CONFIRM_TEXT = "YES";
+        private const string DELETE_COMMUNITY_INVITATION_CANCEL_TEXT = "NO";
 
         public event Action<string>? MainButtonClicked;
         public event Action<string>? ViewCommunityButtonClicked;
         public event Action<string, CommunityResultCardView>? JoinCommunityButtonClicked;
+        public event Action<string, CommunityResultCardView>? RequestToJoinCommunityButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? CancelRequestToJoinCommunityButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? AcceptCommunityInvitationButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? RejectCommunityInvitationButtonClicked;
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
         private const string MEMBERS_COUNTER_FORMAT = "{0} Members";
+
+        private CancellationTokenSource? confirmationDialogCts;
 
         [SerializeField] private RectTransform headerContainer = null!;
         [SerializeField] private RectTransform footerContainer = null!;
@@ -42,9 +60,17 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text communityMembersCountText = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private GameObject buttonsContainer = null!;
+        [SerializeField] private GameObject joinOrViewButtonsContainer = null!;
         [SerializeField] private Button viewCommunityButton = null!;
         [SerializeField] private Button joinCommunityButton = null!;
-        [SerializeField] private GameObject joiningLoading = null!;
+        [SerializeField] private GameObject requestOrCancelToJoinButtonsContainer = null!;
+        [SerializeField] private Button requestToJoinButton = null!;
+        [SerializeField] private Button cancelJoinRequestButton = null!;
+        [SerializeField] private GameObject acceptOrRejectInvitationButtonsContainer = null!;
+        [SerializeField] private Button acceptInvitationButton = null!;
+        [SerializeField] private Button rejectInvitationButton = null!;
+
+        [SerializeField] private GameObject actionLoadingSpinner = null!;
         [SerializeField] private MutualFriendsConfig mutualFriends;
         [SerializeField] private ListenersCountView listenersCountView;
 
@@ -66,7 +92,12 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private string? currentCommunityId;
+        public string CommunityId => currentCommunityId;
+
+        private string currentCommunityId = null!;
+        private string currentInviteOrRequestId = null!;
+        private string currentCommunityName = null!;
+
         private Tweener? headerTween;
         private Tweener? footerTween;
         private Vector2 originalHeaderSizeDelta;
@@ -74,12 +105,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            mainButton.onClick.AddListener(() =>
-            {
-                if (currentCommunityId != null)
-                    MainButtonClicked?.Invoke(currentCommunityId);
-            });
-
             if (viewCommunityButton != null)
             {
                 viewCommunityButton.onClick.AddListener(() =>
@@ -98,6 +123,33 @@ namespace DCL.Communities.CommunitiesBrowser
                 });
             }
 
+            //TODO FRAN -> might need to add null checks for these or just split the view for the streaming communities into a simpler one. Maybe make a base view.
+
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
+            requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
+            cancelJoinRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this));
+            acceptInvitationButton.onClick.AddListener(() => AcceptCommunityInvitationButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this));
+            rejectInvitationButton.onClick.AddListener(() =>
+            {
+                confirmationDialogCts = confirmationDialogCts.SafeRestart();
+                ShowDeleteInvitationConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+                return;
+
+                async UniTask ShowDeleteInvitationConfirmationDialogAsync(CancellationToken ct)
+                {
+                    Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_COMMUNITY_INVITATION_TEXT_FORMAT, currentCommunityName),
+                                                                                         DELETE_COMMUNITY_INVITATION_CANCEL_TEXT,
+                                                                                         DELETE_COMMUNITY_INVITATION_CONFIRM_TEXT,
+                                                                                         communityThumbnail.ImageSprite,
+                                                                                         true, false), ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+
+                    RejectCommunityInvitationButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this);
+                }
+            });
+
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
         }
@@ -115,8 +167,11 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetCommunityId(string id) =>
             currentCommunityId = id;
 
-        public void SetTitle(string title) =>
+        public void SetTitle(string title)
+        {
             communityTitle.text = title;
+            currentCommunityName = title;
+        }
 
         public void SetOwner(string owner) =>
             communityOwner.text = owner;
@@ -148,15 +203,30 @@ namespace DCL.Communities.CommunitiesBrowser
                 communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
         }
 
-        public void SetOwnership(bool isMember)
+        public void SetInviteOrRequestId(string id) =>
+            currentInviteOrRequestId = id;
+
+        public void SetActionButtonsType(CommunityPrivacy privacy, InviteRequestAction type, bool isMember)
         {
+            // Join/View
+            joinOrViewButtonsContainer.SetActive((privacy == CommunityPrivacy.@public || isMember) && type == InviteRequestAction.none);
             joinCommunityButton.gameObject.SetActive(!isMember);
             viewCommunityButton.gameObject.SetActive(isMember);
+
+            // Request/Cancel to join
+            requestOrCancelToJoinButtonsContainer.SetActive(privacy == CommunityPrivacy.@private && !isMember && type != InviteRequestAction.invite);
+            requestToJoinButton.gameObject.SetActive(type != InviteRequestAction.request_to_join);
+            cancelJoinRequestButton.gameObject.SetActive(type == InviteRequestAction.request_to_join);
+
+            // Accept/Reject invitation
+            acceptOrRejectInvitationButtonsContainer.SetActive(type == InviteRequestAction.invite);
+            rejectInvitationButton.gameObject.SetActive(true);
+            acceptInvitationButton.gameObject.SetActive(true);
         }
 
-        public void SetJoiningLoadingActive(bool isActive)
+        public void SetActionLoadingActive(bool isActive)
         {
-            joiningLoading.SetActive(isActive);
+            actionLoadingSpinner.SetActive(isActive);
             buttonsContainer.SetActive(!isActive);
         }
 
@@ -185,6 +255,27 @@ namespace DCL.Communities.CommunitiesBrowser
 
                 mutualFriends.thumbnails[i].isPointerEventsSubscribed = true;
             }
+        }
+
+        public void SetupMutualFriends(ProfileRepositoryWrapper profileDataProvider, GetUserInviteRequestData.UserInviteRequestData userInviteRequestData)
+        {
+            CommunityData communityFromInviteRequestData = new CommunityData
+            {
+                id = userInviteRequestData.communityId,
+                thumbnails = userInviteRequestData.thumbnails,
+                name = userInviteRequestData.name,
+                description = userInviteRequestData.description,
+                ownerAddress = userInviteRequestData.ownerAddress,
+                ownerName = userInviteRequestData.ownerName,
+                membersCount = userInviteRequestData.membersCount,
+                privacy = userInviteRequestData.privacy,
+                role = userInviteRequestData.role,
+                friends = userInviteRequestData.friends,
+                pendingActionType = userInviteRequestData.type,
+                inviteOrRequestId = userInviteRequestData.id,
+            };
+
+            SetupMutualFriends(profileDataProvider, communityFromInviteRequestData);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

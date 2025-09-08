@@ -1,7 +1,7 @@
 using System;
 
 // ReSharper disable InconsistentNaming
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
     public enum CommunityMemberRole

@@ -8,13 +8,13 @@ using DCL.Input;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -87,7 +87,6 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
-            INotificationsBusController notificationsBusController,
             LambdasProfilesProvider lambdasProfilesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
@@ -116,7 +115,7 @@ namespace DCL.PluginSystem.Global
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
-            notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
+            notificationHandler = new NotificationHandler(realmNavigator);
         }
 
         public void Dispose()

@@ -3,6 +3,7 @@ using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
 using DCL.Communities.CommunitiesCard.Places;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
@@ -11,6 +12,8 @@ using DCL.UI.GenericContextMenuParameter;
 using DCL.Utilities.Extensions;
 using MVC;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -31,6 +34,10 @@ namespace DCL.Communities.CommunitiesCard
         private const string DELETE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to delete [{0}] Community?";
         private const string DELETE_COMMUNITY_CONFIRM_TEXT = "CONTINUE";
         private const string DELETE_COMMUNITY_CANCEL_TEXT = "CANCEL";
+
+        private const string REJECT_COMMUNITY_INVITATION_TEXT_FORMAT = "Are you sure you want to delete your invitation to the [{0}] Community?";
+        private const string REJECT_COMMUNITY_INVITATION_CONFIRM_TEXT = "YES";
+        private const string REJECT_COMMUNITY_INVITATION_CANCEL_TEXT = "NO";
 
         public enum Sections
         {
@@ -54,6 +61,10 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? JoinCommunity;
         public event Action? LeaveCommunityRequested;
         public event Action? DeleteCommunityRequested;
+        public event Action? RequestToJoinCommunity;
+        public event Action? CancelRequestToJoinCommunity;
+        public event Action? AcceptInvite;
+        public event Action? RejectInvite;
 
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; } = null!;
@@ -61,9 +72,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private Image backgroundImage { get; set; } = null!;
         [field: SerializeField] public Color BackgroundColor { get; private set; }
-        [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; } = null!;
-        [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; } = null!;
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
+
         [field: SerializeField] private Sprite deleteCommunityImage { get; set; } = null!;
         [field: SerializeField] internal CommunityCardVoiceChatView communityCardVoiceChatView { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
@@ -74,10 +84,17 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Button openContextMenuButton { get; set; } = null!;
         [field: SerializeField] private Button joinedButton { get; set; } = null!;
         [field: SerializeField] private Button joinButton { get; set; } = null!;
+        [field: SerializeField] private Button requestToJoinButton { get; set; } = null!;
+        [field: SerializeField] private Button cancelRequestButton { get; set; } = null!;
+        [field: SerializeField] private Button acceptInviteButton { get; set; } = null!;
+        [field: SerializeField] private Button rejectInviteButton { get; set; } = null!;
 
         [field: Header("Community data references")]
         [field: SerializeField] private TMP_Text communityName { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityMembersNumber { get; set; } = null!;
+        [field: SerializeField] private TMP_Text communityPrivacyText { get; set; } = null!;
+        [field: SerializeField] private GameObject publicCommunityIcon { get; set; } = null!;
+        [field: SerializeField] private GameObject privateCommunityIcon { get; set; } = null!;
         [field: SerializeField] private TMP_Text communityDescription { get; set; } = null!;
         [field: SerializeField] public ImageView CommunityThumbnail { get; private set; } = null!;
 
@@ -102,7 +119,12 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; } = null!;
         [field: SerializeField] public EventListView EventListView { get; private set; } = null!;
 
+        [field: Header("Restricted Access")]
+        [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsAllowed { get; private set; }
+        [field: SerializeField] public List<GameObject> ObjectsToShowWhenAccessIsNotAllowed { get; private set; }
+
         private readonly UniTask[] closingTasks = new UniTask[6];
+
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu? contextMenu;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
@@ -116,6 +138,29 @@ namespace DCL.Communities.CommunitiesCard
             openContextMenuButton.onClick.AddListener(OpenContextMenu);
             joinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
             joinedButton.onClick.AddListener(ShowLeaveConfirmationDialog);
+            requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunity?.Invoke());
+            cancelRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunity?.Invoke());
+            acceptInviteButton.onClick.AddListener(() => AcceptInvite?.Invoke());
+            rejectInviteButton.onClick.AddListener(() =>
+            {
+                confirmationDialogCts = confirmationDialogCts.SafeRestart();
+                ShowDeleteInvitationConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+                return;
+
+                async UniTask ShowDeleteInvitationConfirmationDialogAsync(CancellationToken ct)
+                {
+                    Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(REJECT_COMMUNITY_INVITATION_TEXT_FORMAT, communityName.text),
+                                                                                         REJECT_COMMUNITY_INVITATION_CANCEL_TEXT,
+                                                                                         REJECT_COMMUNITY_INVITATION_CONFIRM_TEXT,
+                                                                                         CommunityThumbnail.ImageSprite,
+                                                                                         false, false), ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+
+                    RejectInvite?.Invoke();
+                }
+            });
 
             photosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
             membersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
@@ -147,8 +192,8 @@ namespace DCL.Communities.CommunitiesCard
                 Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_COMMUNITY_TEXT_FORMAT, communityName.text),
                                                                                      DELETE_COMMUNITY_CANCEL_TEXT,
                                                                                      DELETE_COMMUNITY_CONFIRM_TEXT,
-                                                                                     deleteCommunityImage,
-                                                                                     false, false), ct)
+                                                                                     CommunityThumbnail.ImageSprite,
+                                                                                     true, false), ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
@@ -246,13 +291,17 @@ namespace DCL.Communities.CommunitiesCard
                 SectionChanged?.Invoke(section);
         }
 
-        public void ConfigureInteractionButtons(CommunityMemberRole role)
+        public void ConfigureInteractionButtons(GetCommunityResponse.CommunityData communityData)
         {
-            openChatButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member);
-            openWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            openContextMenuButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            joinedButton.gameObject.SetActive(role is CommunityMemberRole.member);
-            joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
+            openChatButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            openWizardButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            openContextMenuButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            joinedButton.gameObject.SetActive(communityData.role is CommunityMemberRole.member && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            joinButton.gameObject.SetActive(communityData.role == CommunityMemberRole.none && communityData.IsAccessAllowed() && communityData.pendingActionType != InviteRequestAction.invite);
+            requestToJoinButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.none);
+            cancelRequestButton.gameObject.SetActive(!communityData.IsAccessAllowed() && communityData.pendingActionType == InviteRequestAction.request_to_join);
+            acceptInviteButton.gameObject.SetActive(communityData.pendingActionType == InviteRequestAction.invite);
+            rejectInviteButton.gameObject.SetActive(communityData.pendingActionType == InviteRequestAction.invite);
         }
 
         public void SetDefaults()
@@ -267,8 +316,13 @@ namespace DCL.Communities.CommunitiesCard
             openContextMenuButton.gameObject.SetActive(false);
             joinedButton.gameObject.SetActive(false);
             joinButton.gameObject.SetActive(false);
+            requestToJoinButton.gameObject.SetActive(false);
+            cancelRequestButton.gameObject.SetActive(false);
+            acceptInviteButton.gameObject.SetActive(false);
+            rejectInviteButton.gameObject.SetActive(false);
             placesWithSignButton.gameObject.SetActive(false);
             placesButton.gameObject.SetActive(true);
+            SetCommunityAccessAsAllowed(true);
         }
 
         public void UpdateMemberCount(GetCommunityResponse.CommunityData communityData) =>
@@ -280,18 +334,32 @@ namespace DCL.Communities.CommunitiesCard
             communityName.text = communityData.name;
             UpdateMemberCount(communityData);
             communityDescription.text = communityData.description;
+            communityPrivacyText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(communityData.privacy.ToString());
+
+            publicCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@public);
+            privateCommunityIcon.SetActive(communityData.privacy == CommunityPrivacy.@private);
 
             if (communityData.thumbnails != null)
-
-            thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
+                thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
 
-            ConfigureInteractionButtons(communityData.role);
+            ConfigureInteractionButtons(communityData);
 
             placesWithSignButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             placesButton.gameObject.SetActive(!placesWithSignButton.gameObject.activeSelf);
+
+            SetCommunityAccessAsAllowed(communityData.IsAccessAllowed());
+        }
+
+        public void SetCommunityAccessAsAllowed(bool isAllowed)
+        {
+            foreach (GameObject go in ObjectsToShowWhenAccessIsAllowed)
+                go.SetActive(isAllowed);
+
+            foreach (GameObject go in ObjectsToShowWhenAccessIsNotAllowed)
+                go.SetActive(!isAllowed);
         }
     }
 }

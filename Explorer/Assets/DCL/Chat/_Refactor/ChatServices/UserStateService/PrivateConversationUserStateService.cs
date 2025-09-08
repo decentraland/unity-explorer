@@ -37,6 +37,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private const string PRIVACY_SETTING_ALL = "all";
+        private const int TIMEOUT_FRIENDS_CONTAINER_MINUTES = 2;
 
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<IFriendsService> friendsService;
@@ -102,11 +103,13 @@ namespace DCL.Chat.ChatServices
 
                 await UniTask.WaitUntil(() =>
                     chatRoom.Info.ConnectionState == ConnectionState.ConnConnected &&
-                    userBlockingCacheProxy.Configured, cancellationToken: cts.Token);
+                    userBlockingCacheProxy.Configured, cancellationToken: cts.Token)
+                             .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
 
                 foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities().Where(rp => UserIsConsideredAsOnline(rp.Key, true)))
                     onlineParticipants.Add(remoteParticipantIdentity);
             }
+            catch (TimeoutException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, "Friend service and user blocking cache are not available. Ignore this if you are in LSD"); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Error during initialization: {e.Message}"); }
 
             return conversationParticipants;
