@@ -11,7 +11,7 @@ namespace DCL.Input.Utils
 {
     public class InteractionCache
     {
-        private readonly Dictionary<GameObject, bool> interactionCache = new ();
+        private readonly Dictionary<GameObject, Selectable?> interactionCache = new ();
         private readonly Dictionary<GameObject, PanelEventHandler> uiToolkitPanel = new ();
 
         public bool IsInteractable(GameObject gameObject, Vector2 pointerPosition)
@@ -41,16 +41,14 @@ namespace DCL.Input.Utils
                 return canBeInteracted;
             }
 
-            if (interactionCache.TryGetValue(gameObject, out bool result))
-                return result;
+            if (interactionCache.TryGetValue(gameObject, out Selectable? cachedSelectable))
+                return cachedSelectable?.IsInteractable() ?? false;
 
             // In theory Selectable should cover UnityEngine.UI.Toggle but it does not, weird
-            Selectable? isCanvasButton = gameObject.GetComponent<Selectable>();
-
-            if (isCanvasButton)
+            if (gameObject.TryGetComponent<Selectable>(out var selectable))
             {
-                interactionCache.Add(gameObject, true);
-                return true;
+                interactionCache.Add(gameObject, selectable);
+                return selectable.IsInteractable();
             }
 
             PanelEventHandler? eventHandler = gameObject.GetComponent<PanelEventHandler>();
@@ -58,7 +56,7 @@ namespace DCL.Input.Utils
             if (eventHandler)
                 uiToolkitPanel.Add(gameObject, eventHandler);
 
-            interactionCache.Add(gameObject, false);
+            interactionCache.Add(gameObject, null);
             return false;
         }
     }

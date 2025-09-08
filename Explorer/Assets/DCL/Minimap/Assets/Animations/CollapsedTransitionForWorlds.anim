@@ -73,7 +73,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_Alpha
-    path: Container/ExpandBgImageForWorlds/GoToGenesisCityButton
+    path: Container/ExpandBgImageForWorlds/MinimapContextualButton
     classID: 225
     script: {fileID: 0}
     flags: 0
@@ -94,7 +94,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_Interactable
-    path: Container/ExpandBgImageForWorlds/GoToGenesisCityButton
+    path: Container/ExpandBgImageForWorlds/MinimapContextualButton
     classID: 114
     script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
     flags: 0
@@ -116,7 +116,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 3278069594
+      path: 1829714181
       attribute: 1574349066
       script: {fileID: 0}
       typeID: 225
@@ -125,7 +125,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 3278069594
+      path: 1829714181
       attribute: 4287062452
       script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
       typeID: 114
@@ -211,7 +211,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_Alpha
-    path: Container/ExpandBgImageForWorlds/GoToGenesisCityButton
+    path: Container/ExpandBgImageForWorlds/MinimapContextualButton
     classID: 225
     script: {fileID: 0}
     flags: 0
@@ -232,7 +232,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_Interactable
-    path: Container/ExpandBgImageForWorlds/GoToGenesisCityButton
+    path: Container/ExpandBgImageForWorlds/MinimapContextualButton
     classID: 114
     script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
     flags: 0

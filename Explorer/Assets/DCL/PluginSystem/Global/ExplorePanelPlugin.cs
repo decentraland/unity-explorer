@@ -49,6 +49,7 @@ using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
@@ -109,7 +110,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
         private readonly IEventsApiService eventsApiService;
         private readonly IUserCalendar userCalendar;
         private readonly ISystemClipboard clipboard;
@@ -178,7 +179,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             IEventsApiService eventsApiService,
             IUserCalendar userCalendar,
             ISystemClipboard clipboard,
@@ -234,7 +235,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.chatMessagesBus = chatMessagesBus;
             this.systemMemoryCap = systemMemoryCap;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
             this.eventsApiService = eventsApiService;
             this.userCalendar = userCalendar;
             this.clipboard = clipboard;
@@ -376,7 +377,7 @@ namespace DCL.PluginSystem.Global
                 userBlockingCacheProxy,
                 sceneLoadingLimit,
                 settings.VoiceChatSettings,
-                worldVolumeMacBus,
+                volumeBus,
                 upscalingController,
                 isVoiceChatEnabled,
                 assetsProvisioner);
@@ -411,7 +412,7 @@ namespace DCL.PluginSystem.Global
                     galleryEventBus,
                     cameraReelView.CameraReelOptionsButton,
                     webBrowser, decentralandUrlsSource, systemClipboard,
-                    new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
+                    settings.CameraReelGalleryMessages,
                     mvcManager),
                 cameraReelStorageService,
                 web3IdentityCache,
@@ -557,15 +558,8 @@ namespace DCL.PluginSystem.Global
             [field: Header("Camera Reel")]
             [field: SerializeField]
             [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]
-            public string CameraReelGalleryShareToXMessage { get; private set; }
-            [field: SerializeField]
-            public string PhotoSuccessfullyUpdatedMessage { get; private set; }
-            [field: SerializeField]
-            public string PhotoSuccessfullyDeletedMessage { get; private set; }
-            [field: SerializeField]
-            public string PhotoSuccessfullyDownloadedMessage { get; private set; }
-            [field: SerializeField]
-            public string LinkCopiedMessage { get; private set; }
+            public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }
+
             [field: SerializeField]
             public string StorageProgressBarText { get; private set; }
 
