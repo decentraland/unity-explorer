@@ -1,3 +1,4 @@
+using DCL.Ipfs;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -25,6 +26,9 @@ namespace DCL.UI.ConnectionStatusPanel
 
         public void SetGlobalRoomStatus(ConnectionStatus status) =>
             panelView.SetGlobalRoomStatus(status);
+
+        public void SetAssetBundleSceneStatus(AssetBundleRegistryEnum? status) =>
+            panelView.SetAssetBundleSceneStatus(status);
 
         private void OnToggleButtonClicked() =>
             panelView.Toggle();

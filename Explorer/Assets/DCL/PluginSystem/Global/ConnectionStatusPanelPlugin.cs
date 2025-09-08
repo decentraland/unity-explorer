@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.MainUI;
@@ -43,7 +44,8 @@ namespace DCL.PluginSystem.Global
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
 
-            /*connectionStatusPanelController = new ConnectionStatusPanelController(() =>
+            //-----------
+            connectionStatusPanelController = new ConnectionStatusPanelController(() =>
                 {
                     var view = mainUIView.ConnectionStatusPanelView;
                     view!.gameObject.SetActive(true);
@@ -58,7 +60,7 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 debugBuilder
             );
-            mvcManager.RegisterController(connectionStatusPanelController);*/
+            mvcManager.RegisterController(connectionStatusPanelController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -72,17 +74,19 @@ namespace DCL.PluginSystem.Global
             OnSceneStatusUpdate(currentSceneInfo.SceneStatus.Value);
             OnSceneConnectionQualityUpdate(roomsStatus.ConnectionQualityScene.Value);
             OnIslandConnectionQualityUpdate(roomsStatus.ConnectionQualityIsland.Value);
+            OnAssetBundleStatusUpdate(currentSceneInfo.SceneAssetBundleStatus.Value);
+
+            roomsStatus.ConnectionQualityScene.OnUpdate += OnSceneConnectionQualityUpdate;
+            roomsStatus.ConnectionQualityIsland.OnUpdate += OnIslandConnectionQualityUpdate;
+            currentSceneInfo.SceneStatus.OnUpdate += OnSceneStatusUpdate;
+            currentSceneInfo.SceneAssetBundleStatus.OnUpdate += OnAssetBundleStatusUpdate;
         }
 
-        private void OnIslandConnectionQualityUpdate(ConnectionQuality quality)
-        {
+        private void OnIslandConnectionQualityUpdate(ConnectionQuality quality) =>
             connectionStatusPanelGOController.SetGlobalRoomStatus(GetConnectionStatus(quality));
-        }
 
-        private void OnSceneConnectionQualityUpdate(ConnectionQuality quality)
-        {
+        private void OnSceneConnectionQualityUpdate(ConnectionQuality quality) =>
             connectionStatusPanelGOController.SetSceneRoomStatus(GetConnectionStatus(quality));
-        }
 
         private void OnSceneStatusUpdate(ICurrentSceneInfo.RunningStatus? status)
         {
@@ -100,6 +104,9 @@ namespace DCL.PluginSystem.Global
                 default: throw new ArgumentOutOfRangeException(nameof(status), status, null);
             }
         }
+
+        private void OnAssetBundleStatusUpdate(AssetBundleRegistryEnum? assetBundleStatus) =>
+            connectionStatusPanelGOController.SetAssetBundleSceneStatus(assetBundleStatus);
 
         private static ConnectionStatus GetConnectionStatus(ConnectionQuality quality)
         {
