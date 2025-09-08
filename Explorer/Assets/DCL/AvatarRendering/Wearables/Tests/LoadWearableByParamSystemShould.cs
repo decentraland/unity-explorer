@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             WearableDTO wearableDTO = new WearableDTO();
             wearableDTO.id = existingURN;
-            wearableDTO.assetBundleManifestVersion = new AssetBundleManifestVersion("v18", "2024-05-01T05:41:08.138Z");
+            wearableDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback("v18", "2024-05-01T05:41:08.138Z");
 
             wearableStorage.wearablesCache.Add(existingURN, new FakeWearable(wearableDTO));
             await ConcludeSuccess();

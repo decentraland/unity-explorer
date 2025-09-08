@@ -23,16 +23,11 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     public partial class LoadSceneDefinitionSystem : LoadSystemBase<SceneEntityDefinition, GetSceneDefinition>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly URLBuilder urlBuilder = new ();
-        private readonly URLDomain assetBundleURL;
 
-
-
-        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache, URLDomain assetBundleURL)
+        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
-            this.assetBundleURL = assetBundleURL;
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)

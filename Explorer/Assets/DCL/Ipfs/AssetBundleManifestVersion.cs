@@ -9,27 +9,13 @@ public class AssetBundleManifestVersion
         //This was done to solve cache issues
         private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
 
-        private bool? HasHashInPathValue;
+        internal bool? HasHashInPathValue;
 
-        public AssetBundleManifestVersionPerPlatform assets;
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
+        public AssetBundleManifestVersionPerPlatform assets;
 
-        public AssetBundleManifestVersion() { }
-
-        public AssetBundleManifestVersion(string assetBundleManifestVerison, string buildDate, bool hasHashInPath)
-        {
-            assets =  new AssetBundleManifestVersionPerPlatform();
-            assets.SetVersion(assetBundleManifestVerison, buildDate);
-            HasHashInPathValue = hasHashInPath;
-        }
-
-
-        public AssetBundleManifestVersion(string assetBundleManifestVerison, string buildDate)
-        {
-            assets =  new AssetBundleManifestVersionPerPlatform();
-            assets.SetVersion(assetBundleManifestVerison, buildDate);
-        }
+        private AssetBundleManifestVersion() { }
 
         public bool HasHashInPath()
         {
@@ -50,29 +36,65 @@ public class AssetBundleManifestVersion
         public string GetAssetBundleManifestBuildDate() =>
             IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets.windows.buildDate : assets.mac.buildDate;
 
-        //Used only for manual creation
-        public AssetBundleManifestVersion(string assetBundleManifestVersionMac, string assetBundleManifestVersionWin, string buildDate)
-        {
-            assets =  new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDate);;
-            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDate);;
-            HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
-        }
-
         public bool IsEmpty() =>
             assets.IsEmpty();
 
         public static AssetBundleManifestVersion CreateFailed()
         {
-            AssetBundleManifestVersion assetBundleManifestVersion = new AssetBundleManifestVersion();
-            assetBundleManifestVersion.assetBundleManifestRequestFailed = true;
+            var assetBundleManifestVersion = new AssetBundleManifestVersion
+            {
+                assetBundleManifestRequestFailed = true,
+            };
+
             return assetBundleManifestVersion;
         }
 
         public static AssetBundleManifestVersion CreateLSDAsset()
         {
+            var assetBundleManifestVersion = new AssetBundleManifestVersion
+            {
+                IsLSDAsset = true,
+            };
+
+            return assetBundleManifestVersion;
+        }
+
+        public static AssetBundleManifestVersion CreateManualManifest(string assetBundleManifestVersionMac, string assetBundleManifestVersionWin, string buildDate)
+        {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
-            assetBundleManifestVersion.IsLSDAsset = true;
+            var assets = new AssetBundleManifestVersionPerPlatform();
+            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDate);
+            ;
+            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDate);
+            ;
+
+            assetBundleManifestVersion.assets = assets;
+            assetBundleManifestVersion.HasHashInPath();
+
+            return assetBundleManifestVersion;
+        }
+
+        public static AssetBundleManifestVersion CreateFromFallback(string version, string buildDate)
+        {
+            var assets = new AssetBundleManifestVersionPerPlatform();
+            assets.SetVersion(version, buildDate);
+
+            var assetBundleManifestVersion = new AssetBundleManifestVersion();
+            assetBundleManifestVersion.assets = assets;
+            assetBundleManifestVersion.HasHashInPath();
+
+            return assetBundleManifestVersion;
+        }
+
+        public static AssetBundleManifestVersion CreateForLOD(string assetBundleManifestVerison, string buildDate)
+        {
+            var assets = new AssetBundleManifestVersionPerPlatform();
+            assets.SetVersion(assetBundleManifestVerison, buildDate);
+
+            var assetBundleManifestVersion = new AssetBundleManifestVersion();
+            assetBundleManifestVersion.assets = assets;
+            assetBundleManifestVersion.HasHashInPathValue = false;
+
             return assetBundleManifestVersion;
         }
     }

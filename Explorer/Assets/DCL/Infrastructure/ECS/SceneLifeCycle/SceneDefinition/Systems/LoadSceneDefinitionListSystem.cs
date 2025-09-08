@@ -42,19 +42,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private static readonly SceneMetadataConverter SCENE_METADATA_CONVERTER = new ();
 
         private readonly ProfilerMarker deserializationSampler;
-        private readonly URLBuilder urlBuilder = new ();
-        private readonly URLDomain assetBundleURL;
-
-
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
-            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, URLDomain assetBundleURL)
+            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
-            this.assetBundleURL = assetBundleURL;
-
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
 

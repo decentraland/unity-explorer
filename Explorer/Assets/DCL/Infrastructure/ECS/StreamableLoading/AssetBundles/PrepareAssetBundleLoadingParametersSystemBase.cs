@@ -108,7 +108,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
                 return inputHash;
-            
+
             var span = inputHash.AsSpan();
             return (span.Length >= 2 && span[0] == 'Q' && span[1] == 'm')
                 ? inputHash.ToLowerInvariant()

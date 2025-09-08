@@ -3,6 +3,7 @@ using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
+using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -25,7 +26,7 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, TestSuite.TestWebRequestController.INSTANCE, cache, URLDomain.EMPTY);
+            new (world, TestWebRequestController.INSTANCE, cache);
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {
