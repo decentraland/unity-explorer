@@ -56,6 +56,11 @@ namespace DCL.UI.GenericContextMenuParameter
             return this;
         }
 
+        public void ClearControls()
+        {
+            contextMenuSettings.Clear();
+        }
+
         public void ChangeAnchorPoint(ContextMenuOpenDirection newAnchorPoint)
         {
             this.anchorPoint = newAnchorPoint;

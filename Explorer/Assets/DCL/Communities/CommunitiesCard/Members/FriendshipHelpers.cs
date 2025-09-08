@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using System;
 

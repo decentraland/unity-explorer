@@ -12,9 +12,11 @@ namespace DCL.UI.SelectorButton
 
         [SerializeField] private Button? optionButton;
         [SerializeField] private TMP_Text? optionText;
+        [SerializeField] private GameObject? selectedMark;
 
         public string OptionTitle => optionText != null ? optionText.text : string.Empty;
         public bool IsHidden => !this.gameObject.activeSelf;
+        public bool IsSelected { get; set; }
 
         private void OnEnable() =>
             optionButton?.onClick.AddListener(OnClick);
@@ -35,6 +37,9 @@ namespace DCL.UI.SelectorButton
             this.gameObject.SetActive(!isHidden);
             VisibilityChanged?.Invoke();
         }
+
+        public void SetSelectedMarkActive(bool isActive) =>
+            selectedMark?.SetActive(isActive);
 
         private void OnClick() =>
             Clicked?.Invoke(this);

@@ -78,7 +78,7 @@ namespace DCL.MarketplaceCredits
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            INotificationsBusController notificationBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,

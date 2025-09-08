@@ -209,6 +209,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3700927988506820419, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
+      propertyPath: defaultEmptyThumbnail
+      value: 
+      objectReference: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
     - target: {fileID: 4116272842481412131, guid: 4fa8b8e01379f3e448b74360765713d2, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
