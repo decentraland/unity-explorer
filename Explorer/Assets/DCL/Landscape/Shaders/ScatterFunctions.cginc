@@ -85,7 +85,7 @@ float4 QuaternionMultiply(float4 q1, float4 q2)
 }
 
 float CalculateHeightFromHeightmap(float2 uv, float _fDistanceFieldScale,
-    in Texture2D _heightMapTexture, in Texture2D _occupancyTexture)
+    in Texture2D _heightMapTexture, in Texture2D _occupancyTexture, float MinDistOccupancy)
 {
     const float fHeightmap_TexelSize = 1.0f / 8192.0f;
 
@@ -103,7 +103,7 @@ float CalculateHeightFromHeightmap(float2 uv, float _fDistanceFieldScale,
     const float fOccupancy11 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(fHeightmap_TexelSize, fHeightmap_TexelSize), 0).r;
     
     const float fOccupancy = (fOccupancy00 + fOccupancy10 + fOccupancy01 + fOccupancy11) * 0.25f;
-    const float minValue = 155.0f / 255.0f;
+    const float minValue = MinDistOccupancy;
 
     float result = 0.0f;
     
@@ -199,7 +199,7 @@ half4 SplatmapMix(float2 uv, in Texture2D _terrainBlendTexture,
     return mixedDiffuse;
 }
 
-float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale, in Texture2D _heightMapTexture, in Texture2D _occupancyTexture)
+float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale, in Texture2D _heightMapTexture, in Texture2D _occupancyTexture, float MinDistOccupancy)
 {
     float _Heightmap_TexelSize = 1.0f / 8192.0f;
     
@@ -254,7 +254,7 @@ float3 CalculateNormalFromHeightmap(float2 uv, float _DistanceFieldScale, in Tex
     float fOccupancy7 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset7 * _Heightmap_TexelSize), 0).r;
     float fOccupancy8 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + (offset8 * _Heightmap_TexelSize), 0).r;
 
-    float minValue = 175.0f / 255.0f;
+    float minValue = MinDistOccupancy;
 
     fOccupancy0 = (fOccupancy0 <= minValue) ? 0.0f : (fOccupancy0 - minValue) / (1.0f - minValue);
     fOccupancy1 = (fOccupancy1 <= minValue) ? 0.0f : (fOccupancy1 - minValue) / (1.0f - minValue);

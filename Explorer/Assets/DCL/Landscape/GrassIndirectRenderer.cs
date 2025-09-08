@@ -314,6 +314,7 @@ namespace Decentraland.Terrain
 
             ScatterGrassShader.SetVector("TerrainBounds", terrainBounds);
             ScatterGrassShader.SetFloat("TerrainHeight", TerrainGenerator.MAX_HEIGHT);
+            ScatterGrassShader.SetFloat("_MinDistOccupancy", terrainGenerator.OccupancyFloor / 255f);
             ScatterGrassShader.SetTexture(kernelIndex, "HeightMapTexture", HeightMapTexture);
             ScatterGrassShader.SetTexture(kernelIndex, "TerrainBlendTexture", TerrainBlendTexture);
             ScatterGrassShader.SetTexture(kernelIndex, "GroundDetailTexture", GroundDetailTexture);
@@ -376,6 +377,7 @@ namespace Decentraland.Terrain
             ScatterFlowersShader.SetFloat("fDistanceFieldScale", fDistanceFieldScale);
             ScatterFlowersShader.SetFloat("nHeightMapSize", nHeightMapSize);
             ScatterFlowersShader.SetFloat("fSplatMapTiling", fSplatMapTiling);
+            ScatterFlowersShader.SetFloat("_MinDistOccupancy", terrainGenerator.OccupancyFloor / 255f);
             ScatterFlowersShader.SetTexture(kernelIndex, "HeightMapTexture", HeightMapTexture);
             ScatterFlowersShader.SetTexture(kernelIndex, "TerrainBlendTexture", TerrainBlendTexture);
             ScatterFlowersShader.SetTexture(kernelIndex, "GroundDetailTexture", GroundDetailTexture);
@@ -437,6 +439,7 @@ namespace Decentraland.Terrain
             ScatterCatTailsShader.SetFloat("fDistanceFieldScale", fDistanceFieldScale);
             ScatterCatTailsShader.SetFloat("nHeightMapSize", nHeightMapSize);
             ScatterCatTailsShader.SetFloat("fSplatMapTiling", fSplatMapTiling);
+            ScatterCatTailsShader.SetFloat("_MinDistOccupancy", terrainGenerator.OccupancyFloor / 255f);
             ScatterCatTailsShader.SetTexture(kernelIndex, "HeightMapTexture", HeightMapTexture);
             ScatterCatTailsShader.SetTexture(kernelIndex, "TerrainBlendTexture", TerrainBlendTexture);
             ScatterCatTailsShader.SetTexture(kernelIndex, "GroundDetailTexture", GroundDetailTexture);

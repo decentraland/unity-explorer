@@ -25,6 +25,7 @@ CBUFFER_START(UnityPerMaterial)
     float _YellowThreshold;
     float _BlendSmoothness;
     half _DistanceFieldScale;
+    half _MinDistOccupancy;
     UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -47,6 +48,7 @@ UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
     UNITY_DOTS_INSTANCED_PROP(float, _YellowThreshold)
     UNITY_DOTS_INSTANCED_PROP(float, _BlendSmoothness)
     UNITY_DOTS_INSTANCED_PROP(float, _DistanceFieldScale)
+    UNITY_DOTS_INSTANCED_PROP(float, _MinDistOccupancy)
 UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 
 static float4   unity_DOTS_Sampled_BaseColor;
@@ -66,6 +68,7 @@ static float    unity_DOTS_Sampled_RedThreshold;
 static float    unity_DOTS_Sampled_YellowThreshold;
 static float    unity_DOTS_Sampled_BlendSmoothness;
 static float    unity_DOTS_Sampled_DistanceFieldScale;
+static float    unity_DOTS_Sampled_MinDistOccupancy;
 
 void SetupDOTSSimpleLitMaterialPropertyCaches()
 {
@@ -85,7 +88,8 @@ void SetupDOTSSimpleLitMaterialPropertyCaches()
     unity_DOTS_Sampled_RedThreshold         = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _RedThreshold);
     unity_DOTS_Sampled_YellowThreshold      = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _YellowThreshold);
     unity_DOTS_Sampled_BlendSmoothness      = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _BlendSmoothness);
-    unity_DOTS_Sampled_DistanceFieldScale  = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _DistanceFieldScale);
+    unity_DOTS_Sampled_DistanceFieldScale   = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _DistanceFieldScale);
+    unity_DOTS_Sampled_MinDistOccupancy     = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _MinDistOccupancy);
 }
 
 #undef UNITY_SETUP_DOTS_MATERIAL_PROPERTY_CACHES
@@ -108,6 +112,7 @@ void SetupDOTSSimpleLitMaterialPropertyCaches()
 #define _YellowThreshold        unity_DOTS_Sampled_YellowThreshold
 #define _BlendSmoothness        unity_DOTS_Sampled_BlendSmoothness
 #define _DistanceFieldScale     unity_DOTS_Sampled_DistanceFieldScale
+#define _MinDistOccupancy       unity_DOTS_Sampled_MinDistOccupancy
 
 #endif
 

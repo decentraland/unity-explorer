@@ -19,6 +19,7 @@ Shader "DCL/MountainLit"
         _UseHeightMap("Use HeightMap", Range(0, 1)) = 0
         _HeightMapScale("HeightMap Scale", Float) = 4.3567
 
+        [HideInInspector] _MinDistOccupancy ("MinDistOccupancy", float) = 155.0
         _OccupancyMap("Occupancy Map", 2D) = "black" {}
         _DistanceFieldMap("Distance Field Map", 2D) = "black" {}
 

@@ -20,7 +20,7 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     float fHeightMapValue = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, heightUV, 0).x;
     fOccupancy = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, heightUV, 0).r;
 
-    float minValue = 155.0 / 255.0;
+    float minValue = _MinDistOccupancy;
 
     if (fOccupancy <= minValue)
     {

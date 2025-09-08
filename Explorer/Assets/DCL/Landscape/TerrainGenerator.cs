@@ -182,8 +182,10 @@ namespace DCL.Landscape
 
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
 
-                    OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
-                    OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
+                    // The MinParcel, MaxParcel already has padding, so padding zero works here,
+                    // but in reality we should remove integrated padding and utilise padding parameter as it would make things more scalable and less confusing
+                    OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+                    OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
 
                     // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
                     OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);

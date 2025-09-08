@@ -25,6 +25,7 @@ cbuffer ConstBuffer : register(b0)
     float fDistanceFieldScale;
     float nHeightMapSize;
     float fSplatMapTiling;
+    float _MinDistOccupancy;
 }
 
 Texture2D<float4> HeightMapTexture : register(t0);
@@ -101,9 +102,9 @@ void CatTailScatter(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, 
         const float2 UV_coords = (worldSpaceCoord + (nHeightMapSize/2.0f)) / nHeightMapSize;
 
         // Get Height
-        const float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
+        const float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture, _MinDistOccupancy);
         const float fScale = 1.0f + (2.0f * hash_int_to_float(currentGridPosition + localId.x));
-        const float3 normalWS = CalculateNormalFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture);
+        const float3 normalWS = CalculateNormalFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture, _MinDistOccupancy);
 
         perInst.position = float4(currentGridPosition.x + random_X, height, currentGridPosition.y + random_Z, fScale);
         perInst.quatRotation = CreateGrassRotationQuaternion(normalWS, hash_int_to_float(currentGridPosition + localId.x));
