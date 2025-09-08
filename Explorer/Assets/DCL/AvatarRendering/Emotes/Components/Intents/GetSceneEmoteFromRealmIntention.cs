@@ -2,6 +2,7 @@ using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -21,18 +22,18 @@ namespace DCL.AvatarRendering.Emotes
 
         public CancellationTokenSource CancellationTokenSource { get; }
         public string SceneId { get; }
-        public SceneAssetBundleManifest AssetBundleManifest { get; }
         public string EmoteHash { get; }
         public bool Loop { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
-        public bool IsAssetBundleProcessed { get; set; }
+
+        private AssetBundleManifestVersion SceneAssetBundleManifestVersion;
 
         public LoadTimeout Timeout { get; private set; }
 
         public GetSceneEmoteFromRealmIntention(
             string sceneId,
-            SceneAssetBundleManifest assetBundleManifest,
+            AssetBundleManifestVersion sceneAssetBundleManifestVersion,
             string emoteHash,
             bool loop,
             BodyShape bodyShape,
@@ -41,13 +42,13 @@ namespace DCL.AvatarRendering.Emotes
         ) : this()
         {
             SceneId = sceneId;
-            AssetBundleManifest = assetBundleManifest;
             EmoteHash = emoteHash;
             Loop = loop;
             CancellationTokenSource = new CancellationTokenSource();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
             Timeout = new LoadTimeout(timeout, 0);
+            SceneAssetBundleManifestVersion = sceneAssetBundleManifestVersion;
         }
 
         public bool Equals(GetSceneEmoteFromRealmIntention other) =>
@@ -100,10 +101,11 @@ namespace DCL.AvatarRendering.Emotes
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(typeof(GameObject),
                     this.EmoteHash + PlatformUtils.GetCurrentPlatform(),
+                    assetBundleManifestVersion: SceneAssetBundleManifestVersion,
+                    parentEntityID: SceneId,
                     permittedSources: this.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory.Value,
-                    cancellationTokenSource: this.CancellationTokenSource,
-                    manifest: this.AssetBundleManifest),
+                    cancellationTokenSource: this.CancellationTokenSource),
                 partitionComponent);
 
             world.Create(promise, emote, this.BodyShape);
