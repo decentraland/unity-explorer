@@ -1,6 +1,7 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using System;
 using System.Collections.Generic;
-using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {

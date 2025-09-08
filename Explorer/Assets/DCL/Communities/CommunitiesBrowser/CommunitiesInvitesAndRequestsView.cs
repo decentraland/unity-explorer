@@ -166,7 +166,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
                 else
                 {
-                    requestCard.SetActonLoadingActive(false);
+                    requestCard.SetActionLoadingActive(false);
                     ClearSelection();
                 }
 
@@ -193,7 +193,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
                 else
                 {
-                    invitationCard.SetActonLoadingActive(false);
+                    invitationCard.SetActionLoadingActive(false);
                     ClearSelection();
                 }
 
@@ -232,7 +232,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.SetMembersCount(community.membersCount);
             invitedCommunityCardView.SetInviteOrRequestId(community.id);
             invitedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
-            invitedCommunityCardView.SetActonLoadingActive(false);
+            invitedCommunityCardView.SetActionLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events
@@ -271,7 +271,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.SetMembersCount(community.membersCount);
             requestedCommunityCardView.SetInviteOrRequestId(community.id);
             requestedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
-            requestedCommunityCardView.SetActonLoadingActive(false);
+            requestedCommunityCardView.SetActionLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events

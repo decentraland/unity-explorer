@@ -1,5 +1,4 @@
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.SocialService;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
@@ -27,7 +26,6 @@ namespace DCL.VoiceChat
             ISocialServiceEventBus socialServiceEventBus,
             IRoomHub roomHub,
             IWeb3IdentityCache identityCache,
-            INotificationsBusController notificationsBusController,
             IWebRequestController webRequestController,
             PlayerParcelTrackerService parcelTrackerService,
             IRealmNavigator realmNavigator,
@@ -40,8 +38,8 @@ namespace DCL.VoiceChat
 
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController);
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(parcelTrackerService, realmNavigator, realmData);
-            CommunityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, notificationsBusController, sceneVoiceChatTrackerService);
-            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService, notificationsBusController);
+            CommunityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService);
+            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService);
         }
 
         public void Dispose()

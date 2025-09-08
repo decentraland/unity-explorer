@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;

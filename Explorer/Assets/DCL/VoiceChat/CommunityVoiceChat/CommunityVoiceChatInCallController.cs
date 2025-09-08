@@ -1,5 +1,6 @@
 using DCL.Audio;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.WebRequests;

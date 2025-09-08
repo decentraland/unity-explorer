@@ -6,6 +6,10 @@ using System;
 using System.Threading;
 using Utility;
 using Utility.Types;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.NotificationsBusController.NotificationTypes;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -24,8 +28,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
 
         private readonly FilteredCommunitiesView view;
-        private readonly CommunitiesDataProvider dataProvider;
-        private readonly CommunitiesBrowserErrorNotificationService errorNotificationService;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
 
         private string currentNameFilter = string.Empty;
         private bool currentIsOwnerFilter;
@@ -38,11 +41,10 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource? loadResultsCts;
 
         public CommunitiesBrowserFilteredCommunitiesPresenter(
-            FilteredCommunitiesView view, CommunitiesDataProvider dataProvider, CommunitiesBrowserErrorNotificationService errorNotificationService, ProfileRepositoryWrapper profileRepositoryWrapper)
+            FilteredCommunitiesView view, CommunitiesDataProvider.CommunitiesDataProvider dataProvider, ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.view = view;
             this.dataProvider = dataProvider;
-            this.errorNotificationService = errorNotificationService;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.CommunityJoined += OnCommunityJoined;
@@ -161,7 +163,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!result.Success)
             {
-                errorNotificationService.ShowWarningNotification(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE));
                 return;
             }
 

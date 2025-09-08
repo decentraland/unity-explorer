@@ -1,7 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
-using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Utilities;
 using System;

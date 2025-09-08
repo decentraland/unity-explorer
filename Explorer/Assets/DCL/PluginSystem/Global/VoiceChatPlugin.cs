@@ -2,7 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;

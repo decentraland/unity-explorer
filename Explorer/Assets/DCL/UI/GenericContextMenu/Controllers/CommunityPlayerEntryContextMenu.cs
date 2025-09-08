@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
-using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;

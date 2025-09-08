@@ -15,6 +15,7 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using UnityEngine.InputSystem;

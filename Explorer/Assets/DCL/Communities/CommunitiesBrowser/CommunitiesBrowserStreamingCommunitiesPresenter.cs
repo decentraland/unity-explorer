@@ -1,12 +1,15 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using System;
 using System.Threading;
 using Utility.Types;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -15,9 +18,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Streaming Communities. Please try again.";
 
         private readonly StreamingCommunitiesView view;
-        private readonly CommunitiesDataProvider dataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly CommunitiesBrowserStateService browserStateService;
-        private readonly CommunitiesBrowserErrorNotificationService errorNotificationService;
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -26,16 +28,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public CommunitiesBrowserStreamingCommunitiesPresenter(
             StreamingCommunitiesView view,
-            CommunitiesDataProvider dataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             CommunitiesBrowserStateService browserStateService,
-            CommunitiesBrowserErrorNotificationService errorNotificationService,
             ICommunityCallOrchestrator orchestrator,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
-            this.errorNotificationService = errorNotificationService;
             this.orchestrator = orchestrator;
             this.sharedSpaceManager = sharedSpaceManager;
 
@@ -94,7 +94,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!result.Success)
             {
-                errorNotificationService.ShowWarningNotification(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(STREAMING_COMMUNITIES_LOADING_ERROR_MESSAGE));
                 return;
             }
 

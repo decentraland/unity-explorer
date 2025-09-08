@@ -22,22 +22,21 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public CommunitiesBrowserRightSectionPresenter(
             CommunitiesBrowserRightSectionView view,
-            CommunitiesDataProvider dataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             ISharedSpaceManager sharedSpaceManager,
             CommunitiesBrowserStateService browserStateService,
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ICommunityCallOrchestrator orchestrator,
-            CommunitiesBrowserErrorNotificationService errorNotificationService)
+            ICommunityCallOrchestrator orchestrator)
         {
             this.view = view;
 
             streamingCommunitiesPresenter = new CommunitiesBrowserStreamingCommunitiesPresenter(view.StreamingCommunitiesView, dataProvider,
-                browserStateService, errorNotificationService, orchestrator, sharedSpaceManager);
+                browserStateService, orchestrator, sharedSpaceManager);
 
             streamingCommunitiesPresenter.ViewAllClicked += OnViewAllStreamingCommunities;
 
-            filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, errorNotificationService, profileRepositoryWrapper);
+            filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, profileRepositoryWrapper);
             filteredCommunitiesPresenter.ResultsBackButtonClicked += LoadAllCommunities;
             filteredCommunitiesPresenter.CommunityJoined += OnCommunityJoined;
             filteredCommunitiesPresenter.CommunityProfileOpened += OnCommunityProfileOpened;

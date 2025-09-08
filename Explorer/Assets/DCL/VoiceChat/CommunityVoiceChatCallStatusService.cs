@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.NotificationsBusController.NotificationsBus;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
@@ -18,7 +18,6 @@ namespace DCL.VoiceChat
         private const string TAG = nameof(CommunityVoiceChatCallStatusService);
 
         private readonly ICommunityVoiceService voiceChatService;
-        private readonly INotificationsBusController notificationBusController;
         private readonly SceneVoiceChatTrackerService voiceChatSceneTrackerService;
         private readonly Dictionary<string, ReactiveProperty<bool>> communityVoiceChatCalls = new ();
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
@@ -28,11 +27,9 @@ namespace DCL.VoiceChat
 
         public CommunityVoiceChatCallStatusService(
             ICommunityVoiceService voiceChatService,
-            INotificationsBusController notificationBusController,
             SceneVoiceChatTrackerService voiceChatSceneTrackerService)
         {
             this.voiceChatService = voiceChatService;
-            this.notificationBusController = notificationBusController;
             this.voiceChatSceneTrackerService = voiceChatSceneTrackerService;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
             this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
@@ -350,7 +347,7 @@ namespace DCL.VoiceChat
 
                 // We only show notification if we are part of the community, and we didn't start the stream ourselves
                 if (communityUpdate.IsMember && communityUpdate.CommunityId != locallyStartedCommunityId)
-                    notificationBusController.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage, communityUpdate.CommunityId));
+                    Notifications.NotificationsBusController.Instance.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage, communityUpdate.CommunityId));
             }
         }
 

@@ -8,7 +8,7 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -159,10 +159,12 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
-            cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, default(CancellationToken)).Forget();
-            cardView.SetJoiningLoadingActive(false);
+            cardView.SetActionLoadingActive(false);
+
+            //TODO FRAN -> CHECK THIS ONE!!!!
+            //cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
 
             // Setup card events
             cardView.MainButtonClicked -= OnCommunityProfileOpened;
@@ -186,7 +188,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityJoined(string communityId, CommunityResultCardView cardView)
         {
-            cardView.SetJoiningLoadingActive(true);
+            cardView.SetActionLoadingActive(true);
             CommunityJoined?.Invoke(communityId);
         }
     }

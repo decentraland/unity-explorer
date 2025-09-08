@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities.Extensions;
 using System;
 using System.Threading;
 using Utility;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -14,23 +16,20 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action? ViewAllMyCommunitiesButtonClicked;
 
         private readonly MyCommunitiesView view;
-        private readonly CommunitiesDataProvider dataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly CommunitiesBrowserStateService browserStateService;
-        private readonly CommunitiesBrowserErrorNotificationService errorNotificationService;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
 
         public CommunitiesBrowserMyCommunitiesPresenter(
             MyCommunitiesView view,
-            CommunitiesDataProvider dataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             CommunitiesBrowserStateService browserStateService,
-            ThumbnailLoader thumbnailLoader,
-            CommunitiesBrowserErrorNotificationService errorNotificationService)
+            ThumbnailLoader thumbnailLoader)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
-            this.errorNotificationService = errorNotificationService;
 
             view.SetDependencies(browserStateService, thumbnailLoader);
             view.ViewAllMyCommunitiesButtonClicked += OnViewAllMyCommunitiesClicked;
@@ -59,7 +58,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!result.Success)
             {
-                errorNotificationService.ShowWarningNotification(MY_COMMUNITIES_LOADING_ERROR_MESSAGE).Forget();
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MY_COMMUNITIES_LOADING_ERROR_MESSAGE));
                 return;
             }
 

@@ -1,14 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
 using System;
-using System.Net;
 using System.Threading;
 using Utility;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.VoiceChat
 {
@@ -19,7 +18,6 @@ namespace DCL.VoiceChat
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
-        private readonly INotificationsBusController notificationBusController;
 
         private readonly IDisposable privateStatusSubscription;
         private readonly IDisposable communityStatusSubscription;
@@ -51,16 +49,14 @@ namespace DCL.VoiceChat
             PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             VoiceChatParticipantsStateService participantsStateService,
-            SceneVoiceChatTrackerService sceneVoiceChatTrackerService,
-            INotificationsBusController notificationBusController)
+            SceneVoiceChatTrackerService sceneVoiceChatTrackerService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
-            this.notificationBusController = notificationBusController;
             ParticipantsStateService = participantsStateService;
 
-            this.notificationBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_VOICE_CHAT_STARTED, OnClickedNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_VOICE_CHAT_STARTED, OnClickedNotification);
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
