@@ -500,7 +500,7 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder);
+            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, assetsProvisioner);
 
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 

@@ -53,6 +53,7 @@ MonoBehaviour:
   - rid: 6144113899072913496
   - rid: 648265872610426982
   - rid: 657752310186246267
+  - rid: 4600740541208461400
   references:
     version: 2
     RefIds:
@@ -611,6 +612,15 @@ MonoBehaviour:
       data:
         CharacterPreviewContainerReference:
           m_AssetGUID: 23318cb20f4dbe9429dd8be585ef75d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 4600740541208461400
+      type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        UiDocumentPrefab:
+          m_AssetGUID: 6ade66d1c3c0b42f389ff610295b9c13
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

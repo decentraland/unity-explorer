@@ -2,7 +2,6 @@ using DCL.UI.ConnectionStatusPanel.StatusEntry;
 using DCL.Utilities.Extensions;
 using MVC;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.UI.ConnectionStatusPanel

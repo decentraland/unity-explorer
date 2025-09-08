@@ -59,8 +59,8 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
 
-            if (!isLocalSceneDevelopment)
-                mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
+            // if (!isLocalSceneDevelopment)
+            //     mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)
             {
