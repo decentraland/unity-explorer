@@ -1,4 +1,3 @@
-using CodeLess.Attributes;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,23 +6,22 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Chat
 {
-    [Singleton(SingletonGenerationBehavior.GENERATE_STATIC_ACCESSORS)]
-    public partial class ChatConversationsToolbarViewItemPool
+    internal class ChatConversationsToolbarViewItemPool
     {
         private readonly RectTransform itemsContainer;
         private readonly Dictionary<Type, (object Pool, Action<object> ReleaseAction)> poolRegistry = new ();
 
-        public static T Get<T>() where T : ChatConversationsToolbarViewItem
+        public T Get<T>() where T : ChatConversationsToolbarViewItem
         {
-            if (Instance.poolRegistry.TryGetValue(typeof(T), out (object Pool, Action<object> ReleaseAction) poolHandle))
+            if (poolRegistry.TryGetValue(typeof(T), out (object Pool, Action<object> ReleaseAction) poolHandle))
                 return ((ObjectPool<T>) poolHandle.Pool).Get();
 
             throw new Exception($"No pool found for type {typeof(T)}. Make sure to register it in the constructor.");
         }
 
-        public static void Release<T>(T item) where T : ChatConversationsToolbarViewItem
+        public void Release<T>(T item) where T : ChatConversationsToolbarViewItem
         {
-            if (Instance.poolRegistry.TryGetValue(item.GetType(), out var poolHandle))
+            if (poolRegistry.TryGetValue(item.GetType(), out var poolHandle))
             {
                 poolHandle.ReleaseAction.Invoke(item);
                 return;

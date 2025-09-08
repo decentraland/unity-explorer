@@ -185,11 +185,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 918d043c7a901cd458ff04ab88561f38
-    m_Address: Assets/DCL/Chat/Assets/ConversationToolbar/ChatConversationsToolbarViewItem.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 933532a4fcc9baf4fa0491de14d08ed7
     m_Address: Lit.shader
     m_ReadOnly: 0
@@ -197,16 +192,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9372c7ef01a5a4a52a0e9b3467605717
     m_Address: M_Eyes_00
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 954dae08a8ee75d449d12698e42bf923
-    m_Address: Assets/DCL/Chat/Assets/ConversationToolbar/ChatConversationsToolbarViewItem_Community.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9aa01414a8609a74d9e7a38295a6ba1f
-    m_Address: Assets/DCL/Chat/Assets/ConversationToolbar/ChatConversationsToolbarViewItem_Private.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

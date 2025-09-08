@@ -23,6 +23,15 @@ namespace DCL.Chat
         private CanvasGroup conversationsToolbarCanvasGroup;
 
         [SerializeField]
+        private ChatConversationsToolbarViewItem itemNearbyPrefab;
+
+        [SerializeField]
+        private PrivateChatConversationsToolbarViewItem itemPrivatePrefab;
+
+        [SerializeField]
+        private CommunityChatConversationsToolbarViewItem itemCommunityPrefab;
+
+        [SerializeField]
         private CanvasGroup scrollButtons;
 
         [SerializeField]
@@ -39,6 +48,11 @@ namespace DCL.Chat
 
         public event Action<ChatChannel.ChannelId> ConversationSelected;
         public event Action<ChatChannel.ChannelId> ConversationRemovalRequested;
+
+        private ChatConversationsToolbarViewItemPool chatConversationsToolbarViewItemPool;
+
+        private void Awake() =>
+            chatConversationsToolbarViewItemPool = new ChatConversationsToolbarViewItemPool(itemsContainer, itemNearbyPrefab, itemPrivatePrefab, itemCommunityPrefab);
 
         /// <summary>
         /// Marks an item as selected.
@@ -62,7 +76,7 @@ namespace DCL.Chat
         {
             if (!items.TryGetValue(channelId, out var itemToRemove)) return;
 
-            ChatConversationsToolbarViewItemPool.Release(itemToRemove);
+            chatConversationsToolbarViewItemPool.Release(itemToRemove);
             items.Remove(channelId);
             UpdateScrollButtonsVisibility();
         }
@@ -73,7 +87,7 @@ namespace DCL.Chat
         public void RemoveAllConversations()
         {
             foreach (var itemsValue in items.Values)
-                ChatConversationsToolbarViewItemPool.Release(itemsValue);
+                chatConversationsToolbarViewItemPool.Release(itemsValue);
             items.Clear();
             UpdateScrollButtonsVisibility();
         }
@@ -254,9 +268,9 @@ namespace DCL.Chat
         {
             ChatConversationsToolbarViewItem newItem = viewModel.ChannelType switch
                                                        {
-                                                           ChatChannel.ChatChannelType.NEARBY => ChatConversationsToolbarViewItemPool.Get<ChatConversationsToolbarViewItem>(),
-                                                           ChatChannel.ChatChannelType.COMMUNITY => ChatConversationsToolbarViewItemPool.Get<CommunityChatConversationsToolbarViewItem>(),
-                                                           ChatChannel.ChatChannelType.USER => ChatConversationsToolbarViewItemPool.Get<PrivateChatConversationsToolbarViewItem>(),
+                                                           ChatChannel.ChatChannelType.NEARBY => chatConversationsToolbarViewItemPool.Get<ChatConversationsToolbarViewItem>(),
+                                                           ChatChannel.ChatChannelType.COMMUNITY => chatConversationsToolbarViewItemPool.Get<CommunityChatConversationsToolbarViewItem>(),
+                                                           ChatChannel.ChatChannelType.USER => chatConversationsToolbarViewItemPool.Get<PrivateChatConversationsToolbarViewItem>(),
                                                            _ => throw new ArgumentOutOfRangeException()
                                                        };
 
