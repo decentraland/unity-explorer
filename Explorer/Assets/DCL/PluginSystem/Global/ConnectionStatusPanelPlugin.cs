@@ -1,17 +1,11 @@
-using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.DebugUtilities;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
-using DCL.UI.MainUI;
-using DCL.UserInAppInitializationFlow;
-using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using LiveKit.Proto;
-using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -26,41 +20,15 @@ namespace DCL.PluginSystem.Global
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly IRoomsStatus roomsStatus;
         private ConnectionStatusPanelController connectionStatusPanelController;
-        private ConnectionStatusPanelGOController connectionStatusPanelGOController;
 
         public ConnectionStatusPanelPlugin(
-            IUserInAppInitializationFlow userInAppInitializationFlow,
-            IMVCManager mvcManager,
-            MainUIView mainUIView,
             IRoomsStatus roomsStatus,
             ICurrentSceneInfo currentSceneInfo,
-            ECSReloadScene ecsReloadScene,
-            Arch.Core.World world,
-            Entity playerEntity,
-            IDebugContainerBuilder debugBuilder,
             IAssetsProvisioner assetsProvisioner)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
-
-            //-----------
-            connectionStatusPanelController = new ConnectionStatusPanelController(() =>
-                {
-                    var view = mainUIView.ConnectionStatusPanelView;
-                    view!.gameObject.SetActive(true);
-                    return view;
-                },
-                userInAppInitializationFlow,
-                mvcManager,
-                currentSceneInfo,
-                ecsReloadScene,
-                roomsStatus,
-                world,
-                playerEntity,
-                debugBuilder
-            );
-            mvcManager.RegisterController(connectionStatusPanelController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -69,7 +37,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
         {
-            connectionStatusPanelGOController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<ConnectionStatusPanelGOController>();
+            connectionStatusPanelController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<ConnectionStatusPanelController>();
 
             OnSceneStatusUpdate(currentSceneInfo.SceneStatus.Value);
             OnSceneConnectionQualityUpdate(roomsStatus.ConnectionQualityScene.Value);
@@ -83,30 +51,30 @@ namespace DCL.PluginSystem.Global
         }
 
         private void OnIslandConnectionQualityUpdate(ConnectionQuality quality) =>
-            connectionStatusPanelGOController.SetGlobalRoomStatus(GetConnectionStatus(quality));
+            connectionStatusPanelController.SetGlobalRoomStatus(GetConnectionStatus(quality));
 
         private void OnSceneConnectionQualityUpdate(ConnectionQuality quality) =>
-            connectionStatusPanelGOController.SetSceneRoomStatus(GetConnectionStatus(quality));
+            connectionStatusPanelController.SetSceneRoomStatus(GetConnectionStatus(quality));
 
         private void OnSceneStatusUpdate(ICurrentSceneInfo.RunningStatus? status)
         {
             switch (status)
             {
                 case ICurrentSceneInfo.RunningStatus.Good:
-                    connectionStatusPanelGOController.SetSceneStatus(ConnectionStatus.Good);
+                    connectionStatusPanelController.SetSceneStatus(ConnectionStatus.Good);
                     break;
                 case ICurrentSceneInfo.RunningStatus.Crashed:
-                    connectionStatusPanelGOController.SetSceneStatus(ConnectionStatus.Lost);
+                    connectionStatusPanelController.SetSceneStatus(ConnectionStatus.Lost);
                     break;
                 case null:
-                    connectionStatusPanelGOController.SetSceneStatus(ConnectionStatus.None);
+                    connectionStatusPanelController.SetSceneStatus(ConnectionStatus.None);
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(status), status, null);
             }
         }
 
         private void OnAssetBundleStatusUpdate(AssetBundleRegistryEnum? assetBundleStatus) =>
-            connectionStatusPanelGOController.SetAssetBundleSceneStatus(assetBundleStatus);
+            connectionStatusPanelController.SetAssetBundleSceneStatus(assetBundleStatus);
 
         private static ConnectionStatus GetConnectionStatus(ConnectionQuality quality)
         {

@@ -10,7 +10,7 @@
     background-color: var(--dcl-color-black-70);
     position: absolute;
     right: 10px;
-    top: 50px;
+    top: 10px;
 }
 
 .toggle-button {

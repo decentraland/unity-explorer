@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using DCL.UI.MainUI;
-using DCL.UI.SharedSpaceManager;
 using MVC;
 
 namespace DCL.PluginSystem.Global
@@ -12,9 +11,7 @@ namespace DCL.PluginSystem.Global
         public MainUIPlugin(
             IMVCManager mvcManager,
             MainUIView mainUIView,
-            bool isFriendsEnabled,
-            ISharedSpaceManager sharedSpaceManager,
-            bool isLocalSceneDevelopment)
+            bool isFriendsEnabled)
         {
             this.mvcManager = mvcManager;
 
@@ -25,9 +22,7 @@ namespace DCL.PluginSystem.Global
                     return mainUIView;
                 },
                 mvcManager,
-                isFriendsEnabled,
-                sharedSpaceManager,
-                isLocalSceneDevelopment
+                isFriendsEnabled
             );
 
             mvcManager.RegisterController(mainUIController);

@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 namespace DCL.UI.ConnectionStatusPanel
 {
     [RequireComponent(typeof(UIDocument))]
-    public class ConnectionStatusPanelGOController : MonoBehaviour
+    public class ConnectionStatusPanelController : MonoBehaviour
     {
         private ConnectionPanelView panelView;
 

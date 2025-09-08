@@ -2,8 +2,6 @@
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
-using DCL.UI.ConnectionStatusPanel;
-using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
 using DG.Tweening;
 using MVC;
@@ -24,8 +22,6 @@ namespace DCL.UI.MainUI
 
         private readonly IMVCManager mvcManager;
         private readonly bool isFriendsEnabled;
-        private readonly bool isLocalSceneDevelopment;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private bool waitingToShowSidebar;
         private bool waitingToHideSidebar;
@@ -40,14 +36,10 @@ namespace DCL.UI.MainUI
         public MainUIController(
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            bool isFriendsEnabled,
-            ISharedSpaceManager sharedSpaceManager,
-            bool isLocalSceneDevelopment) : base(viewFactory)
+            bool isFriendsEnabled) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.isFriendsEnabled = isFriendsEnabled;
-            this.sharedSpaceManager = sharedSpaceManager;
-            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         protected override void OnViewInstantiated()
@@ -58,9 +50,6 @@ namespace DCL.UI.MainUI
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
-
-            if (!isLocalSceneDevelopment)
-                mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)
             {
