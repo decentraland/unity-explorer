@@ -1,11 +1,10 @@
-using DCL.UI.Profiles.Helpers;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class CommunitiesBrowserRightSectionView : MonoBehaviour
+    public class CommunitiesBrowserRightSectionMainView : MonoBehaviour
     {
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
         public event Action? LoopGridScrollChanged;
@@ -37,12 +36,23 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetActiveSection(CommunitiesSections activeSection)
         {
-            if (activeSection == CommunitiesSections.FILTERED_COMMUNITIES)
+            switch (activeSection)
             {
-                streamingCommunitiesView.ClearStreamingResultsItems();
-                filteredCommunitiesView.SetResultsBackButtonVisible(true);
+                case CommunitiesSections.FILTERED_COMMUNITIES:
+                    streamingCommunitiesView.HideStreamingSection();
+                    filteredCommunitiesView.SetResultsBackButtonVisible(true);
+                    filteredCommunitiesView.SetCountTextVisible(true);
+                    break;
+                case CommunitiesSections.BROWSE_ALL_COMMUNITIES:
+                    filteredCommunitiesView.SetResultsBackButtonVisible(false);
+                    filteredCommunitiesView.SetCountTextVisible(true);
+                    break;
+                case CommunitiesSections.REQUESTS_AND_INVITES:
+                    streamingCommunitiesView.HideStreamingSection();
+                    filteredCommunitiesView.SetResultsBackButtonVisible(false);
+                    filteredCommunitiesView.SetCountTextVisible(false);
+                    break;
             }
-            else filteredCommunitiesView.SetResultsBackButtonVisible(false);
         }
     }
 }

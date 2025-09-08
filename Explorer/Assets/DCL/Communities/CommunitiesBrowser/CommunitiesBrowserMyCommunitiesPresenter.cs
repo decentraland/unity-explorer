@@ -51,7 +51,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 onlyMemberOf: true,
                 pageNumber: 1,
                 elementsPerPage: 1000,
-                ct: ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                ct: ct,
+                includeRequestsReceivedPerCommunity: true)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
                 return;

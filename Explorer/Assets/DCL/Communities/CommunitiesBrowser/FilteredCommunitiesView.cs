@@ -191,5 +191,10 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetActionLoadingActive(true);
             CommunityJoined?.Invoke(communityId);
         }
+
+        public void SetCountTextVisible(bool isVisible)
+        {
+            resultsCountText.gameObject.SetActive(isVisible);
+        }
     }
 }

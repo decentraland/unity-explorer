@@ -85,6 +85,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     onlyMemberOf: true,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
+                    false,
                     ct: loadResultsCts.Token)
                .Forget();
         }
@@ -100,12 +101,13 @@ namespace DCL.Communities.CommunitiesBrowser
                     onlyMemberOf: false,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
+                    false,
                     ct: loadResultsCts.Token,
                     true)
                .Forget();
         }
 
-        public async UniTask LoadAllCommunitiesResultsAsync(CancellationToken ct)
+        public async UniTask LoadAllCommunitiesResultsAsync(bool updateInvitations, CancellationToken ct)
         {
             view.SetResultsTitleText(BROWSE_COMMUNITIES_TITLE);
             loadResultsCts = loadResultsCts.SafeRestartLinked(ct);
@@ -115,6 +117,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 onlyMemberOf: false,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
+                updateInvitations,
                 ct: loadResultsCts.Token);
         }
 
@@ -132,11 +135,12 @@ namespace DCL.Communities.CommunitiesBrowser
                     currentOnlyMemberOf,
                     pageNumber: currentPageNumberFilter + 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
+                    updateJoinRequests: false,
                     ct: loadResultsCts.Token)
                .Forget();
         }
 
-        private async UniTask LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct,
+        private async UniTask LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, bool updateJoinRequests, CancellationToken ct,
             bool isStreaming = false)
         {
             isGridResultsLoadingItems = true;
@@ -198,6 +202,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     onlyMemberOf: false,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
+                    updateJoinRequests: false,
                     ct: loadResultsCts.Token)
                .Forget();
         }

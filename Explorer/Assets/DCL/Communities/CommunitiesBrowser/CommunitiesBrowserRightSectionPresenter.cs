@@ -10,7 +10,7 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesBrowserRightSectionPresenter : IDisposable
     {
-        private readonly CommunitiesBrowserRightSectionView view;
+        private readonly CommunitiesBrowserRightSectionMainView view;
 
         private readonly CommunitiesBrowserStreamingCommunitiesPresenter streamingCommunitiesPresenter;
         private readonly CommunitiesBrowserFilteredCommunitiesPresenter filteredCommunitiesPresenter;
@@ -21,7 +21,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string>? CommunityJoined;
 
         public CommunitiesBrowserRightSectionPresenter(
-            CommunitiesBrowserRightSectionView view,
+            CommunitiesBrowserRightSectionMainView view,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             ISharedSpaceManager sharedSpaceManager,
             CommunitiesBrowserStateService browserStateService,
@@ -93,7 +93,12 @@ namespace DCL.Communities.CommunitiesBrowser
             filteredCommunitiesPresenter.RemoveOneMemberFromCounter(communityId);
         }
 
-        public void LoadAllCommunities()
+        private void LoadAllCommunities()
+        {
+            LoadAllCommunities(false);
+        }
+
+        public void LoadAllCommunities(bool updateInvitations)
         {
             ClearSearchBar?.Invoke();
             view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
@@ -106,7 +111,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 await UniTask.WhenAll(
                                   streamingCommunitiesPresenter.LoadStreamingCommunitiesAsync(ct),
-                                  filteredCommunitiesPresenter.LoadAllCommunitiesResultsAsync(ct)
+                                  filteredCommunitiesPresenter.LoadAllCommunitiesResultsAsync(updateInvitations, ct)
                               )
                              .AttachExternalCancellation(ct);
 

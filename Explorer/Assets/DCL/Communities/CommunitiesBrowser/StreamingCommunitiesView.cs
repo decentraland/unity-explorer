@@ -59,7 +59,12 @@ namespace DCL.Communities.CommunitiesBrowser
             streamingLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
-        public void ClearStreamingResultsItems()
+        public void HideStreamingSection()
+        {
+            ClearStreamingResultsItems();
+        }
+
+        private void ClearStreamingResultsItems()
         {
             streamingResultsIds.Clear();
             streamingLoopGrid.SetListItemCount(0, false);

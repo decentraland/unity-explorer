@@ -29,7 +29,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action? CreateCommunityButtonClicked;
 
         public MyCommunitiesView MyCommunitiesView => myCommunitiesView;
-        public CommunitiesBrowserRightSectionView RightSectionView => rightSectionView;
+        public CommunitiesBrowserRightSectionMainView RightSectionView => rightSectionView;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator = null!;
@@ -44,8 +44,8 @@ namespace DCL.Communities.CommunitiesBrowser
         [Header("My Communities Section")]
         [SerializeField] private MyCommunitiesView myCommunitiesView = null!;
 
-        [Header("Right Side Section")]
-        [SerializeField] private CommunitiesBrowserRightSectionView rightSectionView = null!;
+        [Header("Right Side Main Section")]
+        [SerializeField] private CommunitiesBrowserRightSectionMainView rightSectionView = null!;
 
         [Header("Results Section")]
         [SerializeField] private Button resultsBackButton = null!;
@@ -277,7 +277,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         public void SetResultsSectionActive(bool isActive) =>
-            resultsSection.SetActive(isActive);
+            rightSectionView.gameObject.SetActive(isActive);
 
         private void RefreshCommunityCardInGrid(string communityId)
         {

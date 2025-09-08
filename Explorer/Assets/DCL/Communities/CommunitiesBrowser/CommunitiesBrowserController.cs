@@ -39,13 +39,11 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
 
 // TODO FRAN -> DEV
-        private const string MY_GENERAL_RESULTS_TITLE = "Browse Communities";
         private const string INVITES_RESULTS_TITLE = "Invites";
         private const string REQUESTS_RESULTS_TITLE = "Requests";
         private const string INVITES_AND_REQUESTS_RESULTS_TITLE = "Invites & Requests";
         private const int COMMUNITIES_PER_PAGE = 20;
 
-        private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
 // TODO FRAN -> UNTIL HERE
 
@@ -169,6 +167,12 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened -= OpenCommunityProfile;
             view.CreateCommunityButtonClicked -= CreateCommunity;
 
+            view.CommunityJoined -= JoinCommunity;
+            view.CommunityRequestedToJoin -= RequestToJoinCommunity;
+            view.CommunityRequestToJoinCanceled -= CancelRequestToJoinCommunity;
+            view.CommunityInvitationAccepted -= AcceptCommunityInvitation;
+            view.CommunityInvitationRejected -= RejectCommunityInvitation;
+
             myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
 
             UnsubscribeDataProviderEvents();
@@ -177,9 +181,17 @@ namespace DCL.Communities.CommunitiesBrowser
 
             myCommunitiesPresenter.Dispose();
             searchCancellationCts?.SafeCancelAndDispose();
-           // showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
             spriteCache.Clear();
+
+            updateInvitesCounterCts?.SafeCancelAndDispose();
+            joinCommunityCts?.SafeCancelAndDispose();
+            requestToJoinCommunityCts?.SafeCancelAndDispose();
+            cancelRequestToJoinCommunityCts?.SafeCancelAndDispose();
+            acceptCommunityInvitationCts?.SafeCancelAndDispose();
+            rejectCommunityInvitationCts?.SafeCancelAndDispose();
+
+            view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked -= LoadInvitesAndRequestsResults;
         }
 
         public void Activate()
@@ -225,69 +237,33 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ViewAllMyCommunitiesResults()
         {
+            view.SetResultsSectionActive(true);
+            view.InvitesAndRequestsView.SetSectionActive(false);
+            isInvitesAndRequestsSectionActive = false;
             rightSectionPresenter.ViewAllMyCommunitiesResults();
-            /*private void ViewAllMyCommunitiesResults()
-            {
-                ClearSearchBar();
-                view.SetResultsBackButtonVisible(true);
-                view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
-                view.SetResultsCountTextActive(true);
-                view.SetResultsSectionActive(true);
-                view.InvitesAndRequestsView.SetSectionActive(false);
-                isInvitesAndRequestsSectionActive = false;
-
-                loadResultsCts = loadResultsCts.SafeRestart();
-                LoadResultsAsync(
-                    name: string.Empty,
-                    onlyMemberOf: true,
-                    pageNumber: 1,
-                    elementsPerPage: COMMUNITIES_PER_PAGE,
-                    updateJoinRequests: false,
-                    ct: loadResultsCts.Token).Forget();
-
-            }*/
-
-
-// TODO FRAN -> THIS IS FROM DEV ->
-           // view.ResultsLoopGridScrollChanged -= LoadMoreResults;
-            //view.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
-            view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked -= LoadInvitesAndRequestsResults;
-            //view.ResultsBackButtonClicked -= OnResultsBackButtonClicked;
-            view.SearchBarSelected -= DisableShortcutsInput;
-            view.SearchBarDeselected -= RestoreInput;
-            view.SearchBarValueChanged -= SearchBarValueChanged;
-            view.SearchBarSubmit -= SearchBarSubmit;
-            view.SearchBarClearButtonClicked -= SearchBarCleared;
-            view.CommunityProfileOpened -= OpenCommunityProfile;
-            view.CommunityJoined -= JoinCommunity;
-            view.CommunityRequestedToJoin -= RequestToJoinCommunity;
-            view.CommunityRequestToJoinCanceled -= CancelRequestToJoinCommunity;
-            view.CommunityInvitationAccepted -= AcceptCommunityInvitation;
-            view.CommunityInvitationRejected -= RejectCommunityInvitation;
-            view.CreateCommunityButtonClicked -= CreateCommunity;
-
-            UnsubscribeDataProviderEvents();
-
-          //  loadMyCommunitiesCts?.SafeCancelAndDispose();
-//            loadResultsCts?.SafeCancelAndDispose();
-            searchCancellationCts?.SafeCancelAndDispose();
-            openCommunityCreationCts?.SafeCancelAndDispose();
-            updateInvitesCounterCts?.SafeCancelAndDispose();
-            joinCommunityCts?.SafeCancelAndDispose();
-            requestToJoinCommunityCts?.SafeCancelAndDispose();
-            cancelRequestToJoinCommunityCts?.SafeCancelAndDispose();
-            acceptCommunityInvitationCts?.SafeCancelAndDispose();
-            rejectCommunityInvitationCts?.SafeCancelAndDispose();
-            spriteCache.Clear();
-//TODO FRAN -> UNTIL HERE
         }
+        /*private void ViewAllMyCommunitiesResults()
+        {
+            ***ClearSearchBar();
+            ***view.SetResultsBackButtonVisible(true);
+            view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
+            view.SetResultsCountTextActive(true);
+
+            loadResultsCts = loadResultsCts.SafeRestart();
+            LoadResultsAsync(
+                name: string.Empty,
+                onlyMemberOf: true,
+                pageNumber: 1,
+                elementsPerPage: COMMUNITIES_PER_PAGE,
+                updateJoinRequests: false,
+                ct: loadResultsCts.Token).Forget();
+
+        }*/
 
         private void ReloadBrowser()
         {
-            myCommunitiesPresenter.LoadMyCommunities();
-            rightSectionPresenter.LoadAllCommunities();
-//TODO FRAN -> THIS IS FROM DEV
             LoadMyCommunities();
+//TODO FRAN -> THIS IS FROM DEV
             LoadAllCommunitiesResults(updateInvitations: true);
             RefreshInvitesCounter();
         }
@@ -303,54 +279,13 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void LoadMyCommunities()
         {
-          //  loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
-           // LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
+            myCommunitiesPresenter.LoadMyCommunities();
         }
-
-        private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
-        {
-            view.ClearMyCommunitiesItems();
-            view.SetMyCommunitiesAsLoading(true);
-
-            var result = await dataProvider.GetUserCommunitiesAsync(
-                                                name: string.Empty,
-                                                onlyMemberOf: true,
-                                                pageNumber: 1,
-                                                elementsPerPage: 1000,
-                                                ct: ct,
-                                                includeRequestsReceivedPerCommunity: true).SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-            if (ct.IsCancellationRequested)
-                return;
-
-            if (!result.Success)
-            {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MY_COMMUNITIES_LOADING_ERROR_MESSAGE));
-                return;
-            }
-
-            view.AddMyCommunitiesItems(result.Value.data.results, true);
-            view.SetMyCommunitiesAsLoading(false);
-        }
-
-        private void OnResultsBackButtonClicked() =>
-            LoadAllCommunitiesResults();
 
         private void LoadAllCommunitiesResults(bool updateInvitations = false)
         {
-            ClearSearchBar();
-            loadResultsCts = loadResultsCts.SafeRestart();
-            LoadResultsAsync(
-                name: string.Empty,
-                onlyMemberOf: false,
-                pageNumber: 1,
-                elementsPerPage: COMMUNITIES_PER_PAGE,
-                updateInvitations,
-                ct: loadResultsCts.Token).Forget();
+            rightSectionPresenter.LoadAllCommunities(updateInvitations);
 
-            view.SetResultsBackButtonVisible(false);
-            view.SetResultsTitleText(MY_GENERAL_RESULTS_TITLE);
-            view.SetResultsCountTextActive(true);
             view.SetResultsSectionActive(true);
             view.InvitesAndRequestsView.SetSectionActive(false);
             isInvitesAndRequestsSectionActive = false;
@@ -564,36 +499,21 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             if (string.IsNullOrEmpty(searchText))
-                rightSectionPresenter.LoadAllCommunities();
-            else { rightSectionPresenter.LoadSearchResults(searchText); }
-/* TODO FRAN -> FROM DEV
-                LoadAllCommunitiesResults();
+                rightSectionPresenter.LoadAllCommunities(false);
             else
             {
-                view.SetResultsBackButtonVisible(true);
-                view.SetResultsTitleText(string.Format(SEARCH_RESULTS_TITLE_FORMAT, searchText));
-                view.SetResultsCountTextActive(true);
                 view.SetResultsSectionActive(true);
                 view.InvitesAndRequestsView.SetSectionActive(false);
                 isInvitesAndRequestsSectionActive = false;
-
-                loadResultsCts = loadResultsCts.SafeRestart();
-                LoadResultsAsync(
-                    name: searchText,
-                    onlyMemberOf: false,
-                    pageNumber: 1,
-                    elementsPerPage: COMMUNITIES_PER_PAGE,
-                    updateJoinRequests: false,
-                    ct: loadResultsCts.Token).Forget();
+                rightSectionPresenter.LoadSearchResults(searchText);
             }
-TODO FRAN -> UNTIL HERE*/
 
             currentSearchText = searchText;
         }
 
         private void SearchBarCleared()
         {
-            rightSectionPresenter.LoadAllCommunities();
+            rightSectionPresenter.LoadAllCommunities(false);
         }
 
         private void ClearSearchBar()
@@ -958,5 +878,6 @@ TODO FRAN -> UNTIL HERE*/
     {
         BROWSE_ALL_COMMUNITIES,
         FILTERED_COMMUNITIES,
+        REQUESTS_AND_INVITES,
     }
 }
