@@ -102,27 +102,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             combinedHidingList.Clear();
 
             Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
-            HashSet<string> firstWaveHidden = HashSetPool<string>.Get();
             HashSet<string> hidingList = HashSetPool<string>.Get();
 
             for (var i = 0; i < wearables.Count; i++)
                 wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
 
-            foreach (IWearable wearable in wearables)
-            {
-                hidingList.Clear();
-
-                wearable.GetHidingList(bodyShapeId, hidingList);
-
-                foreach (string categoryToHide in hidingList)
-                    firstWaveHidden.Add(categoryToHide);
-            }
-
             foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
             {
                 hidingList.Clear();
 
-                if (firstWaveHidden.Contains(priorityCategory) ||
+                // Skip this category if we've already hidden it or there's no wearable equipped in that category
+                if (combinedHidingList.Contains(priorityCategory) ||
                     !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
                     continue;
 
@@ -138,7 +128,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
             HashSetPool<string>.Release(hidingList);
-            HashSetPool<string>.Release(firstWaveHidden);
         }
 
         public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
