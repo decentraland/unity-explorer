@@ -120,6 +120,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 50f997bbd4ff89a469f03b9794ff393f
+    m_Address: GPUIShaderBindings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 54b5d6841e4a266459c580ddc5340e49
     m_Address: Crossroads_A
     m_ReadOnly: 0
@@ -297,6 +302,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f5096a82bdf411f4090abaf4631ef228
     m_Address: Road_B
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f574592a55beb414bbd9aaaa5e43cbc8
+    m_Address: GPUIShaderVariantCollection
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
