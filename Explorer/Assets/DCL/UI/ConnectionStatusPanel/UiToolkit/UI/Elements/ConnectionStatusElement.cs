@@ -13,8 +13,8 @@ namespace DCL.UI.ConnectionStatusPanel
         private const string USS_SUBTITLE = USS_BLOCK + "__subtitle";
         private const string USS_STATUS = USS_BLOCK + "__status";
         private const string USS_STATUS_NONE = USS_STATUS + "--none";
-        private const string USS_STATUS_LOST = USS_STATUS + "--lost";
-        private const string USS_STATUS_POOR = USS_STATUS + "--poor";
+        private const string USS_STATUS_BAD = USS_STATUS + "--bad";
+        private const string USS_STATUS_REGULAR = USS_STATUS + "--regular";
         private const string USS_STATUS_GOOD = USS_STATUS + "--good";
         private const string USS_STATUS_EXCELLENT = USS_STATUS + "--excellent";
 
@@ -66,8 +66,8 @@ namespace DCL.UI.ConnectionStatusPanel
             switch (cs)
             {
                 case ConnectionStatus.None: status.AddToClassList(USS_STATUS_NONE); break;
-                case ConnectionStatus.Lost: status.AddToClassList(USS_STATUS_LOST); break;
-                case ConnectionStatus.Poor: status.AddToClassList(USS_STATUS_POOR); break;
+                case ConnectionStatus.Lost: status.AddToClassList(USS_STATUS_BAD); break;
+                case ConnectionStatus.Poor: status.AddToClassList(USS_STATUS_REGULAR); break;
                 case ConnectionStatus.Good: status.AddToClassList(USS_STATUS_GOOD); break;
                 case ConnectionStatus.Excellent: status.AddToClassList(USS_STATUS_EXCELLENT); break;
                 default: throw new ArgumentOutOfRangeException(nameof(status), status, null);

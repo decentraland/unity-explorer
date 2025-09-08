@@ -136,22 +136,22 @@
     -unity-text-align: middle-left;
 }
 
-.connection-status__status--good {
-    background-color: rgba(16, 193, 1, 0.15);
-    color: rgb(16, 193, 1);
-}
-
 .connection-status__status--excellent {
     background-color: rgba(67, 143, 255, 0.15);
     color: rgb(56, 171, 255);
 }
 
-.connection-status__status--poor {
+.connection-status__status--good {
+    background-color: rgba(16, 193, 1, 0.15);
+    color: rgb(16, 193, 1);
+}
+
+.connection-status__status--regular {
     background-color: rgba(255, 184, 0, 0.15);
     color: rgb(255, 184, 0);
 }
 
-.connection-status__status--lost {
+.connection-status__status--bad {
     background-color: rgba(255, 36, 36, 0.15);
     color: rgb(255, 36, 36);
 }

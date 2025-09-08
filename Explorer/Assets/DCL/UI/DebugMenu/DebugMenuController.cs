@@ -51,6 +51,7 @@ namespace DCL.UI.DebugMenu
             if (visiblePanel != null)
                 switch (visiblePanel)
                 {
+                    // We will add other debug panel views here
                     case ConsolePanelView:
                         consolePanelView.Toggle();
                         visiblePanel = consolePanelView;
