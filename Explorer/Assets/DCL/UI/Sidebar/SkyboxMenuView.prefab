@@ -937,6 +937,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 705553140416455877}
+  - component: {fileID: 8732951110585103963}
   m_Layer: 5
   m_Name: TimeProgression
   m_TagString: Untagged
@@ -965,6 +966,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &8732951110585103963
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6113749636753570677}
+  m_Enabled: 0
+  m_Alpha: 0.2
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &6809356691273104490
 GameObject:
   m_ObjectHideFlags: 0
@@ -1134,6 +1147,7 @@ MonoBehaviour:
   <TimeSlider>k__BackingField: {fileID: 7213994172632849929}
   <TimeText>k__BackingField: {fileID: 283481863282831205}
   <CloseButton>k__BackingField: {fileID: 5744729127824224158}
+  <TimeProgressionGroup>k__BackingField: {fileID: 8732951110585103963}
   <TopSliderGroup>k__BackingField: {fileID: 3032222263806370238}
   <TextSliderGroup>k__BackingField: {fileID: 5239212129325419425}
 --- !u!114 &2099558127564310200

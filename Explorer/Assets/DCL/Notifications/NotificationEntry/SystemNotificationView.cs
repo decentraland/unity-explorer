@@ -17,6 +17,9 @@ namespace DCL.Notifications.NotificationEntry
         public Button CloseButton { get; private set; }
 
         [field: SerializeField]
+        public GameObject CloseButtonContainer { get; private set; }
+
+        [field: SerializeField]
         public TMP_Text HeaderText { get; private set; }
 
         [field: SerializeField]

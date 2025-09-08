@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Communities;
 using Utility;
 
 namespace DCL.Chat
@@ -21,6 +22,7 @@ namespace DCL.Chat
         private readonly IChatEventBus chatEventBus;
         private readonly IChatHistory chatHistory;
         private readonly CurrentChannelService currentChannelService;
+        private readonly CommunityDataService communityDataService;
         private readonly SelectChannelCommand selectChannelCommand;
         private readonly CloseChannelCommand closeChannelCommand;
         private readonly OpenConversationCommand openConversationCommand;
@@ -37,6 +39,7 @@ namespace DCL.Chat
             IChatEventBus chatEventBus,
             IChatHistory chatHistory,
             CurrentChannelService currentChannelService,
+            CommunityDataService communityDataService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             SelectChannelCommand selectChannelCommand,
             CloseChannelCommand closeChannelCommand,
@@ -51,6 +54,7 @@ namespace DCL.Chat
             this.chatHistory = chatHistory;
             this.currentChannelService = currentChannelService;
             this.selectChannelCommand = selectChannelCommand;
+            this.communityDataService = communityDataService;
             this.closeChannelCommand = closeChannelCommand;
             this.openConversationCommand = openConversationCommand;
             this.createChannelViewModelCommand = createChannelViewModelCommand;
@@ -67,6 +71,8 @@ namespace DCL.Chat
             this.chatEventBus.OpenPrivateConversationRequested += OnOpenUserConversation;
             this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
 
+            this.communityDataService.CommunityMetadataUpdated += CommunityChannelMetadataUpdated;
+            
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatResetEvent));
             scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
@@ -75,6 +81,28 @@ namespace DCL.Chat
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
+        }
+
+        private void CommunityChannelMetadataUpdated(CommunityMetadataUpdatedEvent evt)
+        {
+            if (!viewModels.TryGetValue(evt.ChannelId, out var baseVm)) return;
+
+            if (baseVm is CommunityChannelViewModel vm)
+            {
+                // Pull latest from the data service
+                // (inject ICommunityDataService instead of CommunityDataService if you prefer)
+                if (communityDataService.TryGetCommunity(evt.ChannelId, out var cd))
+                {
+                    vm.DisplayName = cd.name;
+
+                    // Optional: if you want to also refresh the picture:
+                    vm.ImageUrl = cd.thumbnails?.raw;
+                    view.UpdateConversation(vm);
+
+                    if (!string.IsNullOrEmpty(vm.ImageUrl))
+                        createChannelViewModelCommand.UpdateCommunityThumbnailAsync(vm, lifeCts.Token).Forget();
+                }
+            }
         }
 
         private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)
@@ -203,7 +231,8 @@ namespace DCL.Chat
 
         private void OnMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
-            if (addedMessage is { IsSentByOwnUser: true, IsSystemMessage: false }) return;
+            if (addedMessage is { IsSentByOwnUser: true, IsSystemMessage: true })
+                return;
 
             if (chatHistory.Channels.TryGetValue(destinationChannel.Id, out var channel))
             {

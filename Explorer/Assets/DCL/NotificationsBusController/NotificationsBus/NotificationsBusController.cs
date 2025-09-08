@@ -1,3 +1,4 @@
+using CodeLess.Attributes;
 using DCL.NotificationsBusController.NotificationTypes;
 using System;
 using System.Collections.Generic;
@@ -5,7 +6,8 @@ using Utility;
 
 namespace DCL.NotificationsBusController.NotificationsBus
 {
-    public class NotificationsBusController : INotificationsBusController
+    [Singleton]
+    public partial class NotificationsBusController
     {
         public static readonly IReadOnlyList<NotificationType> NOTIFICATION_TYPES = EnumUtils.Values<NotificationType>();
 

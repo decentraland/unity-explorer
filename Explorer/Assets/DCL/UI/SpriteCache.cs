@@ -143,19 +143,13 @@ namespace DCL.UI
             catch (OperationCanceledException) { tcs.TrySetResult(null); }
             catch (Exception e)
             {
-                MarkAsFailed(imageUrl);
-
-                // This log might be redundant as the exception will be managed from the caller side
-                ReportData reportData = new ReportData(ReportCategory.UI);
-                ReportHub.LogError(reportData, $"Failed to fetch sprite for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for image '{imageUrl}'");
-                ReportHub.LogException(e, reportData);
-
-                tcs.TrySetException(e);
+                MarkAsFailed(imageUrl, e);
+                tcs.TrySetResult(null);
             }
             finally { currentSpriteTasks.Remove(imageUrl); }
         }
 
-        private void MarkAsFailed(string imageUrl)
+        private void MarkAsFailed(string imageUrl, Exception e)
         {
             if (failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts))
                 if (requestAttempts.HasReachedMaxAttempts())
@@ -167,6 +161,11 @@ namespace DCL.UI
                 {
                     unsolvableSprites.Add(imageUrl);
                     failedSprites.Remove(imageUrl);
+
+                    // This log might be redundant as the exception will be managed from the caller side
+                    ReportData reportData = new ReportData(ReportCategory.UI);
+                    ReportHub.LogError(reportData, $"Failed to fetch sprite for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for image '{imageUrl}'");
+                    ReportHub.LogException(e, reportData);
                 }
             else
                 failedSprites[imageUrl] = RequestAttempts.FirstAttempt();

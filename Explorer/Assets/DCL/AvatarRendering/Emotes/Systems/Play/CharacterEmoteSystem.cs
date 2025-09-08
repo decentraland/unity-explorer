@@ -196,30 +196,28 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
 
                     // emote failed to load? remove intent
-                    if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
+                    if (emote.Model is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the manifest");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n the DTO");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
 
                     // emote failed to load? remove intent
-                    if (emote.Model is { IsInitialized: true, Succeeded: false })
+                    if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } and { IsLSDAsset: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult} the DTO");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
-                    StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
 
-                    // the emote is still loading? don't remove the intent yet, wait for it
-                    //TODO (JUANI) : This will go away when the manifest request is out. 
-                    if (streamableAsset == null)
+                    //Loading not complete
+                    if (emote.AssetResults[bodyShape] == null)
                         return;
 
-                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = streamableAsset.Value;
+                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
@@ -234,7 +232,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion()} should be >= 16");
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
@@ -284,9 +282,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (GetSceneEmoteFromRealmIntention.TryParseFromURN(urn, out string sceneId, out string emoteHash, out bool loop))
             {
                 if (!scenesCache.TryGetBySceneId(sceneId, out ISceneFacade? scene)) return;
-                    
+
                 SceneEmoteFromRealmPromise.Create(World,
-                    new GetSceneEmoteFromRealmIntention(sceneId, scene!.SceneData.AssetBundleManifest, emoteHash, loop, bodyShape),
+                    new GetSceneEmoteFromRealmIntention(sceneId, scene!.SceneData.SceneEntityDefinition.assetBundleManifestVersion!, emoteHash, loop, bodyShape),
                     PartitionComponent.TOP_PRIORITY);
             }
             else
