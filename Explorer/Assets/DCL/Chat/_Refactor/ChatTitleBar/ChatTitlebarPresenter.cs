@@ -116,12 +116,8 @@ namespace DCL.Chat
 
         private void OnTranslationSettingsChanged(string eventId)
         {
-            ReportHub.Log(ReportData.UNSPECIFIED, "OnTranslationSettingsChanged1");
-            if (eventId == "TranslationSettingsChangeEvent")
-            {
-                ReportHub.Log(ReportData.UNSPECIFIED, "OnTranslationSettingsChanged2");
-                UpdateAutoTranslateIndicator();
-            }
+            if (eventId != "TranslationSettingsChangeEvent") return;
+            UpdateAutoTranslateIndicator();
         }
 
         private void OnAutoTranslateSettingChanged(TranslationEvents.ConversationAutoTranslateToggled evt)

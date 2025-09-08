@@ -59,7 +59,7 @@ namespace DCL.Chat.ChatServices
 
             chatHistory.AddMessage(channel, type, messageToAdd);
 
-            if (!messageToAdd.IsSystemMessage)
+            if (!messageToAdd.IsSystemMessage && !messageToAdd.IsSentByOwnUser)
             {
                 translationService.ProcessIncomingMessage(messageToAdd.MessageId,
                     messageToAdd.Message,
