@@ -133,19 +133,32 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
         {
             using var scope = DictionaryPool<string, IWearable>.Get(out var wearablesByCategory);
-
             for (var i = 0; i < equippedWearables.Count; i++)
                 wearablesByCategory[equippedWearables[i].GetCategory()] = equippedWearables[i];
 
-            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
-                if (wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
+            var hiddenSoFar = HashSetPool<string>.Get();
+            try
+            {
+                foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
                 {
+                    if (hiddenSoFar.Contains(priorityCategory) ||
+                        !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
+                        continue;
+
                     HIDE_CATEGORIES.Clear();
                     wearable.GetHidingList(bodyShapeId, HIDE_CATEGORIES);
+
+                    foreach (var category in HIDE_CATEGORIES)
+                        hiddenSoFar.Add(category);
 
                     if (HIDE_CATEGORIES.Contains(hiddenCategory))
                         return wearable.GetCategory();
                 }
+            }
+            finally
+            {
+                HashSetPool<string>.Release(hiddenSoFar);
+            }
 
             return string.Empty;
         }
