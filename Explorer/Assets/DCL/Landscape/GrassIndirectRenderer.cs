@@ -273,7 +273,7 @@ namespace Decentraland.Terrain
             Matrix4x4 viewMatrix = camera.worldToCameraMatrix;
 
             var projMatrix = Matrix4x4.Perspective(camera.fieldOfView, camera.aspect,
-                camera.nearClipPlane, Mathf.Clamp(Mathf.Min(camera.farClipPlane, landscapeData.DetailDistance), 0.0f, 200.0f));
+                camera.nearClipPlane, Mathf.Clamp(Mathf.Min(camera.farClipPlane, landscapeData.DetailDistance), 0.0f, 180.0f));
 
             Matrix4x4 viewProjMatrix = projMatrix * viewMatrix;
 
