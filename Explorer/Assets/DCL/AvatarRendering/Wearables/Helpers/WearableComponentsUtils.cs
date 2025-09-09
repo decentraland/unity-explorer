@@ -112,8 +112,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 hidingList.Clear();
 
                 // Skip this category if we've already hidden it or there's no wearable equipped in that category
-                if (combinedHidingList.Contains(priorityCategory) ||
-                    !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
+                if (ShouldSkipCategory(priorityCategory, combinedHidingList, wearablesByCategory, out var wearable))
                     continue;
 
                 wearable.GetHidingList(bodyShapeId, hidingList);
@@ -133,34 +132,63 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
         {
             using var scope = DictionaryPool<string, IWearable>.Get(out var wearablesByCategory);
+
             for (var i = 0; i < equippedWearables.Count; i++)
                 wearablesByCategory[equippedWearables[i].GetCategory()] = equippedWearables[i];
 
             var hiddenSoFar = HashSetPool<string>.Get();
-            try
+
+            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
             {
-                foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
+                if (ShouldSkipCategory(priorityCategory, hiddenSoFar, wearablesByCategory, out var wearable))
+                    continue;
+
+                HIDE_CATEGORIES.Clear();
+                wearable.GetHidingList(bodyShapeId, HIDE_CATEGORIES);
+
+                foreach (var category in HIDE_CATEGORIES)
+                    hiddenSoFar.Add(category);
+
+                if (HIDE_CATEGORIES.Contains(hiddenCategory))
                 {
-                    if (hiddenSoFar.Contains(priorityCategory) ||
-                        !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
-                        continue;
-
-                    HIDE_CATEGORIES.Clear();
-                    wearable.GetHidingList(bodyShapeId, HIDE_CATEGORIES);
-
-                    foreach (var category in HIDE_CATEGORIES)
-                        hiddenSoFar.Add(category);
-
-                    if (HIDE_CATEGORIES.Contains(hiddenCategory))
-                        return wearable.GetCategory();
+                    ReleaseHiddenSoFar();
+                    return wearable.GetCategory();
                 }
             }
-            finally
-            {
-                HashSetPool<string>.Release(hiddenSoFar);
-            }
+
+            ReleaseHiddenSoFar();
 
             return string.Empty;
+
+            void ReleaseHiddenSoFar() =>
+                HashSetPool<string>.Release(hiddenSoFar);
+        }
+
+        /// <summary>
+        /// Determines whether a category should be skipped during wearable processing.
+        /// Skips if the category is already hidden, or if no wearable exists for it.
+        /// </summary>
+        /// <param name="category">The category being checked.</param>
+        /// <param name="hiddenCategories">Set of categories already marked as hidden.</param>
+        /// <param name="wearablesByCategory">Lookup of equipped wearables by category.</param>
+        /// <param name="wearable">The wearable found for the category, if any.</param>
+        /// <returns>True if the category should be skipped, otherwise false.</returns>
+        private static bool ShouldSkipCategory(
+            string category,
+            HashSet<string> hiddenCategories,
+            Dictionary<string, IWearable> wearablesByCategory,
+            out IWearable wearable)
+        {
+            if (hiddenCategories.Contains(category))
+            {
+                wearable = default!;
+                return true;
+            }
+
+            if (!wearablesByCategory.TryGetValue(category, out wearable))
+                return true;
+
+            return false;
         }
 
         public static void HideBodyShape(GameObject? bodyShape, HashSet<string> hidingList, HashSet<string> usedCategories)

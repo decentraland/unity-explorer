@@ -79,10 +79,12 @@ namespace DCL.Tests
         public void HideHierarchyRespected()
         {
             // Helmet hides head, eyewear and hair
-            // Top head hides helmet
-            // So head, eyewear and hair should not be hidden anymore
+            // Mask hides helmet and top head
+            // Top head hides helmet and mask
+
             mockWearables = new List<IWearable>
             {
+                // Helmet
                 new FakeWearable(new WearableDTO
                 {
                     metadata = new WearableDTO.WearableMetadataDto
@@ -98,6 +100,22 @@ namespace DCL.Tests
                     WearablesConstants.Categories.EYEWEAR,
                     WearablesConstants.Categories.HAIR,
                 }),
+                // Mask
+                new FakeWearable(new WearableDTO
+                {
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        data = new WearableDTO.WearableMetadataDto.DataDto
+                        {
+                            category = WearablesConstants.Categories.MASK,
+                        },
+                    },
+                }, new HashSet<string>
+                {
+                    WearablesConstants.Categories.HELMET,
+                    WearablesConstants.Categories.TOP_HEAD,
+                }),
+                // Top head
                 new FakeWearable(new WearableDTO
                 {
                     metadata = new WearableDTO.WearableMetadataDto
@@ -110,7 +128,9 @@ namespace DCL.Tests
                 }, new HashSet<string>
                 {
                     WearablesConstants.Categories.HELMET,
+                    WearablesConstants.Categories.MASK,
                 }),
+                // Eyewear
                 new FakeWearable(new WearableDTO
                 {
                     metadata = new WearableDTO.WearableMetadataDto
@@ -121,6 +141,7 @@ namespace DCL.Tests
                         },
                     },
                 }),
+                // Hair
                 new FakeWearable(new WearableDTO
                 {
                     metadata = new WearableDTO.WearableMetadataDto
@@ -136,10 +157,22 @@ namespace DCL.Tests
             var hidingList = new HashSet<string>();
             WearableComponentsUtils.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
 
+            // So hiding list should be:
+            // head (by helmet)
+            // eyewear (by helmet)
+            // hair (by helmet)
+            // helmet (by top head)
+            // mask (by top head)
+
+            // Hidden by helmet and top head
+            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HEAD));
+            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.EYEWEAR));
+            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HAIR));
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HELMET));
+            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.MASK));
+
+            // Since mask is hidden by higher priority top head
             Assert.False(hidingList.Contains(WearablesConstants.Categories.TOP_HEAD));
-            Assert.False(hidingList.Contains(WearablesConstants.Categories.EYEWEAR));
-            Assert.False(hidingList.Contains(WearablesConstants.Categories.HAIR));
         }
 
         [Test]
