@@ -130,19 +130,6 @@ namespace DCL.Chat.ChatMessages
             }
         }
 
-        private void OnConversationAutoTranslateToggled(TranslationEvents.ConversationAutoTranslateToggled evt)
-        {
-            if (evt.ConversationId != currentChannelService.CurrentChannelId.Id) return;
-            if (!evt.IsEnabled)
-            {
-                RevertAllTranslatedMessagesInView();
-            }
-            else
-            {
-                RestoreAllAvailableTranslationsInView();
-            }
-        }
-
         private void RevertAllTranslatedMessagesInView()
         {
             foreach (var viewModel in viewModels)
@@ -494,7 +481,6 @@ namespace DCL.Chat.ChatMessages
             scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationFailed>(OnMessageTranslationFailed));
             scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationReverted>(OnMessageTranslationReverted));
             scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
-            scope.Add(eventBus.Subscribe<TranslationEvents.ConversationAutoTranslateToggled>(OnConversationAutoTranslateToggled));
             scope.Add(eventBus.Subscribe<string>(OnTranslationSettingsChanged));
             
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
