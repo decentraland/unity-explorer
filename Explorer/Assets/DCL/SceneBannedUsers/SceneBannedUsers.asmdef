@@ -1,0 +1,30 @@
+{
+    "name": "SceneBannedUsers",
+    "rootNamespace": "",
+    "references": [
+        "GUID:702f733b4deb246808c6ce84d93b5c9c",
+        "GUID:7175400a68914a45acecc9fb068de3b8",
+        "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
+        "GUID:286980af24684da6acc1caa413039811",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:d0ec51c740809fd4680d3ea27279dca7",
+        "GUID:275e22790c04e9b47a5085d7b0c4432a",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:c80c82a8f4e04453b85fbab973d6774a",
+        "GUID:d832748739a186646b8656bdbd447ad0",
+        "GUID:166b65e6dfc848bb9fb075f53c293a38",
+        "GUID:e25ef972de004615a22937e739de2def",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

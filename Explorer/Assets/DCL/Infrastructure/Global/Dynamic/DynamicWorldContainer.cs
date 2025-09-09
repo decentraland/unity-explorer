@@ -116,6 +116,7 @@ using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.Chat.Services;
+using DCL.SceneBannedUsers;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -904,6 +905,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
+                new BannedUsersPlugin(staticContainer.ScenesCache, roomHub, realmNavigator, dynamicWorldParams.StartParcel.Peek()),
             };
 
             if (includeVoiceChat)

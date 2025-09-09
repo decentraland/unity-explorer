@@ -9,6 +9,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
+using DCL.SceneBannedUsers;
 using DCL.Utilities;
 using LiveKit.Proto;
 using System;
@@ -125,6 +126,10 @@ namespace DCL.Chat.MessageBus
 
                 string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
                                                                            : receivedMessage.FromWalletId;
+
+                // If the user that sends the message is banned from the current scene, we ignore the message
+                if (channelType == ChatChannel.ChatChannelType.NEARBY && BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId))
+                    return;
 
                 ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
 

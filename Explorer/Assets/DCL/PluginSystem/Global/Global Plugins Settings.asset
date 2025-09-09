@@ -52,6 +52,7 @@ MonoBehaviour:
   - rid: 6144113899072913496
   - rid: 648265872610426982
   - rid: 657752310186246267
+  - rid: 6097422212467261554
   references:
     version: 2
     RefIds:
@@ -779,6 +780,10 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 6097422212467261554
+      type: {class: BannedUsersPlugin/BannedUsersSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CurrentSceneBannedWallets>k__BackingField: {fileID: 11400000, guid: db32be13adf4ed843979baff114a6f7a, type: 2}
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
