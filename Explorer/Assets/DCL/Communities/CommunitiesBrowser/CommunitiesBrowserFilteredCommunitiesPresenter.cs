@@ -16,7 +16,7 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const int COMMUNITIES_PER_PAGE = 20;
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
-        private const string STREAMING_COMMUNITIES_RESULTS_TITLE = "All Streaming Communities";
+        private const string STREAMING_COMMUNITIES_RESULTS_TITLE = "Voice Streaming Communities";
         private const string BROWSE_COMMUNITIES_TITLE = "Browse Communities";
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
@@ -102,7 +102,7 @@ namespace DCL.Communities.CommunitiesBrowser
             ResultsBackButtonClicked?.Invoke();
         }
 
-        public void ViewAllMyCommunitiesResults()
+        public void LoadAllMyCommunities()
         {
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
 
@@ -117,7 +117,7 @@ namespace DCL.Communities.CommunitiesBrowser
                .Forget();
         }
 
-        public void ViewAllStreamingCommunities()
+        public void LoadAllStreamingCommunities()
         {
             view.SetResultsTitleText(STREAMING_COMMUNITIES_RESULTS_TITLE);
 
@@ -133,7 +133,7 @@ namespace DCL.Communities.CommunitiesBrowser
                .Forget();
         }
 
-        public async UniTask LoadAllCommunitiesResultsAsync(Func<CancellationToken, UniTask<int>>? loadJoinRequests, CancellationToken ct)
+        public async UniTask LoadAllCommunitiesAsync(Func<CancellationToken, UniTask<int>>? loadJoinRequests, CancellationToken ct)
         {
             view.SetResultsTitleText(BROWSE_COMMUNITIES_TITLE);
             loadResultsCts = loadResultsCts.SafeRestartLinked(ct);

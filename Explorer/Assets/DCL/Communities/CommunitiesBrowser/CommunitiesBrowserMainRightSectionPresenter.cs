@@ -53,7 +53,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             browserEventBus.RaiseClearSearchBarEvent();
             view.SetActiveView(CommunitiesViews.FILTERED_COMMUNITIES);
-            filteredCommunitiesPresenter.ViewAllStreamingCommunities();
+            filteredCommunitiesPresenter.LoadAllStreamingCommunities();
         }
 
         private void TryLoadMoreResults()
@@ -93,7 +93,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 await UniTask.WhenAll(
                                   streamingCommunitiesPresenter.LoadStreamingCommunitiesAsync(ct),
-                                  filteredCommunitiesPresenter.LoadAllCommunitiesResultsAsync(loadJoinRequests, ct)
+                                  filteredCommunitiesPresenter.LoadAllCommunitiesAsync(loadJoinRequests, ct)
                               )
                              .AttachExternalCancellation(ct);
 
@@ -105,7 +105,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void ViewAllMyCommunitiesResults()
         {
             view.SetActiveView(CommunitiesViews.FILTERED_COMMUNITIES);
-            filteredCommunitiesPresenter.ViewAllMyCommunitiesResults();
+            filteredCommunitiesPresenter.LoadAllMyCommunities();
         }
     }
 }

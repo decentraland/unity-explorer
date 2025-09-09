@@ -72,11 +72,13 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 streamingSection.SetActive(true);
                 streamingLoadingSpinner.ShowLoading();
+                viewAllButton.gameObject.SetActive(false);
             }
             else
             {
                 streamingLoadingSpinner.HideLoading();
                 SetStreamingResultsAsEmpty(streamingResultsIds.Count == 0);
+                viewAllButton.gameObject.SetActive(true);
             }
         }
 
