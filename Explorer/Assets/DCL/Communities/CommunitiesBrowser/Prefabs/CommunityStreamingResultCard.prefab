@@ -324,6 +324,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &3029749034696696981
@@ -353,9 +354,16 @@ MonoBehaviour:
   communityMembersCountText: {fileID: 0}
   mainButton: {fileID: 7446897494615956440}
   buttonsContainer: {fileID: 0}
+  joinOrViewButtonsContainer: {fileID: 0}
   viewCommunityButton: {fileID: 0}
   joinCommunityButton: {fileID: 0}
-  joiningLoading: {fileID: 340140728143378828}
+  requestOrCancelToJoinButtonsContainer: {fileID: 0}
+  requestToJoinButton: {fileID: 0}
+  cancelJoinRequestButton: {fileID: 0}
+  acceptOrRejectInvitationButtonsContainer: {fileID: 0}
+  acceptInvitationButton: {fileID: 0}
+  rejectInvitationButton: {fileID: 0}
+  actionLoadingSpinner: {fileID: 0}
   mutualFriends:
     thumbnails: []
   listenersCountView: {fileID: 1230501869457849747}
@@ -405,11 +413,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 20
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 20
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_LocalPosition.x
@@ -445,7 +453,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 35.164978
+      value: 61
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -472,11 +480,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
---- !u!1 &340140728143378828 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2336035712942851721, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
-  m_PrefabInstance: {fileID: 2653508766543462149}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &3810809177370412762 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
@@ -609,11 +612,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4906287755250558190, guid: bf63ab8a4820b4024a7aedaf81568166, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4906287755250558190, guid: bf63ab8a4820b4024a7aedaf81568166, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4906287755250558190, guid: bf63ab8a4820b4024a7aedaf81568166, type: 3}
       propertyPath: m_SizeDelta.x
