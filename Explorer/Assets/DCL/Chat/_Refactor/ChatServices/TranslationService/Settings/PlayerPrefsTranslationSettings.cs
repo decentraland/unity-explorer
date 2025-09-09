@@ -26,7 +26,7 @@ namespace DCL.Translation.Settings
         /// </summary>
         public bool IsTranslationFeatureActive()
         {
-            return IsGloballyEnabled && PreferredLanguage != LanguageCode.DontTranslate;
+            return IsGloballyEnabled;
         }
         
         public LanguageCode PreferredLanguage
@@ -36,7 +36,7 @@ namespace DCL.Translation.Settings
                 if (ForceEnableTranslations)
                     return LanguageCode.ES;
 
-                return (LanguageCode)DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE, (int)LanguageCode.DontTranslate);
+                return (LanguageCode)DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE);
             }
         }
 

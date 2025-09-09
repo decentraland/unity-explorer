@@ -120,14 +120,7 @@ namespace DCL.Chat.ChatMessages
 
         private void OnTranslationSettingsChanged(string eventId)
         {
-            if (eventId != "TranslationSettingsChangeEvent") return;
-
-            if (translationSettings.PreferredLanguage == LanguageCode.DontTranslate)
-                RevertAllTranslatedMessagesInView();
-            else
-            {
-                RestoreAllAvailableTranslationsInView();
-            }
+            
         }
 
         private void RevertAllTranslatedMessagesInView()

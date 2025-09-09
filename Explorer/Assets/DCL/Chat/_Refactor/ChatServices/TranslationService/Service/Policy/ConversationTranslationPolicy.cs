@@ -20,9 +20,6 @@ namespace DCL.Translation.Service.Policy
             // Rule 1: Is the entire feature disabled globally? (Kill Switch)
             if (!settings.IsGloballyEnabled) return false;
 
-            // Rule 2: Has the user opted out of all translations?
-            if (preferredLanguage == LanguageCode.DontTranslate) return false;
-
             // Rule 3: Has the user disabled auto-translation for this specific conversation?
             if (!settings.GetAutoTranslateForConversation(conversationId)) return false;
 
