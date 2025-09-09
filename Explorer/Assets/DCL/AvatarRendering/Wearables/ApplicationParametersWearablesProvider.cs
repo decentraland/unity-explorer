@@ -88,7 +88,6 @@ namespace DCL.AvatarRendering.Wearables
                 int ownedPage = 1;
                 int ownedTotal = int.MaxValue;
                 using var ownedPageBufferScope = ListPool<IWearable>.Get(out var ownedPageBuffer);
-                ownedPageBuffer = ownedPageBuffer ?? new List<IWearable>();
 
                 while (localBuffer.Count < ownedTotal)
                 {
