@@ -1,20 +1,22 @@
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
-using Object = UnityEngine.Object;
 
 namespace DCL.Chat
 {
     internal class ChatConversationsToolbarViewItemPool
     {
+        private const string ROOT_POOL_CONTAINER_NAME = "ROOT_POOL_CONTAINER";
+
         private readonly RectTransform itemsContainer;
+        private readonly Transform containersRoot;
         private readonly Dictionary<Type, (object Pool, Action<object> ReleaseAction)> poolRegistry = new ();
 
         public T Get<T>() where T : ChatConversationsToolbarViewItem
         {
             if (poolRegistry.TryGetValue(typeof(T), out (object Pool, Action<object> ReleaseAction) poolHandle))
-                return ((ObjectPool<T>) poolHandle.Pool).Get();
+                return ((GameObjectPool<T>) poolHandle.Pool).Get();
 
             throw new Exception($"No pool found for type {typeof(T)}. Make sure to register it in the constructor.");
         }
@@ -32,14 +34,14 @@ namespace DCL.Chat
 
         private void CreateObjectPool<T>(T prefab) where T: ChatConversationsToolbarViewItem
         {
-            ObjectPool<T> pool = new (
-                createFunc: () => Object.Instantiate(prefab, itemsContainer),
-                actionOnGet: component => component.gameObject.SetActive(true),
-                actionOnRelease: component => component?.gameObject.SetActive(false),
-                actionOnDestroy: component => Object.Destroy(component.gameObject));
+            GameObjectPool<T> pool = new (containersRoot, () => GameObject.Instantiate(prefab), onGet: HandleGetObject);
+            poolRegistry[typeof(T)] = (pool, obj => pool.Release((T)obj));
+        }
 
-            Type type = typeof(T);
-            poolRegistry[type] = (pool, obj => pool.Release((T)obj));
+        private void HandleGetObject<T>(T obj) where T : ChatConversationsToolbarViewItem
+        {
+            obj.transform.SetParent(itemsContainer);
+            obj.transform.localScale = Vector3.one;
         }
 
         public ChatConversationsToolbarViewItemPool(
@@ -49,6 +51,7 @@ namespace DCL.Chat
             CommunityChatConversationsToolbarViewItem communityConversationItemPrefab)
         {
             this.itemsContainer = itemsContainer;
+            containersRoot = GameObject.Find(ROOT_POOL_CONTAINER_NAME)!.transform;
 
             CreateObjectPool(nearbyConversationItemPrefab);
             CreateObjectPool(privateConversationItemPrefab);
