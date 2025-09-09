@@ -140,7 +140,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController),
-                new ControlsPanelController(() => controlsPanelView, mvcManager),
+                new ControlsPanelController(() => controlsPanelView),
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
