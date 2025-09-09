@@ -8,38 +8,35 @@ using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public class CommunitiesBrowserRightSectionPresenter : IDisposable
+    public class CommunitiesBrowserMainRightSectionPresenter : IDisposable
     {
         private readonly CommunitiesBrowserRightSectionMainView view;
 
         private readonly CommunitiesBrowserStreamingCommunitiesPresenter streamingCommunitiesPresenter;
         private readonly CommunitiesBrowserFilteredCommunitiesPresenter filteredCommunitiesPresenter;
+        private readonly CommunitiesBrowserEventBus browserEventBus;
 
         private CancellationTokenSource? loadCts;
-        public event Action? ClearSearchBar;
-        public event Action<string>? CommunityProfileOpened;
-        public event Action<string>? CommunityJoined;
 
-        public CommunitiesBrowserRightSectionPresenter(
+        public CommunitiesBrowserMainRightSectionPresenter(
             CommunitiesBrowserRightSectionMainView view,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             ISharedSpaceManager sharedSpaceManager,
             CommunitiesBrowserStateService browserStateService,
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ICommunityCallOrchestrator orchestrator)
+            ICommunityCallOrchestrator orchestrator,
+            CommunitiesBrowserEventBus browserEventBus)
         {
             this.view = view;
+            this.browserEventBus = browserEventBus;
 
             streamingCommunitiesPresenter = new CommunitiesBrowserStreamingCommunitiesPresenter(view.StreamingCommunitiesView, dataProvider,
                 browserStateService, orchestrator, sharedSpaceManager);
-
             streamingCommunitiesPresenter.ViewAllClicked += OnViewAllStreamingCommunities;
 
-            filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, profileRepositoryWrapper);
+            filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, profileRepositoryWrapper, browserStateService, browserEventBus);
             filteredCommunitiesPresenter.ResultsBackButtonClicked += LoadAllCommunities;
-            filteredCommunitiesPresenter.CommunityJoined += OnCommunityJoined;
-            filteredCommunitiesPresenter.CommunityProfileOpened += OnCommunityProfileOpened;
 
             view.SetDependencies(thumbnailLoader, browserStateService);
             view.LoopGridScrollChanged += TryLoadMoreResults;
@@ -48,23 +45,15 @@ namespace DCL.Communities.CommunitiesBrowser
         public void Dispose()
         {
             view.LoopGridScrollChanged -= TryLoadMoreResults;
+            filteredCommunitiesPresenter.ResultsBackButtonClicked -= LoadAllCommunities;
+            streamingCommunitiesPresenter.ViewAllClicked -= OnViewAllStreamingCommunities;
         }
 
         private void OnViewAllStreamingCommunities()
         {
-            ClearSearchBar?.Invoke();
-            view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
+            browserEventBus.RaiseClearSearchBarEvent();
+            view.SetActiveView(CommunitiesViews.FILTERED_COMMUNITIES);
             filteredCommunitiesPresenter.ViewAllStreamingCommunities();
-        }
-
-        private void OnCommunityJoined(string communityId)
-        {
-            CommunityJoined?.Invoke(communityId);
-        }
-
-        private void OnCommunityProfileOpened(string communityId)
-        {
-            CommunityProfileOpened?.Invoke(communityId);
         }
 
         private void TryLoadMoreResults()
@@ -74,34 +63,27 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void LoadSearchResults(string searchText)
         {
-            view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
+            view.SetActiveView(CommunitiesViews.FILTERED_COMMUNITIES);
             filteredCommunitiesPresenter.LoadSearchResults(searchText);
         }
 
         public void Deactivate()
         {
             loadCts?.SafeCancelAndDispose();
-        }
-
-        public void UpdateJoinedCommunity(string communityId, bool isSuccess)
-        {
-            filteredCommunitiesPresenter.UpdateJoinedCommunity(communityId, isSuccess);
-        }
-
-        public void OnUserRemovedFromCommunity(string communityId)
-        {
-            filteredCommunitiesPresenter.RemoveOneMemberFromCounter(communityId);
+            filteredCommunitiesPresenter.Deactivate();
+            streamingCommunitiesPresenter.Deactivate();
         }
 
         private void LoadAllCommunities()
         {
-            LoadAllCommunities(false);
+            LoadAllCommunities(null);
         }
 
-        public void LoadAllCommunities(bool updateInvitations)
+        public void LoadAllCommunities(Func<CancellationToken, UniTask<int>>? loadJoinRequests)
         {
-            ClearSearchBar?.Invoke();
-            view.SetActiveSection(CommunitiesSections.BROWSE_ALL_COMMUNITIES);
+            browserEventBus.RaiseClearSearchBarEvent();
+
+            view.SetActiveView(CommunitiesViews.BROWSE_ALL_COMMUNITIES);
             loadCts = loadCts.SafeRestart();
 
             LoadAllCommunitiesResultsAsync(loadCts.Token).Forget();
@@ -111,7 +93,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 await UniTask.WhenAll(
                                   streamingCommunitiesPresenter.LoadStreamingCommunitiesAsync(ct),
-                                  filteredCommunitiesPresenter.LoadAllCommunitiesResultsAsync(updateInvitations, ct)
+                                  filteredCommunitiesPresenter.LoadAllCommunitiesResultsAsync(loadJoinRequests, ct)
                               )
                              .AttachExternalCancellation(ct);
 
@@ -122,8 +104,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void ViewAllMyCommunitiesResults()
         {
-            ClearSearchBar?.Invoke();
-            view.SetActiveSection(CommunitiesSections.FILTERED_COMMUNITIES);
+            view.SetActiveView(CommunitiesViews.FILTERED_COMMUNITIES);
             filteredCommunitiesPresenter.ViewAllMyCommunitiesResults();
         }
     }

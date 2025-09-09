@@ -18,6 +18,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly MyCommunitiesView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly CommunitiesBrowserStateService browserStateService;
+        private readonly CommunitiesBrowserEventBus browserEventBus;
+        private readonly EventSubscriptionScope scope = new();
 
         private CancellationTokenSource? loadMyCommunitiesCts;
 
@@ -25,15 +27,26 @@ namespace DCL.Communities.CommunitiesBrowser
             MyCommunitiesView view,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             CommunitiesBrowserStateService browserStateService,
-            ThumbnailLoader thumbnailLoader)
+            ThumbnailLoader thumbnailLoader,
+            CommunitiesBrowserEventBus browserEventBus)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
+            this.browserEventBus = browserEventBus;
 
             view.SetDependencies(browserStateService, thumbnailLoader);
             view.ViewAllMyCommunitiesButtonClicked += OnViewAllMyCommunitiesClicked;
+            view.CommunityProfileOpened += OnCommunityProfileOpened;
             view.InitializeCommunitiesList(0);
+
+            scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.UpdateJoinedCommunityEvent>(UpdateJoinedCommunity));
+
+        }
+
+        private void OnCommunityProfileOpened(string communityId)
+        {
+            browserEventBus.RaiseCommunityProfileOpened(communityId);
         }
 
         private void OnViewAllMyCommunitiesClicked()
@@ -72,6 +85,9 @@ namespace DCL.Communities.CommunitiesBrowser
         public void Dispose()
         {
             loadMyCommunitiesCts.SafeCancelAndDispose();
+            view.ViewAllMyCommunitiesButtonClicked -= OnViewAllMyCommunitiesClicked;
+            view.CommunityProfileOpened -= OnCommunityProfileOpened;
+            scope.Dispose();
         }
 
         public void LoadMyCommunities()
@@ -85,9 +101,9 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
         }
 
-        public void UpdateJoinedCommunity(string communityId, bool isJoined, bool isSuccess)
+        public void UpdateJoinedCommunity(CommunitiesBrowserEvents.UpdateJoinedCommunityEvent evt)
         {
-            view.UpdateJoinedCommunity(communityId, isJoined, isSuccess);
+            view.UpdateJoinedCommunity(evt.CommunityId, evt.IsJoined, evt.Success);
         }
     }
 }

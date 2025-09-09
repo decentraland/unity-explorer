@@ -34,23 +34,16 @@ namespace DCL.Communities.CommunitiesBrowser
             streamingCommunitiesView.SetDependencies(newThumbnailLoader, communitiesBrowserStateService);
         }
 
-        public void SetActiveSection(CommunitiesSections activeSection)
+        public void SetActiveView(CommunitiesViews activeView)
         {
-            switch (activeSection)
+            switch (activeView)
             {
-                case CommunitiesSections.FILTERED_COMMUNITIES:
+                case CommunitiesViews.FILTERED_COMMUNITIES:
                     streamingCommunitiesView.HideStreamingSection();
                     filteredCommunitiesView.SetResultsBackButtonVisible(true);
-                    filteredCommunitiesView.SetCountTextVisible(true);
                     break;
-                case CommunitiesSections.BROWSE_ALL_COMMUNITIES:
+                case CommunitiesViews.BROWSE_ALL_COMMUNITIES:
                     filteredCommunitiesView.SetResultsBackButtonVisible(false);
-                    filteredCommunitiesView.SetCountTextVisible(true);
-                    break;
-                case CommunitiesSections.REQUESTS_AND_INVITES:
-                    streamingCommunitiesView.HideStreamingSection();
-                    filteredCommunitiesView.SetResultsBackButtonVisible(false);
-                    filteredCommunitiesView.SetCountTextVisible(false);
                     break;
             }
         }

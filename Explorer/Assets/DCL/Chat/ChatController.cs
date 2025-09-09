@@ -817,7 +817,6 @@ namespace DCL.Chat
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
             // NOTE: it's wired in the ChatPlugin
-            //TODO FRAN: This should take us to the nearby channel and send the command there
             viewInstance!.Focus("/");
         }
 

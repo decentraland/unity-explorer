@@ -12,6 +12,9 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class StreamingCommunitiesView : MonoBehaviour
     {
+        public event Action<string>? JoinStream;
+        public event Action? ViewAllStreamingCommunitiesButtonClicked;
+
         [Header("Streaming Section")]
         [SerializeField] private GameObject streamingSection = null!;
         [SerializeField] private LoopGridView streamingLoopGrid = null!;
@@ -32,14 +35,6 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 ViewAllStreamingCommunitiesButtonClicked?.Invoke();
             }
-        }
-
-        public event Action<string>? JoinStream;
-        public event Action? ViewAllStreamingCommunitiesButtonClicked;
-
-        public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
-        {
-            thumbnailLoader = newThumbnailLoader;
         }
 
         public void InitializeStreamingResultsGrid(int itemTotalCount)

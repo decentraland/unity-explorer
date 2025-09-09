@@ -6,7 +6,6 @@ using System;
 using System.Threading;
 using Utility;
 using Utility.Types;
-using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.NotificationsBusController.NotificationTypes;
 using Notifications = DCL.NotificationsBusController.NotificationsBus;
@@ -23,12 +22,12 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
 
         public event Action? ResultsBackButtonClicked;
-        public event Action<string>? CommunityProfileOpened;
-        public event Action<string>? CommunityJoined;
-
 
         private readonly FilteredCommunitiesView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
+        private readonly CommunitiesBrowserStateService browserStateService;
+        private readonly EventSubscriptionScope scope = new();
+        private readonly CommunitiesBrowserEventBus browserEventBus;
 
         private string currentNameFilter = string.Empty;
         private bool currentIsOwnerFilter;
@@ -41,32 +40,61 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource? loadResultsCts;
 
         public CommunitiesBrowserFilteredCommunitiesPresenter(
-            FilteredCommunitiesView view, CommunitiesDataProvider.CommunitiesDataProvider dataProvider, ProfileRepositoryWrapper profileRepositoryWrapper)
+            FilteredCommunitiesView view,
+            CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            CommunitiesBrowserStateService browserStateService,
+            CommunitiesBrowserEventBus browserEventBus)
         {
             this.view = view;
             this.dataProvider = dataProvider;
+            this.browserStateService = browserStateService;
+            this.browserEventBus = browserEventBus;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.CommunityJoined += OnCommunityJoined;
             view.CommunityProfileOpened += OnCommunityProfileOpened;
+            view.RequestedToJoinCommunity += OnRequestedToJoinCommunity;
+            view.RequestToJoinCommunityCanceled += OnRequestToJoinCommunityCanceled;
 
-            view.InitializeResultsGrid(0);
+            view.InitializeResultsGrid();
             view.SetProfileRepositoryWrapper(profileRepositoryWrapper);
+
+            scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.UpdateJoinedCommunityEvent>(UpdateJoinedCommunity));
+            scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.UserRemovedFromCommunityEvent>(RemoveOneMemberFromCounter));
+        }
+
+        private void OnRequestToJoinCommunityCanceled(string communityId, string requestId)
+        {
+            browserEventBus.RaiseRequestToJoinCommunityCancelledEvent(communityId, requestId);
+        }
+
+        private void OnRequestedToJoinCommunity(string communityId)
+        {
+            browserEventBus.RaiseRequestToJoinCommunityEvent(communityId);
         }
 
         private void OnCommunityProfileOpened(string communityId)
         {
-            CommunityProfileOpened?.Invoke(communityId);
+            browserEventBus.RaiseCommunityProfileOpened(communityId);
         }
 
         private void OnCommunityJoined(string communityId)
         {
-            CommunityJoined?.Invoke(communityId);
+            browserEventBus.RaiseCommunityJoinedClickedEvent(communityId);
         }
 
         public void Dispose()
         {
+            view.CommunityProfileOpened -= OnCommunityProfileOpened;
+            view.CommunityJoined -= OnCommunityJoined;
             view.BackButtonClicked -= OnBackButtonClicked;
+            scope.Dispose();
+        }
+
+        private void RemoveOneMemberFromCounter(CommunitiesBrowserEvents.UserRemovedFromCommunityEvent evt)
+        {
+            view.RemoveOneMemberFromCounter(evt.CommunityId);
         }
 
         private void OnBackButtonClicked()
@@ -85,7 +113,6 @@ namespace DCL.Communities.CommunitiesBrowser
                     onlyMemberOf: true,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
-                    false,
                     ct: loadResultsCts.Token)
                .Forget();
         }
@@ -101,13 +128,12 @@ namespace DCL.Communities.CommunitiesBrowser
                     onlyMemberOf: false,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
-                    false,
                     ct: loadResultsCts.Token,
                     true)
                .Forget();
         }
 
-        public async UniTask LoadAllCommunitiesResultsAsync(bool updateInvitations, CancellationToken ct)
+        public async UniTask LoadAllCommunitiesResultsAsync(Func<CancellationToken, UniTask<int>>? loadJoinRequests, CancellationToken ct)
         {
             view.SetResultsTitleText(BROWSE_COMMUNITIES_TITLE);
             loadResultsCts = loadResultsCts.SafeRestartLinked(ct);
@@ -117,8 +143,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 onlyMemberOf: false,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
-                updateInvitations,
-                ct: loadResultsCts.Token);
+                ct: loadResultsCts.Token,
+                isStreaming: false,
+                loadJoinRequests);
         }
 
         public void TryLoadMoreResults(bool isResultsScrollPositionAtBottom)
@@ -135,13 +162,18 @@ namespace DCL.Communities.CommunitiesBrowser
                     currentOnlyMemberOf,
                     pageNumber: currentPageNumberFilter + 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
-                    updateJoinRequests: false,
                     ct: loadResultsCts.Token)
                .Forget();
         }
 
-        private async UniTask LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, bool updateJoinRequests, CancellationToken ct,
-            bool isStreaming = false)
+        private async UniTask LoadResultsAsync(
+            string name,
+            bool onlyMemberOf,
+            int pageNumber,
+            int elementsPerPage,
+            CancellationToken ct,
+            bool isStreaming = false,
+            Func<CancellationToken, UniTask<int>>? loadJoinRequests = null)
         {
             isGridResultsLoadingItems = true;
 
@@ -153,13 +185,16 @@ namespace DCL.Communities.CommunitiesBrowser
             else
                 view.SetResultsLoadingMoreActive(true);
 
+            if (loadJoinRequests != null)
+                await loadJoinRequests(ct);
+
             Result<GetUserCommunitiesResponse> result = await dataProvider.GetUserCommunitiesAsync(
                                                                                name,
                                                                                onlyMemberOf,
                                                                                pageNumber,
                                                                                elementsPerPage,
                                                                                ct,
-                                                                               isStreaming)
+                                                                               isStreaming: isStreaming)
                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -173,6 +208,21 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (result.Value.data.results.Length > 0)
             {
+                // Match the current join requests with the results to know what communities have been requested to join
+                foreach (GetUserCommunitiesData.CommunityData communityData in result.Value.data.results)
+                {
+                    communityData.pendingActionType = InviteRequestAction.none;
+                    foreach (GetUserInviteRequestData.UserInviteRequestData joinRequest in browserStateService.CurrentJoinRequests)
+                    {
+                        if (communityData.id == joinRequest.communityId)
+                        {
+                            communityData.pendingActionType = InviteRequestAction.request_to_join;
+                            communityData.inviteOrRequestId = joinRequest.id;
+                            break;
+                        }
+                    }
+                }
+
                 currentPageNumberFilter = pageNumber;
                 view.AddResultsItems(result.Value.data.results, pageNumber == 1);
             }
@@ -202,14 +252,13 @@ namespace DCL.Communities.CommunitiesBrowser
                     onlyMemberOf: false,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
-                    updateJoinRequests: false,
                     ct: loadResultsCts.Token)
                .Forget();
         }
 
-        public void UpdateJoinedCommunity(string communityId, bool isSuccess)
+        private void UpdateJoinedCommunity(CommunitiesBrowserEvents.UpdateJoinedCommunityEvent evt)
         {
-            view.UpdateJoinedCommunity(communityId, isSuccess);
+            view.UpdateJoinedCommunity(evt.CommunityId, evt.Success);
         }
 
         public void SetAsLoading(bool isLoading)
@@ -217,9 +266,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetAsLoading(isLoading);
         }
 
-        public void RemoveOneMemberFromCounter(string communityId)
+        public void Deactivate()
         {
-            view.RemoveOneMemberFromCounter(communityId);
+            loadResultsCts.SafeCancelAndDispose();
         }
     }
 }

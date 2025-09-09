@@ -239,7 +239,6 @@ namespace DCL.Chat
         /// </summary>
         public string InputBoxText
         {
-            //TODO FRAN: This should not exist at all ever
             get => chatInputBox.InputBoxText;
             set => chatInputBox.InputBoxText = value;
         }

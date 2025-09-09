@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
@@ -31,6 +32,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
 
+        private CancellationTokenSource thumbnailLoadingCts = new();
+
         public int CurrentResultsCount => currentFilteredIds.Count;
 
         private void Awake()
@@ -47,6 +50,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action? BackButtonClicked;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
+        public event Action<string>? RequestedToJoinCommunity;
+        public event Action<string, string>? RequestToJoinCommunityCanceled;
 
         public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService)
         {
@@ -59,9 +64,9 @@ namespace DCL.Communities.CommunitiesBrowser
             profileRepositoryWrapper = profileDataProvider;
         }
 
-        public void InitializeResultsGrid(int itemTotalCount)
+        public void InitializeResultsGrid()
         {
-            resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
+            resultLoopGrid.InitGridView(0, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
@@ -120,8 +125,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void UpdateJoinedCommunity(string communityId, bool isSuccess)
         {
-            if (isSuccess)
-                RefreshCommunityCardInGrid(communityId);
+            RefreshCommunityCardInGrid(communityId);
         }
 
         public void RemoveOneMemberFromCounter(string communityId)
@@ -159,12 +163,10 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
-            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, default(CancellationToken)).Forget();
+            cardView.SetInviteOrRequestId(communityData.inviteOrRequestId);
+            cardView.SetActionButtonsType(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none);
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token).Forget();
             cardView.SetActionLoadingActive(false);
-
-            //TODO FRAN -> CHECK THIS ONE!!!!
-            //cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
 
             // Setup card events
             cardView.MainButtonClicked -= OnCommunityProfileOpened;
@@ -173,12 +175,28 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.ViewCommunityButtonClicked += OnCommunityProfileOpened;
             cardView.JoinCommunityButtonClicked -= OnCommunityJoined;
             cardView.JoinCommunityButtonClicked += OnCommunityJoined;
+            cardView.RequestToJoinCommunityButtonClicked -= OnCommunityRequestedToJoin;
+            cardView.RequestToJoinCommunityButtonClicked += OnCommunityRequestedToJoin;
+            cardView.CancelRequestToJoinCommunityButtonClicked -= OnCommunityRequestToJoinCanceled;
+            cardView.CancelRequestToJoinCommunityButtonClicked += OnCommunityRequestToJoinCanceled;
 
             // Setup mutual friends
             if (profileRepositoryWrapper != null)
                 cardView.SetupMutualFriends(profileRepositoryWrapper, communityData);
 
             return gridItem;
+        }
+
+        private void OnCommunityRequestedToJoin(string communityId, CommunityResultCardView cardView)
+        {
+            cardView.SetActionLoadingActive(true);
+            RequestedToJoinCommunity?.Invoke(communityId);
+        }
+
+        private void OnCommunityRequestToJoinCanceled(string communityId, string requestId, CommunityResultCardView cardView)
+        {
+            cardView.SetActionLoadingActive(true);
+            RequestToJoinCommunityCanceled?.Invoke(communityId, requestId);
         }
 
         private void OnCommunityProfileOpened(string communityId)
@@ -190,11 +208,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             cardView.SetActionLoadingActive(true);
             CommunityJoined?.Invoke(communityId);
-        }
-
-        public void SetCountTextVisible(bool isVisible)
-        {
-            resultsCountText.gameObject.SetActive(isVisible);
         }
     }
 }

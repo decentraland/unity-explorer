@@ -8,6 +8,7 @@ using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using System;
 using System.Threading;
+using Utility;
 using Utility.Types;
 using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
@@ -76,7 +77,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public async UniTask LoadStreamingCommunitiesAsync(CancellationToken ct)
         {
-            view.ClearStreamingResultsItems();
+            view.HideStreamingSection();
             view.SetAsLoading(true);
 
             Result<GetUserCommunitiesResponse> result = await dataProvider.GetUserCommunitiesAsync(
@@ -108,6 +109,11 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetAsLoading(bool isLoading)
         {
             view.SetAsLoading(isLoading);
+        }
+
+        public void Deactivate()
+        {
+            loadCts.SafeCancelAndDispose();
         }
     }
 }
