@@ -73,8 +73,6 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Image backgroundImage { get; set; } = null!;
         [field: SerializeField] public Color BackgroundColor { get; private set; }
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
-
-        [field: SerializeField] private Sprite deleteCommunityImage { get; set; } = null!;
         [field: SerializeField] internal CommunityCardVoiceChatView communityCardVoiceChatView { get; set; } = null!;
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
 
