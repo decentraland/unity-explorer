@@ -80,6 +80,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 303b28effad14e94871a6cfad2db6615
+    m_Address: Hidden/GPUInstancerPro/InternalErrorShader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 327b853b79746cf48ab308998970d8ae
     m_Address: Fork_C
     m_ReadOnly: 0
@@ -157,6 +162,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7c45d7279c9840b40bf9cf08795bcb8f
     m_Address: Fork_A
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f2bfe2de9f99024383bae22ae477a2a
+    m_Address: Universal Render Pipeline/Nature/SpeedTree8_PBRLit_GPUIPro
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8478781d80234fa29651593b02782b9d
+    m_Address: Hidden/GPUInstancerPro/Nature/TreeProxy
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -292,6 +307,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e72feb04f15ad354cb1fe3dac88f1fdd
     m_Address: Fork_D
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eac608796bf9b9546b3dd3a76bf994aa
+    m_Address: Shader Graphs/Rock_GPUIPro
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
