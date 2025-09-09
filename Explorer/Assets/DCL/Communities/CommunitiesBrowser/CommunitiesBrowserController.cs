@@ -769,10 +769,6 @@ namespace DCL.Communities.CommunitiesBrowser
         }
     }
 
-
-
-
-
     public enum CommunitiesRightSideSections
     {
         MAIN_SECTION,

@@ -52,9 +52,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 892
+  m_MinHeight: 434
   m_PreferredWidth: -1
-  m_PreferredHeight: 892
+  m_PreferredHeight: -1
   m_FlexibleWidth: 1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -79,6 +79,8 @@ MonoBehaviour:
   resultsLoadingSpinner: {fileID: 5534048270618266013}
   resultsLoadingMoreSpinner: {fileID: 1972701702536864114}
   defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
+  layoutElement: {fileID: 5228668036781124216}
+  resultsContainer: {fileID: 3977733281239789257}
 --- !u!1001 &1362038011312496042
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -222,6 +224,10 @@ PrefabInstance:
     - target: {fileID: 4910895074810366696, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5554672531574455727, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+      propertyPath: m_text
+      value: Browse All
       objectReference: {fileID: 0}
     - target: {fileID: 5765541218647947235, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
       propertyPath: m_AnchorMax.y
@@ -480,8 +486,16 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3156068246445730016, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
       insertIndex: 0
       addedObject: {fileID: 442379217479168483}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 118208275156748861, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6956087864156483543}
   m_SourcePrefab: {fileID: 100100000, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+--- !u!224 &233484325195620695 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 1286743732375551229, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+  m_PrefabInstance: {fileID: 1362038011312496042}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1012290827828344906 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2083635556872644064, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
@@ -492,9 +506,49 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 41806820850218814, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
   m_PrefabInstance: {fileID: 1362038011312496042}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1388546391456257943 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 118208275156748861, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+  m_PrefabInstance: {fileID: 1362038011312496042}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6956087864156483543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1388546391456257943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Content: {fileID: 3977733281239789257}
+  m_Horizontal: 0
+  m_Vertical: 0
+  m_MovementType: 2
+  m_Elasticity: 0.1
+  m_Inertia: 1
+  m_DecelerationRate: 0.135
+  m_ScrollSensitivity: 1
+  m_Viewport: {fileID: 233484325195620695}
+  m_HorizontalScrollbar: {fileID: 0}
+  m_VerticalScrollbar: {fileID: 0}
+  m_HorizontalScrollbarVisibility: 2
+  m_VerticalScrollbarVisibility: 1
+  m_HorizontalScrollbarSpacing: -3
+  m_VerticalScrollbarSpacing: -3
+  m_OnValueChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1972701702536864114 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 686411803300265176, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
+  m_PrefabInstance: {fileID: 1362038011312496042}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &3977733281239789257 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2726174222724871011, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
   m_PrefabInstance: {fileID: 1362038011312496042}
   m_PrefabAsset: {fileID: 0}
 --- !u!224 &4119233468797678922 stripped
@@ -545,7 +599,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7411241522591621519, guid: 290ef9fe0f350ab4e80b3e1cd0895013, type: 3}
   m_PrefabInstance: {fileID: 1362038011312496042}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1388546391456257943}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 17e9881a7bce8124a8f855b96a8ca11a, type: 3}

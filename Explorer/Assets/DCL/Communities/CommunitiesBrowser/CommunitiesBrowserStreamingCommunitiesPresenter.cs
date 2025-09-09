@@ -86,6 +86,7 @@ namespace DCL.Communities.CommunitiesBrowser
                                                                                1,
                                                                                7,
                                                                                ct,
+                                                                               false,
                                                                                true
                                                                            )
                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);

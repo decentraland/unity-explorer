@@ -15,7 +15,13 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class FilteredCommunitiesView : MonoBehaviour
     {
-        [Header("Filtered Results Section")]
+        public event Action? BackButtonClicked;
+        public event Action<string>? CommunityProfileOpened;
+        public event Action<string>? CommunityJoined;
+        public event Action<string>? RequestedToJoinCommunity;
+        public event Action<string, string>? RequestToJoinCommunityCanceled;
+
+
         [SerializeField] private Button resultsBackButton = null!;
         [SerializeField] private TMP_Text resultsTitleText = null!;
         [SerializeField] private TMP_Text resultsCountText = null!;
@@ -25,6 +31,9 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
+
+        [SerializeField] private LayoutElement layoutElement = null!;
+        [SerializeField] private RectTransform resultsContainer = null!;
 
         private readonly List<string> currentFilteredIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
@@ -39,6 +48,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void Awake()
         {
             resultsBackButton.onClick.AddListener(OnResultsBackButtonClicked);
+
             return;
 
             void OnResultsBackButtonClicked()
@@ -46,12 +56,6 @@ namespace DCL.Communities.CommunitiesBrowser
                 BackButtonClicked?.Invoke();
             }
         }
-
-        public event Action? BackButtonClicked;
-        public event Action<string>? CommunityProfileOpened;
-        public event Action<string>? CommunityJoined;
-        public event Action<string>? RequestedToJoinCommunity;
-        public event Action<string, string>? RequestToJoinCommunityCanceled;
 
         public void SetDependencies(ThumbnailLoader newThumbnailLoader, CommunitiesBrowserStateService communitiesBrowserStateService)
         {
@@ -79,8 +83,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void AddResultsItems(CommunityData[] communities, bool resetPos)
         {
-            browserStateService!.AddCommunities(communities);
-
             foreach (CommunityData communityData in communities)
                 currentFilteredIds.Add(communityData.id);
 
@@ -90,6 +92,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (resetPos)
                 resultLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
+
+            layoutElement.minHeight = resultsContainer.sizeDelta.y;
         }
 
         public void SetAsLoading(bool isLoading)

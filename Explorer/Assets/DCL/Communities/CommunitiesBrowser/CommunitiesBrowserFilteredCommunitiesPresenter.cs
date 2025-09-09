@@ -224,6 +224,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
 
                 currentPageNumberFilter = pageNumber;
+                browserStateService!.AddCommunities(result.Value.data.results);
                 view.AddResultsItems(result.Value.data.results, pageNumber == 1);
             }
 
