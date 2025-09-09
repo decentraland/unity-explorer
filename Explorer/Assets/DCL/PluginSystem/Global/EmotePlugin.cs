@@ -14,7 +14,6 @@ using DCL.Input;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
-using DCL.Web3.Identities;
 using DCL.ResourcesUnloading;
 using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
@@ -47,10 +46,8 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly SelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly AudioClipsCache audioClipsCache;
-        private readonly URLDomain assetBundleURL;
         private readonly string builderContentURL;
         private readonly ICursor cursor;
         private readonly IInputBlock inputBlock;
@@ -62,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly bool builderCollectionsPreview;
         private readonly IAppArgs appArgs;
+        private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
 
         public EmotePlugin(IWebRequestController webRequestController,
@@ -73,9 +71,7 @@ namespace DCL.PluginSystem.Global
             SelfProfile selfProfile,
             IMVCManager mvcManager,
             CacheCleaner cacheCleaner,
-            IWeb3IdentityCache web3IdentityCache,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            URLDomain assetBundleURL,
             ICursor cursor,
             IInputBlock inputBlock,
             Arch.Core.World world,
@@ -85,6 +81,7 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             bool builderCollectionsPreview,
             IAppArgs appArgs,
+            IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache)
         {
             this.messageBus = messageBus;
@@ -92,9 +89,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
-            this.web3IdentityCache = web3IdentityCache;
             this.entityParticipantTable = entityParticipantTable;
-            this.assetBundleURL = assetBundleURL;
             this.builderContentURL = builderContentURL;
             this.webRequestController = webRequestController;
             this.emoteStorage = emoteStorage;
@@ -107,6 +102,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.builderCollectionsPreview = builderCollectionsPreview;
             this.appArgs = appArgs;
+            this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
 
             audioClipsCache = new AudioClipsCache();
@@ -161,10 +157,8 @@ namespace DCL.PluginSystem.Global
 
             NftTypeIconSO emoteWheelRarityBackgrounds = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteWheelRarityBackgrounds, ct)).Value;
 
-            IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
-
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
-                selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
+                selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, this.thumbnailProvider,
                 inputBlock, cursor, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
