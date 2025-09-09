@@ -125,8 +125,14 @@ MonoBehaviour:
           isMultiselect: 0
           options:
           - Don't Translate
-          - ES
-          - DE
+          - English (default)
+          - Spanish
+          - French
+          - German
+          - Portuguese
+          - Italian
+          - Chinese
+          - Japanese
           defaultOptionIndex: 0
         <Feature>k__BackingField: 12
     - rid: 3126482891795070976

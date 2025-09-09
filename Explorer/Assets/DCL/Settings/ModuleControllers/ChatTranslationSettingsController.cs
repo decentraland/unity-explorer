@@ -36,42 +36,9 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetPreferredLanguageSettings(int index)
         {
-            switch (index)
-            {
-                case (int)ChatPreferredTranslationSettings.DONT_TRANSLATE:
-                    chatSettingsAsset.chatPreferredTranslationSettings = ChatPreferredTranslationSettings.DONT_TRANSLATE;
-                    break;
-                case (int)ChatPreferredTranslationSettings.ES:
-                    chatSettingsAsset.chatPreferredTranslationSettings = ChatPreferredTranslationSettings.ES;
-                    break;
-                case (int)ChatPreferredTranslationSettings.DE:
-                    chatSettingsAsset.chatPreferredTranslationSettings = ChatPreferredTranslationSettings.DE;
-                    break;
-                default:
-                    ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatTranslationSettingsController: {index}");
-                    return;
-            }
-
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE, index, save: true);
             eventBus.Publish(TranslationSettingsChangeEvent);
         }
-        
-        // private static string GetLanguageDisplayName(LanguageCode lang)
-        // {
-        //     return lang switch
-        //     {
-        //         LanguageCode.DontTranslate => "Don't Translate",
-        //         LanguageCode.EN => "English",
-        //         LanguageCode.ES => "Español (Spanish)",
-        //         LanguageCode.PT => "Português (Portuguese)",
-        //         LanguageCode.DE => "Deutsch (German)",
-        //         LanguageCode.ZH => "中文 (Chinese)",
-        //         LanguageCode.JA => "日本語 (Japanese)",
-        //         LanguageCode.KO => "한국어 (Korean)",
-        //         LanguageCode.FR => "Français (French)",
-        //         _ => lang.ToString(),
-        //     };
-        // }
 
         public override void Dispose()
         {

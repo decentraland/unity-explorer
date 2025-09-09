@@ -59,7 +59,13 @@ namespace DCL.Settings.Settings
     public enum ChatPreferredTranslationSettings
     {
         DONT_TRANSLATE = 0,
-        ES = 1,
-        DE = 2
+        EN = 1,
+        ES = 2,
+        FR = 3,
+        DE = 4,
+        PT = 5,
+        IT = 6,
+        ZH = 7,
+        JA = 8
     }
 }
