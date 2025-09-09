@@ -16,9 +16,6 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class ApplicationParametersWearablesProvider : IWearablesProvider
     {
-        private const bool PREVIEW_BUILDER_COL_WITH_EMBEDDED_ELEMENTS = true;
-        private const bool PREVIEW_BUILDER_COL_WITH_ALL_AVAILABLE_ELEMENTS = false;
-
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
         private readonly List<IWearable> resultWearablesBuffer = new ();
@@ -71,8 +68,7 @@ namespace DCL.AvatarRendering.Wearables
 
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
             {
-                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                                       .ToArray();
+                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries).ToArray();
 
                 results ??= new List<IWearable>();
                 var localBuffer = ListPool<IWearable>.Get();
@@ -87,55 +83,36 @@ namespace DCL.AvatarRendering.Wearables
                         needsBuilderAPISigning: true);
                 }
 
-                if (PREVIEW_BUILDER_COL_WITH_ALL_AVAILABLE_ELEMENTS)
+                // Include ALL user's available wearables (loop pages)
+                // Higher page size to do a lot less requests.
+                const int OWNED_PAGE_SIZE = 200;
+                int ownedPage = 1;
+                int ownedTotal = int.MaxValue;
+                using var ownedPageBufferScope = ListPool<IWearable>.Get(out var ownedPageBuffer);
+                ownedPageBuffer = ownedPageBuffer ?? new List<IWearable>();
+
+                while (localBuffer.Count < ownedTotal)
                 {
-                    // Include ALL user's available wearables (loop pages)
-                    // Higher page size to do a lot less requests.
-                    const int OWNED_PAGE_SIZE = 200;
-                    int ownedPage = 1;
-                    int ownedTotal = int.MaxValue;
-                    using var ownedPageBufferScope = ListPool<IWearable>.Get(out var ownedPageBuffer);
-                    ownedPageBuffer = ownedPageBuffer ?? new List<IWearable>();
+                    ownedPageBuffer.Clear();
+                    (IReadOnlyList<IWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
+                        OWNED_PAGE_SIZE,
+                        ownedPage,
+                        ct,
+                        sortingField,
+                        orderBy,
+                        category,
+                        collectionType,
+                        name,
+                        ownedPageBuffer
+                    );
 
-                    while (localBuffer.Count < ownedTotal)
-                    {
-                        ownedPageBuffer.Clear();
-                        (IReadOnlyList<IWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
-                            OWNED_PAGE_SIZE,
-                            ownedPage,
-                            ct,
-                            sortingField,
-                            orderBy,
-                            category,
-                            collectionType,
-                            name,
-                            ownedPageBuffer
-                        );
+                    ownedTotal = ownedPageTotal;
 
-                        ownedTotal = ownedPageTotal;
+                    if (ownedPageResults.Count == 0)
+                        break;
 
-                        if (ownedPageResults.Count == 0)
-                            break;
-
-                        localBuffer.AddRange(ownedPageResults);
-                        ownedPage++;
-                    }
-                }
-                else if (PREVIEW_BUILDER_COL_WITH_EMBEDDED_ELEMENTS)
-                {
-                    var maleDefaultPointers = WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE);
-                    maleDefaultPointers.Add(BodyShape.MALE);
-
-                    var femaleDefaultPointers = WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.FEMALE);
-                    femaleDefaultPointers.Add(BodyShape.FEMALE);
-
-                    var maleDefaults = await RequestPointersAsync(maleDefaultPointers, BodyShape.MALE, ct);
-                    if (maleDefaults != null)
-                        localBuffer.AddRange(maleDefaults);
-
-                    var femaleDefaults = await RequestPointersAsync(femaleDefaultPointers, BodyShape.FEMALE, ct);
-                    if (femaleDefaults != null)
-                        localBuffer.AddRange(femaleDefaults);
+                    localBuffer.AddRange(ownedPageResults);
+                    ownedPage++;
                 }
 
                 // De-duplicate by URN and paginate the unified list
