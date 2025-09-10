@@ -120,6 +120,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
                         if (roomSelection == RoomSelection.NEW)
                         {
+                            if (!string.IsNullOrEmpty(result.Value.sceneId))
+                                while (!scenesCache.TryGetBySceneId(result.Value.sceneId, out ISceneFacade? _))
+                                    await UniTask.Yield();
+
                             previousMetaData = meta;
                             scenesCache.TryGetByParcel(meta.Parcel, out connectedScene);
                         }
