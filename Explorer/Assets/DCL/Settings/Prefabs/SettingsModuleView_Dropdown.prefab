@@ -146,7 +146,7 @@ MonoBehaviour:
     bottomLeft: {r: 1, g: 1, b: 1, a: 1}
     bottomRight: {r: 1, g: 1, b: 1, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
+  m_spriteAsset: {fileID: 11400000, guid: 30ca27f7a7542104f9213835e80ffc04, type: 2}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
   m_TextStyleHashCode: -1183493901
@@ -398,6 +398,10 @@ PrefabInstance:
       propertyPath: m_Size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3634989480188834563, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
+      propertyPath: m_spriteAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 30ca27f7a7542104f9213835e80ffc04, type: 2}
     - target: {fileID: 3934912518001919750, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -450,6 +454,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5338121310425341266, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
+      propertyPath: m_spriteAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 30ca27f7a7542104f9213835e80ffc04, type: 2}
     - target: {fileID: 5421800564082040363, guid: a30e7446d5f849649a66f24dfb5b6933, type: 3}
       propertyPath: m_Name
       value: Dropdown
