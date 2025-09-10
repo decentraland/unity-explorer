@@ -173,7 +173,7 @@ namespace Global.Dynamic
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START));
+            var cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 

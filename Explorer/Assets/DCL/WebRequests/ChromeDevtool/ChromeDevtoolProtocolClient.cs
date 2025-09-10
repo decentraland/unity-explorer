@@ -2,6 +2,7 @@ using CDPBridges;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -16,6 +17,7 @@ namespace DCL.WebRequests.ChromeDevtool
         /// </summary>
         public const string LOADER_ID = "";
         private const string DOCUMENT_URL = "https://local.client.decentraland.com/";
+        private const int PORT = 1473;
 
         private readonly IBridge bridge;
         private readonly CancellationTokenSource cancellationTokenSource;
@@ -30,11 +32,12 @@ namespace DCL.WebRequests.ChromeDevtool
             atomicRequestIdIncrement = 1;
         }
 
-        public static ChromeDevtoolProtocolClient New(bool startOnCreation)
+        public static ChromeDevtoolProtocolClient New(bool startOnCreation, IAppArgs? appArgs = null)
         {
             Bridge bridge = new Bridge(
-                browser: new NativeBrowser(),
-                logger: new UnityLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL)
+                browser: new CreatorHubBrowser(appArgs ?? new ApplicationParametersParser(), PORT),
+                logger: new UnityLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL),
+                port: PORT
             );
 
             ChromeDevtoolProtocolClient newInstance = new ChromeDevtoolProtocolClient(bridge);
