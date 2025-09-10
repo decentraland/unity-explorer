@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.Ipfs;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
@@ -46,7 +47,7 @@ namespace DCL.AvatarRendering.Emotes
                 model.id = embeddedEmote.id;
 
                 // No content hashes available
-                model.content = Array.Empty<AvatarAttachmentDTO.Content>();
+                model.content = Array.Empty<ContentDefinition>();
                 model.pointers = new[] { embeddedEmote.id };
                 model.type = "emote";
                 model.version = "v3";

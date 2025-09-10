@@ -20,6 +20,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EventsApi;
@@ -224,7 +225,8 @@ namespace Global.Dynamic
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
 
             var mapPathEventBus = new MapPathEventBus();
-            INotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsBusController.Initialize(notificationsBusController);
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
@@ -480,7 +482,6 @@ namespace Global.Dynamic
                         eventsApiService,
                         mapPathEventBus,
                         staticContainer.MapPinsEventBus,
-                        notificationsBusController,
                         realmNavigator,
                         staticContainer.RealmData,
                         sharedNavmapCommandBus,
@@ -635,7 +636,9 @@ namespace Global.Dynamic
                 friendOnlineStatusCacheProxy,
                 profileRepository,
                 sharedSpaceManager,
-                includeVoiceChat);
+                includeVoiceChat,
+                includeCommunities,
+                communitiesDataProvider);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -650,6 +653,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData);
 
             var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+
+            var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -683,9 +688,9 @@ namespace Global.Dynamic
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
-                new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
+                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, staticContainer.ScenesCache),
+                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
@@ -775,7 +780,6 @@ namespace Global.Dynamic
                     forceRender,
                     staticContainer.RealmData,
                     profileCache,
-                    assetBundlesURL,
                     notificationsBusController,
                     characterPreviewEventBus,
                     mapPathEventBus,
@@ -806,7 +810,8 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     realmNftNamesProvider,
                     includeVoiceChat,
-                    galleryEventBus
+                    galleryEventBus,
+                    thumbnailProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
@@ -859,7 +864,6 @@ namespace Global.Dynamic
                     profileRepository,
                     characterPreviewFactory,
                     staticContainer.RealmData,
-                    assetBundlesURL,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     characterPreviewEventBus,
                     selfProfile,
@@ -883,6 +887,7 @@ namespace Global.Dynamic
                     profileChangesBus,
                     includeFriends,
                     includeUserBlocking,
+                    includeCommunities,
                     isNameEditorEnabled,
                     includeVoiceChat,
                     chatEventBus,
@@ -890,7 +895,9 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     voiceChatCallStatusService,
                     galleryEventBus,
-                    clipboard
+                    clipboard,
+                    communitiesDataProvider,
+                    thumbnailProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -979,13 +986,11 @@ namespace Global.Dynamic
                     clipboard,
                     bootstrapContainer.DecentralandUrlsSource,
                     webBrowser,
-                    staticContainer.WebRequestsContainer.WebRequestController,
                     profileRepository,
                     realmNavigator,
                     assetsProvisioner,
                     wearableCatalog,
                     wearablesProvider,
-                    assetBundlesURL,
                     dclCursor,
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     globalWorld,
@@ -994,6 +999,7 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     sharedSpaceManager,
                     identityCache,
+                    thumbnailProvider,
                     galleryEventBus));
 
             if (includeMarketplaceCredits)
@@ -1036,7 +1042,6 @@ namespace Global.Dynamic
                     galleryEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
-                    notificationsBusController,
                     lambdasProfilesProvider,
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache));
