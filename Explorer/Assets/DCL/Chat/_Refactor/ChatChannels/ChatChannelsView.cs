@@ -49,10 +49,7 @@ namespace DCL.Chat
         public event Action<ChatChannel.ChannelId> ConversationSelected;
         public event Action<ChatChannel.ChannelId> ConversationRemovalRequested;
 
-        private ChatConversationsToolbarViewItemPool chatConversationsToolbarViewItemPool;
-
-        private void Awake() =>
-            chatConversationsToolbarViewItemPool = new ChatConversationsToolbarViewItemPool(itemsContainer, itemNearbyPrefab, itemPrivatePrefab, itemCommunityPrefab);
+        private ChatConversationsToolbarViewItemPool? chatConversationsToolbarViewItemPool;
 
         /// <summary>
         /// Marks an item as selected.
@@ -266,6 +263,7 @@ namespace DCL.Chat
 
         public void AddConversation(BaseChannelViewModel viewModel)
         {
+            chatConversationsToolbarViewItemPool ??= new ChatConversationsToolbarViewItemPool(itemsContainer, itemNearbyPrefab, itemPrivatePrefab, itemCommunityPrefab);
             ChatConversationsToolbarViewItem newItem = viewModel.ChannelType switch
                                                        {
                                                            ChatChannel.ChatChannelType.NEARBY => chatConversationsToolbarViewItemPool.Get<ChatConversationsToolbarViewItem>(),
