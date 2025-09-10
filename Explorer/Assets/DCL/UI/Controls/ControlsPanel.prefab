@@ -700,3 +700,5 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  unloadedColor: {r: 1, g: 1, b: 1, a: 0}
+  loadedColor: {r: 1, g: 1, b: 1, a: 1}
