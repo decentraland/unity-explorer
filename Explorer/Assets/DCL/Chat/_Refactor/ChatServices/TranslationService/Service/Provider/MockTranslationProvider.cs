@@ -43,10 +43,10 @@ namespace DCL.Translation.Service.Provider
             // This helps test UI resizing with different content lengths.
             int minWords = 5;
             int maxWords = 15 + originalText.Length / 5;
-            string loremIpsumText = LoremIpsumGenerator.Generate(minWords, maxWords);
+            string loremIpsumText = LoremIpsumGenerator.Generate(targetLanguage, minWords, maxWords);
 
             // Prepend the language code for easy identification during testing.
-            return $"[{targetLanguage.ToString().ToLower()}] {loremIpsumText}";
+            return $"{loremIpsumText}";
         }
     }
 }
