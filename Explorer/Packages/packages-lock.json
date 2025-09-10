@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "41d8571a2069fb6489dd00adf9b16c25e460cd9e"
+      "hash": "2488227ce1013f3bf65408447d0fbc6531e54ed5"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
