@@ -78,6 +78,11 @@ MonoBehaviour:
     m_GlyphIndex: 7
     m_Scale: 1
     m_Name: flag_jp
+  - m_ElementType: 2
+    m_Unicode: 65534
+    m_GlyphIndex: 8
+    m_Scale: 1
+    m_Name: flag_ko
   m_GlyphTable:
   - m_Index: 0
     m_Metrics:
@@ -207,6 +212,22 @@ MonoBehaviour:
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: 1944584743, guid: ee942bc981868c84bb1e7dd719b4a129, type: 3}
+  - m_Index: 8
+    m_Metrics:
+      m_Width: 64
+      m_Height: 64
+      m_HorizontalBearingX: 0
+      m_HorizontalBearingY: 44
+      m_HorizontalAdvance: 64
+    m_GlyphRect:
+      m_X: 0
+      m_Y: 64
+      m_Width: 64
+      m_Height: 64
+    m_Scale: 2
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+    sprite: {fileID: 1262314321, guid: ee942bc981868c84bb1e7dd719b4a129, type: 3}
   spriteInfoList: []
   fallbackSpriteAssets: []
 --- !u!21 &3062716542158113615

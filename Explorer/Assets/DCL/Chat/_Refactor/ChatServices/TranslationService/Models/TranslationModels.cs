@@ -9,7 +9,8 @@
         PT = 4,
         IT = 5,
         ZH = 6,
-        JA = 7
+        JA = 7,
+        KO = 8
     }
 
     public enum TranslationState
