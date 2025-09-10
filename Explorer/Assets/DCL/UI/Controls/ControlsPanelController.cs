@@ -1,46 +1,46 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
-using UnityEngine.InputSystem;
+using DCL.UI.SharedSpaceManager;
 
 namespace DCL.UI.Controls
 {
-    public class ControlsPanelController : ControllerBase<ControlsPanelView>
+    public class ControlsPanelController : ControllerBase<ControlsPanelView>, IControllerInSharedSpace<ControlsPanelView>
     {
-        private readonly IMVCManager mvcManager;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         private bool closePanel;
+        private UniTaskCompletionSource? closeViewTask;
 
-        public ControlsPanelController(ViewFactoryMethod viewFactory, IMVCManager mvcManager) : base(viewFactory)
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+
+        public ControlsPanelController(ViewFactoryMethod viewFactory) : base(viewFactory)
         {
-            this.mvcManager = mvcManager;
-
-            DCLInput.Instance.Shortcuts.Controls.performed += OnShortcutPressed;
         }
 
-        private void OnShortcutPressed(InputAction.CallbackContext ctx)
+        protected override void OnViewInstantiated()
         {
-            if (State == ControllerState.ViewFocused)
-                closePanel = true;
-            else
-                mvcManager.ShowAsync(IssueCommand()).Forget();
+            viewInstance!.closeButton.onClick.AddListener(Close);
         }
 
-        protected override void OnViewClose()
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            closePanel = false;
+            closeViewTask?.TrySetCanceled(ct);
+            closeViewTask = new UniTaskCompletionSource();
+            
+            ViewShowingComplete?.Invoke(this);
+
+            await closeViewTask.Task;
         }
-
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(
-                viewInstance!.closeButton.OnClickAsync(ct),
-                UniTask.WaitUntil(() => closePanel, cancellationToken: ct)
-            );
-
-        public override void Dispose()
+        
+        private void Close() =>
+            closeViewTask?.TrySetResult();
+        
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            DCLInput.Instance.Shortcuts.Controls.performed -= OnShortcutPressed;
+            Close();
+            
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
     }
 }
