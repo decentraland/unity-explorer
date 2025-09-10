@@ -8,7 +8,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
-using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Chat;
 using DCL.Clipboard;
@@ -64,12 +63,10 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebBrowser webBrowser;
-        private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly URLDomain assetBundleURL;
         private readonly ICursor cursor;
         private readonly Button sidebarButton;
         private readonly Arch.Core.World globalWorld;
@@ -79,6 +76,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -91,11 +89,10 @@ namespace DCL.PluginSystem.Global
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService,
             ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
-            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
+            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser,
             IProfileRepository profileRepository,
             IRealmNavigator realmNavigator, IAssetsProvisioner assetsProvisioner,
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
-            URLDomain assetBundleURL,
             ICursor cursor,
             Button sidebarButton,
             Arch.Core.World globalWorld,
@@ -104,6 +101,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
+            IThumbnailProvider thumbnailProvider,
             GalleryEventBus galleryEventBus)
         {
             this.selfProfile = selfProfile;
@@ -118,13 +116,11 @@ namespace DCL.PluginSystem.Global
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
-            this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
             this.realmNavigator = realmNavigator;
             this.assetsProvisioner = assetsProvisioner;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
-            this.assetBundleURL = assetBundleURL;
             this.cursor = cursor;
             this.sidebarButton = sidebarButton;
             this.globalWorld = globalWorld;
@@ -133,6 +129,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
+            this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
 
             factory = new InWorldCameraFactory();
@@ -172,7 +169,7 @@ namespace DCL.PluginSystem.Global
                     wearableStorage,
                     wearablesProvider,
                     decentralandUrlsSource,
-                    new ECSThumbnailProvider(realmData, globalWorld, assetBundleURL, webRequestController),
+                    this.thumbnailProvider,
                     new PassportBridgeOpener(),
                     web3IdentityCache,
                     rarityBackgroundsMapping,

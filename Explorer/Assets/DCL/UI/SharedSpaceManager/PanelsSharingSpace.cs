@@ -12,5 +12,6 @@ namespace DCL.UI.SharedSpaceManager
         SidebarProfile,
         Explore,
         MarketplaceCredits,
+        Controls,
     }
 }

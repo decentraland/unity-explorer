@@ -43,7 +43,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IMapPinsEventBus mapPinsEventBus;
         private readonly IRealmNavigator realmNavigator;
-        private readonly INotificationsBusController notificationsBusController;
         private readonly INavmapBus navmapBus;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
@@ -65,7 +64,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             IEventsApiService eventsApiService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
-            INotificationsBusController notificationsBusController,
             IRealmNavigator realmNavigator,
             INavmapBus navmapBus,
             IOnlineUsersProvider onlineUsersProvider)
@@ -79,7 +77,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.eventsApiService = eventsApiService;
             this.mapPathEventBus = mapPathEventBus;
             this.realmNavigator = realmNavigator;
-            this.notificationsBusController = notificationsBusController;
             this.mapPinsEventBus = mapPinsEventBus;
             this.navmapBus = navmapBus;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -129,7 +126,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, cancellationToken),
-                mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
+                mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             (IMapLayerController liveEventsInstaller,

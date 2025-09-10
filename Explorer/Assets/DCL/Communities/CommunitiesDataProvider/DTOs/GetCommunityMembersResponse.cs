@@ -1,17 +1,16 @@
-
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
+using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using System;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
-    public class GetCommunityMembersResponse
+    public class GetCommunityMembersResponse : ICommunityMemberPagedResponse
     {
         [Serializable]
-        public class MemberData
+        public class MemberData : ICommunityMemberData
         {
             public string communityId;
             public string memberAddress;
@@ -37,6 +36,24 @@ namespace DCL.Communities
 
             private FriendshipStatus friendStatus;
             private Color userNameColor;
+
+            public string Id => communityId;
+            public string Address => memberAddress;
+            public string ProfilePictureUrl => profilePictureUrl;
+            public bool HasClaimedName => hasClaimedName;
+            public string Name => name;
+            public int MutualFriends => mutualFriends;
+            public CommunityMemberRole Role
+            {
+                get => role;
+                set => role = value;
+            }
+
+            public FriendshipStatus FriendshipStatus
+            {
+                get => friendshipStatus;
+                set => friendshipStatus = value;
+            }
 
             public Color GetUserNameColor()
             {
@@ -93,6 +110,8 @@ namespace DCL.Communities
         }
 
         public GetCommunityMembersResponseData data;
+        public ICommunityMemberData[] members => data.results;
+        public int total => data.total;
     }
 }
 

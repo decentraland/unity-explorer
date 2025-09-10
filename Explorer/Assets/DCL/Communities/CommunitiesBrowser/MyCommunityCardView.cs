@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using System;
 using TMPro;
@@ -16,6 +17,8 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private ListenersCountView listenersCountView;
+        [SerializeField] private GameObject requestsReceivedContainer = null!;
+        [SerializeField] private TMP_Text requestsReceivedText = null!;
 
         private string currentCommunityId;
 
@@ -40,6 +43,12 @@ namespace DCL.Communities.CommunitiesBrowser
             userRoleContainer.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             var roleString = role.ToString();
             userRole.text = $"{char.ToUpperInvariant(roleString[0])}{roleString[1..]}";
+        }
+
+        public void SetRequestsReceived(int requestsCount)
+        {
+            requestsReceivedContainer.SetActive(requestsCount > 0);
+            requestsReceivedText.text = $"{requestsCount} Request{(requestsCount > 1 ? "s" : "")} Received";
         }
     }
 }

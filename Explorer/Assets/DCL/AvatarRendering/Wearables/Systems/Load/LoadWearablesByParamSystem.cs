@@ -65,7 +65,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             new (intention.Results, intention.TotalAmount);
 
         protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
+            await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Newtonsoft);
 
         protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);

@@ -51,6 +51,7 @@ namespace Global.Dynamic
         private readonly URLDomain assetBundleRegistry;
         private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly DecentralandEnvironment environment;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -87,7 +88,8 @@ namespace Global.Dynamic
             bool isLocalSceneDevelopment,
             URLDomain assetBundleRegistry,
             IAppArgs appArgs,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment environment)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -104,6 +106,7 @@ namespace Global.Dynamic
             this.assetBundleRegistry = assetBundleRegistry;
             this.appArgs = appArgs;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.environment = environment;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -122,7 +125,8 @@ namespace Global.Dynamic
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
-                if (decentralandUrlsSource.RequiresAboutOverride())
+                //The today environment requires a hardcoded content and lambda
+                if (environment.Equals(DecentralandEnvironment.Today))
                 {
                     result.content.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
                     result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandLambdasOverride);

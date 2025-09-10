@@ -124,15 +124,14 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
           options:
-          - Don't Translate
-          - English (default)
-          - Spanish
-          - French
-          - German
-          - Portuguese
-          - Italian
-          - Chinese
-          - Japanese
+          - <sprite name=flag_us> English (default)
+          - <sprite name=flag_es> Spanish
+          - <sprite name=flag_fr> French
+          - <sprite name=flag_de> German
+          - <sprite name=flag_pt> Portuguese
+          - <sprite name=flag_it> Italian
+          - <sprite name=flag_zh> Chinese
+          - <sprite name=flag_jp> Japanese
           defaultOptionIndex: 0
         <Feature>k__BackingField: 12
     - rid: 3126482891795070976
