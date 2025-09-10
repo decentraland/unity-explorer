@@ -19,7 +19,6 @@ using DCL.Input;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -40,8 +39,8 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
-using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.EventsApi;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
@@ -106,7 +105,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
@@ -123,6 +122,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileChangesBus profileChangesBus;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private readonly bool includeCameraReel;
 
@@ -167,8 +167,7 @@ namespace DCL.PluginSystem.Global
             List<string> forceRender,
             IRealmData realmData,
             IProfileCache profileCache,
-            URLDomain assetBundleURL,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             IBackpackEventBus backpackEventBus,
@@ -199,7 +198,8 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             bool isVoiceChatEnabled,
             bool isTranslationChatEnabled,
-            GalleryEventBus galleryEventBus)
+            GalleryEventBus galleryEventBus,
+            IThumbnailProvider thumbnailProvider)
         {
             this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
@@ -224,7 +224,6 @@ namespace DCL.PluginSystem.Global
             this.forceRender = forceRender;
             this.realmData = realmData;
             this.profileCache = profileCache;
-            this.assetBundleURL = assetBundleURL;
             this.notificationsBusController = notificationsBusController;
             this.emoteStorage = emoteStorage;
             this.characterPreviewEventBus = characterPreviewEventBus;
@@ -258,6 +257,7 @@ namespace DCL.PluginSystem.Global
             this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.galleryEventBus = galleryEventBus;
+            this.thumbnailProvider = thumbnailProvider;
         }
 
         public void Dispose()
@@ -291,9 +291,6 @@ namespace DCL.PluginSystem.Global
                 emoteStorage,
                 settings.EmbeddedEmotesAsURN(),
                 forceRender,
-                realmData,
-                assetBundleURL,
-                webRequestController,
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
@@ -306,6 +303,7 @@ namespace DCL.PluginSystem.Global
                 appArgs,
                 webBrowser,
                 inWorldWarningNotificationView,
+                thumbnailProvider,
                 profileChangesBus
             );
 
@@ -435,7 +433,6 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 webRequestController,
                 inputBlock,
-                explorePanelView.WarningNotificationView,
                 mvcManager,
                 profileRepositoryWrapper,
                 selfProfile,

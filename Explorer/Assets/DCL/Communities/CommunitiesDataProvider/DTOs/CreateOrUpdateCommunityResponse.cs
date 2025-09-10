@@ -1,7 +1,6 @@
-
 using System;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
     public class CreateOrUpdateCommunityResponse
@@ -20,6 +19,7 @@ namespace DCL.Communities
 
         public string message;
         public CommunityData data;
+        public CommunityModerationResponse moderationData;
     }
 }
 

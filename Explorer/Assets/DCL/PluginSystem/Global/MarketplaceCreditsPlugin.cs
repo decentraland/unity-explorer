@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IMVCManager mvcManager;
-        private readonly INotificationsBusController notificationBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
-            INotificationsBusController notificationBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
             IRealmData realmData,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,

@@ -4555,6 +4555,8 @@ MonoBehaviour:
   <BlockText>k__BackingField: Block
   <JumpInSprite>k__BackingField: {fileID: 21300000, guid: c5f0f436601ac144a91a6d6d2e2a2677, type: 3}
   <JumpInText>k__BackingField: Jump to Location
+  <InviteToCommunitySprite>k__BackingField: {fileID: 21300000, guid: 8be81fdf59a094b458426c66803c47e3, type: 3}
+  <InviteToCommunityText>k__BackingField: Invite to Community
 --- !u!1 &7226744569022002591
 GameObject:
   m_ObjectHideFlags: 0

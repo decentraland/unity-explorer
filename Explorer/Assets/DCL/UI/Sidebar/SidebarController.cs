@@ -40,7 +40,7 @@ namespace DCL.UI.Sidebar
 
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
@@ -69,7 +69,7 @@ namespace DCL.UI.Sidebar
         public SidebarController(
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationsMenuController notificationsMenuController,
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
@@ -171,6 +171,7 @@ namespace DCL.UI.Sidebar
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
 

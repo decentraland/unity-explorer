@@ -2,6 +2,8 @@
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Prefs;
@@ -71,25 +73,25 @@ namespace DCL.Chat.ChatCommands
                 Channels = new List<ChatChannel>(chatHistory.Channels.Values)
             });
 
-            // Finalize Initialization
-            await chatUserStateUpdater.InitializeAsync(ct);
-
             // Set default channel after all channels are loaded
             if (chatHistory.Channels.TryGetValue(ChatChannel.NEARBY_CHANNEL_ID, out var nearbyChannel))
                 SetDefaultChannel(nearbyChannel);
 
             chatMemberListService.Start();
+
+            // Finalize Initialization
+            await chatUserStateUpdater.InitializeAsync(ct);
         }
 
         private async UniTask InitializeBaseChannelsAsync(CancellationToken ct)
         {
             var nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
-            
+
             if (nearbyChannel.Messages.Count == 0)
                 chatHistory.AddMessage(nearbyChannel.Id, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem("Type /help for available commands."));
 
             nearbyChannel.MarkAllMessagesAsRead();
-            
+
             if (friendsServiceProxy.Configured)
                 chatHistoryStorage?.LoadAllChannelsWithoutMessages();
         }
@@ -102,7 +104,7 @@ namespace DCL.Chat.ChatCommands
             string closedCommunityChatsKey = string.Empty;
             if (identityCache.Identity != null)
                 closedCommunityChatsKey = string.Format(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, identityCache.Identity.Address);
-            
+
             const int ALL_COMMUNITIES_OF_USER = 100;
             Result<GetUserCommunitiesResponse> result =
                 await communitiesDataProvider
