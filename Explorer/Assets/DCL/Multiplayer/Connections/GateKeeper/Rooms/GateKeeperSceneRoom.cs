@@ -120,9 +120,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
                         if (roomSelection == RoomSelection.NEW)
                         {
-                            // We need to wait until we have a valid scene in the cache
-                            // Otherwise it might provoke inconsistencies on the scene creation
-                            // Like live streams not working if you enter by deeplink
+                            // Ensure a valid scene is present in the cache before proceeding.
+                            // Failing to do so may cause inconsistencies during scene load,
+                            // such as live streams not working when entering via a deeplink.
                             if (!string.IsNullOrEmpty(result.Value.sceneId))
                                 while (!scenesCache.TryGetBySceneId(result.Value.sceneId, out ISceneFacade? _))
                                     await UniTask.Yield(token);
