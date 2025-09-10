@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.Chat
 {
@@ -27,10 +26,10 @@ namespace DCL.Chat
         private ChatConversationsToolbarViewItem itemNearbyPrefab;
 
         [SerializeField]
-        private ChatConversationsToolbarViewItem itemPrivatePrefab;
+        private PrivateChatConversationsToolbarViewItem itemPrivatePrefab;
 
         [SerializeField]
-        private ChatConversationsToolbarViewItem itemCommunityPrefab;
+        private CommunityChatConversationsToolbarViewItem itemCommunityPrefab;
 
         [SerializeField]
         private CanvasGroup scrollButtons;
@@ -50,6 +49,8 @@ namespace DCL.Chat
         public event Action<ChatChannel.ChannelId> ConversationSelected;
         public event Action<ChatChannel.ChannelId> ConversationRemovalRequested;
 
+        private ChatConversationsToolbarViewItemPool? chatConversationsToolbarViewItemPool;
+
         /// <summary>
         /// Marks an item as selected.
         /// </summary>
@@ -68,9 +69,11 @@ namespace DCL.Chat
         /// Removes a conversation item from the toolbar UI. It does not change any data.
         /// </summary>
         /// <param name="channelId">The Id of the conversation to find the item.</param>
-        public void RemoveConversation(ChatChannel.ChannelId channelId)
+        public void TryRemoveConversation(ChatChannel.ChannelId channelId)
         {
-            Destroy(items[channelId].gameObject);
+            if (!items.TryGetValue(channelId, out var itemToRemove)) return;
+
+            chatConversationsToolbarViewItemPool.Release(itemToRemove);
             items.Remove(channelId);
             UpdateScrollButtonsVisibility();
         }
@@ -81,7 +84,7 @@ namespace DCL.Chat
         public void RemoveAllConversations()
         {
             foreach (var itemsValue in items.Values)
-                UnityObjectUtils.SafeDestroyGameObject(itemsValue);
+                chatConversationsToolbarViewItemPool.Release(itemsValue);
             items.Clear();
             UpdateScrollButtonsVisibility();
         }
@@ -260,21 +263,14 @@ namespace DCL.Chat
 
         public void AddConversation(BaseChannelViewModel viewModel)
         {
-            ChatConversationsToolbarViewItem newItem;
-
-            switch (viewModel.ChannelType)
-            {
-                case ChatChannel.ChatChannelType.NEARBY:
-                    newItem = Instantiate(itemNearbyPrefab, itemsContainer);
-                    break;
-                case ChatChannel.ChatChannelType.COMMUNITY:
-                    newItem = Instantiate(itemCommunityPrefab, itemsContainer);
-                    break;
-                case ChatChannel.ChatChannelType.USER:
-                    newItem = Instantiate(itemPrivatePrefab, itemsContainer);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
+            chatConversationsToolbarViewItemPool ??= new ChatConversationsToolbarViewItemPool(itemsContainer, itemNearbyPrefab, itemPrivatePrefab, itemCommunityPrefab);
+            ChatConversationsToolbarViewItem newItem = viewModel.ChannelType switch
+                                                       {
+                                                           ChatChannel.ChatChannelType.NEARBY => chatConversationsToolbarViewItemPool.Get<ChatConversationsToolbarViewItem>(),
+                                                           ChatChannel.ChatChannelType.COMMUNITY => chatConversationsToolbarViewItemPool.Get<CommunityChatConversationsToolbarViewItem>(),
+                                                           ChatChannel.ChatChannelType.USER => chatConversationsToolbarViewItemPool.Get<PrivateChatConversationsToolbarViewItem>(),
+                                                           _ => throw new ArgumentOutOfRangeException()
+                                                       };
 
             newItem.Initialize();
             newItem.Id = viewModel.Id;
@@ -312,15 +308,8 @@ namespace DCL.Chat
             UpdateScrollButtonsVisibility();
         }
 
-        public void RemoveConversation(ChatChannel channel)
-        {
-            if (items.TryGetValue(channel.Id, out var itemToRemove))
-            {
-                UnityObjectUtils.SafeDestroyGameObject(itemToRemove);
-                items.Remove(channel.Id);
-                UpdateScrollButtonsVisibility(); // Refresh scrollbar state
-            }
-        }
+        public void TryRemoveConversation(ChatChannel channel) =>
+                TryRemoveConversation(channel.Id);
 
         public void UpdateConversation(BaseChannelViewModel viewModel)
         {
@@ -328,7 +317,7 @@ namespace DCL.Chat
 
             itemToUpdate.SetUnreadMessages(viewModel.UnreadMessagesCount);
             itemToUpdate.ShowMentionSign(viewModel.HasUnreadMentions);
-            
+
             switch (viewModel)
             {
                 case UserChannelViewModel user:
