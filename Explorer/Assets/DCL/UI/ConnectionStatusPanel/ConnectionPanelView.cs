@@ -8,7 +8,7 @@ namespace DCL.UI.ConnectionStatusPanel
     {
         private const string USS_PANEL_HIDDEN = "connection-panel--hidden";
 
-        public bool Visible { get; private set; } = false;
+        private bool visible = false;
         private bool shownOnce;
 
         private readonly VisualElement panelRoot;
@@ -26,7 +26,7 @@ namespace DCL.UI.ConnectionStatusPanel
 
             this.panelRoot = panelRoot;
 
-            panelRoot.EnableInClassList(USS_PANEL_HIDDEN, !Visible);
+            panelRoot.EnableInClassList(USS_PANEL_HIDDEN, !visible);
             panelRoot.Q<Button>("CloseButton").clicked += closeClicked;
 
             assetBundleSceneStatus.EnableInClassList(USS_PANEL_HIDDEN, true);
@@ -34,9 +34,9 @@ namespace DCL.UI.ConnectionStatusPanel
 
         public virtual void Toggle()
         {
-            Visible = !Visible;
+            visible = !visible;
 
-            if (!shownOnce && Visible)
+            if (!shownOnce && visible)
             {
                 // We use this (plus setting display to None in OnEnable) to force UI Toolkit
                 // to redraw all the items on the first open. Without it some styles are not applied.
@@ -44,7 +44,7 @@ namespace DCL.UI.ConnectionStatusPanel
                 shownOnce = true;
             }
 
-            panelRoot.EnableInClassList(USS_PANEL_HIDDEN, Visible);
+            panelRoot.EnableInClassList(USS_PANEL_HIDDEN, !visible);
         }
 
         public void SetSceneStatus(ConnectionStatus status)
