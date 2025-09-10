@@ -18,7 +18,6 @@ MonoBehaviour:
   - rid: 6784895265412481027
   - rid: 1268264176566403074
   - rid: 5215741520409264128
-  - rid: 5215741520409264129
   - rid: 1501337502808539138
   - rid: 1095376790733193218
   - rid: 4107643854440628226
@@ -275,12 +274,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
-          in @decentraland right now and join me!
-        <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
-        <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
-        <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
-        <LinkCopiedMessage>k__BackingField: Link copied!
+        <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
         <GridLayoutFixedColumnCount>k__BackingField: 6
         <ThumbnailHeight>k__BackingField: 230
@@ -429,6 +423,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
     - rid: 2872862648882692099
       type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -492,6 +487,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <NotificationDefaultThumbnailsSO>k__BackingField:
+          m_AssetGUID: 594ae6e7cd408424cb8433ddba60315d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
@@ -530,6 +531,12 @@ MonoBehaviour:
       data:
         <NotificationIconTypesSO>k__BackingField:
           m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NotificationDefaultThumbnailsSO>k__BackingField:
+          m_AssetGUID: 594ae6e7cd408424cb8433ddba60315d
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -772,9 +779,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 5215741520409264129
-      type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
-      data: 
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:

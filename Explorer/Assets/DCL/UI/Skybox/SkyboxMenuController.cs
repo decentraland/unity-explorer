@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
 using DCL.UI.SharedSpaceManager;
 using MVC;
@@ -12,15 +14,20 @@ namespace DCL.UI.Skybox
     public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IControllerInSharedSpace<SkyboxMenuView>
     {
         private readonly SkyboxSettingsAsset skyboxSettings;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private CancellationTokenSource skyboxMenuCts = new ();
+        private bool? pendingInteractableState;
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public SkyboxMenuController(ViewFactoryMethod viewFactory, SkyboxSettingsAsset skyboxSettings) : base(viewFactory)
+        public SkyboxMenuController(ViewFactoryMethod viewFactory, SkyboxSettingsAsset skyboxSettings, ISceneRestrictionBusController sceneRestrictionBusController) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
         }
 
         public override void Dispose()
@@ -30,6 +37,7 @@ namespace DCL.UI.Skybox
 
             skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
             skyboxSettings.DayCycleChanged -= OnDayCycleChanged;
+            sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
 
             if (!viewInstance) return;
             viewInstance.CloseButton.onClick.RemoveAllListeners();
@@ -61,6 +69,9 @@ namespace DCL.UI.Skybox
 
             viewInstance.TimeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleChanged);
             viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
+
+            if (pendingInteractableState.HasValue)
+                SetInteractable(pendingInteractableState.Value);
 
             OnDayCycleChanged(skyboxSettings.IsDayCycleEnabled);
             OnTimeOfDayChanged(skyboxSettings.TimeOfDayNormalized);
@@ -116,6 +127,29 @@ namespace DCL.UI.Skybox
         private void OnClose()
         {
             skyboxMenuCts.Cancel();
+        }
+
+        private void OnSceneRestrictionChanged(SceneRestriction restriction)
+        {
+            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_UI_BLOCKED)
+                SetInteractable(restriction.Action != SceneRestrictionsAction.APPLIED);
+        }
+
+        private void SetInteractable(bool isInteractable)
+        {
+            if (viewInstance == null)
+            {
+                pendingInteractableState = isInteractable;
+                return;
+            }
+
+            viewInstance.TimeSlider.interactable = isInteractable;
+            viewInstance.TimeProgressionToggle.interactable = isInteractable;
+
+            // When enabled these groups display controls as "disabled"
+            viewInstance.TimeProgressionGroup.enabled = !isInteractable;
+            viewInstance.TopSliderGroup.enabled = !isInteractable;
+            viewInstance.TextSliderGroup.enabled = !isInteractable;
         }
     }
 }

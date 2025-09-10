@@ -9,6 +9,8 @@ using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -414,8 +416,8 @@ namespace DCL.Chat
                 GetCommunityResponse response = result.Value;
 
                 var channelId = ChatChannel.NewCommunityChannelId(response.data.id);
-                userCommunities.Add(channelId, new GetUserCommunitiesData.CommunityData()
-                    {
+                userCommunities.Add(channelId, new GetUserCommunitiesData.CommunityData
+                {
                         id = response.data.id,
                         thumbnails = response.data.thumbnails,
                         name = response.data.name,
