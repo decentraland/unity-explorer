@@ -1069,7 +1069,7 @@ namespace Global.Dynamic
                     debugBuilder));
 
             if (!localSceneDevelopment)
-                globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, mvcManager));
+                globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, appArgs));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,

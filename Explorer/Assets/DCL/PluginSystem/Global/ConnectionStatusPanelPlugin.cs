@@ -5,8 +5,8 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
 using ECS.SceneLifeCycle.CurrentScene;
+using Global.AppArgs;
 using LiveKit.Proto;
-using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -20,29 +20,48 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly IRoomsStatus roomsStatus;
-        private readonly IMVCManager loadingScreenMVCManager;
+        private readonly IAppArgs appArgs;
         private ConnectionStatusPanelController connectionStatusPanelController;
 
         public ConnectionStatusPanelPlugin(
             IRoomsStatus roomsStatus,
             ICurrentSceneInfo currentSceneInfo,
             IAssetsProvisioner assetsProvisioner,
-            IMVCManager loadingScreenMVCManager)
+            IAppArgs appArgs)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.currentSceneInfo = currentSceneInfo;
             this.roomsStatus = roomsStatus;
-            this.loadingScreenMVCManager = loadingScreenMVCManager;
+            this.appArgs = appArgs;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public void Dispose() { }
+        public void Dispose() {
+            Chat.Commands.ChatCommandsBus.Instance.ConnectionStatusPanelVisibilityChanged -= EnablePanel;
+        }
 
         public async UniTask InitializeAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
         {
             connectionStatusPanelController = Object.Instantiate(await assetsProvisioner.ProvideMainAssetValueAsync(settings.UiDocumentPrefab, ct: ct)).GetComponent<ConnectionStatusPanelController>();
-            connectionStatusPanelController.SetUGUIMVCManager(loadingScreenMVCManager);
+            connectionStatusPanelController.gameObject.SetActive(false);
+
+            // Subscribe to '/debug' chat command visibility toggles
+            Chat.Commands.ChatCommandsBus.Instance.ConnectionStatusPanelVisibilityChanged += EnablePanel;
+
+            if (appArgs.HasFlag(AppArgsFlags.DEBUG))
+                EnablePanel(true);
+        }
+
+        private bool IsInitialized() =>
+            connectionStatusPanelController.gameObject.activeSelf;
+
+        private void InitializePanel()
+        {
+            connectionStatusPanelController.gameObject.SetActive(true);
+
+            // Keep hidden until explicitly enabled
+            connectionStatusPanelController.SetPanelEnabled(false);
 
             OnSceneStatusUpdate(currentSceneInfo.SceneStatus.Value);
             OnSceneConnectionQualityUpdate(roomsStatus.ConnectionQualityScene.Value);
@@ -53,6 +72,14 @@ namespace DCL.PluginSystem.Global
             roomsStatus.ConnectionQualityIsland.OnUpdate += OnIslandConnectionQualityUpdate;
             currentSceneInfo.SceneStatus.OnUpdate += OnSceneStatusUpdate;
             currentSceneInfo.SceneAssetBundleStatus.OnUpdate += OnAssetBundleStatusUpdate;
+        }
+
+        private void EnablePanel(bool isVisible)
+        {
+            if (!IsInitialized())
+                InitializePanel();
+
+            connectionStatusPanelController.SetPanelEnabled(isVisible);
         }
 
         private void OnIslandConnectionQualityUpdate(ConnectionQuality quality) =>
