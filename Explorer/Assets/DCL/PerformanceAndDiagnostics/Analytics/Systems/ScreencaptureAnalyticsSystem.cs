@@ -54,7 +54,7 @@ namespace DCL.Analytics.Systems
             analytics.Track(AnalyticsEvents.CameraReel.TAKE_PHOTO, new JsonObject
             {
                 { "Photo UUID", response.id },
-                { "Profiles", GetVisiblePeopleAddresses(response.metadata.visiblePeople) },
+                { "Profiles Enhanced", GetVisiblePeopleAddresses(response.metadata.visiblePeople) },
                 { "source", source },
             });
         }
