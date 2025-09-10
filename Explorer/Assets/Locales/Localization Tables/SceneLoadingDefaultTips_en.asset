@@ -116,6 +116,16 @@ MonoBehaviour:
       the community!
     m_Metadata:
       m_Items: []
+  - m_Id: 219996672412868608
+    m_Localized: Art Week
+    m_Metadata:
+      m_Items: []
+  - m_Id: 219996789945655296
+    m_Localized: "Can virtual art make us feel more human?\nFind out Sept 24\u201327,
+      2025 through 30+ immersive installations, creator tours, workshops, parties,
+      and more."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

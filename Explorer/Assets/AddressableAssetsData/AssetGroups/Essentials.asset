@@ -210,6 +210,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be91903945b0c44fdb1908049ce868b1
+    m_Address: ArtWeek.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7939fa59480e654a8537b6fc2f007e3
     m_Address: MediaPlayer
     m_ReadOnly: 0
