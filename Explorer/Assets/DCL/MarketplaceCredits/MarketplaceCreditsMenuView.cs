@@ -29,6 +29,9 @@ namespace DCL.MarketplaceCredits
         public Button InfoLinkButton { get; private set; }
 
         [field: SerializeField]
+        public InfoLinkButtonTooltipView InfoLinkButtonTooltip { get; private set; }
+
+        [field: SerializeField]
         public Button CloseButton { get; private set; }
 
         [field: SerializeField]
