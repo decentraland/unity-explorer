@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.Serialization;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Web3.Identities;
@@ -23,7 +22,6 @@ namespace DCL.Notifications
 
         private readonly JsonSerializerSettings serializerSettings;
         private readonly IWebRequestController webRequestController;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly CommonArguments commonArgumentsForSetRead;
@@ -37,14 +35,12 @@ namespace DCL.Notifications
 
         public NotificationsRequestController(
             IWebRequestController webRequestController,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             bool includeFriendsNotifications
         )
         {
             this.webRequestController = webRequestController;
-            this.notificationsBusController = notificationsBusController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
 
@@ -127,7 +123,7 @@ namespace DCL.Notifications
                 foreach (INotification notification in notifications)
                     try
                     {
-                        notificationsBusController.AddNotification(notification);
+                        NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.AddNotification(notification);
                         list.Add(notification.Id);
                     }
                     catch (Exception e)
