@@ -120,6 +120,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
                         if (roomSelection == RoomSelection.NEW)
                         {
+                            // Fix: https://github.com/decentraland/unity-explorer/issues/5320
                             // Ensure a valid scene is present in the cache before proceeding.
                             // Failing to do so may cause inconsistencies during scene load,
                             // such as live streams not working when entering via a deeplink.
