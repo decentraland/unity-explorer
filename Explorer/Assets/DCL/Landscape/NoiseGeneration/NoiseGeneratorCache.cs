@@ -6,6 +6,7 @@ using UnityEngine.Assertions;
 
 namespace DCL.Landscape.NoiseGeneration
 {
+    [Obsolete(TerrainModel.OBSOLESCENCE_MESSAGE)]
     public class NoiseGeneratorCache : IDisposable
     {
         private readonly Dictionary<INoiseDataFactory, INoiseGenerator> cachedGenerators = new ();
