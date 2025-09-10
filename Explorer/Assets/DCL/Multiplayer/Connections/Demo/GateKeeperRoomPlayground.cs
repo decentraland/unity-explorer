@@ -31,6 +31,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
+#if UNITY_EDITOR
             IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
@@ -53,6 +54,7 @@ namespace DCL.Multiplayer.Connections.Demo
                     options
                 ).StartAsync()
                  .Forget();
+#endif
         }
     }
 }
