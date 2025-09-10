@@ -822,7 +822,7 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     includeVoiceChat,
                     includeTranslationChat,
-                    galleryEventBus
+                    galleryEventBus,
                     thumbnailProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),

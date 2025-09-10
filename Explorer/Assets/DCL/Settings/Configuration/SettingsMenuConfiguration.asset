@@ -124,7 +124,6 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
           options:
-          - Don't Translate
           - English (default)
           - Spanish
           - French

@@ -21,8 +21,7 @@ namespace DCL.Translation.Settings
             FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED);
 
         /// <summary>
-        ///     Is feature active meaning that translations is activated
-        ///     and language option other than "Don't Translate" is selected.
+        ///     Is feature active meaning that translations is activated and can be used.
         /// </summary>
         public bool IsTranslationFeatureActive()
         {
