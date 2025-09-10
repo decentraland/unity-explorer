@@ -7,6 +7,7 @@ using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.CommunitiesCard.Places;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Friends;
@@ -16,6 +17,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI;
@@ -33,6 +35,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Types;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard
 {
@@ -40,10 +43,15 @@ namespace DCL.Communities.CommunitiesCard
     {
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
+        private const string GET_COMMUNITY_ERROR_TEXT = "There was an error getting community data. Please try again.";
+        private const string GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT = "There was an error getting user invites and requests. Please try again.";
         private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
         private const string DELETE_COMMUNITY_ERROR_TEXT = "There was an error deleting the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
+        private const string REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error requesting to join community. Please try again.";
+        private const string CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error cancelling join request. Please try again.";
+        private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
+        private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -51,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IPlacesAPIService placesAPIService;
@@ -86,7 +94,7 @@ namespace DCL.Communities.CommunitiesCard
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            CommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileDataProvider,
             IPlacesAPIService placesAPIService,
@@ -127,6 +135,13 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
             communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
+
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENT_CREATED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
+            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
         }
 
         public override void Dispose()
@@ -139,6 +154,10 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
+                viewInstance.RequestToJoinCommunity -= RequestToJoinCommunity;
+                viewInstance.CancelRequestToJoinCommunity -= CancelRequestToJoinCommunity;
+                viewInstance.AcceptInvite -= AcceptCommunityInvitation;
+                viewInstance.RejectInvite -= RejectCommunityInvitation;
                 viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
             }
 
@@ -159,6 +178,59 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
+        }
+
+        private void OnOpenCommunityCardFromNotification(object[] parameters)
+        {
+            if (parameters.Length == 0)
+                return;
+
+            string communityId = parameters[0] switch
+                                 {
+                                     CommunityUserRequestToJoinNotification joinRequestNotification => joinRequestNotification.Metadata.CommunityId,
+                                     CommunityUserRequestToJoinAcceptedNotification joinAcceptedNotification => joinAcceptedNotification.Metadata.CommunityId,
+                                     CommunityEventCreatedNotification eventCreatedNotification => eventCreatedNotification.Metadata.CommunityId,
+                                     _ => string.Empty
+                                 };
+
+            if (communityId == string.Empty) return;
+
+            if (State == ControllerState.ViewHidden)
+                mvcManager.ShowAndForget(IssueCommand(new CommunityCardParameter(communityId)));
+            else
+            {
+                ResetSubControllers();
+                SetDefaultsAndLoadData(communityId);
+            }
+        }
+
+        private void OnJoinRequestAccepted(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden || notification is not CommunityUserRequestToJoinAcceptedNotification acceptedNotification)
+                return;
+
+            if (communityData.id != acceptedNotification.Metadata.CommunityId)
+                return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData(acceptedNotification.Metadata.CommunityId);
+        }
+
+        private void OnCommunityDeleted(INotification notification)
+        {
+            if (State == ControllerState.ViewHidden)
+                return;
+
+            string communityId = notification switch
+                                 {
+                                     CommunityDeletedNotification communityDeletedNotification => communityDeletedNotification.Metadata.CommunityId,
+                                     CommunityDeletedContenViolationNotification ownerCommunityDeletedNotification => ownerCommunityDeletedNotification.Metadata.CommunityId,
+                                     _ => string.Empty
+                                 };
+
+            if (communityId == string.Empty || communityId != communityData.id) return;
+
+            CloseController();
         }
 
         private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
@@ -183,7 +255,7 @@ namespace DCL.Communities.CommunitiesCard
             if (!communityId.Equals(communityData.id)) return;
 
             ResetSubControllers();
-            SetDefaultsAndLoadData();
+            SetDefaultsAndLoadData(communityId);
         }
 
         private void CloseCardOnConversationRequested(string _) =>
@@ -205,8 +277,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(DELETE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DELETE_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
@@ -240,6 +311,10 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
+            viewInstance.RequestToJoinCommunity += RequestToJoinCommunity;
+            viewInstance.CancelRequestToJoinCommunity += CancelRequestToJoinCommunity;
+            viewInstance.AcceptInvite += AcceptCommunityInvitation;
+            viewInstance.RejectInvite += RejectCommunityInvitation;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
@@ -252,7 +327,6 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
-                viewInstance.warningNotificationView,
                 sharedSpaceManager,
                 chatEventBus,
                 web3IdentityCache);
@@ -261,8 +335,6 @@ namespace DCL.Communities.CommunitiesCard
                 thumbnailLoader,
                 communitiesDataProvider,
                 placesAPIService,
-                viewInstance.warningNotificationView,
-                viewInstance.successNotificationView,
                 realmNavigator,
                 mvcManager,
                 clipboard,
@@ -274,8 +346,6 @@ namespace DCL.Communities.CommunitiesCard
                 placesAPIService,
                 thumbnailLoader,
                 mvcManager,
-                viewInstance.warningNotificationView,
-                viewInstance.successNotificationView,
                 clipboard,
                 webBrowser,
                 realmNavigator,
@@ -285,9 +355,9 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         protected override void OnViewShow() =>
-            SetDefaultsAndLoadData();
+            SetDefaultsAndLoadData(inputData.CommunityId);
 
-        private void SetDefaultsAndLoadData()
+        private void SetDefaultsAndLoadData(string communityId)
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
             closeIntentCompletionSource = new UniTaskCompletionSource();
@@ -310,18 +380,69 @@ namespace DCL.Communities.CommunitiesCard
                     thumbnailLoader.Cache = spriteCache;
                 }
 
-                GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
-                communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
-                communityData = response.data;
+                var getCommunityResult = await communitiesDataProvider.GetCommunityAsync(communityId, ct)
+                                                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!getCommunityResult.Success)
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_COMMUNITY_ERROR_TEXT));
+                    return;
+                }
+
+                communityData = getCommunityResult.Value.data;
+
+                // Check if we have a pending invite to the community
+                bool existsInvitation = await CheckUserInviteOrRequestAsync(InviteRequestAction.invite, ct);
+
+                if (!communityData.IsAccessAllowed())
+                {
+                    if (!existsInvitation)
+                    {
+                        // Check if we have a pending request to join the community
+                        await CheckUserInviteOrRequestAsync(InviteRequestAction.request_to_join, ct);
+                    }
+                }
+                else
+                    communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(communityId, ct)).ToArray();
 
                 viewInstance.SetLoadingState(false);
 
                 viewInstance.SetPanelCancellationToken(ct);
                 viewInstance.ConfigureCommunity(communityData, thumbnailLoader);
 
-                viewInstance.ResetToggle(true);
+                if (communityData.IsAccessAllowed())
+                {
+                    viewInstance.ResetToggle(true);
+                    eventListController?.ShowEvents(communityData, ct);
+                }
+            }
 
-                eventListController?.ShowEvents(communityData, ct);
+            async UniTask<bool> CheckUserInviteOrRequestAsync(InviteRequestAction action, CancellationToken ct)
+            {
+                var getUserInviteRequestResult = await communitiesDataProvider.GetUserInviteRequestAsync(action, ct)
+                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return false;
+
+                if (!getUserInviteRequestResult.Success)
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_USER_INVITES_OR_REQUESTS_ERROR_TEXT));
+                    return false;
+                }
+
+                foreach (var request in getUserInviteRequestResult.Value.data.results)
+                    if (string.Equals(request.communityId, communityId, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        communityData.SetPendingInviteOrRequestId(request.id);
+                        communityData.SetPendingAction(action);
+                        return true;
+                    }
+
+                return false;
             }
         }
 
@@ -392,11 +513,11 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(JOIN_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
+                communityData.SetRole(CommunityMemberRole.member);
                 communityData.IncreaseMembersCount();
                 viewInstance!.UpdateMemberCount(communityData);
 
@@ -404,7 +525,7 @@ namespace DCL.Communities.CommunitiesCard
                 membersListController?.Reset();
                 membersListController?.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
 
-                viewInstance.ConfigureInteractionButtons(CommunityMemberRole.member);
+                viewInstance.ConfigureInteractionButtons(communityData);
             }
         }
 
@@ -424,14 +545,122 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await viewInstance!.warningNotificationView.AnimatedShowAsync(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LEAVE_COMMUNITY_ERROR_TEXT));
                     return;
                 }
 
                 membersListController?.TryRemoveLocalUser();
 
-                viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.none);
+                communityData.SetRole(CommunityMemberRole.none);
+                viewInstance!.ConfigureInteractionButtons(communityData);
+                viewInstance!.SetCommunityAccessAsAllowed(communityData.IsAccessAllowed());
+            }
+        }
+
+        private void RequestToJoinCommunity()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            RequestToJoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, web3IdentityCache.Identity?.Address, InviteRequestAction.request_to_join, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success)
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
+                }
+
+                communityData.SetPendingInviteOrRequestId(result.Value);
+                communityData.SetPendingAction(InviteRequestAction.request_to_join);
+                viewInstance!.ConfigureInteractionButtons(communityData);
+            }
+        }
+
+        private void CancelRequestToJoinCommunity()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            CancelRequestToJoinCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid CancelRequestToJoinCommunityAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData.id, communityData.pendingInviteOrRequestId, InviteRequestIntention.cancelled, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
+                }
+
+                communityData.SetPendingInviteOrRequestId(null);
+                communityData.SetPendingAction(InviteRequestAction.none);
+                viewInstance!.ConfigureInteractionButtons(communityData);
+            }
+        }
+
+        private void AcceptCommunityInvitation()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            AcceptCommunityInvitationAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid AcceptCommunityInvitationAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData.id, communityData.pendingInviteOrRequestId, InviteRequestIntention.accepted, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE));
+                }
+
+                if (communityData.privacy == CommunityPrivacy.@public)
+                {
+                    communityData.SetRole(CommunityMemberRole.member);
+                    communityData.SetPendingInviteOrRequestId(null);
+                    communityData.SetPendingAction(InviteRequestAction.none);
+                    viewInstance!.ConfigureInteractionButtons(communityData);
+                }
+                else
+                {
+                    ResetSubControllers();
+                    SetDefaultsAndLoadData(communityData.id);
+                }
+            }
+        }
+
+        private void RejectCommunityInvitation()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            RejectCommunityInvitationAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid RejectCommunityInvitationAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.ManageInviteRequestToJoinAsync(communityData.id, communityData.pendingInviteOrRequestId, InviteRequestIntention.rejected, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success || !result.Value)
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
+                }
+
+                CloseController();
             }
         }
 

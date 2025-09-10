@@ -59,6 +59,7 @@ namespace SceneRunner
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly ISceneCommunicationPipe messagePipesHub;
         private readonly IRemoteMetadata remoteMetadata;
+        private readonly DecentralandEnvironment dclEnvironment;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -80,7 +81,8 @@ namespace SceneRunner
             IRealmData? realmData,
             IPortableExperiencesController portableExperiencesController,
             ISceneCommunicationPipe messagePipesHub,
-            IRemoteMetadata remoteMetadata)
+            IRemoteMetadata remoteMetadata,
+            DecentralandEnvironment dclEnvironment)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -100,6 +102,7 @@ namespace SceneRunner
             this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
             this.portableExperiencesController = portableExperiencesController;
+            this.dclEnvironment = dclEnvironment;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -117,7 +120,7 @@ namespace SceneRunner
                 }
             );
 
-            var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero,
+            var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
                 ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
@@ -138,7 +141,7 @@ namespace SceneRunner
 
             var sceneDefinition = new SceneEntityDefinition(directoryName, sceneMetadata);
 
-            var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL,
+            var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition,
                 Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
@@ -200,7 +203,7 @@ namespace SceneRunner
                     ethereumApi,
                     runtimeDeps.WebSocketAipImplementation,
                     identityCache,
-                    decentralandUrlsSource,
+                    dclEnvironment,
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
@@ -224,7 +227,7 @@ namespace SceneRunner
                     runtimeDeps.SceneApiImplementation,
                     webRequestController,
                     runtimeDeps.RestrictedActionsAPI,
-                    decentralandUrlsSource,
+                    dclEnvironment,
                     runtimeDeps.RuntimeImplementation,
                     ethereumApi,
                     runtimeDeps.WebSocketAipImplementation,

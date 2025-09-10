@@ -40,7 +40,8 @@ namespace DCL.RealmNavigation
             bool localSceneDevelopment,
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
-            TeleportController teleportController)
+            TeleportController teleportController,
+            DecentralandEnvironment dclEnvironment)
         {
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData);
@@ -68,7 +69,8 @@ namespace DCL.RealmNavigation
                 localSceneDevelopment,
                 assetBundleRegistry,
                 appArgs,
-                urlsSource
+                urlsSource,
+                dclEnvironment
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);

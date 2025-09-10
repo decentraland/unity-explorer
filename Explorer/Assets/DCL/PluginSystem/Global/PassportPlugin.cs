@@ -10,6 +10,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.EventBus;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -46,7 +47,6 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IRealmData realmData;
-        private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
@@ -76,8 +76,11 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IThumbnailProvider thumbnailProvider;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ISystemClipboard systemClipboard;
+        private readonly bool includeCommunities;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private PassportController? passportController;
 
@@ -88,14 +91,13 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
             IRealmData realmData,
-            URLDomain assetBundleURL,
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
@@ -112,6 +114,7 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
+            bool includeCommunities,
             bool isNameEditorEnabled,
             bool isCallEnabled,
             IChatEventBus chatEventBus,
@@ -119,7 +122,9 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             GalleryEventBus galleryEventBus,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            CommunitiesDataProvider communitiesDataProvider,
+            IThumbnailProvider thumbnailProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -127,7 +132,6 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
             this.realmData = realmData;
-            this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
@@ -157,8 +161,11 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
             this.systemClipboard = systemClipboard;
+            this.includeCommunities = includeCommunities;
+            this.communitiesDataProvider = communitiesDataProvider;
         }
 
         public void Dispose()
@@ -179,9 +186,6 @@ namespace DCL.PluginSystem.Global
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
             BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
 
-
-            var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
-
             passportController = new PassportController(
                 PassportController.CreateLazily(chatView, null),
                 cursor,
@@ -195,7 +199,7 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 world,
                 playerEntity,
-                thumbnailProvider,
+                this.thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
                 badgesAPIClient,
@@ -217,6 +221,7 @@ namespace DCL.PluginSystem.Global
                 enableCameraReel,
                 enableFriends,
                 includeUserBlocking,
+                includeCommunities,
                 isNameEditorEnabled,
                 isCallEnabled,
                 chatEventBus,
@@ -226,7 +231,8 @@ namespace DCL.PluginSystem.Global
                 passport3DPreviewCamera,
                 galleryEventBus,
                 systemClipboard,
-                passportSettings.CameraReelGalleryMessages
+                passportSettings.CameraReelGalleryMessages,
+                communitiesDataProvider
             );
 
             mvcManager.RegisterController(passportController);

@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         public bool IsOnChain() =>
-            IsOnChain(id: ((IAvatarAttachment<EmoteDTO>)this).GetUrn().ToString());
+            IsOnChain(id: this.GetUrn().ToString());
 
         public static bool IsOnChain(string id) =>
             id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:");

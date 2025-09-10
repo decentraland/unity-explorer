@@ -508,15 +508,15 @@ namespace DCL.Web3.Authenticators
 
         private string GetNetVersion() =>
             // TODO: this is a temporary thing until we solve the network in a better way
-            environment == DecentralandEnvironment.Org ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
+            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
 
         private string GetChainId() =>
             // TODO: this is a temporary thing until we solve the network in a better way
-            environment == DecentralandEnvironment.Org ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
+            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
 
         private string GetNetworkId() =>
             // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
-            environment == DecentralandEnvironment.Org ? NETWORK_MAINNET : NETWORK_SEPOLIA;
+            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? NETWORK_MAINNET : NETWORK_SEPOLIA;
 
         /// <summary>
         /// Waits until we receive the verification status from the server
