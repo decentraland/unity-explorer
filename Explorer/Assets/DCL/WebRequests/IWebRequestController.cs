@@ -19,7 +19,7 @@ namespace DCL.WebRequests
             new RequestHub(
                 new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             ),
-            ChromeDevtoolProtocolClient.New(false)
+            ChromeDevtoolProtocolClient.NewForTest()
         );
 #endif
 

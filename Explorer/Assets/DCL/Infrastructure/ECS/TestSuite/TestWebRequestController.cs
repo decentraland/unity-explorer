@@ -16,7 +16,7 @@ namespace ECS.TestSuite
             Substitute.For<IWebRequestsAnalyticsContainer>(),
             Substitute.For<IWeb3IdentityCache>(),
             new RequestHub(Substitute.For<IDecentralandUrlsSource>()),
-            ChromeDevtoolProtocolClient.New(false)
+            ChromeDevtoolProtocolClient.NewForTest()
         );
     }
 }

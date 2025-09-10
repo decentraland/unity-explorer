@@ -32,10 +32,15 @@ namespace DCL.WebRequests.ChromeDevtool
             atomicRequestIdIncrement = 1;
         }
 
-        public static ChromeDevtoolProtocolClient New(bool startOnCreation, IAppArgs? appArgs = null)
+#if UNITY_INCLUDE_TESTS || UNITY_EDITOR
+        public static ChromeDevtoolProtocolClient NewForTest() =>
+            New(false, new ApplicationParametersParser());
+#endif
+
+        public static ChromeDevtoolProtocolClient New(bool startOnCreation, IAppArgs appArgs)
         {
             Bridge bridge = new Bridge(
-                browser: new CreatorHubBrowser(appArgs ?? new ApplicationParametersParser(), PORT),
+                browser: new CreatorHubBrowser(appArgs, PORT),
                 logger: new UnityLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL),
                 port: PORT
             );
