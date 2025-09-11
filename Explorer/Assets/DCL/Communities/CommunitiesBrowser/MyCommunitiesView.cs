@@ -65,6 +65,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
             cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
+            cardView.SetRequestsReceived(communityData.requestsReceived);
 
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
