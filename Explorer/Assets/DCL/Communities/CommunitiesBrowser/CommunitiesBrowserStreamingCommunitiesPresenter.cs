@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
@@ -40,14 +41,24 @@ namespace DCL.Communities.CommunitiesBrowser
             this.orchestrator = orchestrator;
             this.sharedSpaceManager = sharedSpaceManager;
 
-            view.InitializeStreamingResultsGrid(0);
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            {
+                view.InitializeStreamingResultsGrid(0);
 
-            view.JoinStream += JoinStreamClicked;
-            view.ViewAllStreamingCommunitiesButtonClicked += ViewAllStreamingCommunitiesButtonClicked;
+                view.JoinStream += JoinStreamClicked;
+                view.ViewAllStreamingCommunitiesButtonClicked += ViewAllStreamingCommunitiesButtonClicked;
+            }
+            else
+            {
+                view.gameObject.SetActive(false);
+            }
         }
 
         public void Dispose()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+                return;
+
             view.JoinStream -= JoinStreamClicked;
             view.ViewAllStreamingCommunitiesButtonClicked -= ViewAllStreamingCommunitiesButtonClicked;
         }
@@ -77,6 +88,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public async UniTask LoadStreamingCommunitiesAsync(CancellationToken ct)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+                return;
+
             view.HideStreamingSection();
             view.SetAsLoading(true);
 
@@ -109,6 +123,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetAsLoading(bool isLoading)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+                return;
+
             view.SetAsLoading(isLoading);
         }
 

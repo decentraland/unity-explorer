@@ -35,6 +35,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 browserStateService, orchestrator, sharedSpaceManager);
             streamingCommunitiesPresenter.ViewAllClicked += OnViewAllStreamingCommunities;
 
+
             filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, profileRepositoryWrapper, browserStateService, browserEventBus);
             filteredCommunitiesPresenter.ResultsBackButtonClicked += LoadAllCommunities;
 
