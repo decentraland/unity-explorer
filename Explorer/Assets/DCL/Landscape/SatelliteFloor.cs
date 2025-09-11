@@ -51,7 +51,7 @@ namespace DCL.Landscape
         public void Create(MapRendererTextureContainer textureContainer)
         {
             int textureSize = CHUNK_SIZE * PARCEL_SIZE;
-            var genesisCityOffset = new Vector3(GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE, -0.05f, GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE);
+            var genesisCityOffset = new Vector3(GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE, 0.2f, GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE);
 
             // the map has some black weird margins, this is an approximation to fit the satellite view in place
             var mapTextureMargins = new Vector3(-2 * PARCEL_SIZE, 0, -(20 * PARCEL_SIZE) + 50 - 1.7f);
