@@ -9,7 +9,7 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class CommunityVoiceChatSubTitleButtonController : IDisposable
+    public class CommunityVoiceChatSubTitleButtonPresenter : IDisposable
     {
         private readonly IDisposable statusSubscription;
         private readonly IDisposable currentChannelSubscription;
@@ -24,7 +24,7 @@ namespace DCL.VoiceChat
 
         private bool isMemberListVisible;
 
-        public CommunityVoiceChatSubTitleButtonController(
+        public CommunityVoiceChatSubTitleButtonPresenter(
             CommunityStreamSubTitleButtonView view,
             ICommunityCallOrchestrator communityCallOrchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,

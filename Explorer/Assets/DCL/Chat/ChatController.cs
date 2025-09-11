@@ -81,7 +81,7 @@ namespace DCL.Chat
         private readonly IRoomHub roomHub;
         private CallButtonController callButtonController;
         private CommunityStreamButtonController communityStreamButtonController;
-        private CommunityVoiceChatSubTitleButtonController communityVoiceChatSubTitleButtonController;
+        private CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ISpriteCache thumbnailCache;
@@ -300,7 +300,7 @@ namespace DCL.Chat
                 CurrentChannel,
                 communitiesDataProvider);
 
-            communityVoiceChatSubTitleButtonController = new CommunityVoiceChatSubTitleButtonController(
+            communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
                 viewInstance.CommunityStreamSubTitleButton,
                 voiceChatOrchestrator,
                 CurrentChannel,
@@ -365,7 +365,7 @@ namespace DCL.Chat
             Dispose();
             callButtonController.Reset();
             communityStreamButtonController?.Reset();
-            communityVoiceChatSubTitleButtonController?.Dispose();
+            communityVoiceChatSubTitleButtonPresenter?.Dispose();
         }
 #endregion
 
@@ -796,7 +796,7 @@ namespace DCL.Chat
 
         private void OnViewMemberListVisibilityChanged(bool isVisible)
         {
-            communityVoiceChatSubTitleButtonController?.OnMemberListVisibilityChanged(isVisible);
+            communityVoiceChatSubTitleButtonPresenter?.OnMemberListVisibilityChanged(isVisible);
 
             if (isVisible && roomHub.HasAnyRoomConnected())
             {

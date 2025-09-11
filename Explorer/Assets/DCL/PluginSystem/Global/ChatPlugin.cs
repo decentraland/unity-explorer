@@ -36,7 +36,6 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Communities;
 using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
@@ -88,7 +87,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
-        private readonly WarningNotificationView warningNotificationView;
 
         private CommandRegistry commandRegistry;
 
@@ -120,10 +118,8 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             CommunityDataService communityDataService,
             ISpriteCache thumbnailCache,
-            WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IRealmNavigator realmNavigator,
             Transform chatViewRectTransform)
         {
             this.mvcManager = mvcManager;
@@ -157,7 +153,6 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.communityDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
-            this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
             this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
@@ -281,7 +276,6 @@ namespace DCL.PluginSystem.Global
                 chatConfig,
                 eventBus,
                 mvcManager,
-                chatMessagesBus,
                 chatEventBus,
                 currentChannelService,
                 chatInputBlockingService,

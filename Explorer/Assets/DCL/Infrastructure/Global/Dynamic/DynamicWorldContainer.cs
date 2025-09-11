@@ -754,10 +754,8 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     communitiesDataService,
                     thumbnailCache,
-                    mainUIView.WarningNotification,
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
-                    realmNavigator,
                     mainUIView.SidebarView.unreadMessagesButton.transform),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
