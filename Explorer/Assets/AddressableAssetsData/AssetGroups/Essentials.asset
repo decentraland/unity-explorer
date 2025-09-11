@@ -211,7 +211,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: be91903945b0c44fdb1908049ce868b1
-    m_Address: ArtWeek.png
+    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Textures/ArtWeek.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

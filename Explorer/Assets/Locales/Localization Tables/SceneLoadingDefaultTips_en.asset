@@ -101,9 +101,10 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 197099055790153728
-    m_Localized: "<color=#FFFF00><size=30>COMING SOON!</size></color> \nExplore Communities
-      to connect over shared interests. Hang in the group chat, get event updates,
-      and enjoy that cozy sense of belonging!\n"
+    m_Localized: 'Explore Communities to connect over shared interests. Hang in the
+      group chat, get event updates, and enjoy that cozy sense of belonging!
+
+'
     m_Metadata:
       m_Items: []
   - m_Id: 197397929998147584
