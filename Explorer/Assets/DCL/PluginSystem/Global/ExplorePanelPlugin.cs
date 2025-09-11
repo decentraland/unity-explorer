@@ -121,6 +121,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileChangesBus profileChangesBus;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private readonly bool includeCameraReel;
 
@@ -163,7 +164,6 @@ namespace DCL.PluginSystem.Global
             List<string> forceRender,
             IRealmData realmData,
             IProfileCache profileCache,
-            URLDomain assetBundleURL,
             NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
@@ -193,8 +193,9 @@ namespace DCL.PluginSystem.Global
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
+            ICommunityCallOrchestrator communityCallOrchestrator,
             GalleryEventBus galleryEventBus,
-            ICommunityCallOrchestrator communityCallOrchestrator)
+            IThumbnailProvider thumbnailProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -218,7 +219,6 @@ namespace DCL.PluginSystem.Global
             this.forceRender = forceRender;
             this.realmData = realmData;
             this.profileCache = profileCache;
-            this.assetBundleURL = assetBundleURL;
             this.notificationsBusController = notificationsBusController;
             this.emoteStorage = emoteStorage;
             this.characterPreviewEventBus = characterPreviewEventBus;
@@ -251,6 +251,7 @@ namespace DCL.PluginSystem.Global
             this.nftNamesProvider = nftNamesProvider;
             this.galleryEventBus = galleryEventBus;
             this.communityCallOrchestrator = communityCallOrchestrator;
+            this.thumbnailProvider = thumbnailProvider;
         }
 
         public void Dispose()
@@ -284,9 +285,6 @@ namespace DCL.PluginSystem.Global
                 emoteStorage,
                 settings.EmbeddedEmotesAsURN(),
                 forceRender,
-                realmData,
-                assetBundleURL,
-                webRequestController,
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
@@ -299,6 +297,7 @@ namespace DCL.PluginSystem.Global
                 appArgs,
                 webBrowser,
                 inWorldWarningNotificationView,
+                thumbnailProvider,
                 profileChangesBus
             );
 

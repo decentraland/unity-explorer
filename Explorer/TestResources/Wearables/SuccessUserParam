@@ -73,7 +73,23 @@
 					],
 					"createdAt": 1637005585914,
 					"updatedAt": 1637005585914
-				}
+				},
+                "versions": {
+                    "assets": {
+                        "mac": {
+                            "version": "v19",
+                            "buildDate": "2024-04-30T19:22:20.586Z"
+                        },
+                        "webgl": {
+                            "version": "v8",
+                            "buildDate": "2023-07-27T19:39:03.976Z"
+                        },
+                        "windows": {
+                            "version": "v18",
+                            "buildDate": "2024-05-01T05:41:08.138Z"
+                        }
+                    }
+                }
 			}
 		}
 	],

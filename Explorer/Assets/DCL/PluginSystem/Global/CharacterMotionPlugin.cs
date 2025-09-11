@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.CharacterMotion.Systems;
@@ -14,6 +13,7 @@ using DCL.Utilities;
 using ECS;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
@@ -30,6 +30,7 @@ namespace DCL.PluginSystem.Global
         private readonly PlayerParcelTrackerService parcelTrackerService;
         private readonly IScenesCache scenesCache;
         private readonly IRealmData realmData;
+        private readonly ILandscape landscape;
 
         private CharacterControllerSettings settings;
 
@@ -40,7 +41,8 @@ namespace DCL.PluginSystem.Global
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             PlayerParcelTrackerService parcelTrackerService,
             IScenesCache scenesCache,
-            IRealmData realmData)
+            IRealmData realmData,
+            ILandscape landscape)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -49,6 +51,7 @@ namespace DCL.PluginSystem.Global
             this.parcelTrackerService = parcelTrackerService;
             this.scenesCache = scenesCache;
             this.realmData = realmData;
+            this.landscape = landscape;
         }
 
         public void Dispose()
@@ -80,7 +83,7 @@ namespace DCL.PluginSystem.Global
                 new HeadIKComponent { IsEnabled = true });
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
-            TeleportPositionCalculationSystem.InjectToWorld(ref builder);
+            TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);

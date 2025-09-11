@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dedc1ff68d792174380560d600ca16fa, type: 3}
+  m_Name: GPUIAsset
+  m_EditorClassIdentifier: 
+  treeManagerPrefab: {fileID: 2061979949107301369, guid: e88a03709dce1144496395dcc14f94b2, type: 3}
+  detailsManagerPrefab: {fileID: 9060911270677862200, guid: 5a044b6b7525c90448396ce99acf8d0a, type: 3}
+  debuggerCanvasPrefab: {fileID: 845808253591855193, guid: 2502ae8a71130474e98553fbb57691aa, type: 3}
+  treesToOverride:
+  - {fileID: 11400000, guid: 20e3f9f040e171341b946aa63509181b, type: 2}
+  - {fileID: 11400000, guid: a06fc7504bc359c40a3dcf979b9551fa, type: 2}
+  - {fileID: 11400000, guid: b32fcb9f8bf234544937fe6db29eb426, type: 2}
+  - {fileID: 11400000, guid: fa3ee0386e904c049875eb81b66b7b6d, type: 2}
+  - {fileID: 11400000, guid: f85bd668b0ab99c4a9e2dd9e37bdc0f5, type: 2}
+  - {fileID: 11400000, guid: b85bd4609a9a4c444aa451b635508010, type: 2}
+  - {fileID: 11400000, guid: 10e4b5ecbf9c6a94ea0dae58a1b4e9c4, type: 2}
+  - {fileID: 11400000, guid: a78cd698d190eb440b100b0875e95351, type: 2}
+  detailToOverride:
+  - {fileID: 11400000, guid: 99c54104723c0fc4981215d1af8497c5, type: 2}
+  - {fileID: 11400000, guid: b2f25ceffa3921e41931611c7dd08a18, type: 2}
+  - {fileID: 11400000, guid: 4362537cefadf584c8a7ea303794690c, type: 2}
+  - {fileID: 11400000, guid: 86b29852bc6b6aa4ab76c26e069e5c8b, type: 2}

@@ -13,11 +13,11 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
-using DCL.Chat.MessageBus;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
+using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -36,7 +36,6 @@ namespace DCL.Chat
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
-        private readonly IChatMessagesBus chatMessagesBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IMVCManager mvcManager;
         private readonly ChatContextMenuService chatContextMenuService;
@@ -45,7 +44,9 @@ namespace DCL.Chat
 
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
-        private CommunityVoiceChatSubTitleButtonController communityVoiceChatSubTitleButtonController;
+        private CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
+
+        private readonly HashSet<IBlocksChat> chatBlockers = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
@@ -62,7 +63,6 @@ namespace DCL.Chat
             ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
             IMVCManager mvcManager,
-            IChatMessagesBus chatMessagesBus,
             IChatEventBus chatEventBus,
             CurrentChannelService currentChannelService,
             ChatInputBlockingService chatInputBlockingService,
@@ -79,7 +79,6 @@ namespace DCL.Chat
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
             this.mvcManager = mvcManager;
-            this.chatMessagesBus = chatMessagesBus;
             this.chatEventBus = chatEventBus;
             this.currentChannelService = currentChannelService;
             this.chatInputBlockingService = chatInputBlockingService;
@@ -110,7 +109,7 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed += OnUIClose;
 
-            communityVoiceChatSubTitleButtonController = new CommunityVoiceChatSubTitleButtonController(
+            communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
                 viewInstance.CommunityStreamSubTitleButton,
                 voiceChatOrchestrator,
                 currentChannelService.CurrentChannelProperty,
@@ -188,7 +187,7 @@ namespace DCL.Chat
                 messageFeedPresenter,
                 inputPresenter,
                 memberListPresenter,
-                communityVoiceChatSubTitleButtonController);
+                communityVoiceChatSubTitleButtonPresenter);
 
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,
@@ -214,6 +213,7 @@ namespace DCL.Chat
         {
             if (chatStateMachine == null) return;
             if (chatStateMachine.IsMinimized) return;
+            if (chatBlockers.Count > 0) return;
 
             chatStateMachine?.SetVisibility(true);
         }
@@ -301,19 +301,25 @@ namespace DCL.Chat
             uiScope?.Dispose();
 
             chatMemberListService.Dispose();
-
-            communityVoiceChatSubTitleButtonController?.Dispose();
+            communityVoiceChatSubTitleButtonPresenter?.Dispose();
+            chatBlockers.Clear();
         }
 
         private void OnMvcViewShowed(IController controller)
         {
-            if (controller is IBlocksChat)
-                chatStateMachine?.Minimize();
+            if (controller is not IBlocksChat blocker) return;
+
+            chatStateMachine?.Minimize();
+            chatBlockers.Add(blocker);
         }
 
         private void OnMvcViewClosed(IController controller)
         {
-            if (controller is IBlocksChat)
+            if (controller is not IBlocksChat blocker) return;
+
+            chatBlockers.Remove(blocker);
+
+            if (chatBlockers.Count == 0)
                 chatStateMachine?.PopState();
         }
     }

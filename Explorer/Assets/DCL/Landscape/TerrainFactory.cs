@@ -1,10 +1,12 @@
 ﻿using DCL.Landscape.Settings;
 using StylizedGrass;
+using System;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.Landscape
 {
@@ -83,6 +85,7 @@ namespace DCL.Landscape
             return collider;
         }
 
+        [Obsolete(TerrainModel.OBSOLESCENCE_MESSAGE)]
         public (Terrain, Collider) CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material, bool enableColliders = false)
         {
             Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)

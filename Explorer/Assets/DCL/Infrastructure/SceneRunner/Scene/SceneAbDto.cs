@@ -9,21 +9,12 @@ namespace SceneRunner.Scene
     [Serializable]
     public struct SceneAbDto
     {
-        public const int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
-        public const int AB_MIN_SUPPORTED_VERSION_MAC = 16;
-
-        [SerializeField]
-        internal string version;
-        [SerializeField]
-        internal string[] files;
-        [SerializeField]
-        private int exitCode;
-        [SerializeField]
-        private string date;
+        public string version;
+        public string[] files;
+        public int exitCode;
+        public string date;
 
         public string Version => version;
-        public IReadOnlyList<string> Files => files ?? Array.Empty<string>();
-
         public string Date => date;
     }
 }
