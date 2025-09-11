@@ -54,34 +54,6 @@ namespace DCL.Communities.CommunitiesBrowser
             ViewAllMyCommunitiesButtonClicked?.Invoke();
         }
 
-        private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
-        {
-            view.ClearCommunitiesItems();
-            view.SetAsLoading(true);
-
-            var result = await dataProvider.GetUserCommunitiesAsync(
-                name: string.Empty,
-                onlyMemberOf: true,
-                pageNumber: 1,
-                elementsPerPage: 1000,
-                ct: ct,
-                includeRequestsReceivedPerCommunity: true)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-            if (ct.IsCancellationRequested)
-                return;
-
-            if (!result.Success)
-            {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MY_COMMUNITIES_LOADING_ERROR_MESSAGE));
-                return;
-            }
-
-            browserStateService.AddCommunities(result.Value.data.results);
-            view.AddCommunitiesItems(result.Value.data.results, true);
-            view.SetAsLoading(false);
-        }
-
         public void Dispose()
         {
             loadMyCommunitiesCts.SafeCancelAndDispose();
@@ -94,6 +66,35 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
             LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
+            return;
+
+            async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
+            {
+                view.ClearCommunitiesItems();
+                view.SetAsLoading(true);
+
+                var result = await dataProvider.GetUserCommunitiesAsync(
+                                                    name: string.Empty,
+                                                    onlyMemberOf: true,
+                                                    pageNumber: 1,
+                                                    elementsPerPage: 1000,
+                                                    ct: ct,
+                                                    includeRequestsReceivedPerCommunity: true)
+                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!result.Success)
+                {
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MY_COMMUNITIES_LOADING_ERROR_MESSAGE));
+                    return;
+                }
+
+                browserStateService.AddCommunities(result.Value.data.results);
+                view.AddCommunitiesItems(result.Value.data.results, true);
+                view.SetAsLoading(false);
+            }
         }
 
         public void Deactivate()
@@ -101,7 +102,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
         }
 
-        public void UpdateJoinedCommunity(CommunitiesBrowserEvents.UpdateJoinedCommunityEvent evt)
+        private void UpdateJoinedCommunity(CommunitiesBrowserEvents.UpdateJoinedCommunityEvent evt)
         {
             view.UpdateJoinedCommunity(evt.CommunityId, evt.IsJoined, evt.Success);
         }

@@ -609,6 +609,8 @@ namespace DCL.Communities.CommunitiesBrowser
             else
                 view.InvitesAndRequestsView.UpdateJoinRequestCancelled(communityId, success);
 
+            browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, success, false);
+
             if (success && !RemoveCurrentCommunityInviteRequest(communityId))
                 LoadMyCommunities();
         }
