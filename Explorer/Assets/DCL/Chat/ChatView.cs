@@ -293,14 +293,14 @@ namespace DCL.Chat
                     switch (currentChannel.ChannelType)
                     {
                         case ChatChannel.ChatChannelType.NEARBY:
-                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED);
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id), profileRepositoryWrapper);
                             break;
                         case ChatChannel.ChatChannelType.COMMUNITY:
-                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED);
                             GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
                             communityTitleCts = communityTitleCts.SafeRestart();
                             chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : null, openContextMenuAction, communityTitleCts.Token);
@@ -867,9 +867,9 @@ namespace DCL.Chat
         /// Must be called from MainThread or will fail.
         /// </summary>
         /// <param name="userState"></param>
-        public void SetupViewWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        public void SetupViewWithUserState(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState userState)
         {
-            bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
+            bool isOtherUserConnected = userState == ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
 
             chatTitleBar.SetCallButtonStatus(currentChannel.ChannelType is ChatChannel.ChatChannelType.USER);

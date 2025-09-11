@@ -7,12 +7,14 @@ using DCL.Utilities;
 using System;
 using System.Threading;
 using Utility;
+// ReSharper disable InconsistentNaming
 
 namespace DCL.VoiceChat
 {
-    public class CallButtonController
+    [Obsolete("Old version used only in Old chat")]
+    public class CallButtonController_OBSOLETE_OLD_CHAT
     {
-        public enum OtherUserCallStatus
+        public enum OtherUserCallStatus_OLD
         {
             USER_OFFLINE,
             USER_REJECTS_CALLS,
@@ -41,12 +43,12 @@ namespace DCL.VoiceChat
         private readonly IVoiceChatOrchestratorState voiceChatState;
         private readonly IChatEventBus chatEventBus;
         private bool isClickedOnce;
-        private OtherUserCallStatus otherUserStatus;
+        private OtherUserCallStatus_OLD otherUserStatus;
         private CancellationTokenSource cts;
         private string currentUserId;
 
 
-        public CallButtonController(
+        public CallButtonController_OBSOLETE_OLD_CHAT(
             CallButtonView view,
             IVoiceChatOrchestratorState voiceChatState,
             IChatEventBus chatEventBus,
@@ -97,7 +99,7 @@ namespace DCL.VoiceChat
             view.TooltipParent.gameObject.SetActive(false);
         }
 
-        public void SetCallStatusForUser(OtherUserCallStatus status, string userId)
+        public void SetCallStatusForUser(OtherUserCallStatus_OLD status, string userId)
         {
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
 
@@ -144,22 +146,22 @@ namespace DCL.VoiceChat
 
             switch (otherUserStatus)
             {
-                case OtherUserCallStatus.USER_OFFLINE:
+                case OtherUserCallStatus_OLD.USER_OFFLINE:
                     await ShowTooltipWithAutoCloseAsync(USER_OFFLINE_TOOLTIP_TEXT, ct);
                     break;
-                case OtherUserCallStatus.USER_AVAILABLE:
+                case OtherUserCallStatus_OLD.USER_AVAILABLE:
                     // For available users, immediately start call without showing tooltip
                     view.TooltipParent.gameObject.SetActive(false);
                     isClickedOnce = false;
                     StartCall?.Invoke(currentUserId);
                     break;
-                case OtherUserCallStatus.OWN_USER_IN_CALL:
+                case OtherUserCallStatus_OLD.OWN_USER_IN_CALL:
                     await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                     break;
-                case OtherUserCallStatus.USER_REJECTS_CALLS:
+                case OtherUserCallStatus_OLD.USER_REJECTS_CALLS:
                     await ShowTooltipWithAutoCloseAsync(USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
                     break;
-                case OtherUserCallStatus.OWN_USER_REJECTS_CALLS:
+                case OtherUserCallStatus_OLD.OWN_USER_REJECTS_CALLS:
                     await ShowTooltipWithAutoCloseAsync(OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
                     break;
             }

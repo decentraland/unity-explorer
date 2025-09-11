@@ -22,7 +22,7 @@ namespace DCL.VoiceChat
         private readonly MicrophoneButtonController micController;
         private readonly IDisposable? statusSubscription;
 
-        private CancellationTokenSource cts;
+        private CancellationTokenSource cts = new ();
 
         public PrivateVoiceChatController(
             VoiceChatView view,
@@ -31,7 +31,6 @@ namespace DCL.VoiceChat
             ProfileRepositoryWrapper profileDataProvider,
             IRoom voiceChatRoom)
         {
-            return;
             this.view = view;
             this.privateCallOrchestrator = privateCallOrchestrator;
             this.profileDataProvider = profileDataProvider;
@@ -43,7 +42,6 @@ namespace DCL.VoiceChat
             view.OutgoingCallView.HangUpButton.onClick.AddListener(HangUp);
 
             view.InCallView.HangUpButton.onClick.AddListener(HangUp);
-
 
             var list = new List<MicrophoneButton>
             {
@@ -67,7 +65,7 @@ namespace DCL.VoiceChat
 
         private void OnActiveSpeakersUpdated()
         {
-            cts?.SafeCancelAndDispose();
+            cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             OnActiveSpeakersUpdatedAsync(cts.Token).Forget();
         }
@@ -81,7 +79,7 @@ namespace DCL.VoiceChat
             {
                 foreach (string activeSpeaker in voiceChatRoom.ActiveSpeakers)
                 {
-                    Profile profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct);
+                    Profile? profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct);
                     if (profileAsync != null) userName = profileAsync.Name;
                 }
             }
@@ -132,7 +130,6 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            return;
             statusSubscription?.Dispose();
             this.voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;

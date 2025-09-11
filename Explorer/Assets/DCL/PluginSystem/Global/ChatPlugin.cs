@@ -77,7 +77,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunityDataService communityDataService;
         private readonly ISpriteCache thumbnailCache;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private ChatController chatController;
+        private ChatController_OBSOLETE_OLD_CHAT chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private PrivateConversationUserStateService? chatUserStateService;

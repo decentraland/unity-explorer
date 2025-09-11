@@ -30,7 +30,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
     {
         private const string LOG_PREFIX = "VoiceChatRoom";
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
-        private static readonly TimeSpan CONNECTION_UPDATE_INTERVAL = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
@@ -131,8 +130,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
-            //SendConnectionStatusAsync(ct).Forget();
-
             while (ct.IsCancellationRequested == false)
             {
                 await ExecuteWithRecoveryAsync(ct);
@@ -141,17 +138,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
             roomState.Set(IConnectiveRoom.State.Stopped);
-        }
-
-        private async UniTaskVoid SendConnectionStatusAsync(CancellationToken ct)
-        {
-            while (ct.IsCancellationRequested == false)
-            {
-                if (CurrentState() == IConnectiveRoom.State.Running)
-                    room.SimulateConnectionStateChanged();
-
-                await UniTask.Delay(CONNECTION_UPDATE_INTERVAL, cancellationToken: ct);
-            }
         }
 
         private async UniTask ExecuteWithRecoveryAsync(CancellationToken ct)

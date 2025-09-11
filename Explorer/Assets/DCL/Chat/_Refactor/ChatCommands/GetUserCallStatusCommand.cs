@@ -14,20 +14,20 @@ namespace DCL.Chat.ChatCommands
             this.getUserChatStatusCommand = getUserChatStatusCommand;
         }
 
-        public async UniTask<CallButtonController.OtherUserCallStatus> ExecuteAsync(string id, CancellationToken ct)
+        public async UniTask<CallButtonPresenter.OtherUserCallStatus> ExecuteAsync(string id, CancellationToken ct)
         {
             var result = await getUserChatStatusCommand.ExecuteAsync(id, ct);
             switch (result)
             {
                 case PrivateConversationUserStateService.ChatUserState.CONNECTED:
-                    return CallButtonController.OtherUserCallStatus.USER_AVAILABLE;
+                    return CallButtonPresenter.OtherUserCallStatus.USER_AVAILABLE;
                 case PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
-                    return CallButtonController.OtherUserCallStatus.OWN_USER_REJECTS_CALLS;
+                    return CallButtonPresenter.OtherUserCallStatus.OWN_USER_REJECTS_CALLS;
                 case PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
-                    return CallButtonController.OtherUserCallStatus.USER_REJECTS_CALLS;
+                    return CallButtonPresenter.OtherUserCallStatus.USER_REJECTS_CALLS;
                 case PrivateConversationUserStateService.ChatUserState.BLOCKED_BY_OWN_USER:
                 case PrivateConversationUserStateService.ChatUserState.DISCONNECTED:
-                default: return CallButtonController.OtherUserCallStatus.USER_OFFLINE;
+                default: return CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE;
             }
         }
     }

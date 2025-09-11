@@ -11,9 +11,9 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class CommunityStreamButtonController : IDisposable
+    public class CommunityStreamButtonPresenter : IDisposable
     {
-        private const string TAG = nameof(CommunityStreamButtonController);
+        private const string TAG = nameof(CommunityStreamButtonPresenter);
 
         private readonly IDisposable currentChannelSubscription;
         private readonly IDisposable communityCallStateSubscription;
@@ -25,9 +25,9 @@ namespace DCL.VoiceChat
         private readonly CommunitiesDataProvider communityDataProvider;
 
         private CancellationTokenSource communityCts = new ();
-        private IDisposable currentCommunityCallStatusSubscription;
+        private IDisposable? currentCommunityCallStatusSubscription;
 
-        public CommunityStreamButtonController(
+        public CommunityStreamButtonPresenter(
             CallButtonView view,
             IVoiceChatOrchestrator orchestrator,
             IChatEventBus chatEventBus,

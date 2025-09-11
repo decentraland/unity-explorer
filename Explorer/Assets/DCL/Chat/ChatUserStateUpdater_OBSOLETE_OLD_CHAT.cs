@@ -19,7 +19,7 @@ using Utility.Types;
 namespace DCL.Chat
 {
     [Obsolete("Super-seeded by ChatUserStateService, will be removed")]
-    public class ChatUserStateUpdater : IDisposable
+    public class ChatUserStateUpdater_OBSOLETE_OLD_CHAT : IDisposable
     {
         private const string PRIVACY_SETTING_ALL = "all";
         //private readonly IChatUsersStateCache chatUsersStateCache;
@@ -43,7 +43,7 @@ namespace DCL.Chat
 
         public string CurrentConversation { get; set; } = string.Empty;
 
-        public ChatUserStateUpdater(
+        public ChatUserStateUpdater_OBSOLETE_OLD_CHAT(
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IParticipantsHub participantsHub,
             ChatSettingsAsset settingsAsset,

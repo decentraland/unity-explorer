@@ -48,10 +48,11 @@ using System.Threading;
 using UnityEngine.InputSystem;
 using Utility.Types;
 using ChatMessage = DCL.Chat.History.ChatMessage;
+// ReSharper disable InconsistentNaming
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView, ChatControllerShowParams>,
+    public class ChatController_OBSOLETE_OLD_CHAT : ControllerBase<ChatView, ChatControllerShowParams>,
         IControllerInSharedSpace<ChatView, ChatControllerShowParams>
     {
         public delegate void ConversationOpenedDelegate(bool wasAlreadyOpen);
@@ -75,12 +76,12 @@ namespace DCL.Chat
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly ChatUserStateUpdater chatUserStateUpdater;
+        private readonly ChatUserStateUpdater_OBSOLETE_OLD_CHAT chatUserStateUpdater;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly IRoomHub roomHub;
-        private CallButtonController callButtonController;
-        private CommunityStreamButtonController communityStreamButtonController;
+        private CallButtonController_OBSOLETE_OLD_CHAT callButtonController;
+        private CommunityStreamButtonPresenter communityStreamButtonPresenter;
         private CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -120,7 +121,7 @@ namespace DCL.Chat
 
         private bool IsViewReady => viewInstanceCreated && viewInstance != null;
 
-        public ChatController(
+        public ChatController_OBSOLETE_OLD_CHAT(
             ViewFactoryMethod viewFactory,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
@@ -178,7 +179,7 @@ namespace DCL.Chat
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
 
-            chatUserStateUpdater = new ChatUserStateUpdater(
+            chatUserStateUpdater = new ChatUserStateUpdater_OBSOLETE_OLD_CHAT(
                 userBlockingCacheProxy,
                 chatRoom.Participants,
                 chatSettings,
@@ -223,7 +224,7 @@ namespace DCL.Chat
                     // https://github.com/decentraland/unity-explorer/issues/4186
                     if (chatUserStateUpdater.CurrentConversation.Equals(ChatChannel.NEARBY_CHANNEL_ID.Id))
                     {
-                        SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
+                        SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED).Forget();
                         return;
                     }
                     else if (chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER)
@@ -291,9 +292,9 @@ namespace DCL.Chat
 
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
 
-            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatOrchestrator, chatEventBus, CurrentChannel);
+            callButtonController = new CallButtonController_OBSOLETE_OLD_CHAT(viewInstance.chatTitleBar.CallButton, voiceChatOrchestrator, chatEventBus, CurrentChannel);
 
-            communityStreamButtonController = new CommunityStreamButtonController(
+            communityStreamButtonPresenter = new CommunityStreamButtonPresenter(
                 viewInstance.chatTitleBar.CommunitiesCallButton,
                 voiceChatOrchestrator,
                 chatEventBus,
@@ -364,7 +365,7 @@ namespace DCL.Chat
             UnsubscribeFromEvents();
             Dispose();
             callButtonController.Reset();
-            communityStreamButtonController?.Reset();
+            communityStreamButtonPresenter?.Reset();
             communityVoiceChatSubTitleButtonPresenter?.Dispose();
         }
 #endregion
@@ -490,7 +491,7 @@ namespace DCL.Chat
             chatHistory.DeleteAllChannels();
             chatUsersUpdateCts.SafeCancelAndDispose();
             callButtonController?.Dispose();
-            communityStreamButtonController?.Dispose();
+            communityStreamButtonPresenter?.Dispose();
             communitiesServiceCts.SafeCancelAndDispose();
             errorNotificationCts.SafeCancelAndDispose();
             memberListCts.SafeCancelAndDispose();
@@ -575,7 +576,7 @@ namespace DCL.Chat
                 UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
             }
             else
-                SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
+                SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED).Forget();
         }
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
@@ -583,7 +584,7 @@ namespace DCL.Chat
             if (!IsViewReady)
                 return;
 
-            Result<ChatUserStateUpdater.ChatUserState> result = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+            Result<ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState> result = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
 
             if (ct.IsCancellationRequested)
                 return;
@@ -591,7 +592,7 @@ namespace DCL.Chat
             if (result.Success == false)
                 return;
 
-            ChatUserStateUpdater.ChatUserState userState = result.Value;
+            ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState userState = result.Value;
 
             SetupViewWithUserStateOnMainThreadAsync(userState).Forget();
             UpdateCallButtonUserState(userState, userId);
@@ -599,29 +600,29 @@ namespace DCL.Chat
             if (!updateToolbar)
                 return;
 
-            bool offline = userState is ChatUserStateUpdater.ChatUserState.DISCONNECTED or ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+            bool offline = userState is ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.DISCONNECTED or ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.BLOCKED_BY_OWN_USER;
             viewInstance.UpdateConversationStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
         }
 
-        private void UpdateCallButtonUserState(ChatUserStateUpdater.ChatUserState userState, string userId)
+        private void UpdateCallButtonUserState(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState userState, string userId)
         {
             if (!isCallEnabled) return;
 
-            CallButtonController.OtherUserCallStatus callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
+            CallButtonController_OBSOLETE_OLD_CHAT.OtherUserCallStatus_OLD callStatus = CallButtonController_OBSOLETE_OLD_CHAT.OtherUserCallStatus_OLD.USER_OFFLINE;
 
             switch (userState)
             {
-                case ChatUserStateUpdater.ChatUserState.CONNECTED:
-                    callStatus = CallButtonController.OtherUserCallStatus.USER_AVAILABLE;
+                case ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED:
+                    callStatus = CallButtonController_OBSOLETE_OLD_CHAT.OtherUserCallStatus_OLD.USER_AVAILABLE;
                     break;
-                case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
-                    callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
+                case ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.DISCONNECTED:
+                    callStatus = CallButtonController_OBSOLETE_OLD_CHAT.OtherUserCallStatus_OLD.USER_OFFLINE;
                     break;
-                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
-                    callStatus = CallButtonController.OtherUserCallStatus.USER_REJECTS_CALLS;
+                case ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
+                    callStatus = CallButtonController_OBSOLETE_OLD_CHAT.OtherUserCallStatus_OLD.USER_REJECTS_CALLS;
                     break;
-                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
-                    callStatus = CallButtonController.OtherUserCallStatus.OWN_USER_REJECTS_CALLS;
+                case ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
+                    callStatus = CallButtonController_OBSOLETE_OLD_CHAT.OtherUserCallStatus_OLD.OWN_USER_REJECTS_CALLS;
                     break;
             }
 
@@ -917,7 +918,7 @@ namespace DCL.Chat
         private async UniTaskVoid GetAndSetupNonFriendUserStateAsync(string userId)
         {
             //We might need a new state of type "LOADING" or similar to display until we resolve the real state
-            SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.DISCONNECTED).Forget();
+            SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.DISCONNECTED).Forget();
             var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
             SetupViewWithUserStateOnMainThreadAsync(state).Forget();
             UpdateCallButtonUserState(state, userId);
@@ -925,27 +926,26 @@ namespace DCL.Chat
 
         private void OnFriendConnected(string userId)
         {
-            var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+            var state = ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED;
             SetupViewWithUserStateOnMainThreadAsync(state).Forget();
             UpdateCallButtonUserState(state, userId);
         }
 
         private void OnUserBlockedByOwnUser(string userId)
         {
-            var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
+            var state = ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.BLOCKED_BY_OWN_USER;
             SetupViewWithUserStateOnMainThreadAsync(state).Forget();
         }
 
         private void OnCurrentConversationUserUnavailable()
         {
-            var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
+            var state = ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
             SetupViewWithUserStateOnMainThreadAsync(state).Forget();
-            UpdateCallButtonUserState(state, viewInstance!.CurrentChannelId.Id);
         }
 
         private void OnCurrentConversationUserAvailable()
         {
-            var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
+            var state = ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED;
             SetupViewWithUserStateOnMainThreadAsync(state).Forget();
             UpdateCallButtonUserState(state, viewInstance!.CurrentChannelId.Id);
         }
@@ -956,7 +956,7 @@ namespace DCL.Chat
         }
 #endregion
 
-        private async UniTaskVoid SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState userState)
+        private async UniTaskVoid SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState userState)
         {
             await UniTask.SwitchToMainThread();
             viewInstance!.SetupViewWithUserState(userState);
@@ -1262,7 +1262,7 @@ namespace DCL.Chat
                 CurrentChannel.UpdateValue(channel);
             }
 
-            SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
+            SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED).Forget();
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
 
