@@ -11,7 +11,7 @@ namespace DCL.Translation.Service.Provider
     {
         private int requestCount;
 
-        public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode source, LanguageCode target, CancellationToken ct)
+        public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode target, CancellationToken ct)
         {
             requestCount++;
 

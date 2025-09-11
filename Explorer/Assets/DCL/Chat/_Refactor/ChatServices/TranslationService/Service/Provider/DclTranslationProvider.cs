@@ -25,7 +25,7 @@ namespace DCL.Translation.Service.Provider
             this.urlsSource = urlsSource;
         }
 
-        public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode source, LanguageCode target, CancellationToken ct)
+        public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode target, CancellationToken ct)
         {
             string targetCode = target.ToString().ToLower();
 
@@ -38,7 +38,10 @@ namespace DCL.Translation.Service.Provider
             );
         }
 
-        private async UniTask<TranslationApiResponse> GetTranslationFromApiAsync(string text, string source, string target, CancellationToken ct)
+        private async UniTask<TranslationApiResponse> GetTranslationFromApiAsync(string text,
+            string source,
+            string target,
+            CancellationToken ct)
         {
             var requestBody = new TranslationRequestBody
             {
@@ -65,6 +68,14 @@ namespace DCL.Translation.Service.Provider
                 return languageCode;
 
             return LanguageCode.EN;
+        }
+
+        private LanguageCode ParseLanguageCodeSafe(string code, LanguageCode fallback)
+        {
+            if (Enum.TryParse<LanguageCode>(code, true, out var languageCode))
+                return languageCode;
+
+            return fallback;
         }
     }
 }
