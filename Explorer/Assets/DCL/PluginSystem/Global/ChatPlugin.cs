@@ -107,6 +107,7 @@ namespace DCL.PluginSystem.Global
         private ITranslationService translationService;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly DecentralandEnvironment decentralandEnvironment;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -147,7 +148,8 @@ namespace DCL.PluginSystem.Global
             Transform chatViewRectTransform,
             ITranslationSettings translationSettings,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment decentralandEnvironment)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -186,6 +188,7 @@ namespace DCL.PluginSystem.Global
             this.translationSettings = translationSettings;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.decentralandEnvironment = decentralandEnvironment;
             
             pluginCts = new CancellationTokenSource();
         }
@@ -221,9 +224,17 @@ namespace DCL.PluginSystem.Global
             
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
 
-            // var translationProvider = new MockTranslationProvider();
-            var translationProvider = new DclTranslationProvider(webRequestController,
-                decentralandUrlsSource);
+            ITranslationProvider translationProvider;
+            if (decentralandEnvironment == DecentralandEnvironment.Zone)
+            {
+                // NOTE: we have api available in the zone environment
+                translationProvider = new DclTranslationProvider(webRequestController,
+                    decentralandUrlsSource);
+            }
+            else
+            {
+                translationProvider = new MockTranslationProvider();
+            }
             
             var translationCache = new InMemoryTranslationCache();
             translationMemory = new InMemoryTranslationMemory();

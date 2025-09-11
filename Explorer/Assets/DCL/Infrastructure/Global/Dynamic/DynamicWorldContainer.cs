@@ -767,7 +767,8 @@ namespace Global.Dynamic
                     mainUIView.SidebarView.unreadMessagesButton.transform,
                     translationSettings,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    bootstrapContainer.DecentralandUrlsSource),
+                    bootstrapContainer.DecentralandUrlsSource,
+                    bootstrapContainer.Environment),
                 new ExplorePanelPlugin(
                     eventBus,
                     assetsProvisioner,
