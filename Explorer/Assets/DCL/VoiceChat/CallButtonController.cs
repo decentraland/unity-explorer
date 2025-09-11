@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.Utilities;
 using System;
 using System.Threading;
@@ -56,10 +57,13 @@ namespace DCL.VoiceChat
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
 
-            statusSubscription = voiceChatState.CurrentCallStatus.Subscribe(OnVoiceChatStatusChanged);
-            currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+            {
+                statusSubscription = voiceChatState.CurrentCallStatus.Subscribe(OnVoiceChatStatusChanged);
+                currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
+                chatEventBus.StartCall += OnChatEventBusStartCall;
+            }
 
-            chatEventBus.StartCall += OnChatEventBusStartCall;
             view.gameObject.SetActive(false);
         }
 
@@ -76,6 +80,8 @@ namespace DCL.VoiceChat
 
         public void Reset()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+
             if (!PlayerLoopHelper.IsMainThread)
                 ResetAsync().Forget();
             else
@@ -92,6 +98,8 @@ namespace DCL.VoiceChat
 
         public void SetCallStatusForUser(OtherUserCallStatus status, string userId)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+
             CurrentUserId = userId;
             otherUserStatus = status;
             Reset();
@@ -181,6 +189,8 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+
             statusSubscription?.Dispose();
             orchestratorTypeSubscription?.Dispose();
             privateVoiceChatAvailableSubscription?.Dispose();

@@ -11,7 +11,6 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
-using Random = UnityEngine.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
@@ -58,7 +57,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool includeRequestsReceivedPerCommunity = false, bool isStreaming = false)
         {
             var url = $"{communitiesBaseUrl}?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
-            if (isStreaming)
+            if (isStreaming) //TODO FRAN & DAVIDE: FIX THIS, IT WORKS BUT IS NOT PROPER :)
                 url = $"{communitiesBaseUrl}?onlyWithActiveVoiceChat={isStreaming}";//&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
 

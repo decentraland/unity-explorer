@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
@@ -56,6 +57,8 @@ namespace DCL.VoiceChat
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
             ParticipantsStateService = participantsStateService;
 
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+
             Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_VOICE_CHAT_STARTED, OnClickedNotification);
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
@@ -87,7 +90,7 @@ namespace DCL.VoiceChat
             if (parameters.Length == 0 || parameters[0] is not CommunityVoiceChatStartedNotification)
                 return;
 
-            CommunityVoiceChatStartedNotification notification = (CommunityVoiceChatStartedNotification)parameters[0];
+            var notification = (CommunityVoiceChatStartedNotification)parameters[0];
             JoinCommunityVoiceChat(notification.CommunityId, true);
         }
 
@@ -228,6 +231,7 @@ namespace DCL.VoiceChat
             {
                 HangUp();
                 await UniTask.Delay(100, cancellationToken: joinCallCts.Token);
+
                 if (!joinCallCts.IsCancellationRequested)
                     communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, joinCallCts.Token).Forget();
             }

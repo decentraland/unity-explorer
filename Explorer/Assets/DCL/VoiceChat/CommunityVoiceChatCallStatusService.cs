@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using Notifications = DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
@@ -31,12 +32,18 @@ namespace DCL.VoiceChat
         {
             this.voiceChatService = voiceChatService;
             this.voiceChatSceneTrackerService = voiceChatSceneTrackerService;
-            this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
-            this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            {
+                this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
+                this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
+            }
         }
 
         public override void StartCall(string communityId)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             //We can start a call only if we are not connected or trying to start a call
             if (!Status.Value.IsNotConnected()) return;
 
@@ -84,6 +91,8 @@ namespace DCL.VoiceChat
 
         public override void HangUp()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
             locallyStartedCommunityId = null;
@@ -121,6 +130,8 @@ namespace DCL.VoiceChat
 
         public void RequestToSpeakInCurrentCall()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || string.IsNullOrEmpty(CallId.Value)) return;
 
             cts = cts.SafeRestart();
@@ -141,6 +152,8 @@ namespace DCL.VoiceChat
 
         public void LowerHandInCurrentCall()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || string.IsNullOrEmpty(CallId.Value)) return;
 
             cts = cts.SafeRestart();
@@ -161,6 +174,8 @@ namespace DCL.VoiceChat
 
         public void PromoteToSpeakerInCurrentCall(string walletId)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
@@ -182,6 +197,8 @@ namespace DCL.VoiceChat
 
         public void DenySpeakerInCurrentCall(string walletId)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
@@ -208,6 +225,8 @@ namespace DCL.VoiceChat
 
         public void DemoteFromSpeakerInCurrentCall(string walletId)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
@@ -229,6 +248,8 @@ namespace DCL.VoiceChat
 
         public void KickPlayerFromCurrentCall(string walletId)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
@@ -250,6 +271,8 @@ namespace DCL.VoiceChat
 
         public void EndStreamInCurrentCall()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             if (string.IsNullOrEmpty(CallId.Value)) return;
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
@@ -271,12 +294,16 @@ namespace DCL.VoiceChat
 
         public override void HandleLivekitConnectionFailed()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
         }
 
         public override void HandleLivekitConnectionEnded()
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
             if (Status.Value == VoiceChatStatus.DISCONNECTED) return;
 
             ResetVoiceChatData();
@@ -394,10 +421,6 @@ namespace DCL.VoiceChat
 
         public override void Dispose()
         {
-            voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
-            voiceChatService.ActiveCommunityVoiceChatsFetched -= OnActiveCommunityVoiceChatsFetched;
-            voiceChatService.Dispose();
-
             foreach (ReactiveProperty<bool>? callData in communityVoiceChatCalls.Values) { callData.ClearSubscriptionsList(); }
 
             communityVoiceChatCalls.Clear();
@@ -405,6 +428,11 @@ namespace DCL.VoiceChat
             locallyStartedCommunityId = null;
             cts.SafeCancelAndDispose();
             base.Dispose();
+
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
+
+            voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
+            voiceChatService.ActiveCommunityVoiceChatsFetched -= OnActiveCommunityVoiceChatsFetched;
         }
 
         public bool HasActiveVoiceChatCall(string communityId)

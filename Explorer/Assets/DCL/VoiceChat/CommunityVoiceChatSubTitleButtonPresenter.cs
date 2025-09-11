@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.FeatureFlags;
 using DCL.Utilities;
 using System;
 using System.Threading;
@@ -11,8 +12,8 @@ namespace DCL.VoiceChat
 {
     public class CommunityVoiceChatSubTitleButtonPresenter : IDisposable
     {
-        private readonly IDisposable statusSubscription;
-        private readonly IDisposable currentChannelSubscription;
+        private readonly IDisposable? statusSubscription;
+        private readonly IDisposable? currentChannelSubscription;
 
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly CommunityStreamSubTitleButtonView view;
@@ -35,10 +36,25 @@ namespace DCL.VoiceChat
             this.currentChannel = currentChannel;
             this.communityDataProvider = communityDataProvider;
 
-            currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
-            statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
-            view.JoinStreamButton.onClick.AddListener(OnJoinStreamButtonClicked);
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+            {
+                currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
+                statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
+                view.JoinStreamButton.onClick.AddListener(OnJoinStreamButtonClicked);
+            }
+
             view.gameObject.SetActive(false);
+        }
+
+        public void Dispose()
+        {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+
+            statusSubscription?.Dispose();
+            currentChannelSubscription?.Dispose();
+            currentCommunityCallStatusSubscription?.Dispose();
+            communityCts.SafeCancelAndDispose();
+            view.JoinStreamButton.onClick.RemoveListener(OnJoinStreamButtonClicked);
         }
 
         private void OnJoinStreamButtonClicked()
@@ -47,16 +63,7 @@ namespace DCL.VoiceChat
             communityCallOrchestrator.JoinCommunityVoiceChat(communityId, true);
         }
 
-        public void Dispose()
-        {
-            statusSubscription.Dispose();
-            currentChannelSubscription.Dispose();
-            currentCommunityCallStatusSubscription?.Dispose();
-            communityCts.SafeCancelAndDispose();
-            view.JoinStreamButton.onClick.RemoveListener(OnJoinStreamButtonClicked);
-        }
-
-       private void OnCurrentChannelChanged(ChatChannel newChannel)
+        private void OnCurrentChannelChanged(ChatChannel newChannel)
         {
             Reset();
 
@@ -82,7 +89,7 @@ namespace DCL.VoiceChat
             communityCts = communityCts.SafeRestart();
             GetCommunityResponse communityData = await communityDataProvider.GetCommunityAsync(communityId, communityCts.Token);
 
-            var dataVoiceChatStatus = communityData.data.voiceChatStatus;
+            GetCommunityResponse.VoiceChatStatus dataVoiceChatStatus = communityData.data.voiceChatStatus;
 
             bool isVoiceChatActive = dataVoiceChatStatus.isActive;
             if (!isVoiceChatActive) return;
@@ -107,7 +114,6 @@ namespace DCL.VoiceChat
             view.gameObject.SetActive(true);
             int participantsCount = communityCallOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
             view.ParticipantsAmount.SetText(participantsCount.ToString());
-
         }
 
         private void OnCommunityCallStatusChanged(VoiceChatStatus status)
@@ -120,6 +126,7 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     OnCallEndedAsync().Forget();
                     break;
+
                 // When we join a call, if it is for THIS community, we need to hide the button. If it's another call, we keep it.
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL when
                     communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase):
@@ -138,12 +145,11 @@ namespace DCL.VoiceChat
 
         public void OnMemberListVisibilityChanged(bool isVisible)
         {
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+
             isMemberListVisible = isVisible;
 
-            if (isVisible)
-            {
-                view.gameObject.SetActive(false);
-            }
+            if (isVisible) { view.gameObject.SetActive(false); }
             else
             {
                 // Re-setup subtitle bar when member list becomes hidden

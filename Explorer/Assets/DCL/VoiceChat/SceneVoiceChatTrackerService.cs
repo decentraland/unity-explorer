@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using ECS;
@@ -40,11 +41,14 @@ namespace DCL.VoiceChat
             this.realmNavigator = realmNavigator;
             this.realmData = realmData;
 
-            this.realmNavigator.NavigationExecuted += OnRealmNavigatorOperationExecuted;
-            parcelSubscription = parcelTrackerService.CurrentParcelData.Subscribe(OnParcelChanged);
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            {
+                this.realmNavigator.NavigationExecuted += OnRealmNavigatorOperationExecuted;
+                parcelSubscription = parcelTrackerService.CurrentParcelData.Subscribe(OnParcelChanged);
+            }
         }
 
-        public void RegisterCommunityInScene(string communityId, IEnumerable<string> positions, IEnumerable<string> worlds)
+        public void RegisterCommunityInScene(string communityId, IEnumerable<string>? positions, IEnumerable<string>? worlds)
         {
             if (positions != null)
                 RegisterCommunityCallInScene(communityId, positions);
