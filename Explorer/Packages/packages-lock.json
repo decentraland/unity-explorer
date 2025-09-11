@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "02cb6f1758fd15ebe9a36a33677309d31eee8c73"
+      "hash": "2488227ce1013f3bf65408447d0fbc6531e54ed5"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
@@ -470,7 +470,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "7aa85f76fe500491d47395e4198fa6f96532c073"
+      "hash": "5d4875abf9de36312689a445460bc00105e8a5d0"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
