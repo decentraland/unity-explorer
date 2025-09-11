@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
 using System;
@@ -24,10 +25,15 @@ namespace DCL.Character.CharacterMotion.Systems
     {
         private static readonly Random RANDOM = new ();
 
+        private readonly ILandscape landscape;
+
         private SingleInstanceEntity? cameraCached;
         private SingleInstanceEntity cameraEntity => cameraCached ??= World.CacheCamera();
 
-        public TeleportPositionCalculationSystem(World world) : base(world) { }
+        public TeleportPositionCalculationSystem(World world, ILandscape landscape) : base(world)
+        {
+            this.landscape = landscape;
+        }
 
         protected override void Update(float t)
         {
@@ -44,7 +50,8 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (sceneDef == null)
             {
-                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation().WithTerrainOffset();
+                Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
+                teleportIntent.Position = targetWorldPosition.WithTerrainOffset(landscape.GetHeight(targetWorldPosition.x, targetWorldPosition.z));
             }
             else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {

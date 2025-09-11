@@ -103,6 +103,7 @@ Material:
     - _BendMode: 0
     - _BendPushStrength: 1
     - _Billboard: 0
+    - _BillboardingVerticalRotation: 0
     - _BlendOp: 0
     - _BumpScale: 1
     - _CameraFadingEnabled: 0
@@ -171,6 +172,7 @@ Material:
     - _WindSwinging: 0.069
     - _WindVertexRand: 0.6
     - _ZWrite: 1
+    - _batchingBlockSize: 256
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BendTint: {r: 1, g: 1, b: 1, a: 1}
