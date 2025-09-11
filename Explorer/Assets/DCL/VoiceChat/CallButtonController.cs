@@ -21,6 +21,8 @@ namespace DCL.VoiceChat
             OWN_USER_REJECTS_CALLS,
         }
 
+        public event Action<string>? StartCall;
+
         private const string USER_OFFLINE_TOOLTIP_TEXT = "User is offline.";
         private const string USER_REJECTS_CALLS_TOOLTIP_TEXT = "User only accepts calls from friends.";
         private const string OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT = "Add User as a friend, or update your DM & Call settings to connect with everyone.";
@@ -30,10 +32,10 @@ namespace DCL.VoiceChat
         private const float ANIMATION_DURATION = 0.5f;
         private const int WAIT_TIME_BEFORE_TOOLTIP_CLOSES_MS = 4000;
 
-        private readonly IDisposable statusSubscription;
-        private readonly IDisposable orchestratorTypeSubscription;
-        private readonly IDisposable privateVoiceChatAvailableSubscription;
-        private readonly IDisposable currentChannelSubscription;
+        private readonly IDisposable? statusSubscription;
+        private readonly IDisposable? orchestratorTypeSubscription;
+        private readonly IDisposable? privateVoiceChatAvailableSubscription;
+        private readonly IDisposable? currentChannelSubscription;
 
         private readonly CallButtonView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
@@ -41,9 +43,8 @@ namespace DCL.VoiceChat
         private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
         private CancellationTokenSource cts;
-        public string CurrentUserId { get; private set; }
+        private string currentUserId;
 
-        public event Action<string> StartCall;
 
         public CallButtonController(
             CallButtonView view,
@@ -100,14 +101,14 @@ namespace DCL.VoiceChat
         {
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
 
-            CurrentUserId = userId;
+            currentUserId = userId;
             otherUserStatus = status;
             Reset();
         }
 
         private void OnCallButtonClicked()
         {
-            cts = cts?.SafeRestart();
+            cts = cts.SafeRestart();
             HandleCallButtonClickAsync(cts!.Token).Forget();
         }
 
@@ -150,7 +151,7 @@ namespace DCL.VoiceChat
                     // For available users, immediately start call without showing tooltip
                     view.TooltipParent.gameObject.SetActive(false);
                     isClickedOnce = false;
-                    StartCall?.Invoke(CurrentUserId);
+                    StartCall?.Invoke(currentUserId);
                     break;
                 case OtherUserCallStatus.OWN_USER_IN_CALL:
                     await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);

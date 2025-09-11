@@ -40,22 +40,21 @@ namespace DCL.FeatureFlags
             });
 
             //We need to set FRIENDS AND USER BLOCKING before setting VOICE CHAT that depends on them.
-            SetFeatureState(FeatureId.VOICE_CHAT, false); //IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
-            SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, false);//IsEnabled(FeatureId.VOICE_CHAT) && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_VOICE_CHAT))));
+            SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
+            SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT));// && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_VOICE_CHAT))));
         }
 
         /// <summary>
-        ///     Checks if a feature flag is enabled globally (cached, synchronous).
-        ///     Examples of global features: FRIENDS, VOICE_CHAT, CAMERA_REEL
+        ///     Checks if a feature is enabled.
         /// </summary>
         public bool IsEnabled(FeatureId featureId) =>
             featureStates.GetValueOrDefault(featureId, false);
 
         /// <summary>
-        ///     Checks if a feature is enabled for the current user (async).
-        ///     Use this for features that depend on user identity or allowlists.
+        ///     Checks if a feature is enabled in an async way using FeatureProviders that can contain more complex logic.
+        ///     Use this for features that depend on user identity or allowlists or anything else that cannot be handled by FF or appArgs.
         ///     Examples of user-specific features: COMMUNITIES
-        ///     For global features, this returns the same result as IsEnabled() but asynchronously.
+        ///     For global features, this returns the same result as IsEnabled().
         /// </summary>
         public async UniTask<bool> IsEnabledAsync(FeatureId featureId, CancellationToken ct)
         {

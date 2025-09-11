@@ -16,7 +16,7 @@ namespace DCL.VoiceChat
         private readonly IDisposable? currentChannelSubscription;
 
         private readonly CommunitiesDataProvider communityDataProvider;
-        private readonly CommunityStreamSubTitleButtonView view;
+        private readonly JoinCommunityLiveStreamChatSubTitleButtonView view;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
 
@@ -26,7 +26,7 @@ namespace DCL.VoiceChat
         private bool isMemberListVisible;
 
         public CommunityVoiceChatSubTitleButtonPresenter(
-            CommunityStreamSubTitleButtonView view,
+            JoinCommunityLiveStreamChatSubTitleButtonView view,
             ICommunityCallOrchestrator communityCallOrchestrator,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,
             CommunitiesDataProvider communityDataProvider)
@@ -108,8 +108,6 @@ namespace DCL.VoiceChat
                 view.gameObject.SetActive(false);
                 return;
             }
-
-            if (!hasActiveCall) return;
 
             view.gameObject.SetActive(true);
             int participantsCount = communityCallOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
