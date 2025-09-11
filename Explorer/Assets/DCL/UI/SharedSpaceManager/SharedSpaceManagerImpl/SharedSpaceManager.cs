@@ -119,6 +119,11 @@ namespace DCL.UI.SharedSpaceManager
             if (controller is IBlocksChat) isCameraReelPanelVisible = false;
         }
 
+        public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
+        {
+            ShowAsync(panel, parameters, PanelsSharingSpace.Chat);
+        }
+
         public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!, params PanelsSharingSpace[] panelsToIgnore)
         {
             if (!IsRegistered(panel))
