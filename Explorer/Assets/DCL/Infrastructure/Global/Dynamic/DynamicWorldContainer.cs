@@ -765,7 +765,9 @@ namespace Global.Dynamic
                     includeTranslationChat,
                     realmNavigator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    translationSettings),
+                    translationSettings,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    bootstrapContainer.DecentralandUrlsSource),
                 new ExplorePanelPlugin(
                     eventBus,
                     assetsProvisioner,

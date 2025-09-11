@@ -82,7 +82,6 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
         [ContextMenu("5. Toggle Auto-Translate for Test Channel")]
         private void ToggleAutoTranslate()
         {
-            // --- NEW, POWERFUL TEST METHOD ---
             if (translationSettings == null)
             {
                 ReportHub.LogError(ReportCategory.UNSPECIFIED, "TranslationSettings not initialized in tester!");
@@ -95,5 +94,24 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             translationSettings.SetAutoTranslateForConversation(TEST_CONVERSATION_ID, newStatus);
             ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Auto-Translate for channel '{TEST_CONVERSATION_ID}' set to: {newStatus}");
         }
+
+        // [ContextMenu("Run Translation Test")]
+        // public async void RunTranslationTest()
+        // {
+        //     ReportHub.Log(ReportCategory.CHAT_TRANSLATE,"Starting translation test...");
+        //
+        //     try
+        //     {
+        //         var result = await translationService.TranslateManualAsync("Hello world my friend!", LanguageCode.EN, LanguageCode.ES, CancellationToken.None);
+        //         ReportHub.Log(ReportCategory.CHAT_TRANSLATE,$"SUCCESS! Translated text: '{result.TranslatedText}'. Detected source: {result.DetectedSourceLanguage}");
+        //
+        //         var result2 = await TranslateAsync("This is a test of the translation service.", LanguageCode.EN, LanguageCode.JA, CancellationToken.None);
+        //         ReportHub.Log(ReportCategory.CHAT_TRANSLATE,$"SUCCESS! Translated text: '{result2.TranslatedText}'. Detected source: {result2.DetectedSourceLanguage}");
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         ReportHub.LogError($"FAILED! The test encountered an error: {e.Message}", e);
+        //     }
+        // }
     }
 }

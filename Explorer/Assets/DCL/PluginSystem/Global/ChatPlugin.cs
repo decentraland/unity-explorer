@@ -40,12 +40,14 @@ using DCL.Chat.ChatServices.ChatTranslationService.Tests;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Translation.Service;
 using DCL.Translation.Service.Cache;
 using DCL.Translation.Service.Memory;
 using DCL.Translation.Service.Policy;
 using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
+using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -103,6 +105,8 @@ namespace DCL.PluginSystem.Global
         private ITranslationSettings translationSettings;
         private ITranslationMemory translationMemory;
         private ITranslationService translationService;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -141,7 +145,9 @@ namespace DCL.PluginSystem.Global
             bool includeTranslationChat,
             IRealmNavigator realmNavigator,
             Transform chatViewRectTransform,
-            ITranslationSettings translationSettings)
+            ITranslationSettings translationSettings,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -178,7 +184,9 @@ namespace DCL.PluginSystem.Global
             this.includeTranslationChat = includeTranslationChat;
             this.chatViewRectTransform = chatViewRectTransform;
             this.translationSettings = translationSettings;
-
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            
             pluginCts = new CancellationTokenSource();
         }
 
@@ -212,7 +220,11 @@ namespace DCL.PluginSystem.Global
             }
             
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
-            var translationProvider = new MockTranslationProvider();
+
+            // var translationProvider = new MockTranslationProvider();
+            var translationProvider = new DclTranslationProvider(webRequestController,
+                decentralandUrlsSource);
+            
             var translationCache = new InMemoryTranslationCache();
             translationMemory = new InMemoryTranslationMemory();
 
