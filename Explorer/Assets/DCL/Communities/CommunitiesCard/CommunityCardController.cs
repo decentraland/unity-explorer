@@ -76,7 +76,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
-        private CommunityCardVoiceChatController? communityCardVoiceChatController;
+        private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
@@ -328,7 +328,7 @@ namespace DCL.Communities.CommunitiesCard
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false, galleryEventBus);
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
-            communityCardVoiceChatController = new CommunityCardVoiceChatController(viewInstance.communityCardVoiceChatView, voiceChatOrchestrator);
+            communityCardVoiceChatController = new CommunityCardVoiceChatPresenter(viewInstance.communityCardVoiceChatView, voiceChatOrchestrator);
             communityCardVoiceChatController.ClosePanel += OnClosePanel;
             membersListController = new MembersListController(viewInstance.MembersListView,
                 profileRepositoryWrapper,
