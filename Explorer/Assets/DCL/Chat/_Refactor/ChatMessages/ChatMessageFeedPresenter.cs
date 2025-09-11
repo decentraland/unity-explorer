@@ -135,7 +135,7 @@ namespace DCL.Chat.ChatMessages
 
         private void OnMessageAddedToChatHistory(ChatChannel destinationChannel, ChatMessage addedMessage, int index)
         {
-            if (currentChannelService.CurrentChannel != destinationChannel)
+            if (currentChannelService.CurrentChannel == null || currentChannelService.CurrentChannel != destinationChannel)
                 return;
 
             // 1. Capture the state BEFORE making any changes
@@ -223,6 +223,12 @@ namespace DCL.Chat.ChatMessages
 
         private void UpdateChannelMessages()
         {
+            if (currentChannelService.CurrentChannel == null)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but no current channel is set. Aborting.");
+                return;
+            }
+
             loadChannelCts = loadChannelCts.SafeRestart();
 
             RemoveNewMessagesSeparator();
