@@ -33,16 +33,18 @@ namespace DCL.WebRequests.ChromeDevtool
 
         public BrowserOpenResult OpenUrl(string url)
         {
-            if (appArgs.TryGetValue(AppArgsFlags.CREATOR_HUB_BIN_PATH, out string? path) == false)
+            string path = CreatorHubExecutablePath();
+
+            if (File.Exists(path) == false)
             {
-                ReportHub.LogWarning(ReportCategory.CHROME_DEVTOOL_PROTOCOL, "Creator Hub path is not provided, fallback to default path");
-                path = DEFAULT_CREATOR_HUB_BIN_PATH;
+                BrowserOpenError error = BrowserOpenError.FromException(new Exception($"Creator Hub is not installed in path: {path}"));
+                return BrowserOpenResult.FromBrowserOpenError(error);
             }
 
             ReportHub.LogWarning(ReportCategory.CHROME_DEVTOOL_PROTOCOL, "Url always ignored by Creator Hub Browser, port is used");
 
             Result result = DclProcesses.Start(
-                path!,
+                path,
                 new[]
                 {
                     $"{DEVTOOL_PORT_ARG}{port}",
@@ -56,6 +58,15 @@ namespace DCL.WebRequests.ChromeDevtool
             }
 
             return BrowserOpenResult.Success();
+        }
+
+        private string CreatorHubExecutablePath()
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.CREATOR_HUB_BIN_PATH, out string? path))
+                return path!;
+
+            ReportHub.LogWarning(ReportCategory.CHROME_DEVTOOL_PROTOCOL, "Creator Hub path is not provided, fallback to default path");
+            return DEFAULT_CREATOR_HUB_BIN_PATH;
         }
     }
 }
