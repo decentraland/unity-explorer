@@ -13,6 +13,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
     public class GateKeeperSceneRoom : ConnectiveRoom
     {
+        private const int WAIT_FOR_VALID_SCENE_TIMEOUT = 10;
+
         private class Activatable : ActivatableConnectiveRoom, IGateKeeperSceneRoom
         {
             private readonly GateKeeperSceneRoom origin;
@@ -122,13 +124,20 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                         {
                             ISceneFacade? scene = null;
 
-                            // Fix: https://github.com/decentraland/unity-explorer/issues/5320
-                            // Ensure a valid scene is present in the cache before proceeding.
-                            // Failing to do so may cause inconsistencies during scene load,
-                            // such as live streams not working when entering via a deeplink.
                             if (!string.IsNullOrEmpty(result.Value.sceneId))
-                                while (!scenesCache.TryGetBySceneId(result.Value.sceneId, out scene))
+                            {
+                                DateTime timestamp = DateTime.Now;
+                                
+                                // Fix: https://github.com/decentraland/unity-explorer/issues/5320
+                                // Ensure a valid scene is present in the cache before proceeding.
+                                // Failing to do so may cause inconsistencies during scene load,
+                                // such as live streams not working when entering via a deeplink.
+                                while (!scenesCache.TryGetBySceneId(result.Value.sceneId, out scene)
+                                       && CurrentState() is IConnectiveRoom.State.Running
+                                       && !HasPlayerMoved()
+                                       && (DateTime.Now - timestamp).TotalSeconds < WAIT_FOR_VALID_SCENE_TIMEOUT)
                                     await UniTask.Yield(token);
+                            }
 
                             previousMetaData = meta;
                             connectedScene = scene;
@@ -141,9 +150,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                     async UniTask WaitForReconnectionRequiredAsync(CancellationToken token)
                     {
                         while (CurrentState() is IConnectiveRoom.State.Running
-                               && !options.SceneRoomMetaDataSource.MetadataIsDirty)
+                               && !HasPlayerMoved())
                             await UniTask.Yield(token);
                     }
+
+                    bool HasPlayerMoved() =>
+                        options.SceneRoomMetaDataSource.MetadataIsDirty;
                 }
 
                 await waitForReconnectionRequiredTask;
