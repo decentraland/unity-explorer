@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -21,12 +22,11 @@ namespace DCL.Profiles.Helpers
             }
 
             var promise = Promise.Create(world,
-                new GetTextureIntention
-                {
-                    CommonArguments = new CommonLoadingArguments(profile.Avatar.FaceSnapshotUrl),
-                    IsAvatarTexture = true,
-                    ReportSource = nameof(ProfileUtils),
-                },
+                new GetTextureIntention(userId: profile.UserId,
+                    wrapMode: TextureWrapMode.Clamp,
+                    filterMode: FilterMode.Bilinear,
+                    textureType: TextureType.Albedo,
+                    reportSource: nameof(ProfileUtils)),
                 partitionComponent);
 
             world.Create(profile, promise, partitionComponent);

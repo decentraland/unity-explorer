@@ -18,6 +18,8 @@ namespace DCL.Landscape.Config
         [Header("Settings when used as tree")]
         public ObjectRandomization randomization;
 
+        [field: SerializeField] public GameObject? Collider { get; set; }
+
         [Tooltip("This radius is being used for this asset to not overlap with the same asset type")]
         public float radius;
 
