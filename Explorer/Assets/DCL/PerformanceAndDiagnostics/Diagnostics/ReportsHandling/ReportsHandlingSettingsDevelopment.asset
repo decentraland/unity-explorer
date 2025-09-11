@@ -518,25 +518,25 @@ MonoBehaviour:
       Severity: 4
     - Category: COMMUNITIES
       Severity: 1
-    - Category: COMMUNITY_VOICE_CHAT
-      Severity: 3
-    - Category: COMMUNITY_VOICE_CHAT
-      Severity: 2
-    - Category: COMMUNITY_VOICE_CHAT
-      Severity: 0
+    - Category: CHAT_HISTORY
+      Severity: 4
+    - Category: CHAT_MESSAGES
+      Severity: 4
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 4
+    - Category: CHAT_MESSAGES
+      Severity: 1
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 1
+    - Category: CHAT_HISTORY
+      Severity: 1
     - Category: COMMUNITY_VOICE_CHAT
       Severity: 4
     - Category: COMMUNITY_VOICE_CHAT
       Severity: 1
-    - Category: VOICE_CHAT
-      Severity: 3
-    - Category: VOICE_CHAT
-      Severity: 2
-    - Category: VOICE_CHAT
-      Severity: 0
-    - Category: VOICE_CHAT
+    - Category: SKYBOX
       Severity: 4
-    - Category: VOICE_CHAT
+    - Category: SKYBOX
       Severity: 1
   sentryMatrix:
     entries: []
