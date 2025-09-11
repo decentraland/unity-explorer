@@ -4,6 +4,7 @@ using Global.AppArgs;
 using Plugins.DclNativeProcesses;
 using RichTypes;
 using System;
+using System.IO;
 
 namespace DCL.WebRequests.ChromeDevtool
 {
@@ -12,6 +13,17 @@ namespace DCL.WebRequests.ChromeDevtool
         private const string DEVTOOL_PORT_ARG = "--open-devtools-with-port=";
         private readonly IAppArgs appArgs;
         private readonly int port;
+
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+        // path for: C:\Users\<YourUsername>\AppData\Local\Programs\creator-hub\Decentraland Creator Hub.exe
+        private static readonly string DEFAULT_CREATOR_HUB_BIN_PATH =
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Programs", "creator-hub", "Decentraland Creator Hub.exe"
+            );
+#else
+        private static readonly string DEFAULT_CREATOR_HUB_BIN_PATH = "/Applications/Decentraland Creator Hub.app/Contents/MacOS/Decentraland Creator Hub";
+#endif
 
         public CreatorHubBrowser(IAppArgs appArgs, int port)
         {
@@ -23,9 +35,8 @@ namespace DCL.WebRequests.ChromeDevtool
         {
             if (appArgs.TryGetValue(AppArgsFlags.CREATOR_HUB_BIN_PATH, out string? path) == false)
             {
-                Exception exception = new Exception("Creator Hub path is not provided");
-                BrowserOpenError error = BrowserOpenError.FromException(exception);
-                return BrowserOpenResult.FromBrowserOpenError(error);
+                ReportHub.LogWarning(ReportCategory.CHROME_DEVTOOL_PROTOCOL, "Creator Hub path is not provided, fallback to default path");
+                path = DEFAULT_CREATOR_HUB_BIN_PATH;
             }
 
             ReportHub.LogWarning(ReportCategory.CHROME_DEVTOOL_PROTOCOL, "Url always ignored by Creator Hub Browser, port is used");
