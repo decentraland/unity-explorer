@@ -32,9 +32,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        [SerializeField] private LayoutElement layoutElement = null!;
-        [SerializeField] private RectTransform resultsContainer = null!;
-
         private readonly List<string> currentFilteredIds = new ();
         private CommunitiesBrowserStateService? browserStateService;
 
@@ -93,7 +90,6 @@ namespace DCL.Communities.CommunitiesBrowser
             if (resetPos)
                 resultLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
 
-            layoutElement.minHeight = resultsContainer.sizeDelta.y;
         }
 
         public void SetAsLoading(bool isLoading)
