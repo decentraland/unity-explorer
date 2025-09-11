@@ -165,6 +165,10 @@ namespace MVC
             if (windowsStackManager.CurrentFullscreenController == controller)
                 return;
 
+            //Hide current fullscreen if any so it's safe to push a new one
+            if (windowsStackManager.CurrentFullscreenController != null)
+                windowsStackManager.CurrentFullscreenController.HideViewAsync(ct).Forget();
+
             // Push new fullscreen controller
             FullscreenPushInfo fullscreenPushInfo = windowsStackManager.PushFullscreen(controller);
 
