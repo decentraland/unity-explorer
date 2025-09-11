@@ -588,13 +588,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!isInvitesAndRequestsSectionActive)
             {
-
                 browserStateService.UpdateRequestToJoinCommunity(communityId, requestId, true, success, alreadyExistsInvitation);
 
-                if (success && alreadyExistsInvitation)
-                {
-                    browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, true, true);
-                }
+                if (success)
+                    browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, true, false);
             }
             else
                 LoadInvitesAndRequestsResults();
