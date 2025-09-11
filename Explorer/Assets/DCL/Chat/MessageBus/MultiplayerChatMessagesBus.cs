@@ -141,7 +141,6 @@ namespace DCL.Chat.MessageBus
                 throw new Exception("ChatMessagesBus is disposed");
 
             double timestamp = DateTime.UtcNow.ToOADate();
-            ReportHub.LogProductionInfo($"MESSAGE SENT: {message} - TIMESTAMP: {timestamp}");
             switch (channel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.NEARBY:

@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using System;
 
 namespace DCL.Chat.History
@@ -41,7 +40,6 @@ namespace DCL.Chat.History
             IsSystemMessage = isSystemMessage;
             SentTimestampRaw = sentTimestamp;
             SentTimestamp = sentTimestamp != 0.0 ? DateTime.FromOADate(sentTimestamp) : null;
-            ReportHub.LogProductionInfo($"MESSAGE RECEIVED: {message} - TIMESTAMP: {sentTimestamp}");
         }
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
