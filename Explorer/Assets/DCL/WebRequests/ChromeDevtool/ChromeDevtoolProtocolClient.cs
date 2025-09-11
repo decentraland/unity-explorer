@@ -41,7 +41,7 @@ namespace DCL.WebRequests.ChromeDevtool
         {
             Bridge bridge = new Bridge(
                 browser: new CreatorHubBrowser(appArgs, PORT),
-                logger: new UnityLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL),
+                logger: new DCLLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL),
                 port: PORT
             );
 
