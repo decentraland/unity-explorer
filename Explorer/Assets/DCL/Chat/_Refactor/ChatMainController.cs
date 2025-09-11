@@ -110,7 +110,7 @@ namespace DCL.Chat
             DCLInput.Instance.UI.Close.performed += OnUIClose;
 
             communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
-                viewInstance.CommunityStreamSubTitleButton,
+                viewInstance.JoinCommunityLiveStreamSubTitleButton,
                 voiceChatOrchestrator,
                 currentChannelService.CurrentChannelProperty,
                 communityDataProvider);
