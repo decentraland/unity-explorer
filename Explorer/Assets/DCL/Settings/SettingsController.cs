@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
@@ -42,7 +43,7 @@ namespace DCL.Settings
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
@@ -67,7 +68,7 @@ namespace DCL.Settings
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
             VoiceChatSettingsAsset voiceChatSettings,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner)
         {
@@ -79,7 +80,7 @@ namespace DCL.Settings
             this.qualitySettingsAsset = qualitySettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
@@ -185,7 +186,7 @@ namespace DCL.Settings
                             voiceChatSettings,
                             upscalingController,
                             assetsProvisioner,
-                            worldVolumeMacBus));
+                            volumeBus));
             }
         }
 

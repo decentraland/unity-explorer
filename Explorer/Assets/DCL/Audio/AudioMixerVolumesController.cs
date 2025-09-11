@@ -31,6 +31,13 @@ namespace DCL.Audio
             allExposedParams = Enum.GetNames(typeof(AudioMixerExposedParam));
         }
 
+        public bool IsGroupMuted(AudioMixerExposedParam groupParam)
+        {
+            var groupParamString = groupParam.ToString();
+            
+            return mutedGroups.Contains(groupParamString);
+        }
+
         public void MuteGroup(AudioMixerExposedParam groupParam)
         {
             var groupParamString = groupParam.ToString();
