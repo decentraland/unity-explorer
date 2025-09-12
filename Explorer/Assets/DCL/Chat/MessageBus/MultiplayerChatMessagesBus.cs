@@ -140,7 +140,7 @@ namespace DCL.Chat.MessageBus
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("ChatMessagesBus is disposed");
 
-            double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+            double timestamp = DateTime.UtcNow.ToOADate();
             switch (channel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.NEARBY:
