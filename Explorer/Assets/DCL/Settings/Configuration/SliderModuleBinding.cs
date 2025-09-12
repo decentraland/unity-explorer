@@ -12,6 +12,7 @@ using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
+using DCL.Audio;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -34,6 +35,7 @@ namespace DCL.Settings.Configuration
             AVATAR_SOUNDS_VOLUME_FEATURE,
             VOICE_CHAT_VOLUME_FEATURE,
             UPSCALER_FEATURE,
+            MUSIC_SFX_SOUND_VOLUME_FEATURE,
             // add other features...
         }
 
@@ -53,7 +55,7 @@ namespace DCL.Settings.Configuration
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             bool isVoiceChatEnabled,
             bool isTranslationChatEnabled,
             IEventBus eventBus)
@@ -67,8 +69,10 @@ namespace DCL.Settings.Configuration
                 SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => new EnvironmentDistanceSettingsController(viewInstance, landscapeData),
                 SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE => new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                 SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
-                SliderFeatures.MASTER_VOLUME_FEATURE => new MasterVolumeSettingsController(viewInstance, generalAudioMixer, worldVolumeMacBus),
-                SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE => new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer, worldVolumeMacBus),
+                SliderFeatures.MASTER_VOLUME_FEATURE => new MasterVolumeSettingsController(viewInstance, generalAudioMixer, volumeBus),
+                SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE => new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer, volumeBus),
+                SliderFeatures.MUSIC_SFX_SOUND_VOLUME_FEATURE => new MusicAndSFXVolumeSettingsController(viewInstance,generalAudioMixer, volumeBus),
+                SliderFeatures.MUSIC_VOLUME_FEATURE => new MusicVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer, isVoiceChatEnabled),

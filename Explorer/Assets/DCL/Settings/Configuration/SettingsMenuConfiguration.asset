@@ -124,10 +124,11 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
           options:
-          - <sprite name=flag_us> English
+          - <sprite name=flag_gb><sprite name=flag_us> English
           - "<sprite name=flag_es> Espa\xF1ol"
           - "<sprite name=flag_fr> Fran\xE7ais"
           - <sprite name=flag_de> Deutsch
+          - "<sprite name=flag_ru> P\u0443\u0301\u0441\u0441\u043A\u0438\u0439"
           - "<sprite name=flag_pt> Portugu\xEAs"
           - <sprite name=flag_it> Italiano
           - "<sprite name=flag_zh> \u4E2D\u6587"
@@ -375,7 +376,7 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 11
     - rid: 5242998342527483919
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

@@ -16,8 +16,10 @@ Shader "DCL/MountainLit"
         _SpecularHighlights("Specular Highlights", Float) = 1.0
 
         _HeightMap("HeightMap", 2D) = "white" {}
-        _UseHeightMap("Use HeightMap", Integer) = 0
+        _UseHeightMap("Use HeightMap", Range(0, 1)) = 0
+        _HeightMapScale("HeightMap Scale", Float) = 4.3567
 
+        [HideInInspector] _MinDistOccupancy ("MinDistOccupancy", float) = 155.0
         _OccupancyMap("Occupancy Map", 2D) = "black" {}
         _DistanceFieldMap("Distance Field Map", 2D) = "black" {}
 
@@ -113,7 +115,7 @@ Shader "DCL/MountainLit"
 
             HLSLPROGRAM
             #pragma target 5.0
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             // -------------------------------------
             // Shader Stages

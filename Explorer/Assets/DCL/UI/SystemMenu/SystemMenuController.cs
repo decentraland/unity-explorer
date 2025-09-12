@@ -13,7 +13,6 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.SystemMenu

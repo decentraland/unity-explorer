@@ -9,14 +9,9 @@ namespace DCL.Translation.Service.Provider
 {
     public class MockTranslationProvider : ITranslationProvider
     {
-        private int requestCount  ;
+        private int requestCount;
 
-        public UniTask<LanguageCode> DetectLanguageAsync(string text, CancellationToken ct)
-        {
-            return UniTask.FromResult(LanguageCode.ES);
-        }
-
-        public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode source, LanguageCode target, CancellationToken ct)
+        public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode target, CancellationToken ct)
         {
             requestCount++;
 

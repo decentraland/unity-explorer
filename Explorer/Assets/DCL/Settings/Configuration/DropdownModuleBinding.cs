@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
@@ -56,7 +57,7 @@ namespace DCL.Settings.Configuration
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             bool isVoiceChatEnabled,
             bool isTranslationChatEnabled,
             IEventBus eventBus)

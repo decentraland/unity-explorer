@@ -57,6 +57,12 @@ namespace DCL.AuthenticationScreenFlow
         public Button DiscordButton { get; private set; } = null!;
 
         [field: SerializeField]
+        public Button ExitButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public MuteButtonView MuteButton { get; private set; } = null!;
+
+        [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
         [field: SerializeField]

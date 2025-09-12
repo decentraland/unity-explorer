@@ -110,7 +110,7 @@ namespace DCL.Translation.Service
             try
             {
                 // Simplified: We now directly use the passed-in cancellation token.
-                var result = await provider.TranslateAsync(translation.OriginalBody, LanguageCode.ES, targetLang, ct);
+                var result = await provider.TranslateAsync(translation.OriginalBody, targetLang, ct);
 
                 // Process success
                 cache.Set(messageId, targetLang, result);

@@ -12,7 +12,6 @@ namespace DCL.Translation.Service.Provider
     /// </summary>
     public interface ITranslationProvider
     {
-        UniTask<LanguageCode> DetectLanguageAsync(string text, CancellationToken ct);
-        UniTask<TranslationResult> TranslateAsync(string text, LanguageCode source, LanguageCode target, CancellationToken ct);
+        UniTask<TranslationResult> TranslateAsync(string text, LanguageCode target, CancellationToken ct);
     }
 }
