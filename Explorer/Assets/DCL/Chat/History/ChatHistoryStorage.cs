@@ -136,7 +136,7 @@ namespace DCL.Chat.History
                     if (!isConversationSettingsPresent)
                     {
                         filePaths = new List<string>(Directory.GetFiles(userFilesFolder));
-                        conversationSettings = new UserConversationsSettings(){ ConversationFilePaths = new List<string>(filePaths.Count) };
+                        conversationSettings = new UserConversationsSettings { ConversationFilePaths = new List<string>(filePaths.Count) };
                     }
 
                     for (int i = 0; i < filePaths.Count; ++i)
@@ -149,24 +149,21 @@ namespace DCL.Chat.History
                         ChatChannel.ChannelId fileChannelId = chatEncryptor.FileNameToChannelId(currentFileName);
 
                         ChannelFile newFile = new ChannelFile
-                            {
-                                Path = filePaths[i],
-                            };
-
-                        ReportHub.Log(reportData, $"Creating channel for file " + filePaths[i] + " for channel with Id: " + fileChannelId.Id);
-
-                        lock (channelsLocker)
                         {
-                            channelFiles[fileChannelId] = newFile;
-                        }
+                            Path = filePaths[i],
+                        };
+
+                        ReportHub.Log(reportData, $"Creating channel for file {filePaths[i]} for channel with Id: {fileChannelId.Id}");
+
+                        lock (channelsLocker) { channelFiles[fileChannelId] = newFile; }
 
                         chatHistory.AddOrGetChannel(fileChannelId, ChatChannel.ChatChannelType.USER);
 
                         // All stored conversations will be added to the settings file, when it is not present
-                        if(!isConversationSettingsPresent)
+                        if (!isConversationSettingsPresent)
                             conversationSettings.ConversationFilePaths.Add(filePaths[i]);
 
-                        ReportHub.Log(reportData, $"Channel with Id " + fileChannelId.Id + " created.");
+                        ReportHub.Log(reportData, $"Channel with Id {fileChannelId.Id} created.");
                     }
 
                     if (!isConversationSettingsPresent)
@@ -177,11 +174,11 @@ namespace DCL.Chat.History
                 else
                     ReportHub.Log(reportData, $"Nothing to load.");
 
-                areAllChannelsLoaded = true;
             }
-            catch (Exception e)
+            catch (Exception e) { ReportHub.LogError(reportData, "An error occurred while loading all open conversations. " + e.Message + e.StackTrace); }
+            finally
             {
-                ReportHub.LogError(reportData, "An error occurred while loading all open conversations. " + e.Message + e.StackTrace);
+                areAllChannelsLoaded = true;
             }
         }
 
