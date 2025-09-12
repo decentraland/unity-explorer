@@ -62,10 +62,11 @@ namespace DCL.Settings.Settings
         ES = 1,
         FR = 2,
         DE = 3,
-        PT = 4,
-        IT = 5,
-        ZH = 6,
-        JA = 7,
-        KO = 8
+        RU = 4,
+        PT = 5,
+        IT = 6,
+        ZH = 7,
+        JA = 8,
+        KO = 9
     }
 }

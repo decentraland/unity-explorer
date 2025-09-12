@@ -97,7 +97,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: flag_us
+      name: flag_gb
       rect:
         serializedVersion: 2
         x: 0
@@ -281,7 +281,7 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -290,6 +290,72 @@ TextureImporter:
       bones: []
       spriteID: 9bfab6117bd870d4cb7ec428fc7dff08
       internalID: 1262314321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flag_ru
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15e8064811f78574f85b602e2b508972
+      internalID: 665478725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flag_zh_1
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 137acd8eac995674994e12d3bc19fbe8
+      internalID: 1567174753
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flag_us
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 64
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c2160c0ba42a254881a3f29589582d7
+      internalID: 1387488574
       vertices: []
       indices: 
       edges: []
@@ -311,12 +377,15 @@ TextureImporter:
       flag_de: 1058186946
       flag_es: -2081602818
       flag_fr: 842812033
+      flag_gb: 1435412655
       flag_it: -838528680
       flag_ja: 1944584743
       flag_ko: 1262314321
       flag_pt: -1814450887
-      flag_us: 1435412655
+      flag_ru: 665478725
+      flag_us: 1387488574
       flag_zh: -935962326
+      flag_zh_1: 1567174753
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
