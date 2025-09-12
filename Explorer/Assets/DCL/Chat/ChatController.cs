@@ -9,6 +9,8 @@ using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -397,6 +399,10 @@ namespace DCL.Chat
 
         private async UniTask AddCommunityConversationAsync(string communityId, bool setAsCurrentChannel = false)
         {
+            // Note: The conversation has to be added to the connectivity info provider in advance because if it is successful, the "user connected" message
+            //       will arrive to the provider while the conversation is not registered yet, causing an error
+            userConnectivityInfoProvider.AddConversation(ChatChannel.NewCommunityChannelId(communityId), ChatChannel.ChatChannelType.COMMUNITY);
+
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
             Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -410,8 +416,8 @@ namespace DCL.Chat
                 GetCommunityResponse response = result.Value;
 
                 var channelId = ChatChannel.NewCommunityChannelId(response.data.id);
-                userCommunities.Add(channelId, new GetUserCommunitiesData.CommunityData()
-                    {
+                userCommunities.Add(channelId, new GetUserCommunitiesData.CommunityData
+                {
                         id = response.data.id,
                         thumbnails = response.data.thumbnails,
                         name = response.data.name,
@@ -429,6 +435,8 @@ namespace DCL.Chat
             }
             else
             {
+                // Note: In case the conversation could not be created, it has to be removed from the connectivity info provider. Read the note above
+                userConnectivityInfoProvider.RemoveConversation(ChatChannel.NewCommunityChannelId(communityId), ChatChannel.ChatChannelType.COMMUNITY);
                 ReportHub.LogError(ReportCategory.COMMUNITIES, GET_COMMUNITY_FAILED_MESSAGE + result.ErrorMessage ?? string.Empty);
                 ShowErrorNotificationAsync(GET_COMMUNITY_FAILED_MESSAGE, errorNotificationCts.Token).Forget();
             }
@@ -466,6 +474,7 @@ namespace DCL.Chat
             memberListCts.SafeCancelAndDispose();
             isUserAllowedInInitializationCts.SafeCancelAndDispose();
             isUserAllowedInCommunitiesBusSubscriptionCts.SafeCancelAndDispose();
+            userConnectivityInfoProvider.Dispose();
         }
 #endregion
 
@@ -509,6 +518,14 @@ namespace DCL.Chat
             };
 
             chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
+        }
+
+        private void OnCommunitiesDataProviderCommunityJoined(string joinedCommunityId, bool joinResult)
+        {
+            if(!joinResult)
+                return;
+
+            AddCommunityConversationAsync(joinedCommunityId, false).Forget();
         }
 
         private void OnCommunitiesDataProviderCommunityDeleted(string communityId)
@@ -589,7 +606,8 @@ namespace DCL.Chat
 #endregion
 
 #region Chat History Events
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
@@ -836,7 +854,10 @@ namespace DCL.Chat
                     break;
             }
 
-            userConnectivityInfoProvider.AddConversation(addedChannel.Id, addedChannel.ChannelType);
+            // Registers the conversation in the connectivity info provider
+            // Note: There is an exceptional case for communities, when the user joins a community. The conversation may have been created before
+            if(addedChannel.ChannelType != ChatChannel.ChatChannelType.COMMUNITY || !userConnectivityInfoProvider.HasConversation(addedChannel.Id, addedChannel.ChannelType))
+                userConnectivityInfoProvider.AddConversation(addedChannel.Id, addedChannel.ChannelType);
         }
 #endregion
 
@@ -1057,6 +1078,7 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
 
             communitiesDataProvider.CommunityCreated += OnCommunitiesDataProviderCommunityCreated;
+            communitiesDataProvider.CommunityJoined += OnCommunitiesDataProviderCommunityJoined;
             communitiesDataProvider.CommunityDeleted += OnCommunitiesDataProviderCommunityDeleted;
 
             userConnectivityInfoProvider.UserConnected += OnUserConnectivityInfoProviderUserConnected;

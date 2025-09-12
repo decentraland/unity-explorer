@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI;
@@ -16,7 +17,9 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatConversationsToolbarView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ChatConversationsToolbarView : MonoBehaviour,
+        IPointerEnterHandler,
+        IPointerExitHandler
     {
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationRemovalRequestedDelegate(ChatChannel.ChannelId channelId);

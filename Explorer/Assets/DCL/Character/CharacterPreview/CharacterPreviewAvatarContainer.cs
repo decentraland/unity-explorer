@@ -39,6 +39,12 @@ namespace DCL.CharacterPreview
             cameraData.renderPostProcessing = false;
         }
 
+        public void DeInitialize()
+        {
+            if(camera != null)
+                camera.targetTexture = null!;
+        }
+
         public void SetCameraPosition(CharacterPreviewCameraPreset preset)
         {
             if (cameraTarget != null)

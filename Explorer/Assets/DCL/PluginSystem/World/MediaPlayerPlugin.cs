@@ -19,6 +19,7 @@ using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Audio;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -31,7 +32,7 @@ namespace DCL.PluginSystem.World
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
         private readonly ExposedCameraData exposedCameraData;
         private readonly ObjectProxy<IRoomHub> roomHub;
         private MediaPlayer mediaPlayerPrefab;
@@ -43,7 +44,7 @@ namespace DCL.PluginSystem.World
             IAssetsProvisioner assetsProvisioner,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             ExposedCameraData exposedCameraData,
             ObjectProxy<IRoomHub> roomHub)
         {
@@ -52,7 +53,7 @@ namespace DCL.PluginSystem.World
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.cacheCleaner = cacheCleaner;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
             this.exposedCameraData = exposedCameraData;
             this.roomHub = roomHub;
         }
@@ -66,7 +67,6 @@ namespace DCL.PluginSystem.World
 
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
-            VideoPrioritizationSettings videoPrioritizationSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct: ct)).Value;
             mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value.GetComponent<MediaPlayer>();
 
             mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(
@@ -75,10 +75,10 @@ namespace DCL.PluginSystem.World
                 videoTexturePool,
                 frameTimeBudget,
                 mediaPlayerPrefab,
-                worldVolumeMacBus,
+                volumeBus,
                 exposedCameraData,
                 settings.FadeSpeed,
-                videoPrioritizationSettings,
+                settings.VideoPrioritizationSettings,
                 roomHub
             );
         }
@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.World
 
             [field: SerializeField] public float FadeSpeed { get; private set; } = 1f;
 
-            public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings;
+            public VideoPrioritizationSettings VideoPrioritizationSettings;
         }
     }
 }

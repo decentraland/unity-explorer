@@ -11,7 +11,8 @@ namespace DCL.Multiplayer.Connections.Demo
     {
         public static async UniTask<IWeb3IdentityCache> NewAsync(
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3AccountFactory web3AccountFactory
+            IWeb3AccountFactory web3AccountFactory,
+            DecentralandEnvironment dclEnvironment
         )
         {
             IWeb3IdentityCache identityCache = new ProxyIdentityCache(
@@ -25,7 +26,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             if (identityCache.Identity is null)
             {
-                IWeb3Identity? identity = await new DappWeb3Authenticator.Default(identityCache, decentralandUrlsSource, web3AccountFactory)
+                IWeb3Identity? identity = await new DappWeb3Authenticator.Default(identityCache, decentralandUrlsSource, web3AccountFactory, dclEnvironment)
                    .LoginAsync(CancellationToken.None);
 
                 identityCache.Identity = identity;

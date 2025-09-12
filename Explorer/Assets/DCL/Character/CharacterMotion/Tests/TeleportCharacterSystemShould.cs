@@ -64,7 +64,7 @@ namespace DCL.CharacterMotion.Tests
 
             Entity camEntity = world.Create(new CameraComponent(camera!), cameraSamplingData);
             var loadReport = AsyncLoadProcessReport.Create(CancellationToken.None);
-            var teleportIntent = new PlayerTeleportIntent(null, new Vector2Int(22, 22), Vector3.one * 100, CancellationToken.None, loadReport);
+            var teleportIntent = new PlayerTeleportIntent(null, new Vector2Int(22, 22), Vector3.one * 100, CancellationToken.None, loadReport, isPositionSet: true);
 
             Entity e = world.Create(characterController, new CharacterPlatformComponent(), new CharacterRigidTransform(), teleportIntent);
 

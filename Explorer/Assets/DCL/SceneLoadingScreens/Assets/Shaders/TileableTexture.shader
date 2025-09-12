@@ -130,5 +130,4 @@ Shader "Custom/AnimatedBackgroundMovingTexture"
             ENDCG
         }
     }
-    FallBack "Unlit/Color"
 }

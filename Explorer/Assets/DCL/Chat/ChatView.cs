@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
@@ -214,8 +215,8 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
         private bool isSubmitHooked;
-        private CancellationTokenSource privateConversationItemCts = new CancellationTokenSource();
-        private CancellationTokenSource communityConversationItemCts = new CancellationTokenSource();
+        private CancellationTokenSource privateConversationItemCts;
+        private CancellationTokenSource communityConversationItemCts;
         private CancellationTokenSource communityTitleCts;
 
         private ISpriteCache thumbnailCache;
@@ -523,6 +524,9 @@ namespace DCL.Chat
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
             chatTitleBar.ViewCommunityRequested += OnTitleBarViewCommunityRequested;
+
+            privateConversationItemCts = new CancellationTokenSource();
+            communityConversationItemCts = new CancellationTokenSource();
 
             this.loadingStatus = loadingStatus;
             loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;

@@ -12,7 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87ac801ee21e47668f593a1d5e2272ee, type: 3}
   m_Name: SettingsMenuConfiguration
   m_EditorClassIdentifier: 
-  <SettingsGroupPrefab>k__BackingField: {fileID: 3020791554913712716, guid: 204157b950b45f240819f044fb624b0d, type: 3}
+  <SettingsGroupPrefab>k__BackingField:
+    m_AssetGUID: 204157b950b45f240819f044fb624b0d
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 1
   <GeneralSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField: []
   <GraphicsSectionConfig>k__BackingField:
@@ -67,7 +72,12 @@ MonoBehaviour:
     - rid: 1708279571579404288
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Send & Receive DMs From
           <Description>k__BackingField: 
@@ -81,7 +91,12 @@ MonoBehaviour:
     - rid: 1708279571579404289
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
         <Config>k__BackingField:
           <ModuleName>k__BackingField: In-World Chat Bubbles
           <Description>k__BackingField: 
@@ -96,7 +111,12 @@ MonoBehaviour:
     - rid: 3126482891795070976
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Vertical sensitivity
           <Description>k__BackingField: 
@@ -110,7 +130,12 @@ MonoBehaviour:
     - rid: 3126482891795070977
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Horizontal sensitivity
           <Description>k__BackingField: 
@@ -124,7 +149,12 @@ MonoBehaviour:
     - rid: 3511243270148325473
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Microphone
           <Description>k__BackingField: 
@@ -136,7 +166,12 @@ MonoBehaviour:
     - rid: 3511243270148325474
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Voice Chat
           <Description>k__BackingField: 
@@ -150,7 +185,12 @@ MonoBehaviour:
     - rid: 4494877371389181952
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Notification Ping
           <Description>k__BackingField: 
@@ -165,7 +205,12 @@ MonoBehaviour:
     - rid: 4916151837425664002
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: V-Sync
           <Description>k__BackingField: 
@@ -175,7 +220,12 @@ MonoBehaviour:
     - rid: 4975969656134959106
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Memory Limit
           <Description>k__BackingField: 
@@ -190,7 +240,12 @@ MonoBehaviour:
     - rid: 5015494041161695532
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Upscaler
           <Description>k__BackingField: Rendering Upscaler
@@ -204,7 +259,12 @@ MonoBehaviour:
     - rid: 5242998342527483906
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Quality
           <Description>k__BackingField: 
@@ -216,7 +276,12 @@ MonoBehaviour:
     - rid: 5242998342527483909
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Scene Distance
           <Description>k__BackingField: 
@@ -230,7 +295,12 @@ MonoBehaviour:
     - rid: 5242998342527483910
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Environment Distance
           <Description>k__BackingField: 
@@ -244,7 +314,12 @@ MonoBehaviour:
     - rid: 5242998342527483917
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Master
           <Description>k__BackingField: 
@@ -258,7 +333,12 @@ MonoBehaviour:
     - rid: 5242998342527483918
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: In-World Music & SFX
           <Description>k__BackingField: 
@@ -268,11 +348,16 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 11
     - rid: 5242998342527483919
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Avatar & Emotes SFX
           <Description>k__BackingField: 
@@ -286,7 +371,12 @@ MonoBehaviour:
     - rid: 5242998342527483920
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: UI SFX
           <Description>k__BackingField: 
@@ -300,7 +390,12 @@ MonoBehaviour:
     - rid: 5242998500334764034
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Resolution
           <Description>k__BackingField: 
@@ -312,7 +407,12 @@ MonoBehaviour:
     - rid: 5242998503086751746
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Window Mode
           <Description>k__BackingField: 
@@ -327,7 +427,12 @@ MonoBehaviour:
     - rid: 5242998503086751747
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: FPS Limit
           <Description>k__BackingField: 

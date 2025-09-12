@@ -165,7 +165,7 @@ namespace DCL.Backpack.EmotesSection
                     customOwnedEmotes
                 );
 
-                if (onChainEmotesOnly || builderEmotesPreview)
+                if (onChainEmotesOnly)
                     emotes = customOwnedEmotes;
                 else
                 {

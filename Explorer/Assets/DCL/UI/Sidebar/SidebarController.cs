@@ -1,20 +1,17 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
-using DCL.Diagnostics;
-using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -27,6 +24,10 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
+using CommunicationData.URLHelpers;
+using DCL.Communities;
+using DCL.Diagnostics;
+using DCL.Profiles;
 using UnityEngine;
 using Utility;
 
@@ -39,7 +40,7 @@ namespace DCL.UI.Sidebar
 
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
@@ -47,12 +48,11 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
-        private readonly ChatView chatView;
+        private readonly ChatMainView chatView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -61,7 +61,6 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
         private CancellationTokenSource? referralNotificationCts;
         private CancellationTokenSource checkForCommunitiesFeatureCts;
-        private bool? pendingSkyboxInteractableState;
 
         public event Action? HelpOpened;
 
@@ -70,7 +69,7 @@ namespace DCL.UI.Sidebar
         public SidebarController(
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationsMenuController notificationsMenuController,
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
@@ -80,12 +79,11 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            ChatView chatView,
+            ChatMainView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrlsSource)
             : base(viewFactory)
         {
@@ -105,8 +103,6 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            this.sceneRestrictionBusController = sceneRestrictionBusController;
-            this.sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
@@ -116,7 +112,6 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
-            sceneRestrictionBusController?.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
@@ -144,6 +139,7 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
+            viewInstance.skyboxButton.interactable = true;
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
@@ -165,7 +161,8 @@ namespace DCL.UI.Sidebar
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
-            chatView.FoldingChanged += OnChatViewFoldingChanged;
+
+            //chatView.FoldingChanged += OnChatViewFoldingChanged;
 
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(profileMenuController);
@@ -174,37 +171,17 @@ namespace DCL.UI.Sidebar
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
 
-            if (pendingSkyboxInteractableState.HasValue)
-            {
-                viewInstance.skyboxButton.interactable = pendingSkyboxInteractableState.Value;
-                pendingSkyboxInteractableState = null;
-            }
-
             checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
             CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
-        }
 
-        private void OnSceneRestrictionChanged(SceneRestriction restriction)
-        {
-            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_UI_BLOCKED)
-            {
-                bool isRestricted = restriction.Action == SceneRestrictionsAction.APPLIED;
-                if (viewInstance)
-                {
-                    if (isRestricted)
-                        skyboxMenuController.HideViewAsync(CancellationToken.None).Forget();
-
-                    viewInstance.skyboxButton.interactable = !isRestricted;
-                }
-                else
-                    pendingSkyboxInteractableState = !isRestricted;
-            }
+            OnChatViewFoldingChanged(true);
         }
 
         private void OnReferralNewTierNotificationClicked(object[] parameters)
@@ -240,8 +217,8 @@ namespace DCL.UI.Sidebar
                 viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             else if (closedController is FriendsPanelController)
             {
-                viewInstance?.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-                OnChatViewFoldingChanged(chatView.IsUnfolded);
+                viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                OnChatViewFoldingChanged(true);
             }
         }
 
@@ -257,7 +234,7 @@ namespace DCL.UI.Sidebar
             }
         }
 
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
         }
@@ -333,8 +310,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
-        #region Sidebar button handlers
-
+#region Sidebar button handlers
         private void OnUnreadMessagesButtonClicked()
         {
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
@@ -367,9 +343,9 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSidebarSettingsAsync()
         {
-            viewInstance?.BlockSidebar();
+            viewInstance.BlockSidebar();
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
-            viewInstance?.UnblockSidebar();
+            viewInstance.UnblockSidebar();
 
             viewInstance!.sidebarSettingsButton.OnDeselect(null);
         }
@@ -390,20 +366,20 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSkyboxSettingsAsync()
         {
-            viewInstance?.BlockSidebar();
-            viewInstance?.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance.BlockSidebar();
+            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-            viewInstance?.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-            viewInstance?.UnblockSidebar();
+            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
-            viewInstance?.BlockSidebar();
-            viewInstance?.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance.BlockSidebar();
+            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            viewInstance?.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-            viewInstance?.UnblockSidebar();
+            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.UnblockSidebar();
         }
 
         private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)

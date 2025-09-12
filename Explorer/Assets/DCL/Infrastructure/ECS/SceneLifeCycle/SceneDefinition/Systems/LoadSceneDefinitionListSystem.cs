@@ -1,16 +1,20 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
+using SceneRunner.Scene;
 using System;
 using System.IO;
 using System.Runtime.Serialization;
@@ -19,6 +23,8 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
+using Utility;
+using UnityEngine.Scripting;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -43,7 +49,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
-
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
 
@@ -99,10 +104,18 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 }
             }
 
+            foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
+            {
+                //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
+                //Could be removed once the asset bundle manifest registry has been battle tested
+                await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct);
+            }
+
             return new StreamableLoadingResult<SceneDefinitions>(
                 new SceneDefinitions(intention.TargetCollection));
         }
 
+        [Preserve]
         private sealed class SceneMetadataConverter : JsonConverter
         {
             public override bool CanConvert(Type objectType) =>
