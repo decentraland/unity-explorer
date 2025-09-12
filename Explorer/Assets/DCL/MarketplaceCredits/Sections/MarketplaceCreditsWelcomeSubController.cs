@@ -130,7 +130,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         private async UniTaskVoid RegisterInTheProgramWithNewEmailAsync(string email, CancellationToken ct)
         {
-            const string ERROR_MESSAGE = "There was an error registering in the Credits Program. Please try again!";
+            const string ERROR_MESSAGE = "An error occurred. Please enter your email and try again.";
             
             try
             {
