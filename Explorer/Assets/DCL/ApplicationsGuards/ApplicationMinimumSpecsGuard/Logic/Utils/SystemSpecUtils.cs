@@ -1,3 +1,4 @@
+using DCL.FeatureFlags;
 using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -62,7 +63,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         // Mac Silicon Requirement Constants
         private const string APPLE_SILICON_PATTERN = @"apple\s+m\d";
-        
 
         public static bool IsWindowsCpuAcceptable(string cpu)
         {
@@ -81,7 +81,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             var intelUltraMatch = Regex.Match(cpu, INTEL_ULTRA_CPU_PATTERN);
             if (intelUltraMatch.Success && int.TryParse(intelUltraMatch.Groups[1].Value, out int ultraSeries))
                 return ultraSeries >= MIN_INTEL_ULTRA_SERIES;
-            
+
             var intelMatch = Regex.Match(cpu, INTEL_CPU_PATTERN);
             if (intelMatch.Success)
             {
@@ -103,7 +103,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             string lowerGpuName = gpuName.ToLowerInvariant();
 
-            foreach (string keyword in INTEGRATED_GPU_KEYWORDS)
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            foreach (string keyword in minimumRequirements.integrated_gpu_supported_versions)
             {
                 if (lowerGpuName.Contains(keyword))
                     return true;
@@ -111,7 +112,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             return false;
         }
-        
+
         public static bool IsWindowsGpuAcceptable(string gpu)
         {
             gpu = gpu.ToLowerInvariant();
@@ -130,7 +131,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             return false;
         }
-        
+
         public static bool IsDirectX12Compatible()
         {
             // Check current graphics API
@@ -149,7 +150,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public static bool IsWindowsVersionAcceptable(string os)
         {
-            foreach (string version in ACCEPTABLE_WINDOWS_VERSIONS)
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            foreach (string version in minimumRequirements.windows_supported_versions)
             {
                 if (os.IndexOf(version, StringComparison.OrdinalIgnoreCase) >= 0)
                     return true;
@@ -160,7 +162,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public static bool IsMacOSVersionAcceptable(string os)
         {
             bool isMac = false;
-            foreach (string keyword in MACOS_IDENTIFIER_KEYWORDS)
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            foreach (string keyword in minimumRequirements.mac_supported_versions)
             {
                 if (os.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
                 {
@@ -185,12 +188,12 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             return Regex.IsMatch(deviceName, APPLE_SILICON_PATTERN, RegexOptions.IgnoreCase);
         }
-        
+
         public static bool ComputeShaderCheck()
         {
             return SystemInfo.supportsComputeShaders;
         }
-        
+
         /// <summary>
         ///     Checks if the provided memory size meets the minimum requirement,
         ///     accounting for reporting discrepancies (e.g., 15.9 GB for a 16 GB module).
@@ -219,6 +222,14 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             // 4. Compare the effective (rounded) GB against the required GB.
             return roundedActualGB >= requiredGB;
+        }
+
+        [Serializable]
+        private struct MinimumRequirementsDefinition
+        {
+            public string[] windows_supported_versions;
+            public string[] mac_supported_versions;
+            public string[] integrated_gpu_supported_versions;
         }
     }
 }

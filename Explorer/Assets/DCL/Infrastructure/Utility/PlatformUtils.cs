@@ -47,72 +47,26 @@ namespace Utility
             return platformSuffix;
         }
 
-        /// <summary>
-        ///     One-shot check of the primary storage (the volume backing Application.persistentDataPath).
-        ///     Returns null on failure; logs the native error when available.
-        /// </summary>
         public static DriveData? GetPrimaryStorageInfoUsingPersistentPath()
         {
-#if UNITY_STANDALONE_OSX
-        string path = Application.persistentDataPath;
-        if (StatfsUtf8(path, out var st) != 0)
-        {
-            int err = Marshal.GetLastWin32Error();
-            Debug.LogError($"[Disk] statfs failed for '{path}' (errno {err})");
-            return null;
-        }
-
-        ulong total = st.f_blocks * st.f_bsize;
-        ulong avail = st.f_bavail * st.f_bsize;
-
-        return new DriveData
-        {
-            Name = path,
-            AvailableFreeSpace = avail,
-            TotalSize = total,
-        };
-
-#elif UNITY_STANDALONE_WIN
             string path = Application.persistentDataPath;
+            string root = Path.GetPathRoot(path);
 
-            if (!GetDiskFreeSpaceEx(path, out ulong freeBytes, out ulong totalBytes, out _))
+            try
             {
-                // Fallback to drive root (e.g., C:\) if a deep path fails
-                try
+                var drive = new DriveInfo(root);
+                return new DriveData
                 {
-                    string root = Path.GetPathRoot(path) ?? "C:\\";
-                    if (!GetDiskFreeSpaceEx(root, out freeBytes, out totalBytes, out _))
-                    {
-                        int err = Marshal.GetLastWin32Error();
-                        Debug.LogError($"[Disk] GetDiskFreeSpaceEx failed for '{path}' and root '{root}' (Win32 {err})");
-                        return null;
-                    }
-
-                    path = root; // report root if we fell back
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[Disk] Could not resolve drive root for '{path}': {ex.Message}");
-                    return null;
-                }
+                    Name = path,
+                    AvailableFreeSpace = (ulong)drive.AvailableFreeSpace,
+                    TotalSize = (ulong)drive.TotalSize
+                };
             }
-
-            return new DriveData
+            catch (Exception ex)
             {
-                Name = path, AvailableFreeSpace = freeBytes, TotalSize = totalBytes
-            };
-#else
-    return null;
-#endif
-        }
-
-        /// <summary>
-        ///     Convenience: returns true if the primary storage has at least minRequiredBytes.
-        /// </summary>
-        public static bool HasEnoughDiskSpace(ulong minRequiredBytes, out DriveData? driveInfo)
-        {
-            driveInfo = GetPrimaryStorageInfoUsingPersistentPath();
-            return driveInfo != null && driveInfo.AvailableFreeSpace >= minRequiredBytes;
+                Debug.LogError($"[Disk] DriveInfo failed for '{path}': {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>
@@ -137,9 +91,6 @@ namespace Utility
                 return new List<DriveData>();
             }
         }
-        
-        
-
 
         public static void ShellExecute(string fileName)
         {
@@ -172,9 +123,9 @@ namespace Utility
 #endif
         }
 
-        
+
 #if UNITY_STANDALONE_WIN
-        
+
         private static List<DriveData> GetWindowsDrivesInfo()
         {
             var allDrivesData = new List<DriveData>();
@@ -193,7 +144,7 @@ namespace Utility
             }
             return allDrivesData;
         }
-        
+
         // Kernel32.dll exports GetLogicalDrives, no parameters:
         [DllImport("kernel32.dll")]
         private static extern uint GetLogicalDrives();
@@ -218,7 +169,7 @@ namespace Utility
             out ulong lpFreeBytesAvailable,
             out ulong lpTotalNumberOfBytes,
             out ulong lpTotalNumberOfFreeBytes);
-        
+
         [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern uint FormatMessage(uint dwFlags, IntPtr lpSource, int dwMessageId,
             uint dwLanguageId, StringBuilder lpBuffer, int nSize, IntPtr Arguments);
@@ -232,36 +183,6 @@ namespace Utility
         private const int SW_NORMAL = 1;
 
 #elif UNITY_STANDALONE_OSX
-        [StructLayout(LayoutKind.Sequential)]
-        private struct StatfsSimple
-        {
-            public uint  f_bsize;
-            public int   f_iosize;
-            public ulong f_blocks;
-            public ulong f_bfree;
-            public ulong f_bavail;
-        }
-
-        // Raw pointer version to avoid LPStr/ANSI issues.
-        [DllImport("libc", SetLastError = true, EntryPoint = "statfs")]
-        private static extern int statfs_ptr(IntPtr path, out StatfsSimple st);
-
-        // Encode path as UTF-8 + NUL and pass pointer
-        private static int StatfsUtf8(string path, out StatfsSimple st)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(path + "\0");
-            IntPtr p = IntPtr.Zero;
-            try
-            {
-                p = Marshal.AllocHGlobal(bytes.Length);
-                Marshal.Copy(bytes, 0, p, bytes.Length);
-                return statfs_ptr(p, out st);
-            }
-            finally
-            {
-                if (p != IntPtr.Zero) Marshal.FreeHGlobal(p);
-            }
-        }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct StatfsRaw

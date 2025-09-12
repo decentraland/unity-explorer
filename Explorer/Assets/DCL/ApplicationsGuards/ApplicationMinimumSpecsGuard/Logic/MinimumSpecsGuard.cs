@@ -26,7 +26,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
     ///         results = specsGuard.Results;
     ///         if (!hasMinimumSpecs)
     ///         {
-    ///          
+    ///
     ///         }
     /// </summary>
     public class MinimumSpecsGuard
@@ -93,7 +93,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             {
                 gpuRequirementMessage = profile.GpuIntegratedRequirement;
             }
-            
+
             string actualGpuDisplayString = $"{gpuName}".Trim();
 
             results.Add(new SpecResult(
@@ -107,7 +107,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             int actualVramMB = systemInfoProvider.GraphicsMemorySize;
             bool isVramMet = SystemSpecUtils.IsMemorySizeSufficient(actualVramMB, profile.MinVramMB);
             int roundedActualVramGB = Mathf.RoundToInt(actualVramMB / 1024f);
-            
+
             // NOTE: e.g., shows "16 GB" not "15.7 GB"
             string actualVramDisplay = $"{roundedActualVramGB} GB";
             results.Add(new SpecResult(SpecCategory.VRAM, isVramMet, profile.VramRequirement, actualVramDisplay));
@@ -116,7 +116,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             int actualRamMB = systemInfoProvider.SystemMemorySize;
             bool isRamMet = SystemSpecUtils.IsMemorySizeSufficient(actualRamMB, profile.MinRamMB);
             int roundedActualRamGB = Mathf.RoundToInt(actualRamMB / 1024f);
-            
+
             // NOTE: e.g., shows "16 GB" not "15.7 GB"
             string actualRamDisplay = $"{roundedActualRamGB} GB";
             results.Add(new SpecResult(SpecCategory.RAM, isRamMet, profile.RamRequirement, actualRamDisplay));
