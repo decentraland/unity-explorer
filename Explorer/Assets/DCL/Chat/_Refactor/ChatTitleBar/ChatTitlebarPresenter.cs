@@ -1,15 +1,11 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Chat.ChatViewModels;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Web3;
 using DG.Tweening;
-using MVC;
-using System.Collections.Generic;
 using System.Linq;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
@@ -19,7 +15,6 @@ using DCL.Communities;
 using DCL.Settings.Settings;
 using DCL.Translation.Events;
 using DCL.Translation.Settings;
-using DCL.UI.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.ProfileElements;
@@ -47,7 +42,7 @@ namespace DCL.Chat
         private readonly CancellationTokenSource lifeCts = new ();
         private readonly EventSubscriptionScope scope = new ();
         private CancellationTokenSource profileLoadCts = new ();
-        private CancellationTokenSource thumbCts = new();    
+        private CancellationTokenSource thumbCts = new ();
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
         private ChatTitlebarViewModel? currentViewModel;
@@ -138,7 +133,7 @@ namespace DCL.Chat
                 view.defaultTitlebarView.SetAutoTranslateIndicatorForUserAndCommunities(false);
                 return;
             }
-            
+
             if (currentViewModel == null) return;
 
             // 1. Get the current status for the active channel.
@@ -170,7 +165,7 @@ namespace DCL.Chat
                 view.membersTitlebarView.SetChannelName(currentViewModel);
 
                 UpdateAutoTranslateIndicator();
-                
+
                 if (cd.thumbnails?.raw != null)
                     RefreshTitlebarCommunityThumbnailAsync(cd.thumbnails?.raw).Forget();
             }
@@ -203,7 +198,7 @@ namespace DCL.Chat
             communityDataService
                 .OpenCommunityCard(currentChannelService.CurrentChannel);
         }
-        
+
         public void Dispose()
         {
             view.OnCloseRequested -= OnCloseRequested;
@@ -335,12 +330,12 @@ namespace DCL.Chat
             // If not, uncomment the next line:
             // view.defaultTitlebarView.Setup(currentViewModel);
         }
-        
+
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
             LoadTitlebarDataAsync(evt.Channel).Forget();
         }
-        
+
         private async UniTaskVoid LoadTitlebarDataAsync(ChatChannel channel)
         {
             profileLoadCts = profileLoadCts.SafeRestart();
@@ -435,7 +430,7 @@ namespace DCL.Chat
                     .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] =
                         new ToggleWithCheckContextMenuControlSettings("None",
                             x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
-            
+
             contextMenuInstance = new GenericContextMenu(
                     chatConfig.chatContextMenuSettings.ContextMenuWidth,
                     chatConfig.chatContextMenuSettings.OffsetFromTarget,
