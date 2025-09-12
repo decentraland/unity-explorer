@@ -50,7 +50,8 @@ namespace DCL.Chat
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowUnfocused();
             memberListPresenter.Hide();
-            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
+
+            subTitleButtonPresenter.Hide();
 
             SetPanelsFocus(isFocused: false, animate);
         }

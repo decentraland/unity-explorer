@@ -66,8 +66,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public Button CollapseButton  { get; private set; }
 
-
-
         [field: FormerlySerializedAs("<talkingStatusView>k__BackingField")]
         [field: SerializeField]
         public TalkingStatusView TalkingStatusView { get; private set; } = null!;
