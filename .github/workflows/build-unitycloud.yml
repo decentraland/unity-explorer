@@ -307,10 +307,24 @@ jobs:
       - name: Set artifact name
         id: set_artifact_name
         run: |
-          if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
-            echo "artifact_name=Decentraland_${{ matrix.target }}" >> $GITHUB_ENV
+          # Get the branch name for non-release builds
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+          SAFE_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/_/g')
+          
+          if [ "${{ inputs.is_release_build }}" == "true" ]; then
+            # Release builds use the original naming
+            if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
+              echo "artifact_name=Decentraland_${{ matrix.target }}" >> $GITHUB_ENV
+            else
+              echo "artifact_name=Decentraland_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}" >> $GITHUB_ENV
+            fi
           else
-            echo "artifact_name=Decentraland_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}" >> $GITHUB_ENV
+            # Non-release builds include branch name
+            if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
+              echo "artifact_name=Decentraland_${{ matrix.target }}_${SAFE_BRANCH_NAME}" >> $GITHUB_ENV
+            else
+              echo "artifact_name=Decentraland_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_${SAFE_BRANCH_NAME}" >> $GITHUB_ENV
+            fi
           fi
 
       - name: Upload artifact for macOS
