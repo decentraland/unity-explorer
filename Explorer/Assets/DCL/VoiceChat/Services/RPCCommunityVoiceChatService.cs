@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.SocialService;
 using Decentraland.SocialService.V2;
 using DCL.WebRequests;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
@@ -27,12 +28,10 @@ namespace DCL.VoiceChat.Services
         private const string END_COMMUNITY_VOICE_CHAT = "EndCommunityVoiceChat";
         private const string SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES = "SubscribeToCommunityVoiceChatUpdates";
 
-        private const string ACTIVE_COMMUNITY_VOICE_CHATS_ENDPOINT = "/v1/community-voice-chats/active";
-        private const string SOCIAL_SERVICE_BASE_URL = "https://social-api.decentraland.zone";
-
         private readonly IRPCSocialServices socialServiceRPC;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IWebRequestController webRequestController;
+        private readonly string activeCommunityVoiceChatsUrl;
         private CancellationTokenSource subscriptionCts = new();
         private bool isServiceDisabled = false;
 
@@ -45,11 +44,13 @@ namespace DCL.VoiceChat.Services
         public RPCCommunityVoiceChatService(
             IRPCSocialServices socialServiceRPC,
             ISocialServiceEventBus socialServiceEventBus,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource)
         {
             this.socialServiceRPC = socialServiceRPC;
             this.socialServiceEventBus = socialServiceEventBus;
             this.webRequestController = webRequestController;
+            this.activeCommunityVoiceChatsUrl = urlsSource.Url(DecentralandUrl.ActiveCommunityVoiceChats);
 
             socialServiceEventBus.TransportClosed += OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
@@ -156,10 +157,8 @@ namespace DCL.VoiceChat.Services
         {
             ThrowIfServiceDisabled();
 
-            var url = $"{SOCIAL_SERVICE_BASE_URL}{ACTIVE_COMMUNITY_VOICE_CHATS_ENDPOINT}";
-
             var result = await webRequestController
-                .SignedFetchGetAsync(url, string.Empty, ct)
+                .SignedFetchGetAsync(activeCommunityVoiceChatsUrl, string.Empty, ct)
                 .CreateFromJson<ActiveCommunityVoiceChatsResponse>(WRJsonParser.Newtonsoft);
 
             return result;
