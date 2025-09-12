@@ -307,19 +307,20 @@ jobs:
       - name: Set artifact name
         id: set_artifact_name
         run: |
-          # Get the branch name for non-release builds
-          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
-          SAFE_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/_/g')
-          
           if [ "${{ inputs.is_release_build }}" == "true" ]; then
-            # Release builds use the original naming
+            # Release builds (including epic) use the original naming without branch
             if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
               echo "artifact_name=Decentraland_${{ matrix.target }}" >> $GITHUB_ENV
             else
               echo "artifact_name=Decentraland_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}" >> $GITHUB_ENV
             fi
           else
-            # Non-release builds include branch name
+            # Non-release builds include branch name for clarity
+            BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+            SAFE_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/_/g')
+            # Truncate branch name to max 50 characters to keep artifact names manageable
+            SAFE_BRANCH_NAME=$(echo "$SAFE_BRANCH_NAME" | cut -c1-50)
+            
             if [ "${{ needs.prebuild.outputs.install_source }}" == "launcher" ]; then
               echo "artifact_name=Decentraland_${{ matrix.target }}_${SAFE_BRANCH_NAME}" >> $GITHUB_ENV
             else
