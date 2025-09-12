@@ -224,17 +224,8 @@ namespace DCL.PluginSystem.Global
             
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
 
-            ITranslationProvider translationProvider;
-            if (decentralandEnvironment == DecentralandEnvironment.Zone)
-            {
-                // NOTE: we have api available in the zone environment
-                translationProvider = new DclTranslationProvider(webRequestController,
-                    decentralandUrlsSource);
-            }
-            else
-            {
-                translationProvider = new MockTranslationProvider();
-            }
+            var translationProvider = new DclTranslationProvider(webRequestController, decentralandUrlsSource);
+            //var translationProvider = new MockTranslationProvider();
             
             var translationCache = new InMemoryTranslationCache();
             translationMemory = new InMemoryTranslationMemory();
