@@ -64,12 +64,10 @@ namespace ECS.SceneLifeCycle.Systems
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
             var definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneDefinition, new IpfsPath(sceneDefinition.id!, URLDomain.EMPTY), true);
-            var assetBundleManifest = intention.SmartWearable.ManifestResult!.Value.Asset!;
 
             var sceneData = new SceneData(
                 sceneContent,
                 sceneDefinition,
-                assetBundleManifest,
                 sceneDefinition.metadata.scene.DecodedBase,
                 definitionComponent.SceneGeometry,
                 definitionComponent.Parcels,
