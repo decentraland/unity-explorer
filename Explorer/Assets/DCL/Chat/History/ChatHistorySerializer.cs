@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Chat.History
 {
@@ -82,12 +83,34 @@ namespace DCL.Chat.History
 
                 while(currentLine != null)
                 {
-                    ParseEntryValues(currentLine, entryValues);
-                    bool sentByLocalUser = entryValues[ENTRY_SENT_BY_LOCAL_USER] == LOCAL_USER_TRUE_VALUE;
-                    string walletAddress = sentByLocalUser ? localUserWalletAddress : remoteUserWalletAddress;
-                    ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], double.Parse(entryValues[ENTRY_TIMESTAMP], CultureInfo.InvariantCulture));
+                    if (ct.IsCancellationRequested) break;
 
-                    obtainedMessages.Add(newMessage);
+                    if (string.IsNullOrWhiteSpace(currentLine))
+                    {
+                        currentLine = await reader2.ReadLineAsync();
+                        continue;
+                    }
+
+                    try
+                    {
+                        ParseEntryValues(currentLine, entryValues);
+
+                        bool sentByLocalUser = entryValues[ENTRY_SENT_BY_LOCAL_USER] == LOCAL_USER_TRUE_VALUE;
+                        string walletAddress = sentByLocalUser ? localUserWalletAddress : remoteUserWalletAddress;
+                        string timestampString = entryValues[ENTRY_TIMESTAMP].Trim();
+
+                        if (!double.TryParse(timestampString, NumberStyles.Float, CultureInfo.InvariantCulture, out double timestamp))
+                        {
+                            Debug.LogWarning($"ChatHistory: skipping corrupted entry due to invalid timestamp: '{entryValues[ENTRY_TIMESTAMP]}'. Line: '{currentLine}'");
+                            currentLine = await reader2.ReadLineAsync();
+                            continue;
+                        }
+
+                        ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], timestamp);
+                        obtainedMessages.Add(newMessage);
+                    }
+                    catch { Debug.LogWarning($"ChatHistory: skipping corrupted entry. Line: '{currentLine}'"); }
+
                     currentLine = await reader2.ReadLineAsync();
                 }
             }
