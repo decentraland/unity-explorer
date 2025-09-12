@@ -13,6 +13,7 @@ namespace DCL.VoiceChat
         private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
         private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100;
         private const float COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 50;
+        private const float EXPANDED_COMMUNITY_VOICE_CHAT_WITH_HIDDEN_BUTTONS_SIZE = 200;
 
         public VoiceChatPanelResizeController(VoiceChatPanelResizeView view, IVoiceChatOrchestratorState voiceChatState)
         {
@@ -52,8 +53,15 @@ namespace DCL.VoiceChat
                         chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_PRIVATE_VOICE_CHAT_SIZE : EXPANDED_PRIVATE_VOICE_CHAT_SIZE;
                     break;
                 case VoiceChatType.COMMUNITY:
-                    view.VoiceChatPanelLayoutElement.preferredHeight =
-                        chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+                    if (chatPanelSize == VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS)
+                    {
+                        view.VoiceChatPanelLayoutElement.preferredHeight = EXPANDED_COMMUNITY_VOICE_CHAT_WITH_HIDDEN_BUTTONS_SIZE;
+                    }
+                    else
+                    {
+                        view.VoiceChatPanelLayoutElement.preferredHeight =
+                            chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+                    }
                     break;
             }
         }

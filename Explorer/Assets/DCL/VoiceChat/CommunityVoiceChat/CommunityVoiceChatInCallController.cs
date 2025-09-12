@@ -14,11 +14,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     public class CommunityVoiceChatInCallController : IDisposable
     {
         private readonly CommunityVoiceChatInCallView view;
+
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly CommunityVoiceChatInCallButtonsController expandedPanelButtonsController;
-        private readonly CommunityVoiceChatInCallButtonsController collapsedPanelButtonsController;
+        private readonly CommunityVoiceChatInCallButtonsPresenter expandedPanelButtonsPresenter;
+        private readonly CommunityVoiceChatInCallButtonsPresenter collapsedPanelButtonsPresenter;
         private readonly ImageController thumbnailController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize;
+        private readonly IDisposable panelSizeChangeSubscription;
 
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct = new();
@@ -31,13 +33,21 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            expandedPanelButtonsController = new CommunityVoiceChatInCallButtonsController(view.ExpandedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
-            collapsedPanelButtonsController = new CommunityVoiceChatInCallButtonsController(view.CollapsedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
+            expandedPanelButtonsPresenter = new CommunityVoiceChatInCallButtonsPresenter(view.ExpandedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
+            collapsedPanelButtonsPresenter = new CommunityVoiceChatInCallButtonsPresenter(view.CollapsedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
             currentVoiceChatPanelSize = voiceChatOrchestrator.CurrentVoiceChatPanelSize;
             thumbnailController = new ImageController(view.CommunityThumbnail, webRequestController);
+
             view.EndStreamButton.onClick.AddListener(OnEndStreamButtonClicked);
             view.CommunityButton.onClick.AddListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.AddListener(OnToggleCollapseButtonClicked);
+
+            panelSizeChangeSubscription = currentVoiceChatPanelSize.Subscribe(OnPanelSizeChanged);
+        }
+
+        private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
+        {
+            view.SetHiddenButtonsState(panelSize is VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS or VoiceChatPanelSize.DEFAULT);
         }
 
         private void OnCommunityButtonClicked()
@@ -60,8 +70,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
-            expandedPanelButtonsController.Dispose();
-            collapsedPanelButtonsController.Dispose();
+            expandedPanelButtonsPresenter.Dispose();
+            collapsedPanelButtonsPresenter.Dispose();
+            panelSizeChangeSubscription.Dispose();
             view.EndStreamButton.onClick.RemoveListener(OnEndStreamButtonClicked);
             view.CommunityButton.onClick.RemoveListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);

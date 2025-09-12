@@ -7,7 +7,7 @@ using Utility;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
-    public class CommunityVoiceChatInCallButtonsController : IDisposable
+    public class CommunityVoiceChatInCallButtonsPresenter : IDisposable
     {
         private readonly IDisposable isSpeakerSubscription;
         private readonly IDisposable isRequestingToSpeakSubscription;
@@ -20,7 +20,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private CancellationTokenSource cts = new ();
 
-        public CommunityVoiceChatInCallButtonsController(
+        public CommunityVoiceChatInCallButtonsPresenter(
             CommunityVoiceChatInCallButtonsView view,
             ICommunityCallOrchestrator orchestrator,
             VoiceChatMicrophoneHandler microphoneHandler)

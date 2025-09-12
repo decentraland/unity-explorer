@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
-using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -107,6 +106,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ContentPanel.SetActive(!isCollapsed);
             FooterPanel.SetActive(!isCollapsed);
             OpenListenersSectionButton.gameObject.SetActive(!isCollapsed);
+        }
+
+        public void SetHiddenButtonsState(bool isHidden)
+        {
+            FooterPanel.SetActive(!isHidden);
         }
     }
 }

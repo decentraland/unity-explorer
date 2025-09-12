@@ -155,5 +155,16 @@ namespace DCL.VoiceChat
                 OnCurrentChannelChanged(currentChannel.Value);
             }
         }
+
+        public void Hide()
+        {
+            isMemberListVisible = false;
+            view.gameObject.SetActive(false);
+        }
+
+        public void Show()
+        {
+            isMemberListVisible = true;
+        }
     }
 }
