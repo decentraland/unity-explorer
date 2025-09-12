@@ -23,7 +23,7 @@ namespace DCL.WebRequests
         private readonly TWebRequestArgs args;
         private readonly DownloadHandler? customDownloadHandler;
         private readonly WebRequestHeadersInfo headersInfo;
-        private readonly WebRequestSignInfo? signInfo;
+        internal readonly WebRequestSignInfo? signInfo;
         private readonly ISet<long>? responseCodeIgnores;
 
         private const string NONE = "NONE";

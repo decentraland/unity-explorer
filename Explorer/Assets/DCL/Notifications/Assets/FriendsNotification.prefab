@@ -482,7 +482,7 @@ MonoBehaviour:
   <HeaderText>k__BackingField: {fileID: 4609991108150892024}
   <TitleText>k__BackingField: {fileID: 1913272022558761674}
   <TimeText>k__BackingField: {fileID: 3997278871462557347}
-  <NotificationImage>k__BackingField: {fileID: 8794382868476474188}
+  <NotificationImage>k__BackingField: {fileID: 7256400807390002670}
   <NotificationImageBackground>k__BackingField: {fileID: 5547385199967951698}
   <NotificationTypeImage>k__BackingField: {fileID: 2445410349030607296}
   <RequestNotificationAudio>k__BackingField: {fileID: 11400000, guid: b6493777141cb4794b18ce0545cc47d3, type: 2}
@@ -514,6 +514,9 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 1974615107952363819}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &6352375852875522709
 GameObject:
   m_ObjectHideFlags: 0
@@ -1110,6 +1113,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1447895524821148947, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1550108083613389261, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -1151,9 +1162,9 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 224503025678412095, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 6448963782535645855}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8794382868476474188 stripped
+--- !u!114 &7256400807390002670 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2554876876778093011, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4453136935542798193, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 6448963782535645855}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}

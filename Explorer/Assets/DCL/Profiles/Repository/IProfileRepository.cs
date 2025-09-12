@@ -16,7 +16,7 @@ namespace DCL.Profiles
 
         UniTask SetAsync(Profile profile, CancellationToken ct);
 
-        UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct);
+        UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true);
 
         public class Fake : IProfileRepository
         {
@@ -35,7 +35,7 @@ namespace DCL.Profiles
                 return UniTask.CompletedTask;
             }
 
-            public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct)
+            public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true)
             {
                 var key = new Key(id, version);
 
@@ -79,8 +79,8 @@ namespace DCL.Profiles
         public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, CancellationToken ct) =>
             profileRepository.GetAsync(id, 0, null, ct);
 
-        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, int version, CancellationToken ct) =>
-            profileRepository.GetAsync(id, version, null, ct);
+        public static UniTask<Profile?> GetAsync(this IProfileRepository profileRepository, string id, int version, CancellationToken ct, bool getFromCacheIfPossible = true) =>
+            profileRepository.GetAsync(id, version, null, ct, getFromCacheIfPossible);
 
         public static async UniTask<Profile> EnsuredProfileAsync(this IProfileRepository profileRepository, string id, CancellationToken ct) =>
             (await profileRepository.GetAsync(id, ct)).EnsureNotNull();

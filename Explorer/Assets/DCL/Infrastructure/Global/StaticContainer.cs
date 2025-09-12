@@ -1,7 +1,9 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
@@ -27,7 +29,6 @@ using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.VideoPlayer;
-using DCL.Settings;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -74,8 +75,6 @@ namespace Global
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
 
         private ProvidedInstance<CharacterObject> characterObject;
-        private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
-        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
         private IAssetsProvisioner assetsProvisioner;
         public Entity PlayerEntity { get; set; }
@@ -98,8 +97,8 @@ namespace Global
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
         public Profiler Profiler { get; private set; }
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
-        public IPartitionSettings PartitionSettings => partitionSettings.Value;
-        public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
+        public IPartitionSettings PartitionSettings => StaticSettings.PartitionSettings;
+        public IRealmPartitionSettings RealmPartitionSettings => StaticSettings.RealmPartitionSettings;
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
         public IEthereumApi EthereumApi { get; private set; }
@@ -117,22 +116,15 @@ namespace Global
 
         public void Dispose()
         {
-            realmPartitionSettings.Dispose();
-            partitionSettings.Dispose();
             QualityContainer.Dispose();
             Profiler.Dispose();
             SceneRestrictionBusController.Dispose();
         }
 
-        public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
         {
             StaticSettings = settings;
-
-            (partitionSettings, realmPartitionSettings) =
-                await UniTask.WhenAll(
-                    assetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
-                    assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
-                );
+            return UniTask.CompletedTask;
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
@@ -150,14 +142,14 @@ namespace Global
             World globalWorld,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             bool enableAnalytics,
             IAnalyticsController analyticsController,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
-            UIDocument scenesUIRoot,
             ObjectProxy<IProfileRepository> profileRepository,
             CancellationToken ct,
+            bool hasDebugFlag,
             bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
@@ -217,7 +209,7 @@ namespace Global
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
             var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
-            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)));
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, profileRepository);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
@@ -255,7 +247,7 @@ namespace Global
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, videoTexturePool),
-                new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
+                new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry, assetsProvisioner),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies),
@@ -267,11 +259,11 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, scenesUIRoot),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy),
+                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, volumeBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
@@ -279,10 +271,10 @@ namespace Global
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
-                new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
+                new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, hasDebugFlag),
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
-                new SkyboxTimePlugin(assetsProvisioner),
+                new SkyboxTimePlugin(),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
@@ -294,9 +286,10 @@ namespace Global
             {
                 assetBundlePlugin,
                 new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneLoadingLimit),
-                new AdaptivePerformancePlugin(container.assetsProvisioner, container.Profiler, container.LoadingStatus),
+                new AdaptivePerformancePlugin(container.Profiler, container.LoadingStatus),
                 textureResolvePlugin,
                 promisesAnalyticsPlugin,
+                new LightSourceDebugPlugin(container.DebugContainerBuilder, globalWorld)
             };
 
             return (container, true);

@@ -19,8 +19,6 @@ namespace DCL.AvatarRendering.Emotes
 
         public IReadOnlyCollection<URN> Pointers => pointers;
 
-        // TODO why so many allocations?
-        public HashSet<URN> RequestedPointers { get; }
         public HashSet<URN> SuccessfulPointers { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
@@ -34,11 +32,10 @@ namespace DCL.AvatarRendering.Emotes
         {
             this.pointers = pointers;
             CancellationTokenSource = new CancellationTokenSource();
-            RequestedPointers = POINTERS_HASHSET_POOL.Get();
             SuccessfulPointers = POINTERS_HASHSET_POOL.Get();
             PermittedSources = permittedSources;
             BodyShape = bodyShape;
-            Timeout = new LoadTimeout(timeout);
+            Timeout = new LoadTimeout(timeout, 0);
         }
 
         public bool Equals(GetEmotesByPointersIntention other) =>
@@ -54,10 +51,17 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (isDisposed) return;
             POINTERS_POOL.Release(pointers);
-            POINTERS_HASHSET_POOL.Release(RequestedPointers);
             POINTERS_HASHSET_POOL.Release(SuccessfulPointers);
             CancellationTokenSource.Cancel();
             isDisposed = true;
+        }
+
+        public bool IsTimeout(float dt)
+        {
+            // Timeout access returns a temporary value. We need to reassign the field or we lose the changes
+            Timeout = new LoadTimeout(Timeout.Timeout, Timeout.ElapsedTime + dt);
+            bool result = Timeout.IsTimeout;
+            return result;
         }
     }
 }

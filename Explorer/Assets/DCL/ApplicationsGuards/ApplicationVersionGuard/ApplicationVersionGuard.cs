@@ -25,10 +25,10 @@ namespace DCL.ApplicationVersionGuard
         private const string LAUNCHER_EXECUTABLE_FILENAME = "dcl_launcher.exe";
         private const string LAUNCHER_PATH_MAC = "/Applications/" + LAUNCHER_EXECUTABLE_NAME + ".app";
         private const string LEGACY_LAUNCHER_PATH_MAC = "/Applications/" + LEGACY_LAUNCHER_EXECUTABLE_NAME + ".app";
-        private const string DECENTRALAND_LAUNCHER_WIN_X64_EXE = "Decentraland_x64-setup.exe";
-        private const string DECENTRALAND_LAUNCHER_MAC_ARM_64DMG = "Decentraland_aarch64.dmg";
+        private const string DECENTRALAND_LAUNCHER_WIN_X64_EXE = "Decentraland_installer.exe";
+        private const string DECENTRALAND_LAUNCHER_MAC_ARM_64DMG = "Decentraland_installer.dmg";
         //Aga: Rust version of launcher does not support intel macs, until fully deprecating it, we need to keep the old launcher for intel based macs
-        private const string DECENTRALAND_LEGACY_LAUNCHER_MAC_X_64DMG = "Decentraland Launcher-mac-x64.dmg";
+        private const string DECENTRALAND_LEGACY_LAUNCHER_MAC_X_64DMG = "Decentraland Outdated-mac-x64.dmg";
 
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
@@ -48,8 +48,8 @@ namespace DCL.ApplicationVersionGuard
                 ReportCategory.VERSION_CONTROL,
                 new WebRequestHeadersInfo());
 
-            GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
-            string latestVersion = latestRelease.tag_name.TrimStart('v');
+            ClientVersionInfo versionInfo = JsonUtility.FromJson<ClientVersionInfo>(response.body);
+            string latestVersion = versionInfo.version.TrimStart('v');
 
             return latestVersion;
         }
@@ -159,9 +159,10 @@ namespace DCL.ApplicationVersionGuard
             SystemInfo.processorType.Contains("apple", StringComparison.OrdinalIgnoreCase);
 
         [Serializable]
-        private struct GitHubRelease
+        private struct ClientVersionInfo
         {
-            public string tag_name;
+            public string version;
+            public string timestamp;
         }
     }
 }

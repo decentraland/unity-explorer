@@ -21,10 +21,12 @@ namespace DCL.Communities.CommunitiesCard.Events
         [field: SerializeField] private GameObject emptyState { get; set; } = null!;
         [field: SerializeField] private GameObject emptyStateAdminText { get; set; } = null!;
         [field: SerializeField] private Button openWizardButton { get; set; } = null!;
+        [field: SerializeField] private Button createEventButton { get; set; } = null!;
         [field: SerializeField] private CommunityEventsContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
 
         public event Action? NewDataRequested;
         public event Action? OpenWizardRequested;
+        public event Action? CreateEventRequested;
 
         public event Action<PlaceAndEventDTO>? MainButtonClicked;
         public event Action<PlaceAndEventDTO>? JumpInButtonClicked;
@@ -43,6 +45,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         {
             loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
             openWizardButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
+            createEventButton.onClick.AddListener(() => CreateEventRequested?.Invoke());
 
             contextMenu = new GenericContextMenu(contextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: contextMenuConfiguration.VerticalPadding, elementsSpacing: contextMenuConfiguration.ElementsSpacing)
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.ShareText, contextMenuConfiguration.ShareSprite, () => EventShareButtonClicked?.Invoke(lastClickedEventCtx)))
@@ -52,6 +55,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public void SetCanModify(bool canModify)
         {
             this.canModify = canModify;
+            createEventButton.gameObject.SetActive(canModify);
         }
 
         public void InitList(ThumbnailLoader newThumbnailLoader,

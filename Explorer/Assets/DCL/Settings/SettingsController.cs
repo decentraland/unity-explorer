@@ -1,3 +1,6 @@
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
@@ -41,13 +44,15 @@ namespace DCL.Settings
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
+        private readonly bool isVoiceChatEnabled;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
@@ -65,9 +70,10 @@ namespace DCL.Settings
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
             VoiceChatSettingsAsset voiceChatSettings,
-            WorldVolumeMacBus worldVolumeMacBus,
-            UpscalingController upscalingController
-        )
+            VolumeBus volumeBus,
+            UpscalingController upscalingController,
+            bool isVoiceChatEnabled,
+            IAssetsProvisioner assetsProvisioner)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -77,17 +83,17 @@ namespace DCL.Settings
             this.qualitySettingsAsset = qualitySettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
+            this.isVoiceChatEnabled = isVoiceChatEnabled;
+            this.assetsProvisioner = assetsProvisioner;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
-
-            GenerateSettings();
 
             view.GeneralSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.GENERAL, settingsMenuConfiguration.GeneralSectionConfig.SettingsGroups.Count));
             view.GraphicsSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.GRAPHICS, settingsMenuConfiguration.GraphicsSectionConfig.SettingsGroups.Count));
@@ -95,6 +101,9 @@ namespace DCL.Settings
             view.ControlsSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.CONTROLS, settingsMenuConfiguration.ControlsSectionConfig.SettingsGroups.Count));
             view.ChatSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.CHAT, settingsMenuConfiguration.ChatSectionConfig.SettingsGroups.Count));
         }
+
+        public UniTask InitializeAsync() =>
+            GenerateSettingsAsync();
 
         public void Activate()
         {
@@ -128,7 +137,7 @@ namespace DCL.Settings
             ChatBubblesVisibilityChanged?.Invoke(newVisibility);
         }
 
-        private void GenerateSettings()
+        private async UniTask GenerateSettingsAsync()
         {
             if (settingsMenuConfiguration.SettingsGroupPrefab == null)
             {
@@ -136,11 +145,11 @@ namespace DCL.Settings
                 return;
             }
 
-            GenerateSettingsSection(settingsMenuConfiguration.GeneralSectionConfig, view.GeneralSectionContainer);
-            GenerateSettingsSection(settingsMenuConfiguration.GraphicsSectionConfig, view.GraphicsSectionContainer);
-            GenerateSettingsSection(settingsMenuConfiguration.SoundSectionConfig, view.SoundSectionContainer);
-            GenerateSettingsSection(settingsMenuConfiguration.ControlsSectionConfig, view.ControlsSectionContainer);
-            GenerateSettingsSection(settingsMenuConfiguration.ChatSectionConfig, view.ChatSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.GeneralSectionConfig, view.GeneralSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.GraphicsSectionConfig, view.GraphicsSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.SoundSectionConfig, view.SoundSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.ControlsSectionConfig, view.ControlsSectionContainer);
+            await GenerateSettingsSectionAsync(settingsMenuConfiguration.ChatSectionConfig, view.ChatSectionContainer);
 
             foreach (var controller in controllers)
                 controller.OnAllControllersInstantiated(controllers);
@@ -148,14 +157,14 @@ namespace DCL.Settings
             SetInitialSectionsVisibility();
         }
 
-        private void GenerateSettingsSection(SettingsSectionConfig sectionConfig, Transform sectionContainer)
+        private async UniTask GenerateSettingsSectionAsync(SettingsSectionConfig sectionConfig, Transform sectionContainer)
         {
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
                 if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
                     return;
 
-                SettingsGroupView generalGroupView = Object.Instantiate(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer);
+                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;
@@ -164,7 +173,7 @@ namespace DCL.Settings
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
                     if (module != null)
-                        controllers.Add(module.CreateModule
+                        controllers.Add(await module.CreateModuleAsync
                         (
                             generalGroupView.ModulesContainer,
                             realmPartitionSettingsAsset,
@@ -180,7 +189,9 @@ namespace DCL.Settings
                             this,
                             voiceChatSettings,
                             upscalingController,
-                            worldVolumeMacBus));
+                            assetsProvisioner,
+                            volumeBus,
+                            isVoiceChatEnabled));
             }
         }
 

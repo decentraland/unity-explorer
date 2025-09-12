@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using DCL.Profiling;
+using GPUInstancerPro;
+using TerrainProto;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -75,9 +77,11 @@ namespace DCL.Landscape
             else
             {
                 IMemoryProfiler memoryProfiler = new Profiler();
-                gen = new TerrainGenerator(memoryProfiler, true, clearCache);
-                gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "", false, new MockGPUIWrapper(), new CPUTerrainDetailSetter());
-                await gen.GenerateGenesisTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
+                gen = new TerrainGenerator(memoryProfiler, true);
+
+                gen.Initialize(genData, GPUIProfile.DefaultProfile, ref emptyParcels, ref ownedParcels);
+
+                await gen.GenerateGenesisTerrainAndShowAsync();
             }
 
             emptyParcels.Dispose();

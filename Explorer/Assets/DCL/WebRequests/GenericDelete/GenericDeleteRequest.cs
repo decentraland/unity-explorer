@@ -6,6 +6,8 @@ namespace DCL.WebRequests.GenericDelete
     {
         public UnityWebRequest UnityWebRequest { get; }
 
+        public bool Idempotent => false;
+
         internal static GenericDeleteRequest Initialize(in CommonArguments commonArguments, GenericDeleteArguments arguments)
         {
             UnityWebRequest unityWebRequest = arguments.MultipartFormSections != null

@@ -27,6 +27,8 @@ namespace DCL.WebRequests
 
         public UnityWebRequest UnityWebRequest { get; }
 
+        public bool Idempotent => true;
+
         /// <summary>
         ///     Creates the texture
         /// </summary>

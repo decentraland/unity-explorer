@@ -1,20 +1,23 @@
 ﻿using DCL.DebugUtilities.Views;
 using System;
 using System.Collections.Generic;
+using UnityEngine.UIElements;
 using Utility.UIToolkit;
 
 namespace DCL.DebugUtilities
 {
     public class DebugUtilitiesContainer
     {
+        public UIDocument RootDocument { get; private set; }
         public IDebugContainerBuilder Builder { get; }
 
-        private DebugUtilitiesContainer(IDebugContainerBuilder builder)
+        private DebugUtilitiesContainer(IDebugContainerBuilder builder, UIDocument rootDocument)
         {
             Builder = builder;
+            RootDocument = rootDocument;
         }
 
-        public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog, bool isFullDebug, bool isLocalSceneDevelopment)
+        public static DebugUtilitiesContainer Create(DebugViewsCatalogSO viewsCatalog, bool isFullDebug, bool isLocalSceneDevelopment)
         {
             ISet<string>? allowedCategories = null;
 
@@ -51,12 +54,15 @@ namespace DCL.DebugUtilities
                 }
             }
 
+            var rootDocument = UnityEngine.Object.Instantiate(viewsCatalog.RootDocumentPrefab);
+
             return new DebugUtilitiesContainer(
                 new DebugContainerBuilder(
                     () => viewsCatalog.Widget.InstantiateForElement<DebugWidget>(),
                     () => viewsCatalog.ControlContainer.InstantiateForElement<DebugControl>(),
                     new Dictionary<Type, IDebugElementFactory>
                     {
+                        { typeof(AverageFpsBannerDef), new DebugElementBase<AverageFpsBannerElement, AverageFpsBannerDef>.Factory(viewsCatalog.AverageFpsBanner) },
                         { typeof(DebugButtonDef), new DebugElementBase<DebugButtonElement, DebugButtonDef>.Factory(viewsCatalog.Button) },
                         { typeof(DebugConstLabelDef), new DebugElementBase<DebugConstLabelElement, DebugConstLabelDef>.Factory(viewsCatalog.ConstLabel) },
                         { typeof(DebugFloatFieldDef), new DebugElementBase<DebugFloatFieldElement, DebugFloatFieldDef>.Factory(viewsCatalog.FloatField) },
@@ -72,7 +78,8 @@ namespace DCL.DebugUtilities
                         { typeof(DebugDropdownDef), new DebugElementBase<DebugDropdownElement, DebugDropdownDef>.Factory(viewsCatalog.DropdownField) },
                     },
                     allowedCategories
-                )
+                ),
+                rootDocument
             );
         }
     }

@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             //We have some missing pointers that were not completed. We have to consider them as failure
 
             if (storage.TryGetElement(urn, out var component))
-
+            {
                 //If its not in the catalog, we cannot determine which one has failed
                 component.ResolvedFailedDTO(
                     new StreamableLoadingResult<TDTO>(
@@ -55,6 +55,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         new ArgumentNullException($"Wearable DTO is null for for {urn}")
                     )
                 );
+                component.UpdateLoadingStatus(false);
+            }
+
+
         }
     }
 }

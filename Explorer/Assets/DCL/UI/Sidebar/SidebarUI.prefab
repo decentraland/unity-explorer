@@ -1050,6 +1050,14 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 32
       objectReference: {fileID: 0}
+    - target: {fileID: 7371464609997258869, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7371464609997258869, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7541182562930353666, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_Colors.m_FadeDuration
       value: 0
@@ -2032,6 +2040,10 @@ PrefabInstance:
     - target: {fileID: 8386085941965291156, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_Colors.m_FadeDuration
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8386085941965291156, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_Colors.m_NormalColor.a
+      value: 0.039215688
       objectReference: {fileID: 0}
     - target: {fileID: 8386085941965291156, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_Colors.m_PressedColor.a

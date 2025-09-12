@@ -15,8 +15,58 @@ MonoBehaviour:
   m_GroupName: UI
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
+  - m_GUID: 022077403db6945e58f0023757b0155f
+    m_Address: Assets/DCL/ApplicationsGuards/ApplicationLivekitGuard/LivekitDownGuardPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 028bf9eb42404424bbd1df5cd802720e
     m_Address: FullSearchResult
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 03dabb815fc004f9581a9528b72c106f
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonList.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 04a7ffcd277754f7c91237894604f522
+    m_Address: NftRarityBackgrounds
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 05e6ec17311e94dfbb4c3e08aaea0891
+    m_Address: FriendsPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 05ee6d06f194b41c89e83a5ce527a57a
+    m_Address: Assets/DCL/Communities/Textures/Atlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 08d42937d0bc54b48baaa23c8c520175
+    m_Address: AuthenticationScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ae66608be2735a4f96e0f1aa9b3a75b
+    m_Address: PlayerMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0bbeb665cb8b4bb4cbea314581e50bab
+    m_Address: Assets/DCL/InWorldCamera/InWorldCamera/UI/Textures/RuleOf3rd.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0fce4c1a785b1495bbf861787a9a3224
+    m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 112ec96d4c89d41d68b03e4ba73992e9
+    m_Address: Assets/DCL/Communities/EventInfo/Prefabs/EventInfoPanel.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -25,8 +75,53 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1979326266a1bec44bc70519850f7a5a
+    m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/PadlockImg.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b149c5240fcd49309285605ce2e8067
+    m_Address: CategoryMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
+    m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/LogoDCL154x154SpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
+    m_Address: Nametag
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f557ed079be146f9aeb090104c115c9
+    m_Address: Assets/DCL/MapRenderer/Addressables/SceneOfInterest.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 204157b950b45f240819f044fb624b0d
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsGroup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
     m_Address: MapRendererSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2228bfa95a7c26247a4e9c67587122c2
+    m_Address: Assets/Textures/ExplorePanel/NotificationsHoverSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2308a593e7fee41dbad5a6b14f89e0e7
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/BlockUserButton.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 23dcf75316411d344be316dc2cb0e41f
+    m_Address: Assets/DCL/Interaction/Assets/CursorInteractive.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -40,13 +135,53 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25a27c814a51d4a67a7ebd0b3b672284
+    m_Address: Assets/DCL/Input/Assets/CursorDragCamera.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2668240d360264034b2ee70e645aab92
     m_Address: Assets/DCL/UI/ColorPicker/HairColors.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26a5616becdfd49b4abfbee07ba3cbf2
+    m_Address: Assets/DCL/InWorldCamera/PhotoDetail/Prefabs/PhotoDetailUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26fa4ad5e35df464b8cc4bd887c2a6d9
+    m_Address: Assets/DCL/Interaction/Assets/CrosshairInteractive.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 27c8bedb89b5739458399a3bd3d255ac
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Slider.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 295cf8ad8d171d849863eccaf581c9e7
     m_Address: ScenesUIStyleSheet
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2eac55a1aa3034858a71ab0e06baf5de
+    m_Address: ClusterMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2fe097e0595decf4cbb812bf06bd1651
+    m_Address: Assets/Textures/ExplorePanel/MapTabHoverUnhoverSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33891647b85dc47319f39490bb24594d
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithCheck.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 353f2294734a94b57b061c9b83eb275d
+    m_Address: Assets/DCL/SDKComponents/TextShape/Settings/Font List.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -60,8 +195,93 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 37fc70977aa8e4023aadf578a73db58b
+    m_Address: PageButton
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 39458b71e0ed84549b1b280c4fb1f105
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Toggle.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c3c8d365c6ef4acfa3665168b5737a9
+    m_Address: ButtonWithTextAndIcon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d761805ce62940dbafaa7bb64be222c
+    m_Address: ClusterMarkerObjectForSearchResults
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3efe8a48fc3905f47a0648abd6859394
+    m_Address: MapCameraObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4359e32789e7f914c8e7e12d16286b76
+    m_Address: ChatConfig.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4362b43091b0d462db2641f8c866e9b9
+    m_Address: Assets/DCL/UI/Profile/Names/Assets/ProfileNameEditor.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44b3d3fa43f2d2247b3784803389bbb1
+    m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/Authentication.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 497073cedbc8540c2b17104cfee96158
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/SubMenuButton.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4974685691c134a35bcea75af1936381
+    m_Address: Assets/DCL/UI/Controls/Textures/Controls.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4a21ec4cd76d144a5bce86b3ac4cc9d6
+    m_Address: Assets/DCL/UI/Assets/ShowUICanvas.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4a2a7b610414b45c1b576946ce094877
+    m_Address: NftCategoryIcons
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4ad9b13f190b323498848e87367bb0a7
+    m_Address: Assets/DCL/ApplicationMinimumSpecsGuard/UI/Prefab/MinimumSpecsScreen.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b896bc1397444f00a2b45725af2b263
+    m_Address: NotificationIconTypesSO
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f900819503d2412194e6de3e5a95ba0
+    m_Address: Assets/DCL/Communities/CommunitiesCard/Prefabs/CommunityCard.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 506fef2fcce22b54ba4571ced3af5dc6
-    m_Address: LoadingAtlast.spriteatlasv2
+    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Textures/Atlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52bc5c5fe83f743cdba8dab60b247e96
+    m_Address: Separator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53b70d09c4a814878a30c68582ad4523
+    m_Address: Assets/DCL/MapRenderer/Addressables/HotUserMarkerObject.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -70,8 +290,33 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5729e2631c53948629ab380aa951e394
+    m_Address: Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/DebugViewsCatalog.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58c436690cb47644492bc0d655dbcce8
+    m_Address: EmotesWheelHUD.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58f16fd4b3584431d87e11f043b40408
+    m_Address: Assets/DCL/Navmap/Assets/EventScheduleElement.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5af318126b38647fea34ff22fba4ef17
     m_Address: Assets/DCL/UI/ColorPicker/BodyShapeColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5deacee45f1ebfe4394a97755a51fcca
+    m_Address: Assets/Textures/ExplorePanel/BackpackHoverUnhoverSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ed0eaf7428cb4135baf7d2e09a9430a
+    m_Address: PageSelector
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -80,8 +325,38 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5f2c1af519efc4b82b87b887f93077fc
+    m_Address: Assets/DCL/MapRenderer/Addressables/Favorite.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 605506dac7ec04ed09953980478e93d4
+    m_Address: SceneLoadingScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60ec312971597448e978368a5382c0f1
+    m_Address: ToggleWithText
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 624d527621f514c5999533539668c4d3
+    m_Address: Assets/DCL/Navmap/Assets/EventEntry.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65104014709704f75838386ed5173c45
+    m_Address: Assets/DCL/MapRenderer/Addressables/SearchResultMarkerObject.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66f8f8427a5c4443e95b0d298addd639
+    m_Address: NftInfoPanelRarityBackgrounds
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 67c43eeeaf9c34744807086742498bf8
-    m_Address: BackpackAtlas.spriteatlasv2
+    m_Address: Assets/Textures/BackpackPanel/BackpackAtlas.spriteatlasv2
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -95,8 +370,33 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6cfe7986a3d81484d96b5962ae4f300f
+    m_Address: Assets/DCL/Interaction/HoverCanvas/UI/HoverUIDocument.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6dfe28bda416549a9b6598e822044ba1
-    m_Address: CommonTexturesAtlas.spriteatlasv2
+    m_Address: Assets/Textures/Common/Atlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70c6f2eab01fc462a9a2cac0d661417e
+    m_Address: RewardPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 71786712afc0f4310ba349bc712ce763
+    m_Address: Assets/DCL/MarketplaceCredits/Textures/Atlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7382805fd18299d41925547efbad99f0
+    m_Address: Assets/DCL/Input/Assets/CursorSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 738b2479bcbccba45b0c649ce580ef7a
+    m_Address: Assets/DCL/Chat/Textures/ChatAtlas.spriteatlasv2
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -105,8 +405,43 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73e736ffedc4d4e1c9acc6461c55248b
+    m_Address: MapLayerCategoryIconMapping
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73f988cecacd42e48920937e996e446d
     m_Address: ScreencaptureCameraHUD
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+    m_Address: NftRarityColors
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 797a1eda92ffc43a093281ee7851ae71
+    m_Address: Assets/DCL/Friends/Textures/Atlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 79eb8e4682b784de1b1b18eaeba27edc
+    m_Address: Assets/DCL/Backpack/Assets/BackpackEmoteGridItem.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a24101494a664ee59a8952e20b8f441
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ControlsContainer.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a43321b8055d407ba2e871e873c7062
+    m_Address: EmoteWheelRarityBackgrounds.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b075576ea612439bb40436f7c0fdff0
+    m_Address: Assets/DCL/UI/ConfirmationDialog/Prefabs/ConfirmationDialog.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -115,8 +450,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e150ada146ad0749b39e65968780157
+    m_Address: MapParcelHighlightMarker
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 809b68e5ce75da1429e55ffcc44fa23b
     m_Address: ExternalUrlPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8521b529ac852454480e3f6596bca3ba
+    m_Address: DebugMenuRootCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86a5a8acd91f6994788c37e301d06c56
+    m_Address: CinemachineCameraAudioSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -125,8 +475,73 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90c5ebf3fa8f7a643976616957cc83a2
+    m_Address: Assets/DCL/UI/Assets/ColorToggle.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 91f97481855a7954d91bd70839dc70cd
+    m_Address: Assets/Textures/ExplorePanel/Skybox/SkyboxUnhoverAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 936e614ba87194e438d73a6e89be4cb8
+    m_Address: Assets/Textures/ExplorePanel/InWorldCameraSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 93a86930ad6d44ebd85b46f9c6ebad72
+    m_Address: Assets/DCL/Friends/UI/Prefabs/BlockUserPrompt.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 989cf1173881645c598573447b2b56d8
+    m_Address: HidesRow
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98d75b092dc90bb49a14cf7e80096e01
+    m_Address: Assets/DCL/Interaction/Assets/Crosshair.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c27490a499144f85bed4593943fe86a
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/Text.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a00387527d7ddda41b9eb524b4a8662c
     m_Address: Assets/DCL/UI/ColorPicker/EyesColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1d5d4f99234041159f0c215eef3eff3
+    m_Address: NewNotificationPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a341d15dd51544eb9985664704a7c43a
+    m_Address: Assets/DCL/Friends/UI/Prefabs/UnfriendConfirmationPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a39f0a305be6be143aabcbf7ebb59d62
+    m_Address: RoomIndicator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a731ee28947d7d54d8f4ff349525c868
+    m_Address: Assets/Textures/ExplorePanel/EmotesHoverSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aabac5666448b4345a76347f94ea32a4
+    m_Address: BackpackItem
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acb5d5500934645ac89935fe64d8bf01
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonWithText.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -140,18 +555,48 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b028edf69a2c54c9194c4ce6524befff
+    m_Address: ChatBubbleConfiguration
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b54d9d4189903c2438fa811308f14ceb
+    m_Address: MapConfiguration
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5efcea1481b64193ae5b5029f0c673f
+    m_Address: UntrustedRealmConfirmationPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b9f5995d6af773a43a7a26ec52c7427f
+    m_Address: Assets/Textures/ExplorePanel/Skybox/SkyboxHoverAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bc2f6e2e838c8114e89c2f3157c0ab47
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithTextAndImage.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bdd6d1e45d38dbc44b593240a7768188
-    m_Address: EmoteIconPressedSpriteAtlas.spriteatlasv2
+    m_Address: Assets/Textures/Emotes/EmoteIconPressedSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bf1104b23d6ed8f4ab84e9a0da93e10d
     m_Address: Passport
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf22911f490866b45b81ddea869255f2
+    m_Address: Assets/DCL/Interaction/Assets/Cursor.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf82184de91c3944b8de02d57d7dd151
+    m_Address: Crosshair.uxml
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -165,8 +610,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d2b6974d311b52d418b15738f4ef38dc
-    m_Address: Authentication.spriteatlas
+  - m_GUID: cbb820cf51b7a714e88a7c873eb5de9c
+    m_Address: InteractionsAudioConfigs
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d20747763091b4fc5a2d5b6d1ba0ea7d
+    m_Address: HideCategory
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -185,8 +635,38 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dcc6085d51c3e443f82d4d58e0087519
+    m_Address: Assets/DCL/Friends/Prefabs/FriendRequest.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e052984ad30813240bd28c945f4cab60
+    m_Address: DottedLineRenderer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e0f5a4ab5d8f74640ae94adb6824bd45
     m_Address: ScenesUIRootCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0fd8880fbfa1470c88c5da31136fe85
+    m_Address: Assets/Textures/Passport/Atlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e7d14406516774d91886b6b4d1a26a58
+    m_Address: MapPin
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea1f7da7c78c3d74bac70064dcc265a7
+    m_Address: Assets/DCL/Interaction/Settings/InteractionSettingsData.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea36ce73a81b58d44a1b1cc76a840b03
+    m_Address: Assets/Textures/ExplorePanel/CameraReelSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -202,6 +682,56 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f2ef3a867ab2840cb9bc73b4762922fd
     m_Address: Minimap
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f33ca6aa5d0855d429288687f87c41c0
+    m_Address: Assets/Textures/NftPrompt/NftPrompt.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f74fa2421d947f4439553458ae5fbd93
+    m_Address: Assets/DCL/UI/Assets/ChatEntryMenuPopupView.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f80a8f4fcad2b4246b66c94221314244
+    m_Address: AtlasChunk
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f999deca82ccdc14ebae40250c8eb0c9
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f9b91c66bb8dc8547849cb992d9cffea
+    m_Address: Assets/Textures/ExplorePanel/SettingsTabHoverUnhoverSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fb7327249a7554d50afaf729d15aa697
+    m_Address: Assets/DCL/Input/Crosshair/CrosshairUIDocument.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fc78f0ea3986a4e08922b0212a1734b5
+    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Splash.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd17ec7a54a9c49b2bc6b3f984b68f7a
+    m_Address: Assets/DCL/VoiceChat/Textures/Atlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdd9de2cf51974e4f9be30ab72d8eabd
+    m_Address: MapLayerIconMapping
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe90941e720314adfb13574446732ea7
+    m_Address: UserProfile
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

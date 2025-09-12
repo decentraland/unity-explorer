@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -13,10 +14,8 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public string? Hash;
 
-        /// <summary>
-        ///     Manifest can be null if <see cref="CommonArguments" />.<see cref="CommonLoadingArguments.PermittedSources" /> does not contain <see cref="AssetSource.WEB" />
-        /// </summary>
-        public SceneAssetBundleManifest? Manifest;
+        public AssetBundleManifestVersion? AssetBundleManifestVersion;
+        public string ParentEntityID;
 
         /// <summary>
         ///     If the expected object type is null we don't know which asset will be loaded.
@@ -26,6 +25,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         /// <summary>
         ///     Left to have a reference of what went wrong in PrepareAssetBundleLoadingParametersSystemBase
+        ///     It doesn't participate in the loading process and should not be used for caching or comparison
         /// </summary>
         public readonly string? Name;
 
@@ -48,9 +48,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
-            SceneAssetBundleManifest? assetBundleManifest = null,
             URLSubdirectory customEmbeddedSubDirectory = default,
             bool lookForShaderAssets = false,
+            AssetBundleManifestVersion? assetBundleVersion = null,
+            string parentEntityID = "",
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -61,8 +62,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, customEmbeddedSubDirectory, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
             cacheHash = null;
-            Manifest = assetBundleManifest;
             LookForShaderAssets = lookForShaderAssets;
+
+            ParentEntityID = parentEntityID;
+            AssetBundleManifestVersion = assetBundleVersion;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -71,29 +74,28 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public bool Equals(GetAssetBundleIntention other) =>
-            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) || Name == other.Name;
+
+            // It doesn't take into consideration the asset bundle version, so whatever is retrieved and cached first will be served for all versions
+            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash);
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public static GetAssetBundleIntention FromHash(Type? expectedAssetType, string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default,
-            bool lookForShaderAsset = false) =>
-            new (expectedAssetType, hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset);
-
-        public static GetAssetBundleIntention FromHash(Type expectedAssetType, string hash, CancellationTokenSource cancellationTokenSource, AssetSource permittedSources = AssetSource.ALL,
-            SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
-            new (expectedAssetType, hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory, cancellationTokenSource: cancellationTokenSource);
-
-        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null,
+        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default) =>
-            new (expectedAssetType, hash: hash, name: name, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
+            new (expectedAssetType, hash: hash, name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
+
+        public static GetAssetBundleIntention FromHash(Type? expectedAssetType, string hash, AssetSource permittedSources = AssetSource.ALL,
+            URLSubdirectory customEmbeddedSubDirectory = default, bool lookForShaderAsset = false , CancellationTokenSource cancellationTokenSource = null,
+            AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "") =>
+            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, cancellationTokenSource: cancellationTokenSource);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? ""), Name);
+            StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? string.Empty);
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
@@ -109,5 +111,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 keyPayload.Put(asset.Hash ?? asset.Name!);
             }
         }
+
+
     }
 }

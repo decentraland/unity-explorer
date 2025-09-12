@@ -1,4 +1,5 @@
-﻿using UnityEngine.Networking;
+﻿using System;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
@@ -8,6 +9,8 @@ namespace DCL.WebRequests
     public readonly struct PartialDownloadRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
     {
         public UnityWebRequest UnityWebRequest { get; }
+
+        public bool Idempotent => true;
 
         private PartialDownloadRequest(UnityWebRequest unityWebRequest)
         {

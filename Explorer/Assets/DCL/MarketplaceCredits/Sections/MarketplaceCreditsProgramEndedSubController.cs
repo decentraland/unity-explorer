@@ -8,9 +8,26 @@ namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsProgramEndedSubController : IDisposable
     {
+        private const string TITLE_CREDITS_VALID = "Time to go shopping—you've completed {0} of Marketplace Credits!";
+        private const string TITLE_CREDITS_VALID_PART2 = "Spend your Credits before they expire on {0}.";
+        private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_KNOWN = "Save the date—Marketplace Credits return for {0} on {1}!";
+        private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_UNKNOWN = "{0} of Marketplace Credits Has Closed";
+        private const string TITLE_NO_FOUNDS_SEASON = "All Available Credits Claimed: The current Marketplace Credits Season is now closed";
+        private const string TITLE_NO_FOUNDS_WEEK = "All Available Credits Claimed: The beta run of the Weekly Rewards program is now closed";
+        private const string TITLE_MARKET_OFFLINE = "Marketplace Credits are Temporarily Offline";
+        
         private const string SUBSCRIBE_LINK_ID = "SUBSCRIBE_LINK_ID";
         private const string X_LINK_ID = "X_LINK_ID";
         private const string DISCORD_LINK_ID = "DISCORD_LINK_ID";
+        
+        private const string SUBTITLE_CREDITS_VALID_NEXT_SEASON_KNOWN = "See you back here for {0}, starting {1}.";
+        
+        private readonly string subtitleCreditsValidNextUnknown = $"<color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>Subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> for news on the next season!";
+        private readonly string subtitleSeasonCreditsRunOut = $"<color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>Subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> for news on upcoming seasons";
+        private readonly string subtitleWeekCreditsRunOut = $"Make sure to <color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> to find out when the next run goes live!";
+        private readonly string subtitleCreditsExpiredNextSeasonKnown = $"<color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>Subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> for more news.";
+        private readonly string subtitleCreditsExpiredNextSeasonUnknown = $"<color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>Subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> for news on the next season's start date!";
+        private readonly string subtitleMarketOffline = $"Please check the #product-status channel in <color=#FF2D55><b><u><link={DISCORD_LINK_ID}>Decentraland's Discord server</link></u></b></color> for updates if service does not resume shortly.";
 
         private readonly MarketplaceCreditsProgramEndedSubView subView;
         private readonly IWebBrowser webBrowser;
@@ -33,26 +50,85 @@ namespace DCL.MarketplaceCredits.Sections
 
         public void Setup(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            var title = $"The current run of Marketplace Credits Weekly Rewards ({MarketplaceCreditsUtils.FormatSeasonDateRange(creditsProgramProgressResponse.season.startDate, creditsProgramProgressResponse.season.endDate)}) has closed";
-            var subTitle = $"Make sure to <color=#FF2D55><b><u><link={SUBSCRIBE_LINK_ID}>subscribe</link></u></b></color> to Decentraland's newsletter or follow on <color=#FF2D55><b><u><link={X_LINK_ID}>X</link></u></b></color> to find out when the next run goes live!";
+            string boldedTitle = GetBoldedTitleText(creditsProgramProgressResponse);
+            string normalTitle = GetNormalTitle(creditsProgramProgressResponse);
+            string subTitle = GetSubtitleText(creditsProgramProgressResponse);
 
-            switch (creditsProgramProgressResponse.season.seasonState)
-            {
-                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS):
-                    title = "All Available Credits Claimed: The beta run of the Weekly Rewards program is now closed";
-                    break;
-                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS):
-                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED):
-                    title = "Marketplace Credits are Temporarily Offline";
-                    subTitle = $"Please check the #product-status channel in <color=#FF2D55><b><u><link={DISCORD_LINK_ID}>Decentraland's Discord server</link></u></b></color> for updates if service does not resume shortly.";
-                    break;
-            }
-
-            subView.SetTitle(title);
+            subView.SetBoldTitle(boldedTitle);
+            subView.SetNormalTitle(normalTitle);
             subView.SetSubtitle(subTitle);
         }
 
         public void Dispose() { }
+        
+        private string GetBoldedTitleText(CreditsProgramProgressResponse creditsProgramProgressResponse)
+        {
+            switch (creditsProgramProgressResponse.currentSeason.state)
+            {
+                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS):
+                    return TITLE_NO_FOUNDS_SEASON;
+                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS):
+                    return TITLE_NO_FOUNDS_WEEK;
+                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED):
+                    return TITLE_MARKET_OFFLINE;
+            }
+            
+            if (creditsProgramProgressResponse.credits.expiresIn > 0)
+                return string.Format(TITLE_CREDITS_VALID, creditsProgramProgressResponse.lastSeason.name);
+
+            if (creditsProgramProgressResponse.nextSeason.state == nameof(MarketplaceCreditsUtils.SeasonState.NOT_STARTED)
+                && creditsProgramProgressResponse.nextSeason.startDate.ToSpanFromNow().Seconds > 0)
+            {
+                string nextSeasonData = MarketplaceCreditsUtils.FormatSeasonDate(creditsProgramProgressResponse.nextSeason.startDate);
+                
+                return string.Format(TITLE_CREDITS_EXPIRED_NEXT_SEASON_KNOWN, creditsProgramProgressResponse.nextSeason.name, nextSeasonData);
+            }
+
+            return string.Format(TITLE_CREDITS_EXPIRED_NEXT_SEASON_UNKNOWN, creditsProgramProgressResponse.lastSeason.name);
+        }
+
+        private string GetNormalTitle(CreditsProgramProgressResponse creditsProgramProgressResponse)
+        {
+            if (creditsProgramProgressResponse.credits.expiresIn <= 0 ||
+                creditsProgramProgressResponse.currentSeason.state != nameof(MarketplaceCreditsUtils.SeasonState.ENDED))
+                return string.Empty;
+            
+            string timeForCreditsToExpire = MarketplaceCreditsUtils.FormatSecondsToMonthDays(creditsProgramProgressResponse.credits.expiresIn);
+            
+            return string.Format(TITLE_CREDITS_VALID_PART2, timeForCreditsToExpire);
+        }
+        
+        private string GetSubtitleText(CreditsProgramProgressResponse creditsProgramProgressResponse)
+        {
+            switch (creditsProgramProgressResponse.currentSeason.state)
+            {
+                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS):
+                    return subtitleSeasonCreditsRunOut;
+                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS):
+                    return subtitleWeekCreditsRunOut;
+                case nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED):
+                    return subtitleMarketOffline;
+            }
+
+            if (creditsProgramProgressResponse.credits.expiresIn > 0)
+            {
+                if (creditsProgramProgressResponse.nextSeason.state == nameof(MarketplaceCreditsUtils.SeasonState.NOT_STARTED)
+                    && creditsProgramProgressResponse.nextSeason.startDate.ToSpanFromNow().Seconds > 0)
+                {
+                    string nextSeasonData = MarketplaceCreditsUtils.FormatSeasonDate(creditsProgramProgressResponse.nextSeason.startDate);
+                    
+                    return string.Format(SUBTITLE_CREDITS_VALID_NEXT_SEASON_KNOWN, creditsProgramProgressResponse.nextSeason.name, nextSeasonData);
+                }
+                    
+                return subtitleCreditsValidNextUnknown;
+            }
+
+            if (creditsProgramProgressResponse.nextSeason.state == nameof(MarketplaceCreditsUtils.SeasonState.NOT_STARTED) 
+                && creditsProgramProgressResponse.nextSeason.startDate.ToSpanFromNow().Seconds > 0)
+                return subtitleCreditsExpiredNextSeasonKnown;
+
+            return subtitleCreditsExpiredNextSeasonUnknown;
+        }
 
         private void OpenLink(string id)
         {

@@ -14,6 +14,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -45,7 +46,7 @@ namespace Global.Dynamic
         private readonly DebugSettings.DebugSettings debugSettings;
         private readonly RealmUrls realmUrls;
         private readonly IAppArgs appArgs;
-        private readonly ISplashScreen splashScreen;
+        private readonly SplashScreen splashScreen;
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
@@ -62,7 +63,7 @@ namespace Global.Dynamic
         public Bootstrap(
             DebugSettings.DebugSettings debugSettings,
             IAppArgs appArgs,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             RealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
@@ -81,13 +82,9 @@ namespace Global.Dynamic
             this.world = world;
         }
 
-        public async UniTask PreInitializeSetupAsync(UIDocument cursorRoot,
-            UIDocument debugUiRoot,
-            CancellationToken token)
+        public async UniTask PreInitializeSetupAsync(CancellationToken token)
         {
             splashScreen.Show();
-
-            cursorRoot.EnsureNotNull();
 
             string realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
@@ -103,7 +100,7 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            UIDocument sceneUIRoot,
+            bool hasDebugFlag,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -121,14 +118,14 @@ namespace Global.Dynamic
                 world,
                 playerEntity,
                 memoryCap,
-                bootstrapContainer.WorldVolumeMacBus,
+                bootstrapContainer.VolumeBus,
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
-                sceneUIRoot,
                 profileRepositoryProxy,
-                ct
+                ct,
+                hasDebugFlag
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
@@ -137,9 +134,6 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot,
-            UIDocument scenesUIRoot,
-            UIDocument cursorRoot,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
@@ -155,9 +149,6 @@ namespace Global.Dynamic
                 bootstrapContainer.AssetsProvisioner,
                 staticContainer,
                 scenePluginSettingsContainer,
-                uiToolkitRoot,
-                scenesUIRoot,
-                cursorRoot,
                 dynamicSettings,
                 bootstrapContainer.Web3Authenticator,
                 bootstrapContainer.IdentityCache,
@@ -165,10 +156,7 @@ namespace Global.Dynamic
                 worldInfoTool
             );
 
-            string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
-
-
 
             (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
@@ -177,7 +165,6 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    DefaultStartingRealm = defaultStartingRealm,
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
@@ -185,7 +172,6 @@ namespace Global.Dynamic
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
-                    AppParameters = appArgs,
                 },
                 backgroundMusic,
                 world,
@@ -259,7 +245,8 @@ namespace Global.Dynamic
                 dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
                 dynamicWorldContainer.RemoteMetadata,
-                webJsSources
+                webJsSources,
+                bootstrapContainer.Environment
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
@@ -268,8 +255,7 @@ namespace Global.Dynamic
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
-            staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
-            staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag() || appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
+            InitializeDebugPanel(staticContainer.DebugContainerBuilder, debugUiRoot);
 
             return globalWorld;
         }
@@ -316,6 +302,18 @@ namespace Global.Dynamic
         {
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
+        }
+
+        private void InitializeDebugPanel(IDebugContainerBuilder debugContainerBuilder, UIDocument debugUiRoot)
+        {
+            debugContainerBuilder.BuildWithFlex(debugUiRoot);
+            bool hasDebugFlag = appArgs.HasDebugFlag();
+
+            // Make Debug Panel available
+            debugContainerBuilder.IsVisible = hasDebugFlag || appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
+
+            // Start application with Debug Panel open/closed
+            debugContainerBuilder.Container.SetPanelVisibility(hasDebugFlag);
         }
     }
 }

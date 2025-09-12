@@ -2,13 +2,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DG.Tweening;
-using DG.Tweening.Core;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.ApplicationGuards;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Audio
@@ -35,12 +33,15 @@ namespace DCL.Audio
 
         private GameObjectPool<AudioSource> audioSourcePool;
         private CancellationTokenSource mainCancellationTokenSource;
+        private AudioMixerVolumesController mixerVolumesController;
 
         public void Dispose()
         {
             UIAudioEventsBus.Instance.PlayUIAudioEvent -= OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent -= OnStopContinuousUIAudioEvent;
+            UIAudioEventsBus.Instance.MuteContinuousUIAudioEvent -= OnMuteContinuousUIAudioEvent;
+            ExitUtils.BeforeApplicationQuitting -= OnBeforeApplicationQuitting;
             mainCancellationTokenSource.SafeCancelAndDispose();
 
             foreach (KeyValuePair<AudioClipConfig, ContinuousPlaybackAudioData> audioData in audioDataPerAudioClipConfig)
@@ -56,13 +57,16 @@ namespace DCL.Audio
             audioSourcePool?.Dispose();
         }
 
-        public void Initialize()
+        public void Initialize(AudioMixerVolumesController mixerVolumesController)
         {
+            this.mixerVolumesController = mixerVolumesController;
             UIAudioEventsBus.Instance.PlayUIAudioEvent += OnPlayUIAudioEvent;
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent += OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent += OnStopContinuousUIAudioEvent;
+            UIAudioEventsBus.Instance.MuteContinuousUIAudioEvent += OnMuteContinuousUIAudioEvent;
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
             mainCancellationTokenSource = new CancellationTokenSource();
+            ExitUtils.BeforeApplicationQuitting += OnBeforeApplicationQuitting;
         }
 
         private CancellationTokenSource CreateLinkedCancellationTokenSource() =>
@@ -81,15 +85,24 @@ namespace DCL.Audio
             {
                 audioData.FadeTweener.Kill();
                 audioData.CancellationTokenSource.SafeCancelAndDispose();
-
-                audioData.FadeTweener = audioData.AudioSource.DOFade(0, fadeDuration)
-                                                 .SetAutoKill()
-                                                 .OnComplete(() =>
-                                                  {
-                                                      if (!mainCancellationTokenSource.IsCancellationRequested)
-                                                          ReleaseOnFadeOut(audioData, audioClipConfig);
-                                                  });
+                
+                audioData.FadeTweener = audioData.AudioSource
+                    .DOFade(0, fadeDuration)
+                    .SetAutoKill()
+                    .OnComplete(() =>
+                {
+                    if (!mainCancellationTokenSource.IsCancellationRequested) 
+                        ReleaseOnFadeOut(audioData, audioClipConfig);
+                });
             }
+        }
+
+        private void OnMuteContinuousUIAudioEvent(AudioClipConfig audioClipConfig, bool isMuted)
+        {
+            if (!audioDataPerAudioClipConfig.TryGetValue(audioClipConfig, out ContinuousPlaybackAudioData audioData))
+                return;
+
+            audioData.AudioSource.mute = isMuted;
         }
 
         private void ReleaseOnFadeOut(ContinuousPlaybackAudioData audioData, AudioClipConfig audioClipConfig)
@@ -234,6 +247,43 @@ namespace DCL.Audio
             audioSource.outputAudioMixerGroup = settings.MixerGroup;
             audioSource.spatialBlend = 0;
             return audioSource;
+        }
+
+        // Unity sometimes unmutes AudioMixer groups on application quit for a split second, this method disables audio
+        // sources to prevent this bleaching.
+        private void OnBeforeApplicationQuitting()
+        {
+            foreach (var audioClipPair in audioDataPerAudioClipConfig)
+            {
+                switch(audioClipPair.Key.Category)
+                {
+                    case AudioCategory.UI:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.UI_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.Chat:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.Chat_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.World:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.World_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.Avatar:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.Avatar_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.Music:
+                        if(!mixerVolumesController.IsGroupMuted(AudioMixerExposedParam.Music_Volume))
+                            continue;
+                        break;
+                    case AudioCategory.None:
+                    default:
+                        continue;
+                }
+                
+                audioClipPair.Value.AudioSource.mute = true;
+            }
         }
 
         private struct ContinuousPlaybackAudioData

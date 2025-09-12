@@ -18,6 +18,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -200,18 +201,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             var credentials = new ConnectionStringCredentials(connectionString);
 
-            (bool success, string? errorMessage) connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
+            Result connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
 
-            AttemptToConnectState connectionState = connectResult.success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
+            AttemptToConnectState connectionState = connectResult.Success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
-            if (connectResult.success)
+            if (connectResult.Success)
             {
                 room.Assign(roomInstance, out IRoom _);
                 roomState.Set(IConnectiveRoom.State.Running);
             }
 
-            return connectResult.success;
+            return connectResult.Success;
         }
 
         [Serializable]

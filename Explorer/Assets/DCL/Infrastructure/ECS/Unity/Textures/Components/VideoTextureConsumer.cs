@@ -1,6 +1,7 @@
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
+using DCL.Shaders;
 using UnityEngine;
 
 namespace ECS.Unity.Textures.Components
@@ -46,7 +47,7 @@ namespace ECS.Unity.Textures.Components
         }
 
         // All the renderers that use the video texture
-        private readonly List<MeshRenderer> renderers;
+        private readonly List<Renderer> renderers;
 
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,
@@ -54,18 +55,22 @@ namespace ECS.Unity.Textures.Components
         /// </summary>
         public Texture2DData Texture { get; private set; }
 
+        public bool IsDirty;
+
         public int ConsumersCount => Texture.referenceCount;
 
         public VideoTextureConsumer(Texture2D texture)
         {
             Texture = new Texture2DData(texture);
-            renderers = new List<MeshRenderer>();
+            renderers = new List<Renderer>();
+            IsDirty = false;
         }
 
         public VideoTextureConsumer(Texture2DData t2dd)
         {
             Texture = t2dd;
-            renderers = new List<MeshRenderer>();
+            renderers = new List<Renderer>();
+            IsDirty = false;
         }
 
         public void Dispose()
@@ -79,7 +84,7 @@ namespace ECS.Unity.Textures.Components
         /// Stores a reference to a renderer that consumes the same texture.
         /// </summary>
         /// <param name="renderer">The renderer using the video texture.</param>
-        public void AddConsumerMeshRenderer(MeshRenderer renderer)
+        public void AddConsumer(Renderer renderer)
         {
             renderers.Add(renderer);
         }
@@ -88,9 +93,18 @@ namespace ECS.Unity.Textures.Components
         /// Removes a reference to a renderer that was consuming the same texture.
         /// </summary>
         /// <param name="renderer">The renderer to stop referencing to.</param>
-        public void RemoveConsumerMeshRenderer(MeshRenderer renderer)
+        public void RemoveConsumer(Renderer renderer)
         {
             renderers.Remove(renderer);
+        }
+
+        public void SetTextureScale(Vector2 texScale)
+        {
+            foreach (var meshRenderer in renderers)
+            {
+                meshRenderer.material.SetTextureScale(ShaderUtils.BaseMap, texScale);
+                meshRenderer.material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+            }
         }
     }
 }

@@ -36,10 +36,11 @@ namespace DCL.Multiplayer.Movement.Systems
             UpdateRemotePlayersMovementQuery(World, t);
         }
 
-        private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
+        private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, 
+            ref RemotePlayerMovementComponent remotePlayerMovement)
         {
-            transComp.Transform.position = firstRemote.position;
-
+            SetPositionAndRotation(ref transComp, firstRemote.position, firstRemote.rotationY);
+            
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
         }
@@ -47,7 +48,8 @@ namespace DCL.Multiplayer.Movement.Systems
         [Query]
         [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp,
+            ref ExtrapolationComponent extComp)
         {
             SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
@@ -164,7 +166,8 @@ namespace DCL.Multiplayer.Movement.Systems
             return true;
         }
 
-        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
+        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, 
+            ref RemotePlayerMovementComponent remotePlayerMovement,
             SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             // Filter messages with the same position and rotation
@@ -174,7 +177,8 @@ namespace DCL.Multiplayer.Movement.Systems
                        && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
 
-            transComp.Transform.position = remote.position;
+            SetPositionAndRotation(ref transComp, remote.position, remote.rotationY);
+
             remotePlayerMovement.AddPassed(remote, characterControllerSettings, wasTeleported: true);
         }
 
@@ -208,10 +212,16 @@ namespace DCL.Multiplayer.Movement.Systems
             else if (intSettings.UseSpeedUp)
                 SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
 
-            transComp.Transform.position = intComp.Start.position;
+            SetPositionAndRotation(ref transComp, intComp.Start.position, intComp.Start.rotationY);
 
             // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
             float unusedTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
+        }
+
+        private static void SetPositionAndRotation(ref CharacterTransform transformComp, Vector3 position, float rotationY)
+        {
+            var newRotation = Quaternion.Euler(transformComp.Transform.rotation.x, rotationY, transformComp.Transform.rotation.z);
+            transformComp.SetPositionAndRotationWithDirtyCheck(position, newRotation);
         }
 
         private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,

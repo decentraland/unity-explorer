@@ -4,13 +4,16 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
+using System.Buffers;
 using System.Threading;
 using Utility.Multithreading;
 
@@ -18,7 +21,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
     public abstract class LoadElementsByIntentionSystem<TAsset, TIntention, TAvatarElement, TAvatarElementDTO> :
         LoadSystemBase<TAsset, TIntention>
-        where TIntention: struct, IAttachmentsLoadingIntention<TAvatarElement>
+        where TIntention: struct, IAttachmentsLoadingIntention<TAvatarElement>, IEquatable<TIntention>
         where TAvatarElementDTO: AvatarAttachmentDTO where TAvatarElement : IAvatarAttachment<TAvatarElementDTO>
     {
         private readonly IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage;
@@ -57,13 +60,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 var lambdaResponse =
                     await ParseBuilderResponseAsync(
                         webRequestController.SignedFetchGetAsync(
-                            new CommonArguments(
-                                url,
-                                attemptsCount: intention.CommonArguments.Attempts
-                            ),
-                            string.Empty,
-                            ct
-                        )
+                            new CommonArguments(url), string.Empty, ct)
                     );
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
@@ -74,53 +71,69 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 var lambdaResponse =
                     await ParseResponseAsync(
                         webRequestController.GetAsync(
-                            new CommonArguments(
-                                url,
-                                attemptsCount: intention.CommonArguments.Attempts
-                            ),
+                            new CommonArguments(url),
                             ct,
                             GetReportCategory()
                         )
                     );
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
-                    Load(ref intention, lambdaResponse);
+                {
+                    //TODO (JUANI): This complexity can go away once the fallback helper is no longer needed; returning to the LOAD method that was here before
+                    intention.SetTotal(lambdaResponse.TotalAmount);
+
+                    // Process elements in parallel for better performance
+                    var pageElements = lambdaResponse.Page;
+                    var elementTasks = new UniTask<TAvatarElement>[pageElements.Count];
+
+                    for (int i = 0; i < pageElements.Count; i++)
+                    {
+                        var element = pageElements[i];
+                        elementTasks[i] = ProcessElementAsync(element, partition, ct);
+                    }
+
+                    // Wait for all elements to be processed and add results to intention
+                    var processedWearables = await UniTask.WhenAll(elementTasks);
+                    for (int i = 0; i < processedWearables.Length; i++)
+                    {
+                        intention.AppendToResult(processedWearables[i]);
+                    }
+                }
             }
+
 
             return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
         }
 
-        private void Load<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
+        private async UniTask<TAvatarElement> ProcessElementAsync(ILambdaResponseElement<TAvatarElementDTO> element, IPartitionComponent partition, CancellationToken ct)
         {
-            intention.SetTotal(lambdaResponse.TotalAmount);
+            var elementDTO = element.Entity;
+            var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
 
-            foreach (var element in lambdaResponse.Page)
+            // Run the asset bundle fallback check in parallel
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.DTO, partition, ct);
+
+            // Process individual data (this part needs to remain sequential per element for thread safety)
+            foreach (var individualData in element.IndividualData)
             {
-                var elementDTO = element.Entity;
+                // Probably a base wearable, wrongly return individual data. Skip it
+                if (elementDTO.Metadata.id == individualData.id) continue;
 
-                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
+                long.TryParse(individualData.transferredAt, out long transferredAt);
+                decimal.TryParse(individualData.price, out decimal price);
 
-                foreach (var individualData in element.IndividualData)
-                {
-                    // Probably a base wearable, wrongly return individual data. Skip it
-                    if (elementDTO.Metadata.id == individualData.id) continue;
-
-                    long.TryParse(individualData.transferredAt, out long transferredAt);
-                    decimal.TryParse(individualData.price, out decimal price);
-
-                    avatarElementStorage.SetOwnedNft(
-                        elementDTO.Metadata.id,
-                        new NftBlockchainOperationEntry(
-                            individualData.id,
-                            individualData.tokenId,
-                            DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
-                            price
-                        )
-                    );
-                }
-
-                intention.AppendToResult(wearable);
+                avatarElementStorage.SetOwnedNft(
+                    elementDTO.Metadata.id,
+                    new NftBlockchainOperationEntry(
+                        individualData.id,
+                        individualData.tokenId,
+                        DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
+                        price
+                    )
+                );
             }
+
+            return wearable;
         }
 
         private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>> lambdaResponse)
@@ -138,6 +151,11 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         continue;
 
                     var avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO, false);
+
+                    //Builder items will never have an asset bundle
+                    if (avatarElement.DTO.assetBundleManifestVersion == null)
+                        avatarElement.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateLSDAsset();
+
                     intention.AppendToResult(avatarElement);
                     totalCount++;
                 }

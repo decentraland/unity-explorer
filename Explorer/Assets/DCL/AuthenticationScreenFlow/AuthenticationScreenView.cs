@@ -24,19 +24,13 @@ namespace DCL.AuthenticationScreenFlow
         public Button LoginButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject ConnectingToServerContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject Slides { get; private set; } = null!;
+        public GameObject LoadingSpinner { get; private set; } = null!;
 
         [field: SerializeField]
         public GameObject PendingAuthentication { get; private set; } = null!;
 
         [field: SerializeField]
         public Button CancelAuthenticationProcess { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject ProgressContainer { get; private set; } = null!;
 
         [field: SerializeField]
         public GameObject FinalizeContainer { get; private set; } = null!;
@@ -61,6 +55,12 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public Button DiscordButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ExitButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public MuteButtonView MuteButton { get; private set; } = null!;
 
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;

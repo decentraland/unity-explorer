@@ -25,13 +25,13 @@ namespace DCL.Profiles
                .Log($"ProfileRepository: set finished for profile: {profile}");
         }
 
-        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct)
+        public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct, bool getFromCacheIfPossible = true)
         {
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: get requested for id: {id}, version: {version}, from catalyst: {fromCatalyst}");
 
-            Profile? result = await origin.GetAsync(id, version, fromCatalyst, ct);
+            Profile? result = await origin.GetAsync(id, version, fromCatalyst, ct, getFromCacheIfPossible);
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: get finished for id: {id}, version: {version}, from catalyst: {fromCatalyst}, profile: {result}{(result == null ? "null" : string.Empty)}");

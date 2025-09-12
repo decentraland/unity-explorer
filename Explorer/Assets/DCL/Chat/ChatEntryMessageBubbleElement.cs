@@ -1,7 +1,6 @@
-using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
-using MVC;
 using System;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -25,6 +24,7 @@ namespace DCL.Chat
         [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
         [field: SerializeField] internal RectTransform popupPosition { get; private set; }
         [field: SerializeField] internal GameObject mentionedOutline { get; private set; }
+        [field: SerializeField] internal TMP_Text timestamp { get; private set; }
 
         private Vector2 backgroundSize;
         private bool popupOpen;
@@ -57,14 +57,23 @@ namespace DCL.Chat
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageContentElement.SetMessageContent(data.Message);
 
+            if (data.SentTimestamp.HasValue)
+            {
+                timestamp.gameObject.SetActive(true);
+                timestamp.text = data.SentTimestamp.Value.ToLocalTime().ToString("hh:mm tt", CultureInfo.InvariantCulture);
+            }
+            else
+                timestamp.gameObject.SetActive(false);
+
             backgroundSize = backgroundRectTransform.sizeDelta;
             backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
+            backgroundSize.y += timestamp.gameObject.activeSelf ? timestamp.rectTransform.sizeDelta.y : 0.0f;
             backgroundSize.x = CalculatePreferredWidth(data);
             backgroundRectTransform.sizeDelta = backgroundSize;
             mentionedOutline.SetActive(data.IsMention);
 
             backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
-            messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
+            //messageOptionsButton.onClick.AddListener(OnMessageOptionsClicked);
         }
 
         private void OnMessageOptionsClicked()
@@ -125,6 +134,11 @@ namespace DCL.Chat
                 }
             }
             return count;
+        }
+
+        public void GreyOut(float opacity)
+        {
+            messageContentElement.GreyOut(opacity);
         }
     }
 }

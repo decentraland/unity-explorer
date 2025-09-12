@@ -8,7 +8,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
-using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Chat;
 using DCL.Clipboard;
@@ -64,12 +63,10 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebBrowser webBrowser;
-        private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly URLDomain assetBundleURL;
         private readonly ICursor cursor;
         private readonly Button sidebarButton;
         private readonly Arch.Core.World globalWorld;
@@ -77,7 +74,9 @@ namespace DCL.PluginSystem.Global
         private readonly NametagsData nametagsData;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -90,11 +89,10 @@ namespace DCL.PluginSystem.Global
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService,
             ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
-            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
+            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser,
             IProfileRepository profileRepository,
             IRealmNavigator realmNavigator, IAssetsProvisioner assetsProvisioner,
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
-            URLDomain assetBundleURL,
             ICursor cursor,
             Button sidebarButton,
             Arch.Core.World globalWorld,
@@ -102,7 +100,9 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IThumbnailProvider thumbnailProvider,
+            GalleryEventBus galleryEventBus)
         {
             this.selfProfile = selfProfile;
             this.realmData = realmData;
@@ -116,13 +116,11 @@ namespace DCL.PluginSystem.Global
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
-            this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
             this.realmNavigator = realmNavigator;
             this.assetsProvisioner = assetsProvisioner;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
-            this.assetBundleURL = assetBundleURL;
             this.cursor = cursor;
             this.sidebarButton = sidebarButton;
             this.globalWorld = globalWorld;
@@ -131,6 +129,8 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
+            this.thumbnailProvider = thumbnailProvider;
+            this.galleryEventBus = galleryEventBus;
 
             factory = new InWorldCameraFactory();
             web3IdentityCache.OnIdentityChanged += FetchCameraReelStorage;
@@ -145,8 +145,8 @@ namespace DCL.PluginSystem.Global
         {
             this.settings = settings;
 
-            hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
-            followTarget = factory.CreateFollowTarget(settings.FollowTarget);
+            hud = factory.CreateScreencaptureHud(await assetsProvisioner.ProvideMainAssetValueAsync(settings.ScreencaptureHud, ct: ct));
+            followTarget = factory.CreateFollowTarget(await assetsProvisioner.ProvideMainAssetValueAsync(settings.FollowTarget, ct: ct));
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
@@ -169,18 +169,22 @@ namespace DCL.PluginSystem.Global
                     wearableStorage,
                     wearablesProvider,
                     decentralandUrlsSource,
-                    new ECSThumbnailProvider(realmData, globalWorld, assetBundleURL, webRequestController),
+                    this.thumbnailProvider,
                     new PassportBridgeOpener(),
+                    web3IdentityCache,
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
                     profileRepositoryWrapper
                     ),
                 cameraReelScreenshotsStorage,
+                cameraReelStorageService,
                 systemClipboard,
                 decentralandUrlsSource,
                 webBrowser,
-                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
+                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage,
+                    settings.PhotoSuccessfullySetAsPublicMessage, settings.LinkCopiedMessage),
+                galleryEventBus));
 
 
             inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService, sharedSpaceManager);
@@ -209,8 +213,8 @@ namespace DCL.PluginSystem.Global
         public class InWorldCameraSettings : IDCLPluginSettings
         {
             [field: Header(nameof(InWorldCameraSettings))]
-            [field: SerializeField] internal GameObject ScreencaptureHud { get; private set; }
-            [field: SerializeField] internal GameObject FollowTarget { get; private set; }
+            [field: SerializeField] internal AssetReferenceGameObject ScreencaptureHud { get; private set; }
+            [field: SerializeField] internal AssetReferenceGameObject FollowTarget { get; private set; }
 
             [field: Header("Configs")]
             [field: SerializeField] internal InWorldCameraTransitionSettings TransitionSettings { get; private set; }
@@ -220,13 +224,13 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
             [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
             [field: SerializeField] internal string PhotoSuccessfullyDownloadedMessage { get; private set; }
+            [field: SerializeField] internal string PhotoSuccessfullySetAsPublicMessage { get; private set; }
             [field: SerializeField] internal string LinkCopiedMessage { get; private set; }
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
 
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
 
             [field: SerializeField] internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
-            [field: SerializeField] internal AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
         }
     }
 }

@@ -5,6 +5,8 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
+using DCL.Platforms;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -19,10 +21,12 @@ namespace ECS.StreamableLoading.AssetBundles
         };
 
         private readonly URLDomain streamingAssetURL;
+        private readonly URLDomain assetBundlesURL;
 
-        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL) : base(world)
+        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world)
         {
             this.streamingAssetURL = streamingAssetURL;
+            this.assetBundlesURL = assetBundlesURL;
         }
 
         protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
@@ -40,25 +44,17 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.CurrentSource = AssetSource.EMBEDDED;
                 ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash, assetBundleIntention.CommonArguments.CustomEmbeddedSubDirectory);
                 assetBundleIntention.CommonArguments = ca;
+
                 return;
             }
 
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (assetBundleIntention.Manifest == null)
+                if (assetBundleIntention.AssetBundleManifestVersion == null || assetBundleIntention.AssetBundleManifestVersion.assetBundleManifestRequestFailed)
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
-
-                    return;
-                }
-
-                if (!assetBundleIntention.Manifest.Contains(assetBundleIntention.Hash))
-                {
-                    // Add the failure to the entity
-                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (GetReportCategory(), CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} {assetBundleIntention.Name} not found in the manifest"))));
+                        (GetReportCategory(), CreateException(new ArgumentException($"Manifest version must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
 
                     return;
                 }
@@ -67,10 +63,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
-                ca.URL = assetBundleIntention.Manifest.GetAssetBundleURL(assetBundleIntention.Hash);
-                ca.CacheableURL = assetBundleIntention.Manifest.GetCacheableURL(assetBundleIntention.Hash);
+                assetBundleIntention.Hash = CheckCapitalizationFix(assetBundleIntention.Hash);
+                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = assetBundleIntention.Manifest.ComputeHash(assetBundleIntention.Hash);
+                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate());
             }
         }
 
@@ -81,5 +77,43 @@ namespace ECS.StreamableLoading.AssetBundles
             customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
+
+        public unsafe Hash128 ComputeHash(string hash, string buildDate)
+        {
+            Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
+            buildDate.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
+
+            fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
+        }
+
+        private URLAddress GetAssetBundleURL(bool hasSceneIDInPath, string hash, string sceneID, string assetBundleManifestVersion)
+        {
+            if (hasSceneIDInPath)
+                return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{sceneID}/{hash}"));
+
+            return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{hash}"));
+        }
+
+        private string CheckCapitalizationFix(string inputHash)
+        {
+            // TODO (JUANI): hack, for older Qm assets in Mac. Doesnt happen with bafk because they are all lowercase
+            // This has a long due capitalization problem. The hash in Mac which is requested should always be lower case, since the output files are lowercase and the
+            // request to S3 is case sensitive.
+            // IE: This works: https://ab-cdn.decentraland.org/v35/Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk/qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_mac
+            //     This doesnt: https://ab-cdn.decentraland.org/v35/Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk/QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV_mac
+            // This was previously fixes using this extension (https://github.com/decentraland/unity-explorer/blob/7dd332562143e406fecf7006ac86586add0b0c71/Explorer/Assets/DCL/Infrastructure/SceneRunner/Scene/SceneAssetBundleManifestExtensions.cs#L5)
+            // But we cannot use it anymore since we are not downloading the whole manifest
+            // Maybe one day, when `Qm` deployments dont exist anymore, this method can be removed
+
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+                return inputHash;
+
+            var span = inputHash.AsSpan();
+            return (span.Length >= 2 && span[0] == 'Q' && span[1] == 'm')
+                ? inputHash.ToLowerInvariant()
+                : inputHash;
+        }
+
     }
 }

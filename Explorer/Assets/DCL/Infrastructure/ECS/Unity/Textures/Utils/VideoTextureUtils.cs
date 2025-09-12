@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CRDT;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using System.Collections.Generic;
@@ -17,28 +18,33 @@ namespace ECS.Unity.Textures.Utils
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IObjectPool<Texture2D> videoTexturesPool,
             World world,
-            out VideoRenderingInfo info)
+            out Texture2DData? texture)
         {
-            info = default(VideoRenderingInfo);
+            texture = null;
 
-            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out info.VideoPlayer) || !world.IsAlive(info.VideoPlayer))
+            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out var videoPlayerEntity) || !world.IsAlive(videoPlayerEntity))
                 return false;
 
-            ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(info.VideoPlayer, out bool hasConsumer);
+            ref var consumer = ref world.TryGetRef<VideoTextureConsumer>(videoPlayerEntity, out bool hasConsumer);
 
             if (!hasConsumer)
-                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), info.VideoPlayer);
+                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), videoPlayerEntity);
 
-            info.VideoTexture = consumer.Texture;
-            info.VideoTexture.AddReference();
 
-            ref PrimitiveMeshRendererComponent meshRenderer = ref world.TryGetRef<PrimitiveMeshRendererComponent>(entity, out bool hasRenderer);
+            if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
+            {
+                consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
+            }
+            else if (world.TryGet(entity, out GltfNode gltfNode))
+            {
+                foreach (var renderer in gltfNode.Renderers)
+                    consumer.AddConsumer(renderer);
+            }
 
-            if (hasRenderer)
-                consumer.AddConsumerMeshRenderer(meshRenderer.MeshRenderer);
+            consumer.Texture.AddReference();
+            consumer.IsDirty = true;
 
-            info.VideoRenderer = hasRenderer ? meshRenderer.MeshRenderer : null;
-
+            texture = consumer.Texture;
             return true;
         }
 

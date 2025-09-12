@@ -63,8 +63,11 @@ namespace DCL.Rendering.GPUInstancing.Utils
             }
         }
 
-        public List<CombinedLodsRenderer> BuildCombinedLodsRenderers() =>
-            combineDict.Values.Select(combinedLodsBuilder => combinedLodsBuilder.Build(root.gameObject)).ToList();
+        public List<CombinedLodsRenderer> BuildCombinedLodsRenderers()
+        {
+            CombinedLodsBuilder.RemoveAllMeshTypeSubAssets(root.gameObject);
+            return combineDict.Values.Select(combinedLodsBuilder => combinedLodsBuilder.Build(root.gameObject)).ToList();
+        }
 
         private static bool IsValidRenderer(Renderer rend, MeshFilter meshFilter)
         {

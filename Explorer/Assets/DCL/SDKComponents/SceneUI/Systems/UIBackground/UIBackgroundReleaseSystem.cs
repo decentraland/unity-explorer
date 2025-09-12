@@ -14,7 +14,6 @@ using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
-using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {

@@ -22,6 +22,7 @@ namespace DCL.Multiplayer.Movement.Systems
     {
         public readonly ElementBinding<string> Timestamp = new (string.Empty);
         public readonly ElementBinding<string> Position = new (string.Empty);
+        public readonly ElementBinding<string> RotationY = new (string.Empty);
         public readonly ElementBinding<string> Velocity = new (string.Empty);
         public readonly ElementBinding<string> MovementKind = new (string.Empty);
     }
@@ -111,6 +112,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 widget?.AddCustomMarker(label, new ElementBinding<string>(string.Empty))
                        .AddCustomMarker("Timestamp", messageBinding.Timestamp)
                        .AddCustomMarker("Position", messageBinding.Position)
+                       .AddCustomMarker("Rotation", messageBinding.RotationY)
                        .AddCustomMarker("Velocity", messageBinding.Velocity)
                        .AddCustomMarker("Movement Kind", messageBinding.MovementKind);
             }
@@ -164,6 +166,7 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 bindings.Timestamp.Value = networkMessage.timestamp.ToString();
                 bindings.Position.Value = networkMessage.position.ToString();
+                bindings.RotationY.Value = networkMessage.rotationY.ToString();
                 bindings.Velocity.Value = networkMessage.velocity.ToString();
                 bindings.MovementKind.Value = networkMessage.movementKind.ToString();
             }

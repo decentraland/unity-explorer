@@ -81,6 +81,9 @@ namespace DCL.MarketplaceCredits.Sections
         {
             subView.gameObject.SetActive(false);
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+            // We need to cancel the operation, otherwise after it finishes, it will disable the input, even if the ui is closed already,
+            // making it impossible to move the avatar again
+            fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
         }
 
         public void Dispose()
@@ -195,8 +198,7 @@ namespace DCL.MarketplaceCredits.Sections
                 marketplaceCreditsProgramEndedSubController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
                 totalCreditsWidgetView.gameObject.SetActive(
-                    currentCreditsProgramProgress.season.seasonState != nameof(MarketplaceCreditsUtils.SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS) &&
-                    currentCreditsProgramProgress.season.seasonState != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
+                    currentCreditsProgramProgress.currentSeason.state != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
                 return;
             }
 

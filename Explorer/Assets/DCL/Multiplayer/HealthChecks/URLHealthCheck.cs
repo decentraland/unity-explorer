@@ -39,7 +39,7 @@ namespace DCL.Multiplayer.HealthChecks
 
             try
             {
-                int code = await webRequestController.HeadAsync(new CommonArguments(urlAddress, attemptsCount: ATTEMPTS), ct, ReportCategory.LIVEKIT).StatusCodeAsync();
+                int code = await webRequestController.HeadAsync(new CommonArguments(urlAddress, RetryPolicy.WithRetries(1)), ct, ReportCategory.LIVEKIT).StatusCodeAsync();
                 bool success = ERROR_CODES.Contains(code) == false;
                 return success ? Result.SuccessResult() : Result.ErrorResult($"Cannot connect to {urlAddress}");
             }

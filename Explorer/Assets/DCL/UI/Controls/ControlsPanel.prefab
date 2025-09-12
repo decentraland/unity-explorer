@@ -615,6 +615,7 @@ GameObject:
   - component: {fileID: 7075882287136742815}
   - component: {fileID: 5177279135711129695}
   - component: {fileID: 9076430290872901638}
+  - component: {fileID: 8062342455853253683}
   m_Layer: 0
   m_Name: Controls
   m_TagString: Untagged
@@ -669,7 +670,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4974685691c134a35bcea75af1936381, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -679,3 +680,25 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &8062342455853253683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9218213929928170561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9688e6de611b437aaa1cbd8dd2bcd932, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 9076430290872901638}
+  spriteAsset:
+    m_AssetGUID: 4974685691c134a35bcea75af1936381
+    m_SubObjectName: Controls
+    m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  unloadedColor: {r: 1, g: 1, b: 1, a: 0}
+  loadedColor: {r: 1, g: 1, b: 1, a: 1}

@@ -31,11 +31,13 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
         internal readonly Action<UserData, FriendshipStatus> friendButtonClickAction;
+        internal readonly bool showProfilePicture;
 
-        public UserProfileContextMenuControlSettings(Action<UserData, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null)
+        public UserProfileContextMenuControlSettings(Action<UserData, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null, bool showProfilePicture = true)
         {
             this.friendButtonClickAction = friendButtonClickAction;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
+            this.showProfilePicture = showProfilePicture;
         }
 
         public void SetInitialData(UserData data,

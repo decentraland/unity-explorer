@@ -47,15 +47,12 @@ namespace DCL.Communities.CommunitiesCard
 
             try
             {
-
                 SectionFetchData<T> membersData = currentSectionFetchData;
 
                 view.SetEmptyStateActive(false);
 
                 if (membersData.PageNumber == 0)
                     view.SetLoadingStateActive(true);
-
-                int count = membersData.Items.Count;
 
                 membersData.PageNumber++;
                 membersData.TotalToFetch = await FetchDataAsync(ct);
@@ -65,7 +62,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 view.SetEmptyStateActive(membersData.TotalToFetch == 0);
 
-                view.RefreshGrid(currentSectionFetchData, count == membersData.Items.Count);
+                view.RefreshGrid(currentSectionFetchData, membersData.PageNumber > 1);
             }
             finally { isFetching = false; }
         }

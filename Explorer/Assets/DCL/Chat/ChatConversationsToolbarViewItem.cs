@@ -1,7 +1,8 @@
 using DCL.Chat.History;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
+using DCL.UI.ProfileElements;
+using DCL.Utilities;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -16,6 +17,9 @@ namespace DCL.Chat
         public delegate void RemoveButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void TooltipShownDelegate(GameObject tooltip);
 
+        [SerializeField]
+        private ProfilePictureView profilePictureView;
+        
         [SerializeField]
         protected GameObject thumbnailView;
 
@@ -58,6 +62,13 @@ namespace DCL.Chat
 
         [SerializeField]
         private RectTransform tooltipPosition;
+
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float offlineThumbnailGreyOutOpacity = 0.6f;
+
+        // This is necessary because the data is set while the script has not awakened yet
+        private OnlineStatus storedConnectionStatus = OnlineStatus.OFFLINE;
 
         /// <summary>
         /// Gets or sets the identifier of the conversation.
@@ -119,12 +130,28 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        ///     It replaces the number in the conversation icon with an '@' that indicates that one or more unread messages are
+        ///     mentions.
+        /// </summary>
+        /// <param name="show">When True, it replaces the number. Otherwise it does nothing.</param>
+        public void ShowMentionSign(bool show)
+        {
+            unreadMessagesBadge.ShowMentionsSign(show);
+        }
+
+        /// <summary>
         /// Changes the visual aspect of the connection status indicator.
         /// </summary>
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicatorContainer.SetActive(connectionStatus == OnlineStatus.ONLINE);
+
+            if(thumbnailView != null && thumbnailView.TryGetComponent(out ProfilePictureView profilePictureView))
+                profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
+
+            storedConnectionStatus = connectionStatus;
         }
 
         /// <summary>
@@ -151,6 +178,13 @@ namespace DCL.Chat
             customIcon.gameObject.SetActive(true);
             thumbnailView.gameObject.SetActive(false);
         }
+
+        public void Configure(bool isClosable, bool hasOnlineStatus)
+        {
+            removeButton.gameObject.SetActive(isClosable);
+            connectionStatusIndicatorContainer.SetActive(hasOnlineStatus);
+        }
+
 
         /// <summary>
         /// Shows or hides the "verified" icon.
@@ -213,6 +247,28 @@ namespace DCL.Chat
             tooltip.gameObject.SetActive(false);
             removeButton.gameObject.SetActive(false);
             connectionStatusIndicatorContainer.gameObject.SetActive(false);
+
+            SetConnectionStatus(storedConnectionStatus);
+        }
+
+        public virtual void SetPicture(Sprite? sprite, Color color)
+        {
+            if (profilePictureView != null)
+            {
+                profilePictureView.gameObject.SetActive(true);
+                customIcon.gameObject.SetActive(false);
+
+                bool isLoading = sprite == null;
+
+                profilePictureView.SetLoadingState(isLoading);
+            }
+        }
+
+        public virtual void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
+        {
+            customIcon.gameObject.SetActive(false);
+            profilePictureView.gameObject.SetActive(true);
+            profilePictureView.Bind(viewModel);
         }
     }
 }

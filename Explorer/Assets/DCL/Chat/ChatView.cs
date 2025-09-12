@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
@@ -214,8 +215,8 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
         private bool isSubmitHooked;
-        private CancellationTokenSource privateConversationItemCts = new CancellationTokenSource();
-        private CancellationTokenSource communityConversationItemCts = new CancellationTokenSource();
+        private CancellationTokenSource privateConversationItemCts;
+        private CancellationTokenSource communityConversationItemCts;
         private CancellationTokenSource communityTitleCts;
 
         private ISpriteCache thumbnailCache;
@@ -280,6 +281,7 @@ namespace DCL.Chat
                     conversationsToolbar.SelectConversation(value);
                     chatInputBox.InputBoxText = string.Empty;
                     memberListView.IsVisible = false;
+                    chatTitleBar.SetCurrentChannel(currentChannel.Id);
 
                     switch (currentChannel.ChannelType)
                     {
@@ -523,6 +525,9 @@ namespace DCL.Chat
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
             chatTitleBar.ViewCommunityRequested += OnTitleBarViewCommunityRequested;
 
+            privateConversationItemCts = new CancellationTokenSource();
+            communityConversationItemCts = new CancellationTokenSource();
+
             this.loadingStatus = loadingStatus;
             loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;
 
@@ -731,7 +736,22 @@ namespace DCL.Chat
         /// <param name="destinationChannel">The Id of the conversation.</param>
         public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
         {
-            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
+            int unreadMessages = channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages;
+            IReadOnlyList<ChatMessage> messages = channels[destinationChannel].Messages;
+
+            // Checks if there is any mention to the current user among the unread messages
+            bool hasMentions = false;
+
+            for (int i = 0; i < unreadMessages; ++i)
+            {
+                if (messages[i + 1].IsMention) // Note: +1 due to padding
+                {
+                    hasMentions = true;
+                    break;
+                }
+            }
+
+            conversationsToolbar.SetUnreadMessages(destinationChannel, unreadMessages, hasMentions);
         }
 #endregion
 
@@ -1133,6 +1153,22 @@ namespace DCL.Chat
         public void MoveChannelToTop(ChatChannel.ChannelId channelToMove)
         {
             conversationsToolbar.MoveConversationToPosition(channelToMove, 1);
+        }
+
+        /// <summary>
+        /// Stores a list of users that are online (so if a user is not in it, it's offline). Visual elements (messages, profile pictures, etc.) of offline users
+        /// will be greyed out.
+        /// </summary>
+        /// <param name="onlineUserAddresses">A list of online user addresses.</param>
+        public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
+        {
+            if (currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER })
+                chatTitleBar.SetConnectionStatus(onlineUserAddresses.Contains(currentChannel.Id.Id) ? OnlineStatus.ONLINE
+                                                                                                    : OnlineStatus.OFFLINE);
+            else
+                chatTitleBar.SetMemberListNumberText(onlineUserAddresses.Count.ToString());
+
+            chatMessageViewer.SetOnlineUserAddresses(onlineUserAddresses);
         }
     }
 }

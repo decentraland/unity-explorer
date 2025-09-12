@@ -26,12 +26,6 @@ namespace DCL.Passport.Modules.Badges
         public Color Badge3DImageLockedColor { get; private set; }
 
         [field: SerializeField]
-        public Animator Badge3DAnimator { get; private set; }
-
-        [field: SerializeField]
-        public Material Badge3DMaterial { get; private set; }
-
-        [field: SerializeField]
         public Sprite DefaultBadgeSprite { get; private set; }
 
         [field: SerializeField]

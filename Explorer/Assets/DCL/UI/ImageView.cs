@@ -22,6 +22,12 @@ namespace DCL.UI
         internal float imageLoadingFadeDuration { get; private set; } = 0.3f;
 
         public Sprite ImageSprite => Image.sprite;
+        
+        public Color ImageColor
+        {
+            get => Image.color;
+            set => Image.color = value;
+        }
 
         [SerializeField] private AspectRatioFitter? aspectRatioFitter;
         [SerializeField] private RectTransform? rectTransform;
@@ -83,9 +89,6 @@ namespace DCL.UI
             if (sprite != null && sprite.texture != null)
                 aspectRatioFitter.aspectRatio = fitAndCenterImage ? sprite.texture.width * 1f / sprite.texture.height : 1f;
         }
-
-        public void SetColor(Color color) =>
-            Image.color = color;
 
         public async UniTask FadeInAsync(float duration, CancellationToken ct)
         {

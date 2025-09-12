@@ -59,7 +59,7 @@ namespace ECS.StreamableLoading.Cache.Generic
             else
                 ReportHub.LogError(
                     ReportCategory.SCENE_LOADING,
-                    $"Error getting disk cache content for '{key}' - {diskResult.Error!.Value.State} {diskResult.Error!.Value.Message}"
+                    $"{diskResult.Error!.Value.Message} - Error getting disk cache content for '{key}'"
                 );
 
             return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);

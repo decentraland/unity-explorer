@@ -1,4 +1,4 @@
-﻿using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
 

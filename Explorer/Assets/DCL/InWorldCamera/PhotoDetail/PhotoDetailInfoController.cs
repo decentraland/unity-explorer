@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using DCL.Web3.Identities;
 using UnityEngine;
 using Utility;
 
@@ -39,8 +40,11 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly List<VisiblePersonController> visiblePersonControllers = new ();
+
+        public bool IsReelUserOwned => reelOwnerAddress == web3IdentityCache.Identity?.Address;
 
         private Vector2Int screenshotParcel = Vector2Int.zero;
         private string reelOwnerAddress;
@@ -59,6 +63,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IDecentralandUrlsSource decentralandUrlsSource,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
+            IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -69,6 +74,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
+            this.web3IdentityCache = web3IdentityCache;
 
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
                 view.equippedWearablePrefab,

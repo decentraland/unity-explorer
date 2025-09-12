@@ -12,6 +12,8 @@ namespace DCL.Chat
         [field: SerializeField] internal TMP_Text messageContentText { get; private set; }
         [field: SerializeField] internal TextHyperlinkHandlerElement textHyperlinkHandler { get; private set; }
 
+        [field: SerializeField] private CanvasGroup messageContentCanvas;
+
         public void SetMessageContent(string content)
         {
             messageContentText.SetText(content);
@@ -20,6 +22,11 @@ namespace DCL.Chat
             //of the previous frame, also data for links would not be updated either.
             messageContentText.ForceMeshUpdate(true, true);
             messageContentSizeFitter.SetLayoutVertical();
+        }
+
+        public void GreyOut(float opacity)
+        {
+            messageContentCanvas.alpha = 1.0f - opacity;
         }
     }
 }

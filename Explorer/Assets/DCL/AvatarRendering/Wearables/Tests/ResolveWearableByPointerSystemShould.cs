@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.TestTools;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Tests
@@ -30,10 +30,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
     [TestFixture]
     public class ResolveWearableByPointerSystemShould : UnitySystemTestBase<FinalizeAssetBundleWearableLoadingSystem>
     {
+
+        private readonly string AB_MANIFEST_VERSION = "v0";
+
         [SetUp]
         public void Setup()
         {
-            mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, "v0", Array.Empty<string>(), "hash", "04_10_2024"));
+            mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(AB_MANIFEST_VERSION, "3/3"));
 
             wearableStorage = new WearableStorage();
 
@@ -44,11 +47,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
 
             wearableStorage.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
-
-            world.Create(new DefaultWearablesComponent
-            {
-                ResolvedState = DefaultWearablesComponent.State.Success,
-            });
 
             system = new FinalizeAssetBundleWearableLoadingSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()));
             system.Initialize();
@@ -96,7 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Mocking the result of the LoadWearableManifestSystem
             var assetBundleManifestPromise
-                = AssetBundleManifestPromise.Create(world, new GetWearableAssetBundleManifestIntention
+                = AssetBundleManifestPromise.Create(world, new GetAssetBundleManifestIntention()
                 {
                     CommonArguments = new CommonLoadingArguments("mockURL", cancellationTokenSource: cts),
                 }, PartitionComponent.TOP_PRIORITY);
@@ -142,7 +140,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedAB;
-            mockWearable.ManifestResult = mockedABManifest;
         }
 
         [Test]
@@ -167,7 +164,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             //Assert
             mockUnisexWearable.WearableAssetResults[BodyShape.MALE] = mockedAB;
             mockUnisexWearable.WearableAssetResults[BodyShape.FEMALE] = mockedAB;
-            mockUnisexWearable.ManifestResult = mockedABManifest;
+            //mockUnisexWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]
@@ -190,7 +187,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedDefaultAB;
-            mockWearable.ManifestResult = mockedABManifest;
+            //mockWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]
@@ -214,42 +211,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedDefaultAB;
-            mockWearable.ManifestResult = mockedABManifest;
-        }
-
-        [Test]
-        public void CancelIntentionOnManifestStage()
-        {
-            var resolveWearablePromisesSystem = new ResolveWearablePromisesSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
-            resolveWearablePromisesSystem.Initialize();
-
-            LogAssert.ignoreFailingMessages = true;
-
-            //Arrange
-            IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableStorage.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
-
-            var getWearablesByPointersIntention
-                = new GetWearablesByPointersIntention(new List<URN>
-                    { testUrn }, BodyShape.MALE, Array.Empty<string>());
-
-            var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
-            resolveWearablePromisesSystem.Update(0);
-            system!.Update(0);
-
-            //Act
-            Assert.AreEqual(1, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
-            promise.ForgetLoading(world);
-            system.Update(0);
-
-            //Assert
-            Assert.IsTrue(promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested);
-            Assert.IsFalse(world.IsAlive(promise.Entity));
-
-            //No  Manifest promises should be left
-            Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
-
-            resolveWearablePromisesSystem.Dispose();
+            //mockWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]

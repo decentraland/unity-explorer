@@ -134,6 +134,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 0.25, y: 0.25}
+      offset: {x: 0.5, y: 0.75}
   - Name: RoadSideStraight
     LODGroup: {fileID: 8616102864288008705}
     InstancesBuffer:
@@ -155,6 +157,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 1706921662146658065}
     InstancesBuffer:
@@ -176,6 +180,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: Lamp01
     LODGroup: {fileID: 4167255394123245067}
     InstancesBuffer:
@@ -197,6 +203,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: Bench01
     LODGroup: {fileID: 6567070505923550351}
     InstancesBuffer:
@@ -218,6 +226,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: HedgeMiddleLarge
     LODGroup: {fileID: 6425575648724816458}
     InstancesBuffer:
@@ -239,6 +249,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
 --- !u!1001 &3290788593735690167
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -446,7 +458,7 @@ PrefabInstance:
     - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 6153946807931067593, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: m_Name
       value: HedgeMiddleLarge

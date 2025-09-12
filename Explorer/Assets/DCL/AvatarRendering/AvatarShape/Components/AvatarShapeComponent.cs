@@ -26,8 +26,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public readonly List<CachedAttachment> InstantiatedWearables;
         public readonly List<Renderer> OutlineCompatibleRenderers;
 
+        public bool ShowOnlyWearables;
+
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
-            Color skinColor, Color hairColor, Color eyesColor)
+            Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false)
         {
             ID = id;
             Name = name;
@@ -42,10 +44,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             IsVisible = true;
             HiddenByModifierArea = false;
             IsPreview = false;
+            ShowOnlyWearables = showOnlyWearables;
         }
 
         public void CreateOutlineCompatibilityList()
         {
+            // TODO: support outline for wearables when body is invisible
+            if (ShowOnlyWearables) return;
+
             foreach (var wearable in InstantiatedWearables)
             {
                 if (wearable.OutlineCompatible)

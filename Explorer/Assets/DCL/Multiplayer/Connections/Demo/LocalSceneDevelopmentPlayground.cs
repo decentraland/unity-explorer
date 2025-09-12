@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var launchMode = ILaunchMode.LOCAL_SCENE_DEVELOPMENT;
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, launchMode);
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Org);
             var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource)));
 
             var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(webRequests).WithLog();

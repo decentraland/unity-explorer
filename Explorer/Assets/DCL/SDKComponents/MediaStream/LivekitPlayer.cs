@@ -97,7 +97,7 @@ namespace DCL.SDKComponents.MediaStream
             // See: https://github.com/decentraland/unity-explorer/issues/3796
             lock (room.Participants)
             {
-                foreach (string remoteParticipantIdentity in room.Participants.RemoteParticipantIdentities())
+                foreach ((string remoteParticipantIdentity, _) in room.Participants.RemoteParticipantIdentities())
                 {
                     var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
 
@@ -176,17 +176,11 @@ namespace DCL.SDKComponents.MediaStream
             audioSource.SetVolume(target);
         }
 
-        public void SetVolumeFaded(bool isCurrentScene, float targetVolume, float volumeDelta)
+        public void CrossfadeVolume(float targetVolume, float volumeDelta)
         {
-            switch (isCurrentScene)
-            {
-                case true when Volume < targetVolume:
-                    SetVolume(Mathf.Min(targetVolume, Volume + volumeDelta));
-                    break;
-                case false when Volume > 0:
-                    SetVolume(Mathf.Max(0, targetVolume - volumeDelta));
-                    break;
-            }
+            SetVolume(Volume > targetVolume
+                ? Mathf.Max(0, targetVolume - volumeDelta)
+                : Mathf.Min(targetVolume, Volume + volumeDelta));
         }
 
         public void PlaceAudioAt(Vector3 position)

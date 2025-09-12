@@ -14,22 +14,20 @@ namespace DCL.Browser.DecentralandUrls
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly ILaunchMode launchMode;
-
-        public string DecentralandDomain { get; }
-        public DecentralandEnvironment Environment { get; }
+        private readonly string DecentralandDomain;
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
-            Environment = environment;
             DecentralandDomain = environment.ToString()!.ToLower();
             this.launchMode = launchMode;
 
             if (environment == DecentralandEnvironment.Today)
             {
-                //The today environemnt is a mixture of the org and today enviroments.
-                //We want to fetch pointers from org, but asset bundles from today. To achieve this, we fill the cache with `.today` for those two urls and then go back to org.
-                //Also, we override the content and lambdas url to a dedicate testing catalyst.
-                //Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
+                // The today environemnt is a mixture of the org and today enviroments.
+                // Asset delivery (registry and S3) are used with the `.today` extension
+                // Content and lambdas url are hardcoded to a particular catalyst
+                // All of the remaining urls should use the `Org` domain, thats why we change the domain to forcefully `.org`
+                // Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
                 Url(DecentralandUrl.AssetBundleRegistry);
                 Url(DecentralandUrl.AssetBundlesCDN);
                 CONTENT_URL_OVERRIDE = "https://peer-testing.decentraland.org/content/";
@@ -63,9 +61,6 @@ namespace DCL.Browser.DecentralandUrls
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-        public bool RequiresAboutOverride() =>
-            Environment == DecentralandEnvironment.Today;
-
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
@@ -76,6 +71,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
+                DecentralandUrl.ContentPolicy => $"https://decentraland.{ENV}/content",
+                DecentralandUrl.CodeOfEthics => $"https://decentraland.{ENV}/ethics",
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
                 DecentralandUrl.ApiWorlds => $"https://places.decentraland.{ENV}/api/worlds",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
@@ -90,6 +87,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.LocalGateKeeperSceneAdapter => "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
                 DecentralandUrl.ChatAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
+                DecentralandUrl.EventsWebpage => $"https://decentraland.{ENV}/events",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
@@ -124,6 +122,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
                 DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",
                 DecentralandUrl.Communities => $"https://social-api.decentraland.{ENV}/v1/communities",
+                DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
                 DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
                 DecentralandUrl.DecentralandLambdasOverride => LAMBDAS_URL_OVERRIDE,
                 DecentralandUrl.DecentralandContentOverride => CONTENT_URL_OVERRIDE,

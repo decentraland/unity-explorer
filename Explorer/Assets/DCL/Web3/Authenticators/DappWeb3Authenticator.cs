@@ -185,7 +185,7 @@ namespace DCL.Web3.Authenticators
                 else
                     codeVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
 
-                LoginAuthApiResponse response = await RequestWalletConfirmationAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
+                LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
 
                 await DisconnectFromAuthApiAsync();
@@ -355,7 +355,7 @@ namespace DCL.Web3.Authenticators
 
                 signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                MethodResponse response = await RequestWalletConfirmationAsync<MethodResponse>(authenticationResponse.requestId, signatureExpiration, ct);
+                MethodResponse response = await RequestSignatureAsync<MethodResponse>(authenticationResponse.requestId, signatureExpiration, ct);
 
                 if (authApiPendingOperations <= 1)
                     await DisconnectFromAuthApiAsync();
@@ -417,7 +417,7 @@ namespace DCL.Web3.Authenticators
         private void ProcessCodeVerificationStatus(SocketIOResponse response) =>
             codeVerificationTask?.TrySetResult(response);
 
-        private async UniTask<T> RequestWalletConfirmationAsync<T>(string requestId, DateTime expiration, CancellationToken ct)
+        private async UniTask<T> RequestSignatureAsync<T>(string requestId, DateTime expiration, CancellationToken ct)
         {
             webBrowser.OpenUrl($"{signatureWebAppUrl}/{requestId}");
 
@@ -432,6 +432,7 @@ namespace DCL.Web3.Authenticators
                 return response.GetValue<T>();
             }
             catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
+            catch (WebSocketException e) { throw new Web3SignatureException("An error occurred while requesting signature: unable to complete the operation due to a WebSocket issue", e); }
         }
 
         private async UniTask<SignatureIdResponse> RequestEthMethodWithSignatureAsync(
@@ -472,6 +473,8 @@ namespace DCL.Web3.Authenticators
 
                 authApiWebSocket.On("outcome", ProcessSignatureOutcomeMessage);
                 authApiWebSocket.On("request-validation-status", ProcessCodeVerificationStatus);
+                authApiWebSocket.OnDisconnected += OnWebSocketDisconnected;
+                authApiWebSocket.OnError += OnWebSocketError;
             }
 
             if (authApiWebSocket.Connected) return;
@@ -480,6 +483,18 @@ namespace DCL.Web3.Authenticators
                  .ConnectAsync()
                  .AsUniTask()
                  .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+        }
+
+        private void OnWebSocketError(object sender, string error)
+        {
+            signatureOutcomeTask?.TrySetException(new WebSocketException(WebSocketError.Faulted, error));
+            codeVerificationTask?.TrySetException(new WebSocketException(WebSocketError.Faulted, error));
+        }
+
+        private void OnWebSocketDisconnected(object sender, string reason)
+        {
+            signatureOutcomeTask?.TrySetException(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, reason));
+            codeVerificationTask?.TrySetException(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, reason));
         }
 
         private bool IsReadOnly(EthApiRequest request)
@@ -493,15 +508,15 @@ namespace DCL.Web3.Authenticators
 
         private string GetNetVersion() =>
             // TODO: this is a temporary thing until we solve the network in a better way
-            environment == DecentralandEnvironment.Org ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
+            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
 
         private string GetChainId() =>
             // TODO: this is a temporary thing until we solve the network in a better way
-            environment == DecentralandEnvironment.Org ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
+            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
 
         private string GetNetworkId() =>
             // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
-            environment == DecentralandEnvironment.Org ? NETWORK_MAINNET : NETWORK_SEPOLIA;
+            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? NETWORK_MAINNET : NETWORK_SEPOLIA;
 
         /// <summary>
         /// Waits until we receive the verification status from the server
@@ -526,7 +541,8 @@ namespace DCL.Web3.Authenticators
                     codeVerificationCallback?.Invoke(code, expiration, requestId);
                 }
             }
-            catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
+            catch (TimeoutException e) { throw new CodeVerificationException($"Code verification expired: {expiration}", e); }
+            catch (WebSocketException e) { throw new CodeVerificationException("An error occurred while verifying the code: unable to complete the operation due to a WebSocket issue", e); }
         }
     }
 }

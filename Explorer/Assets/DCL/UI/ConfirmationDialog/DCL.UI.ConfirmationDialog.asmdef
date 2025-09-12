@@ -1,0 +1,22 @@
+{
+    "name": "DCL.UI.ConfirmationDialog",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ff38b7506167d314d987b4b8e8406988",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:52421c42d33594c47a6fbd48b45b1259",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:36cf0712f9b9c4da5a8ae98277cd3d6e"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

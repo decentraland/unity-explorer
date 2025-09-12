@@ -15,8 +15,62 @@ MonoBehaviour:
   m_GroupName: Localization-Assets-English (en)
   m_GUID: bbf196456d6041d4e9cb25f216e21f0c
   m_SerializeEntries:
-  - m_GUID: d5a5afcb41e894aef83f169d6b2bc67c
-    m_Address: Smaller_Career_Quest_White
+  - m_GUID: 3d9c80e4179389748acbca560257f6e2
+    m_Address: Camera
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70bdbdf1913a730428a9a7301e1b4845
+    m_Address: Wearables1
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7ea30c03552cb4a01b3d79db84bd812f
+    m_Address: Events
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1126b9fcc6324d31ad4c40328649bf8
+    m_Address: GenesisCity
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bc9bddc06da3a4b72ba1b3c950a136fc
+    m_Address: Communities
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd69dcae9b8dc4e4ea4b6309c41a3dbe
+    m_Address: Badges
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cab127bf632384449be1ce1e91be26db
+    m_Address: CreatorHub
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e818c720eea4d4795938e38570ddb5fa
+    m_Address: Worlds
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ef85de092088847a78bcd37f5e2bbb4a
+    m_Address: MarketplaceCredits
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f0234be42f99e0d4b957acfa0a0badea
+    m_Address: Emotes
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en

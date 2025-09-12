@@ -18,5 +18,14 @@ MonoBehaviour:
   mapChunk: {fileID: 1448041327893328029, guid: 63b41593f2fa6c04d8772db2b2b61589, type: 3}
   terrainData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
   worldsTerrainData: {fileID: 11400000, guid: 073a968567df25b4988ecaf238256181, type: 2}
-  gpuiAssets: {fileID: 11400000, guid: 4177f048c26079f4296ecc8377c8d7fb, type: 2}
+  gpuiAssets: {fileID: 11400000, guid: 31fff183471b657468eb7aef41a49a38, type: 2}
+  <TreesProfile>k__BackingField: {fileID: 11400000, guid: 9f94bf94540900949b7a7e777ebff662, type: 2}
   detailDistanceValue: 1000
+  <GroundMaterial>k__BackingField: {fileID: 2100000, guid: c882e23b0b2b83c45b15f00494fd796c, type: 2}
+  <GroundInstanceCapacity>k__BackingField: 80
+  <TerrainHeight>k__BackingField: 16
+  <GrassIndirectRenderer>k__BackingField: {fileID: 11400000, guid: dba3e10a9bd1634418aefb13082ff380, type: 2}
+  <GroundMeshes>k__BackingField:
+  - {fileID: 1394718660543912083, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
+  - {fileID: 2474922959326173943, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
+  - {fileID: -3615330361707025511, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}

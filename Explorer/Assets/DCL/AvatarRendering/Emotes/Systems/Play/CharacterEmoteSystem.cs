@@ -6,6 +6,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Character.Components;
@@ -23,12 +24,15 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
+using ECS.SceneLifeCycle;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Play
 {
@@ -36,12 +40,14 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(AvatarGroup))]
     [UpdateAfter(typeof(RemoteEmotesSystem))]
+    [UpdateAfter(typeof(LoadEmotesByPointersSystem))]
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
     [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         // todo: use this to add nice Debug UI to trigger any emote?
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly IScenesCache scenesCache;
 
         private readonly IEmoteStorage emoteStorage;
         private readonly EmotePlayer emotePlayer;
@@ -55,11 +61,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             AudioSource audioSource,
             IDebugContainerBuilder debugContainerBuilder,
             bool localSceneDevelopment,
-            IAppArgs appArgs) : base(world)
+            IAppArgs appArgs,
+            IScenesCache scenesCache) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.scenesCache = scenesCache;
             emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
         }
 
@@ -184,22 +192,32 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
+                    if (emote.IsLoading)
+                        return;
+
                     // emote failed to load? remove intent
-                    if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
+                    if (emote.Model is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n the DTO");
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
+
+                    // emote failed to load? remove intent
+                    if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } and { IsLSDAsset: false })
+                    {
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
-                    StreamableLoadingResult<AttachmentRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
 
-                    // the emote is still loading? don't remove the intent yet, wait for it
-                    if (streamableAsset == null)
+                    //Loading not complete
+                    if (emote.AssetResults[bodyShape] == null)
                         return;
 
-                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = streamableAsset.Value;
+                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
@@ -213,14 +231,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    if (!emotePlayer.Play(mainAsset, audioClip, emoteIntent.TriggerSource != TriggerSource.PREVIEW && emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.DTO.assetBundleManifestVersion.GetAssetBundleManifestVersion()} should be >= 16");
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
                 else
+                {
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
-                    LoadEmote(emoteId, avatarShapeComponent.BodyShape);
+                    CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
+                }
+
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -254,27 +275,22 @@ namespace DCL.AvatarRendering.Emotes.Play
             characterController.enabled = !emoteComponent.IsPlayingEmote;
         }
 
-        private void LoadEmote(URN emoteId, BodyShape bodyShape)
-        {
-            var isLoadingThisEmote = false;
-
-            World.Query(in new QueryDescription().WithAll<EmotePromise>(), (Entity entity, ref EmotePromise promise) =>
-            {
-                if (!promise.IsConsumed && promise.LoadingIntention.Pointers.Contains(emoteId))
-                    isLoadingThisEmote = true;
-            });
-
-            if (isLoadingThisEmote) return;
-
-            World.Create(CreateEmotePromise(emoteId, bodyShape));
-        }
-
-        private EmotePromise CreateEmotePromise(URN urn, BodyShape bodyShape)
+        private void CreateEmotePromise(URN urn, BodyShape bodyShape)
         {
             loadEmoteBuffer[0] = urn;
 
-            return EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
-                PartitionComponent.TOP_PRIORITY);
+            if (GetSceneEmoteFromRealmIntention.TryParseFromURN(urn, out string sceneId, out string emoteHash, out bool loop))
+            {
+                if (!scenesCache.TryGetBySceneId(sceneId, out ISceneFacade? scene)) return;
+
+                SceneEmoteFromRealmPromise.Create(World,
+                    new GetSceneEmoteFromRealmIntention(sceneId, scene!.SceneData.SceneEntityDefinition.assetBundleManifestVersion!, emoteHash, loop, bodyShape),
+                    PartitionComponent.TOP_PRIORITY);
+            }
+            else
+                EmotePromise.Create(World,
+                    EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
+                    PartitionComponent.TOP_PRIORITY);
         }
     }
 }

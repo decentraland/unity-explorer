@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using System;
 using TMPro;
@@ -14,8 +15,10 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject userRoleContainer = null!;
         [SerializeField] private TMP_Text userRole = null!;
         [field: SerializeField] public ImageView communityThumbnail = null!;
-        [SerializeField] private GameObject communityLiveMark = null!;
         [SerializeField] private Button mainButton = null!;
+        [SerializeField] private ListenersCountView listenersCountView;
+        [SerializeField] private GameObject requestsReceivedContainer = null!;
+        [SerializeField] private TMP_Text requestsReceivedText = null!;
 
         private string currentCommunityId;
 
@@ -42,7 +45,10 @@ namespace DCL.Communities.CommunitiesBrowser
             userRole.text = $"{char.ToUpperInvariant(roleString[0])}{roleString[1..]}";
         }
 
-        public void SetLiveMarkAsActive(bool isLiveMark) =>
-            communityLiveMark.SetActive(isLiveMark);
+        public void SetRequestsReceived(int requestsCount)
+        {
+            requestsReceivedContainer.SetActive(requestsCount > 0);
+            requestsReceivedText.text = $"{requestsCount} Request{(requestsCount > 1 ? "s" : "")} Received";
+        }
     }
 }

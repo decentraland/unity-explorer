@@ -35,7 +35,7 @@ namespace DCL.Chat.MessageBus
             ChatMessageFactory messageFactory,
             IMessageDeduplication<double> messageDeduplication,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            DecentralandEnvironment decentralandEnvironment)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
@@ -43,9 +43,10 @@ namespace DCL.Chat.MessageBus
             this.messageFactory = messageFactory;
 
             // Depending on the selected environment, we send the community messages to one user or another
-            string serverEnv = decentralandUrlsSource.Environment switch
+            string serverEnv = decentralandEnvironment switch
                                {
                                    DecentralandEnvironment.Org => "prd",
+                                   DecentralandEnvironment.Today => "prd",
                                    DecentralandEnvironment.Zone => "dev",
                                    _ => "local"
                                };
@@ -125,7 +126,7 @@ namespace DCL.Chat.MessageBus
                 string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
                                                                            : receivedMessage.FromWalletId;
 
-                ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Topic);
+                ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
 
                 MessageAdded?.Invoke(parsedChannelId, channelType, newMessage);
             }

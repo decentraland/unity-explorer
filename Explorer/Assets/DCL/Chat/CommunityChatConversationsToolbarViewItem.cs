@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.UI;
 using DCL.UI.Communities;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Chat
 {
@@ -20,6 +21,34 @@ namespace DCL.Chat
 
             if(imageUrl != null)
                 thumbnailView.GetComponent<CommunityThumbnailView>().LoadThumbnailAsync(thumbnailCache, imageUrl, ct).Forget();
+        }
+
+        public override void SetPicture(Sprite? sprite, Color color)
+        {
+            customIcon.gameObject.SetActive(false);
+            thumbnailView.SetActive(true);
+
+            var communityView = thumbnailView.GetComponent<CommunityThumbnailView>();
+            communityView.SetImage(sprite);
+        }
+
+        public void SetLoadedThumbnail(Sprite thumbnail)
+        {
+            customIcon.gameObject.SetActive(false);
+            thumbnailView.SetActive(true);
+
+            var thumbnailComponent = thumbnailView.GetComponent<CommunityThumbnailView>();
+
+            if (thumbnail != null)
+            {
+                thumbnailComponent.SetImage(thumbnail);
+            }
+        }
+        
+        protected override void Start()
+        {
+            base.Start();
+            removeButton.gameObject.SetActive(true);
         }
     }
 }

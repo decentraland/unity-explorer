@@ -30,7 +30,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWearableStorage wearableStorage;
         private readonly IRealmData realmData;
-        private SingleInstanceEntity defaultWearablesState;
 
         public ResolveWearablePromisesSystem(
             World world,
@@ -46,19 +45,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         public override void Initialize()
         {
-            defaultWearablesState = World!.CacheDefaultWearablesState();
         }
 
         protected override void Update(float t)
         {
-            bool defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
-
-            ResolveWearablePromiseQuery(World, defaultWearablesResolved);
+            ResolveWearablePromiseQuery(World);
         }
 
         [Query]
         [None(typeof(StreamableResult))]
-        private void ResolveWearablePromise([Data] bool defaultWearablesResolved, in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
+        private void ResolveWearablePromise(in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -66,15 +62,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            // Instead of checking particular resolution, for simplicity just check if the default wearables are resolved
-            // if it is required
-            if (wearablesByPointersIntention.FallbackToDefaultWearables && !defaultWearablesResolved)
-                return; // Wait for default wearables to be resolved
-
             List<URN> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get()!;
             List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get()!;
 
-            var successfulResults = 0;
+            var resolvedResults = 0;
             int finishedDTOs = 0;
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
@@ -127,7 +118,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (hideWearablesResolution.VisibleWearables == null)
                     WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, ref hideWearablesResolution);
 
-                successfulResults += wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count;
+                resolvedResults += wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count;
 
                 for (var i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
                 {
@@ -137,7 +128,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     if (CreateAssetPromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
                     if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
 
-                    successfulResults++;
+                    resolvedResults++;
 
                     // Reference must be added only once when the wearable is resolved
                     if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
@@ -152,15 +143,19 @@ namespace DCL.AvatarRendering.Wearables.Systems
             // If there are no missing pointers, we release the list
             WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
 
-            if (successfulResults == wearablesByPointersIntention.Pointers.Count)
+            if (resolvedResults == wearablesByPointersIntention.Pointers.Count)
+            {
+                //One last safeguard in case the dto was successfull but the assets failed
+                WearableComponentsUtils.ConfirmWearableVisibility(wearablesByPointersIntention.BodyShape, ref hideWearablesResolution);
                 World.Add(entity, new StreamableResult(new WearablesResolution(hideWearablesResolution.VisibleWearables, hideWearablesResolution.HiddenCategories)));
+            }
         }
 
         private void CreateMissingPointersPromise(List<URN> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,
-                new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
+                new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
 
@@ -172,11 +167,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
 
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (!dtoHasContentDownloadUrl && component.ManifestResult is { Succeeded: false }) return false;
-
-            if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) // Manifest is required for Web loading only
-                && !dtoHasContentDownloadUrl && component.ManifestResult == null)
-                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
+            if (!dtoHasContentDownloadUrl && component.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed) return false;
 
             if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
             {

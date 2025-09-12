@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -12,39 +13,124 @@ namespace DCL.UI.ProfileElements
 {
     public class ProfilePictureView : MonoBehaviour, IDisposable, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action? PointerEnter;
-        public event Action? PointerExit;
-
         [SerializeField] private ImageView thumbnailImageView;
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
+        [SerializeField] private Image thumbnailFrame;
 
-        private ProfileRepositoryWrapper profileRepositoryWrapper;
+        private IDisposable? binding;
         private CancellationTokenSource? cts;
         private string? currentUrl;
+
+        private float greyOutOpacity;
+
+        private bool originalColorsInitialized;
+        private Color originalThumbnailBackgroundColor;
+        private Color originalThumbnailFrameColor;
+
+        private Color originalThumbnailImageColor;
+
+        [Obsolete]
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public void Dispose()
         {
             cts.SafeCancelAndDispose();
+
+            binding?.Dispose();
         }
 
-        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct)
+        public void OnPointerEnter(PointerEventData eventData) =>
+            PointerEnter?.Invoke();
+
+        public void OnPointerExit(PointerEventData eventData) =>
+            PointerExit?.Invoke();
+
+        public event Action? PointerEnter;
+        public event Action? PointerExit;
+
+        public void Bind(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModelProp)
         {
-            this.profileRepositoryWrapper = profileDataProvider;
-            SetupOnlyColor(userColor);
-            await LoadThumbnailAsync(faceSnapshotUrl, ct);
+            binding?.Dispose();
+
+            viewModelProp.UpdateValue(viewModelProp.Value.SetProfile(viewModelProp.Value.Thumbnail.TryBind()));
+
+            OnThumbnailWithColorUpdated(viewModelProp.Value);
+            binding = viewModelProp.Subscribe(OnThumbnailWithColorUpdated);
         }
 
-        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _="")
+        public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp, Color userNameColor)
         {
-            this.profileRepositoryWrapper = profileDataProvider;
-            SetupOnlyColor(userColor);
-            LoadThumbnailAsync(faceSnapshotUrl).Forget();
+            // Unbind previous binding if exists
+            binding?.Dispose();
+
+            viewModelProp.UpdateValue(viewModelProp.Value.TryBind());
+
+            SetBaseBackgroundColor(userNameColor);
+
+            OnThumbnailUpdated(viewModelProp.Value);
+            binding = viewModelProp.Subscribe(OnThumbnailUpdated);
         }
 
-        public void SetupOnlyColor(Color userColor)
+        private void OnThumbnailWithColorUpdated(ProfileThumbnailViewModel.WithColor model)
         {
-            thumbnailBackground.color = userColor;
+            SetBaseBackgroundColor(model.ProfileColor);
+            OnThumbnailUpdated(model.Thumbnail);
+        }
+
+        private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
+        {
+            switch (model.ThumbnailState)
+            {
+                case ProfileThumbnailViewModel.State.LOADING:
+                    SetLoadingState(true);
+                    thumbnailImageView.Alpha = 0f;
+                    break;
+                case ProfileThumbnailViewModel.State.FALLBACK:
+                case ProfileThumbnailViewModel.State.LOADED_FROM_CACHE:
+                    thumbnailImageView.SetImage(model.Sprite!);
+                    SetLoadingState(false);
+                    thumbnailImageView.Alpha = 1f;
+                    break;
+                case ProfileThumbnailViewModel.State.LOADED_REMOTELY:
+                    SetThumbnailImageWithAnimationAsync(model.Sprite!, destroyCancellationToken).Forget();
+                    break;
+                default:
+                    thumbnailImageView.SetImage(defaultEmptyThumbnail);
+                    SetLoadingState(false);
+                    thumbnailImageView.Alpha = 1f;
+                    break;
+            }
+        }
+
+        [Obsolete("Use" + nameof(Bind) + " instead.")]
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct,
+            bool rethrowError = false)
+        {
+            profileRepositoryWrapper = profileDataProvider;
+            SetBackgroundColor(userColor);
+            await LoadThumbnailAsync(faceSnapshotUrl, rethrowError, ct);
+        }
+
+        [Obsolete("Use" + nameof(Bind) + " instead.")]
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _ = "")
+        {
+            profileRepositoryWrapper = profileDataProvider;
+            SetBackgroundColor(userColor);
+            LoadThumbnailAsync(faceSnapshotUrl, false).Forget();
+        }
+
+        [Obsolete("Use" + nameof(Bind) + " instead.")]
+        public void SetImage(Sprite image)
+        {
+            thumbnailImageView.SetImage(image);
+            SetLoadingState(false);
+        }
+
+        [Obsolete("Use" + nameof(Bind) + " instead.")]
+        public void SetBackgroundColor(Color userColor)
+        {
+            SetBaseBackgroundColor(userColor);
         }
 
         public void SetLoadingState(bool isLoading)
@@ -66,11 +152,11 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, bool rethrowError, CancellationToken ct = default)
         {
             if (faceSnapshotUrl.Equals(currentUrl)) return;
 
-            cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+            cts = ct != default(CancellationToken) ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
             currentUrl = faceSnapshotUrl;
 
             try
@@ -97,23 +183,53 @@ namespace DCL.UI.ProfileElements
 
                 await SetThumbnailImageWithAnimationAsync(sprite ? sprite! : defaultEmptyThumbnail, cts.Token);
             }
-            catch (OperationCanceledException)
-            {
-                currentUrl = null;
-            }
+            catch (OperationCanceledException) { currentUrl = null; }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
-
                 currentUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
+
+                if (rethrowError)
+                    throw;
+
+                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
             }
         }
 
-        public void OnPointerEnter(PointerEventData eventData) =>
-            PointerEnter?.Invoke();
+        private void SetBaseBackgroundColor(Color newBaseColor)
+        {
+            originalThumbnailBackgroundColor = newBaseColor;
+            GreyOut(greyOutOpacity);
+        }
 
-        public void OnPointerExit(PointerEventData eventData) =>
-            PointerExit?.Invoke();
+        public void GreyOut(float opacity)
+        {
+            greyOutOpacity = opacity;
+
+            InitializeOriginalColors();
+
+            if (thumbnailImageView != null)
+                thumbnailImageView.ImageColor = Color.Lerp(originalThumbnailImageColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailImageColor.a), opacity);
+
+            if (thumbnailBackground != null)
+                thumbnailBackground.color = Color.Lerp(originalThumbnailBackgroundColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailBackgroundColor.a), opacity);
+
+            if (thumbnailFrame != null)
+                thumbnailFrame.color = Color.Lerp(originalThumbnailFrameColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailFrameColor.a), opacity);
+        }
+
+        private void InitializeOriginalColors()
+        {
+            if (originalColorsInitialized)
+                return;
+
+            if (thumbnailImageView != null)
+                originalThumbnailImageColor = thumbnailImageView.ImageColor;
+
+            if (thumbnailFrame != null)
+                originalThumbnailFrameColor = thumbnailFrame.color;
+
+            originalColorsInitialized = true;
+        }
     }
 }

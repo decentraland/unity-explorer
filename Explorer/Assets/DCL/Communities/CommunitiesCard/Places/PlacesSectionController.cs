@@ -3,32 +3,45 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
+using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
-using DCL.UI;
+using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
-using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
+using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
-    public class PlacesSectionController : CommunityFetchingControllerBase<PlaceInfo, PlacesSectionView>
+    public class PlacesSectionController : CommunityFetchingControllerBase<PlaceData, PlacesSectionView>
     {
-        private const int PAGE_SIZE = 10;
+        public struct PlaceData
+        {
+            public PlaceInfo PlaceInfo;
+            public string OwnerName;
+        }
 
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
+        private const int PAGE_SIZE = 10;
+        private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
+
         private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
         private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
         private const string COMMUNITY_PLACES_DELETE_ERROR_MESSAGE = "There was an error deleting the community place. Please try again.";
+        private const string GET_OWNERS_NAMES_ERROR_MESSAGE = "There was an error getting owners names. Please try again.";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
@@ -38,20 +51,20 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
 
         private readonly PlacesSectionView view;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
+        private readonly SectionFetchData<PlaceData> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
-        private readonly WarningNotificationView inWorldSuccessNotificationView;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly LambdasProfilesProvider lambdasProfilesProvider;
+        private readonly Dictionary<string, string> userNames = new (StringComparer.OrdinalIgnoreCase);
 
         private string[] communityPlaceIds;
 
-        protected override SectionFetchData<PlaceInfo> currentSectionFetchData => placesFetchData;
+        protected override SectionFetchData<PlaceData> currentSectionFetchData => placesFetchData;
 
         private CommunityData? communityData = null;
         private bool userCanModify = false;
@@ -59,25 +72,23 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public PlacesSectionController(PlacesSectionView view,
             ThumbnailLoader thumbnailLoader,
-            CommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IPlacesAPIService placesAPIService,
-            WarningNotificationView inWorldWarningNotificationView,
-            WarningNotificationView inWorldSuccessNotificationView,
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser) : base (view, PAGE_SIZE)
+            IWebBrowser webBrowser,
+            LambdasProfilesProvider lambdasProfilesProvider) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
             this.placesAPIService = placesAPIService;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
-            this.inWorldSuccessNotificationView = inWorldSuccessNotificationView;
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.thumbnailLoader = thumbnailLoader;
+            this.lambdasProfilesProvider = lambdasProfilesProvider;
 
             view.InitGrid(thumbnailLoader, cancellationToken);
 
@@ -136,13 +147,12 @@ namespace DCL.Communities.CommunitiesCard.Places
 
                 if (!result.Success)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE));
                     return;
                 }
 
-                placesFetchData.Items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
-                RefreshGrid(false);
+                placesFetchData.Items.RemoveAll(elem => elem.PlaceInfo.id.Equals(placeInfo.id));
+                RefreshGrid(true);
             }
         }
 
@@ -158,6 +168,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private void OnElementInfoButtonClicked(PlaceInfo place)
         {
+            // The button for this callback is disabled, a user cannot reach this point.
             throw new NotImplementedException();
         }
 
@@ -173,9 +184,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             clipboard.Set(GetPlaceCopyLink(place));
 
-            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken)
-                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                                          .Forget();
+            Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private static string GetPlaceCopyLink(PlaceInfo place)
@@ -204,8 +213,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(FAVORITE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_PLACE_ERROR_MESSAGE));
                 }
 
                 placeInfo.user_favorite = favoriteValue;
@@ -229,8 +237,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetDislikeToggle(!dislikeValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(DISLIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DISLIKE_PLACE_ERROR_MESSAGE));
 
                     return;
                 }
@@ -261,8 +268,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetLikeToggle(!likeValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(LIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LIKE_PLACE_ERROR_MESSAGE));
 
                     return;
                 }
@@ -303,12 +309,40 @@ namespace DCL.Communities.CommunitiesCard.Places
             if (!response.Success || !response.Value.ok)
             {
                 placesFetchData.PageNumber--;
-                await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
                 return placesFetchData.TotalToFetch;
             }
 
-            placesFetchData.Items.AddRange(response.Value.data);
+            using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
+            foreach (var place in response.Value.data)
+               if (!userNames.ContainsKey(place.owner))
+                   userIds.Value.Add(place.owner);
+
+            if (userIds.Value.Count > 0)
+            {
+                var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
+                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!getAvatarsDetailsResult.Success)
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
+                else
+                    foreach (var avatarDetails in getAvatarsDetailsResult.Value)
+                    {
+                        if (avatarDetails.avatars.Count == 0)
+                            continue;
+
+                        ProfileJsonDto avatar = avatarDetails.avatars[0];
+                        userNames.Add(avatar.userId, avatar.name);
+                        break;
+                    }
+            }
+
+            foreach (var place in response.Value.data)
+                placesFetchData.Items.Add(new PlaceData
+                {
+                    PlaceInfo = place,
+                    OwnerName = userNames.GetValueOrDefault(place.owner, string.Empty)
+                });
 
             return response.Value.total;
         }

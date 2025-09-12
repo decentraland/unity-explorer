@@ -1,12 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using UnityEngine.Scripting;
 
 namespace DCL.Ipfs
 {
     /// <summary>
     ///     Provides support for polymorphic definition of "position"
     /// </summary>
+    [Preserve]
     public class SpawnPointCoordinateConverter : JsonConverter<SceneMetadata.SpawnPoint.Coordinate>
     {
         public override void WriteJson(JsonWriter writer, SceneMetadata.SpawnPoint.Coordinate value, JsonSerializer serializer)

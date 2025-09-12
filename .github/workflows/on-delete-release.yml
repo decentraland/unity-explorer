@@ -11,10 +11,10 @@ jobs:
     container:
       image: amazon/aws-cli:latest
     steps:
-      - name: Install jq and curl
+      - name: Install jq
         run: |
           yum update -y
-          yum install -y jq curl
+          yum install -y jq
 
       - name: Check Deleted and Update Latest
         env:

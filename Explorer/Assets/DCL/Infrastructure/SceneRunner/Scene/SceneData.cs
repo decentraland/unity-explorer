@@ -34,7 +34,6 @@ namespace SceneRunner.Scene
         public SceneData(
             ISceneContent sceneContent,
             SceneEntityDefinition sceneDefinition,
-            SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
@@ -42,7 +41,6 @@ namespace SceneRunner.Scene
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;
-            AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
@@ -84,8 +82,12 @@ namespace SceneRunner.Scene
             if (TryGetContentUrl(url, out result))
                 return true;
 
-            if (!CHECK_ALLOWED_MEDIA_HOSTNAMES
-                || (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) && IsUrlDomainAllowed(url)))
+            bool isAllowed = CHECK_ALLOWED_MEDIA_HOSTNAMES
+                ? HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) // permission gate
+                  && IsUrlDomainAllowed(url) // whitelist
+                : Uri.TryCreate(url, UriKind.Absolute, out _); // general syntax check
+
+            if (isAllowed)
             {
                 result = URLAddress.FromString(url);
                 return true;

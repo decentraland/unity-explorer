@@ -48,9 +48,12 @@ namespace Global.Editor
 
         private static Rect DrawTargetScene(Rect propertyPosition, SerializedProperty parent, InitialRealm initialRealm)
         {
+            SerializedProperty editorSceneStartPosition = parent.FindPropertyRelative(nameof(RealmLaunchSettings.EditorSceneStartPosition));
+            EditorGUI.PropertyField(propertyPosition, editorSceneStartPosition, new GUIContent("Editor Start Position", "If this is on, the feature flag position will not be set"), true);
+            propertyPosition.y += singleLineHeight;
+
             Rect fieldPosition = propertyPosition;
             SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.targetScene));
-
             const float BUTTON_WIDTH = 80f;
 
             if (TEST_REALMS.Contains(initialRealm))
@@ -89,7 +92,7 @@ namespace Global.Editor
         {
             if (initialRealm == InitialRealm.World)
             {
-                SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.targetWorld));
+                SerializedProperty property = parent.FindPropertyRelative("targetWorld");
 
                 EditorGUI.PropertyField(position, property);
                 position.y += singleLineHeight;
@@ -271,6 +274,13 @@ namespace Global.Editor
                     fieldsCount += 1;
                     break;
             }
+
+            // Add height for IsolateSceneCommunication field when it's drawn
+            if (initialRealmValue is InitialRealm.World or InitialRealm.Goerli or InitialRealm.StreamingWorld or InitialRealm.TestScenes)
+                fieldsCount += 1;
+
+            // Add height for PredefinedScenes enabled checkbox (always drawn)
+            fieldsCount += 1;
 
             float height = fieldsCount * singleLineHeight;
 

@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using MVC;
@@ -19,7 +19,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (0, 80);
 
         private readonly IMVCManager mvcManager;
-        private readonly UI.GenericContextMenuParameter.GenericContextMenu contextMenu;
+        private readonly GenericContextMenuParameter.GenericContextMenu contextMenu;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
@@ -27,10 +27,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
         public ChatOptionsContextMenuController(IMVCManager mvcManager, Sprite deleteChatHistoryIcon, string deleteChatHistoryText, Action onDeleteChatHistoryClicked)
         {
             this.mvcManager = mvcManager;
-            ButtonContextMenuControlSettings deleteChatHistoryButton = new ButtonContextMenuControlSettings(deleteChatHistoryText, deleteChatHistoryIcon, onDeleteChatHistoryClicked);
+            var deleteChatHistoryButton = new ButtonContextMenuControlSettings(deleteChatHistoryText, deleteChatHistoryIcon, onDeleteChatHistoryClicked);
 
-            contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
-               .AddControl(deleteChatHistoryButton);
+            contextMenu = new GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
+                .AddControl(deleteChatHistoryButton);
 
             //Disabled until we got multiple channels working
             //.AddControl(new SeparatorContextMenuControlSettings())

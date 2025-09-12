@@ -45,6 +45,7 @@ namespace DCL.PluginSystem.Global
                 webRequestController,
                 true,
                 true,
+                false,
                 downloadStrategy);
         }
     }

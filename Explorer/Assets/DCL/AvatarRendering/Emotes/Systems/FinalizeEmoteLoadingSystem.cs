@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
@@ -37,32 +36,10 @@ namespace DCL.AvatarRendering.Emotes
         protected override void Update(float t)
         {
             FinalizeEmoteDTOQuery(World);
-            FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
             FinalizeGltfLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
             ConsumeAndDisposeFinishedEmotePromiseQuery(World);
-        }
-
-        [Query]
-        private void FinalizeAssetBundleManifestLoading(
-            Entity entity,
-            ref AssetBundleManifestPromise promise,
-            ref IEmote emote
-        )
-        {
-            if (promise.IsCancellationRequested(World))
-            {
-                emote.ResetManifest();
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
-            {
-                emote.UpdateManifest(result);
-                World.Destroy(entity);
-            }
         }
 
         [Query]
@@ -71,19 +48,15 @@ namespace DCL.AvatarRendering.Emotes
             ref EmotesFromRealmPromise promise
         )
         {
-            if (promise.IsCancellationRequested(World))
-            {
-                World.Destroy(entity);
+            if (TryFinalizeIfCancelled(entity, promise))
                 return;
-            }
 
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
                     foreach (var pointerID in promise.LoadingIntention.Pointers)
-                        if (storage.TryGetElement(pointerID, out IEmote component))
-                            component.UpdateLoadingStatus(false);
+                        ReportAndFinalizeWithError(pointerID);
                 }
                 else
                     using (var list = promiseResult.Asset.ConsumeAttachments())

@@ -17,6 +17,7 @@ namespace DCL.UI
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
         private readonly IWebRequestController? webRequestController;
+        private readonly Color defaultColor = Color.white;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
 
@@ -31,7 +32,14 @@ namespace DCL.UI
             this.webRequestController = webRequestController;
         }
 
-        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false, bool fitAndCenterImage = false)
+        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
+            bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
+        {
+            RequestImage(uri, defaultColor, removePrevious, hideImageWhileLoading, useKtx, fitAndCenterImage, defaultSprite);
+        }
+
+        public void RequestImage(string uri, Color targetColor, bool removePrevious = false, bool hideImageWhileLoading = false,
+            bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
             if (removePrevious)
                 view.Image.sprite = null;
@@ -40,7 +48,7 @@ namespace DCL.UI
                 view.Image.enabled = false;
 
             cts = cts.SafeRestart();
-            RequestImageAsync(uri, useKtx, cts.Token, fitAndCenterImage).Forget();
+            RequestImageAsync(uri, useKtx, targetColor, cts.Token, fitAndCenterImage, defaultSprite).Forget();
         }
 
         public void SetVisible(bool isVisible)
@@ -48,7 +56,7 @@ namespace DCL.UI
             view.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask RequestImageAsync(string uri, bool useKtx, CancellationToken ct, bool fitAndCenterImage = false)
+        public async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
             try
             {
@@ -83,19 +91,32 @@ namespace DCL.UI
                     SetImage(sprite, fitAndCenterImage);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
-                    view.Image.DOColor(Color.white, view.imageLoadingFadeDuration);
+                    view.Image.DOColor(targetColor, view.imageLoadingFadeDuration);
                 }
+                else if (defaultSprite != null)
+                    TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.ENGINE);
+
+                TryApplyDefaultSprite(defaultSprite, fitAndCenterImage);
             }
             finally
             {
                 view.IsLoading = false;
                 view.Image.enabled = true;
             }
+        }
+
+        private void TryApplyDefaultSprite(Sprite? defaultSprite, bool fitAndCenterImage)
+        {
+            if (defaultSprite == null) return;
+
+            SetImage(defaultSprite, fitAndCenterImage);
+            view.Image.enabled = true;
+            view.Image.DOColor(defaultColor, view.imageLoadingFadeDuration);
         }
 
         public void SetImage(Sprite sprite, bool fitAndCenterImage = false) =>

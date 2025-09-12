@@ -27,29 +27,24 @@ namespace DCL.ECSComponents {
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvbGlnaHRfc291cmNlLnBy",
             "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJhbGFu",
             "ZC9jb21tb24vY29sb3JzLnByb3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3Rl",
-            "eHR1cmUucHJvdG8i4gUKDVBCTGlnaHRTb3VyY2USEwoGYWN0aXZlGAQgASgI",
-            "SAGIAQESLwoFY29sb3IYASABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNv",
-            "bG9yM0gCiAEBEhcKCmJyaWdodG5lc3MYAiABKAJIA4gBARISCgVyYW5nZRgD",
-            "IAEoAkgEiAEBEkEKBXBvaW50GAYgASgLMjAuZGVjZW50cmFsYW5kLnNkay5j",
-            "b21wb25lbnRzLlBCTGlnaHRTb3VyY2UuUG9pbnRIABI/CgRzcG90GAcgASgL",
-            "Mi8uZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCTGlnaHRTb3VyY2Uu",
-            "U3BvdEgAGl4KBVBvaW50EkoKBnNoYWRvdxgFIAEoDjI1LmRlY2VudHJhbGFu",
-            "ZC5zZGsuY29tcG9uZW50cy5QQkxpZ2h0U291cmNlLlNoYWRvd1R5cGVIAIgB",
-            "AUIJCgdfc2hhZG93Go4CCgRTcG90EhgKC2lubmVyX2FuZ2xlGAEgASgCSACI",
-            "AQESGAoLb3V0ZXJfYW5nbGUYAiABKAJIAYgBARJKCgZzaGFkb3cYBSABKA4y",
-            "NS5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJMaWdodFNvdXJjZS5T",
-            "aGFkb3dUeXBlSAKIAQESQwoTc2hhZG93X21hc2tfdGV4dHVyZRgIIAEoCzIh",
-            "LmRlY2VudHJhbGFuZC5jb21tb24uVGV4dHVyZVVuaW9uSAOIAQFCDgoMX2lu",
-            "bmVyX2FuZ2xlQg4KDF9vdXRlcl9hbmdsZUIJCgdfc2hhZG93QhYKFF9zaGFk",
-            "b3dfbWFza190ZXh0dXJlIjMKClNoYWRvd1R5cGUSCwoHU1RfTk9ORRAAEgsK",
-            "B1NUX1NPRlQQARILCgdTVF9IQVJEEAJCBgoEdHlwZUIJCgdfYWN0aXZlQggK",
-            "Bl9jb2xvckINCgtfYnJpZ2h0bmVzc0IICgZfcmFuZ2VCFKoCEURDTC5FQ1ND",
-            "b21wb25lbnRzYgZwcm90bzM="));
+            "eHR1cmUucHJvdG8inAQKDVBCTGlnaHRTb3VyY2USEwoGYWN0aXZlGAEgASgI",
+            "SAGIAQESLwoFY29sb3IYAiABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNv",
+            "bG9yM0gCiAEBEhYKCWludGVuc2l0eRgDIAEoAkgDiAEBEhIKBXJhbmdlGAQg",
+            "ASgCSASIAQESEwoGc2hhZG93GAUgASgISAWIAQESQwoTc2hhZG93X21hc2tf",
+            "dGV4dHVyZRgGIAEoCzIhLmRlY2VudHJhbGFuZC5jb21tb24uVGV4dHVyZVVu",
+            "aW9uSAaIAQESQQoFcG9pbnQYByABKAsyMC5kZWNlbnRyYWxhbmQuc2RrLmNv",
+            "bXBvbmVudHMuUEJMaWdodFNvdXJjZS5Qb2ludEgAEj8KBHNwb3QYCCABKAsy",
+            "Ly5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJMaWdodFNvdXJjZS5T",
+            "cG90SAAaBwoFUG9pbnQaWgoEU3BvdBIYCgtpbm5lcl9hbmdsZRgJIAEoAkgA",
+            "iAEBEhgKC291dGVyX2FuZ2xlGAogASgCSAGIAQFCDgoMX2lubmVyX2FuZ2xl",
+            "Qg4KDF9vdXRlcl9hbmdsZUIGCgR0eXBlQgkKB19hY3RpdmVCCAoGX2NvbG9y",
+            "QgwKCl9pbnRlbnNpdHlCCAoGX3JhbmdlQgkKB19zaGFkb3dCFgoUX3NoYWRv",
+            "d19tYXNrX3RleHR1cmVCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, global::Decentraland.Common.TextureReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBLightSource), global::DCL.ECSComponents.PBLightSource.Parser, new[]{ "Active", "Color", "Brightness", "Range", "Point", "Spot" }, new[]{ "Type", "Active", "Color", "Brightness", "Range" }, new[]{ typeof(global::DCL.ECSComponents.PBLightSource.Types.ShadowType) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBLightSource.Types.Point), global::DCL.ECSComponents.PBLightSource.Types.Point.Parser, new[]{ "Shadow" }, new[]{ "Shadow" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBLightSource.Types.Spot), global::DCL.ECSComponents.PBLightSource.Types.Spot.Parser, new[]{ "InnerAngle", "OuterAngle", "Shadow", "ShadowMaskTexture" }, new[]{ "InnerAngle", "OuterAngle", "Shadow", "ShadowMaskTexture" }, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBLightSource), global::DCL.ECSComponents.PBLightSource.Parser, new[]{ "Active", "Color", "Intensity", "Range", "Shadow", "ShadowMaskTexture", "Point", "Spot" }, new[]{ "Type", "Active", "Color", "Intensity", "Range", "Shadow", "ShadowMaskTexture" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBLightSource.Types.Point), global::DCL.ECSComponents.PBLightSource.Types.Point.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBLightSource.Types.Spot), global::DCL.ECSComponents.PBLightSource.Types.Spot.Parser, new[]{ "InnerAngle", "OuterAngle" }, new[]{ "InnerAngle", "OuterAngle" }, null, null, null)})
           }));
     }
     #endregion
@@ -94,8 +89,10 @@ namespace DCL.ECSComponents {
       _hasBits0 = other._hasBits0;
       active_ = other.active_;
       color_ = other.color_ != null ? other.color_.Clone() : null;
-      brightness_ = other.brightness_;
+      intensity_ = other.intensity_;
       range_ = other.range_;
+      shadow_ = other.shadow_;
+      shadowMaskTexture_ = other.shadowMaskTexture_ != null ? other.shadowMaskTexture_.Clone() : null;
       switch (other.TypeCase) {
         case TypeOneofCase.Point:
           Point = other.Point.Clone();
@@ -115,7 +112,7 @@ namespace DCL.ECSComponents {
     }
 
     /// <summary>Field number for the "active" field.</summary>
-    public const int ActiveFieldNumber = 4;
+    public const int ActiveFieldNumber = 1;
     private bool active_;
     /// <summary>
     /// default = true, whether the lightSource is active or not.
@@ -123,9 +120,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool Active {
-      get { if ((_hasBits0 & 4) != 0) { return active_; } else { return false; } }
+      get { if ((_hasBits0 & 1) != 0) { return active_; } else { return false; } }
       set {
-        _hasBits0 |= 4;
+        _hasBits0 |= 1;
         active_ = value;
       }
     }
@@ -133,17 +130,17 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasActive {
-      get { return (_hasBits0 & 4) != 0; }
+      get { return (_hasBits0 & 1) != 0; }
     }
     /// <summary>Clears the value of the "active" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearActive() {
-      _hasBits0 &= ~4;
+      _hasBits0 &= ~1;
     }
 
     /// <summary>Field number for the "color" field.</summary>
-    public const int ColorFieldNumber = 1;
+    public const int ColorFieldNumber = 2;
     private global::Decentraland.Common.Color3 color_;
     /// <summary>
     /// default = Color.white, the tint of the light, in RGB format where each component is a floating point value with a range from 0 to 1.
@@ -157,46 +154,46 @@ namespace DCL.ECSComponents {
       }
     }
 
-    /// <summary>Field number for the "brightness" field.</summary>
-    public const int BrightnessFieldNumber = 2;
-    private float brightness_;
+    /// <summary>Field number for the "intensity" field.</summary>
+    public const int IntensityFieldNumber = 3;
+    private float intensity_;
     /// <summary>
     /// default = 250, ranges from 1 (dim) to 100,000 (very bright), expressed in Lumens for Point and Spot.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Brightness {
-      get { if ((_hasBits0 & 1) != 0) { return brightness_; } else { return 0F; } }
+    public float Intensity {
+      get { if ((_hasBits0 & 2) != 0) { return intensity_; } else { return 0F; } }
       set {
-        _hasBits0 |= 1;
-        brightness_ = value;
+        _hasBits0 |= 2;
+        intensity_ = value;
       }
     }
-    /// <summary>Gets whether the "brightness" field is set</summary>
+    /// <summary>Gets whether the "intensity" field is set</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasBrightness {
-      get { return (_hasBits0 & 1) != 0; }
+    public bool HasIntensity {
+      get { return (_hasBits0 & 2) != 0; }
     }
-    /// <summary>Clears the value of the "brightness" field</summary>
+    /// <summary>Clears the value of the "intensity" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearBrightness() {
-      _hasBits0 &= ~1;
+    public void ClearIntensity() {
+      _hasBits0 &= ~2;
     }
 
     /// <summary>Field number for the "range" field.</summary>
-    public const int RangeFieldNumber = 3;
+    public const int RangeFieldNumber = 4;
     private float range_;
     /// <summary>
-    /// default = 10, how far the light travels, expressed in meters.
+    /// default = 0, how far the light travels, expressed in meters. If left at 0 will be computed automatically
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public float Range {
-      get { if ((_hasBits0 & 2) != 0) { return range_; } else { return 0F; } }
+      get { if ((_hasBits0 & 4) != 0) { return range_; } else { return 0F; } }
       set {
-        _hasBits0 |= 2;
+        _hasBits0 |= 4;
         range_ = value;
       }
     }
@@ -204,17 +201,60 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasRange {
-      get { return (_hasBits0 & 2) != 0; }
+      get { return (_hasBits0 & 4) != 0; }
     }
     /// <summary>Clears the value of the "range" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearRange() {
-      _hasBits0 &= ~2;
+      _hasBits0 &= ~4;
+    }
+
+    /// <summary>Field number for the "shadow" field.</summary>
+    public const int ShadowFieldNumber = 5;
+    private bool shadow_;
+    /// <summary>
+    /// default = false, whether the light casts shadows or not.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Shadow {
+      get { if ((_hasBits0 & 8) != 0) { return shadow_; } else { return false; } }
+      set {
+        _hasBits0 |= 8;
+        shadow_ = value;
+      }
+    }
+    /// <summary>Gets whether the "shadow" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasShadow {
+      get { return (_hasBits0 & 8) != 0; }
+    }
+    /// <summary>Clears the value of the "shadow" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearShadow() {
+      _hasBits0 &= ~8;
+    }
+
+    /// <summary>Field number for the "shadow_mask_texture" field.</summary>
+    public const int ShadowMaskTextureFieldNumber = 6;
+    private global::Decentraland.Common.TextureUnion shadowMaskTexture_;
+    /// <summary>
+    /// Texture mask through which shadows are cast to simulate caustics, soft shadows, and light shapes such as light entering from a window.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.TextureUnion ShadowMaskTexture {
+      get { return shadowMaskTexture_; }
+      set {
+        shadowMaskTexture_ = value;
+      }
     }
 
     /// <summary>Field number for the "point" field.</summary>
-    public const int PointFieldNumber = 6;
+    public const int PointFieldNumber = 7;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::DCL.ECSComponents.PBLightSource.Types.Point Point {
@@ -226,7 +266,7 @@ namespace DCL.ECSComponents {
     }
 
     /// <summary>Field number for the "spot" field.</summary>
-    public const int SpotFieldNumber = 7;
+    public const int SpotFieldNumber = 8;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::DCL.ECSComponents.PBLightSource.Types.Spot Spot {
@@ -241,8 +281,8 @@ namespace DCL.ECSComponents {
     /// <summary>Enum of possible cases for the "type" oneof.</summary>
     public enum TypeOneofCase {
       None = 0,
-      Point = 6,
-      Spot = 7,
+      Point = 7,
+      Spot = 8,
     }
     private TypeOneofCase typeCase_ = TypeOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -275,8 +315,10 @@ namespace DCL.ECSComponents {
       }
       if (Active != other.Active) return false;
       if (!object.Equals(Color, other.Color)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Brightness, other.Brightness)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Intensity, other.Intensity)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Range, other.Range)) return false;
+      if (Shadow != other.Shadow) return false;
+      if (!object.Equals(ShadowMaskTexture, other.ShadowMaskTexture)) return false;
       if (!object.Equals(Point, other.Point)) return false;
       if (!object.Equals(Spot, other.Spot)) return false;
       if (TypeCase != other.TypeCase) return false;
@@ -289,8 +331,10 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (HasActive) hash ^= Active.GetHashCode();
       if (color_ != null) hash ^= Color.GetHashCode();
-      if (HasBrightness) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Brightness);
+      if (HasIntensity) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Intensity);
       if (HasRange) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Range);
+      if (HasShadow) hash ^= Shadow.GetHashCode();
+      if (shadowMaskTexture_ != null) hash ^= ShadowMaskTexture.GetHashCode();
       if (typeCase_ == TypeOneofCase.Point) hash ^= Point.GetHashCode();
       if (typeCase_ == TypeOneofCase.Spot) hash ^= Spot.GetHashCode();
       hash ^= (int) typeCase_;
@@ -312,28 +356,36 @@ namespace DCL.ECSComponents {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (color_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(Color);
-      }
-      if (HasBrightness) {
-        output.WriteRawTag(21);
-        output.WriteFloat(Brightness);
-      }
-      if (HasRange) {
-        output.WriteRawTag(29);
-        output.WriteFloat(Range);
-      }
       if (HasActive) {
-        output.WriteRawTag(32);
+        output.WriteRawTag(8);
         output.WriteBool(Active);
       }
-      if (typeCase_ == TypeOneofCase.Point) {
+      if (color_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(Color);
+      }
+      if (HasIntensity) {
+        output.WriteRawTag(29);
+        output.WriteFloat(Intensity);
+      }
+      if (HasRange) {
+        output.WriteRawTag(37);
+        output.WriteFloat(Range);
+      }
+      if (HasShadow) {
+        output.WriteRawTag(40);
+        output.WriteBool(Shadow);
+      }
+      if (shadowMaskTexture_ != null) {
         output.WriteRawTag(50);
+        output.WriteMessage(ShadowMaskTexture);
+      }
+      if (typeCase_ == TypeOneofCase.Point) {
+        output.WriteRawTag(58);
         output.WriteMessage(Point);
       }
       if (typeCase_ == TypeOneofCase.Spot) {
-        output.WriteRawTag(58);
+        output.WriteRawTag(66);
         output.WriteMessage(Spot);
       }
       if (_unknownFields != null) {
@@ -346,28 +398,36 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (color_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(Color);
-      }
-      if (HasBrightness) {
-        output.WriteRawTag(21);
-        output.WriteFloat(Brightness);
-      }
-      if (HasRange) {
-        output.WriteRawTag(29);
-        output.WriteFloat(Range);
-      }
       if (HasActive) {
-        output.WriteRawTag(32);
+        output.WriteRawTag(8);
         output.WriteBool(Active);
       }
-      if (typeCase_ == TypeOneofCase.Point) {
+      if (color_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(Color);
+      }
+      if (HasIntensity) {
+        output.WriteRawTag(29);
+        output.WriteFloat(Intensity);
+      }
+      if (HasRange) {
+        output.WriteRawTag(37);
+        output.WriteFloat(Range);
+      }
+      if (HasShadow) {
+        output.WriteRawTag(40);
+        output.WriteBool(Shadow);
+      }
+      if (shadowMaskTexture_ != null) {
         output.WriteRawTag(50);
+        output.WriteMessage(ShadowMaskTexture);
+      }
+      if (typeCase_ == TypeOneofCase.Point) {
+        output.WriteRawTag(58);
         output.WriteMessage(Point);
       }
       if (typeCase_ == TypeOneofCase.Spot) {
-        output.WriteRawTag(58);
+        output.WriteRawTag(66);
         output.WriteMessage(Spot);
       }
       if (_unknownFields != null) {
@@ -386,11 +446,17 @@ namespace DCL.ECSComponents {
       if (color_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Color);
       }
-      if (HasBrightness) {
+      if (HasIntensity) {
         size += 1 + 4;
       }
       if (HasRange) {
         size += 1 + 4;
+      }
+      if (HasShadow) {
+        size += 1 + 1;
+      }
+      if (shadowMaskTexture_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ShadowMaskTexture);
       }
       if (typeCase_ == TypeOneofCase.Point) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Point);
@@ -419,11 +485,20 @@ namespace DCL.ECSComponents {
         }
         Color.MergeFrom(other.Color);
       }
-      if (other.HasBrightness) {
-        Brightness = other.Brightness;
+      if (other.HasIntensity) {
+        Intensity = other.Intensity;
       }
       if (other.HasRange) {
         Range = other.Range;
+      }
+      if (other.HasShadow) {
+        Shadow = other.Shadow;
+      }
+      if (other.shadowMaskTexture_ != null) {
+        if (shadowMaskTexture_ == null) {
+          ShadowMaskTexture = new global::Decentraland.Common.TextureUnion();
+        }
+        ShadowMaskTexture.MergeFrom(other.ShadowMaskTexture);
       }
       switch (other.TypeCase) {
         case TypeOneofCase.Point:
@@ -455,26 +530,37 @@ namespace DCL.ECSComponents {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
+          case 8: {
+            Active = input.ReadBool();
+            break;
+          }
+          case 18: {
             if (color_ == null) {
               Color = new global::Decentraland.Common.Color3();
             }
             input.ReadMessage(Color);
             break;
           }
-          case 21: {
-            Brightness = input.ReadFloat();
+          case 29: {
+            Intensity = input.ReadFloat();
             break;
           }
-          case 29: {
+          case 37: {
             Range = input.ReadFloat();
             break;
           }
-          case 32: {
-            Active = input.ReadBool();
+          case 40: {
+            Shadow = input.ReadBool();
             break;
           }
           case 50: {
+            if (shadowMaskTexture_ == null) {
+              ShadowMaskTexture = new global::Decentraland.Common.TextureUnion();
+            }
+            input.ReadMessage(ShadowMaskTexture);
+            break;
+          }
+          case 58: {
             global::DCL.ECSComponents.PBLightSource.Types.Point subBuilder = new global::DCL.ECSComponents.PBLightSource.Types.Point();
             if (typeCase_ == TypeOneofCase.Point) {
               subBuilder.MergeFrom(Point);
@@ -483,7 +569,7 @@ namespace DCL.ECSComponents {
             Point = subBuilder;
             break;
           }
-          case 58: {
+          case 66: {
             global::DCL.ECSComponents.PBLightSource.Types.Spot subBuilder = new global::DCL.ECSComponents.PBLightSource.Types.Spot();
             if (typeCase_ == TypeOneofCase.Spot) {
               subBuilder.MergeFrom(Spot);
@@ -507,26 +593,37 @@ namespace DCL.ECSComponents {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 10: {
+          case 8: {
+            Active = input.ReadBool();
+            break;
+          }
+          case 18: {
             if (color_ == null) {
               Color = new global::Decentraland.Common.Color3();
             }
             input.ReadMessage(Color);
             break;
           }
-          case 21: {
-            Brightness = input.ReadFloat();
+          case 29: {
+            Intensity = input.ReadFloat();
             break;
           }
-          case 29: {
+          case 37: {
             Range = input.ReadFloat();
             break;
           }
-          case 32: {
-            Active = input.ReadBool();
+          case 40: {
+            Shadow = input.ReadBool();
             break;
           }
           case 50: {
+            if (shadowMaskTexture_ == null) {
+              ShadowMaskTexture = new global::Decentraland.Common.TextureUnion();
+            }
+            input.ReadMessage(ShadowMaskTexture);
+            break;
+          }
+          case 58: {
             global::DCL.ECSComponents.PBLightSource.Types.Point subBuilder = new global::DCL.ECSComponents.PBLightSource.Types.Point();
             if (typeCase_ == TypeOneofCase.Point) {
               subBuilder.MergeFrom(Point);
@@ -535,7 +632,7 @@ namespace DCL.ECSComponents {
             Point = subBuilder;
             break;
           }
-          case 58: {
+          case 66: {
             global::DCL.ECSComponents.PBLightSource.Types.Spot subBuilder = new global::DCL.ECSComponents.PBLightSource.Types.Spot();
             if (typeCase_ == TypeOneofCase.Spot) {
               subBuilder.MergeFrom(Spot);
@@ -554,21 +651,6 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static partial class Types {
-      public enum ShadowType {
-        /// <summary>
-        /// No shadows are cast from this LightSource.
-        /// </summary>
-        [pbr::OriginalName("ST_NONE")] StNone = 0,
-        /// <summary>
-        /// More realistic type of shadow that reduces block artifacts, noise or pixelation, but requires more processing.
-        /// </summary>
-        [pbr::OriginalName("ST_SOFT")] StSoft = 1,
-        /// <summary>
-        /// Less realistic type of shadow but more performant, uses hard edges.
-        /// </summary>
-        [pbr::OriginalName("ST_HARD")] StHard = 2,
-      }
-
       public sealed partial class Point : pb::IMessage<Point>
       #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
           , pb::IBufferMessage
@@ -576,7 +658,6 @@ namespace DCL.ECSComponents {
       {
         private static readonly pb::MessageParser<Point> _parser = new pb::MessageParser<Point>(() => new Point());
         private pb::UnknownFieldSet _unknownFields;
-        private int _hasBits0;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pb::MessageParser<Point> Parser { get { return _parser; } }
@@ -604,8 +685,6 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public Point(Point other) : this() {
-          _hasBits0 = other._hasBits0;
-          shadow_ = other.shadow_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -613,34 +692,6 @@ namespace DCL.ECSComponents {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public Point Clone() {
           return new Point(this);
-        }
-
-        /// <summary>Field number for the "shadow" field.</summary>
-        public const int ShadowFieldNumber = 5;
-        private global::DCL.ECSComponents.PBLightSource.Types.ShadowType shadow_;
-        /// <summary>
-        /// default = ShadowType.ST_NONE The type of shadow the light source supports.
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public global::DCL.ECSComponents.PBLightSource.Types.ShadowType Shadow {
-          get { if ((_hasBits0 & 1) != 0) { return shadow_; } else { return global::DCL.ECSComponents.PBLightSource.Types.ShadowType.StNone; } }
-          set {
-            _hasBits0 |= 1;
-            shadow_ = value;
-          }
-        }
-        /// <summary>Gets whether the "shadow" field is set</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool HasShadow {
-          get { return (_hasBits0 & 1) != 0; }
-        }
-        /// <summary>Clears the value of the "shadow" field</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public void ClearShadow() {
-          _hasBits0 &= ~1;
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -658,7 +709,6 @@ namespace DCL.ECSComponents {
           if (ReferenceEquals(other, this)) {
             return true;
           }
-          if (Shadow != other.Shadow) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -666,7 +716,6 @@ namespace DCL.ECSComponents {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override int GetHashCode() {
           int hash = 1;
-          if (HasShadow) hash ^= Shadow.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -685,10 +734,6 @@ namespace DCL.ECSComponents {
         #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
           output.WriteRawMessage(this);
         #else
-          if (HasShadow) {
-            output.WriteRawTag(40);
-            output.WriteEnum((int) Shadow);
-          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -699,10 +744,6 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-          if (HasShadow) {
-            output.WriteRawTag(40);
-            output.WriteEnum((int) Shadow);
-          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -713,9 +754,6 @@ namespace DCL.ECSComponents {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public int CalculateSize() {
           int size = 0;
-          if (HasShadow) {
-            size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Shadow);
-          }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
           }
@@ -727,9 +765,6 @@ namespace DCL.ECSComponents {
         public void MergeFrom(Point other) {
           if (other == null) {
             return;
-          }
-          if (other.HasShadow) {
-            Shadow = other.Shadow;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -746,10 +781,6 @@ namespace DCL.ECSComponents {
               default:
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
                 break;
-              case 40: {
-                Shadow = (global::DCL.ECSComponents.PBLightSource.Types.ShadowType) input.ReadEnum();
-                break;
-              }
             }
           }
         #endif
@@ -765,10 +796,6 @@ namespace DCL.ECSComponents {
               default:
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
-              case 40: {
-                Shadow = (global::DCL.ECSComponents.PBLightSource.Types.ShadowType) input.ReadEnum();
-                break;
-              }
             }
           }
         }
@@ -814,8 +841,6 @@ namespace DCL.ECSComponents {
           _hasBits0 = other._hasBits0;
           innerAngle_ = other.innerAngle_;
           outerAngle_ = other.outerAngle_;
-          shadow_ = other.shadow_;
-          shadowMaskTexture_ = other.shadowMaskTexture_ != null ? other.shadowMaskTexture_.Clone() : null;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -826,7 +851,7 @@ namespace DCL.ECSComponents {
         }
 
         /// <summary>Field number for the "inner_angle" field.</summary>
-        public const int InnerAngleFieldNumber = 1;
+        public const int InnerAngleFieldNumber = 9;
         private float innerAngle_;
         /// <summary>
         /// default = 21.8. Inner angle can't be higher than outer angle, otherwise will default to same value. Min value is 0. Max value is 179.
@@ -854,7 +879,7 @@ namespace DCL.ECSComponents {
         }
 
         /// <summary>Field number for the "outer_angle" field.</summary>
-        public const int OuterAngleFieldNumber = 2;
+        public const int OuterAngleFieldNumber = 10;
         private float outerAngle_;
         /// <summary>
         /// default = 30. Outer angle can't be lower than inner angle, otherwise will inner angle will be set to same value. Max value is 179.
@@ -881,49 +906,6 @@ namespace DCL.ECSComponents {
           _hasBits0 &= ~2;
         }
 
-        /// <summary>Field number for the "shadow" field.</summary>
-        public const int ShadowFieldNumber = 5;
-        private global::DCL.ECSComponents.PBLightSource.Types.ShadowType shadow_;
-        /// <summary>
-        /// default = ShadowType.ST_NONE The type of shadow the light source supports.
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public global::DCL.ECSComponents.PBLightSource.Types.ShadowType Shadow {
-          get { if ((_hasBits0 & 4) != 0) { return shadow_; } else { return global::DCL.ECSComponents.PBLightSource.Types.ShadowType.StNone; } }
-          set {
-            _hasBits0 |= 4;
-            shadow_ = value;
-          }
-        }
-        /// <summary>Gets whether the "shadow" field is set</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool HasShadow {
-          get { return (_hasBits0 & 4) != 0; }
-        }
-        /// <summary>Clears the value of the "shadow" field</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public void ClearShadow() {
-          _hasBits0 &= ~4;
-        }
-
-        /// <summary>Field number for the "shadow_mask_texture" field.</summary>
-        public const int ShadowMaskTextureFieldNumber = 8;
-        private global::Decentraland.Common.TextureUnion shadowMaskTexture_;
-        /// <summary>
-        /// Texture mask through which shadows are cast to simulate caustics, soft shadows, and light shapes such as light entering from a window.
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public global::Decentraland.Common.TextureUnion ShadowMaskTexture {
-          get { return shadowMaskTexture_; }
-          set {
-            shadowMaskTexture_ = value;
-          }
-        }
-
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -941,8 +923,6 @@ namespace DCL.ECSComponents {
           }
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(InnerAngle, other.InnerAngle)) return false;
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(OuterAngle, other.OuterAngle)) return false;
-          if (Shadow != other.Shadow) return false;
-          if (!object.Equals(ShadowMaskTexture, other.ShadowMaskTexture)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -952,8 +932,6 @@ namespace DCL.ECSComponents {
           int hash = 1;
           if (HasInnerAngle) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(InnerAngle);
           if (HasOuterAngle) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(OuterAngle);
-          if (HasShadow) hash ^= Shadow.GetHashCode();
-          if (shadowMaskTexture_ != null) hash ^= ShadowMaskTexture.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -973,20 +951,12 @@ namespace DCL.ECSComponents {
           output.WriteRawMessage(this);
         #else
           if (HasInnerAngle) {
-            output.WriteRawTag(13);
+            output.WriteRawTag(77);
             output.WriteFloat(InnerAngle);
           }
           if (HasOuterAngle) {
-            output.WriteRawTag(21);
+            output.WriteRawTag(85);
             output.WriteFloat(OuterAngle);
-          }
-          if (HasShadow) {
-            output.WriteRawTag(40);
-            output.WriteEnum((int) Shadow);
-          }
-          if (shadowMaskTexture_ != null) {
-            output.WriteRawTag(66);
-            output.WriteMessage(ShadowMaskTexture);
           }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
@@ -999,20 +969,12 @@ namespace DCL.ECSComponents {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
           if (HasInnerAngle) {
-            output.WriteRawTag(13);
+            output.WriteRawTag(77);
             output.WriteFloat(InnerAngle);
           }
           if (HasOuterAngle) {
-            output.WriteRawTag(21);
+            output.WriteRawTag(85);
             output.WriteFloat(OuterAngle);
-          }
-          if (HasShadow) {
-            output.WriteRawTag(40);
-            output.WriteEnum((int) Shadow);
-          }
-          if (shadowMaskTexture_ != null) {
-            output.WriteRawTag(66);
-            output.WriteMessage(ShadowMaskTexture);
           }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
@@ -1029,12 +991,6 @@ namespace DCL.ECSComponents {
           }
           if (HasOuterAngle) {
             size += 1 + 4;
-          }
-          if (HasShadow) {
-            size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Shadow);
-          }
-          if (shadowMaskTexture_ != null) {
-            size += 1 + pb::CodedOutputStream.ComputeMessageSize(ShadowMaskTexture);
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -1054,15 +1010,6 @@ namespace DCL.ECSComponents {
           if (other.HasOuterAngle) {
             OuterAngle = other.OuterAngle;
           }
-          if (other.HasShadow) {
-            Shadow = other.Shadow;
-          }
-          if (other.shadowMaskTexture_ != null) {
-            if (shadowMaskTexture_ == null) {
-              ShadowMaskTexture = new global::Decentraland.Common.TextureUnion();
-            }
-            ShadowMaskTexture.MergeFrom(other.ShadowMaskTexture);
-          }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
 
@@ -1078,23 +1025,12 @@ namespace DCL.ECSComponents {
               default:
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
                 break;
-              case 13: {
+              case 77: {
                 InnerAngle = input.ReadFloat();
                 break;
               }
-              case 21: {
+              case 85: {
                 OuterAngle = input.ReadFloat();
-                break;
-              }
-              case 40: {
-                Shadow = (global::DCL.ECSComponents.PBLightSource.Types.ShadowType) input.ReadEnum();
-                break;
-              }
-              case 66: {
-                if (shadowMaskTexture_ == null) {
-                  ShadowMaskTexture = new global::Decentraland.Common.TextureUnion();
-                }
-                input.ReadMessage(ShadowMaskTexture);
                 break;
               }
             }
@@ -1112,23 +1048,12 @@ namespace DCL.ECSComponents {
               default:
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
-              case 13: {
+              case 77: {
                 InnerAngle = input.ReadFloat();
                 break;
               }
-              case 21: {
+              case 85: {
                 OuterAngle = input.ReadFloat();
-                break;
-              }
-              case 40: {
-                Shadow = (global::DCL.ECSComponents.PBLightSource.Types.ShadowType) input.ReadEnum();
-                break;
-              }
-              case 66: {
-                if (shadowMaskTexture_ == null) {
-                  ShadowMaskTexture = new global::Decentraland.Common.TextureUnion();
-                }
-                input.ReadMessage(ShadowMaskTexture);
                 break;
               }
             }

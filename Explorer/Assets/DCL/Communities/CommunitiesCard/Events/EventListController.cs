@@ -3,10 +3,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities.Extensions;
@@ -16,15 +19,15 @@ using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
-using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
+using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard.Events
 {
     public class EventListController : CommunityFetchingControllerBase<PlaceAndEventDTO, EventListView>
     {
         private const int PAGE_SIZE = 20;
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
@@ -34,8 +37,6 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly EventListView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IEventsApiService eventsApiService;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
-        private readonly WarningNotificationView inWorldSuccessNotificationView;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
@@ -44,10 +45,10 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly string createEventFormat;
 
         private CommunityData? communityData = null;
         private CancellationTokenSource eventCardOperationsCts = new ();
-        private string[] communityPlaceIds;
 
         protected override SectionFetchData<PlaceAndEventDTO> currentSectionFetchData => eventsFetchData;
 
@@ -56,22 +57,21 @@ namespace DCL.Communities.CommunitiesCard.Events
             IPlacesAPIService placesAPIService,
             ThumbnailLoader thumbnailLoader,
             IMVCManager mvcManager,
-            WarningNotificationView inWorldWarningNotificationView,
-            WarningNotificationView inWorldSuccessNotificationView,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IRealmNavigator realmNavigator) : base(view, PAGE_SIZE)
+            IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.eventsApiService = eventsApiService;
             this.placesAPIService = placesAPIService;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
-            this.inWorldSuccessNotificationView = inWorldSuccessNotificationView;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
+
+            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}";
 
             view.InitList(thumbnailLoader, cancellationToken);
 
@@ -81,6 +81,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             view.InterestedButtonClicked += OnInterestedButtonClicked;
             view.EventShareButtonClicked += OnEventShareButtonClicked;
             view.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
+            view.CreateEventRequested += OnCreateEventButtonClicked;
         }
 
         public override void Dispose()
@@ -91,19 +92,21 @@ namespace DCL.Communities.CommunitiesCard.Events
             view.InterestedButtonClicked -= OnInterestedButtonClicked;
             view.EventShareButtonClicked -= OnEventShareButtonClicked;
             view.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
+            view.CreateEventRequested -= OnCreateEventButtonClicked;
 
             eventCardOperationsCts.SafeCancelAndDispose();
 
             base.Dispose();
         }
 
+        private void OnCreateEventButtonClicked() =>
+            webBrowser.OpenUrl(string.Format(createEventFormat, communityData?.id));
+
         private void OnEventCopyLinkButtonClicked(PlaceAndEventDTO eventData)
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event));
 
-            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken)
-                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                                          .Forget();
+            Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
@@ -129,8 +132,7 @@ namespace DCL.Communities.CommunitiesCard.Events
                 if (!result.Success)
                 {
                     eventItemView.UpdateInterestedButtonState();
-                    await inWorldWarningNotificationView.AnimatedShowAsync(INTERESTED_CHANGED_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
                     return;
                 }
 
@@ -174,7 +176,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetEventsByPlaceIdsAsync(communityPlaceIds, eventsFetchData.PageNumber, PAGE_SIZE, ct)
+            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetCommunityEventsAsync(communityData!.Value.id, eventsFetchData.PageNumber, PAGE_SIZE, ct)
                                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -184,8 +186,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.PageNumber--;
-                await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAILED_EVENTS_FETCHING_ERROR_MESSAGE));
                 return eventsFetchData.TotalToFetch;
             }
 
@@ -207,8 +208,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.PageNumber--;
-                await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE));
                 return eventsFetchData.TotalToFetch;
             }
 
@@ -227,11 +227,10 @@ namespace DCL.Communities.CommunitiesCard.Events
             return eventResponse.Value.data.total;
         }
 
-        public void ShowEvents(CommunityData community, string[] placeIds, CancellationToken token)
+        public void ShowEvents(CommunityData community, CancellationToken token)
         {
             cancellationToken = token;
             communityData = community;
-            communityPlaceIds = placeIds;
             view.SetCanModify(community.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             FetchNewDataAsync(token).Forget();
         }

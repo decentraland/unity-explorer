@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 607553074291760859}
   - component: {fileID: 1528761235184241228}
   m_Layer: 5
-  m_Name: Handle
+  m_Name: HandleOn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -88,7 +88,7 @@ GameObject:
   - component: {fileID: 1027324785593132713}
   - component: {fileID: 110364968190423852}
   m_Layer: 5
-  m_Name: Background
+  m_Name: BackgroundOn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -175,7 +175,7 @@ GameObject:
   - component: {fileID: 7426988612973123945}
   - component: {fileID: 3667918575240206737}
   m_Layer: 5
-  m_Name: Handle
+  m_Name: HandleOff
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -248,6 +248,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6521834947971461802}
   - component: {fileID: 7625753975028379600}
+  - component: {fileID: 4090642556362700737}
   - component: {fileID: 977034302134673057}
   m_Layer: 5
   m_Name: Toggle
@@ -325,6 +326,18 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!225 &4090642556362700737
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7225474628005434785}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!114 &977034302134673057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -345,6 +358,30 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 6975587278961672583}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <canvasGroup>k__BackingField: {fileID: 4090642556362700737}
+  <interactableAlpha>k__BackingField: 1
+  <nonInteractableAlpha>k__BackingField: 0.5
+  <colorableElements>k__BackingField:
+  - <element>k__BackingField: {fileID: 6975587278961672583}
+    <interactableOnColor>k__BackingField: {r: 1, g: 0.1764706, b: 0.33333334, a: 1}
+    <interactableOffColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.14901961}
+    <nonInteractableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+    <nonInteractableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+  - <element>k__BackingField: {fileID: 3667918575240206737}
+    <interactableOnColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    <interactableOffColor>k__BackingField: {r: 0.9254902, g: 0.92156863, b: 0.92941177, a: 0.5019608}
+    <nonInteractableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+    <nonInteractableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+  - <element>k__BackingField: {fileID: 1027324785593132713}
+    <interactableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+    <interactableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+    <nonInteractableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+    <nonInteractableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+  - <element>k__BackingField: {fileID: 1528761235184241228}
+    <interactableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+    <interactableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+    <nonInteractableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
+    <nonInteractableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
 --- !u!1 &8806659310530846726
 GameObject:
   m_ObjectHideFlags: 0
@@ -395,7 +432,7 @@ GameObject:
   - component: {fileID: 6975587278961672583}
   - component: {fileID: 2323292459898918373}
   m_Layer: 5
-  m_Name: Background
+  m_Name: BackgroundOff
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -441,7 +478,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8117647, g: 0.8039216, b: 0.83137256, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.29803923}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

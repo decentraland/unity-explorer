@@ -16,6 +16,5 @@ namespace DCL.SDKComponents.NFTShape.Frames
 
         public abstract void UpdateStatus(Status status);
 
-        public abstract void SetTextureScale(Vector2 texScale);
     }
 }

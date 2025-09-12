@@ -37,14 +37,14 @@ namespace Global.Dynamic
             this.analytics = analytics;
         }
 
-        public UniTask PreInitializeSetupAsync(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct)
+        public UniTask PreInitializeSetupAsync(CancellationToken ct)
         {
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
                 { STAGE_KEY, "0 - started" },
             });
 
-            return core.PreInitializeSetupAsync(cursorRoot, debugUiRoot, ct);
+            return core.PreInitializeSetupAsync(ct);
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
@@ -53,12 +53,12 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            UIDocument scenesUIRoot,
+            bool hasDebugFlag,
             CancellationToken ct
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
-                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
+                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, hasDebugFlag, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -72,7 +72,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot, UIDocument scenesUIRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
+            AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
@@ -82,7 +82,7 @@ namespace Global.Dynamic
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
+                    settings, dynamicSettings, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

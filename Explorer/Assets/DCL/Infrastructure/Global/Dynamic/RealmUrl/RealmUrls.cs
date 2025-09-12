@@ -30,7 +30,7 @@ namespace Global.Dynamic.RealmUrl
                        InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
                        InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
                        InitialRealm.TestScenes => IRealmNavigator.TEST_SCENES_URL,
-                       InitialRealm.World => decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer) + "/" + realmLaunchSettings.targetWorld,
+                       InitialRealm.World => decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer) + "/" + realmLaunchSettings.TargetWorld,
                        InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
                        InitialRealm.Custom => await CustomRealmAsync(ct),
                        _ => decentralandUrlsSource.Url(DecentralandUrl.Genesis),

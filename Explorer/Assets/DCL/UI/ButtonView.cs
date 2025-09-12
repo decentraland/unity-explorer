@@ -1,4 +1,5 @@
 using DCL.Audio;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -16,6 +17,16 @@ namespace DCL.UI
         [field: SerializeField]
         public AudioClipConfig ButtonHoverAudio { get; private set; }
 
+        [field: Header("Interactable Properties")]
+        [field: SerializeField]
+        private Image[] images { get; set; }
+        [field: SerializeField]
+        private TMP_Text text { get; set; }
+        [field: SerializeField]
+        private Color interactableColor = new Color(1f, 1f, 1f, 1f);
+        [field: SerializeField]
+        private Color hoverColor = new Color(0.54f, 0.54f, 0.54f);
+
         private void OnEnable()
         {
             Button.onClick.AddListener(OnClick);
@@ -30,6 +41,21 @@ namespace DCL.UI
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
         }
+
+        public void SetInteractable(bool isInteractable)
+        {
+            var color = isInteractable ? interactableColor : hoverColor;
+
+            foreach (var image in images)
+            {
+                image.color = color;
+            }
+
+            text.color = color;
+            Button.interactable = isInteractable;
+        }
+
+        public void SetText(string value) => text.text = value;
 
         public void OnPointerEnter(PointerEventData eventData)
         {

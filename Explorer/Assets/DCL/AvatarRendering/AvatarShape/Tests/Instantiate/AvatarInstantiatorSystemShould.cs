@@ -93,20 +93,17 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
             IAvatarMaterialPoolHandler? materialPoolHandler = Substitute.For<IAvatarMaterialPoolHandler>();
             materialPoolHandler.GetMaterialPool(Arg.Any<int>()).Returns(poolMaterialSetup);
 
-            IDefaultFaceFeaturesHandler? defaultFaceFeaturesHandler = Substitute.For<IDefaultFaceFeaturesHandler>();
-
-            defaultFaceFeaturesHandler.GetDefaultFacialFeaturesDictionary(Arg.Any<BodyShape>())
-                                      .Returns(new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>
-                                       {
-                                           [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
-                                           [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
-                                           [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
-                                       }));
+            var facialFeatureTextures = new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>
+            {
+                [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
+                [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
+                [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
+            });
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
                 Substitute.For<IAttachmentsAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
-                new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler, new WearableStorage(),
-                new AvatarTransformMatrixJobWrapper());
+                new ObjectProxy<AvatarBase>(), new WearableStorage(),
+                new AvatarTransformMatrixJobWrapper(), new[] { facialFeatureTextures });
         }
 
         private IEmote GetMockEmote(string materialName, string category)

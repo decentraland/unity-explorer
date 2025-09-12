@@ -3,12 +3,56 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * *'  # Runs at 2 AM UTC every day
-
 jobs:
+  check-commits:
+    name: Check for New Commits
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: dev
+      
+      - name: Check for commits since last nightly build
+        id: check
+        run: |
+          # Get the timestamp of the last successful nightly build
+          LAST_BUILD_TIME=$(gh run list \
+            --workflow="Nightly Profile Build" \
+            --status=success \
+            --limit=1 \
+            --json=createdAt \
+            --jq='.[0].createdAt' || echo "")
+          
+          if [ -z "$LAST_BUILD_TIME" ]; then
+            echo "No previous successful build found, proceeding with build"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Check if there are commits since the last build
+          COMMITS_SINCE=$(git log --since="$LAST_BUILD_TIME" --oneline | wc -l)
+          
+          if [ "$COMMITS_SINCE" -gt 0 ]; then
+            echo "Found $COMMITS_SINCE commits since last build"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "No commits since last build, skipping"
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   get-info:
     name: Get Info
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    needs: check-commits
+    if: needs.check-commits.outputs.should_build == 'true'
     outputs:
       latest_version: ${{ steps.get_version.outputs.latest_version }}
       full_version: ${{ steps.get_version.outputs.short_version }}
@@ -22,10 +66,11 @@ jobs:
       - name: Get version
         id: get_version
         uses: ./.github/actions/version
-
+        
   build:
     name: Build Unity Cloud
-    needs: get-info
+    needs: [check-commits, get-info]
+    if: needs.check-commits.outputs.should_build == 'true'
     uses: ./.github/workflows/build-unitycloud.yml
     with:
       profile: profile

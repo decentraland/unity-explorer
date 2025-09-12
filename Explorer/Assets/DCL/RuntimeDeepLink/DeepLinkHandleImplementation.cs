@@ -1,6 +1,7 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.Commands;
 using DCL.RealmNavigation;
-using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
@@ -11,13 +12,13 @@ namespace DCL.RuntimeDeepLink
     public class DeepLinkHandle : IDeepLinkHandle
     {
         private readonly StartParcel startParcel;
-        private readonly IRealmNavigator realmNavigator;
+        private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
 
-        public DeepLinkHandle(StartParcel startParcel, IRealmNavigator realmNavigator, CancellationToken token)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token)
         {
             this.startParcel = startParcel;
-            this.realmNavigator = realmNavigator;
+            this.chatTeleporter = chatTeleporter;
             this.token = token;
         }
 
@@ -26,13 +27,20 @@ namespace DCL.RuntimeDeepLink
         public Result HandleDeepLink(DeepLink deeplink)
         {
             Vector2Int? position = PositionFrom(deeplink);
+            URLDomain? realm = RealmFrom(deeplink);
+
+            if (realm.HasValue)
+            {
+                chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position, token).Forget();
+                return Result.SuccessResult();
+            }
 
             if (position.HasValue)
             {
                 var parcel = position.Value;
 
                 if (startParcel.IsConsumed())
-                    realmNavigator.TeleportToParcelAsync(position.Value, token, false).Forget();
+                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token).Forget();
                 else
                     startParcel.Assign(parcel);
 
@@ -40,6 +48,16 @@ namespace DCL.RuntimeDeepLink
             }
 
             return Result.ErrorResult("no matches");
+        }
+
+        private static URLDomain? RealmFrom(DeepLink deepLink)
+        {
+            string? rawRealm = deepLink.ValueOf(AppArgsFlags.REALM);
+
+            if (rawRealm == null)
+                return null;
+
+            return URLDomain.FromString(rawRealm);
         }
 
         private static Vector2Int? PositionFrom(DeepLink deeplink)

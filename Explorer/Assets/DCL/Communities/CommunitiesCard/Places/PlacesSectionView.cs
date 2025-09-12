@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
@@ -14,11 +15,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using Utility.Types;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
-using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
+using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
-    public class PlacesSectionView : MonoBehaviour, ICommunityFetchingView<PlaceInfo>
+    public class PlacesSectionView : MonoBehaviour, ICommunityFetchingView<PlaceData>
     {
         private const int ELEMENT_MISSING_THRESHOLD = 5;
         private const int ADD_PLACE_PREFAB_INDEX = 0;
@@ -34,7 +36,6 @@ namespace DCL.Communities.CommunitiesCard.Places
         [field: SerializeField] private GameObject emptyState { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
-        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
         [field: SerializeField] private Sprite deleteSprite { get; set; } = null!;
 
         public event Action? NewDataRequested;
@@ -49,7 +50,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo>? ElementJumpInButtonClicked;
         public event Action<PlaceInfo>? ElementDeleteButtonClicked;
 
-        private SectionFetchData<PlaceInfo> placesInfo = null!;
+        private SectionFetchData<PlaceData> placesInfo = null!;
         private bool canModify;
         private CommunityData communityData;
         private ThumbnailLoader? thumbnailLoader;
@@ -112,11 +113,11 @@ namespace DCL.Communities.CommunitiesCard.Places
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[PLACE_PREFAB_INDEX].mItemPrefab.name);
             PlaceCardView elementView = listItem.GetComponent<PlaceCardView>();
 
-            SectionFetchData<PlaceInfo> membersData = placesInfo;
+            SectionFetchData<PlaceData> membersData = placesInfo;
 
             int realIndex = canModify ? index - 1 : index;
-            PlaceInfo placeInfo = membersData.Items[realIndex];
-            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, thumbnailLoader!, cancellationToken);
+            PlaceData placeInfo = membersData.Items[realIndex];
+            elementView.Configure(placeInfo, placeInfo.PlaceInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, thumbnailLoader!, cancellationToken);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),
@@ -148,23 +149,22 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
-                                                                                                                      DELETE_PLACE_CANCEL_TEXT,
-                                                                                                                      DELETE_PLACE_CONFIRM_TEXT,
-                                                                                                                      deleteSprite,
-                                                                                                                      false, false,
-                                                                                                                      DELETE_PLACE_SUB_TEXT),
-                                                                                                                  ct)
-                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
+                                                                                         DELETE_PLACE_CANCEL_TEXT,
+                                                                                         DELETE_PLACE_CONFIRM_TEXT,
+                                                                                         deleteSprite,
+                                                                                         false, false,
+                                                                                         subText: DELETE_PLACE_SUB_TEXT),
+                                                                                     ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
 
                 ElementDeleteButtonClicked?.Invoke(placeInfo);
             }
         }
 
-        public void RefreshGrid(SectionFetchData<PlaceInfo> placesInfo, bool redraw)
+        public void RefreshGrid(SectionFetchData<PlaceData> placesInfo, bool redraw)
         {
             this.placesInfo = placesInfo;
             int count = placesInfo.Items.Count;

@@ -5,13 +5,31 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public readonly struct FacialFeaturesTextures
     {
-        public readonly IReadOnlyDictionary<string, Dictionary<int, Texture>> Value;
+        private readonly Dictionary<string, Dictionary<int, Texture>> texturesByCategory;
+        public IReadOnlyDictionary<string, Dictionary<int, Texture>> Value => texturesByCategory;
 
-        public FacialFeaturesTextures(IReadOnlyDictionary<string, Dictionary<int, Texture>> value)
+        public FacialFeaturesTextures(Dictionary<string, Dictionary<int, Texture>> value)
         {
-            Value = value;
+            texturesByCategory = value;
         }
 
         public Texture this[string category, int originalTextureId] => Value[category][originalTextureId];
+
+        public void CopyInto(ref FacialFeaturesTextures other)
+        {
+            var texturesByCategory = other.texturesByCategory;
+
+            foreach ((string? category, Dictionary<int, Texture>? existingTextures) in Value)
+            {
+                if (!texturesByCategory.ContainsKey(category))
+                    texturesByCategory[category] = new Dictionary<int, Texture>();
+
+                var newTextures = texturesByCategory[category];
+                newTextures.Clear();
+
+                foreach ((int textureId, Texture? texture) in existingTextures)
+                    newTextures[textureId] = texture;
+            }
+        }
     }
 }

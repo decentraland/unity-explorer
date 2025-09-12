@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI;
@@ -16,7 +17,9 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatConversationsToolbarView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ChatConversationsToolbarView : MonoBehaviour,
+        IPointerEnterHandler,
+        IPointerExitHandler
     {
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
@@ -157,9 +160,13 @@ namespace DCL.Chat
         /// </summary>
         /// <param name="destinationChannel">The Id of the conversation to find the item.</param>
         /// <param name="unreadMessages">The amount of unread messages in the conversation.</param>
-        public void SetUnreadMessages(ChatChannel.ChannelId destinationChannel, int unreadMessages)
+        /// <param name="hasMentions">Whether there are mentions among the unread messages or not.</param>
+        public void SetUnreadMessages(ChatChannel.ChannelId destinationChannel, int unreadMessages, bool hasMentions)
         {
-            items[destinationChannel].SetUnreadMessages(unreadMessages);
+            items[destinationChannel].ShowMentionSign(hasMentions);
+
+            if(!hasMentions)
+                items[destinationChannel].SetUnreadMessages(unreadMessages);
         }
 
         /// <summary>

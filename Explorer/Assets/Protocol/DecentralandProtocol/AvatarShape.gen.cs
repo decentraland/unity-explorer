@@ -26,7 +26,7 @@ namespace DCL.ECSComponents {
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX3NoYXBlLnBy",
             "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJhbGFu",
-            "ZC9jb21tb24vY29sb3JzLnByb3RvIvsDCg1QQkF2YXRhclNoYXBlEgoKAmlk",
+            "ZC9jb21tb24vY29sb3JzLnByb3RvIrUECg1QQkF2YXRhclNoYXBlEgoKAmlk",
             "GAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARIXCgpib2R5X3NoYXBlGAMgASgJ",
             "SAGIAQESNAoKc2tpbl9jb2xvchgEIAEoCzIbLmRlY2VudHJhbGFuZC5jb21t",
             "b24uQ29sb3IzSAKIAQESNAoKaGFpcl9jb2xvchgFIAEoCzIbLmRlY2VudHJh",
@@ -34,15 +34,16 @@ namespace DCL.ECSComponents {
             "ZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjNIBIgBARIiChVleHByZXNzaW9u",
             "X3RyaWdnZXJfaWQYByABKAlIBYgBARIpChxleHByZXNzaW9uX3RyaWdnZXJf",
             "dGltZXN0YW1wGAggASgDSAaIAQESFAoHdGFsa2luZxgJIAEoCEgHiAEBEhEK",
-            "CXdlYXJhYmxlcxgKIAMoCRIOCgZlbW90ZXMYCyADKAlCBwoFX25hbWVCDQoL",
-            "X2JvZHlfc2hhcGVCDQoLX3NraW5fY29sb3JCDQoLX2hhaXJfY29sb3JCDAoK",
-            "X2V5ZV9jb2xvckIYChZfZXhwcmVzc2lvbl90cmlnZ2VyX2lkQh8KHV9leHBy",
-            "ZXNzaW9uX3RyaWdnZXJfdGltZXN0YW1wQgoKCF90YWxraW5nQhSqAhFEQ0wu",
-            "RUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "CXdlYXJhYmxlcxgKIAMoCRIOCgZlbW90ZXMYCyADKAkSIAoTc2hvd19vbmx5",
+            "X3dlYXJhYmxlcxgMIAEoCEgIiAEBQgcKBV9uYW1lQg0KC19ib2R5X3NoYXBl",
+            "Qg0KC19za2luX2NvbG9yQg0KC19oYWlyX2NvbG9yQgwKCl9leWVfY29sb3JC",
+            "GAoWX2V4cHJlc3Npb25fdHJpZ2dlcl9pZEIfCh1fZXhwcmVzc2lvbl90cmln",
+            "Z2VyX3RpbWVzdGFtcEIKCghfdGFsa2luZ0IWChRfc2hvd19vbmx5X3dlYXJh",
+            "Ymxlc0IUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes" }, new[]{ "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes", "ShowOnlyWearables" }, new[]{ "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "ShowOnlyWearables" }, null, null, null)
           }));
     }
     #endregion
@@ -106,6 +107,7 @@ namespace DCL.ECSComponents {
       talking_ = other.talking_;
       wearables_ = other.wearables_.Clone();
       emotes_ = other.emotes_.Clone();
+      showOnlyWearables_ = other.showOnlyWearables_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -348,6 +350,34 @@ namespace DCL.ECSComponents {
       get { return emotes_; }
     }
 
+    /// <summary>Field number for the "show_only_wearables" field.</summary>
+    public const int ShowOnlyWearablesFieldNumber = 12;
+    private bool showOnlyWearables_;
+    /// <summary>
+    /// hides the skin + hair + facial features (default: false)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool ShowOnlyWearables {
+      get { if ((_hasBits0 & 4) != 0) { return showOnlyWearables_; } else { return false; } }
+      set {
+        _hasBits0 |= 4;
+        showOnlyWearables_ = value;
+      }
+    }
+    /// <summary>Gets whether the "show_only_wearables" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasShowOnlyWearables {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "show_only_wearables" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearShowOnlyWearables() {
+      _hasBits0 &= ~4;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -374,6 +404,7 @@ namespace DCL.ECSComponents {
       if (Talking != other.Talking) return false;
       if(!wearables_.Equals(other.wearables_)) return false;
       if(!emotes_.Equals(other.emotes_)) return false;
+      if (ShowOnlyWearables != other.ShowOnlyWearables) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -392,6 +423,7 @@ namespace DCL.ECSComponents {
       if (HasTalking) hash ^= Talking.GetHashCode();
       hash ^= wearables_.GetHashCode();
       hash ^= emotes_.GetHashCode();
+      if (HasShowOnlyWearables) hash ^= ShowOnlyWearables.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -448,6 +480,10 @@ namespace DCL.ECSComponents {
       }
       wearables_.WriteTo(output, _repeated_wearables_codec);
       emotes_.WriteTo(output, _repeated_emotes_codec);
+      if (HasShowOnlyWearables) {
+        output.WriteRawTag(96);
+        output.WriteBool(ShowOnlyWearables);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -496,6 +532,10 @@ namespace DCL.ECSComponents {
       }
       wearables_.WriteTo(ref output, _repeated_wearables_codec);
       emotes_.WriteTo(ref output, _repeated_emotes_codec);
+      if (HasShowOnlyWearables) {
+        output.WriteRawTag(96);
+        output.WriteBool(ShowOnlyWearables);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -535,6 +575,9 @@ namespace DCL.ECSComponents {
       }
       size += wearables_.CalculateSize(_repeated_wearables_codec);
       size += emotes_.CalculateSize(_repeated_emotes_codec);
+      if (HasShowOnlyWearables) {
+        size += 1 + 1;
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -585,6 +628,9 @@ namespace DCL.ECSComponents {
       }
       wearables_.Add(other.wearables_);
       emotes_.Add(other.emotes_);
+      if (other.HasShowOnlyWearables) {
+        ShowOnlyWearables = other.ShowOnlyWearables;
+      }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -653,6 +699,10 @@ namespace DCL.ECSComponents {
             emotes_.AddEntriesFrom(input, _repeated_emotes_codec);
             break;
           }
+          case 96: {
+            ShowOnlyWearables = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -719,6 +769,10 @@ namespace DCL.ECSComponents {
           }
           case 90: {
             emotes_.AddEntriesFrom(ref input, _repeated_emotes_codec);
+            break;
+          }
+          case 96: {
+            ShowOnlyWearables = input.ReadBool();
             break;
           }
         }

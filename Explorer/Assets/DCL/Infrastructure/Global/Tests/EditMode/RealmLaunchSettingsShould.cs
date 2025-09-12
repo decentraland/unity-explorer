@@ -125,7 +125,7 @@ namespace Global.Tests.EditMode
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
-            Assert.AreEqual(world, realmLaunchSettings.targetWorld);
+            Assert.AreEqual(world, realmLaunchSettings.TargetWorld);
         }
 
         [Test]

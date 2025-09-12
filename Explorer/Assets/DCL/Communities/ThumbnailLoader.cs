@@ -19,7 +19,7 @@ namespace DCL.Communities
 
         public async UniTaskVoid LoadCommunityThumbnailAsync(string thumbnailUrl, ImageView thumbnailView, Sprite? defaultThumbnail, CancellationToken ct)
         {
-            thumbnailView.SetColor(Color.clear);
+            thumbnailView.ImageColor = Color.clear;
             thumbnailView.SetImage(defaultThumbnail!, true);
             thumbnailView.IsLoading = true;
 

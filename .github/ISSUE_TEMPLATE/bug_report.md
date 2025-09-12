@@ -14,7 +14,7 @@ assignees: ''
 ### 📔 **Issue Description:**
 <!-- Short description of the observed issue -->
 
-### **STR:** 
+### 👣 **STR:** 
 
   1.
   2.
@@ -24,12 +24,15 @@ assignees: ''
 
 ### ❌ **Actual Result with evidence:**
 
+### ➗ **Reproduction:**
+<!-- Select one option bellow and add notes such as "Happens 100% or happens to one user" -->
+##### 🔁 Always - (note)
 
-### ➗ **Repro Index:**
-<!-- Starting on 0/10 attempts -->
+##### ⚠️ Intermittent - (note)
 
+##### ❓ Unknown - (note)
 
-### 🖥️ **Operative system and additional Notes:**
+#### 🖥️ **Operative system and additional Notes:**
 <!-- If the test is made on Mac, specify if the chip is M1 or Intel -->
 
 

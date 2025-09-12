@@ -17,6 +17,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         PrivacyPolicy,
         TermsOfUse,
+        ContentPolicy,
+        CodeOfEthics,
 
         ApiChunks,
 
@@ -27,6 +29,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ContentModerationReport,
 
         ApiEvents,
+        EventsWebpage,
 
         ApiAuth,
         AuthSignatureWebApp,
@@ -83,6 +86,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         EmailSubscriptions,
 
         Communities,
+        Members,
 
         DecentralandWorlds,
 
