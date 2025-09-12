@@ -560,7 +560,9 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 playerParcelTracker,
                 realmNavigator,
-                staticContainer.RealmData);
+                staticContainer.RealmData,
+                bootstrapContainer.DecentralandUrlsSource
+                );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)

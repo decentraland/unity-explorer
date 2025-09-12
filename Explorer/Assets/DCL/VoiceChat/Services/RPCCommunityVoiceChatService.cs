@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SocialService;
 using Decentraland.SocialService.V2;
 using DCL.WebRequests;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;

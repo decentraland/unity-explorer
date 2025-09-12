@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SocialService;
 using DCL.Utilities;
@@ -29,14 +30,15 @@ namespace DCL.VoiceChat
             IWebRequestController webRequestController,
             PlayerParcelTrackerService parcelTrackerService,
             IRealmNavigator realmNavigator,
-            IRealmData realmData)
+            IRealmData realmData,
+            IDecentralandUrlsSource urlsSource)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
 
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
 
-            rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController);
+            rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController, urlsSource);
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(parcelTrackerService, realmNavigator, realmData);
             CommunityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService);
             VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService);
