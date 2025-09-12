@@ -1071,7 +1071,9 @@ namespace Global.Dynamic
                         identityCache,
                         debugBuilder,
                         cameraReelStorageService,
-                        entityParticipantTable
+                        entityParticipantTable,
+                        eventBus,
+                        translationSettings
                     )
                 );
 

@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
@@ -23,13 +22,13 @@ namespace DCL.Settings.ModuleControllers
             this.chatSettingsAsset = chatSettingsAsset;
             this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.eventBus = eventBus;
-            
+
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE))
             {
                 var currentLanguage = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE);
                 view.DropdownView.Dropdown.SetValueWithoutNotify(currentLanguage);
             }
-            
+
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetPreferredLanguageSettings);
             view.gameObject.SetActive(this.isTranslationChatEnabled);
         }
