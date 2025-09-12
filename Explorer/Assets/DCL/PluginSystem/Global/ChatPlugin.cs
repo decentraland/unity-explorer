@@ -49,6 +49,8 @@ using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -102,6 +104,7 @@ namespace DCL.PluginSystem.Global
         private readonly CancellationTokenSource pluginCts;
         private CommandRegistry commandRegistry;
         private readonly bool includeTranslationChat;
+        private FallbackFontsProvider fallbackFontsProvider;
         private ITranslationSettings translationSettings;
         private ITranslationMemory translationMemory;
         private ITranslationService translationService;
@@ -199,8 +202,9 @@ namespace DCL.PluginSystem.Global
             chatBusListenerService?.Dispose();
             chatUserStateService?.Dispose();
             communityUserStateService?.Dispose();
-            pluginScope.Dispose();
+            fallbackFontsProvider?.Dispose();
 
+            pluginScope.Dispose();
             pluginCts.Cancel();
             pluginCts.Dispose();
         }
@@ -210,6 +214,8 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, pluginCts.Token);
+
+            fallbackFontsProvider = new FallbackFontsProvider(assetsProvisioner, settings.FallbackFonts, linkedCts.Token);
 
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, settings.ChatSettingsAsset);
 
@@ -221,7 +227,7 @@ namespace DCL.PluginSystem.Global
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
-            
+
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
 
             var translationProvider = new DclTranslationProvider(webRequestController, decentralandUrlsSource);
@@ -419,6 +425,7 @@ namespace DCL.PluginSystem.Global
     {
         [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; }
         [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; }
+        [field: SerializeField] public List<AssetReferenceT<TMP_FontAsset>> FallbackFonts { get; private set; }
 
         [Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
