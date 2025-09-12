@@ -1,14 +1,10 @@
 ﻿using Arch.SystemGroups;
 using DCL.Backpack.BackpackBus;
 using DCL.PluginSystem.Global;
+using DCL.SmartWearables;
 
-namespace DCL.PluginSystem.World
+namespace DCL.PluginSystem.SmartWearables
 {
-    /// <summary>
-    /// Injects systems that are needed for the Smart Wearables feature.
-    ///
-    /// - SmartWearableSystem listens to backpack events to initiate the loading flow of smart wearable scenes
-    /// </summary>
     public class SmartWearablesGlobalPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly IBackpackEventBus backpackEventBus;

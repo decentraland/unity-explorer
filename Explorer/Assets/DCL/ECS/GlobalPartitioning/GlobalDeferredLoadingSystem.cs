@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.SceneLifeCycle;
@@ -18,7 +17,6 @@ using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
-using UnityEngine;
 using LoadWearableAssetBundleManifestSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearableAssetBundleManifestSystem;
 using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
 using LoadWearablesDTOByPointersSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesDTOByPointersSystem;
@@ -55,6 +53,7 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
+                CreateQuery<GetSmartWearableSceneIntention, GetSmartWearableSceneIntention.Result>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetTextureIntention, Texture2DData>(),

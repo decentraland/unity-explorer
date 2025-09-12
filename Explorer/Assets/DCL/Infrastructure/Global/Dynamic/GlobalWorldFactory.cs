@@ -13,7 +13,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
-using DCL.Time;
 using DCL.Time.Systems;
 using DCL.WebRequests;
 using ECS;
@@ -37,7 +36,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
 using DCL.Roads.Systems;
-using DCL.SkyBox;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -193,6 +191,8 @@ namespace Global.Dynamic
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
+
+            LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
 
