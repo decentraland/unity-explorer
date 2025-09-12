@@ -157,7 +157,7 @@ namespace DCL.Chat.History
 
                         lock (channelsLocker)
                         {
-                            channelFiles.Add(fileChannelId, newFile);
+                            channelFiles.TryAdd(fileChannelId, newFile);
                         }
 
                         chatHistory.AddOrGetChannel(fileChannelId, ChatChannel.ChatChannelType.USER);
@@ -196,12 +196,9 @@ namespace DCL.Chat.History
         {
             ReportHub.Log(reportData, $"Initializing conversation with messages for channel: " + channelId.Id);
 
-            ChannelFile channelFile;
-
             // If already reading or if the file did not exist, ignore it
-            if (!channelFiles.TryGetValue(channelId, out channelFile) ||
-                channelFile.IsInitialized ||
-                (channelFile.Content != null && channelFile.Content.CanRead))
+            if (!channelFiles.TryGetValue(channelId, out ChannelFile channelFile) ||
+                channelFile.IsInitialized || channelFile.Content is { CanRead: true })
             {
                 ReportHub.LogWarning(reportData, $"Initialization canceled. The file does not exist or the channel was already initialized: " + channelId.Id);
                 return false;
@@ -216,7 +213,7 @@ namespace DCL.Chat.History
                 chatHistory.Channels[channelId].FillChannel(messagesBuffer);
 
             channelFile.IsInitialized = true;
-            
+
             ReportHub.Log(reportData, $"Conversation initialized.");
             return loadedAny;
         }
