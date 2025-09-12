@@ -99,7 +99,8 @@ namespace DCL.Chat.History
                         string walletAddress = sentByLocalUser ? localUserWalletAddress : remoteUserWalletAddress;
                         string timestampString = entryValues[ENTRY_TIMESTAMP].Trim();
 
-                        if (!double.TryParse(timestampString, NumberStyles.Float, CultureInfo.InvariantCulture, out double timestamp))
+                        if (!double.TryParse(timestampString, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double timestamp)
+                            && !double.TryParse(entryValues[ENTRY_TIMESTAMP], NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out timestamp)) // fallback
                         {
                             ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"skipping corrupted entry due to invalid timestamp: '{entryValues[ENTRY_TIMESTAMP]}'. Line: '{currentLine}'");
                             currentLine = await reader2.ReadLineAsync();
