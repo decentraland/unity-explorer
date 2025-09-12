@@ -157,7 +157,7 @@ namespace DCL.Chat.History
 
                         lock (channelsLocker)
                         {
-                            channelFiles.TryAdd(fileChannelId, newFile);
+                            channelFiles[fileChannelId] = newFile;
                         }
 
                         chatHistory.AddOrGetChannel(fileChannelId, ChatChannel.ChatChannelType.USER);
