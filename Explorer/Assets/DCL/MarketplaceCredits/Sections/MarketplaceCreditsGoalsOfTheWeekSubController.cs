@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCreditsAPIService;
+using DCL.UI.InputFieldFormatting;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly List<MarketplaceCreditsGoalRowView> instantiatedGoalRows = new ();
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
+        private readonly ITextFormatter textFormatter;
 
         private CancellationTokenSource fetchCaptchaCts;
         private CancellationTokenSource claimCreditsCts;
@@ -34,12 +36,14 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWebRequestController webRequestController,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
-            MarketplaceCreditsMenuController marketplaceCreditsMenuController)
+            MarketplaceCreditsMenuController marketplaceCreditsMenuController,
+            ITextFormatter textFormatter)
         {
             this.subView = subView;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
+            this.textFormatter = textFormatter;
 
             marketplaceCreditsMenuController.OnAnyPlaceClick += CloseTimeLeftTooltip;
             subView.TimeLeftInfoButton.onClick.AddListener(ToggleTimeLeftTooltip);
@@ -122,7 +126,7 @@ namespace DCL.MarketplaceCredits.Sections
             var goalRow = goalRowsPool.Get();
 
             goalRow.SetupGoalImage(goalData.thumbnail);
-            goalRow.SetTitle(goalData.title);
+            goalRow.SetTitle(textFormatter.FormatText(goalData.title));
             goalRow.SetCredits(MarketplaceCreditsUtils.FormatGoalReward(goalData.reward));
             goalRow.SetAsCompleted(goalData.progress.completedSteps == goalData.progress.totalSteps, goalData.isClaimed);
             goalRow.SetClaimStatus(goalData.progress.completedSteps == goalData.progress.totalSteps && !goalData.isClaimed, goalData.isClaimed);

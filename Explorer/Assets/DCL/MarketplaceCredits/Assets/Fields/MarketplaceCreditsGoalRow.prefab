@@ -167,7 +167,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 7755962594517003769}
+  <skeletonLoadingView>k__BackingField: {fileID: 0}
   <Image>k__BackingField: {fileID: 2576211823450272506}
+  <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 0}
+  rectTransform: {fileID: 0}
 --- !u!1 &1533269208112015939
 GameObject:
   m_ObjectHideFlags: 0
@@ -1377,6 +1381,7 @@ GameObject:
   - component: {fileID: 3995880006943449906}
   - component: {fileID: 8230511648181990848}
   - component: {fileID: 3694455267212925076}
+  - component: {fileID: 1661602641225776878}
   m_Layer: 5
   m_Name: GoalTitle
   m_TagString: Untagged
@@ -1502,6 +1507,19 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &1661602641225776878
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8092706339491897411}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71db578cd89a48d0903a2e608024fcd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textComponent: {fileID: 3694455267212925076}
 --- !u!1001 &5461163177342593904
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -9,6 +9,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
@@ -36,6 +37,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
+        private readonly ITextFormatter textFormatter;
 
         private MarketplaceCreditsMenuController? marketplaceCreditsMenuController;
         private CreditsUnlockedController? creditsUnlockedController;
@@ -53,7 +55,8 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            ITextFormatter textFormatter)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -67,6 +70,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
+            this.textFormatter = textFormatter;
 
             marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
         }
@@ -100,7 +104,8 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 sharedSpaceManager,
                 web3IdentityCache,
-                loadingStatus);
+                loadingStatus,
+                textFormatter);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);
