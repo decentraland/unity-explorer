@@ -17,6 +17,8 @@ namespace DCL.AssetsProvision
     {
         [SerializeField] private Image image = null!;
         [SerializeField] private AssetReferenceT<Sprite> spriteAsset = null!;
+        [SerializeField] private Color unloadedColor = Color.white;
+        [SerializeField] private Color loadedColor = Color.white;
 
         private ContextualAsset<Sprite> asset = null!;
 
@@ -36,10 +38,15 @@ namespace DCL.AssetsProvision
 
         private async UniTask LoadAsync()
         {
+            image.color = unloadedColor;
             Weak<Sprite> sprite = await asset.AssetAsync(destroyCancellationToken);
             Option<Sprite> resource = sprite.Resource;
 
-            if (resource.Has) image.sprite = resource.Value;
+            if (resource.Has)
+            {
+                image.sprite = resource.Value;
+                image.color = loadedColor;
+            }
             else ReportHub.LogError(ReportCategory.UI, "Cannot load grid asset");
         }
 

@@ -40,7 +40,7 @@ WindZone:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4984400270765111023}
   m_Enabled: 1
-  m_Mode: 1
+  m_Mode: 0
   m_Radius: 40
   m_WindMain: 0.15
   m_WindTurbulence: 0.2

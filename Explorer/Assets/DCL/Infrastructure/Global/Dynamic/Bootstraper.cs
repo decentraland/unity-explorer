@@ -118,7 +118,7 @@ namespace Global.Dynamic
                 world,
                 playerEntity,
                 memoryCap,
-                bootstrapContainer.WorldVolumeMacBus,
+                bootstrapContainer.VolumeBus,
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
@@ -245,7 +245,8 @@ namespace Global.Dynamic
                 dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
                 dynamicWorldContainer.RemoteMetadata,
-                webJsSources
+                webJsSources,
+                bootstrapContainer.Environment
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(

@@ -3,6 +3,7 @@ using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Burst;
@@ -16,15 +17,21 @@ namespace DCL.UI.GenericContextMenu
 {
     public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter.GenericContextMenuParameter>
     {
-        private struct DeferredConfig
+        private readonly struct DeferredConfig
         {
             public readonly GenericContextMenuParameter.GenericContextMenu Config;
             public readonly GenericContextMenuSubMenuButtonView ParentComponent;
+            public readonly SubMenuContextMenuButtonSettings.SettingsFillingDelegate SettingsFillingDelegate;
+            public readonly Rect? OverlapRect;
 
-            public DeferredConfig(GenericContextMenuParameter.GenericContextMenu config, GenericContextMenuSubMenuButtonView parentComponent)
+            public bool IsAsynchronous => SettingsFillingDelegate != null;
+
+            public DeferredConfig(GenericContextMenuParameter.GenericContextMenu config, GenericContextMenuSubMenuButtonView parentComponent, SubMenuContextMenuButtonSettings.SettingsFillingDelegate settingsFillingDelegate, Rect? overlapRect)
             {
                 Config = config;
                 ParentComponent = parentComponent;
+                SettingsFillingDelegate = settingsFillingDelegate;
+                OverlapRect = overlapRect;
             }
         }
 
@@ -35,7 +42,6 @@ namespace DCL.UI.GenericContextMenu
         private readonly ControlsPoolManager controlsPoolManager;
         private NativeArray<float3> worldRectCorners;
         private readonly ContextMenuOpenDirection[] openDirections = EnumUtils.Values<ContextMenuOpenDirection>();
-        private readonly Queue<DeferredConfig> deferredConfigs = new ();
 
         private NativeArray<ContextMenuOpenDirection> fallbackDirectionsCache;
         private int fallbackDirectionsCount;
@@ -47,6 +53,10 @@ namespace DCL.UI.GenericContextMenu
         private bool isNativeArrayInitialized;
 
         private Vector3[] cornersArray;
+
+        // Probable limitation?: This will work as long as there are no more than one asynchronous submenu
+        private CancellationTokenSource submenuConfigurationCts = new ();
+        private bool isConfiguringSubmenu;
 
         public GenericContextMenuController(ViewFactoryMethod viewFactory,
             ControlsPoolManager controlsPoolManager) : base(viewFactory)
@@ -70,6 +80,7 @@ namespace DCL.UI.GenericContextMenu
         {
             base.Dispose();
 
+            submenuConfigurationCts.SafeCancelAndDispose();
             controlsPoolManager.Dispose();
             DisposeNativeArrays();
         }
@@ -103,10 +114,57 @@ namespace DCL.UI.GenericContextMenu
             inputData.ActionOnShow?.Invoke();
         }
 
+        private async UniTaskVoid ConfigureContextMenuSubmenuAsync(DeferredConfig deferredConfig, CancellationToken ct)
+        {
+            if(isConfiguringSubmenu)
+                return;
+
+            isConfiguringSubmenu = true;
+            deferredConfig.ParentComponent.container.SetLoadingAnimationVisibility(true);
+
+            try
+            {
+                if (deferredConfig.SettingsFillingDelegate != null)
+                {
+                    // First it removes all the previous items of the submenu
+                    deferredConfig.Config.ClearControls();
+
+                    for (int i = 0; i < deferredConfig.ParentComponent.container.transform.childCount; ++i)
+                    {
+                        Transform currentChild = deferredConfig.ParentComponent.container.transform.GetChild(i);
+
+                        if (currentChild.TryGetComponent(out GenericContextMenuComponentBase control))
+                        {
+                            controlsPoolManager.ReleaseControl(control);
+                            --i;
+                        }
+                    }
+
+                    // Calls the function to add the new items to the submenu, which is implemented by the caller
+                    await deferredConfig.SettingsFillingDelegate(deferredConfig.Config, ct);
+                }
+
+                // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
+                ConfigureContextMenu(deferredConfig.ParentComponent.container, deferredConfig.Config, Vector2.zero, deferredConfig.OverlapRect);
+
+                // Moves the submenu in case it is crossing any of the borders of the screen
+                float4 boundaryRect = deferredConfig.OverlapRect.HasValue ? BurstRectUtils.RectToFloat4(deferredConfig.OverlapRect.Value) : backgroundWorldRect;
+                deferredConfig.ParentComponent.container.transform.position = AdjustSubmenuPositionToFitBounds(deferredConfig.ParentComponent.container, boundaryRect);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                isConfiguringSubmenu = false;
+                deferredConfig.ParentComponent.container.SetLoadingAnimationVisibility(false);
+            }
+        }
+
         private void ConfigureContextMenu(ControlsContainerView container, GenericContextMenuParameter.GenericContextMenu contextMenuConfig, Vector2 anchorPosition, Rect? overlapRect)
         {
             float totalHeight = 0;
             bool needsLayoutRebuild = false;
+
+            Queue<DeferredConfig> deferredConfigs = new ();
 
             for (var i = 0; i < contextMenuConfig.contextMenuSettings.Count; i++)
             {
@@ -118,7 +176,24 @@ namespace DCL.UI.GenericContextMenu
 
                 if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings && component is GenericContextMenuSubMenuButtonView subMenuButtonView)
                 {
-                    deferredConfigs.Enqueue(new DeferredConfig(subMenuButtonSettings.subMenu, subMenuButtonView));
+                    DeferredConfig deferredConfig = new DeferredConfig(subMenuButtonSettings.subMenu, subMenuButtonView, subMenuButtonSettings.asyncControlSettingsFillingDelegate, overlapRect);
+                    deferredConfigs.Enqueue(deferredConfig);
+
+                    if (subMenuButtonSettings.IsSubMenuAsynchronous)
+                    {
+                        // Tells the submenu view to call the async configuration method when it is shown
+                        submenuConfigurationCts = submenuConfigurationCts.SafeRestart();
+                        subMenuButtonView.SetContainerCreationMethod(() =>
+                            {
+                                ConfigureContextMenuSubmenuAsync(deferredConfig, submenuConfigurationCts.Token).Forget();
+                            });
+                    }
+                    else
+                    {
+                        submenuConfigurationCts.Cancel();
+                        subMenuButtonView.SetContainerCreationMethod(null);
+                    }
+
                     needsLayoutRebuild = true;
                 }
 
@@ -144,7 +219,7 @@ namespace DCL.UI.GenericContextMenu
             if (needsLayoutRebuild)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(container.controlsContainer);
 
-            if (deferredConfigs.Count > 0)
+            while(deferredConfigs.Count > 0)
             {
                 DeferredConfig queuedDeferredConfig = deferredConfigs.Dequeue();
 
@@ -156,9 +231,50 @@ namespace DCL.UI.GenericContextMenu
                 subContainer.controlsContainer.anchoredPosition = GetSubContainerPosition(queuedDeferredConfig.ParentComponent.RightAnchor == subContainerAnchor, queuedDeferredConfig.Config);
                 queuedDeferredConfig.ParentComponent.SetContainer(subContainer);
 
-                // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
-                ConfigureContextMenu(subContainer, queuedDeferredConfig.Config, Vector2.zero, overlapRect);
+                // If it is not an asynchronous submenu...
+                if (!queuedDeferredConfig.IsAsynchronous)
+                {
+                    // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
+                    ConfigureContextMenu(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.Config, Vector2.zero, queuedDeferredConfig.OverlapRect);
+
+                    // Moves the submenu in case it is crossing any of the borders of the screen
+                    float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : backgroundWorldRect;
+                    queuedDeferredConfig.ParentComponent.container.transform.position = AdjustSubmenuPositionToFitBounds(queuedDeferredConfig.ParentComponent.container, boundaryRect);
+                }
             }
+        }
+
+        // TODO: Reuse the existing method AdjustPositionToFitBounds with the proper parameters
+        private Vector3 AdjustSubmenuPositionToFitBounds(ControlsContainerView container, float4 boundaryRect)
+        {
+            RectTransform rectTransform = (RectTransform)container.transform;
+            Rect menuRect = new Rect(rectTransform.position.x, rectTransform.position.y, rectTransform.sizeDelta.x, rectTransform.sizeDelta.y);
+            Vector3 adjustedPosition = menuRect.position;
+            menuRect.y = boundaryRect.w - menuRect.y;
+
+            if (menuRect.x < boundaryRect.x)
+            {
+                float adjustment = boundaryRect.x - menuRect.x;
+                adjustedPosition.x += adjustment;
+            }
+            else if (menuRect.x + menuRect.width > boundaryRect.x + boundaryRect.z)
+            {
+                float adjustment = menuRect.x + menuRect.width - (boundaryRect.x + boundaryRect.z);
+                adjustedPosition.x -= adjustment;
+            }
+
+            if (menuRect.y < boundaryRect.y)
+            {
+                float adjustment = boundaryRect.y - menuRect.y;
+                adjustedPosition.y += adjustment;
+            }
+            else if (menuRect.y + menuRect.height > boundaryRect.y + boundaryRect.w)
+            {
+                float adjustment = menuRect.y + menuRect.height - (boundaryRect.y + boundaryRect.w);
+                adjustedPosition.y += adjustment;
+            }
+
+            return adjustedPosition;
         }
 
         private RectTransform GetSubContainerAnchor(RectTransform rightAnchor, RectTransform leftAnchor, GenericContextMenuParameter.GenericContextMenu contextMenuConfig)
