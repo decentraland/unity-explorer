@@ -2,11 +2,15 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Character;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -14,7 +18,6 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
-using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -30,9 +33,8 @@ namespace DCL.SmartWearables
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class SmartWearableSystem : BaseUnityLoopSystem
     {
-        /// <summary>
-        /// Used to subscribe to backpack events to know when we equip / unequip a smart wearable
-        /// </summary>
+        private readonly WearableStorage wearableStorage;
+
         private readonly IBackpackEventBus backpackEventBus;
 
         /// <summary>
@@ -50,8 +52,9 @@ namespace DCL.SmartWearables
         /// </summary>
         private readonly HashSet<string> toUnload = new ();
 
-        public SmartWearableSystem(World world, IBackpackEventBus backpackEventBus) : base(world)
+        public SmartWearableSystem(World world, WearableStorage wearableStorage, IBackpackEventBus backpackEventBus) : base(world)
         {
+            this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
         }
 
@@ -61,12 +64,37 @@ namespace DCL.SmartWearables
 
             backpackEventBus.EquipWearableEvent += OnEquipWearable;
             backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
+
+            HandleInitialEquipmentAsync().Forget();
         }
 
         protected override void Update(float t)
         {
             ResolveScenePromises();
             UnloadSmartWearableScenesQuery(World);
+        }
+
+        private async UniTask HandleInitialEquipmentAsync()
+        {
+            Entity player = Entity.Null;
+            while (player == Entity.Null)
+            {
+                player = World.CachePlayer();
+                await UniTask.Yield();
+            }
+
+            Profile profile;
+            while (!World.TryGet(player, out profile)) await UniTask.Yield();
+
+            foreach (var urn in profile.Avatar.Wearables)
+            {
+                IWearable wearable;
+
+                URN shortUrn = urn.Shorten();
+                while (!wearableStorage.TryGetElement(shortUrn, out wearable) || wearable.IsLoading) await UniTask.Yield();
+
+                OnEquipWearable(wearable);
+            }
         }
 
         private void OnEquipWearable(IWearable wearable)

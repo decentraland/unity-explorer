@@ -20,13 +20,6 @@ using System.Threading.Tasks;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    public struct SmartWearableScene
-    {
-        public SceneDefinitionComponent Definition;
-
-        public ISceneFacade Scene;
-    }
-
     /// <summary>
     /// Handles the <see cref="GetSmartWearableSceneIntention"/> to load the actual scene associated with the smart wearable.
     /// </summary>

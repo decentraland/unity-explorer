@@ -898,7 +898,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new SmartWearablesGlobalPlugin(backpackEventBus)
+                new SmartWearablesGlobalPlugin(wearableCatalog, backpackEventBus)
             };
 
             if (includeVoiceChat)
