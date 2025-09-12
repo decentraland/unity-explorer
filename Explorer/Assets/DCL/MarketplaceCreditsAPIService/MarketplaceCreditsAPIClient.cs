@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
