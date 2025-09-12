@@ -14,6 +14,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,18 +28,21 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
         private readonly IComponentPool<PBTriggerAreaResult> triggerAreaResultPool;
+        private readonly ISceneStateProvider sceneStateProvider;
 
         public TriggerAreaHandlerSystem(
             World world,
             World globalWorld,
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IECSToCRDTWriter ecsToCRDTWriter,
-            IComponentPool<PBTriggerAreaResult> triggerAreaResultPool) : base(world)
+            IComponentPool<PBTriggerAreaResult> triggerAreaResultPool,
+            ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.globalWorld = globalWorld;
             this.entitiesMap = entitiesMap;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.triggerAreaResultPool = triggerAreaResultPool;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
@@ -53,6 +57,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
             // TODO: make the CharacterTriggerAreaComponent more versatile, to accept scene entity colliders
+            // TODO: make CharacterTriggerAreaComponent configurable to use BOX or SPHERE
             World.Add(entity, new SDKTriggerAreaComponent(), new CharacterTriggerAreaComponent(areaSize: Vector3.zero, targetOnlyMainPlayer: false));
         }
 
@@ -80,11 +85,12 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     Scale =
                 }*/
 
-                ecsToCRDTWriter.PutMessage(resultComponent, triggerAreaCRDTEntity);
+                PropagateResultComponent(triggerAreaCRDTEntity, resultComponent);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
 
             // TODO: STAY...
+            // TODO: Can we infer the "STAY" state when ENTER was received but not EXIT ???
 
             foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
             {
@@ -106,11 +112,27 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     Scale =
                 }*/
 
-                // TODO: should the result component be a GOVS component ??? won't several event step on each other???
-
-                ecsToCRDTWriter.PutMessage(resultComponent, triggerAreaCRDTEntity);
+                PropagateResultComponent(triggerAreaCRDTEntity, resultComponent);
             }
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+        }
+
+        private void PropagateResultComponent(in CRDTEntity triggerAreaCRDTEntity, in PBTriggerAreaResult resultComponent)
+        {
+            ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>
+            (
+                prepareMessage: static (pbTriggerAreaResult, data) =>
+                {
+                    pbTriggerAreaResult.TriggeredEntity = data.result.TriggeredEntity;
+                    pbTriggerAreaResult.EventType = data.result.EventType;
+                    pbTriggerAreaResult.TriggeredEntityRotation = data.result.TriggeredEntityRotation;
+                    pbTriggerAreaResult.TriggeredEntityPosition = data.result.TriggeredEntityPosition;
+                    pbTriggerAreaResult.Trigger = data.result.Trigger;
+
+                    pbTriggerAreaResult.Timestamp = data.timestamp;
+                },
+                triggerAreaCRDTEntity, (int)sceneStateProvider.TickNumber, (resultComponent, sceneStateProvider.TickNumber)
+            );
         }
 
         [Query]
