@@ -1,24 +1,24 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace DCL.PluginSystem
 {
     public class SmartWearableSceneContent : ISceneContent
     {
-        private Dictionary<string, string> hashTable;
+        private Dictionary<string, string> hashTable = new ();
 
         private Dictionary<string, (bool, URLAddress)> cachedUrls = new();
 
-        public SmartWearableSceneContent(URLDomain contentBaseUrl, IWearable wearable)
+        private SmartWearableSceneContent(URLDomain contentBaseUrl)
         {
             ContentBaseUrl = contentBaseUrl;
-            hashTable = wearable.DTO.content.ToDictionary(x => x.file, x => x.hash);
         }
 
-        public URLDomain ContentBaseUrl { get; }
+        public URLDomain ContentBaseUrl { get;}
 
         public bool TryGetContentUrl(string contentPath, out URLAddress result)
         {
@@ -28,7 +28,7 @@ namespace DCL.PluginSystem
                 return cachedResult.success;
             }
 
-            if (hashTable.TryGetValue(contentPath, out string hash) || hashTable.TryGetValue("male/" + contentPath, out hash))
+            if (hashTable.TryGetValue(contentPath, out string hash))
             {
                 result = ContentBaseUrl.Append(URLPath.FromString(hash));
                 cachedUrls[contentPath] = (true, result);
@@ -43,6 +43,35 @@ namespace DCL.PluginSystem
         public bool TryGetHash(string name, out string hash)
         {
             return hashTable.TryGetValue(name, out hash);
+        }
+
+        public static SmartWearableSceneContent Create(URLDomain contentBaseUrl, IWearable wearable, BodyShape bodyShape)
+        {
+            var result = new SmartWearableSceneContent(contentBaseUrl);
+
+            string contentPrefix = GetContentPrefix(bodyShape);
+            foreach (var content in wearable.DTO.content)
+            {
+                string key = content.file;
+
+                // NOTE we use StartsWith because the string female/ also contains male/
+                if (content.file.StartsWith(contentPrefix))
+                    // Remove the prefix so that we don't need it when querying content with TryGetContentUrl
+                    key = content.file.Replace(contentPrefix, string.Empty);
+
+                result.hashTable.Add(key, content.hash);
+            }
+
+            return result;
+        }
+
+        private static string GetContentPrefix(BodyShape bodyShape)
+        {
+            if (bodyShape.Index == BodyShape.MALE.Index) return "male/";
+
+            if (bodyShape.Index == BodyShape.FEMALE.Index) return "female/";
+
+            throw new ArgumentOutOfRangeException();
         }
     }
 }

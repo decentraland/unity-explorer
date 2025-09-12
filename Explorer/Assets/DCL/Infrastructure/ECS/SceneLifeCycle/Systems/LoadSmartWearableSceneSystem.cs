@@ -1,13 +1,13 @@
 ﻿using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.PluginSystem;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -51,11 +51,19 @@ namespace ECS.SceneLifeCycle.Systems
         {
             const string CONTENT_URL = "https://peer.decentraland.org/content/contents/";
 
-            SceneEntityDefinition sceneDefinition = await GetSceneDefinitionAsync(CONTENT_URL, intention.SmartWearable, ct);
+            var player = World.CachePlayer();
+            var avatarShape = World.Get<AvatarShapeComponent>(player);
+            var bodyShape = avatarShape.BodyShape;
+
+            var sceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(CONTENT_URL), intention.SmartWearable, bodyShape);
+
+            SceneEntityDefinition? sceneDefinition = await GetSceneDefinitionAsync(intention.SmartWearable.DTO.id, sceneContent, ct);
+            if (sceneDefinition == null || ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
+
+            ReadOnlyMemory<byte> crdt = await GetCrdtAsync(sceneContent, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
-            var definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneDefinition, new IpfsPath(sceneDefinition.id, URLDomain.EMPTY), true);
-            var sceneContent = new SmartWearableSceneContent(URLDomain.FromString(CONTENT_URL), intention.SmartWearable);
+            var definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneDefinition, new IpfsPath(sceneDefinition.id!, URLDomain.EMPTY), true);
             var assetBundleManifest = intention.SmartWearable.ManifestResult!.Value.Asset!;
 
             var sceneData = new SceneData(
@@ -65,7 +73,7 @@ namespace ECS.SceneLifeCycle.Systems
                 sceneDefinition.metadata.scene.DecodedBase,
                 definitionComponent.SceneGeometry,
                 definitionComponent.Parcels,
-                StaticSceneMessages.EMPTY); // TODO should be something like `new StaticSceneMessages(crdt));`
+                new StaticSceneMessages(crdt));
 
             ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
@@ -83,20 +91,30 @@ namespace ECS.SceneLifeCycle.Systems
             return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>(result);
         }
 
-        private async Task<SceneEntityDefinition> GetSceneDefinitionAsync(string url, IWearable wearable, CancellationToken ct)
+        private async Task<SceneEntityDefinition?> GetSceneDefinitionAsync(string sceneId, ISceneContent sceneContent, CancellationToken ct)
         {
-            foreach (var content in wearable.DTO.content)
+            if (!sceneContent.TryGetContentUrl("scene.json", out URLAddress url))
             {
-                if (!content.file.EndsWith("scene.json", StringComparison.Ordinal)) continue;
-
-                var args = new CommonLoadingArguments(URLAddress.FromString(url + content.hash));
-                var sceneMetadata = await webRequestController.GetAsync(args, ct, GetReportData())
-                                                              .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-
-                return new SceneEntityDefinition(content.hash, sceneMetadata);
+                ReportHub.LogError(GetReportCategory(), "Could not find 'scene.json'");
+                return null;
             }
 
-            throw new InvalidOperationException();
+            var args = new CommonLoadingArguments(URLAddress.FromString(url));
+            var sceneMetadata = await webRequestController.GetAsync(args, ct, GetReportData())
+                                                          .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+
+            return new SceneEntityDefinition(sceneId, sceneMetadata);
+        }
+
+        private async UniTask<ReadOnlyMemory<byte>> GetCrdtAsync(ISceneContent sceneContent, CancellationToken ct)
+        {
+            if (!sceneContent.TryGetContentUrl("assets/scene/main.composite", out var url))
+            {
+                ReportHub.LogError(GetReportCategory(), "Could not find 'main.composite'");
+                return ReadOnlyMemory<byte>.Empty;
+            }
+
+            return await webRequestController.GetAsync(new CommonArguments(url), ct, GetReportData()).GetDataCopyAsync();
         }
     }
 }
