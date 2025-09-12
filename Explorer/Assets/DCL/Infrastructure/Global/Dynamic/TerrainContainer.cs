@@ -20,12 +20,11 @@ namespace Global.Dynamic
         private bool landscapeEnabled { get; init; }
 
         public LandscapePlugin CreatePlugin(StaticContainer staticContainer, BootstrapContainer bootstrapContainer, MapRendererContainer mapRendererContainer,
-            IDebugContainerBuilder debugBuilder, bool isGPUIEnabledFF) =>
+            IDebugContainerBuilder debugBuilder) =>
             new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, worldsTerrain, bootstrapContainer.AssetsProvisioner,
                 debugBuilder, mapRendererContainer.TextureContainer,
                 staticContainer.WebRequestsContainer.WebRequestController, landscapeEnabled,
-                bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone),
-                isGPUIEnabledFF);
+                bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone));
 
         public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape, bool localSceneDevelopemnt)
         {
@@ -34,7 +33,7 @@ namespace Global.Dynamic
 
             return new TerrainContainer
             {
-                Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, enableLandscape, localSceneDevelopemnt),
+                Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, enableLandscape),
                 GenesisTerrain = genesisTerrain,
                 worldsTerrain = worldsTerrain,
                 landscapeEnabled = enableLandscape,

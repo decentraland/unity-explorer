@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.Landscape
 {
+    [Obsolete]
     public class ChunkModel
     {
         public readonly int2 MinParcel;

@@ -54,14 +54,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _GroundDetailMap:
         m_Texture: {fileID: 2800000, guid: 105c316dba1de864bb569d48355ce5b8, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 2048, y: 2048}
         m_Offset: {x: 0, y: 0}
     - _GroundNormalMap:
         m_Texture: {fileID: 2800000, guid: db76fd23887e3d54a800352d0befafe2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _HeightMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: a2595bec59855164fbd83eaed2bae39d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -90,7 +90,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _SandDetailMap:
         m_Texture: {fileID: 2800000, guid: ab93a90cd64e2624c978358bf09e59e2, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 4096, y: 4096}
         m_Offset: {x: 0, y: 0}
     - _SandNormalMap:
         m_Texture: {fileID: 2800000, guid: 725c9cbe484cf0f4e9df6469c3a8c614, type: 3}
@@ -102,7 +102,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _TerrainMaskMap:
         m_Texture: {fileID: 2800000, guid: a18e2ee62f44106449f90e6d834bfb4e, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 8, y: 8}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
@@ -117,11 +117,12 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints:
-    - _UseHeightMap: 0
-    - _octaves: 4
+    - _FlipHeightMapV: 0
+    - _UseHeightMap: 18
+    - _octaves: 8
     m_Floats:
     - _AddPrecomputedVelocity: 0
-    - _AlphaClip: 0
+    - _AlphaClip: 1
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
@@ -133,7 +134,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DistanceFieldScale: 10
+    - _DistanceFieldScale: 16
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
@@ -142,6 +143,7 @@ Material:
     - _GlossinessSource: 0
     - _GlossyReflections: 0
     - _GroundNormalScale: 1
+    - _HeightMapScale: 3.8
     - _Metallic: 0
     - _MinDistOccupancy: 0.6862745
     - _OcclusionStrength: 1
@@ -153,7 +155,7 @@ Material:
     - _RedThreshold: 1
     - _SandNormalScale: 1
     - _Shininess: 0
-    - _Smoothness: 0.5
+    - _Smoothness: 0
     - _SmoothnessSource: 0
     - _SmoothnessTextureChannel: 0
     - _SpecSource: 0
@@ -162,12 +164,13 @@ Material:
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _TerrainHeight: 13
+    - _UseHeightMap: 1
     - _WorkflowMode: 1
     - _YellowThreshold: 1
     - _ZWrite: 1
-    - _frequency: 0.005
-    - _terrainHeight: 10
-    - _terrainScale: 10
+    - _frequency: 0.1
+    - _terrainHeight: 16
+    - _terrainScale: 16
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}

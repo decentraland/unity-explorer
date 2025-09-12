@@ -564,6 +564,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &3924260357498821240
@@ -3703,7 +3704,7 @@ MonoBehaviour:
   m_Color: {r: 1, g: 0.1764706, b: 0.33333334, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 0
+  m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -3777,6 +3778,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &5097482182100245469
@@ -4355,6 +4357,7 @@ MonoBehaviour:
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!114 &8391629296536027484
@@ -4580,7 +4583,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 175607292521401437}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.8681382
+  m_Size: 0.86813825
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -5151,7 +5154,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 596702907866863807, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Maskable
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 596702907866863807, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
@@ -5175,7 +5178,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Maskable
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Pivot.x
