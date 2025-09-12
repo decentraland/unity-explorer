@@ -109,7 +109,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
         private readonly IEventsApiService eventsApiService;
         private readonly IUserCalendar userCalendar;
         private readonly ISystemClipboard clipboard;
@@ -180,7 +180,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             IChatMessagesBus chatMessagesBus,
             ISystemMemoryCap systemMemoryCap,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             IEventsApiService eventsApiService,
             IUserCalendar userCalendar,
             ISystemClipboard clipboard,
@@ -238,7 +238,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.chatMessagesBus = chatMessagesBus;
             this.systemMemoryCap = systemMemoryCap;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
             this.eventsApiService = eventsApiService;
             this.userCalendar = userCalendar;
             this.clipboard = clipboard;
@@ -380,7 +380,7 @@ namespace DCL.PluginSystem.Global
                 userBlockingCacheProxy,
                 sceneLoadingLimit,
                 settings.VoiceChatSettings,
-                worldVolumeMacBus,
+                volumeBus,
                 upscalingController,
                 isVoiceChatEnabled,
                 isTranslationChatEnabled,
