@@ -29,9 +29,11 @@ namespace DCL.SDKComponents.MediaStream
 
         public static MediaAddress New(string rawAddress)
         {
+            return FromLivekitAddress(LivekitAddress.New("livekit-video://current-stream"));
+
             if (rawAddress.IsLivekitAddress())
             {
-                return FromLivekitAddress(LivekitAddress.New(rawAddress));
+                return FromLivekitAddress(LivekitAddress.New("livekit-video://current-stream"));
             }
 
             return FromUrlMediaAddress(new UrlMediaAddress(rawAddress));

@@ -122,6 +122,8 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
+            Debug.Log("JUANIII " + sdkComponent.Src);
+
             if (component.State != VideoState.VsError)
             {
                 float targetVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
