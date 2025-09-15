@@ -555,11 +555,11 @@ RectTransform:
   m_Children:
   - {fileID: 4931105431082496744}
   - {fileID: 978605412640507565}
+  - {fileID: 5789183934289443090}
   - {fileID: 2121785855073664546}
   - {fileID: 9191039417669128927}
   - {fileID: 4110035790944863777}
   - {fileID: 2582225395208829658}
-  - {fileID: 5789183934289443090}
   - {fileID: 5603154496668808370}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
