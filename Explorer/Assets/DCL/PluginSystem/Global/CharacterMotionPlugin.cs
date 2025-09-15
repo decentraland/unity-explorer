@@ -9,10 +9,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
-using ECS;
 using ECS.ComponentsPooling.Systems;
-using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
@@ -27,9 +24,6 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly PlayerParcelTrackerService parcelTrackerService;
-        private readonly IScenesCache scenesCache;
-        private readonly IRealmData realmData;
         private readonly ILandscape landscape;
 
         private CharacterControllerSettings settings;
@@ -39,18 +33,12 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            PlayerParcelTrackerService parcelTrackerService,
-            IScenesCache scenesCache,
-            IRealmData realmData,
             ILandscape landscape)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.parcelTrackerService = parcelTrackerService;
-            this.scenesCache = scenesCache;
-            this.realmData = realmData;
             this.landscape = landscape;
         }
 
@@ -96,7 +84,6 @@ namespace DCL.PluginSystem.Global
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
-            PlayerParcelTrackingSystem.InjectToWorld(ref builder, arguments.PlayerEntity, parcelTrackerService, scenesCache, realmData);
         }
     }
 }

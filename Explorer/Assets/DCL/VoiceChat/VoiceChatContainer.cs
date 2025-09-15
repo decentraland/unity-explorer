@@ -1,10 +1,10 @@
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SocialService;
-using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using System;
 
@@ -27,7 +27,7 @@ namespace DCL.VoiceChat
             IRoomHub roomHub,
             IWeb3IdentityCache identityCache,
             IWebRequestController webRequestController,
-            PlayerParcelTrackerService parcelTrackerService,
+            IScenesCache scenesCache,
             IRealmNavigator realmNavigator,
             IRealmData realmData)
         {
@@ -37,7 +37,7 @@ namespace DCL.VoiceChat
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
 
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController);
-            sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(parcelTrackerService, realmNavigator, realmData);
+            sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(scenesCache, realmNavigator, realmData);
             CommunityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService);
             VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService);
         }

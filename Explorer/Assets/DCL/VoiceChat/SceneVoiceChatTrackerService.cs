@@ -3,6 +3,7 @@ using DCL.FeatureFlags;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(SceneVoiceChatTrackerService);
 
-        private readonly PlayerParcelTrackerService parcelTrackerService;
+        private readonly IScenesCache scenesCache;
         private readonly IRealmNavigator realmNavigator;
         private readonly IRealmData realmData;
         private readonly IDisposable? parcelSubscription;
@@ -33,18 +34,18 @@ namespace DCL.VoiceChat
         public event Action? ActiveVoiceChatStoppedInScene;
 
         public SceneVoiceChatTrackerService(
-            PlayerParcelTrackerService parcelTrackerService,
+            IScenesCache scenesCache,
             IRealmNavigator realmNavigator,
             IRealmData realmData)
         {
-            this.parcelTrackerService = parcelTrackerService;
+            this.scenesCache = scenesCache;
             this.realmNavigator = realmNavigator;
             this.realmData = realmData;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
                 this.realmNavigator.NavigationExecuted += OnRealmNavigatorOperationExecuted;
-                parcelSubscription = parcelTrackerService.CurrentParcelData.Subscribe(OnParcelChanged);
+                parcelSubscription = scenesCache.CurrentParcel.Subscribe(OnParcelChanged);
             }
         }
 
@@ -77,7 +78,7 @@ namespace DCL.VoiceChat
         {
             if (realmData.RealmType.Value == RealmKind.GenesisCity)
             {
-                OnParcelChanged(parcelTrackerService.CurrentParcelData.Value);
+                OnParcelChanged(scenesCache.CurrentParcel.Value);
                 return;
             }
 
@@ -98,20 +99,20 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnParcelChanged(PlayerParcelData playerParcelData)
+        private void OnParcelChanged(Vector2Int newParcel)
         {
             if (realmData.RealmType.Value != RealmKind.GenesisCity) return;
 
-            if (parcelToCommunityMap.TryGetValue(playerParcelData.ParcelPosition, out List<string>? communities))
+            if (parcelToCommunityMap.TryGetValue(newParcel, out List<string>? communities))
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {playerParcelData.ParcelPosition} has {communities.Count} active community voice chats");
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {newParcel} has {communities.Count} active community voice chats");
 
                 string? communityId = communities[0];
                 OnActiveVoiceChatDetectedInScene(communityId);
             }
             else
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {playerParcelData.ParcelPosition} has no active community voice chat");
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {newParcel} has no active community voice chat");
                 OnActiveVoiceChatStoppedInScene();
             }
         }
@@ -143,14 +144,14 @@ namespace DCL.VoiceChat
                         {
                             parcelToCommunityMap.Remove(parcel);
 
-                            if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
+                            if (scenesCache.CurrentParcel.Value == parcel)
                             {
                                 OnActiveVoiceChatStoppedInScene();
                             }
                         }
                         else
                         {
-                            if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
+                            if (scenesCache.CurrentParcel.Value == parcel)
                             {
                                 string remainingCommunityId = communities[0];
                                 if (activeCommunityVoiceChats.TryGetValue(remainingCommunityId, out ActiveCommunityVoiceChat _))
@@ -230,7 +231,7 @@ namespace DCL.VoiceChat
 
                 parcels.Add(parcel);
 
-                if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
+                if (scenesCache.CurrentParcel.Value == parcel)
                 {
                     if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _))
                     {
