@@ -37,6 +37,7 @@ namespace DCL.VoiceChat
             source.Construct(stream);
             AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
             audioSource.outputAudioMixerGroup = audioMixerGroup;
+            source.name = $"LivekitSource_{key.Identity}_{key.Sid}";
 
             if (streams.TryAdd(key, source) == false)
             {
