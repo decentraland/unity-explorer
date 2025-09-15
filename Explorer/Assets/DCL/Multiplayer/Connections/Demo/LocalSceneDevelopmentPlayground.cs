@@ -13,7 +13,6 @@ using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
-using ECS.SceneLifeCycle;
 using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
@@ -46,7 +45,6 @@ namespace DCL.Multiplayer.Connections.Demo
 
             new GateKeeperSceneRoom(
                     webRequests,
-                    new ScenesCache(),
                     options
                 ).StartAsync()
                  .Forget();
