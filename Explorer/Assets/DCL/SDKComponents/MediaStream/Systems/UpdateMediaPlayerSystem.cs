@@ -305,9 +305,16 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void ToggleCurrentStreamsState(ref MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
+        private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
         {
-            if (enteredScene) { }
+            if (mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer) && !enteredScene)
+            {
+                //Streams rely on livekit room being active; which can only be in we are on the same scene. Next time we enter the scene, it will be recreate by
+                //the regular CreateMediaPlayerSystem
+                mediaPlayerComponent.Dispose();
+                World.Remove<MediaPlayerComponent>(entity);
+            }
+
         }
     }
 }
