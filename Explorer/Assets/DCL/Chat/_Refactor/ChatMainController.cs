@@ -16,6 +16,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
 using DCL.UI.Profiles.Helpers;
+using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -40,6 +41,7 @@ namespace DCL.Chat
         private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly HashSet<IBlocksChat> chatBlockers = new ();
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public event Action? PointerEntered;
@@ -190,6 +192,7 @@ namespace DCL.Chat
         {
             if (chatStateMachine == null) return;
             if (chatStateMachine.IsMinimized) return;
+            if (chatBlockers.Count > 0) return;
 
             chatStateMachine?.SetVisibility(true);
         }
@@ -277,17 +280,24 @@ namespace DCL.Chat
             uiScope?.Dispose();
 
             chatMemberListService.Dispose();
+            chatBlockers.Clear();
         }
 
         private void OnMvcViewShowed(IController controller)
         {
-            if (controller is IBlocksChat)
-                chatStateMachine?.Minimize();
+            if (controller is not IBlocksChat blocker) return;
+
+            chatStateMachine?.Minimize();
+            chatBlockers.Add(blocker);
         }
 
         private void OnMvcViewClosed(IController controller)
         {
-            if (controller is IBlocksChat)
+            if (controller is not IBlocksChat blocker) return;
+
+            chatBlockers.Remove(blocker);
+
+            if (chatBlockers.Count == 0)
                 chatStateMachine?.PopState();
         }
     }

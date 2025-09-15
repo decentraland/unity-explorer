@@ -12,7 +12,6 @@ namespace ECS.StreamableLoading.Textures
     {
         public CommonLoadingArguments CommonArguments { get; set; }
         public string ReportSource;
-        public bool IsAvatarTexture;
 
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
@@ -26,13 +25,16 @@ namespace ECS.StreamableLoading.Textures
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
+        public readonly string? AvatarTextureUserId;
+
+        public readonly bool IsAvatarTexture => !string.IsNullOrEmpty(AvatarTextureUserId);
+
         // Note: Depending on the origin of the texture, it may not have a file hash, so the source URL is used in equality comparisons
         private readonly string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash;
 
         public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
             string reportSource,
-            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT,
-            bool isAvatarTexture = false)
+            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
             CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
             WrapMode = wrapMode;
@@ -41,7 +43,23 @@ namespace ECS.StreamableLoading.Textures
             IsVideoTexture = false;
             VideoPlayerEntity = -1;
             FileHash = fileHash;
-            IsAvatarTexture = isAvatarTexture;
+            AvatarTextureUserId = null;
+            ReportSource = reportSource;
+        }
+
+        public GetTextureIntention(string userId,
+            TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
+            string reportSource,
+            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
+        {
+            CommonArguments = new CommonLoadingArguments(string.Empty, attempts: attemptsCount);
+            WrapMode = wrapMode;
+            FilterMode = filterMode;
+            TextureType = textureType;
+            IsVideoTexture = false;
+            VideoPlayerEntity = -1;
+            FileHash = string.Empty;
+            AvatarTextureUserId = userId;
             ReportSource = reportSource;
         }
 
@@ -54,7 +72,7 @@ namespace ECS.StreamableLoading.Textures
             IsVideoTexture = true;
             VideoPlayerEntity = videoPlayerEntity;
             TextureType = TextureType.Albedo; //Ignored
-            IsAvatarTexture = false;
+            AvatarTextureUserId = null;
             ReportSource = "Video Texture";
         }
 

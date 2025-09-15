@@ -41,7 +41,7 @@ namespace DCL.UI.SharedSpaceManager
         /// <param name="panel">Which panel to show.</param>
         /// <param name="parameters">Optionally, the parameters the panel will use when shown.</param>
         /// <returns>The async task.</returns>
-        UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!);
+        UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!, params PanelsSharingSpace[] panelsToIgnore);
 
         /// <summary>
         ///     <inheritdoc cref="ShowAsync{TParams}" /> <br />

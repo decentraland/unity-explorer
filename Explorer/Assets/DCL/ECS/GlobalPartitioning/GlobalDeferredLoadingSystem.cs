@@ -17,6 +17,7 @@ using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
+using UnityEngine;
 using LoadWearableAssetBundleManifestSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearableAssetBundleManifestSystem;
 using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
 using LoadWearablesDTOByPointersSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesDTOByPointersSystem;
@@ -31,7 +32,7 @@ namespace DCL.GlobalPartitioning
     [UpdateBefore(typeof(LoadSceneDefinitionListSystem))]
     [UpdateBefore(typeof(LoadSceneSystem))]
     [UpdateBefore(typeof(LoadSceneDefinitionSystem))]
-    [UpdateBefore(typeof(LoadWearableAssetBundleManifestSystem))]
+    [UpdateBefore(typeof(LoadAssetBundleManifestSystem))]
     [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
     [UpdateBefore(typeof(LoadWearablesDTOByPointersSystem))]
     [UpdateBefore(typeof(LoadWearablesByParamSystem))]
@@ -52,8 +53,8 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
-                CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetSmartWearableSceneIntention, GetSmartWearableSceneIntention.Result>(),
+                CreateQuery<GetAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetTextureIntention, Texture2DData>(),
