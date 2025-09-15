@@ -16,8 +16,6 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-
-
         public readonly struct RequestedToJoinCommunityEvent
         {
             public readonly string CommunityId;
