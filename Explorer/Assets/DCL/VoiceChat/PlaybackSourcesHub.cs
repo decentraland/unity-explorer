@@ -39,7 +39,12 @@ namespace DCL.VoiceChat
             audioSource.outputAudioMixerGroup = audioMixerGroup;
 
             if (streams.TryAdd(key, source) == false)
+            {
                 ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot add stream key to dictionary, value is already assigned within the key: {key}");
+                source.Stop();
+                source.Free();
+                source.gameObject.SelfDestroy();
+            }
         }
 
         public void RemoveStream(StreamKey key)
