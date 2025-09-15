@@ -86,7 +86,8 @@
         "GUID:7213a1d35667f9b40be6aca8cbfcee23",
         "GUID:0b6da6475647d445b857bdaaa93c9dae",
         "GUID:924e84bd95e84ef3b9bfb35d9681dfc7",
-        "GUID:37cb5599d7914a6f8aa89a24fe37578f"
+        "GUID:37cb5599d7914a6f8aa89a24fe37578f",
+        "GUID:69448af7b92c7f342b298e06a37122aa"
     ],
     "includePlatforms": [
         "Editor"

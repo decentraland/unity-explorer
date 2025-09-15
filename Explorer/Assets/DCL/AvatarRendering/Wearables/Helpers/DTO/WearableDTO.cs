@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.Ipfs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -76,14 +77,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             public BuilderWearableDTO BuildElementDTO(string contentDownloadUrl)
             {
-                Content[] parsedContent = new Content[contents.Count];
+                ContentDefinition[] parsedContent = new ContentDefinition[contents.Count];
 
                 using (var enumerator = contents.GetEnumerator())
                 {
                     for (int i = 0; i < parsedContent.Length; i++)
                     {
                         enumerator.MoveNext();
-                        parsedContent[i] = new Content()
+                        parsedContent[i] = new ContentDefinition()
                         {
                             file = enumerator.Current.Key,
                             hash = enumerator.Current.Value

@@ -1,7 +1,6 @@
-
 using System;
 
-namespace DCL.Communities
+namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
     public class GetUserCommunitiesResponse
@@ -25,6 +24,32 @@ namespace DCL.Communities
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
+
+            public string inviteOrRequestId;
+            public InviteRequestAction pendingActionType;
+            public int requestsReceived;
+
+            public CommunityData()
+            {
+            }
+            public CommunityData(string id,
+                CommunityThumbnails? thumbnails,
+                string name,
+                string description,
+                CommunityPrivacy privacy,
+                CommunityMemberRole role,
+                string ownerAddress,
+                int membersCount)
+            {
+                this.id = id;
+                this.thumbnails = thumbnails;
+                this.name = name;
+                this.description = description;
+                this.privacy = privacy;
+                this.role = role;
+                this.ownerAddress = ownerAddress;
+                this.membersCount = membersCount;
+            }
 
             public void SetAsJoined(bool isJoined)
             {
@@ -58,5 +83,3 @@ namespace DCL.Communities
         public int total;
     }
 }
-
-

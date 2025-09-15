@@ -32,11 +32,12 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly ISplashScreen splashScreen;
+        private readonly SplashScreen splashScreen;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly Arch.Core.World world;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly IInputBlock inputBlock;
+        private readonly AudioClipConfig backgroundMusic;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -51,10 +52,11 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             AudioMixerVolumesController audioMixerVolumesController,
             IInputBlock inputBlock,
             CharacterPreviewEventBus characterPreviewEventBus,
+            AudioClipConfig backgroundMusic,
             Arch.Core.World world
         )
         {
@@ -71,6 +73,7 @@ namespace DCL.PluginSystem.Global
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.inputBlock = inputBlock;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.backgroundMusic = backgroundMusic;
             this.world = world;
         }
 
@@ -81,7 +84,7 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic);
             mvcManager.RegisterController(authenticationScreenController);
         }
 

@@ -23,15 +23,20 @@ using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Events;
 using Utility;
 
 namespace DCL.Minimap
@@ -40,8 +45,13 @@ namespace DCL.Minimap
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
         private const string DEFAULT_BACK_FROM_WORLD_TEXT = "JUMP BACK TO GENESIS CITY";
-        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new () { { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" } };
+        private const string RELOAD_SCENE_TEXT = "RELOAD SCENE";
+        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new ()
+        {
+            { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" }
+        };
         private const float ANIMATION_TIME = 0.2f;
+        private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
@@ -56,6 +66,9 @@ namespace DCL.Minimap
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrls;
+        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ReloadSceneChatCommand reloadSceneCommand;
+
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
@@ -81,7 +94,9 @@ namespace DCL.Minimap
             Vector2Int startParcelInGenesis,
             ISharedSpaceManager sharedSpaceManager,
             ISystemClipboard systemClipboard,
-            IDecentralandUrlsSource decentralandUrls
+            IDecentralandUrlsSource decentralandUrls,
+            IChatMessagesBus chatMessagesBus,
+            ReloadSceneChatCommand reloadSceneCommand
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -96,6 +111,8 @@ namespace DCL.Minimap
             this.sharedSpaceManager = sharedSpaceManager;
             this.systemClipboard = systemClipboard;
             this.decentralandUrls = decentralandUrls;
+            this.chatMessagesBus = chatMessagesBus;
+            this.reloadSceneCommand = reloadSceneCommand;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -106,7 +123,9 @@ namespace DCL.Minimap
             disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+            scenesCache.OnCurrentSceneChanged -= OnSceneChanged;
             sceneRestrictionsController?.Dispose();
+            viewInstance?.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -121,15 +140,17 @@ namespace DCL.Minimap
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
+        private void OnSceneChanged(ISceneFacade? scene)
+        {
+            SetGenesisMode(realmData.IsGenesis());
+        }
+
         protected override void OnViewInstantiated()
         {
             viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
-
-            viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
-                realmNavigator.TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, false).Forget());
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -141,6 +162,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
+            scenesCache.OnCurrentSceneChanged += OnSceneChanged;
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
 
@@ -308,16 +330,75 @@ namespace DCL.Minimap
             if (viewInstance == null)
                 return;
 
-            foreach (GameObject go in viewInstance!.objectsToActivateForGenesis)
+            ToggleObjects(isGenesisModeActivated);
+            ConfigureContextualButton(isGenesisModeActivated);
+            SetAnimatorController(isGenesisModeActivated);
+        }
+
+        private void ToggleObjects(bool isGenesisModeActivated)
+        {
+            foreach (GameObject go in viewInstance.objectsToActivateForGenesis)
                 go.SetActive(isGenesisModeActivated);
 
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
                 go.SetActive(!isGenesisModeActivated);
+        }
 
-            if (!isGenesisModeActivated)
-                viewInstance.goToGenesisCityText.text = CUSTOM_BACK_FROM_WORLD_TEXTS.GetValueOrDefault(realmData.RealmName, DEFAULT_BACK_FROM_WORLD_TEXT);
+        private void ConfigureContextualButton(bool isGenesisModeActivated)
+        {
+            // Interactivity
+            viewInstance.minimapContextualButtonView.SetInteractable(CanInteractWithContextualButton(isGenesisModeActivated));
 
-            viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
+            // Text
+            string buttonText = GetContextualButtonText(isGenesisModeActivated);
+            viewInstance.minimapContextualButtonView.SetText(buttonText);
+
+            // Action
+            viewInstance.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
+            UnityAction buttonAction = GetContextualButtonAction(isGenesisModeActivated);
+            viewInstance.minimapContextualButtonView.Button.onClick.AddListener(buttonAction);
+        }
+
+        private bool CanInteractWithContextualButton(bool isGenesisModeActivated) =>
+            !isGenesisModeActivated &&
+            (!realmData.IsLocalSceneDevelopment ||
+             (realmData.IsLocalSceneDevelopment && scenesCache.CurrentScene != null));
+
+        private string GetContextualButtonText(bool isGenesisModeActivated)
+        {
+            if (isGenesisModeActivated)
+                return DEFAULT_BACK_FROM_WORLD_TEXT;
+
+            if (realmData.IsLocalSceneDevelopment)
+                return RELOAD_SCENE_TEXT;
+
+            return CUSTOM_BACK_FROM_WORLD_TEXTS.GetValueOrDefault(
+                realmData.RealmName, DEFAULT_BACK_FROM_WORLD_TEXT
+            );
+        }
+
+        private UnityAction GetContextualButtonAction(bool isGenesisModeActivated)
+        {
+            if (isGenesisModeActivated || !realmData.IsLocalSceneDevelopment)
+            {
+                return () => realmNavigator
+                            .TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, false)
+                            .Forget();
+            }
+
+            return () => chatMessagesBus.Send(
+                ChatChannel.NEARBY_CHANNEL,
+                $"/{reloadSceneCommand.Command}",
+                RELOAD_SCENE_COMMAND_ORIGIN
+            );
+        }
+
+        private void SetAnimatorController(bool isGenesisModeActivated)
+        {
+            viewInstance.minimapAnimator.runtimeAnimatorController =
+                isGenesisModeActivated
+                    ? viewInstance.genesisCityAnimatorController
+                    : viewInstance.worldsAnimatorController;
         }
     }
 

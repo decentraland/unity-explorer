@@ -16,7 +16,7 @@ namespace DCL.Web3.Authenticators
             private readonly IWeb3VerifiedAuthenticator originAuth;
             private readonly IVerifiedEthereumApi originApi;
 
-            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory)
+            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
                 URLAddress authApiUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth));
                 URLAddress signatureUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp));
@@ -55,7 +55,7 @@ namespace DCL.Web3.Authenticators
                         "eth_getBlockByNumber",
                         "eth_getCode",
                     },
-                    decentralandUrlsSource.Environment,
+                    environment,
                     new InvalidAuthCodeVerificationFeatureFlag()
                 );
 

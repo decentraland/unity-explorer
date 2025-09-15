@@ -113,8 +113,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 // the destination array might be not created if DTO itself has failed to load
                 ref var result = ref wearable.WearableAssetResults[bs];
-                result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[1]; // default capacity, can't tell without the DTO
-                result.Results[0] = failedResult;
+                result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[2]; // We need to set failed result for both slots, to handle facial features failure
+                for (int i = 0; i < result.Results.Length; i++)
+                    result.Results[i] = failedResult;
             }
         }
 

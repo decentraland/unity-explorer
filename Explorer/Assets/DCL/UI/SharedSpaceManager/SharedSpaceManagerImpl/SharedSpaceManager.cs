@@ -61,6 +61,7 @@ namespace DCL.UI.SharedSpaceManager
                 dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
 
             dclInput.Shortcuts.EmoteWheel.performed += OnInputShortcutsEmoteWheelPerformedAsync;
+            dclInput.Shortcuts.Controls.performed += OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.Shortcuts.OpenChat.performed += OnInputShortcutsOpenChatPerformedAsync;
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
 
@@ -86,6 +87,7 @@ namespace DCL.UI.SharedSpaceManager
                 dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformedAsync;
 
             dclInput.Shortcuts.EmoteWheel.performed -= OnInputShortcutsEmoteWheelPerformedAsync;
+            dclInput.Shortcuts.Controls.performed -= OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.Shortcuts.OpenChat.performed -= OnInputShortcutsOpenChatPerformedAsync;
             dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
 
@@ -119,6 +121,11 @@ namespace DCL.UI.SharedSpaceManager
 
         public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
         {
+            ShowAsync(panel, parameters, PanelsSharingSpace.Chat);
+        }
+
+        public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!, params PanelsSharingSpace[] panelsToIgnore)
+        {
             if (!IsRegistered(panel))
             {
                 ReportHub.LogError(ReportCategory.UI, $"The panel {panel} is not registered in the shared space manager!");
@@ -136,7 +143,7 @@ namespace DCL.UI.SharedSpaceManager
 
             try
             {
-                await HideAllAsync(panelToIgnore: PanelsSharingSpace.Chat);
+                await HideAllAsync(panelsToIgnore: panelsToIgnore);
 
                 PanelRegistration<TParams> registration = registrations[panel].GetByParams<TParams>();
                 IPanelInSharedSpace<TParams> panelInSharedSpace = registration.instance;
@@ -189,6 +196,7 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.Explore:
                     case PanelsSharingSpace.SidebarProfile:
                     case PanelsSharingSpace.MarketplaceCredits:
+                    case PanelsSharingSpace.Controls:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                         {
@@ -291,17 +299,33 @@ namespace DCL.UI.SharedSpaceManager
 
                 await HideAsync(panel);
             }
-
         }
 
         private bool IsRegistered(PanelsSharingSpace panel) =>
             registrations.ContainsKey(panel);
 
-        private async UniTask HideAllAsync(PanelsSharingSpace? panelToIgnore = null)
+        private async UniTask HideAllAsync(params PanelsSharingSpace[] panelsToIgnore)
         {
             foreach (KeyValuePair<PanelsSharingSpace, PanelRegistration> controllerInSharedSpace in registrations)
-                if ((!panelToIgnore.HasValue || controllerInSharedSpace.Key != panelToIgnore) && controllerInSharedSpace.Value.panel.IsVisibleInSharedSpace)
-                    await HideAsync(controllerInSharedSpace.Key);
+            {
+                if(!controllerInSharedSpace.Value.panel.IsVisibleInSharedSpace)
+                    continue;
+                
+                bool shouldIgnore = false;
+                for (int i = 0; i < panelsToIgnore.Length; i++)
+                {
+                    if(panelsToIgnore[i] != controllerInSharedSpace.Key)
+                        continue;
+                    
+                    shouldIgnore = true;
+                    break;
+                }
+
+                if (shouldIgnore)
+                    continue;
+                
+                await HideAsync(controllerInSharedSpace.Key);
+            }
         }
 
         private void OnPanelViewShowingComplete(IPanelInSharedSpace panel)
@@ -440,6 +464,22 @@ namespace DCL.UI.SharedSpaceManager
         {
             if (!isExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new ControllerNoData());
+        }
+
+        private async void OnInputShortcutsControlsPanelPerformedAsync(InputAction.CallbackContext obj)
+        {
+            var panel = PanelsSharingSpace.Controls;
+            
+            // For hiding the panel, use standard logic.
+            if (registrations[panel].panel.IsVisibleInSharedSpace)
+            {
+                await ToggleVisibilityAsync(PanelsSharingSpace.Controls, new ControllerNoData());
+            }
+            else
+            {
+                await ShowAsync(PanelsSharingSpace.Controls, new ControllerNoData(), 
+                    PanelsSharingSpace.Chat, PanelsSharingSpace.Explore);
+            }
         }
 
         private async void OnInputShortcutsFriendPanelPerformedAsync(InputAction.CallbackContext obj)
