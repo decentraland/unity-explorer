@@ -154,7 +154,7 @@
       "dependencies": {}
     },
     "com.unity.addressables": {
-      "version": "2.7.0",
+      "version": "2.7.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -284,7 +284,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.memoryprofiler": {
-      "version": "1.1.7",
+      "version": "1.1.8",
       "depth": 0,
       "source": "registry",
       "dependencies": {
