@@ -26,9 +26,12 @@ MonoBehaviour:
     positionOffsetX: {x: 0, y: 0}
     positionOffsetY: {x: 0, y: 0}
     positionOffsetZ: {x: 0, y: 0}
+  <Collider>k__BackingField: {fileID: 0}
   radius: 1
   secondaryRadius: 0
   TerrainDetailSettings:
+    <Mesh>k__BackingField: {fileID: 2140836983364464420, guid: 21b91474660c00f45b6aca3e7715fbc3, type: 3}
+    <Material>k__BackingField: {fileID: 2100000, guid: 652d2568f4fa3b94fa84f3d290ef06e1, type: 2}
     alignToGround: 100
     positionJitter: 50
     minWidth: 2
