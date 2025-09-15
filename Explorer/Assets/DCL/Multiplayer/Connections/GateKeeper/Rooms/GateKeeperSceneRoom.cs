@@ -4,8 +4,6 @@ using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 
@@ -25,30 +23,22 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public bool IsSceneConnected(string? sceneId) =>
                 origin.IsSceneConnected(sceneId);
 
-            public ISceneData? ConnectedScene => origin.ConnectedScene;
+            public MetaData? ConnectedScene => origin.ConnectedScene;
         }
 
         private readonly IWebRequestController webRequests;
-        private readonly IScenesCache scenesCache;
         private readonly GateKeeperSceneRoomOptions options;
 
-        /// <summary>
-        ///     The scene the current LiveKit room corresponds to
-        /// </summary>
-        private ISceneFacade? connectedScene;
+        private MetaData? currentMetaData;
 
-        private MetaData previousMetaData;
-
-        public ISceneData? ConnectedScene => connectedScene?.SceneData;
+        public MetaData? ConnectedScene => currentMetaData;
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
-            IScenesCache scenesCache,
             GateKeeperSceneRoomOptions options
         )
         {
             this.webRequests = webRequests;
-            this.scenesCache = scenesCache;
             this.options = options;
         }
 
@@ -56,7 +46,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             new Activatable(this);
 
         private bool IsSceneConnected(string? sceneId) =>
-            !options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated || sceneId == connectedScene?.SceneData.SceneEntityDefinition.id;
+            !options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated || string.Equals(sceneId, currentMetaData?.sceneId, StringComparison.OrdinalIgnoreCase);
 
         public override async UniTask StopAsync()
         {
@@ -64,12 +54,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             // We need to reset the metadata, so we can later re-connect to the scene on RunConnectCycleStepAsync.ProcessMetaDataAsync
             // Otherwise flows like the logout->login will not work due to metadata not changing
-            previousMetaData = default(MetaData);
-            connectedScene = null;
+            currentMetaData = null;
         }
 
         protected override RoomSelection SelectValidRoom() =>
-            options.SceneRoomMetaDataSource.GetMetadataInput().Equals(previousMetaData) ? RoomSelection.PREVIOUS : RoomSelection.NEW;
+            options.SceneRoomMetaDataSource.GetMetadataInput().Equals(currentMetaData.GetValueOrDefault()) ? RoomSelection.PREVIOUS : RoomSelection.NEW;
 
         protected override UniTask PrewarmAsync(CancellationToken token) =>
             UniTask.CompletedTask;
@@ -92,13 +81,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 // Disconnect if no sceneId assigned, disconnection can't be interrupted
                 if (meta.sceneId == null)
                 {
-                    connectedScene = null;
                     await DisconnectCurrentRoomAsync(true, token);
 
                     // After disconnection we need to wait for metadata to change
                     waitForReconnectionRequiredTask = WaitForMetadataIsDirtyAsync(token);
 
-                    previousMetaData = meta;
+                    currentMetaData = meta;
 
                     async UniTask WaitForMetadataIsDirtyAsync(CancellationToken token)
                     {
@@ -108,7 +96,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 }
                 else
                 {
-                    if (!meta.Equals(previousMetaData))
+                    if (!meta.Equals(currentMetaData.GetValueOrDefault()))
                     {
                         string connectionString = await ConnectionStringAsync(meta, token);
 
@@ -120,8 +108,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
                         if (roomSelection == RoomSelection.NEW)
                         {
-                            previousMetaData = meta;
-                            scenesCache.TryGetByParcel(meta.Parcel, out connectedScene);
+                            currentMetaData = meta;
                         }
                     }
 
