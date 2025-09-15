@@ -19,7 +19,7 @@ namespace DCL.VoiceChat
         private readonly IVoiceService voiceChatService;
         private CancellationTokenSource cts;
 
-        public string CurrentTargetWallet { get; private set; }
+        public string CurrentTargetWallet { get; private set; } = string.Empty;
 
         public event Action<PrivateVoiceChatUpdate>? PrivateVoiceChatUpdateReceived;
 
