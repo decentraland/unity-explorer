@@ -69,10 +69,10 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject acceptOrRejectInvitationButtonsContainer = null!;
         [SerializeField] private Button acceptInvitationButton = null!;
         [SerializeField] private Button rejectInvitationButton = null!;
-
         [SerializeField] private GameObject actionLoadingSpinner = null!;
+        [SerializeField] private ListenersCountView listenersCountView = null!;
+
         [SerializeField] private MutualFriendsConfig mutualFriends;
-        [SerializeField] private ListenersCountView listenersCountView;
 
         private readonly StringBuilder stringBuilder = new ();
 
@@ -105,26 +105,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            if (viewCommunityButton != null)
-            {
-                viewCommunityButton.onClick.AddListener(() =>
-                {
-                    if (currentCommunityId != null)
-                        ViewCommunityButtonClicked?.Invoke(currentCommunityId);
-                });
-            }
-
-            if (joinCommunityButton != null)
-            {
-                joinCommunityButton.onClick.AddListener(() =>
-                {
-                    if (currentCommunityId != null)
-                        JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
-                });
-            }
-
-            //TODO FRAN -> might need to add null checks for these or just split the view for the streaming communities into a simpler one. Maybe make a base view.
-
+            viewCommunityButton.onClick.AddListener(() => ViewCommunityButtonClicked?.Invoke(currentCommunityId));
+            joinCommunityButton.onClick.AddListener( ()=> JoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
             mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
             requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
             cancelJoinRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this));
