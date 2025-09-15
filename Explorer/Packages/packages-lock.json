@@ -92,7 +92,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "fb650cc3ec25353400ef801b8a67a41a1225d680"
+      "hash": "0e77b1c83047f3e9f7413a8cef47d25f5276575f"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
