@@ -146,18 +146,33 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             ReportHub.Log(ReportCategory.SCENE_UI, $"Start loading texture for UI background for source {textureComponentValue.Src} | Scene {sceneData.SceneShortInfo.ToString()}");
 
-            promise = Promise.Create(
-                World,
-                new GetTextureIntention(
-                    textureComponentValue.Src,
-                    textureComponentValue.FileHash,
-                    textureComponentValue.WrapMode,
-                    textureComponentValue.FilterMode,
-                    textureComponentValue.TextureType,
-                    attemptsCount: ATTEMPTS_COUNT,
-                    isAvatarTexture: textureComponentValue.IsAvatarTexture,
-                    reportSource: nameof(UIBackgroundInstantiationSystem)),
-                partitionComponent);
+            if (textureComponentValue.IsAvatarTexture)
+            {
+                promise = Promise.Create(
+                    World,
+                    new GetTextureIntention(
+                        userId: textureComponentValue.Src,
+                        textureComponentValue.WrapMode,
+                        textureComponentValue.FilterMode,
+                        textureComponentValue.TextureType,
+                        attemptsCount: ATTEMPTS_COUNT,
+                        reportSource: nameof(UIBackgroundInstantiationSystem)),
+                    partitionComponent);
+            }
+            else
+            {
+                promise = Promise.Create(
+                    World,
+                    new GetTextureIntention(
+                        url: textureComponentValue.Src,
+                        textureComponentValue.FileHash,
+                        textureComponentValue.WrapMode,
+                        textureComponentValue.FilterMode,
+                        textureComponentValue.TextureType,
+                        attemptsCount: ATTEMPTS_COUNT,
+                        reportSource: nameof(UIBackgroundInstantiationSystem)),
+                    partitionComponent);
+            }
         }
 
         private void TryAddAbortIntention(ref Promise? promise)

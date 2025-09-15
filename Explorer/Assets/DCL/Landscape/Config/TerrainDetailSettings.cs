@@ -6,6 +6,9 @@ namespace DCL.Landscape.Config
     [Serializable]
     public class TerrainDetailSettings
     {
+        [field: SerializeField] public Mesh? Mesh { get; private set; }
+        [field: SerializeField] public Material? Material { get; private set; }
+
         [Range(0f, 100f)]
         public float alignToGround = 100f;
 

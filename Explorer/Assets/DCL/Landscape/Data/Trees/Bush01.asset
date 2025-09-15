@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Bush01
   m_EditorClassIdentifier: 
   asset: {fileID: 2281217931661837468, guid: 0b84201e6b7ff9a41aef33f6c69ff90e, type: 3}
+  <Collider>k__BackingField: {fileID: 0}
   noiseData: {fileID: 11400000, guid: 09c98a00165e56e46ac78f8a5d9a6b1c, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}

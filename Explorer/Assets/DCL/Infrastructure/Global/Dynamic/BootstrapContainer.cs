@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -10,7 +11,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -50,7 +50,7 @@ namespace Global.Dynamic
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
-        public WorldVolumeMacBus WorldVolumeMacBus { get; private set; }
+        public VolumeBus VolumeBus { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings;
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
@@ -101,7 +101,7 @@ namespace Global.Dynamic
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
-                WorldVolumeMacBus = new WorldVolumeMacBus(),
+                VolumeBus = new VolumeBus(),
                 Environment = decentralandEnvironment
             };
 
@@ -110,7 +110,7 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings);
 
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser);
+                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
 
                 if (container.enableAnalytics)
                 {
@@ -210,6 +210,7 @@ namespace Global.Dynamic
                 IWebBrowser webBrowser,
                 BootstrapContainer container,
                 IDecentralandUrlsSource decentralandUrlsSource,
+                DecentralandEnvironment dclEnvironment,
                 IAppArgs appArgs)
         {
 
@@ -223,7 +224,7 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
-                decentralandUrlsSource.Environment,
+                dclEnvironment,
                 new AuthCodeVerificationFeatureFlag(),
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );

@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
@@ -55,7 +57,7 @@ namespace DCL.Chat.ChatServices
 
             if (onlineParticipantsPerChannel.ContainsKey(addedChannel.Id))
                 return;
-            
+
             onlineParticipantsPerChannel.SyncAdd(addedChannel.Id, HASHSET_POOL.Get());
             InitializeOnlineMembersAsync(addedChannel.Id, lifeTimeCts.Token).Forget();
         }

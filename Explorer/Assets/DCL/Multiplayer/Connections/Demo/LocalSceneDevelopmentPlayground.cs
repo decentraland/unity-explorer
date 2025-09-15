@@ -12,7 +12,6 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
-using ECS.SceneLifeCycle;
 using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
@@ -36,7 +35,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var launchMode = ILaunchMode.LOCAL_SCENE_DEVELOPMENT;
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, launchMode);
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Org);
             var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource)));
 
             var metaDataSource = new ConstSceneRoomMetaDataSource("random-name").WithLog();
@@ -44,7 +43,6 @@ namespace DCL.Multiplayer.Connections.Demo
 
             new GateKeeperSceneRoom(
                     webRequests,
-                    new ScenesCache(),
                     options
                 ).StartAsync()
                  .Forget();

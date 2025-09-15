@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         protected override void UpdateInternal()
         {
             base.UpdateInternal();
-            associatedParcel.SetAndUpdate(connectiveRoom.ConnectedScene?.SceneShortInfo.BaseParcel ?? Vector2Int.zero);
+            associatedParcel.SetAndUpdate(connectiveRoom.ConnectedScene?.BaseParcel ?? Vector2Int.zero);
         }
     }
 }

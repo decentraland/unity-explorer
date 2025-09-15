@@ -223,6 +223,12 @@ namespace DCL.Chat.ChatMessages
 
         private void UpdateChannelMessages()
         {
+            if (currentChannelService.CurrentChannel == null)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but no current channel is set. Aborting.");
+                return;
+            }
+
             loadChannelCts = loadChannelCts.SafeRestart();
 
             RemoveNewMessagesSeparator();
