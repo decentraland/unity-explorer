@@ -9,7 +9,7 @@
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
     "com.decentraland.filebrowserpro": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
-    "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git#fix/remote-participant-concurrency",
+    "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git#fix/room-handles-and-events",
     "com.decentraland.rpc-csharp": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
     "com.decentraland.unity-shared-dependencies": "https://github.com/decentraland/unity-shared-dependencies.git",
     "com.gurbu.gpui-pro": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
