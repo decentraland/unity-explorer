@@ -1,4 +1,4 @@
-# pr-comment-artifact-url.yml
+  # pr-comment-artifact-url.yml
 ---
 name: Comment Artifact URL on PR
 
@@ -54,11 +54,51 @@ jobs:
           echo "Previous Suite ID: $SUITE_ID"
           echo "SUITE_ID=$SUITE_ID" >> "$GITHUB_ENV"
 
+          # Extract branch name and sanitize it (matching build-unitycloud.yml logic)
+          BRANCH_NAME=$(jq -r '.pull_requests[0].head.ref // .head_branch' <<< "$WORKFLOW_RUN_EVENT_OBJ")
+          SAFE_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/_/g')
+          # Truncate branch name to max 50 characters to keep artifact names manageable
+          SAFE_BRANCH_NAME=$(echo "$SAFE_BRANCH_NAME" | cut -c1-50)
+          echo "Safe Branch Name: $SAFE_BRANCH_NAME"
+
+          # Default install source (matching build workflow default)
+          INSTALL_SOURCE="launcher"
+          echo "Install Source: $INSTALL_SOURCE"
+
+          # Check if this is a release build (we can't detect this perfectly from workflow_run,
+          # but release builds typically don't come from PRs)
+          IS_RELEASE_BUILD="false"
+          echo "Is Release Build: $IS_RELEASE_BUILD"
+
+          # Construct artifact names using same logic as build-unitycloud.yml
+          if [ "$IS_RELEASE_BUILD" == "true" ]; then
+            # Release builds use original naming without branch
+            if [ "$INSTALL_SOURCE" == "launcher" ]; then
+              WINDOWS_ARTIFACT_NAME="Decentraland_windows64"
+              MAC_ARTIFACT_NAME="Decentraland_macos"
+            else
+              WINDOWS_ARTIFACT_NAME="Decentraland_windows64_${INSTALL_SOURCE}"
+              MAC_ARTIFACT_NAME="Decentraland_macos_${INSTALL_SOURCE}"
+            fi
+          else
+            # Non-release builds include branch name for clarity
+            if [ "$INSTALL_SOURCE" == "launcher" ]; then
+              WINDOWS_ARTIFACT_NAME="Decentraland_windows64_${SAFE_BRANCH_NAME}"
+              MAC_ARTIFACT_NAME="Decentraland_macos_${SAFE_BRANCH_NAME}"
+            else
+              WINDOWS_ARTIFACT_NAME="Decentraland_windows64_${INSTALL_SOURCE}_${SAFE_BRANCH_NAME}"
+              MAC_ARTIFACT_NAME="Decentraland_macos_${INSTALL_SOURCE}_${SAFE_BRANCH_NAME}"
+            fi
+          fi
+
+          echo "Windows Artifact Name: $WINDOWS_ARTIFACT_NAME"
+          echo "Mac Artifact Name: $MAC_ARTIFACT_NAME"
+
           WINDOWS_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
             --jq ".artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            select(.name==\"Decentraland_windows64\") |
+            select(.name==\"${WINDOWS_ARTIFACT_NAME}\") |
             .id")
           echo "Windows Artifact ID: $WINDOWS_ARTIFACT_ID"
           echo "WINDOWS_ARTIFACT_ID=$WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
@@ -67,7 +107,7 @@ jobs:
             --jq ".artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            select(.name==\"Decentraland_macos\") |
+            select(.name==\"${MAC_ARTIFACT_NAME}\") |
             .id")
           echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
           echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"
