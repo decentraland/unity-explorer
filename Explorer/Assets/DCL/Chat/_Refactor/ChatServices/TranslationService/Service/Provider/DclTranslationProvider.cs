@@ -45,7 +45,7 @@ namespace DCL.Translation.Service.Provider
         {
             var requestBody = new TranslationRequestBody
             {
-                q = text, source = source, target = target
+                q = text, source = source, target = target, format = "html"
             };
 
             try

@@ -8,6 +8,7 @@ namespace DCL.Translation.Service.Models
         public string q;
         public string source;
         public string target;
+        public string format;
     }
 
     [Serializable]
