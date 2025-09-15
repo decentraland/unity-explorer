@@ -88,17 +88,15 @@ namespace DCL.SceneBannedUsers
             if (ownProfile == null)
                 return;
 
+            Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [NOT BANNED]");
+            reloadScene.SetSceneAsUnbannedAsync();
+
             if (IsUserBanned(ownProfile.UserId))
             {
                 //realmNavigator.TeleportToParcelAsync(Vector2Int.zero, ct, false).Forget();
 
                 Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [BANNED]");
                 reloadScene.SetSceneAsBannedAsync(ct).Forget();
-            }
-            else
-            {
-                Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [NOT BANNED]");
-                reloadScene.SetSceneAsUnbannedAsync();
             }
         }
     }
