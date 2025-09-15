@@ -114,7 +114,11 @@ namespace DCL.Chat.ChatMessages
 
         private void TryAddNewMessagesSeparatorAfterPendingMessages()
         {
-            ChatChannel currentChannel = currentChannelService.CurrentChannel!;
+            ChatChannel? currentChannel = currentChannelService.CurrentChannel;
+
+            if (currentChannel == null)
+                return;
+
             int unreadMessagesCount = currentChannel.Messages.Count - currentChannel.ReadMessages;
 
             if (unreadMessagesCount > 0)
@@ -223,6 +227,9 @@ namespace DCL.Chat.ChatMessages
 
         private void UpdateChannelMessages()
         {
+            if (currentChannelService.UserStateService == null)
+                return;
+
             loadChannelCts = loadChannelCts.SafeRestart();
 
             RemoveNewMessagesSeparator();
@@ -241,7 +248,7 @@ namespace DCL.Chat.ChatMessages
 
                     Subscribe();
 
-                    view.SetUserConnectivityProvider(currentChannelService.UserStateService!.OnlineParticipants);
+                    view.SetUserConnectivityProvider(currentChannelService.UserStateService.OnlineParticipants);
 
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
