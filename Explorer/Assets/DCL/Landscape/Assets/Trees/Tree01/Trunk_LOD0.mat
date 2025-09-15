@@ -13,7 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - BACKFACE_NORMAL_MODE_MIRROR
-  - _WINDQUALITY_BEST
+  - _WINDQUALITY_FASTEST
   m_InvalidKeywords:
   - _EMISSION
   m_LightmapFlags: 2
@@ -69,7 +69,7 @@ Material:
     - _QueueOffset: 0
     - _SubsurfaceIndirect: 0.25
     - _SubsurfaceKwToggle: 0
-    - _WINDQUALITY: 4
+    - _WINDQUALITY: 1
     - _WindQuality: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

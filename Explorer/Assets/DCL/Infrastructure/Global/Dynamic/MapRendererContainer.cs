@@ -5,7 +5,6 @@ using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Navmap;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using System;
@@ -42,7 +41,6 @@ namespace Global.Dynamic
             IEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
-            INotificationsBusController notificationsBusController,
             IRealmNavigator teleportBusController,
             IRealmData realmData,
             INavmapBus navmapBus,
@@ -63,7 +61,6 @@ namespace Global.Dynamic
                     eventsAPIService,
                     mapPathEventBus,
                     mapPinsEventBus,
-                    notificationsBusController,
                     teleportBusController,
                     navmapBus,
                     onlineUsersProvider));

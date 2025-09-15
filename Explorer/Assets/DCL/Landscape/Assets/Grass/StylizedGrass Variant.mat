@@ -95,6 +95,7 @@ Material:
     - _Billboard: 0
     - _BillboardKwToggle: 0
     - _BillboardShadowFade: 0.5
+    - _BillboardingVerticalRotation: 0
     - _Blend: 0
     - _BumpScale: 1
     - _ColorMapHeight: 0.5
@@ -161,6 +162,7 @@ Material:
     - _WindVertexRand: 1
     - _WorkflowMode: 1
     - _ZWrite: 1
+    - _batchingBlockSize: 256
     m_Colors:
     - _BaseColor: {r: 0.9098039, g: 0.24954338, b: 0.21176468, a: 1}
     - _BendTint: {r: 1, g: 0.80655015, b: 0, a: 1}

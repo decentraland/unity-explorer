@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.Textures
             // A replacement of IProfileRepository to avoid cyclic dependencies
             IAvatarTextureUrlProvider avatarTextureUrlProvider)
             : base(
-                world, cache, 
+                world, cache,
                 new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
             )
         {
@@ -42,14 +42,14 @@ namespace ECS.StreamableLoading.Textures
         {
             if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
 
-            IOwnedTexture2D? result = null;
+            IOwnedTexture2D? result;
 
             if (intention.IsAvatarTexture)
             {
-                URLAddress? url = await avatarTextureUrlProvider.GetAsync(intention.CommonArguments.URL.Value, ct);
+                URLAddress? url = await avatarTextureUrlProvider.GetAsync(intention.AvatarTextureUserId!, ct);
 
                 if (url == null)
-                    throw new Exception($"No profile found for {intention.CommonArguments.URL}");
+                    throw new Exception($"No profile found for {intention.AvatarTextureUserId}");
 
                 result = await TryResolveAvatarTextureAsync(url.Value, intention, ct);
             }

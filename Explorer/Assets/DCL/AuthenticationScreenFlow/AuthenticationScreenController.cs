@@ -10,9 +10,11 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Prefs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
@@ -22,6 +24,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Prefs;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -56,6 +59,8 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private const int ANIMATION_DELAY = 300;
+        private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
+        private const FullScreenMode DEFAULT_SCREEN_MODE = FullScreenMode.FullScreenWindow;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -70,6 +75,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
+        private readonly List<Resolution> possibleResolutions = new ();
+        private readonly AudioClipConfig backgroundMusic;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -97,7 +104,8 @@ namespace DCL.AuthenticationScreenFlow
             BuildData buildData,
             World world,
             AuthScreenEmotesSettings emotesSettings,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            AudioClipConfig backgroundMusic)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -112,6 +120,9 @@ namespace DCL.AuthenticationScreenFlow
             this.world = world;
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
+            this.backgroundMusic = backgroundMusic;
+
+            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
 
         public override void Dispose()
@@ -122,6 +133,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             characterPreviewController?.Dispose();
             web3Authenticator.SetVerificationListener(null);
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
         }
 
         protected override void OnViewInstantiated()
@@ -139,8 +151,10 @@ namespace DCL.AuthenticationScreenFlow
 
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
+            viewInstance.ExitButton.onClick.AddListener(ExitApplication);
+            viewInstance.MuteButton.Button.onClick.AddListener(OnMuteButtonClicked);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-
+            
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildData.InstallSource}"
                 : $"{Application.version} - {buildData.InstallSource}";
@@ -167,6 +181,10 @@ namespace DCL.AuthenticationScreenFlow
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
+            // Unregistering in case player re-login midgame.
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent += OnContinuousAudioStarted;
+            InitMusicMute();
         }
 
         protected override void OnViewClose()
@@ -261,8 +279,11 @@ namespace DCL.AuthenticationScreenFlow
         private void StartLoginFlowUntilEnd()
         {
             CancelLoginProcess();
+            ForceResolutionAndWindowedMode();
+
             loginCancellationToken = new CancellationTokenSource();
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
+
             return;
 
             async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
@@ -298,15 +319,35 @@ namespace DCL.AuthenticationScreenFlow
                     }
                 }
                 catch (OperationCanceledException) { SwitchState(ViewState.Login); }
-                catch (SignatureExpiredException) { SwitchState(ViewState.Login); }
-                catch (Web3SignatureException) { SwitchState(ViewState.Login); }
-                catch (CodeVerificationException) { SwitchState(ViewState.Login); }
-                catch (ProfileNotFoundException) { SwitchState(ViewState.Login); }
+                catch (SignatureExpiredException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (Web3SignatureException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (CodeVerificationException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
+                catch (ProfileNotFoundException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
                 catch (Exception e)
                 {
                     SwitchState(ViewState.Login);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     ShowConnectionErrorPopup();
+                }
+                finally
+                {
+                    RestoreResolutionAndScreenMode();
                 }
             }
         }
@@ -448,6 +489,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     viewInstance.JumpIntoWorldButton.interactable = true;
+                    characterPreviewController?.OnBeforeShow();
                     characterPreviewController?.OnShow();
 
                     break;
@@ -463,6 +505,65 @@ namespace DCL.AuthenticationScreenFlow
             animator.gameObject.SetActive(false);
         }
 
+        private void ForceResolutionAndWindowedMode()
+        {
+            Resolution current = Screen.currentResolution;
+
+            int targetWidth = (int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+            int targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+
+            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, current.refreshRateRatio);
+        }
+
+        private void RestoreResolutionAndScreenMode()
+        {
+            Resolution targetResolution = GetTargetResolution();
+            FullScreenMode targetScreenMode = GetTargetScreenMode();
+            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
+        }
+
+        private Resolution GetTargetResolution()
+        {
+            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION)
+                ? GetSavedResolution()
+                : GetDefaultResolution();
+
+            Resolution GetSavedResolution()
+            {
+                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
+                return possibleResolutions[index];
+            }
+
+            Resolution GetDefaultResolution()
+            {
+                int defaultIndex = 0;
+
+                for (var index = 0; index < possibleResolutions.Count; index++)
+                {
+                    Resolution resolution = possibleResolutions[index];
+
+                    if (!ResolutionUtils.IsDefaultResolution(resolution))
+                        continue;
+
+                    defaultIndex = index;
+                    break;
+                }
+
+                return possibleResolutions[defaultIndex];
+            }
+        }
+
+        private FullScreenMode GetTargetScreenMode()
+        {
+            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE) ? GetSavedScreenMode() : DEFAULT_SCREEN_MODE;
+
+            FullScreenMode GetSavedScreenMode()
+            {
+                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
+                return FullscreenModeUtils.Modes[index];
+            }
+        }
+
         private void CancelLoginProcess()
         {
             loginCancellationToken?.SafeCancelAndDispose();
@@ -476,6 +577,45 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OpenDiscord() =>
             webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
+
+        private void ExitApplication()
+        {
+            CancelLoginProcess();
+            ExitUtils.Exit();
+        }
+
+        private void OnContinuousAudioStarted(AudioClipConfig audioClipConfig)
+        {
+            if (audioClipConfig.GetInstanceID() != backgroundMusic.GetInstanceID())
+                return;
+            
+            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
+            InitMusicMute();
+        }
+
+        private void InitMusicMute()
+        {
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
+
+            if (isMuted)
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
+            
+            viewInstance?.MuteButton.SetIcon(isMuted);
+        }
+
+        private void OnMuteButtonClicked()
+        {
+            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
+            
+            if (isMuted)
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, false);
+            else
+                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
+            
+            viewInstance?.MuteButton.SetIcon(!isMuted);
+            
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, !isMuted, save: true);
+        }
 
         private void CancelVerificationCountdown()
         {

@@ -513,7 +513,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1647044090541485172}
   <raycaster>k__BackingField: {fileID: 8235211841819826033}
   <ChatView>k__BackingField: {fileID: 0}
-  <VoiceChatView>k__BackingField: {fileID: 0}
+  <VoiceChatView>k__BackingField: {fileID: 2361695290891952565}
   <ChatView2>k__BackingField: {fileID: 619325826877662910}
   <FriendsPanelViewView>k__BackingField: {fileID: 5022243188138649843}
   <MinimapView>k__BackingField: {fileID: 2530848671240461574}
@@ -2280,20 +2280,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8104674094646444773, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104674094646444773, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104674094646444773, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 23
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104674094646444773, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -170.24841
+      propertyPath: m_LocalPosition.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8300278909215074304, guid: e495fc295bd1f3e44aeda4cbccc5f767, type: 3}
       propertyPath: m_Pivot.x
@@ -3444,6 +3432,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5052833648798503620, guid: ff613379c6a17084ab0f59655c4330c9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5395435801097517953, guid: ff613379c6a17084ab0f59655c4330c9, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -3642,6 +3634,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7df05ef5019000345ba252954cb79551, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2361695290891952565 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6658683673239745162, guid: ff613379c6a17084ab0f59655c4330c9, type: 3}
+  m_PrefabInstance: {fileID: 8984128061435155263}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a63b2b486ec4141f681fb2fd3f59772f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &6686122133691422770 stripped

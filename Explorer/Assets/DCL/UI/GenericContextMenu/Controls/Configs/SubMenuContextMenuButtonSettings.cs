@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenuParameter;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
@@ -17,6 +19,15 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly GenericContextMenuParameter.GenericContextMenu subMenu;
         internal readonly float anchorPadding;
 
+        public delegate UniTask<bool> VisibilityResolverDelegate(CancellationToken ct);
+        public delegate UniTask SettingsFillingDelegate(GenericContextMenuParameter.GenericContextMenu contextSubMenu, CancellationToken ct);
+
+        internal readonly VisibilityResolverDelegate asyncVisibilityResolverDelegate;
+        internal readonly SettingsFillingDelegate asyncControlSettingsFillingDelegate;
+
+        public bool IsButtonAsynchronous => asyncVisibilityResolverDelegate != null;
+        public bool IsSubMenuAsynchronous => asyncControlSettingsFillingDelegate != null;
+
         /// <summary>
         ///     Button component settings for the context menu.
         ///     horizontalLayoutPadding has the default value of (8, 8, 0, 0).
@@ -29,7 +40,9 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             int horizontalLayoutSpacing = 10,
             bool horizontalLayoutReverseArrangement = false,
             Color textColor = default,
-            Color iconColor = default)
+            Color iconColor = default,
+            SettingsFillingDelegate asyncControlSettingsFillingDelegate = null,
+            VisibilityResolverDelegate asyncVisibilityResolverDelegate = null)
         {
             this.buttonText = buttonText;
             this.buttonIcon = buttonIcon;
@@ -40,6 +53,8 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             this.horizontalLayoutReverseArrangement = horizontalLayoutReverseArrangement;
             this.textColor = textColor == default(Color) ? WHITE_COLOR : textColor;
             this.iconColor = iconColor == default(Color) ? WHITE_COLOR : iconColor;
+            this.asyncControlSettingsFillingDelegate = asyncControlSettingsFillingDelegate;
+            this.asyncVisibilityResolverDelegate = asyncVisibilityResolverDelegate;
         }
     }
 }

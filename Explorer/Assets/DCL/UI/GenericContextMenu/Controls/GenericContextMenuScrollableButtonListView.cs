@@ -28,6 +28,18 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, Math.Min(CalculateComponentHeight(settings), settings.maxHeight));
 
+            // Removes all existing buttons (it may be reused from a pool)
+            for(int j = 0; j < ScrollContentParent.childCount; ++j)
+            {
+                Transform currentChild = ScrollContentParent.GetChild(j);
+
+                if (currentChild.TryGetComponent(out GenericContextMenuSimpleButtonView control))
+                {
+                    controlsPoolManager.ReleaseControl(control);
+                    --j;
+                }
+            }
+
             int i = 0;
             foreach (string label in settings.dataLabels)
             {

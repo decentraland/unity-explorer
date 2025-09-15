@@ -195,5 +195,21 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     ReportHub.LogWarning(ReportCategory.WEARABLE, $"{name} has not been set-up as a valid body part");
             }
         }
+
+        public static void ConfirmWearableVisibility(BodyShape bodyShape, ref HideWearablesResolution hideWearablesResolution)
+        {
+            List<IWearable> helperWearableList = WEARABLES_POOL.Get()!;
+            foreach (IWearable visibleWearable in hideWearablesResolution.VisibleWearables)
+            {
+                if(visibleWearable.WearableAssetResults[bodyShape].Results[0].Value.Succeeded)
+                    helperWearableList.Add(visibleWearable);
+            }
+
+            // Clean up existing pooled objects before overwriting
+            hideWearablesResolution.Release();
+
+            ExtractVisibleWearables(bodyShape, helperWearableList, ref hideWearablesResolution);
+            WEARABLES_POOL.Release(helperWearableList);
+        }
     }
 }

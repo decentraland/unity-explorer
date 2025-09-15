@@ -23,7 +23,7 @@ namespace DCL.Notifications
 
         private readonly JsonSerializerSettings serializerSettings;
         private readonly IWebRequestController webRequestController;
-        private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly CommonArguments commonArgumentsForSetRead;
@@ -37,7 +37,7 @@ namespace DCL.Notifications
 
         public NotificationsRequestController(
             IWebRequestController webRequestController,
-            INotificationsBusController notificationsBusController,
+            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             bool includeFriendsNotifications

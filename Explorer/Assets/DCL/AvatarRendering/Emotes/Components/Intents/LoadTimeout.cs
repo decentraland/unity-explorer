@@ -1,20 +1,16 @@
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct LoadTimeout
+    public readonly struct LoadTimeout
     {
         public int Timeout { get; }
 
-        public float ElapsedTime { get; private set; }
+        public float ElapsedTime { get; }
+        public bool IsTimeout => ElapsedTime >= Timeout;
 
-        public LoadTimeout(int timeout) : this()
+        public LoadTimeout(int timeout, float elapsedTime) : this()
         {
             Timeout = timeout;
-        }
-
-        public bool IsTimeout(float deltaTime)
-        {
-            ElapsedTime += deltaTime;
-            return ElapsedTime >= Timeout;
+            ElapsedTime = elapsedTime;
         }
     }
 }

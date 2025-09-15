@@ -41,7 +41,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteStorage emoteStorage;
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
         private readonly List<string> forceRender;
-        private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
@@ -52,13 +51,12 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly URLDomain assetBundleURL;
-        private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IInputBlock inputBlock;
         private readonly IAppArgs appArgs;
         private readonly IWebBrowser webBrowser;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly IThumbnailProvider thumbnailProvider;
         private readonly ProfileChangesBus profileChangesBus;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
@@ -77,9 +75,6 @@ namespace DCL.PluginSystem.Global
             IEmoteStorage emoteStorage,
             IReadOnlyCollection<URN> embeddedEmotes,
             List<string> forceRender,
-            IRealmData realmData,
-            URLDomain assetBundleURL,
-            IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
@@ -92,6 +87,7 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             IWebBrowser webBrowser,
             WarningNotificationView inWorldWarningNotificationView,
+            IThumbnailProvider thumbnailProvider,
             ProfileChangesBus profileChangesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -105,9 +101,6 @@ namespace DCL.PluginSystem.Global
             this.emoteStorage = emoteStorage;
             this.embeddedEmotes = embeddedEmotes;
             this.forceRender = forceRender;
-            this.realmData = realmData;
-            this.assetBundleURL = assetBundleURL;
-            this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
@@ -120,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.webBrowser = webBrowser;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.thumbnailProvider = thumbnailProvider;
             this.profileChangesBus = profileChangesBus;
 
             backpackCommandBus = new BackpackCommandBus();
@@ -184,19 +178,17 @@ namespace DCL.PluginSystem.Global
 
             ObjectPool<BackpackItemView>? gridPool = await BackpackGridController.InitialiseAssetsAsync(assetsProvisioner, avatarView.backpackGridView, ct);
 
-            var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
-
             var gridController = new BackpackGridController(
                 avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
                 rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
                 equippedWearables, sortController, pageButtonView, gridPool,
-                thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
+                this.thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
                 wearablesProvider, webBrowser
             );
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                 web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                sortController, pageButtonView, emoteGridPool, emoteProvider, embeddedEmotes, thumbnailProvider, webBrowser, appArgs);
+                sortController, pageButtonView, emoteGridPool, emoteProvider, embeddedEmotes, this.thumbnailProvider, webBrowser, appArgs);
 
             var emotesController = new EmotesController(emoteView,
                 new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);
@@ -236,7 +228,7 @@ namespace DCL.PluginSystem.Global
                 avatarView.GetComponentsInChildren<AvatarSlotView>().EnsureNotNull(),
                 emotesController,
                 backpackCharacterPreviewController,
-                thumbnailProvider,
+                this.thumbnailProvider,
                 inputBlock,
                 cursor
             );

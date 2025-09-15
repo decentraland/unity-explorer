@@ -3,7 +3,9 @@ using DCL.Chat.History;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -14,10 +16,21 @@ using Utility.Types;
 
 namespace DCL.Communities
 {
+    public readonly struct CommunityMetadataUpdatedEvent
+    {
+        public ChatChannel.ChannelId ChannelId { get; }
+
+        public CommunityMetadataUpdatedEvent(ChatChannel.ChannelId channelId)
+        {
+            ChannelId = channelId;
+        }
+    }
+
     public interface ICommunityDataService
     {
         void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> communities);
         bool TryGetCommunity(ChatChannel.ChannelId channelId, out GetUserCommunitiesData.CommunityData communityData);
+        event Action<CommunityMetadataUpdatedEvent> CommunityMetadataUpdated;
     }
 
     public class CommunityDataService : ICommunityDataService, IDisposable
@@ -25,17 +38,19 @@ namespace DCL.Communities
         private readonly IChatHistory chatHistory;
         private readonly IMVCManager mvcManager;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities = new();
 
         private CancellationTokenSource userAllowedToUseCommunityBusCts;
         private CancellationTokenSource communitiesServiceCts = new();
+        public event Action<CommunityMetadataUpdatedEvent>? CommunityMetadataUpdated;
 
-        public CommunityDataService(IChatHistory chatHistory,
+        public CommunityDataService(
+            IChatHistory chatHistory,
             IMVCManager mvcManager,
             CommunitiesEventBus communitiesEventBus,
-            CommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.chatHistory = chatHistory;
@@ -44,13 +59,53 @@ namespace DCL.Communities
             this.communitiesDataProvider = communitiesDataProvider;
             this.web3IdentityCache = web3IdentityCache;
 
-            communitiesDataProvider.CommunityCreated += OnCommunityCreated;
-            communitiesDataProvider.CommunityDeleted += OnCommunityDeleted;
-            communitiesDataProvider.CommunityLeft += OnCommunityLeft;
+            communitiesDataProvider.CommunityCreated += CommunityCreated;
+            communitiesDataProvider.CommunityDeleted += CommunityDeleted;
+            communitiesDataProvider.CommunityLeft += CommunityLeft;
+            communitiesDataProvider.CommunityUpdated += CommunityUpdated;
 
             SubscribeToCommunitiesBusEventsAsync().Forget();
         }
 
+        private void CommunityUpdated(string communityId)
+        {
+            // Fire-and-forget fetch; keep method sync because the provider callback is sync
+            RefreshCommunityAsync(communityId).Forget();
+        }
+
+        private async UniTaskVoid RefreshCommunityAsync(string communityId)
+        {
+            var ct = (communitiesServiceCts = communitiesServiceCts.SafeRestart()).Token;
+
+            var result = await communitiesDataProvider
+                .GetCommunityAsync(communityId, ct)
+                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested) return;
+
+            if (!result.Success)
+            {
+                ReportHub.LogWarning(ReportCategory.COMMUNITIES, $"Failed to refresh community {communityId}: {result.ErrorMessage}");
+                return;
+            }
+
+            var data = result.Value.data;
+            var channelId = ChatChannel.NewCommunityChannelId(data.id);
+
+            communities[channelId] = new GetUserCommunitiesData.CommunityData(data.id,
+                data.thumbnails,
+                data.name,
+                data.description,
+                data.privacy,
+                data.role,
+                data.ownerAddress,
+                data.membersCount);
+
+            // Notify anyone who cares (titlebar, channels list, etc.)
+            CommunityMetadataUpdated?.Invoke(new CommunityMetadataUpdatedEvent(channelId));
+
+            ReportHub.Log(ReportCategory.COMMUNITIES, $"Community refreshed: {data.name} ({data.id})");
+        }
 
         private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
         {
@@ -80,7 +135,7 @@ namespace DCL.Communities
             }
         }
 
-        private void OnCommunityLeft(string communityId, bool success)
+        private void CommunityLeft(string communityId, bool success)
         {
             if (!success) return;
 
@@ -108,11 +163,14 @@ namespace DCL.Communities
                 var response = result.Value;
 
                 var channelId = ChatChannel.NewCommunityChannelId(response.data.id);
-                communities.Add(channelId, new GetUserCommunitiesData.CommunityData
-                {
-                    id = response.data.id, thumbnails = response.data.thumbnails, name = response.data.name, privacy = response.data.privacy,
-                    role = response.data.role, ownerAddress = response.data.ownerAddress
-                });
+                communities.Add(channelId, new GetUserCommunitiesData.CommunityData(response.data.id,
+                    response.data.thumbnails,
+                    response.data.name,
+                    response.data.description,
+                    response.data.privacy,
+                    response.data.role,
+                    response.data.ownerAddress,
+                    response.data.membersCount));
 
                 chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
 
@@ -123,23 +181,28 @@ namespace DCL.Communities
             //ShowErrorNotificationAsync(GET_COMMUNITY_FAILED_MESSAGE, errorNotificationCts.Token).Forget();
         }
 
-        private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
+        private void CommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
         {
             var channelId = ChatChannel.NewCommunityChannelId(newCommunity.id);
-            communities[channelId] = new GetUserCommunitiesData.CommunityData
-            {
-                id = newCommunity.id, thumbnails = newCommunity.thumbnails, description = newCommunity.description, ownerAddress = newCommunity.ownerAddress,
-                name = newCommunity.name, privacy = newCommunity.privacy, role = CommunityMemberRole.owner, membersCount = 1
-            };
+
+            communities[channelId] = new GetUserCommunitiesData.CommunityData(newCommunity.id,
+                newCommunity.thumbnails,
+                newCommunity.name,
+                newCommunity.description,
+                newCommunity.privacy,
+                CommunityMemberRole.owner,
+                newCommunity.ownerAddress,
+                1);
+
             chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
         }
 
-        private void OnCommunityDeleted(string communityId)
+        private void CommunityDeleted(string communityId)
         {
             var channelId = ChatChannel.NewCommunityChannelId(communityId);
             chatHistory.RemoveChannel(channelId);
         }
-        
+
         public void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> newCommunities)
         {
             communities.Clear();
@@ -154,12 +217,14 @@ namespace DCL.Communities
             return communities.TryGetValue(channelId, out communityData);
         }
 
+
         public void Dispose()
         {
-            communitiesDataProvider.CommunityCreated -= OnCommunityCreated;
-            communitiesDataProvider.CommunityDeleted -= OnCommunityDeleted;
-            communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
-            
+            communitiesDataProvider.CommunityCreated -= CommunityCreated;
+            communitiesDataProvider.CommunityDeleted -= CommunityDeleted;
+            communitiesDataProvider.CommunityLeft -= CommunityLeft;
+            communitiesDataProvider.CommunityUpdated -= CommunityUpdated;
+
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
 

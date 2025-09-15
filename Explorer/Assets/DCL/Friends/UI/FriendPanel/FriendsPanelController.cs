@@ -20,7 +20,7 @@ using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
 {
-    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IControllerInSharedSpace<FriendsPanelView, FriendsPanelParameter>
+    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IControllerInSharedSpace<FriendsPanelView, FriendsPanelParameter>, IBlocksChat
     {
         public enum FriendsPanelTab
         {
