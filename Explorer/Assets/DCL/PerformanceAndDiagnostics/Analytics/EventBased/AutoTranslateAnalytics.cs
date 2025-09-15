@@ -27,27 +27,36 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
             scope = new EventSubscriptionScope();
             scope.Add(eventBus.Subscribe<string>(OnTranslationSettingsChanged));
-            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationRequested>(_ => { analytics.Track(AnalyticsEvents.AutoTranslate.MANUAL_MESSAGE_TRANSLATED); }));
-            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationReverted>(_ => { analytics.Track(AnalyticsEvents.AutoTranslate.SHOW_ORIGINAL_MESSAGE); }));
+
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<TranslationEvents.ConversationAutoTranslateToggled>(OnAutoTranslateToggled));
-        }
 
-        private void OnTranslationSettingsChanged(string eventId)
-        {
-            if (eventId != TRANSLATION_SETTINGS_CHANGE_EVENT) return;
+            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationReverted>(_ => { analytics.Track(AnalyticsEvents.AutoTranslate.SEE_ORIGINAL_MESSAGE); }));
 
-            var props = new JsonObject
+            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationRequested>(_ =>
             {
-                { "language", translationSettings.PreferredLanguage.ToString() },
-            };
+                analytics.Track(AnalyticsEvents.AutoTranslate.TRANSLATE_MESSAGE_MANUALLY, new JsonObject
+                {
+                    { "language_chosen", translationSettings.PreferredLanguage.ToString() },
+                });
+            }));
 
-            analytics.Track(AnalyticsEvents.AutoTranslate.CHOSEN_LANGUAGE, props);
         }
 
         public void Dispose()
         {
             scope.Dispose();
+        }
+
+        private void OnTranslationSettingsChanged(string eventId)
+        {
+            if (eventId != TRANSLATION_SETTINGS_CHANGE_EVENT)
+                return;
+
+            analytics.Track(AnalyticsEvents.AutoTranslate.CHOOSE_PREFERRED_LANGUAGE, new JsonObject
+            {
+                { "language_chosen", translationSettings.PreferredLanguage.ToString() },
+            });
         }
 
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
@@ -58,10 +67,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnAutoTranslateToggled(TranslationEvents.ConversationAutoTranslateToggled evt)
         {
+            ChatChannel.ChatChannelType scope = ResolveScope(evt.ConversationId);
+            string receiverId = scope == ChatChannel.ChatChannelType.USER ? evt.ConversationId : string.Empty;
+            string communityId = scope == ChatChannel.ChatChannelType.COMMUNITY ? evt.ConversationId : string.Empty;
+
             var props = new JsonObject
             {
-                { "scope", ResolveScope(evt.ConversationId).ToString() },
-                { "is_enabled", evt.IsEnabled },
+                { "enabled", evt.IsEnabled },
+                { "scope", scope.ToString() },
+                { "receiver_id", receiverId },
+                { "community_id", communityId },
             };
 
             analytics.Track(AnalyticsEvents.AutoTranslate.SWITCH_AUTOTRANSLATE, props);
