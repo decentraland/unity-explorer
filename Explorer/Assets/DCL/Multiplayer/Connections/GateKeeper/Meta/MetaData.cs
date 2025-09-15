@@ -47,16 +47,24 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public string? sceneId;
 
-
+        /// <summary>
+        ///     Parcel metadata was requested for, not necessarily the base parcel of the scene
+        /// </summary>
         [NonSerialized]
         public readonly Vector2Int Parcel;
 
-        public MetaData(string? sceneId, Input input)
+        /// <summary>
+        ///     Base Parcel of the scene
+        /// </summary>
+        public readonly Vector2Int BaseParcel;
+
+        public MetaData(string? sceneId, Vector2Int baseParcel, Input input)
         {
             realmName = input.RealmName;
             realm = new Realm { serverName = input.RealmName };
             Parcel = input.Parcel;
             this.sceneId = sceneId;
+            BaseParcel = baseParcel;
         }
 
         public string ToJson() =>

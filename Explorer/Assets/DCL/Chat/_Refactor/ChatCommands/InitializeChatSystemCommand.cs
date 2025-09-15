@@ -60,7 +60,7 @@ namespace DCL.Chat.ChatCommands
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
             // Initialize Basic Channels and User Conversations
-            await InitializeBaseChannelsAsync(ct);
+            InitializeBaseChannelsAsync();
             ct.ThrowIfCancellationRequested();
 
             // Initialize Community Conversations
@@ -83,7 +83,7 @@ namespace DCL.Chat.ChatCommands
             await chatUserStateUpdater.InitializeAsync(ct);
         }
 
-        private async UniTask InitializeBaseChannelsAsync(CancellationToken ct)
+        private void InitializeBaseChannelsAsync()
         {
             var nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
 
