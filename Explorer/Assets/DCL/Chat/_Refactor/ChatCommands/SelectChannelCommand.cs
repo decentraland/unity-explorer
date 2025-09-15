@@ -49,8 +49,6 @@ namespace DCL.Chat.ChatCommands
             {
                 oneOpAtATimeCts = oneOpAtATimeCts.SafeRestart();
 
-                ct = CancellationTokenSource.CreateLinkedTokenSource(ct, oneOpAtATimeCts.Token).Token;
-
                 currentChannelService.UserStateService?.Deactivate();
 
                 // Select the new service based on the channel type
