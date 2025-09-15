@@ -68,8 +68,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnAutoTranslateToggled(TranslationEvents.ConversationAutoTranslateToggled evt)
         {
             ChatChannel.ChatChannelType scope = ResolveScope(evt.ConversationId);
-            string receiverId = scope == ChatChannel.ChatChannelType.USER ? evt.ConversationId : string.Empty;
-            string communityId = scope == ChatChannel.ChatChannelType.COMMUNITY ? evt.ConversationId : string.Empty;
+            string receiverId = scope == ChatChannel.ChatChannelType.USER ? evt.ConversationId : "NULL";
+            string communityId = scope == ChatChannel.ChatChannelType.COMMUNITY ? evt.ConversationId : "NULL";
 
             var props = new JsonObject
             {
