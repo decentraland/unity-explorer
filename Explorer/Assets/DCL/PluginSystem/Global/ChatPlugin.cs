@@ -230,7 +230,7 @@ namespace DCL.PluginSystem.Global
 
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
 
-            var translationProvider = new DclTranslationProvider(webRequestController, decentralandUrlsSource);
+            var translationProvider = new DclTranslationProvider(webRequestController, decentralandUrlsSource, translationSettings);
             //var translationProvider = new MockTranslationProvider();
             
             var translationCache = new InMemoryTranslationCache();

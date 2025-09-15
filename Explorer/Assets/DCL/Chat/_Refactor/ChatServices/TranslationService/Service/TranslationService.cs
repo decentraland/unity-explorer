@@ -36,10 +36,10 @@ namespace DCL.Translation.Service
             this.translationMemory = translationMemory;
         }
 
-        public  void ProcessIncomingMessage(string messageId, string originalText, string conversationId)
+        public void ProcessIncomingMessage(string messageId, string originalText, string conversationId)
         {
             if (!settings.IsTranslationFeatureActive()) return;
-            
+
             if (!policy.ShouldAutoTranslate(originalText, conversationId, settings.PreferredLanguage))
             {
                 // We don't even need to store it; the default is no translation.
@@ -58,13 +58,14 @@ namespace DCL.Translation.Service
                 MessageId = messageId
             });
 
-            TranslateInternalAsync(messageId, CancellationToken.None).Forget();
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.TranslationTimeoutSeconds));
+            TranslateInternalAsync(messageId, cts.Token).Forget();
         }
 
         public UniTask TranslateManualAsync(string messageId, string originalText, CancellationToken ct)
         {
             if (!settings.IsTranslationFeatureActive()) return UniTask.CompletedTask;
-            
+
             // The logic is now much cleaner.
             // 1. Check if a record already exists. If not, create one from the provided text.
             if (!translationMemory.TryGet(messageId, out var translation))

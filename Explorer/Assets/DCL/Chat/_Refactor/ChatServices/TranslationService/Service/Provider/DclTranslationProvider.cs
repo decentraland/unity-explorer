@@ -7,6 +7,8 @@ using System.Threading;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using UnityEngine;
+using DCL.Translation.Settings;
+using CommunicationData.URLHelpers;
 
 namespace DCL.Translation.Service.Provider
 {
@@ -14,15 +16,18 @@ namespace DCL.Translation.Service.Provider
     {
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
+        private readonly ITranslationSettings settings;
 
         private string translateUrl => urlsSource.Url(DecentralandUrl.ChatTranslate);
 
         public DclTranslationProvider(
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource urlsSource)
+            IDecentralandUrlsSource urlsSource,
+            ITranslationSettings settings)
         {
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
+            this.settings = settings;
         }
 
         public async UniTask<TranslationResult> TranslateAsync(string text, LanguageCode target, CancellationToken ct)
@@ -50,8 +55,14 @@ namespace DCL.Translation.Service.Provider
 
             try
             {
+                var commonArgs = new CommonArguments(
+                    url: URLAddress.FromString(translateUrl),
+                    retryPolicy: RetryPolicy.WithRetries(settings.MaxRetries),
+                    timeout: (int)settings.TranslationTimeoutSeconds
+                );
+
                 var response = await webRequestController
-                    .PostAsync(translateUrl, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.CHAT_TRANSLATE)
+                    .PostAsync(commonArgs, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.CHAT_TRANSLATE)
                     .CreateFromJson<TranslationApiResponse>(WRJsonParser.Newtonsoft);
                 return response;
             }
