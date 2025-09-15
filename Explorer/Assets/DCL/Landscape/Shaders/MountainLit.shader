@@ -115,7 +115,7 @@ Shader "DCL/MountainLit"
 
             HLSLPROGRAM
             #pragma target 5.0
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             // -------------------------------------
             // Shader Stages

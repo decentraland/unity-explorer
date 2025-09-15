@@ -1,6 +1,6 @@
 ﻿#include "QuadTreeHelpers.cginc"
 
-#pragma enable_d3d11_debug_symbols
+//#pragma enable_d3d11_debug_symbols
 
 // Hierarchical Quadtree Frustum Culling Compute Shader
 #pragma kernel HierarchicalQuadTreeCulling
