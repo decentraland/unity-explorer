@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -10,6 +11,7 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using RichTypes;
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -26,7 +28,7 @@ namespace DCL.VoiceChat
 
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
-        private readonly VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource;
+        private readonly PlaybackSourcesHub playbackSourcesHub;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
         private CancellationTokenSource? trackPublishingCts;
@@ -37,13 +39,16 @@ namespace DCL.VoiceChat
         public VoiceChatTrackManager(
             IRoom voiceChatRoom,
             VoiceChatConfiguration configuration,
-            VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource,
             VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
-            this.combinedStreamsAudioSource = combinedStreamsAudioSource;
             this.microphoneHandler = microphoneHandler;
+
+            playbackSourcesHub = new PlaybackSourcesHub(
+                new ConcurrentDictionary<StreamKey, LivekitAudioSource>(),
+                configuration.ChatAudioMixerGroup.EnsureNotNull()
+            );
         }
 
         public void Dispose()
@@ -131,7 +136,7 @@ namespace DCL.VoiceChat
         {
             try
             {
-                combinedStreamsAudioSource.Reset();
+                playbackSourcesHub.Reset();
 
                 foreach (var remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 {
@@ -139,18 +144,18 @@ namespace DCL.VoiceChat
                     {
                         if (value.Kind == TrackKind.KindAudio)
                         {
-                            WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity.Key, sid);
+                            WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity.Key!, sid);
 
                             if (stream != null)
                             {
-                                combinedStreamsAudioSource.AddStream(stream);
+                                playbackSourcesHub.AddStream(new StreamKey(remoteParticipantIdentity.Key!, sid), stream);
                                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity}");
                             }
                         }
                     }
                 }
 
-                combinedStreamsAudioSource.Play();
+                playbackSourcesHub.Play();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track listening started");
             }
@@ -173,11 +178,8 @@ namespace DCL.VoiceChat
 
             try
             {
-                if (combinedStreamsAudioSource != null)
-                {
-                    combinedStreamsAudioSource.Stop();
-                    combinedStreamsAudioSource.Reset();
-                }
+                playbackSourcesHub.Stop();
+                playbackSourcesHub.Reset();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track listening stopped");
             }
@@ -194,7 +196,7 @@ namespace DCL.VoiceChat
 
                     if (stream != null)
                     {
-                        combinedStreamsAudioSource.AddStream(stream);
+                        playbackSourcesHub.AddStream(new StreamKey(participant.Identity, participant.Sid), stream);
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New remote track subscribed from {participant.Identity}");
                     }
                 }
@@ -208,13 +210,8 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio)
                 {
-                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
-
-                    if (stream != null)
-                    {
-                        combinedStreamsAudioSource.RemoveStream(stream);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscribed from {participant.Identity}");
-                    }
+                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, participant.Sid));
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscribed from {participant.Identity}");
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}"); }
@@ -230,7 +227,7 @@ namespace DCL.VoiceChat
 
                     if (stream != null)
                     {
-                        combinedStreamsAudioSource.AddStream(stream);
+                        playbackSourcesHub.AddStream(new StreamKey(participant.Identity, participant.Sid), stream);
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
                     }
                 }
@@ -244,13 +241,8 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
-
-                    if (stream != null)
-                    {
-                        combinedStreamsAudioSource.RemoveStream(stream);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
-                    }
+                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, participant.Sid));
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track unpublished: {ex.Message}"); }
