@@ -30,8 +30,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserEventBus browserEventBus;
 
         private string currentNameFilter = string.Empty;
-        private bool currentIsOwnerFilter;
-        private bool currentIsMemberFilter;
         private int currentPageNumberFilter = 1;
         private bool currentOnlyMemberOf;
         private bool isGridResultsLoadingItems;
