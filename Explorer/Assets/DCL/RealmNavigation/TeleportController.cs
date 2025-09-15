@@ -64,6 +64,9 @@ namespace DCL.RealmNavigation
         public UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct) =>
             TeleportAsync(parcel, loadReport, ct, nullifySceneDef: true);
 
+        public void StartTeleportToSpawnPoint(SceneEntityDefinition sceneDataSceneEntityDefinition, CancellationToken ct) =>
+            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDataSceneEntityDefinition, Vector2Int.zero, TeleportUtils.PickTargetWithOffset(sceneDataSceneEntityDefinition, sceneDataSceneEntityDefinition.metadata.scene.DecodedBase).targetWorldPosition, ct, isPositionSet: true));
+
         private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool nullifySceneDef = false)
         {
             if (retrieveScene == null)
