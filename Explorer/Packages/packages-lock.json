@@ -122,7 +122,7 @@
       "url": "https://package.openupm.com"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
-      "version": "https://github.com/NickKhalow/chrome-devtool-protocol-unity.git?path=/Packages",
+      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
       "depth": 0,
       "source": "git",
       "dependencies": {},
