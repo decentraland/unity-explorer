@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
+      "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
     "avprovideo": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "02cb6f1758fd15ebe9a36a33677309d31eee8c73"
+      "hash": "2488227ce1013f3bf65408447d0fbc6531e54ed5"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
@@ -71,14 +71,14 @@
       "hash": "e2daa643b01fc072db3dd3276e584db705a3d9a9"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
+      "version": "https://github.com/decentraland/client-sdk-unity.git#fix/remote-participant-concurrency",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "3a54f9c5f656f25beca250f14d0b573b9974fff4"
+      "hash": "1304e9c0c6c60f51c49009bf05e85db7d615669f"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",

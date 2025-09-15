@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS;
@@ -82,7 +83,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             ExtractMissingPointersAndResolvedEmotes(in intention, pointersToRequest!, resolvedEmotesTmp);
 
-            if (intention.Timeout.IsTimeout(dt))
+            if (intention.IsTimeout(dt))
             {
                 var pointersStrLog = string.Join(",", intention.Pointers);
                 ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
@@ -124,7 +125,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
-                if (emote.ManifestResult is { Exception: not null } || emote.Model is { Exception: not null })
+                if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } || emote.Model is { Exception: not null })
                 {
                     emotesWithResponse++;
                     continue;
@@ -161,7 +162,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             var promise = EmotesFromRealmPromise.Create(
                 World!,
                 new GetEmotesByPointersFromRealmIntention(missingPointers.ToList(),
-                    new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)
+                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)
                 ),
                 partitionComponent
             );
@@ -209,23 +210,11 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            // Manifest is required for Web loading only
-            if (component.ManifestResult == null
-                && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)
-
-                // Skip processing manifest for embedded emotes which do not start with 'urn'
-                && component.GetUrn().IsValid())
-
-                // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
-                return component.CreateAssetBundleManifestPromise(World!, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
-
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
                 return false;
 
             if (component.AssetResults[intention.BodyShape] == null)
             {
-                SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
-
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 var promise = AssetBundlePromise.Create(
                     World!,
@@ -234,8 +223,9 @@ namespace DCL.AvatarRendering.Emotes.Load
                         hash! + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        manifest: manifest,
-                        cancellationTokenSource: intention.CancellationTokenSource
+                        cancellationTokenSource: intention.CancellationTokenSource,
+                        assetBundleManifestVersion: component.DTO.assetBundleManifestVersion,
+                        parentEntityID: component.DTO.id
                     ),
                     partitionComponent
                 );
@@ -252,9 +242,9 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private void TryCreateAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
         {
-            AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
+            ContentDefinition[]? content = component.Model.Asset!.content;
 
-            foreach (AvatarAttachmentDTO.Content item in content ?? Array.Empty<AvatarAttachmentDTO.Content>())
+            foreach (ContentDefinition item in content)
             {
                 var audioType = item.file.ToAudioType();
 

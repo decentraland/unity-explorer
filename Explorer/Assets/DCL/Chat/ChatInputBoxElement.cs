@@ -45,7 +45,6 @@ namespace DCL.Chat
         [Header("Emojis")]
         [SerializeField] private EmojiPanelConfigurationSO emojiPanelConfiguration;
         [SerializeField] private EmojiButton emojiButtonPrefab;
-        [SerializeField] private TextAsset emojiMappingJson;
         [SerializeField] private EmojiSectionView emojiSectionViewPrefab;
         [SerializeField] private EmojiButtonView emojiPanelButton;
         [SerializeField] private EmojiPanelView emojiPanel;
@@ -143,10 +142,11 @@ namespace DCL.Chat
             this.profileCache = profileCache;
 
             InitializeEmojiPanelController();
-            InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
+            InitializeEmojiMapping(emojiPanelController!.EmojiMapping.NameMapping);
 
             suggestionPanelController = new InputSuggestionPanelController(suggestionPanel);
-            suggestionPanelController.SuggestionSelected += OnSuggestionSelected;
+
+            // suggestionPanelController.SuggestionSelected += OnSuggestionSelected;
 
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
@@ -432,7 +432,8 @@ namespace DCL.Chat
             if (suggestionPanelController != null)
             {
                 suggestionPanelController.Dispose();
-                suggestionPanelController.SuggestionSelected -= OnSuggestionSelected;
+
+                // suggestionPanelController.SuggestionSelected -= OnSuggestionSelected;
             }
 
             emojiPanelCts.SafeCancelAndDispose();
@@ -500,7 +501,7 @@ namespace DCL.Chat
 
         private void InitializeEmojiPanelController()
         {
-            emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
+            emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.EmojiSelected += OnEmojiSelected;
             emojiPanelButton.Button.onClick.AddListener(OnEmojiPanelButtonClicked);
         }
@@ -510,7 +511,7 @@ namespace DCL.Chat
             IsEmojiPanelVisible = !IsEmojiPanelVisible;
         }
 
-        private void InitializeEmojiMapping(Dictionary<string, EmojiData> emojiNameDataMapping)
+        private void InitializeEmojiMapping(IReadOnlyDictionary<string, EmojiData> emojiNameDataMapping)
         {
             foreach ((string emojiName, EmojiData emojiData) in emojiNameDataMapping)
                 emojiSuggestionsDictionary[emojiName] = new EmojiInputSuggestionData(emojiData.EmojiCode, emojiData.EmojiName);

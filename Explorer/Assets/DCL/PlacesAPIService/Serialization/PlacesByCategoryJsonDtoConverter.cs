@@ -3,9 +3,11 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace DCL.PlacesAPIService.Serialization
 {
+    [Preserve]
     public class PlacesByCategoryJsonDtoConverter : JsonConverter<List<OptimizedPlaceInMapResponse>>
     {
         public override void WriteJson(JsonWriter writer, List<OptimizedPlaceInMapResponse> value, JsonSerializer serializer)

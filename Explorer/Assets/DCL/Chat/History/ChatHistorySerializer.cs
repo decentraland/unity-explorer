@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Globalization;
@@ -45,7 +46,7 @@ namespace DCL.Chat.History
             entryValues[ENTRY_SENT_BY_LOCAL_USER] = messageToAppend.IsSentByOwnUser ? LOCAL_USER_TRUE_VALUE : LOCAL_USER_FALSE_VALUE;
             entryValues[ENTRY_MESSAGE] = messageToAppend.Message;
             entryValues[ENTRY_USERNAME] = messageToAppend.SenderValidatedName;
-            entryValues[ENTRY_TIMESTAMP] = messageToAppend.SentTimestamp.ToString(CultureInfo.InvariantCulture);
+            entryValues[ENTRY_TIMESTAMP] = messageToAppend.SentTimestampRaw.ToString(CultureInfo.InvariantCulture);
 
             destination.Write(CreateHistoryEntry(entryValues));
             destination.Flush();
@@ -82,12 +83,35 @@ namespace DCL.Chat.History
 
                 while(currentLine != null)
                 {
-                    ParseEntryValues(currentLine, entryValues);
-                    bool sentByLocalUser = entryValues[ENTRY_SENT_BY_LOCAL_USER] == LOCAL_USER_TRUE_VALUE;
-                    string walletAddress = sentByLocalUser ? localUserWalletAddress : remoteUserWalletAddress;
-                    ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], double.Parse(entryValues[ENTRY_TIMESTAMP]));
+                    if (ct.IsCancellationRequested) break;
 
-                    obtainedMessages.Add(newMessage);
+                    if (string.IsNullOrWhiteSpace(currentLine))
+                    {
+                        currentLine = await reader2.ReadLineAsync();
+                        continue;
+                    }
+
+                    try
+                    {
+                        ParseEntryValues(currentLine, entryValues);
+
+                        bool sentByLocalUser = entryValues[ENTRY_SENT_BY_LOCAL_USER] == LOCAL_USER_TRUE_VALUE;
+                        string walletAddress = sentByLocalUser ? localUserWalletAddress : remoteUserWalletAddress;
+                        string timestampString = entryValues[ENTRY_TIMESTAMP].Trim();
+
+                        if (!double.TryParse(timestampString, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double timestamp)
+                            && !double.TryParse(entryValues[ENTRY_TIMESTAMP], NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out timestamp)) // fallback
+                        {
+                            ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"skipping corrupted entry due to invalid timestamp: '{entryValues[ENTRY_TIMESTAMP]}'. Line: '{currentLine}'");
+                            currentLine = await reader2.ReadLineAsync();
+                            continue;
+                        }
+
+                        ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], timestamp);
+                        obtainedMessages.Add(newMessage);
+                    }
+                    catch { ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"skipping corrupted entry. Line: '{currentLine}'"); }
+
                     currentLine = await reader2.ReadLineAsync();
                 }
             }
@@ -100,17 +124,10 @@ namespace DCL.Chat.History
         /// <returns>The filled instance of the user conversation settings.</returns>
         public ChatHistoryStorage.UserConversationsSettings DeserializeUserConversationSettings(Stream inputStream)
         {
-            ChatHistoryStorage.UserConversationsSettings result;
+            using var streamReader = new StreamReader(inputStream);
+            using var jsonReader = new JsonTextReader(streamReader);
 
-            using (StreamReader streamReader = new StreamReader(inputStream))
-            {
-                using (JsonTextReader jsonReader = new JsonTextReader(streamReader))
-                {
-                    result = jsonSerializer.Deserialize<ChatHistoryStorage.UserConversationsSettings>(jsonReader);
-                }
-            }
-
-            return result;
+            return jsonSerializer.Deserialize<ChatHistoryStorage.UserConversationsSettings>(jsonReader);
         }
 
         /// <summary>
@@ -120,10 +137,8 @@ namespace DCL.Chat.History
         /// <param name="outputStream">The output where to store the JSON-formatted text, with writing permission.</param>
         public void SerializeUserConversationSettings(ChatHistoryStorage.UserConversationsSettings conversationsSettingsToSerialize, Stream outputStream)
         {
-            using (TextWriter streamWriter = new StreamWriter(outputStream))
-            {
-                jsonSerializer.Serialize(streamWriter, conversationsSettingsToSerialize);
-            }
+            using TextWriter streamWriter = new StreamWriter(outputStream);
+            jsonSerializer.Serialize(streamWriter, conversationsSettingsToSerialize);
         }
 
         private byte[] CreateHistoryEntry(string[] values)

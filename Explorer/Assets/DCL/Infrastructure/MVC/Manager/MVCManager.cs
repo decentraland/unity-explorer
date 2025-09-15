@@ -114,12 +114,7 @@ namespace MVC
 
             // Hide all popups in the stack and clear it
             if (overlayPushInfo.PopupControllers != null)
-            {
-                foreach ((IController controller, int orderInLayer) popupController in overlayPushInfo.PopupControllers)
-                    popupController.controller.HideViewAsync(ct).Forget();
-
-                overlayPushInfo.PopupControllers.Clear();
-            }
+                CloseAllPopups(overlayPushInfo.PopupControllers, ct);
 
             // Hide fullscreen UI if any
             if (overlayPushInfo.FullscreenController != null)
@@ -155,23 +150,31 @@ namespace MVC
             }
         }
 
+        private void CloseAllPopups(List<(IController, int)> popupControllers, CancellationToken ct)
+        {
+            // Hide all popups in the stack and clear it
+            for (int i = popupControllers.Count - 1; i >= 0; i--)
+                popupControllers[i].Item1.HideViewAsync(ct).Forget();
+
+            popupControllers.Clear();
+        }
+
         private async UniTask ShowFullScreenAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView: IView
         {
             if (windowsStackManager.CurrentFullscreenController == controller)
                 return;
 
+            //Hide current fullscreen if any so it's safe to push a new one
+            if (windowsStackManager.CurrentFullscreenController != null)
+                windowsStackManager.CurrentFullscreenController.HideViewAsync(ct).Forget();
+
             // Push new fullscreen controller
             FullscreenPushInfo fullscreenPushInfo = windowsStackManager.PushFullscreen(controller);
 
             try
             {
-                // Hide all popups in the stack and clear it
-
-                foreach ((IController controller, int orderInLayer) popupController in fullscreenPushInfo.PopupControllers)
-                    popupController.controller.HideViewAsync(ct).Forget();
-
-                fullscreenPushInfo.PopupControllers.Clear();
+                CloseAllPopups(fullscreenPushInfo.PopupControllers, ct);
 
                 // Hide the popup closer
                 popupCloser.HideAsync(ct).Forget();

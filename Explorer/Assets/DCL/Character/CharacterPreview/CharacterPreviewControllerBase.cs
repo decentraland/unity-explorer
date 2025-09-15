@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
+using DCL.Diagnostics;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -15,27 +16,30 @@ namespace DCL.CharacterPreview
 {
     public abstract class CharacterPreviewControllerBase : IDisposable
     {
-        private static readonly float AVATAR_FADE_ANIMATION = 0.5f;
+        private const float AVATAR_FADE_ANIMATION = 0.5f;
+
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly CharacterPreviewCursorController cursorController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-
         private readonly World world;
         private readonly bool isPreviewPlatformActive;
+        private readonly Func<bool> isPlayingEmoteDelegate;
 
         private bool initialized;
-        private CancellationTokenSource updateModelCancellationToken;
+        private CancellationTokenSource? updateModelCancellationToken;
         private Color profileColor;
+        private Vector3 avatarPosition;
+
+        private RenderTexture? currentRenderTexture;
 
         protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
         protected bool zoomEnabled = true;
         protected bool panEnabled = true;
         protected bool rotateEnabled = true;
-        private readonly Func<bool> isPlayingEmoteDelegate;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
@@ -64,10 +68,10 @@ namespace DCL.CharacterPreview
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
 
-            isPlayingEmoteDelegate = () => previewController!.Value.IsPlayingEmote();
+            isPlayingEmoteDelegate = () => previewController?.IsPlayingEmote() ?? false;
         }
 
-        public virtual void Initialize(Avatar avatar)
+        public virtual void Initialize(Avatar avatar, Vector3 position)
         {
             previewAvatarModel.BodyShape = avatar.BodyShape;
             previewAvatarModel.HairColor = avatar.HairColor;
@@ -75,6 +79,8 @@ namespace DCL.CharacterPreview
             previewAvatarModel.EyesColor = avatar.EyesColor;
             previewAvatarModel.ForceRenderCategories = new HashSet<string>(avatar.ForceRender);
             previewAvatarModel.Initialized = true;
+
+            avatarPosition = position;
 
             Initialize();
         }
@@ -84,20 +90,21 @@ namespace DCL.CharacterPreview
             if (initialized) return;
 
             //Temporal solution to fix issue with render format in Mac VS Windows
-            Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
+            Vector2 sizeDelta = view.RawImage.rectTransform!.sizeDelta;
 
-            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
+            currentRenderTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
                 antiAliasing = 4,
                 useDynamicScale = true,
             };
 
-            newTexture.Create();
+            currentRenderTexture.Create();
 
-            view.RawImage.texture = newTexture;
+            view.RawImage.texture = currentRenderTexture;
 
-            previewController = previewFactory.Create(world, view.RawImage.rectTransform, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
+            previewController = previewFactory.Create(world, view.RawImage.rectTransform, currentRenderTexture,
+                inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings, avatarPosition);
             initialized = true;
 
             OnModelUpdated();
@@ -116,6 +123,14 @@ namespace DCL.CharacterPreview
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
             cursorController.Dispose();
             updateModelCancellationToken.SafeCancelAndDispose();
+        }
+
+        private void ReleaseRenderTexture()
+        {
+            if (!currentRenderTexture) return;
+            currentRenderTexture.Release();
+            UnityEngine.Object.Destroy(currentRenderTexture);
+            currentRenderTexture = null;
         }
 
         private void OnPointerEnter(PointerEventData pointerEventData)
@@ -162,8 +177,17 @@ namespace DCL.CharacterPreview
                     case PointerEventData.InputButton.Left when view.EnableRotating:
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
                         break;
+                    case PointerEventData.InputButton.Middle:
+                    default:
+                        ReportHub.LogError(ReportCategory.UI, nameof(InvalidOperationException));
+                        break;
                 }
             }
+        }
+
+        public void OnBeforeShow()
+        {
+            EnableSpinner();
         }
 
         /// <summary>
@@ -177,7 +201,8 @@ namespace DCL.CharacterPreview
                 inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
                 OnModelUpdated();
             }
-            else if (previewAvatarModel.Initialized) { Initialize(); }
+            else if (previewAvatarModel.Initialized)
+                Initialize();
 
             previewController?.SetPreviewPlatformActive(isPreviewPlatformActive);
 
@@ -197,6 +222,7 @@ namespace DCL.CharacterPreview
                 previewController?.Dispose();
                 previewController = null;
                 initialized = false;
+                ReleaseRenderTexture();
             }
 
             if (triggerOnHideBusEvent)
@@ -225,7 +251,6 @@ namespace DCL.CharacterPreview
         protected void OnModelUpdated()
         {
             updateModelCancellationToken = updateModelCancellationToken.SafeRestart();
-
             UpdateModelAsync(updateModelCancellationToken.Token).Forget();
             return;
 

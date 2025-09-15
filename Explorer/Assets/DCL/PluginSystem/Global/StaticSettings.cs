@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
-using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -18,10 +17,10 @@ namespace DCL.PluginSystem.Global
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
         [field: SerializeField]
-        public PartitionSettingsRef PartitionSettings { get; private set; }
+        public PartitionSettingsAsset PartitionSettings { get; private set; }
 
         [field: SerializeField]
-        public RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+        public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; }
 
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]
@@ -57,24 +56,6 @@ namespace DCL.PluginSystem.Global
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>
         {
             public PartitionSettingsRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class VoiceChatSettingsRef : AssetReferenceT<VoiceChatSettingsAsset>
-        {
-            public VoiceChatSettingsRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class RealmPartitionSettingsRef : AssetReferenceT<RealmPartitionSettingsAsset>
-        {
-            public RealmPartitionSettingsRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class VideoPrioritizationSettingsRef : AssetReferenceT<VideoPrioritizationSettings>
-        {
-            public VideoPrioritizationSettingsRef(string guid) : base(guid) { }
         }
 
         [Serializable]

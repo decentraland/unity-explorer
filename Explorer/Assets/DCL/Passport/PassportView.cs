@@ -1,5 +1,6 @@
 using DCL.CharacterPreview;
 using DCL.InWorldCamera.CameraReelGallery;
+using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
@@ -53,6 +54,9 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public CameraReelGalleryView CameraReelGalleryModuleView { get; private set; }
+
+        [field: SerializeField]
+        public CameraReelOptionButtonView CameraReelGalleryContextMenuView { get; private set; }
 
         [field: SerializeField]
         public RectTransform MainContainer { get; private set; }
@@ -115,6 +119,12 @@ namespace DCL.Passport
         [field: SerializeField]
         public string JumpInText { get; private set; } = "Jump to Location";
 
+        [field: SerializeField]
+        public Sprite InviteToCommunitySprite { get; private set; }
+
+        [field: SerializeField]
+        public string InviteToCommunityText { get; private set; } = "Invite to Community";
+
         [Serializable]
         public struct MutualFriendsConfig
         {
@@ -163,8 +173,6 @@ namespace DCL.Passport
             ViewportSoftMask.enabled = passportSection != PassportSection.PHOTOS;
 
             MainScroll.verticalNormalizedPosition = 1;
-
-            CharacterPreviewView.gameObject.SetActive(passportSection != PassportSection.BADGES);
         }
     }
 }

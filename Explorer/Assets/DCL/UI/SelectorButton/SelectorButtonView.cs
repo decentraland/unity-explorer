@@ -10,6 +10,8 @@ namespace DCL.UI.SelectorButton
 {
     public class SelectorButtonView : MonoBehaviour
     {
+        public event Action? OptionsPanelOpened;
+        public event Action? OptionsPanelClosed;
         public event Action<int>? OptionClicked;
 
         [SerializeField] private Button selectorButton;
@@ -22,6 +24,37 @@ namespace DCL.UI.SelectorButton
         [SerializeField] private SelectorButtonOptionItemView optionItemGameObject;
         [SerializeField] private Button backgroundCloseButton;
         [SerializeField] private int defaultPoolCapacity = 10;
+        [SerializeField] private bool changeSelectorButtonTextOnOptionSelected = false;
+        [SerializeField] private bool showSelectedMarkOnOptionSelected = false;
+
+        public int SelectedIndex
+        {
+            get
+            {
+                for (int i = 0; i < currentOptions.Count; i++)
+                {
+                    if (currentOptions[i].IsSelected)
+                        return i;
+                }
+
+                return -1;
+            }
+
+            set
+            {
+                if (value < 0 || value >= currentOptions.Count)
+                    return;
+
+                for (int i = 0; i < currentOptions.Count; i++)
+                {
+                    currentOptions[i].IsSelected = i == value;
+                    currentOptions[i].SetSelectedMarkActive(showSelectedMarkOnOptionSelected && i == value);
+
+                    if (changeSelectorButtonTextOnOptionSelected && i == value)
+                        SetMainButtonText(currentOptions[i].OptionTitle);
+                }
+            }
+        }
 
         private IObjectPool<SelectorButtonOptionItemView> optionsPool;
         private readonly List<SelectorButtonOptionItemView> currentOptions = new ();
@@ -102,6 +135,9 @@ namespace DCL.UI.SelectorButton
             return null;
         }
 
+        public void SetAsInteractable(bool isInteractable) =>
+            selectorButton.interactable = isInteractable;
+
         private void ClearOptions()
         {
             foreach (SelectorButtonOptionItemView optionItemView in currentOptions)
@@ -117,6 +153,7 @@ namespace DCL.UI.SelectorButton
             if (index < 0)
                 return;
 
+            SelectedIndex = index;
             OptionClicked?.Invoke(index);
             OnCloseOptionsPanel();
         }
@@ -148,10 +185,15 @@ namespace DCL.UI.SelectorButton
                 selectorPanel.localPosition = originalLocalPosition;
                 selectorPanel.parent = selectorPanelParent;
             }
+
+            OptionsPanelOpened?.Invoke();
         }
 
-        private void OnCloseOptionsPanel() =>
+        private void OnCloseOptionsPanel()
+        {
             selectorPanel.gameObject.SetActive(false);
+            OptionsPanelClosed?.Invoke();
+        }
 
         private void RefreshSelectorPanelSize()
         {

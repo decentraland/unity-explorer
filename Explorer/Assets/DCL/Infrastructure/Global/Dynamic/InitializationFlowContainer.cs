@@ -107,7 +107,8 @@ namespace DCL.UserInAppInitializationFlow
                     appArgs,
                     characterContainer.CharacterObject,
                     characterContainer.Transform,
-                    dynamicWorldParams.StartParcel),
+                    dynamicWorldParams.StartParcel,
+                    localSceneDevelopment),
             };
         }
     }

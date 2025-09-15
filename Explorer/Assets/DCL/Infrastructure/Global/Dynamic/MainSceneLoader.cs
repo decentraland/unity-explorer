@@ -7,6 +7,7 @@ using DCL.ApplicationBlocklistGuard;
 using DCL.ApplicationGuards;
 using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
+using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
@@ -46,6 +47,8 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.UI;
+using DCL.Settings.ModuleControllers;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -68,24 +71,14 @@ namespace Global.Dynamic
         [SerializeField] private DecentralandEnvironment decentralandEnvironment;
 
         [Space]
-        [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
-
-        [Space]
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
         [Header("REFERENCES")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
-        [SerializeField] private UIDocument uiToolkitRoot = null!;
-        [SerializeField] private UIDocument scenesUIRoot = null!;
-        [SerializeField] private UIDocument cursorRoot = null!;
-        [SerializeField] private UIDocument debugUiRoot = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
+        [SerializeField] private SplashScreenRef splashScreenRef = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
-        [SerializeField] private GameObject splashRoot = null!;
-        [SerializeField] private TMP_Text splashScreenText = null!;
-        [SerializeField] private Animator splashScreenAnimation = null!;
-        [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
@@ -94,6 +87,8 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
+
+        private ProvidedInstance<SplashScreen> splashScreen;
 
         private void Awake()
         {
@@ -166,21 +161,26 @@ namespace Global.Dynamic
 
             World world = World.Create();
 
-            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
             var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
+            var assetsProvisioner = new AddressablesProvisioner();
+
+            splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
+
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
-            var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE)).Builder;
+            var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
+            var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainerBuilder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
+                assetsProvisioner,
                 debugSettings,
                 sceneLoaderSettings: settings,
                 decentralandUrlsSource,
@@ -189,7 +189,7 @@ namespace Global.Dynamic
                 globalPluginSettingsContainer,
                 launchSettings,
                 applicationParametersParser,
-                splashScreen,
+                splashScreen.Value,
                 realmUrls,
                 diskCache,
                 partialsDiskCache,
@@ -203,12 +203,12 @@ namespace Global.Dynamic
 
             try
             {
-                await bootstrap.PreInitializeSetupAsync(cursorRoot, debugUiRoot, destroyCancellationToken);
+                await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
                 bool hasDebugFlag = applicationParametersParser.HasDebugFlag();
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, hasDebugFlag, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, hasDebugFlag, ct);
 
                 if (!isLoaded)
                 {
@@ -230,9 +230,6 @@ namespace Global.Dynamic
                     scenePluginSettingsContainer,
                     settings,
                     dynamicSettings,
-                    uiToolkitRoot,
-                    scenesUIRoot,
-                    cursorRoot,
                     backgroundMusic,
                     worldInfoTool.EnsureNotNull(),
                     playerEntity,
@@ -247,14 +244,14 @@ namespace Global.Dynamic
                     return;
                 }
 
-                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, splashScreen, decentralandUrlsSource, ct))
+                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
-                    splashScreen.Hide();
+                    splashScreen.Value.Hide();
 
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
@@ -262,7 +259,7 @@ namespace Global.Dynamic
                         return;
                     }
 
-                    splashScreen.Show();
+                    splashScreen.Value.Show();
                 }
 
                 DisableInputs();
@@ -273,16 +270,15 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
+                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
 
-                //This is done in order to release the memory usage of the splash screen logo animation sprites
+                //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
-                logoAnimation.StopPlayback();
-                logoAnimation.runtimeAnimatorController = null;
+                splashScreen.Dispose();
 
                 RestoreInputs();
             }
@@ -312,8 +308,13 @@ namespace Global.Dynamic
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
-
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+            if (!hasMinimumSpecs)
+            {
+                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
+                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, UpscalingController.MIN_SPECS_UPSCALER_VALUE, true);
+            }
+            
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
@@ -321,8 +322,7 @@ namespace Global.Dynamic
             {
                 bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
             });
-
-
+            
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
@@ -342,7 +342,7 @@ namespace Global.Dynamic
             await minimumSpecsScreenController.HoldingTask.Task;
         }
 
-        private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, DecentralandUrlsSource dclSources,
+        private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
             CancellationToken ct)
         {
             //If Livekit is down, stop bootstrapping
@@ -350,7 +350,7 @@ namespace Global.Dynamic
                 return false;
 
             //If application requires version update, stop bootstrapping
-            if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
+            if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen.Value, ct))
                 return false;
 
             //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
@@ -579,6 +579,14 @@ namespace Global.Dynamic
             public void Dispose()
             {
                 ReportHub.Log(data, "Finish checking");
+            }
+        }
+
+        [Serializable]
+        public class SplashScreenRef : ComponentReference<SplashScreen>
+        {
+            public SplashScreenRef(string guid) : base(guid)
+            {
             }
         }
     }
