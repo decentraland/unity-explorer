@@ -134,7 +134,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnBackButtonClicked()
         {
-            LoadAllCommunitiesResults();
+            LoadJoinRequestsAndAllCommunities();
         }
 
         public void Dispose()
@@ -223,7 +223,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void ReloadBrowser()
         {
             LoadMyCommunities();
-            LoadAllCommunitiesResults();
+            LoadJoinRequestsAndAllCommunities();
             RefreshInvitesCounter();
         }
 
@@ -233,10 +233,20 @@ namespace DCL.Communities.CommunitiesBrowser
             myCommunitiesPresenter.LoadMyCommunities();
         }
 
-        private void LoadAllCommunitiesResults()
+        private void LoadJoinRequestsAndAllCommunities()
         {
-            mainRightSectionPresenter.LoadAllCommunities(LoadJoinRequestsAsync);
             SetActiveSection(CommunitiesRightSideSections.MAIN_SECTION);
+            loadResultsCts = loadResultsCts.SafeRestart();
+
+            mainRightSectionPresenter.SetAsLoading();
+            LoadJoinRequestsAndAllCommunitiesAsync(loadResultsCts.Token).Forget();
+            return;
+
+            async UniTaskVoid LoadJoinRequestsAndAllCommunitiesAsync(CancellationToken ct)
+            {
+                await LoadJoinRequestsAsync(ct);
+                mainRightSectionPresenter.LoadAllCommunitiesAsync().Forget();
+            }
         }
 
         private void LoadInvitesAndRequestsResults()
@@ -361,7 +371,7 @@ namespace DCL.Communities.CommunitiesBrowser
             SetActiveSection(CommunitiesRightSideSections.MAIN_SECTION);
 
             if (string.IsNullOrEmpty(searchText))
-                mainRightSectionPresenter.LoadAllCommunities(null);
+                mainRightSectionPresenter.LoadAllCommunities();
             else
                 mainRightSectionPresenter.LoadSearchResults(searchText);
 
@@ -387,7 +397,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void SearchBarCleared()
         {
             ClearSearchBar();
-            mainRightSectionPresenter.LoadAllCommunities(null);
+            mainRightSectionPresenter.LoadAllCommunities();
         }
 
         private void OnClearSearchBar(CommunitiesBrowserEvents.ClearSearchBarEvent evt)
@@ -469,7 +479,7 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             int? indexToRemove = null;
-            for (int i = 0; i < browserStateService.CurrentJoinRequests.Count; i++)
+            for ( var i = 0; i < browserStateService.CurrentJoinRequests.Count; i++)
             {
                 GetUserInviteRequestData.UserInviteRequestData joinRequest = browserStateService.CurrentJoinRequests[i];
                 if (joinRequest.communityId == communityId && joinRequest.id == requestId)
@@ -539,7 +549,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid CreateCommunityAsync(CancellationToken ct)
         {
-            bool canCreate = false;
+            var canCreate = false;
             var ownProfile = await selfProfile.ProfileAsync(ct);
 
             if (ownProfile != null)
@@ -646,7 +656,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private bool RemoveCurrentCommunityInviteRequest(string communityId)
         {
-            bool foundInvitation = false;
+            var foundInvitation = false;
             foreach (var invitation in browserStateService.CurrentInvitationRequests)
             {
                 if (invitation.communityId == communityId)
@@ -657,7 +667,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
             }
 
-            bool foundJoinRequest = false;
+            var foundJoinRequest = false;
             foreach (var joinRequest in browserStateService.CurrentJoinRequests)
             {
                 if (joinRequest.communityId == communityId)
@@ -748,7 +758,7 @@ namespace DCL.Communities.CommunitiesBrowser
             LoadMyCommunities();
 
             if (!isInvitesAndRequestsSectionActive)
-                LoadAllCommunitiesResults();
+                LoadJoinRequestsAndAllCommunities();
             else
                 LoadInvitesAndRequestsResults();
         }
@@ -764,7 +774,7 @@ namespace DCL.Communities.CommunitiesBrowser
             LoadMyCommunities();
 
             if (!isInvitesAndRequestsSectionActive)
-                LoadAllCommunitiesResults();
+                LoadJoinRequestsAndAllCommunities();
         }
     }
 
