@@ -27,6 +27,12 @@ namespace DCL.VoiceChat
 
         public void AddStream(StreamKey key, WeakReference<IAudioStream> stream)
         {
+            if (streams.ContainsKey(key))
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot same key and its stream more than once: {key}");
+                return;
+            }
+
             LivekitAudioSource source = LivekitAudioSource.New(true);
             source.Construct(stream);
             AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
@@ -62,53 +68,37 @@ namespace DCL.VoiceChat
 
         public void Play()
         {
-            ConcurrentDictionary<StreamKey, LivekitAudioSource> streamsRef = streams;
-
-            if (!PlayerLoopHelper.IsMainThread)
+            ExecuteOnMainThread(this, static hub =>
             {
-                PlayAsync().Forget();
-                return;
-            }
-
-            PlayInternal();
-            return;
-
-            void PlayInternal()
-            {
-                foreach (LivekitAudioSource livekitAudioSource in streamsRef.Values)
+                foreach (LivekitAudioSource livekitAudioSource in hub.streams.Values)
                     livekitAudioSource.Play();
-            }
-
-            async UniTaskVoid PlayAsync()
-            {
-                await UniTask.SwitchToMainThread();
-                PlayInternal();
-            }
+            });
         }
 
         public void Stop()
         {
-            ConcurrentDictionary<StreamKey, LivekitAudioSource> streamsRef = streams;
+            ExecuteOnMainThread(this, static hub =>
+            {
+                foreach (LivekitAudioSource livekitAudioSource in hub.streams.Values)
+                    livekitAudioSource.Stop();
+            });
+        }
 
+        private static void ExecuteOnMainThread(PlaybackSourcesHub sourcesHub, Action<PlaybackSourcesHub> action)
+        {
             if (!PlayerLoopHelper.IsMainThread)
             {
-                StopAsync().Forget();
+                ExecuteAsync().Forget();
                 return;
             }
 
-            StopInternal();
+            action(sourcesHub);
             return;
 
-            void StopInternal()
-            {
-                foreach (LivekitAudioSource livekitAudioSource in streamsRef.Values)
-                    livekitAudioSource.Stop();
-            }
-
-            async UniTaskVoid StopAsync()
+            async UniTaskVoid ExecuteAsync()
             {
                 await UniTask.SwitchToMainThread();
-                StopInternal();
+                action(sourcesHub);
             }
         }
     }
