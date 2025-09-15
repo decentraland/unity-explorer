@@ -16,7 +16,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         [SerializeField] private RectTransform hoverOverlay = null!;
         [SerializeField] private TMP_Text communityTitle = null!;
-        [field: SerializeField] public ImageView communityThumbnail = null!;
+        [SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private ListenersCountView listenersCountView = null!;
 
