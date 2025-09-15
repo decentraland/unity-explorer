@@ -6,17 +6,14 @@ namespace DCL.VoiceChat
     internal readonly struct StreamKey : IEquatable<StreamKey>
     {
         public readonly string Identity;
-        public readonly string Sid;
 
-        public StreamKey(string identity, string sid)
+        public StreamKey(string identity)
         {
             this.Identity = identity;
-            this.Sid = sid;
         }
 
         public bool Equals(StreamKey other) =>
-            Identity == other.Identity
-            && Sid == other.Sid;
+            Identity == other.Identity;
 
         public override bool Equals(object? obj)
         {
@@ -25,7 +22,7 @@ namespace DCL.VoiceChat
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Identity, Sid);
+            return HashCode.Combine(Identity);
         }
     }
 }

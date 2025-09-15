@@ -25,26 +25,21 @@ namespace DCL.VoiceChat
             this.audioMixerGroup = audioMixerGroup;
         }
 
-        public void AddStream(StreamKey key, WeakReference<IAudioStream> stream)
+        public void AddOrReplaceStream(StreamKey key, WeakReference<IAudioStream> stream)
         {
-            if (streams.ContainsKey(key))
-            {
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot same key and its stream more than once: {key}");
-                return;
-            }
+            if (streams.TryRemove(key, out var oldStream))
+                DisposeSource(oldStream!);
 
             LivekitAudioSource source = LivekitAudioSource.New(true);
             source.Construct(stream);
             AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
             audioSource.outputAudioMixerGroup = audioMixerGroup;
-            source.name = $"LivekitSource_{key.Identity}_{key.Sid}";
+            source.name = $"LivekitSource_{key.Identity}";
 
             if (streams.TryAdd(key, source) == false)
             {
                 ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot add stream key to dictionary, value is already assigned within the key: {key}");
-                source.Stop();
-                source.Free();
-                source.gameObject.SelfDestroy();
+                DisposeSource(source);
             }
         }
 
@@ -58,9 +53,7 @@ namespace DCL.VoiceChat
             static async UniTaskVoid InternalAsync(LivekitAudioSource livekitAudioSource)
             {
                 await UniTask.SwitchToMainThread();
-                livekitAudioSource.Stop();
-                livekitAudioSource.Free();
-                livekitAudioSource.gameObject.SelfDestroy();
+                DisposeSource(livekitAudioSource);
             }
         }
 
@@ -88,6 +81,13 @@ namespace DCL.VoiceChat
                 foreach (LivekitAudioSource livekitAudioSource in hub.streams.Values)
                     livekitAudioSource.Stop();
             });
+        }
+
+        private static void DisposeSource(LivekitAudioSource livekitAudioSource)
+        {
+            livekitAudioSource.Stop();
+            livekitAudioSource.Free();
+            livekitAudioSource.gameObject.SelfDestroy();
         }
 
         private static void ExecuteOnMainThread(PlaybackSourcesHub sourcesHub, Action<PlaybackSourcesHub> action)
