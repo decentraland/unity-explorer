@@ -12,6 +12,7 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -25,7 +26,7 @@ namespace DCL.SDKComponents.MediaStream
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     [ThrottlingEnabled]
-    public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem
+    public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly IWebRequestController webRequestController;
         private readonly ISceneData sceneData;
@@ -296,6 +297,17 @@ namespace DCL.SDKComponents.MediaStream
             volumeBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
             volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
 #endif
+        }
+
+        public void OnSceneIsCurrentChanged(bool enteredScene)
+        {
+            ToggleCurrentStreamsStateQuery(World, enteredScene);
+        }
+
+        [Query]
+        private void ToggleCurrentStreamsState(ref MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
+        {
+            if (enteredScene) { }
         }
     }
 }
