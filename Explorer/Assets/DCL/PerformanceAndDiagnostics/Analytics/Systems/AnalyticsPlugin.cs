@@ -12,6 +12,8 @@ using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
+using DCL.Translation.Settings;
+using Utility;
 using Utility.Json;
 using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
 
@@ -28,8 +30,11 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IEventBus eventBus;
+        private readonly ITranslationSettings translationSettings;
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
+        private AutoTranslateAnalytics? autoTranslateAnalytics;
 
         public AnalyticsPlugin(
             IAnalyticsController analytics,
@@ -41,7 +46,9 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache identityCache,
             IDebugContainerBuilder debugContainerBuilder,
             ICameraReelStorageService cameraReelStorageService,
-            IReadOnlyEntityParticipantTable entityParticipantTable
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            IEventBus eventBus,
+            ITranslationSettings translationSettings
         )
         {
             this.analytics = analytics;
@@ -54,6 +61,8 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cameraReelStorageService = cameraReelStorageService;
             this.entityParticipantTable = entityParticipantTable;
+            this.eventBus = eventBus;
+            this.translationSettings = translationSettings;
 
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
         }
@@ -61,6 +70,8 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             walkedDistanceAnalytics.Initialize();
+
+            autoTranslateAnalytics = new AutoTranslateAnalytics(analytics, eventBus, translationSettings);
 
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder());
@@ -74,6 +85,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             walkedDistanceAnalytics.Dispose();
+            autoTranslateAnalytics?.Dispose();
         }
     }
 }
