@@ -368,7 +368,7 @@ namespace Global.Dynamic
 
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode, bootstrapContainer.DecentralandUrlsSource, playSceneMetaDataSource, localDevelopmentMetaDataSource);
 
-            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.ScenesCache, gateKeeperSceneRoomOptions)
+            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, gateKeeperSceneRoomOptions)
                .AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
