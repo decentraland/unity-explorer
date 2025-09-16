@@ -8,6 +8,12 @@ using UnityEngine;
 
 namespace DCL.CharacterTriggerArea.Components
 {
+    public enum CharacterTriggerAreaMeshType
+    {
+        BOX,
+        SPHERE
+    }
+
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
@@ -17,6 +23,7 @@ namespace DCL.CharacterTriggerArea.Components
         private bool hasMonoBehaviour;
 
         public Vector3 AreaSize { get; private set; }
+        public CharacterTriggerAreaMeshType MeshType { get; private set; }
         public bool IsDirty { get; set; }
 
         public readonly IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => hasMonoBehaviour
@@ -31,9 +38,10 @@ namespace DCL.CharacterTriggerArea.Components
             ? monoBehaviour!.CurrentAvatarsInside
             : EMPTY_COLLECTION;
 
-        public CharacterTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false, CharacterTriggerArea? monoBehaviour = null)
+        public CharacterTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false, CharacterTriggerArea? monoBehaviour = null, CharacterTriggerAreaMeshType meshType = CharacterTriggerAreaMeshType.BOX)
         {
             AreaSize = areaSize;
+            this.MeshType = meshType;
             this.targetOnlyMainPlayer = targetOnlyMainPlayer;
 
             this.monoBehaviour = monoBehaviour;
@@ -44,8 +52,20 @@ namespace DCL.CharacterTriggerArea.Components
 
         public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)
         {
-            if (hasMonoBehaviour && !monoBehaviour!.BoxCollider.enabled)
-                monoBehaviour.BoxCollider.enabled = true;
+            if (hasMonoBehaviour)
+            {
+                switch (MeshType)
+                {
+                    case CharacterTriggerAreaMeshType.BOX:
+                        monoBehaviour!.SphereCollider.enabled = false;
+                        monoBehaviour!.BoxCollider.enabled = true;
+                        break;
+                    case CharacterTriggerAreaMeshType.SPHERE:
+                        monoBehaviour!.BoxCollider.enabled = false;
+                        monoBehaviour!.SphereCollider.enabled = true;
+                        break;
+                }
+            }
 
             if (IsDirty == false) return;
             IsDirty = false;
@@ -65,8 +85,19 @@ namespace DCL.CharacterTriggerArea.Components
                 triggerAreaTransform.localRotation = Quaternion.identity;
             }
 
-            monoBehaviour!.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
-            monoBehaviour.BoxCollider.enabled = true;
+            switch (MeshType)
+            {
+                case CharacterTriggerAreaMeshType.BOX:
+                    monoBehaviour!.SphereCollider.enabled = false;
+                    monoBehaviour!.BoxCollider.enabled = true;
+                    monoBehaviour!.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
+                    break;
+                case CharacterTriggerAreaMeshType.SPHERE:
+                    monoBehaviour!.BoxCollider.enabled = false;
+                    monoBehaviour!.SphereCollider.enabled = true;
+                    monoBehaviour!.SphereCollider.radius = useTransformScaleAsAreaSize ? 1f : AreaSize.magnitude;
+                    break;
+            }
         }
 
         public void UpdateAreaSize(Vector3 size)

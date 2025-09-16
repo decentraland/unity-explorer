@@ -7,6 +7,7 @@ namespace DCL.CharacterTriggerArea
     public class CharacterTriggerArea : MonoBehaviour, IDisposable
     {
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
+        [field: SerializeField] public SphereCollider SphereCollider { get; private set; }
 
         internal readonly HashSet<Transform> currentAvatarsInside = new ();
         internal readonly HashSet<Transform> enteredAvatarsToBeProcessed = new ();
@@ -38,6 +39,7 @@ namespace DCL.CharacterTriggerArea
         public void Dispose()
         {
             BoxCollider.enabled = false;
+            SphereCollider.enabled = false;
 
             foreach (Transform avatarTransform in currentAvatarsInside)
                 exitedAvatarsToBeProcessed.Add(avatarTransform);

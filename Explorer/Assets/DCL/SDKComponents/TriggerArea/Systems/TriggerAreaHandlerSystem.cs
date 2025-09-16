@@ -63,8 +63,13 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
             // TODO: make the CharacterTriggerAreaComponent more versatile, to accept scene entity colliders
-            // TODO: make CharacterTriggerAreaComponent configurable to use BOX or SPHERE
-            World.Add(entity, new SDKTriggerAreaComponent(), new CharacterTriggerAreaComponent(areaSize: Vector3.zero, targetOnlyMainPlayer: false));
+            World.Add(
+                entity,
+                new SDKTriggerAreaComponent(),
+                new CharacterTriggerAreaComponent(
+                    areaSize: Vector3.zero,
+                    targetOnlyMainPlayer: false,
+                    meshType: (CharacterTriggerAreaMeshType)pbTriggerArea.Mesh));
         }
 
         [Query]
