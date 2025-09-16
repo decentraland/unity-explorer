@@ -3,9 +3,9 @@ using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using System.Threading;
 using DCL.Translation.Service.Memory;
@@ -53,7 +53,7 @@ namespace DCL.Chat.ChatCommands
             }
 
             if (message.IsSystemMessage)
-                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true), ProfileNameColorHelper.GetNameColor(message.SenderValidatedName)));
+                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true), NameColorHelper.GetNameColor(message.SenderValidatedName)));
             else
                 FetchProfileAsync(message.SenderWalletAddress, viewModel).Forget();
 

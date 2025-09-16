@@ -970,7 +970,7 @@ namespace DCL.Chat
                             FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl,
                             Name = profile.ValidatedName,
                             ConnectionStatus = ChatMemberConnectionStatus.Online,
-                            ProfileColor = ProfileNameColorHelper.GetNameColor(profile.ValidatedName),
+                            ProfileColor = NameColorHelper.GetNameColor(profile.ValidatedName),
                             WalletId = profile.WalletId
                         });
                 }
@@ -998,7 +998,7 @@ namespace DCL.Chat
                             FaceSnapshotUrl = memberData.profilePictureUrl,
                             Name = memberData.name,
                             ConnectionStatus = ChatMemberConnectionStatus.Online,
-                            ProfileColor = ProfileNameColorHelper.GetNameColor(memberData.name),
+                            ProfileColor = NameColorHelper.GetNameColor(memberData.name),
                             WalletId = memberData.memberAddress = $"#{memberData.memberAddress[^4..]}"
                         });
                     }

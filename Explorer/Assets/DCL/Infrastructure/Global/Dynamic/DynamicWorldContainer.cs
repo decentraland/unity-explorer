@@ -303,7 +303,7 @@ namespace Global.Dynamic
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
-            ProfileNameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
+            NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
