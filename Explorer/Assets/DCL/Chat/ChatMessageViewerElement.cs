@@ -2,9 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.Diagnostics;
-using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
+using DCL.Utilities;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
@@ -434,7 +434,7 @@ namespace DCL.Chat
         private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView, float defaultItemPadding)
         {
             if (itemData.IsSystemMessage)
-                itemView.SetUsernameColor(ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName));
+                itemView.SetUsernameColor(NameColorHelper.GetNameColor(itemData.SenderValidatedName));
             else
             {
                 Profile? profile = await profileRepositoryWrapper.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
