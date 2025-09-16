@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
-using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -268,11 +266,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             usedPlayerEntries[participantState.WalletId] =  entryView;
             entryView.CleanupEntry();
 
-            var nameColor = ProfileNameColorHelper.GetNameColor(participantState.Name.Value);
+            var nameColor = NameColorHelper.GetNameColor(participantState.Name.Value);
 
             entryView.ProfilePictureView.SetupAsync(profileRepositoryWrapper, nameColor, participantState.ProfilePictureUrl, participantState.WalletId, CancellationToken.None).Forget();
             entryView.nameElement.text = participantState.Name.Value;
-            entryView.nameElement.color = ProfileNameColorHelper.GetNameColor(participantState.Name.Value);
+            entryView.nameElement.color = NameColorHelper.GetNameColor(participantState.Name.Value);
             view.ConfigureEntry(entryView, participantState, voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
 
             var subscriptions = new List<IDisposable>
