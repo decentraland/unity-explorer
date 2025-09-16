@@ -69,11 +69,14 @@ namespace Global.Dynamic.Landscapes
         public float GetHeight(float x, float z) =>
             CurrentTerrain.GetHeight(x, z);
 
-        //TODO should it accept isLocal instead of encapsulating it?
-        public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal) =>
-            !CurrentTerrain.Contains(parcel)
+        public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal)
+        {
+            ITerrain terrain = isLocal && !realmController.RealmData.IsGenesis() ? worldsTerrain : genesisTerrain;
+
+            return !terrain.Contains(parcel)
                 ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
                 : Result.SuccessResult();
+        }
 
         private async UniTask GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
