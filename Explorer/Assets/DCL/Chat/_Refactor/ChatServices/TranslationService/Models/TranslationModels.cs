@@ -51,4 +51,18 @@
             FromCache = fromCache;
         }
     }
+
+    public readonly struct TranslationResultBatch
+    {
+        public readonly string[] TranslatedText;
+        public readonly LanguageCode DetectedSourceLanguage;
+        public readonly bool FromCache;
+
+        public TranslationResultBatch(string[] translatedText, LanguageCode detectedSourceLanguage, bool fromCache)
+        {
+            TranslatedText = translatedText;
+            DetectedSourceLanguage = detectedSourceLanguage;
+            FromCache = fromCache;
+        }
+    }
 }

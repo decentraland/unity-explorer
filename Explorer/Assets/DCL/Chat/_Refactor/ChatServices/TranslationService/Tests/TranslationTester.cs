@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatServices.TranslationService.Utilities;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Translation.Models;
 using DCL.Translation.Service;
+using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
 using UnityEngine;
 
@@ -13,13 +18,16 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
         private const string TEST_CONVERSATION_ID = "test-channel";
 
         private ITranslationService translationService;
+        private ITranslationProvider translationProvider;
         private ITranslationSettings translationSettings;
         private int messageCounter = 0;
 
         public void Initialize(ITranslationService translationService,
+            ITranslationProvider translationProvider,
             ITranslationSettings translationSettings)
         {
             this.translationService = translationService;
+            this.translationProvider = translationProvider;
             this.translationSettings = translationSettings;
         }
 
@@ -95,7 +103,9 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Auto-Translate for channel '{TEST_CONVERSATION_ID}' set to: {newStatus}");
         }
 
-        // [ContextMenu("Run Translation Test")]
+        
+        
+    // [ContextMenu("Run Translation Test")]
         // public async void RunTranslationTest()
         // {
         //     ReportHub.Log(ReportCategory.CHAT_TRANSLATE,"Starting translation test...");
@@ -113,5 +123,115 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
         //         ReportHub.LogError($"FAILED! The test encountered an error: {e.Message}", e);
         //     }
         // }
+
+        private List<string> tests = new List<string>
+        {
+            
+            "<#00B2FF><link=world>mirko.dcl.eth</link></color>",
+            "Hello, my friend! <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> How are you doing today? I want you to go here: <#00B2FF><link=scene>100,100</link></color> and have a good time",
+            "Hello, my friend! How are you doing today? <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color>",
+            "Hello world, this is a test of the translation system.<b>Mirko</b>",
+            "<#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> Hello",
+            "<#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> Hello, my friend! How are you doing today?",
+            "Hello <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> my friend! How are you doing today?",
+            "Hello <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color>,<#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> my friends! How are you doing today?",
+            "type /help for a list of commands",
+        };
+        
+        private List<LanguageCode> languageCodes = new List<LanguageCode>
+        {
+            LanguageCode.DE,
+            LanguageCode.ES,
+            LanguageCode.FR,
+            LanguageCode.IT,
+            LanguageCode.JA,
+            LanguageCode.KO,
+            LanguageCode.ZH,
+            LanguageCode.RU,
+            LanguageCode.PT,
+            LanguageCode.EN
+        };
+        
+        [ContextMenu("Test Segmentations")]
+        public async void TestSegmentations()
+        {
+            foreach (var code in languageCodes)
+            {
+                
+                foreach (string test in tests)
+                {
+                    string input = test;
+
+                    // 1) Segment
+                    var toks = ChatSegmenter.Segment(input);
+
+                    // 2) Extract only text pieces for MT
+                    var (pieces, idxs) = ChatSegmenter.ExtractTranslatables(toks);
+
+                    // 3) Translate each piece (or batch if your API supports array 'q')
+                    var translated = new string[pieces.Length];
+                    for (int i = 0; i < pieces.Length; i++)
+                    {
+                        var result = await translationProvider.TranslateAsync(pieces[i], code, CancellationToken.None);
+                        translated[i] = result.TranslatedText;
+                    }
+
+                    // 4) Apply translations back into the token list
+                    toks = ChatSegmenter.ApplyTranslations(toks, idxs, translated);
+
+                    // 5) Stitch
+                    string output = ChatSegmenter.Stitch(toks);
+
+                    ReportHub.Log(ReportData.UNSPECIFIED, output);
+                }
+            }
+        }
+        
+        [ContextMenu("Test Segmentations [Batch]")]
+        public async void TestSegmentations2()
+        {
+            foreach (var code in languageCodes)
+            {
+                foreach (string test in tests)
+                {
+                    string input = test;
+
+                    // 1) Segment
+                    var toks = ChatSegmenter.Segment(input);
+
+                    // 2) Extract only text pieces for MT
+                    var (pieces, idxs) = ChatSegmenter.ExtractTranslatables(toks);
+
+                    // 3) Translate each piece (or batch if your API supports array 'q')
+                    var translated = new string[pieces.Length];
+                    if (pieces.Length > 0)
+                    {
+                        var ct = CancellationToken.None;
+
+                        if (translationProvider is IBatchTranslationProvider batchProv)
+                        {
+                            var arr = await batchProv.TranslateBatchAsync(pieces, code, ct);
+                            translated = arr.translatedText;
+                        }
+                        else
+                        {
+                            for (int i = 0; i < pieces.Length; i++)
+                            {
+                                var res = await translationProvider.TranslateAsync(pieces[i], code, ct);
+                                translated[i] = res.TranslatedText;
+                            }
+                        }
+
+                        // 4) Apply translations back into the token list
+                        toks = ChatSegmenter.ApplyTranslations(toks, idxs, translated);
+                    }
+
+                    // 5) Stitch
+                    string output = ChatSegmenter.Stitch(toks);
+
+                    ReportHub.Log(ReportData.UNSPECIFIED, input + "-" + output);
+                }
+            }
+        }
     }
 }

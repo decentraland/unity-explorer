@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatServices.TranslationService.Utilities;
 using DCL.Translation.Events;
 using DCL.Translation.Models;
 using DCL.Translation.Service.Cache;
@@ -14,6 +17,19 @@ namespace DCL.Translation.Service
 {
     public class TranslationService : ITranslationService
     {
+        private static readonly Regex TagRx =
+            new(@"<[^>]*>", RegexOptions.Compiled);
+
+        private static readonly Regex MentionRx =
+            new(@"(?<=^|\s)@[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?\b", RegexOptions.Compiled);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool RequiresProcessing(string text)
+        {
+            return !string.IsNullOrEmpty(text) && TagRx.IsMatch(text);
+        }
+
+
         private readonly ITranslationProvider provider;
         private readonly ITranslationCache cache;
         private readonly IConversationTranslationPolicy policy;
@@ -110,10 +126,11 @@ namespace DCL.Translation.Service
 
             try
             {
-                // Simplified: We now directly use the passed-in cancellation token.
-                var result = await provider.TranslateAsync(translation.OriginalBody, targetLang, ct);
+                string original = translation.OriginalBody ?? string.Empty;
+                var result = RequiresProcessing(original)
+                    ? await UseBatchTranslation(original, targetLang, ct)
+                    : await UseRegularTranslation(original, targetLang, ct);
 
-                // Process success
                 cache.Set(messageId, targetLang, result);
                 translationMemory.SetTranslatedResult(messageId, result);
                 eventBus.Publish(new TranslationEvents.MessageTranslated
@@ -139,6 +156,46 @@ namespace DCL.Translation.Service
                     MessageId = messageId, Error = ex.Message
                 });
             }
+        }
+
+        private async UniTask<TranslationResult> UseRegularTranslation(
+            string text, LanguageCode target, CancellationToken ct)
+        {
+            var single = await provider.TranslateAsync(text, target, ct);
+            return single;
+        }
+
+        private async UniTask<TranslationResult> UseBatchTranslation(
+            string text, LanguageCode target, CancellationToken ct)
+        {
+            // Segment → translate only TEXT → stitch
+            var toks = ChatSegmenter.SegmentByAngleBrackets(text);
+            toks = ChatSegmenter.ProtectLinkInners(toks);
+            (string[] cores, int[] idxs, string[] leading, string[] trailing) = ChatSegmenter.ExtractTranslatablesPreserveSpaces(toks);
+
+            string[] translated = Array.Empty<string>();
+            if (cores.Length > 0)
+            {
+                if (provider is IBatchTranslationProvider batchProv)
+                {
+                    var resp = await batchProv.TranslateBatchAsync(cores, target, ct);
+                    translated = resp.translatedText; // or translatedTexts in your DTO
+                }
+                else
+                {
+                    translated = new string[cores.Length];
+                    for (int i = 0; i < cores.Length; i++)
+                    {
+                        var r = await provider.TranslateAsync(cores[i], target, ct);
+                        translated[i] = r.TranslatedText;
+                    }
+                }
+
+                toks = ChatSegmenter.ApplyTranslationsWithSpaces(toks, idxs, leading, trailing, translated);
+            }
+
+            string stitched = ChatSegmenter.Stitch(toks);
+            return new TranslationResult(stitched, LanguageCode.EN, false);
         }
     }
 }

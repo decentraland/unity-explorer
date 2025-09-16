@@ -246,7 +246,9 @@ namespace DCL.PluginSystem.Global
             var translationTester = new GameObject("_TranslationTester")
                 .AddComponent<TranslationTester>();
 
-            translationTester.Initialize(translationService, translationSettings);
+            translationTester.Initialize(translationService,
+                translationProvider,
+                translationSettings);
 
             var viewInstance = mainUIView.ChatView2;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
