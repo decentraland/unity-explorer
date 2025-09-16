@@ -1,9 +1,41 @@
+using DCL.FeatureFlags;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace DCL.ApplicationMinimumSpecsGuard.Tests
 {
     public class SystemSpecUtilsShould
     {
+        [SetUp]
+        public void SetUp()
+        {
+            FeatureFlagsResultDto ffDto = new()
+            {
+                flags = new Dictionary<string, bool>(),
+                variants = new Dictionary<string, FeatureFlagVariantDto>()
+                {
+                    {FeatureFlagsStrings.MINIMUM_REQUIREMENTS,
+                        new FeatureFlagVariantDto()
+                        {
+                            name = "minimum_requirements",
+                            enabled = true,
+                            payload = new FeatureFlagPayload()
+                            {
+                                type = "json",
+                                value = "{\n             \"windows_supported_versions\": [\n               \"Windows 10\",\n               \"Windows 11\"\n             ],\n             \"mac_supported_versions\": [\n               \"Mac OS X\",\n               \"macOS\"\n             ],\n             \"integrated_gpu_supported_versions\": [\n               \"intel(r) hd graphics\",\n               \"intel(r) uhd graphics\",\n               \"intel iris\",\n               \"iris(r) xe graphics\",\n               \"amd radeon(tm) graphics\",\n               \"amd radeon graphics\",\n               \"amd radeon vega\",\n               \"amd radeon r5\",\n               \"amd radeon r6\",\n               \"amd radeon r7\"\n             ],\n             \"always_accepted_cpus\": [\n               \"threadripper\"\n             ],\n             \"minimum_macos_major_version\": 11,\n             \"macos_supported_version_regex\": \"(\\\\d+)\\\\.\\\\d+\",\n             \"ryzen_supported_cpu_regex\": \"ryzen\\\\s*(\\\\d)\",\n             \"ryzen_supported_minimum_series\": 5,\n             \"intel_supported_minimum_series\": 5,\n             \"intel_supported_minimum_generation\": 7,\n             \"intel_ultra_supported_minimum_generation\": 5,\n             \"intel_cpu_supported_version_regex\": \"i([3579])-?(\\\\d{4,5})\",\n             \"intel_ultra_cpu_supported_version_regex\": \"ultra\\\\s+([579])\",\n             \"rtx_gpu_supported_version_regex\": \"rtx\\\\s*(\\\\d{4})\",\n             \"rx_gpu_supported_version_regex\": \"rx\\\\s*(\\\\d{4})\",\n             \"arc_gpu_supported_version_regex\": \"a(\\\\d{3})\",\n             \"minimum_rtx_supported_version\": 2000,\n             \"minimum_rx_supported_version\": 5000,\n             \"minimum_arc_supported_version\": 500,\n             \"apple_silicon_supported_regex\": \"apple\\\\s+m\\\\d\"\n           }"
+                            }
+                        }}
+                },
+            };
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(ffDto));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            FeatureFlagsConfiguration.Reset(true);
+        }
+
         [Test]
         [TestCase("Intel(R) Core(TM) Ultra 9 185H", true, TestName = "Intel(R) Core(TM) Ultra 9 185H is accepted")]
         [TestCase("Intel Core Ultra 7 165H", true, TestName = "Intel Core Ultra 7 165H is accepted")]
@@ -86,7 +118,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             // Assert
             Assert.AreEqual(expectedResult, isAcceptable);
         }
-        
+
         [Test]
         [TestCase(16280, 16384, true, TestName = "Memory Check - 15.9GB (reported) for 16GB (required) should PASS")]
         [TestCase(8100, 16384, false, TestName = "Memory Check - 7.9GB (reported) for 16GB (required) should FAIL")]
@@ -100,7 +132,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
         [TestCase(16077, 16384, true, TestName = "Rounding - 15.7GB (rounds up to 16) for 16GB should PASS")]
         [TestCase(7679, 8192, false, TestName = "Rounding - 7.499GB (rounds down to 7) for 8GB should FAIL")]
         [TestCase(7680, 8192, true, TestName = "Rounding - 7.5GB (rounds up to 8) for 8GB should PASS")]
-        
+
         // --- High Memory Values ---
         [TestCase(32650, 32768, true, TestName = "High Memory - 31.8GB (reported) for 32GB (required) should PASS")]
         [TestCase(65000, 65536, false, TestName = "High Memory - 63.4GB (reported) for 64GB (required) should FAIL")]
@@ -118,12 +150,12 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
         // --- Values Just Above and Below Requirement ---
         [TestCase(16385, 16384, true, TestName = "Slightly Above - 16.001GB for 16GB (required) should PASS")]
         [TestCase(15871, 16384, false, TestName = "Slightly Below - 15.499GB for 16GB (required) should FAIL (as tested above)")]
-        
+
         // --- Zero and Unusual Values ---
         [TestCase(0, 4096, false, TestName = "Zero Value - 0MB for 4GB (required) should FAIL")]
         [TestCase(4096, 0, true, TestName = "Zero Requirement - 4GB for 0GB (required) should PASS")]
         [TestCase(0, 0, true, TestName = "Zero for Zero - 0MB for 0MB (required) should PASS")]
-        
+
         // --- Non-standard Requirement Values ---
         [TestCase(6000, 6144, true, TestName = "Non-Standard - 5.86GB (reported) for 6GB (required) should PASS")] // 5.86 rounds to 6
         [TestCase(5500, 6144, false, TestName = "Non-Standard - 5.37GB (reported) for 6GB (required) should FAIL")] // 5.37 rounds to 5
@@ -135,7 +167,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             // Assert: Verify the result is what we expect.
             Assert.AreEqual(expectedResult, isSufficient, $"Failed on actual: {actualMB}MB, required: {requiredMB}MB");
         }
-        
+
         [Test]
         // --- Standard Discrete GPU VRAM ---
         [TestCase(8100, true, TestName = "VRAM Check - 8GB Card (e.g., RTX 2070) should PASS")]

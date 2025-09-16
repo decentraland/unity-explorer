@@ -64,7 +64,6 @@ namespace Utility
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Disk] DriveInfo failed for '{path}': {ex.Message}");
                 return null;
             }
         }

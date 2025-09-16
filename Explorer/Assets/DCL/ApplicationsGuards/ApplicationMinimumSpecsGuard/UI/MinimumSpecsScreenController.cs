@@ -45,10 +45,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnToggleChanged(bool dontShowAgain)
         {
-            ReportHub.Log(ReportData.UNSPECIFIED, $"OnToggleChanged [before]: {dontShowAgain}");
             DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, dontShowAgain, true);
-            ReportHub.Log(ReportData.UNSPECIFIED, $"OnToggleChanged [after]: {DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN)}");
-
         }
 
         public override void Dispose()

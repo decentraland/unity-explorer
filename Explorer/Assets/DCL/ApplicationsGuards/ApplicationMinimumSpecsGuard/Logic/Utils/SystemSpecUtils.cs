@@ -12,9 +12,11 @@ namespace DCL.ApplicationMinimumSpecsGuard
     /// </summary>
     public static class SystemSpecUtils
     {
+        private const string FEATURE_FLAG_VARIANT = "minimum_requirements";
+
         public static bool IsWindowsCpuAcceptable(string cpu)
         {
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
 
             cpu = cpu.ToLowerInvariant();
 
@@ -53,7 +55,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             string lowerGpuName = gpuName.ToLowerInvariant();
 
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
             foreach (string keyword in minimumRequirements.integrated_gpu_supported_versions)
             {
                 if (lowerGpuName.Contains(keyword))
@@ -65,7 +67,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public static bool IsWindowsGpuAcceptable(string gpu)
         {
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
 
             gpu = gpu.ToLowerInvariant();
 
@@ -102,7 +104,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public static bool IsWindowsVersionAcceptable(string os)
         {
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
             foreach (string version in minimumRequirements.windows_supported_versions)
             {
                 if (os.IndexOf(version, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -114,7 +116,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public static bool IsMacOSVersionAcceptable(string os)
         {
             bool isMac = false;
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
             foreach (string keyword in minimumRequirements.mac_supported_versions)
             {
                 if (os.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -138,7 +140,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public static bool IsAppleSilicon(string deviceName)
         {
-            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, "minimum_requirements", out MinimumRequirementsDefinition minimumRequirements);
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
 
             return Regex.IsMatch(deviceName, minimumRequirements.apple_silicon_supported_regex, RegexOptions.IgnoreCase);
         }
