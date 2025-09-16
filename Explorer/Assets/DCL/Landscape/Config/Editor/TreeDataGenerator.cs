@@ -52,8 +52,8 @@ namespace DCL.Landscape.Config.Editor
                 var terrainChunkDataGenerator = new TerrainChunkDataGenerator(null,
                     new TimeProfiler(false), terrainData, ReportCategory.LANDSCAPE);
 
-                terrainChunkDataGenerator.Prepare(1, 16, ref emptyParcelsData,
-                    ref emptyParcelsNeighborData, new NoiseGeneratorCache());
+                terrainChunkDataGenerator.Prepare(terrainData.seed, terrainData.parcelSize,
+                    ref emptyParcelsData, ref emptyParcelsNeighborData, new NoiseGeneratorCache());
 
                 int sizeInUnits = terrainSize * terrainData.parcelSize;
                 var treeInstances = new List<TreeInstance>();
