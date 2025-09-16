@@ -6,6 +6,7 @@ using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
 using TMPro;
 using UnityEngine;
+using DCL.SkyBox;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -13,21 +14,23 @@ namespace DCL.Settings.ModuleControllers
     {
         // Used when system doesn't meet minimum requirements
         public const int MIN_SPECS_GRAPHICS_QUALITY_LEVEL = 0;
-        
+
         private const int DEFAULT_QUALITY_LEVEL_INDEX = 1;
 
         private readonly SettingsDropdownModuleView view;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly SkyboxSettingsAsset skyboxSettingsAsset;
 
-        public GraphicsQualitySettingsController(SettingsDropdownModuleView view, RealmPartitionSettingsAsset realmPartitionSettingsAsset, LandscapeData landscapeData, QualitySettingsAsset qualitySettingsAsset)
+        public GraphicsQualitySettingsController(SettingsDropdownModuleView view, RealmPartitionSettingsAsset realmPartitionSettingsAsset, LandscapeData landscapeData, QualitySettingsAsset qualitySettingsAsset, SkyboxSettingsAsset skyboxSettingsAsset)
         {
             this.view = view;
 
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
+            this.skyboxSettingsAsset = skyboxSettingsAsset;
 
             LoadGraphicsQualityOptions();
 
@@ -57,6 +60,15 @@ namespace DCL.Settings.ModuleControllers
                 ForceSetQualityLevel(index);
 
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, index, save: true);
+
+            // Update skybox refresh interval based on our quality preset
+            // Mapping: Low(0)=5s, Medium(1 or others)=1s, High(2)=0s
+            skyboxSettingsAsset.RefreshInterval = index switch
+                                                  {
+                                                      0 => 5f,
+                                                      2 => 0f,
+                                                      _ => 1f,
+                                                  };
         }
 
         private void ForceSetQualityLevel(int index)

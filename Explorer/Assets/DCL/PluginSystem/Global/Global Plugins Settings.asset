@@ -266,6 +266,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <QualitySettingsAsset>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
+        <SkyboxSettingsAsset>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
         <ControlsSettingsAsset>k__BackingField: {fileID: 11400000, guid: 26489687fb2f3419886df8e49f34b006, type: 2}
         <ChatSettingsAsset>k__BackingField: {fileID: 11400000, guid: a358ab6eb8d31ca488364e13b54f5f9c, type: 2}
         <CategoryMappingSO>k__BackingField:

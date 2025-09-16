@@ -2,7 +2,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Serialization;
 
 namespace DCL.SkyBox
 {
@@ -23,7 +22,7 @@ namespace DCL.SkyBox
 
         [SerializeField] private float fullDayCycleInMinutes = 120;
         [SerializeField] private float transitionSpeed = 1f;
-        [field: SerializeField] public float RefreshInterval { get; private set; } = 5f;
+        [field: SerializeField] public float RefreshInterval { get; set; } = 5f;
 
         private float timeOfDayNormalized;
         private bool isDayCycleEnabled;
