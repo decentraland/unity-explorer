@@ -538,6 +538,14 @@ MonoBehaviour:
       Severity: 4
     - Category: SKYBOX
       Severity: 1
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 0
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 2
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 4
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

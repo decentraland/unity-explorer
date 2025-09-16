@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Profiling;
 using DCL.WebRequests.Analytics.Metrics;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.Abstract;
 using System;
 using System.Collections.Generic;
@@ -46,14 +47,16 @@ namespace DCL.WebRequests.Analytics
         internal ShowWebRequestsAnalyticsSystem(World world,
             IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer,
             IDebugContainerBuilder debugContainerBuilder,
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
             RequestType[] requestTypes) : base(world)
         {
             this.webRequestsAnalyticsContainer = webRequestsAnalyticsContainer;
             this.requestTypes = requestTypes;
 
             DebugWidgetBuilder? widget = debugContainerBuilder
-                                       .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS)
-                                      ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
+                                        .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS)
+                                       ?.AddSingleButton("Open Chrome DevTools", () => chromeDevtoolProtocolClient.StartAndOpen())
+                                        .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
 
             foreach (RequestType requestType in requestTypes)
             {

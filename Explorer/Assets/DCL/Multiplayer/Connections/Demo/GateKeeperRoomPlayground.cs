@@ -11,6 +11,7 @@ using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using ECS;
 using Global.Dynamic.LaunchModes;
@@ -29,6 +30,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
+#if UNITY_EDITOR
             IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
@@ -39,7 +41,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Zone);
             var character = new ExposedTransform();
-            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource)));
+            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource), ChromeDevtoolProtocolClient.NewForTest()));
             var realmData = new IRealmData.Fake();
 
             var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false));
@@ -50,6 +52,7 @@ namespace DCL.Multiplayer.Connections.Demo
                     options
                 ).StartAsync()
                  .Forget();
+#endif
         }
     }
 }
