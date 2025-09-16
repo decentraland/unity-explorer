@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Translation.Models;
 using DCL.Translation.Service.Models;
+using DCL.Utilities;
 
 namespace DCL.Translation.Service.Provider
 {

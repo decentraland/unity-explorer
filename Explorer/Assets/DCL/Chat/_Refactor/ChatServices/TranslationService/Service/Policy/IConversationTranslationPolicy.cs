@@ -1,5 +1,6 @@
 ﻿using DCL.Chat.History;
 using DCL.Translation.Models;
+using DCL.Utilities;
 
 namespace DCL.Translation.Service.Policy
 {

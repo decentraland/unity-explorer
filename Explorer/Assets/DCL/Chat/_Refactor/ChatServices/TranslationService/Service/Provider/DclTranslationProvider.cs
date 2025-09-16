@@ -9,6 +9,7 @@ using DCL.WebRequests;
 using UnityEngine;
 using DCL.Translation.Settings;
 using CommunicationData.URLHelpers;
+using DCL.Utilities;
 
 namespace DCL.Translation.Service.Provider
 {

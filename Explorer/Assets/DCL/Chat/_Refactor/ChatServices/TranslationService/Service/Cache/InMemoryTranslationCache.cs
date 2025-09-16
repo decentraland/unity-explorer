@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using DCL.Translation.Models;
+using DCL.Utilities;
 
 namespace DCL.Translation.Service.Cache
 {

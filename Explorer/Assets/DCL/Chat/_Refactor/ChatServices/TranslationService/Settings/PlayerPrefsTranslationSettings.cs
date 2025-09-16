@@ -2,6 +2,7 @@
 using DCL.FeatureFlags;
 using DCL.Prefs;
 using DCL.Translation.Models;
+using DCL.Utilities;
 
 namespace DCL.Translation.Settings
 {
@@ -27,7 +28,7 @@ namespace DCL.Translation.Settings
         {
             return IsGloballyEnabled;
         }
-        
+
         public LanguageCode PreferredLanguage
         {
             get

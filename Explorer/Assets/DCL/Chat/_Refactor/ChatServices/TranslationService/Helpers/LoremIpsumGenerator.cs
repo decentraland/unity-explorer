@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
-using DCL.Translation.Models; // Make sure you have a 'using' for your LanguageCode enum
+using DCL.Translation.Models;
+using DCL.Utilities; // Make sure you have a 'using' for your LanguageCode enum
 using UnityEngine;
 
 namespace DCL.Chat.ChatServices.TranslationService.Helpers

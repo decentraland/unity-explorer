@@ -1,6 +1,8 @@
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using DCL.Utilities;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Settings.ModuleControllers
@@ -23,12 +25,17 @@ namespace DCL.Settings.ModuleControllers
             this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.eventBus = eventBus;
 
+            int currentLanguage;
+
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE))
+                currentLanguage = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE);
+            else
             {
-                var currentLanguage = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE);
-                view.DropdownView.Dropdown.SetValueWithoutNotify(currentLanguage);
+                currentLanguage = (int)GetLanguageCodeFromSystem(Application.systemLanguage);
+                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE, currentLanguage, save: true);
             }
 
+            view.DropdownView.Dropdown.SetValueWithoutNotify(currentLanguage);
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetPreferredLanguageSettings);
             view.gameObject.SetActive(this.isTranslationChatEnabled);
         }
@@ -42,6 +49,24 @@ namespace DCL.Settings.ModuleControllers
         public override void Dispose()
         {
             view.DropdownView.Dropdown.onValueChanged.RemoveListener(SetPreferredLanguageSettings);
+        }
+
+        private static LanguageCode GetLanguageCodeFromSystem(SystemLanguage systemLang)
+        {
+            return systemLang switch
+                   {
+                       SystemLanguage.English => LanguageCode.EN,
+                       SystemLanguage.Spanish => LanguageCode.ES,
+                       SystemLanguage.French => LanguageCode.FR,
+                       SystemLanguage.German => LanguageCode.DE,
+                       SystemLanguage.Russian => LanguageCode.RU,
+                       SystemLanguage.Portuguese => LanguageCode.PT,
+                       SystemLanguage.Italian => LanguageCode.IT,
+                       SystemLanguage.Chinese or SystemLanguage.ChineseSimplified or SystemLanguage.ChineseTraditional => LanguageCode.ZH,
+                       SystemLanguage.Japanese => LanguageCode.JA,
+                       SystemLanguage.Korean => LanguageCode.KO,
+                       _ => 0,
+                   };
         }
     }
 }

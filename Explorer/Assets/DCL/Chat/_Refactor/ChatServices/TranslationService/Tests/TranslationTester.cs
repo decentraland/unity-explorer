@@ -9,6 +9,7 @@ using DCL.Translation.Models;
 using DCL.Translation.Service;
 using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
+using DCL.Utilities;
 using UnityEngine;
 
 namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
@@ -103,8 +104,8 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Auto-Translate for channel '{TEST_CONVERSATION_ID}' set to: {newStatus}");
         }
 
-        
-        
+
+
     // [ContextMenu("Run Translation Test")]
         // public async void RunTranslationTest()
         // {
@@ -126,7 +127,7 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
 
         private List<string> tests = new List<string>
         {
-            
+
             "<#00B2FF><link=world>mirko.dcl.eth</link></color>",
             "Hello, my friend! <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> How are you doing today? I want you to go here: <#00B2FF><link=scene>100,100</link></color> and have a good time",
             "Hello, my friend! How are you doing today? <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color>",
@@ -137,7 +138,7 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             "Hello <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color>,<#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> my friends! How are you doing today?",
             "type /help for a list of commands",
         };
-        
+
         private List<LanguageCode> languageCodes = new List<LanguageCode>
         {
             LanguageCode.DE,
@@ -151,13 +152,13 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             LanguageCode.PT,
             LanguageCode.EN
         };
-        
+
         [ContextMenu("Test Segmentations")]
         public async void TestSegmentations()
         {
             foreach (var code in languageCodes)
             {
-                
+
                 foreach (string test in tests)
                 {
                     string input = test;
@@ -186,7 +187,7 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
                 }
             }
         }
-        
+
         [ContextMenu("Test Segmentations [Batch]")]
         public async void TestSegmentations2()
         {

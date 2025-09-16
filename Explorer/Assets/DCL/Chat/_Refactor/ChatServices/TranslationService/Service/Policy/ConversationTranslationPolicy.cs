@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using DCL.Translation.Models;
 using DCL.Translation.Settings;
+using DCL.Utilities;
 
 namespace DCL.Translation.Service.Policy
 {

@@ -1,6 +1,7 @@
 using DCL.Audio;
 using DCL.Translation.Models;
 using DCL.UI.Communities;
+using DCL.Utilities;
 using DG.Tweening;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace DCL.Chat.ChatConfig
 
         [SerializeField]
         public ChatContextMenuConfiguration chatContextMenuSettings;
-        
+
         [field: Header("General")]
         [field: SerializeField]
         public Sprite DefaultProfileThumbnail { get; private set; }
@@ -97,7 +98,7 @@ namespace DCL.Chat.ChatConfig
         [field: SerializeField] public LanguageCode DefaultLanguage = LanguageCode.ES;
         [field: SerializeField] public int TranslationMaxRetries { get; set; } = 1;
         [field: SerializeField] public float TranslationTimeoutSeconds { get; set; } = 10.0f;
-        
+
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio { get; private set; }
@@ -111,6 +112,6 @@ namespace DCL.Chat.ChatConfig
         public string ChatContextMenuCopyText = "Copy";
         public string ChatContextMenuSeeOriginalText = "See Original";
         public string ChatContextMenuTranslateText = "Translate";
-        
+
     }
 }
