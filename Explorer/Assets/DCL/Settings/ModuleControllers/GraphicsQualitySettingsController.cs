@@ -60,15 +60,7 @@ namespace DCL.Settings.ModuleControllers
                 ForceSetQualityLevel(index);
 
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, index, save: true);
-
-            // Update skybox refresh interval based on our quality preset
-            // Mapping: Low(0)=5s, Medium(1 or others)=1s, High(2)=0s
-            skyboxSettingsAsset.RefreshInterval = index switch
-                                                  {
-                                                      0 => 5f,
-                                                      2 => 0f,
-                                                      _ => 1f,
-                                                  };
+            skyboxSettingsAsset.SetRefreshInterval(index);
         }
 
         private void ForceSetQualityLevel(int index)

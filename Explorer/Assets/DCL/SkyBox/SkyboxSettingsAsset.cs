@@ -22,6 +22,7 @@ namespace DCL.SkyBox
 
         [SerializeField] private float fullDayCycleInMinutes = 120;
         [SerializeField] private float transitionSpeed = 1f;
+        [SerializeField] private float[] refreshIntervalByQuality;
         [field: SerializeField] public float RefreshInterval { get; set; } = 5f;
 
         private float timeOfDayNormalized;
@@ -76,6 +77,12 @@ namespace DCL.SkyBox
             TransitionMode = TransitionMode.FORWARD;
             IsUIControlled = false;
             CurrentSDKControlledScene = null;
+        }
+
+        // Mapping: 0 - Low, 1 - Medium, 2 - High
+        public void SetRefreshInterval(int qualityPresetId)
+        {
+            RefreshInterval = refreshIntervalByQuality[qualityPresetId];
         }
 
         public static float NormalizeTime(float time)
