@@ -73,7 +73,7 @@ namespace DCL.SceneBannedUsers
             CheckIfPlayerIsBannedAsync(checkIfPlayerIsBannedCts.Token).Forget();
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
         {
             Debug.Log($"SANTI LOG -> connection state updated: [{room.Info.Sid}] [{connectionUpdate.ToString()}]");
 
