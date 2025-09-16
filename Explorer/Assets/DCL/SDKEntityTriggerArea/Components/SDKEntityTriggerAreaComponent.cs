@@ -95,7 +95,7 @@ namespace DCL.SDKEntityTriggerArea.Components
                 case SDKEntityTriggerAreaMeshType.SPHERE:
                     monoBehaviour!.BoxCollider.enabled = false;
                     monoBehaviour!.SphereCollider.enabled = true;
-                    monoBehaviour!.SphereCollider.radius = useTransformScaleAsAreaSize ? 1f : AreaSize.magnitude;
+                    monoBehaviour!.SphereCollider.radius = useTransformScaleAsAreaSize ? 0.5f : AreaSize.magnitude / 2;
                     break;
             }
         }
