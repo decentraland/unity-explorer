@@ -71,6 +71,8 @@ jobs:
           REPOS_READ_ONLY_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
         run: |
             git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com/decentraland/unity-explorer-packages.git
+            git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@@github.com:decentraland/unity-gltf.git
+            git clone -b fix/ssh-submodule https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com:decentraland/client-sdk-unity.git
             $jsonFilePath = "Explorer/Packages/manifest.json"
             (Get-Content $jsonFilePath) `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/FileBrowserPro', 'file:../../unity-explorer-packages/FileBrowserPro' `
@@ -81,7 +83,9 @@ jobs:
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' |
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' `
+                -replace 'git@github.com:decentraland/client-sdk-unity.git#fix/ssh-submodule', 'file:../../client-sdk-unity' `
+                -replace 'git@github.com:decentraland/unity-gltf.git', 'file:../../unity-gltf' |
                 Set-Content $jsonFilePath
 
             Get-ChildItem
