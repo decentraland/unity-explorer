@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using Notifications = DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Utilities;
@@ -13,10 +12,18 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class CommunityVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, ICommunityVoiceChatCallStatusService
+    public class CommunityVoiceChatCallStatusService : ICommunityVoiceChatCallStatusService
     {
         private static readonly ReactiveProperty<bool> DEFAULT_BOOL_REACTIVE_PROPERTY = new (false);
         private const string TAG = nameof(CommunityVoiceChatCallStatusService);
+
+        public IReadonlyReactiveProperty<VoiceChatStatus> Status => status;
+        public IReadonlyReactiveProperty<string> CallId => callId;
+        string IVoiceChatCallStatusServiceBase.ConnectionUrl => connectionUrl;
+
+        private readonly ReactiveProperty<VoiceChatStatus> status = new (VoiceChatStatus.DISCONNECTED);
+        private readonly ReactiveProperty<string> callId = new (string.Empty);
+        private string connectionUrl = string.Empty;
 
         private readonly ICommunityVoiceService voiceChatService;
         private readonly SceneVoiceChatTrackerService voiceChatSceneTrackerService;
@@ -33,19 +40,14 @@ namespace DCL.VoiceChat
             this.voiceChatService = voiceChatService;
             this.voiceChatSceneTrackerService = voiceChatSceneTrackerService;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
-            {
-                this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
-                this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
-            }
+            this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
+            this.voiceChatService.ActiveCommunityVoiceChatsFetched += OnActiveCommunityVoiceChatsFetched;
         }
 
-        public override void StartCall(string communityId)
+        public void StartCall(string communityId)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
             //We can start a call only if we are not connected or trying to start a call
-            if (!Status.Value.IsNotConnected()) return;
+            if (!status.Value.IsNotConnected()) return;
 
             cts = cts.SafeRestart();
 
@@ -71,7 +73,7 @@ namespace DCL.VoiceChat
                 {
                     //When the call can be started
                     case StartCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        ConnectionUrl = response.Ok.Credentials.ConnectionUrl;
+                        connectionUrl = response.Ok.Credentials.ConnectionUrl;
                         SetCallId(communityId);
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
@@ -89,10 +91,8 @@ namespace DCL.VoiceChat
             catch (Exception e) { }
         }
 
-        public override void HangUp()
+        public void HangUp()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
             locallyStartedCommunityId = null;
@@ -102,8 +102,7 @@ namespace DCL.VoiceChat
         {
             try
             {
-                if (!Status.Value.IsNotConnected())
-
+                if (!status.Value.IsNotConnected())
                     //we should throw here and let the catch handle it?
                     return;
 
@@ -114,7 +113,7 @@ namespace DCL.VoiceChat
                 switch (response.ResponseCase)
                 {
                     case JoinCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        ConnectionUrl = response.Ok.Credentials.ConnectionUrl;
+                        connectionUrl = response.Ok.Credentials.ConnectionUrl;
                         SetCallId(communityId);
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
@@ -130,12 +129,10 @@ namespace DCL.VoiceChat
 
         public void RequestToSpeakInCurrentCall()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || string.IsNullOrEmpty(CallId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || string.IsNullOrEmpty(callId.Value)) return;
 
             cts = cts.SafeRestart();
-            RequestToSpeakAsync(CallId.Value, cts.Token).Forget();
+            RequestToSpeakAsync(callId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid RequestToSpeakAsync(string communityId, CancellationToken ct)
@@ -152,12 +149,10 @@ namespace DCL.VoiceChat
 
         public void LowerHandInCurrentCall()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || string.IsNullOrEmpty(CallId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || string.IsNullOrEmpty(callId.Value)) return;
 
             cts = cts.SafeRestart();
-            LowerHandAsync(CallId.Value, cts.Token).Forget();
+            LowerHandAsync(callId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid LowerHandAsync(string communityId, CancellationToken ct)
@@ -174,13 +169,11 @@ namespace DCL.VoiceChat
 
         public void PromoteToSpeakerInCurrentCall(string walletId)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
-            if (string.IsNullOrEmpty(CallId.Value)) return;
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+            if (string.IsNullOrEmpty(callId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            PromoteToSpeakerAsync(CallId.Value).Forget();
+            PromoteToSpeakerAsync(callId.Value).Forget();
             return;
 
             async UniTaskVoid PromoteToSpeakerAsync(string communityId)
@@ -197,13 +190,11 @@ namespace DCL.VoiceChat
 
         public void DenySpeakerInCurrentCall(string walletId)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
-            if (string.IsNullOrEmpty(CallId.Value)) return;
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+            if (string.IsNullOrEmpty(callId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            DenySpeakerAsync(CallId.Value, walletId, cts.Token).Forget();
+            DenySpeakerAsync(callId.Value, walletId, cts.Token).Forget();
 
             return;
 
@@ -225,13 +216,11 @@ namespace DCL.VoiceChat
 
         public void DemoteFromSpeakerInCurrentCall(string walletId)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
-            if (string.IsNullOrEmpty(CallId.Value)) return;
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+            if (string.IsNullOrEmpty(callId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            DemoteFromSpeakerAsync(CallId.Value, cts.Token).Forget();
+            DemoteFromSpeakerAsync(callId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid DemoteFromSpeakerAsync(string communityId, CancellationToken ct)
@@ -248,13 +237,11 @@ namespace DCL.VoiceChat
 
         public void KickPlayerFromCurrentCall(string walletId)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
-            if (string.IsNullOrEmpty(CallId.Value)) return;
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+            if (string.IsNullOrEmpty(callId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            KickPlayerAsync(CallId.Value, walletId, cts.Token).Forget();
+            KickPlayerAsync(callId.Value, walletId, cts.Token).Forget();
             return;
 
             async UniTaskVoid KickPlayerAsync(string communityId, string walletId, CancellationToken ct)
@@ -271,13 +258,11 @@ namespace DCL.VoiceChat
 
         public void EndStreamInCurrentCall()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
-            if (string.IsNullOrEmpty(CallId.Value)) return;
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+            if (string.IsNullOrEmpty(callId.Value)) return;
+            if (status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            EndStreamAsync(CallId.Value, cts.Token).Forget();
+            EndStreamAsync(callId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid EndStreamAsync(string communityId, CancellationToken ct)
@@ -292,22 +277,42 @@ namespace DCL.VoiceChat
             }
         }
 
-        public override void HandleLivekitConnectionFailed()
+        public void HandleLivekitConnectionFailed()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
         }
 
-        public override void HandleLivekitConnectionEnded()
+        public void HandleLivekitConnectionEnded()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
-
-            if (Status.Value == VoiceChatStatus.DISCONNECTED) return;
+            if (status.Value == VoiceChatStatus.DISCONNECTED) return;
 
             ResetVoiceChatData();
             UpdateStatus(VoiceChatStatus.DISCONNECTED);
+        }
+
+        public void UpdateStatus(VoiceChatStatus newStatus)
+        {
+            UpdateStatusAsync().Forget();
+
+            async UniTaskVoid UpdateStatusAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New status is {newStatus}");
+                status.Value = newStatus;
+            }
+        }
+
+        public void ResetVoiceChatData()
+        {
+            communityVoiceChatCalls.Clear();
+            activeCommunityVoiceChats.Clear();
+            locallyStartedCommunityId = null;
+        }
+
+        public void SetCallId(string newCallId)
+        {
+            callId.Value = newCallId;
         }
 
         private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate communityUpdate)
@@ -419,7 +424,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Completed processing. Total communities in cache: {communityVoiceChatCalls.Count}");
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             foreach (ReactiveProperty<bool>? callData in communityVoiceChatCalls.Values) { callData.ClearSubscriptionsList(); }
 
@@ -427,9 +432,6 @@ namespace DCL.VoiceChat
             activeCommunityVoiceChats.Clear();
             locallyStartedCommunityId = null;
             cts.SafeCancelAndDispose();
-            base.Dispose();
-
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)) return;
 
             voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
             voiceChatService.ActiveCommunityVoiceChatsFetched -= OnActiveCommunityVoiceChatsFetched;

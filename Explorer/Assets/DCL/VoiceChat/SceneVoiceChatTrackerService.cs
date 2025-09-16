@@ -3,10 +3,12 @@ using DCL.FeatureFlags;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.VoiceChat
 {
@@ -14,18 +16,16 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(SceneVoiceChatTrackerService);
 
-        private readonly PlayerParcelTrackerService parcelTrackerService;
+        private readonly IScenesCache scenesCache;
         private readonly IRealmNavigator realmNavigator;
         private readonly IRealmData realmData;
         private readonly IDisposable? parcelSubscription;
 
         private readonly Dictionary<Vector2Int, List<string>> parcelToCommunityMap = new ();
         private readonly Dictionary<string, HashSet<Vector2Int>> communityToParcelMap = new ();
-        private readonly HashSet<Vector2Int> reusableParcelSet = new ();
 
         private readonly Dictionary<string, List<string>> worldToCommunityMap = new ();
         private readonly Dictionary<string, HashSet<string>> communityToWorldMap = new ();
-        private readonly HashSet<string> reusableWorldSet = new ();
 
         private readonly Dictionary<string, ActiveCommunityVoiceChat> activeCommunityVoiceChats = new ();
 
@@ -33,18 +33,18 @@ namespace DCL.VoiceChat
         public event Action? ActiveVoiceChatStoppedInScene;
 
         public SceneVoiceChatTrackerService(
-            PlayerParcelTrackerService parcelTrackerService,
+            IScenesCache scenesCache,
             IRealmNavigator realmNavigator,
             IRealmData realmData)
         {
-            this.parcelTrackerService = parcelTrackerService;
+            this.scenesCache = scenesCache;
             this.realmNavigator = realmNavigator;
             this.realmData = realmData;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
                 this.realmNavigator.NavigationExecuted += OnRealmNavigatorOperationExecuted;
-                parcelSubscription = parcelTrackerService.CurrentParcelData.Subscribe(OnParcelChanged);
+                parcelSubscription = scenesCache.CurrentParcel.Subscribe(OnParcelChanged);
             }
         }
 
@@ -77,7 +77,7 @@ namespace DCL.VoiceChat
         {
             if (realmData.RealmType.Value == RealmKind.GenesisCity)
             {
-                OnParcelChanged(parcelTrackerService.CurrentParcelData.Value);
+                OnParcelChanged(scenesCache.CurrentParcel.Value);
                 return;
             }
 
@@ -98,30 +98,27 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnParcelChanged(PlayerParcelData playerParcelData)
+        private void OnParcelChanged(Vector2Int newParcel)
         {
             if (realmData.RealmType.Value != RealmKind.GenesisCity) return;
 
-            if (parcelToCommunityMap.TryGetValue(playerParcelData.ParcelPosition, out List<string>? communities))
+            if (parcelToCommunityMap.TryGetValue(newParcel, out List<string>? communities))
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {playerParcelData.ParcelPosition} has {communities.Count} active community voice chats");
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {newParcel} has {communities.Count} active community voice chats");
 
                 string? communityId = communities[0];
                 OnActiveVoiceChatDetectedInScene(communityId);
             }
             else
             {
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {playerParcelData.ParcelPosition} has no active community voice chat");
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Parcel {newParcel} has no active community voice chat");
                 OnActiveVoiceChatStoppedInScene();
             }
         }
 
         private void OnActiveVoiceChatDetectedInScene(string communityId)
         {
-            if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat activeChat))
-            {
-                ActiveVoiceChatDetectedInScene?.Invoke(activeChat);
-            }
+            if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat activeChat)) { ActiveVoiceChatDetectedInScene?.Invoke(activeChat); }
         }
 
         private void OnActiveVoiceChatStoppedInScene()
@@ -142,21 +139,17 @@ namespace DCL.VoiceChat
                         if (communities.Count == 0)
                         {
                             parcelToCommunityMap.Remove(parcel);
+                            ListPool<string>.Release(communities);
 
-                            if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
-                            {
-                                OnActiveVoiceChatStoppedInScene();
-                            }
+                            if (scenesCache.CurrentParcel.Value == parcel) { OnActiveVoiceChatStoppedInScene(); }
                         }
                         else
                         {
-                            if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
+                            if (scenesCache.CurrentParcel.Value == parcel)
                             {
                                 string remainingCommunityId = communities[0];
-                                if (activeCommunityVoiceChats.TryGetValue(remainingCommunityId, out ActiveCommunityVoiceChat _))
-                                {
-                                    OnActiveVoiceChatDetectedInScene(remainingCommunityId);
-                                }
+
+                                if (activeCommunityVoiceChats.TryGetValue(remainingCommunityId, out ActiveCommunityVoiceChat _)) { OnActiveVoiceChatDetectedInScene(remainingCommunityId); }
                             }
                         }
                     }
@@ -181,6 +174,7 @@ namespace DCL.VoiceChat
                         if (communities.Count == 0)
                         {
                             worldToCommunityMap.Remove(worldName);
+                            ListPool<string>.Release(communities);
                         }
                     }
                 }
@@ -193,16 +187,19 @@ namespace DCL.VoiceChat
 
         private bool TryParsePosition(string positionString, out Vector2Int parcel)
         {
-            parcel = default;
+            parcel = default(Vector2Int);
 
             if (string.IsNullOrWhiteSpace(positionString))
                 return false;
 
-            string[] coords = positionString.Split(',');
-            if (coords.Length != 2)
+            int commaIndex = positionString.IndexOf(',');
+            if (commaIndex == -1 || commaIndex == 0 || commaIndex == positionString.Length - 1)
                 return false;
 
-            if (!int.TryParse(coords[0].Trim(), out int x) || !int.TryParse(coords[1].Trim(), out int y))
+            ReadOnlySpan<char> firstPart = positionString.AsSpan(0, commaIndex).Trim();
+            ReadOnlySpan<char> secondPart = positionString.AsSpan(commaIndex + 1).Trim();
+
+            if (!int.TryParse(firstPart, out int x) || !int.TryParse(secondPart, out int y))
                 return false;
 
             parcel = new Vector2Int(x, y);
@@ -212,10 +209,8 @@ namespace DCL.VoiceChat
         private void RegisterCommunityCallInScene(string communityId, IEnumerable<string> positionStrings)
         {
             bool isNewCommunity = !communityToParcelMap.TryGetValue(communityId, out HashSet<Vector2Int>? existingParcels);
-            HashSet<Vector2Int> parcels = isNewCommunity ? reusableParcelSet : existingParcels!;
 
-            if (isNewCommunity)
-                reusableParcelSet.Clear();
+            HashSet<Vector2Int> parcels = isNewCommunity ? HashSetPool<Vector2Int>.Get() : existingParcels!;
 
             foreach (string positionString in positionStrings)
             {
@@ -226,23 +221,22 @@ namespace DCL.VoiceChat
                 }
 
                 if (parcelToCommunityMap.TryGetValue(parcel, out List<string>? existingCommunities)) { existingCommunities.Add(communityId); }
-                else { parcelToCommunityMap[parcel] = new List<string> { communityId }; }
+                else
+                {
+                    List<string>? newList = ListPool<string>.Get();
+                    newList.Add(communityId);
+                    parcelToCommunityMap[parcel] = newList;
+                }
 
                 parcels.Add(parcel);
 
-                if (parcelTrackerService.CurrentParcelData.Value.ParcelPosition == parcel)
+                if (scenesCache.CurrentParcel.Value == parcel)
                 {
-                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _))
-                    {
-                        OnActiveVoiceChatDetectedInScene(communityId);
-                    }
+                    if (activeCommunityVoiceChats.TryGetValue(communityId, out ActiveCommunityVoiceChat _)) { OnActiveVoiceChatDetectedInScene(communityId); }
                 }
             }
 
-            if (isNewCommunity)
-            {
-                communityToParcelMap[communityId] = new HashSet<Vector2Int>(reusableParcelSet);
-            }
+            if (isNewCommunity) { communityToParcelMap[communityId] = parcels; }
 
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Registered community {communityId} in {parcels.Count} parcels");
         }
@@ -250,10 +244,7 @@ namespace DCL.VoiceChat
         private void RegisterCommunityCallInWorlds(string communityId, IEnumerable<string> worldNames)
         {
             bool isNewCommunity = !communityToWorldMap.TryGetValue(communityId, out HashSet<string>? existingWorlds);
-            HashSet<string> worlds = isNewCommunity ? reusableWorldSet : existingWorlds!;
-
-            if (isNewCommunity)
-                reusableWorldSet.Clear();
+            HashSet<string> worlds = isNewCommunity ? HashSetPool<string>.Get() : existingWorlds!;
 
             foreach (string worldName in worldNames)
             {
@@ -264,15 +255,17 @@ namespace DCL.VoiceChat
                 }
 
                 if (worldToCommunityMap.TryGetValue(worldName, out List<string>? existingCommunities)) { existingCommunities.Add(communityId); }
-                else { worldToCommunityMap[worldName] = new List<string> { communityId }; }
+                else
+                {
+                    List<string>? newList = ListPool<string>.Get();
+                    newList.Add(communityId);
+                    worldToCommunityMap[worldName] = newList;
+                }
 
                 worlds.Add(worldName);
             }
 
-            if (isNewCommunity)
-            {
-                communityToWorldMap[communityId] = new HashSet<string>(reusableWorldSet);
-            }
+            if (isNewCommunity) { communityToWorldMap[communityId] = worlds; }
 
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} Registered community {communityId} in {worlds.Count} worlds");
         }
@@ -283,10 +276,28 @@ namespace DCL.VoiceChat
             parcelSubscription?.Dispose();
 
             activeCommunityVoiceChats.Clear();
-            worldToCommunityMap.Clear();
+
+            // Release pooled HashSets
+            foreach (HashSet<string>? hashSet in communityToWorldMap.Values)
+                HashSetPool<string>.Release(hashSet);
+
             communityToWorldMap.Clear();
-            parcelToCommunityMap.Clear();
+
+            foreach (HashSet<Vector2Int>? hashSet in communityToParcelMap.Values)
+                HashSetPool<Vector2Int>.Release(hashSet);
+
             communityToParcelMap.Clear();
+
+            // Release pooled Lists
+            foreach (List<string>? list in worldToCommunityMap.Values)
+                ListPool<string>.Release(list);
+
+            worldToCommunityMap.Clear();
+
+            foreach (List<string>? list in parcelToCommunityMap.Values)
+                ListPool<string>.Release(list);
+
+            parcelToCommunityMap.Clear();
         }
     }
 }

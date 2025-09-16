@@ -1,6 +1,5 @@
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
-using System.Threading;
 
 namespace DCL.VoiceChat
 {

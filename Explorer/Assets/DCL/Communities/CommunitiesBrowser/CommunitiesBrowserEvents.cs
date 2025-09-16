@@ -16,8 +16,6 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-
-
         public readonly struct RequestedToJoinCommunityEvent
         {
             public readonly string CommunityId;
@@ -40,52 +38,6 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        public readonly struct CommunityInviteRequestAcceptedEvent
-        {
-            public readonly string CommunityId;
-            public readonly bool Success;
-
-            public CommunityInviteRequestAcceptedEvent(string communityId, bool success)
-            {
-                CommunityId = communityId;
-                Success = success;
-            }
-        }
-
-        public readonly struct CommunityInviteRequestRejectedEvent
-        {
-            public readonly string CommunityId;
-            public readonly bool Success;
-
-            public CommunityInviteRequestRejectedEvent(string communityId, bool success)
-            {
-                CommunityId = communityId;
-                Success = success;
-            }
-        }
-
-        public readonly struct CommunityLeftEvent
-        {
-            public readonly string CommunityId;
-            public readonly bool Success;
-
-            public CommunityLeftEvent(string communityId, bool success)
-            {
-                CommunityId = communityId;
-                Success = success;
-            }
-        }
-
-        public readonly struct CommunityDeletedEvent
-        {
-            public readonly string CommunityId;
-
-            public CommunityDeletedEvent(string communityId)
-            {
-                CommunityId = communityId;
-            }
-        }
-
         public readonly struct UserRemovedFromCommunityEvent
         {
             public readonly string CommunityId;
@@ -93,18 +45,6 @@ namespace DCL.Communities.CommunitiesBrowser
             public UserRemovedFromCommunityEvent(string communityId)
             {
                 CommunityId = communityId;
-            }
-        }
-
-        public readonly struct UserBannedFromCommunityEvent
-        {
-            public readonly string CommunityId;
-            public readonly string UserAddress;
-
-            public UserBannedFromCommunityEvent(string communityId, string userAddress)
-            {
-                CommunityId = communityId;
-                UserAddress = userAddress;
             }
         }
 

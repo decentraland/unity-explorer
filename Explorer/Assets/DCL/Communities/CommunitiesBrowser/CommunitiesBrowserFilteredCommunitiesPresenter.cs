@@ -30,8 +30,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserEventBus browserEventBus;
 
         private string currentNameFilter = string.Empty;
-        private bool currentIsOwnerFilter;
-        private bool currentIsMemberFilter;
         private int currentPageNumberFilter = 1;
         private bool currentOnlyMemberOf;
         private bool isGridResultsLoadingItems;
@@ -133,7 +131,7 @@ namespace DCL.Communities.CommunitiesBrowser
                .Forget();
         }
 
-        public async UniTask LoadAllCommunitiesAsync(Func<CancellationToken, UniTask<int>>? loadJoinRequests, CancellationToken ct)
+        public async UniTask LoadAllCommunitiesAsync(CancellationToken ct)
         {
             view.SetResultsTitleText(BROWSE_COMMUNITIES_TITLE);
             loadResultsCts = loadResultsCts.SafeRestartLinked(ct);
@@ -144,8 +142,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token,
-                isStreaming: false,
-                loadJoinRequests);
+                isStreaming: false);
         }
 
         public void TryLoadMoreResults(bool isResultsScrollPositionAtBottom)
@@ -172,8 +169,7 @@ namespace DCL.Communities.CommunitiesBrowser
             int pageNumber,
             int elementsPerPage,
             CancellationToken ct,
-            bool isStreaming = false,
-            Func<CancellationToken, UniTask<int>>? loadJoinRequests = null)
+            bool isStreaming = false)
         {
             isGridResultsLoadingItems = true;
 
@@ -184,9 +180,6 @@ namespace DCL.Communities.CommunitiesBrowser
             }
             else
                 view.SetResultsLoadingMoreActive(true);
-
-            if (loadJoinRequests != null)
-                await loadJoinRequests(ct);
 
             Result<GetUserCommunitiesResponse> result = await dataProvider.GetUserCommunitiesAsync(
                                                                                name,
@@ -224,7 +217,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
 
                 currentPageNumberFilter = pageNumber;
-                browserStateService!.AddCommunities(result.Value.data.results);
+                browserStateService.AddCommunities(result.Value.data.results);
                 view.AddResultsItems(result.Value.data.results, pageNumber == 1);
             }
 

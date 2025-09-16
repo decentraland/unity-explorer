@@ -41,7 +41,7 @@ namespace DCL.Chat.Commands
             this.teleportController = teleportController;
             this.isLocalSceneDevelopmentMode = isLocalSceneDevelopmentMode;
 
-            this.sceneReadyCondition = () => scenesCache.CurrentScene != null && scenesCache.CurrentScene.IsSceneReady();
+            this.sceneReadyCondition = () => scenesCache.CurrentScene.Value != null && scenesCache.CurrentScene.Value.IsSceneReady();
         }
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)

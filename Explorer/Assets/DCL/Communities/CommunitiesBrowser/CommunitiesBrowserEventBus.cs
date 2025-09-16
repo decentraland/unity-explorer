@@ -22,9 +22,6 @@ namespace DCL.Communities.CommunitiesBrowser
         public void RaiseUserRemovedFromCommunity(string communityId) =>
             Publish(new CommunitiesBrowserEvents.UserRemovedFromCommunityEvent(communityId));
 
-        public void RaiseUserBannedFromCommunity(string communityId, string userAddress) =>
-            Publish(new CommunitiesBrowserEvents.UserBannedFromCommunityEvent(communityId, userAddress));
-
         public void RaiseCommunityProfileOpened(string communityId) =>
             Publish(new CommunitiesBrowserEvents.CommunityProfileOpenedEvent(communityId));
 

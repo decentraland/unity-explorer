@@ -167,6 +167,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetActionButtonsType(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token).Forget();
             cardView.SetActionLoadingActive(false);
+            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
 
             // Setup card events
             cardView.MainButtonClicked -= OnCommunityProfileOpened;

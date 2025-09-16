@@ -16,8 +16,8 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(VoiceChatOrchestrator);
 
-        private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
-        private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
+        private readonly IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
+        private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
 
         private readonly IDisposable privateStatusSubscription;
@@ -28,7 +28,7 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.DEFAULT);
         private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
 
-        private VoiceChatCallStatusServiceBase activeCallStatusService;
+        private IVoiceChatCallStatusServiceBase activeCallStatusService;
         private IVoiceChatOrchestrator voiceChatOrchestratorImplementation;
         private CancellationTokenSource joinCallCts;
 
@@ -47,8 +47,8 @@ namespace DCL.VoiceChat
         public string CurrentTargetWallet => privateVoiceChatCallStatusService.CurrentTargetWallet;
 
         public VoiceChatOrchestrator(
-            PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
-            CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
+            IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
+            ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             VoiceChatParticipantsStateService participantsStateService,
             SceneVoiceChatTrackerService sceneVoiceChatTrackerService)
         {

@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatServices;
+using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using System.Threading;
 
@@ -7,17 +9,20 @@ namespace DCL.Chat.ChatCommands
 {
     public class GetUserCallStatusCommand
     {
-        private readonly GetUserChatStatusCommand getUserChatStatusCommand;
+        private readonly PrivateConversationUserStateService userStateService;
 
-        public GetUserCallStatusCommand(GetUserChatStatusCommand getUserChatStatusCommand)
+        public GetUserCallStatusCommand(PrivateConversationUserStateService userStateService)
         {
-            this.getUserChatStatusCommand = getUserChatStatusCommand;
+            this.userStateService = userStateService;
         }
 
-        public async UniTask<CallButtonPresenter.OtherUserCallStatus> ExecuteAsync(string id, CancellationToken ct)
+        public async UniTask<CallButtonPresenter.OtherUserCallStatus> ExecuteAsync(string userId, CancellationToken ct)
         {
-            var result = await getUserChatStatusCommand.ExecuteAsync(id, ct);
-            switch (result)
+            var result = await userStateService.GetChatUserStateAsync(userId, ct)
+                                               .SuppressCancellationThrow()
+                                               .SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+
+            switch (result.Value.Result)
             {
                 case PrivateConversationUserStateService.ChatUserState.CONNECTED:
                     return CallButtonPresenter.OtherUserCallStatus.USER_AVAILABLE;

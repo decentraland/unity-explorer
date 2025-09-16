@@ -1,11 +1,12 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SocialService;
-using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using System;
 
@@ -15,11 +16,11 @@ namespace DCL.VoiceChat
     {
         private readonly IVoiceService rpcPrivateVoiceChatService;
         private readonly ICommunityVoiceService rpcCommunityVoiceChatService;
-        private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
+        private readonly IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly VoiceChatParticipantsStateService participantsStateService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
 
-        public readonly CommunityVoiceChatCallStatusService CommunityVoiceChatCallStatusService;
+        public readonly ICommunityVoiceChatCallStatusService CommunityVoiceChatCallStatusService;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
 
         public VoiceChatContainer(
@@ -28,19 +29,21 @@ namespace DCL.VoiceChat
             IRoomHub roomHub,
             IWeb3IdentityCache identityCache,
             IWebRequestController webRequestController,
-            PlayerParcelTrackerService parcelTrackerService,
+            IScenesCache scenesCache,
             IRealmNavigator realmNavigator,
             IRealmData realmData,
             IDecentralandUrlsSource urlsSource)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
-            privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
+            privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)
+                ? new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService) : new PrivateVoiceChatCallStatusServiceNull();
 
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
 
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController, urlsSource);
-            sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(parcelTrackerService, realmNavigator, realmData);
-            CommunityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService);
+            sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(scenesCache, realmNavigator, realmData);
+            CommunityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)
+                ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
             VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService);
         }
 
