@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.CharacterTriggerArea
+namespace DCL.SDKEntityTriggerArea
 {
-    public class CharacterTriggerArea : MonoBehaviour, IDisposable
+    public class SDKEntityTriggerArea : MonoBehaviour, IDisposable
     {
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
         [field: SerializeField] public SphereCollider SphereCollider { get; private set; }

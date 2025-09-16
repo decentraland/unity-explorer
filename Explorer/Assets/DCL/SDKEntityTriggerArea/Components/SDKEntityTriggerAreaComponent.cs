@@ -6,24 +6,24 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.CharacterTriggerArea.Components
+namespace DCL.SDKEntityTriggerArea.Components
 {
-    public enum CharacterTriggerAreaMeshType
+    public enum SDKEntityTriggerAreaMeshType
     {
         BOX,
         SPHERE
     }
 
-    public struct CharacterTriggerAreaComponent : IDirtyMarker
+    public struct SDKEntityTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
-        public CharacterTriggerArea? monoBehaviour { get; private set; }
+        public SDKEntityTriggerArea? monoBehaviour { get; private set; }
 
         private readonly bool targetOnlyMainPlayer;
         private bool hasMonoBehaviour;
 
         public Vector3 AreaSize { get; private set; }
-        public CharacterTriggerAreaMeshType MeshType { get; private set; }
+        public SDKEntityTriggerAreaMeshType MeshType { get; private set; }
         public bool IsDirty { get; set; }
 
         public readonly IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => hasMonoBehaviour
@@ -38,7 +38,7 @@ namespace DCL.CharacterTriggerArea.Components
             ? monoBehaviour!.CurrentAvatarsInside
             : EMPTY_COLLECTION;
 
-        public CharacterTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false, CharacterTriggerArea? monoBehaviour = null, CharacterTriggerAreaMeshType meshType = CharacterTriggerAreaMeshType.BOX)
+        public SDKEntityTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false, SDKEntityTriggerArea? monoBehaviour = null, SDKEntityTriggerAreaMeshType meshType = SDKEntityTriggerAreaMeshType.BOX)
         {
             AreaSize = areaSize;
             this.MeshType = meshType;
@@ -50,17 +50,17 @@ namespace DCL.CharacterTriggerArea.Components
             IsDirty = true;
         }
 
-        public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)
+        public void TryAssignArea(IComponentPool<SDKEntityTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)
         {
             if (hasMonoBehaviour)
             {
                 switch (MeshType)
                 {
-                    case CharacterTriggerAreaMeshType.BOX:
+                    case SDKEntityTriggerAreaMeshType.BOX:
                         monoBehaviour!.SphereCollider.enabled = false;
                         monoBehaviour!.BoxCollider.enabled = true;
                         break;
-                    case CharacterTriggerAreaMeshType.SPHERE:
+                    case SDKEntityTriggerAreaMeshType.SPHERE:
                         monoBehaviour!.BoxCollider.enabled = false;
                         monoBehaviour!.SphereCollider.enabled = true;
                         break;
@@ -87,12 +87,12 @@ namespace DCL.CharacterTriggerArea.Components
 
             switch (MeshType)
             {
-                case CharacterTriggerAreaMeshType.BOX:
+                case SDKEntityTriggerAreaMeshType.BOX:
                     monoBehaviour!.SphereCollider.enabled = false;
                     monoBehaviour!.BoxCollider.enabled = true;
                     monoBehaviour!.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
                     break;
-                case CharacterTriggerAreaMeshType.SPHERE:
+                case SDKEntityTriggerAreaMeshType.SPHERE:
                     monoBehaviour!.BoxCollider.enabled = false;
                     monoBehaviour!.SphereCollider.enabled = true;
                     monoBehaviour!.SphereCollider.radius = useTransformScaleAsAreaSize ? 1f : AreaSize.magnitude;
@@ -106,7 +106,7 @@ namespace DCL.CharacterTriggerArea.Components
             IsDirty = true;
         }
 
-        public void TryRelease(IComponentPool<CharacterTriggerArea> pool)
+        public void TryRelease(IComponentPool<SDKEntityTriggerArea> pool)
         {
             if (!hasMonoBehaviour) return;
 
@@ -134,7 +134,7 @@ namespace DCL.CharacterTriggerArea.Components
             return false;
         }
 
-        internal void SetMonoBehaviour(CharacterTriggerArea newMonoBehaviour)
+        internal void SetMonoBehaviour(SDKEntityTriggerArea newMonoBehaviour)
         {
             monoBehaviour = newMonoBehaviour;
             hasMonoBehaviour = newMonoBehaviour != null;

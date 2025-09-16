@@ -2,7 +2,7 @@ using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
-using DCL.CharacterTriggerArea.Components;
+using DCL.SDKEntityTriggerArea.Components;
 using DCL.ECSComponents;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraModeArea.Components;
@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
         }
 
         [Test]
-        public void SetupCharacterTriggerAreaCorrectly()
+        public void SetupSDKEntityTriggerAreaCorrectly()
         {
             var areaSize = new Vector3
             {
@@ -62,12 +62,12 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
 
             system.Update(1);
 
-            Assert.IsTrue(world.TryGet(entity, out CharacterTriggerAreaComponent triggerAreaComponent));
+            Assert.IsTrue(world.TryGet(entity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
         }
 
         [Test]
-        public void UpdateCharacterTriggerAreaCorrectly()
+        public void UpdateSDKEntityTriggerAreaCorrectly()
         {
             var areaSize = new Vector3
             {
@@ -86,7 +86,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
 
             system.Update(1);
 
-            Assert.IsTrue(world.TryGet(entity, out CharacterTriggerAreaComponent triggerAreaComponent));
+            Assert.IsTrue(world.TryGet(entity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
 
             // update component

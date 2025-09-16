@@ -28,15 +28,15 @@ namespace DCL.PluginSystem.World
 
         private async UniTask CreateEntitiesTriggerAreaPoolAsync(EntitiesTriggerAreaSettings settings, CancellationToken ct)
         {
-            // CharacterTriggerArea.CharacterTriggerArea characterTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterTriggerAreaPrefab, ct: ct)).Value.GetComponent<CharacterTriggerArea.CharacterTriggerArea>();
-            // characterTriggerAreaPoolRegistry = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease, onGet: OnTriggerAreaPoolGet);
-            // cacheCleaner.Register(characterTriggerAreaPoolRegistry);
+            // SDKEntityTriggerArea.SDKEntityTriggerArea sdkEntityTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.TriggerAreaPrefab, ct: ct)).Value.GetComponent<SDKEntityTriggerArea.SDKEntityTriggerArea>();
+            // sdkEntityTriggerAreaPoolRegistry = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(sdkEntityTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease, onGet: OnTriggerAreaPoolGet);
+            // cacheCleaner.Register(sdkEntityTriggerAreaPoolRegistry);
         }
 
-        // private static void OnTriggerAreaPoolRelease(CharacterTriggerArea.CharacterTriggerArea area) =>
+        // private static void OnTriggerAreaPoolRelease(SDKEntityTriggerArea.SDKEntityTriggerArea area) =>
         //     area.Dispose();
         //
-        // private static void OnTriggerAreaPoolGet(CharacterTriggerArea.CharacterTriggerArea area) =>
+        // private static void OnTriggerAreaPoolGet(SDKEntityTriggerArea.SDKEntityTriggerArea area) =>
         //     area.Clear();
     }
 

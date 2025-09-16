@@ -3,7 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
-using DCL.CharacterTriggerArea.Components;
+using DCL.SDKEntityTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
@@ -13,18 +13,18 @@ using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 
-namespace DCL.CharacterTriggerArea.Systems
+namespace DCL.SDKEntityTriggerArea.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
-    public partial class CharacterTriggerAreaHandlerSystem : BaseUnityLoopSystem
+    public partial class SDKEntityTriggerAreaHandlerSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<CharacterTriggerArea> poolRegistry;
+        private readonly IComponentPool<SDKEntityTriggerArea> poolRegistry;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly Transform mainPlayerTransform;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        public CharacterTriggerAreaHandlerSystem(World world, IComponentPool<CharacterTriggerArea> poolRegistry, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider, ICharacterObject characterObject) : base(world)
+        public SDKEntityTriggerAreaHandlerSystem(World world, IComponentPool<SDKEntityTriggerArea> poolRegistry, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider, ICharacterObject characterObject) : base(world)
         {
             this.poolRegistry = poolRegistry;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
@@ -36,11 +36,11 @@ namespace DCL.CharacterTriggerArea.Systems
         {
             if (!mainPlayerAvatarBaseProxy.Configured) return;
 
-            UpdateCharacterTriggerAreaQuery(World);
+            UpdateSDKEntityTriggerAreaQuery(World);
         }
 
         [Query]
-        private void UpdateCharacterTriggerArea(ref TransformComponent transformComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
+        private void UpdateSDKEntityTriggerArea(ref TransformComponent transformComponent, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             if (triggerAreaComponent.TryDispose(sceneStateProvider))
                 return;

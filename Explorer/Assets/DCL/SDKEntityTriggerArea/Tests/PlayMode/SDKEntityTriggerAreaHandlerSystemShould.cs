@@ -2,8 +2,8 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
-using DCL.CharacterTriggerArea.Components;
-using DCL.CharacterTriggerArea.Systems;
+using DCL.SDKEntityTriggerArea.Components;
+using DCL.SDKEntityTriggerArea.Systems;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
@@ -18,19 +18,19 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace DCL.CharacterTriggerArea.Tests
+namespace DCL.SDKEntityTriggerArea.Tests
 {
-    public class CharacterTriggerAreaHandlerSystemShould : UnitySystemTestBase<CharacterTriggerAreaHandlerSystem>
+    public class SDKEntityTriggerAreaHandlerSystemShould : UnitySystemTestBase<SDKEntityTriggerAreaHandlerSystem>
     {
         private Entity entity;
         private TransformComponent entityTransformComponent;
         private ISceneStateProvider sceneStateProvider;
         private GameObject fakeMainPlayerGO;
         private GameObject fakeMainPlayerAvatarGO;
-        private CharacterTriggerArea characterTriggerArea;
+        private SDKEntityTriggerArea sdkEntityTriggerArea;
         private ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private IComponentPoolsRegistry poolsRegistry;
-        private IComponentPool<CharacterTriggerArea> characterTriggerAreaPool;
+        private IComponentPool<SDKEntityTriggerArea> sdkEntityTriggerAreaPool;
         private ICharacterObject characterObject;
 
         [SetUp]
@@ -46,8 +46,8 @@ namespace DCL.CharacterTriggerArea.Tests
             fakeMainPlayerGO = Object.Instantiate(fakeMainPlayerGO.GetComponent<CharacterObject>()).gameObject;
             fakeMainPlayerGO.transform.position = Vector3.zero;
 
-            GameObject characterTriggerAreaBaseGO = await Addressables.LoadAssetAsync<GameObject>("CharacterTriggerArea");
-            characterTriggerArea = Object.Instantiate(characterTriggerAreaBaseGO.GetComponent<CharacterTriggerArea>());
+            GameObject sdkEntityTriggerAreaBaseGO = await Addressables.LoadAssetAsync<GameObject>("SDKEntityTriggerArea");
+            sdkEntityTriggerArea = Object.Instantiate(sdkEntityTriggerAreaBaseGO.GetComponent<SDKEntityTriggerArea>());
 
             fakeMainPlayerAvatarGO = new GameObject();
 
@@ -61,10 +61,10 @@ namespace DCL.CharacterTriggerArea.Tests
             sceneStateProvider.IsCurrent.Returns(true);
 
             poolsRegistry = new ComponentPoolsRegistry();
-            poolsRegistry.AddGameObjectPool(() => characterTriggerArea, onRelease: area => area.Dispose());
-            characterTriggerAreaPool = poolsRegistry.GetReferenceTypePool<CharacterTriggerArea>();
+            poolsRegistry.AddGameObjectPool(() => sdkEntityTriggerArea, onRelease: area => area.Dispose());
+            sdkEntityTriggerAreaPool = poolsRegistry.GetReferenceTypePool<SDKEntityTriggerArea>();
 
-            system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
+            system = new SDKEntityTriggerAreaHandlerSystem(world, sdkEntityTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
 
             UnityEngine.Physics.simulationMode = SimulationMode.Script;
         }
@@ -84,13 +84,13 @@ namespace DCL.CharacterTriggerArea.Tests
             await UniTask.WaitUntil(() => system != null);
 
             var pbComponent = new PBCameraModeArea();
-            var component = new CharacterTriggerAreaComponent(areaSize: new Vector3(15, 6, 18));
+            var component = new SDKEntityTriggerAreaComponent(areaSize: new Vector3(15, 6, 18));
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.IsNotNull(world.Get<CharacterTriggerAreaComponent>(entity));
+            Assert.IsNotNull(world.Get<SDKEntityTriggerAreaComponent>(entity));
         }
 
         [Test]
@@ -101,16 +101,16 @@ namespace DCL.CharacterTriggerArea.Tests
 
             var targetAreaSize = new Vector3(15, 6, 18);
 
-            Assert.AreNotEqual(characterTriggerArea.BoxCollider.size, targetAreaSize);
+            Assert.AreNotEqual(sdkEntityTriggerArea.BoxCollider.size, targetAreaSize);
 
             var pbComponent = new PBCameraModeArea();
-            var component = new CharacterTriggerAreaComponent(areaSize: targetAreaSize);
+            var component = new SDKEntityTriggerAreaComponent(areaSize: targetAreaSize);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.AreEqual(targetAreaSize, characterTriggerArea.BoxCollider.size);
+            Assert.AreEqual(targetAreaSize, sdkEntityTriggerArea.BoxCollider.size);
         }
 
         [Test]
@@ -122,24 +122,24 @@ namespace DCL.CharacterTriggerArea.Tests
             var targetAreaSize = new Vector3(15, 6, 18);
 
             var pbComponent = new PBCameraModeArea();
-            var component = new CharacterTriggerAreaComponent(areaSize: targetAreaSize);
+            var component = new SDKEntityTriggerAreaComponent(areaSize: targetAreaSize);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.AreEqual(targetAreaSize, characterTriggerArea.BoxCollider.size);
+            Assert.AreEqual(targetAreaSize, sdkEntityTriggerArea.BoxCollider.size);
 
             // update component values
             targetAreaSize /= 3;
             component.UpdateAreaSize(targetAreaSize);
             world.Set(entity, component);
 
-            Assert.AreNotEqual(targetAreaSize, characterTriggerArea.BoxCollider.size);
+            Assert.AreNotEqual(targetAreaSize, sdkEntityTriggerArea.BoxCollider.size);
 
             system.Update(0);
 
-            Assert.AreEqual(targetAreaSize, characterTriggerArea.BoxCollider.size);
+            Assert.AreEqual(targetAreaSize, sdkEntityTriggerArea.BoxCollider.size);
         }
 
         [Test]
@@ -149,29 +149,29 @@ namespace DCL.CharacterTriggerArea.Tests
             await UniTask.WaitUntil(() => system != null);
 
             var pbComponent = new PBCameraModeArea();
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one);
+            var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
 
-            Assert.AreEqual(entityTransformComponent.Transform.position, characterTriggerArea.transform.position);
+            Assert.AreEqual(entityTransformComponent.Transform.position, sdkEntityTriggerArea.transform.position);
 
             entityTransformComponent.SetTransform(Vector3.one * 10, Quaternion.identity, Vector3.one);
             world.Set(entity, entityTransformComponent);
 
             system.Update(0);
-            Assert.AreEqual(entityTransformComponent.Transform.position, characterTriggerArea.transform.position);
+            Assert.AreEqual(entityTransformComponent.Transform.position, sdkEntityTriggerArea.transform.position);
 
             entityTransformComponent.SetTransform(Vector3.one * 38, Quaternion.Euler(33, 65, 59), Vector3.one * 66);
             world.Set(entity, entityTransformComponent);
 
             system.Update(0);
 
-            Assert.AreEqual(entityTransformComponent.Transform.position, characterTriggerArea.transform.position);
-            Assert.AreEqual(entityTransformComponent.Transform.rotation, characterTriggerArea.transform.rotation);
-            Assert.AreNotEqual(entityTransformComponent.Transform.localScale, characterTriggerArea.BoxCollider.size);
-            Assert.AreEqual(Vector3.one, characterTriggerArea.BoxCollider.size);
+            Assert.AreEqual(entityTransformComponent.Transform.position, sdkEntityTriggerArea.transform.position);
+            Assert.AreEqual(entityTransformComponent.Transform.rotation, sdkEntityTriggerArea.transform.rotation);
+            Assert.AreNotEqual(entityTransformComponent.Transform.localScale, sdkEntityTriggerArea.BoxCollider.size);
+            Assert.AreEqual(Vector3.one, sdkEntityTriggerArea.BoxCollider.size);
         }
 
         [Test]
@@ -182,12 +182,12 @@ namespace DCL.CharacterTriggerArea.Tests
 
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
+            var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
-            component = world.Get<CharacterTriggerAreaComponent>(entity);
+            component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
             Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
@@ -218,12 +218,12 @@ namespace DCL.CharacterTriggerArea.Tests
 
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
+            var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
-            component = world.Get<CharacterTriggerAreaComponent>(entity);
+            component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
             Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
@@ -244,7 +244,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
             Assert.AreEqual(1, component.ExitedAvatarsToBeProcessed.Count);
-            Assert.IsFalse(characterTriggerArea.BoxCollider.enabled);
+            Assert.IsFalse(sdkEntityTriggerArea.BoxCollider.enabled);
         }
 
         [Test]
@@ -258,7 +258,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
+            var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
@@ -267,7 +267,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             system.Update(0);
             await WaitForPhysics();
-            component = world.Get<CharacterTriggerAreaComponent>(entity);
+            component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
             Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
             Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
@@ -284,11 +284,11 @@ namespace DCL.CharacterTriggerArea.Tests
 
             // Use fresh non-initialized MainPlayerAvatarBaseProxy
             mainPlayerAvatarBaseProxy = new ObjectProxy<AvatarBase>();
-            system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
+            system = new SDKEntityTriggerAreaHandlerSystem(world, sdkEntityTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
 
             var pbComponent = new PBCameraModeArea();
 
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
+            var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4);
 
             world.Add(entity, component, pbComponent);
 
@@ -297,7 +297,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             system.Update(0);
             await WaitForPhysics();
-            component = world.Get<CharacterTriggerAreaComponent>(entity);
+            component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
             Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
@@ -306,7 +306,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             system.Update(0);
             await WaitForPhysics();
-            component = world.Get<CharacterTriggerAreaComponent>(entity);
+            component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
             Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
             Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
@@ -325,12 +325,12 @@ namespace DCL.CharacterTriggerArea.Tests
             fakeOtherPlayerGO.transform.position = Vector3.zero;
 
             var pbComponent = new PBCameraModeArea();
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4, targetOnlyMainPlayer: onlyMainPlayer);
+            var component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4, targetOnlyMainPlayer: onlyMainPlayer);
 
             world.Add(entity, component, pbComponent);
 
             system.Update(0);
-            component = world.Get<CharacterTriggerAreaComponent>(entity);
+            component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
             Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
             Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);

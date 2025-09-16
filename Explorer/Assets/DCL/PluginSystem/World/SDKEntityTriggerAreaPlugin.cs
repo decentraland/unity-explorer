@@ -5,10 +5,9 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.CharacterCamera;
-using DCL.CharacterTriggerArea.Systems;
+using DCL.SDKEntityTriggerArea.Systems;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -19,14 +18,16 @@ using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.World
 {
-    public class CharacterTriggerAreaPlugin : IDCLWorldPlugin<CharacterTriggerAreaSettings>
+    public class SDKEntityTriggerAreaPlugin : IDCLWorldPlugin<SDKEntityTriggerAreaSettings>
     {
         private readonly Arch.Core.World globalWorld;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -39,9 +40,9 @@ namespace DCL.PluginSystem.World
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
-        private IComponentPool<CharacterTriggerArea.CharacterTriggerArea>? characterTriggerAreaPoolRegistry;
+        private IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>? sdkEntityTriggerAreaPoolRegistry;
 
-        public CharacterTriggerAreaPlugin(
+        public SDKEntityTriggerAreaPlugin(
             Arch.Core.World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             ObjectProxy<Entity> cameraEntityProxy,
@@ -67,37 +68,46 @@ namespace DCL.PluginSystem.World
 
         public void Dispose()
         {
-            characterTriggerAreaPoolRegistry?.Dispose();
+            sdkEntityTriggerAreaPoolRegistry?.Dispose();
         }
 
-        public async UniTask InitializeAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(SDKEntityTriggerAreaSettings settings, CancellationToken ct)
         {
-            await CreateCharacterTriggerAreaPoolAsync(settings, ct);
+            await CreateSDKEntityTriggerAreaPoolAsync(settings, ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBCameraModeArea>.InjectToWorld(ref builder);
 
-            CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
+            SDKEntityTriggerAreaHandlerSystem.InjectToWorld(ref builder, sdkEntityTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
 
             finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
             finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
             finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sharedDependencies.EntitiesMap, sharedDependencies.EcsToCRDTWriter, componentPoolsRegistry.GetReferenceTypePool<PBTriggerAreaResult>(), sharedDependencies.SceneStateProvider, sharedDependencies.EntityCollidersSceneCache));
-            finalizeWorldSystems.Add(CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!));
+            finalizeWorldSystems.Add(SDKEntityTriggerAreaCleanupSystem.InjectToWorld(ref builder, sdkEntityTriggerAreaPoolRegistry!));
         }
 
-        private async UniTask CreateCharacterTriggerAreaPoolAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
+        private async UniTask CreateSDKEntityTriggerAreaPoolAsync(SDKEntityTriggerAreaSettings settings, CancellationToken ct)
         {
-            CharacterTriggerArea.CharacterTriggerArea characterTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterTriggerAreaPrefab, ct: ct)).Value.GetComponent<CharacterTriggerArea.CharacterTriggerArea>();
-            characterTriggerAreaPoolRegistry = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease, onGet: OnTriggerAreaPoolGet);
-            cacheCleaner.Register(characterTriggerAreaPoolRegistry);
+            SDKEntityTriggerArea.SDKEntityTriggerArea triggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.TriggerAreaPrefab, ct: ct)).Value.GetComponent<SDKEntityTriggerArea.SDKEntityTriggerArea>();
+            sdkEntityTriggerAreaPoolRegistry = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(triggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease, onGet: OnTriggerAreaPoolGet);
+            cacheCleaner.Register(sdkEntityTriggerAreaPoolRegistry);
         }
 
-        private static void OnTriggerAreaPoolRelease(CharacterTriggerArea.CharacterTriggerArea area) =>
+        private static void OnTriggerAreaPoolRelease(SDKEntityTriggerArea.SDKEntityTriggerArea area) =>
             area.Dispose();
 
-        private static void OnTriggerAreaPoolGet(CharacterTriggerArea.CharacterTriggerArea area) =>
+        private static void OnTriggerAreaPoolGet(SDKEntityTriggerArea.SDKEntityTriggerArea area) =>
             area.Clear();
+    }
+
+    [Serializable]
+    public class SDKEntityTriggerAreaSettings : IDCLPluginSettings
+    {
+        [field: Header(nameof(SDKEntityTriggerAreaPlugin) + "." + nameof(SDKEntityTriggerAreaSettings))]
+        [field: Space]
+        [field: SerializeField]
+        public AssetReferenceGameObject TriggerAreaPrefab;
     }
 }

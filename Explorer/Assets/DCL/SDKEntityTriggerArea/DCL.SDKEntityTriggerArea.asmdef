@@ -1,5 +1,5 @@
 {
-    "name": "DCL.CharacterTriggerArea",
+    "name": "DCL.SDKEntityTriggerArea",
     "rootNamespace": "",
     "references": [
         "GUID:275e22790c04e9b47a5085d7b0c4432a",

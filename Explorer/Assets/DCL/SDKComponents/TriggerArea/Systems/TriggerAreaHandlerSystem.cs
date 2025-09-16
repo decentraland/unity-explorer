@@ -5,7 +5,7 @@ using CRDT;
 using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.Physics;
-using DCL.CharacterTriggerArea.Components;
+using DCL.SDKEntityTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
@@ -58,23 +58,23 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
 
         [Query]
-        [None(typeof(CharacterTriggerAreaComponent), typeof(SDKTriggerAreaComponent))]
+        [None(typeof(SDKEntityTriggerAreaComponent), typeof(SDKTriggerAreaComponent))]
         [All(typeof(TransformComponent))]
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
-            // TODO: make the CharacterTriggerAreaComponent more versatile, to accept scene entity colliders
+            // TODO: make the SDKEntityTriggerAreaComponent more versatile, to accept scene entity colliders
             World.Add(
                 entity,
                 new SDKTriggerAreaComponent(),
-                new CharacterTriggerAreaComponent(
+                new SDKEntityTriggerAreaComponent(
                     areaSize: Vector3.zero,
                     targetOnlyMainPlayer: false,
-                    meshType: (CharacterTriggerAreaMeshType)pbTriggerArea.Mesh));
+                    meshType: (SDKEntityTriggerAreaMeshType)pbTriggerArea.Mesh));
         }
 
         [Query]
         [All(typeof(PBTriggerArea))]
-        private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref CharacterTriggerAreaComponent triggerAreaComponent)
+        private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             foreach (Transform entityTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
             {
