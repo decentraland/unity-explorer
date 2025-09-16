@@ -12,7 +12,7 @@ using CommunicationData.URLHelpers;
 
 namespace DCL.Translation.Service.Provider
 {
-    public class DclTranslationProvider : ITranslationProvider
+    public class DclTranslationProvider : ITranslationProvider, IBatchTranslationProvider
     {
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -43,6 +43,45 @@ namespace DCL.Translation.Service.Provider
             );
         }
 
+        public async UniTask<TranslationApiResponseBatch> TranslateBatchAsync(string[] texts, LanguageCode target, CancellationToken ct)
+        {
+            if (texts == null || texts.Length == 0)
+                return new TranslationApiResponseBatch
+                {
+                    translatedText = Array.Empty<string>(), detectedLanguage = Array.Empty<DetectedLanguageDto>()
+                };
+
+            string targetCode = target.ToString().ToLower();
+            var resp = await GetTranslationFromApiBatchAsync(texts, "auto", targetCode, ct);
+
+            // Ignore languages completely, just return translations
+            if (resp == null || resp.translatedText == null || resp.translatedText.Length != texts.Length)
+                throw new Exception("Batch translation response size mismatch or null translatedTexts.");
+
+            return resp;
+        }
+
+        private async UniTask<TranslationApiResponseBatch> GetTranslationFromApiBatchAsync(
+            string[] texts, string source, string target, CancellationToken ct)
+        {
+            var requestBody = new TranslationRequestBodyBatch
+            {
+                q = texts, source = source, target = target, format = "text"
+            };
+
+            try
+            {
+                return await webRequestController
+                    .PostAsync(translateUrl, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.CHAT_TRANSLATE)
+                    .CreateFromJson<TranslationApiResponseBatch>(WRJsonParser.Newtonsoft);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.CHAT_TRANSLATE);
+                throw;
+            }
+        }
+
         private async UniTask<TranslationApiResponse> GetTranslationFromApiAsync(string text,
             string source,
             string target,
@@ -50,7 +89,7 @@ namespace DCL.Translation.Service.Provider
         {
             var requestBody = new TranslationRequestBody
             {
-                q = text, source = source, target = target, format = "html"
+                q = text, source = source, target = target, format = "text"
             };
 
             try
