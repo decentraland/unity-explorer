@@ -8,7 +8,6 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
-using DCL.Passport;
 using DCL.Profiles;
 using DCL.Web3;
 using ECS.Abstract;
@@ -16,7 +15,6 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using InputAction = DCL.ECSComponents.InputAction;
 
 namespace DCL.Interaction.Systems
 {
@@ -25,7 +23,7 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string HOVER_TOOLTIP = "View Profile";
+        private const string HOVER_TOOLTIP = "Options...";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
@@ -100,13 +98,9 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            //Commented for now, we will restore it later
-            //contextMenuTask.TrySetResult();
-            //contextMenuTask = new UniTaskCompletionSource();
-
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
-
-            //menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
+            contextMenuTask.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
         }
     }
 }

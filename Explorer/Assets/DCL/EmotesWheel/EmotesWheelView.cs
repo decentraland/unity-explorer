@@ -36,6 +36,15 @@ namespace DCL.EmotesWheel
         [field: SerializeField]
         public AudioClipConfig CloseAudio { get; private set; }
 
+        [field: SerializeField]
+        public GameObject SocialEmote { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text SocialEmoteName { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text TargetUsername { get; private set; }
+
         private void Awake()
         {
             foreach (Button button in closeButtons)

@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Diagnostics;
+using DCL.EmotesWheel.Params;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Input.Component;
@@ -22,7 +23,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.EmotesWheel
 {
-    public class EmotesWheelController : ControllerBase<EmotesWheelView>, IControllerInSharedSpace<EmotesWheelView>
+    public class EmotesWheelController : ControllerBase<EmotesWheelView, EmotesWheelParams>, IControllerInSharedSpace<EmotesWheelView, EmotesWheelParams>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly SelfProfile selfProfile;
@@ -91,7 +92,11 @@ namespace DCL.EmotesWheel
         {
             viewInstance!.Closed += Close;
             viewInstance.EditButton.onClick.AddListener(OpenBackpackAsync);
-            viewInstance.CurrentEmoteName.text = "";
+
+            if(inputData.IsSocialEmote)
+                viewInstance.SocialEmoteName.text = "";
+            else
+                viewInstance.CurrentEmoteName.text = "";
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
             {
@@ -107,6 +112,16 @@ namespace DCL.EmotesWheel
         {
             UnblockUnwantedInputs();
             cursor.Unlock();
+
+            viewInstance.CurrentEmoteName.gameObject.SetActive(!inputData.IsSocialEmote);
+            viewInstance.SocialEmote.SetActive(inputData.IsSocialEmote);
+
+            if (inputData.IsSocialEmote)
+            {
+                viewInstance.TargetUsername.text = inputData.TargetUsername;
+                viewInstance.TargetUsername.color = inputData.TargetUsernameColor;
+            }
+
             fetchProfileCts = fetchProfileCts.SafeRestart();
             InitializeEverythingAsync(fetchProfileCts.Token).Forget();
             return;
@@ -210,12 +225,18 @@ namespace DCL.EmotesWheel
             if (!emoteStorage.TryGetElement(currentEmotes[slot], out IEmote emote))
                 ClearCurrentEmote(slot);
             else
-                viewInstance!.CurrentEmoteName.text = emote.GetName();
+                if(inputData.IsSocialEmote)
+                    viewInstance.SocialEmoteName.text = emote.GetName();
+                else
+                    viewInstance!.CurrentEmoteName.text = emote.GetName();
         }
 
         private void ClearCurrentEmote(int slot)
         {
-            viewInstance!.CurrentEmoteName.text = string.Empty;
+            if(inputData.IsSocialEmote)
+                viewInstance.SocialEmoteName.text = "";
+            else
+                viewInstance!.CurrentEmoteName.text = string.Empty;
         }
 
         private void PlayEmote(int slot)

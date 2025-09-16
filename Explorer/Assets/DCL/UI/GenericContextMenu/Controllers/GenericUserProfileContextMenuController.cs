@@ -3,6 +3,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
+using DCL.EmotesWheel.Params;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -64,9 +65,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> socialEmoteButtonControlSettings;
+
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
+        private readonly GenericContextMenuElement contextMenuSocialEmoteButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource cancellationTokenSource;
@@ -112,10 +116,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
             blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
             startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
+            socialEmoteButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.SocialEmoteButtonConfig.Text, contextMenuSettings.SocialEmoteButtonConfig.Sprite, new StringDelegate(OnSocialEmoteButtonClicked));
 
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
+            contextMenuSocialEmoteButton = new GenericContextMenuElement(socialEmoteButtonControlSettings, true);
 
             contextMenu = new GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
@@ -124,6 +130,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(openUserProfileButtonControlSettings)
                          .AddControl(openConversationControlSettings)
                          .AddControl(contextMenuCallButton)
+                         .AddControl(contextMenuSocialEmoteButton)
                          .AddControl(contextMenuJumpInButton)
                          .AddControl(contextMenuBlockUserButton);
 
@@ -342,6 +349,21 @@ namespace DCL.UI.GenericContextMenu.Controllers
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
             FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
+        }
+
+        private void OnSocialEmoteButtonClicked(string userId)
+        {
+            // TODO: Disable Emote button if not clicking on a avatar
+            //chatEventBus.InsertText("");
+            // FriendsPushNotifications
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.EmotesWheel,
+                                         new EmotesWheelParams()
+                                         {
+                                             IsSocialEmote = true,
+                                             TargetUsername = targetProfile.ValidatedName,
+                                             TargetUsernameColor = targetProfile.UserNameColor
+                                         });
+            closeContextMenuTask.TrySetResult();
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
