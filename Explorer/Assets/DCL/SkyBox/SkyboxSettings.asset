@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1162b863c0b747f59404c4a323168f3a, type: 3}
   m_Name: SkyboxSettings
   m_EditorClassIdentifier: 
-  speedMultiplier: 60
+  fullDayCycleInMinutes: 120
   transitionSpeed: 0.25
   SkyboxRenderControllerPrefab:
     m_AssetGUID: 1dbd1decb60282248bd089c32bec5d02
