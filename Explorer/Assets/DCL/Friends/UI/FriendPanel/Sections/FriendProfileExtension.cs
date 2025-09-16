@@ -2,7 +2,7 @@ using CommunicationData.URLHelpers;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Web3;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
@@ -13,7 +13,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             new (new Web3Address(profile.UserId), profile.Name, profile.HasClaimedName, profile.Avatar.FaceSnapshotUrl, profile.UserNameColor);
 
         public static FriendProfile ToFriendProfile(this FriendRequestProfile profile) =>
-            new (new Web3Address(profile.Address), profile.Name, profile.HasClaimedName, URLAddress.FromString(profile.ProfileImageUrl), ProfileNameColorHelper.GetNameColor(profile.Name));
+            new (new Web3Address(profile.Address), profile.Name, profile.HasClaimedName, URLAddress.FromString(profile.ProfileImageUrl), NameColorHelper.GetNameColor(profile.Name));
 
         public static UserProfileContextMenuControlSettings.UserData ToUserData(this FriendProfile friendProfile) =>
             new ()
