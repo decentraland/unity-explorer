@@ -25,7 +25,7 @@ namespace DCL.Tests
                 {
                     data = new WearableDTO.WearableMetadataDto.DataDto
                     {
-                        category = WearablesConstants.Categories.UPPER_BODY,
+                        category = WearableCategories.Categories.UPPER_BODY,
                     },
                 },
             };
@@ -34,9 +34,9 @@ namespace DCL.Tests
                 mockDto,
                 new HashSet<string>
                 {
-                    WearablesConstants.Categories.LOWER_BODY,
-                    WearablesConstants.Categories.HANDS,
-                    WearablesConstants.Categories.SKIN
+                    WearableCategories.Categories.LOWER_BODY,
+                    WearableCategories.Categories.HANDS,
+                    WearableCategories.Categories.SKIN
                 }
             );
 
@@ -46,7 +46,7 @@ namespace DCL.Tests
                 {
                     data = new WearableDTO.WearableMetadataDto.DataDto
                     {
-                        category = WearablesConstants.Categories.SKIN,
+                        category = WearableCategories.Categories.SKIN,
                     },
                 },
             };
@@ -55,9 +55,9 @@ namespace DCL.Tests
                 skinDto,
                 new HashSet<string>
                 {
-                    WearablesConstants.Categories.LOWER_BODY,
-                    WearablesConstants.Categories.HANDS,
-                    WearablesConstants.Categories.UPPER_BODY
+                    WearableCategories.Categories.LOWER_BODY,
+                    WearableCategories.Categories.HANDS,
+                    WearableCategories.Categories.UPPER_BODY
                 }
             );
         }
@@ -70,9 +70,9 @@ namespace DCL.Tests
             var hidingList = new HashSet<string>();
             WearableComponentsUtils.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
 
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.LOWER_BODY));
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
-            Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.UPPER_BODY));
+            Assert.IsTrue(hidingList.Contains(WearableCategories.Categories.LOWER_BODY));
+            Assert.IsTrue(hidingList.Contains(WearableCategories.Categories.HANDS));
+            Assert.IsFalse(hidingList.Contains(WearableCategories.Categories.UPPER_BODY));
         }
 
         [Test]
@@ -91,14 +91,14 @@ namespace DCL.Tests
                     {
                         data = new WearableDTO.WearableMetadataDto.DataDto
                         {
-                            category = WearablesConstants.Categories.HELMET,
+                            category = WearableCategories.Categories.HELMET,
                         },
                     },
                 }, new HashSet<string>
                 {
-                    WearablesConstants.Categories.HEAD,
-                    WearablesConstants.Categories.EYEWEAR,
-                    WearablesConstants.Categories.HAIR,
+                    WearableCategories.Categories.HEAD,
+                    WearableCategories.Categories.EYEWEAR,
+                    WearableCategories.Categories.HAIR,
                 }),
                 // Mask
                 new FakeWearable(new WearableDTO
@@ -107,13 +107,13 @@ namespace DCL.Tests
                     {
                         data = new WearableDTO.WearableMetadataDto.DataDto
                         {
-                            category = WearablesConstants.Categories.MASK,
+                            category = WearableCategories.Categories.MASK,
                         },
                     },
                 }, new HashSet<string>
                 {
-                    WearablesConstants.Categories.HELMET,
-                    WearablesConstants.Categories.TOP_HEAD,
+                    WearableCategories.Categories.HELMET,
+                    WearableCategories.Categories.TOP_HEAD,
                 }),
                 // Top head
                 new FakeWearable(new WearableDTO
@@ -122,13 +122,13 @@ namespace DCL.Tests
                     {
                         data = new WearableDTO.WearableMetadataDto.DataDto
                         {
-                            category = WearablesConstants.Categories.TOP_HEAD,
+                            category = WearableCategories.Categories.TOP_HEAD,
                         },
                     },
                 }, new HashSet<string>
                 {
-                    WearablesConstants.Categories.HELMET,
-                    WearablesConstants.Categories.MASK,
+                    WearableCategories.Categories.HELMET,
+                    WearableCategories.Categories.MASK,
                 }),
                 // Eyewear
                 new FakeWearable(new WearableDTO
@@ -137,7 +137,7 @@ namespace DCL.Tests
                     {
                         data = new WearableDTO.WearableMetadataDto.DataDto
                         {
-                            category = WearablesConstants.Categories.EYEWEAR,
+                            category = WearableCategories.Categories.EYEWEAR,
                         },
                     },
                 }),
@@ -148,7 +148,7 @@ namespace DCL.Tests
                     {
                         data = new WearableDTO.WearableMetadataDto.DataDto
                         {
-                            category = WearablesConstants.Categories.HAIR,
+                            category = WearableCategories.Categories.HAIR,
                         },
                     },
                 }),
@@ -165,14 +165,14 @@ namespace DCL.Tests
             // mask (by top head)
 
             // Hidden by helmet and top head
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HEAD));
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.EYEWEAR));
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HAIR));
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HELMET));
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.MASK));
+            Assert.IsTrue(hidingList.Contains(WearableCategories.Categories.HEAD));
+            Assert.IsTrue(hidingList.Contains(WearableCategories.Categories.EYEWEAR));
+            Assert.IsTrue(hidingList.Contains(WearableCategories.Categories.HAIR));
+            Assert.IsTrue(hidingList.Contains(WearableCategories.Categories.HELMET));
+            Assert.IsTrue(hidingList.Contains(WearableCategories.Categories.MASK));
 
             // Since mask is hidden by higher priority top head
-            Assert.False(hidingList.Contains(WearablesConstants.Categories.TOP_HEAD));
+            Assert.False(hidingList.Contains(WearableCategories.Categories.TOP_HEAD));
         }
 
         [Test]
@@ -181,14 +181,14 @@ namespace DCL.Tests
             mockWearables = new List<IWearable>() { upperMockWearable };
 
             var forceRender = new HashSet<string>();
-            forceRender.Add(WearablesConstants.Categories.LOWER_BODY);
+            forceRender.Add(WearableCategories.Categories.LOWER_BODY);
 
             var hidingList = new HashSet<string>();
             WearableComponentsUtils.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, forceRender, mockWearables, hidingList);
 
-            Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.LOWER_BODY));
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
-            Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.UPPER_BODY));
+            Assert.IsFalse(hidingList.Contains(WearableCategories.Categories.LOWER_BODY));
+            Assert.IsTrue(hidingList.Contains(WearableCategories.Categories.HANDS));
+            Assert.IsFalse(hidingList.Contains(WearableCategories.Categories.UPPER_BODY));
         }
 
         [Test]
@@ -200,7 +200,7 @@ namespace DCL.Tests
             WearableComponentsUtils.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
 
             var usedCategories = new HashSet<string>();
-            usedCategories.Add(WearablesConstants.Categories.HEAD);
+            usedCategories.Add(WearableCategories.Categories.HEAD);
 
             var fakeBodyShape = new GameObject();
 

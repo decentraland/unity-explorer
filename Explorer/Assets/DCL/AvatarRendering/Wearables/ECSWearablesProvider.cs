@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.Wearables
         private const string THIRD_PARTY_COLLECTION_TYPE = "third-party";
         private const string BASE_WEARABLE_COLLECTION_TYPE = "base-wearable";
 
-        private readonly string[] allWearableCategories = WearablesConstants.CATEGORIES_PRIORITY.ToArray();
+        private readonly string[] allWearableCategories = WearableCategories.CATEGORIES_PRIORITY.ToArray();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly List<(string, string)> requestParameters = new ();
         private readonly World world;

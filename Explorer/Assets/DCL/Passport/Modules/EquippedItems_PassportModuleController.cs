@@ -176,7 +176,7 @@ namespace DCL.Passport.Modules
 
             foreach (IWearable wearable in gridWearables)
             {
-                if (wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
+                if (wearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE)
                     continue;
 
                 string wearableCategory = wearable.GetCategory();

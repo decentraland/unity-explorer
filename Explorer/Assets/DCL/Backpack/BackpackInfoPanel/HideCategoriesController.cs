@@ -67,7 +67,7 @@ namespace DCL.Backpack
 
             ClearPool();
 
-            IWearable? bodyShapeWearable = equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE);
+            IWearable? bodyShapeWearable = equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE);
 
             if (bodyShapeWearable == null)
             {

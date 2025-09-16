@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public EquippedWearables()
         {
-            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
+            foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
                 wearables.Add(category, null);
         }
 
@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public void UnEquipAll()
         {
-            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
+            foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
                 wearables[category] = null;
         }
 

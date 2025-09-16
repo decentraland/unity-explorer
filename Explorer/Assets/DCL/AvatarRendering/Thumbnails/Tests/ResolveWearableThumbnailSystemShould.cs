@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                             representations = isUnisex
                                 ? new AvatarAttachmentDTO.Representation[] { new (), new () }
                                 : new AvatarAttachmentDTO.Representation[] { new () },
-                            category = WearablesConstants.Categories.UPPER_BODY,
+                            category = WearableCategories.Categories.UPPER_BODY,
                         },
                     },
                 },

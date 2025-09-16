@@ -92,7 +92,7 @@ namespace DCL.Backpack.Breadcrumb
             {
                 view.FilterButton.gameObject.SetActive(true);
                 view.FilterButton.Icon.sprite = categoryIcons.GetTypeImage(category.ToLower());
-                view.FilterButton.CategoryName.text = WearablesConstants.READABLE_CATEGORIES[category.ToLower()];
+                view.FilterButton.CategoryName.text = WearableCategories.READABLE_CATEGORIES[category.ToLower()];
                 SetAllButtonColor(false);
             }
         }

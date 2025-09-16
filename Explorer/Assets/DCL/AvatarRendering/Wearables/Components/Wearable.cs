@@ -131,17 +131,17 @@ namespace DCL.AvatarRendering.Wearables.Components
             }
 
             if (IsSkin())
-                hideListResult.UnionWith(WearablesConstants.SKIN_IMPLICIT_CATEGORIES);
+                hideListResult.UnionWith(WearableCategories.SKIN_IMPLICIT_CATEGORIES);
 
             // we apply this rule to hide the hands by default if the wearable is an upper body or hides the upper body
-            bool isOrHidesUpperBody = hideListResult.Contains(WearablesConstants.Categories.UPPER_BODY) || data.category == WearablesConstants.Categories.UPPER_BODY;
+            bool isOrHidesUpperBody = hideListResult.Contains(WearableCategories.Categories.UPPER_BODY) || data.category == WearableCategories.Categories.UPPER_BODY;
 
             // the rule is ignored if the wearable contains the removal of this default rule (newer upper bodies since the release of hands)
-            bool removesHandDefault = data.removesDefaultHiding?.Contains(WearablesConstants.Categories.HANDS) ?? false;
+            bool removesHandDefault = data.removesDefaultHiding?.Contains(WearableCategories.Categories.HANDS) ?? false;
 
             // why we do this? because old upper bodies contains the base hand mesh, and they might clip with the new handwear items
             if (isOrHidesUpperBody && !removesHandDefault)
-                hideListResult.UnionWith(WearablesConstants.UPPER_BODY_DEFAULT_HIDES);
+                hideListResult.UnionWith(WearableCategories.UPPER_BODY_DEFAULT_HIDES);
 
             string[]? replaces = GetReplacesList(bodyShapeType);
 
@@ -174,13 +174,13 @@ namespace DCL.AvatarRendering.Wearables.Components
         }
 
         private bool IsBodyShape() =>
-            GetCategory().Equals(WearablesConstants.Categories.BODY_SHAPE);
+            GetCategory().Equals(WearableCategories.Categories.BODY_SHAPE);
 
         private bool IsSkin() =>
-            GetCategory() == WearablesConstants.Categories.SKIN;
+            GetCategory() == WearableCategories.Categories.SKIN;
 
         private bool IsFacialFeature() =>
-            WearablesConstants.FACIAL_FEATURES.Contains(GetCategory());
+            WearableCategories.FACIAL_FEATURES.Contains(GetCategory());
 
         private AvatarAttachmentDTO.Representation? GetRepresentation(string bodyShapeType)
         {

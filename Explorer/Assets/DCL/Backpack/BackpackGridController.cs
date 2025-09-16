@@ -186,7 +186,7 @@ namespace DCL.Backpack
 
                 backpackItemView.IsCompatibleWithBodyShape = (currentBodyShape != null
                                                               && gridWearables[i].IsCompatibleWithBodyShape(currentBodyShape.GetUrn()))
-                                                             || gridWearables[i].GetCategory() == WearablesConstants.Categories.BODY_SHAPE;
+                                                             || gridWearables[i].GetCategory() == WearableCategories.Categories.BODY_SHAPE;
 
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, pageFetchCancellationToken!.Token).Forget();
@@ -333,7 +333,7 @@ namespace DCL.Backpack
                 backpackItemView.SetEquipButtonsState();
             }
 
-            if (equippedWearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
+            if (equippedWearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE)
             {
                 currentBodyShape = equippedWearable;
 
@@ -353,7 +353,7 @@ namespace DCL.Backpack
                 if (itemView == null) continue;
 
                 itemView.IsCompatibleWithBodyShape = wearable.IsCompatibleWithBodyShape(bodyShape.GetUrn())
-                                                     || wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE;
+                                                     || wearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE;
 
                 itemView.SetEquipButtonsState();
             }

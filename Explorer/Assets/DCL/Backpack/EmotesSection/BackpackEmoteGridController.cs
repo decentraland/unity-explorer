@@ -376,7 +376,7 @@ namespace DCL.Backpack.EmotesSection
 
         private void OnWearableEquipped(IWearable wearable)
         {
-            if (wearable.GetCategory() != WearablesConstants.Categories.BODY_SHAPE) return;
+            if (wearable.GetCategory() != WearableCategories.Categories.BODY_SHAPE) return;
 
             foreach (BodyShape bodyShape in BodyShape.VALUES)
             {

@@ -264,15 +264,15 @@ namespace DCL.PluginSystem.Global
             {
                 new (new Dictionary<string, Dictionary<int, Texture>>
                 {
-                    [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyesTexture },
-                    [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleMouthTexture },
-                    [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyebrowsTexture },
+                    [WearableCategories.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyesTexture },
+                    [WearableCategories.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleMouthTexture },
+                    [WearableCategories.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyebrowsTexture },
                 }),
                 new (new Dictionary<string, Dictionary<int, Texture>>
                 {
-                    [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyesTexture },
-                    [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleMouthTexture },
-                    [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyebrowsTexture },
+                    [WearableCategories.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyesTexture },
+                    [WearableCategories.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleMouthTexture },
+                    [WearableCategories.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyebrowsTexture },
                 }),
             };
         }

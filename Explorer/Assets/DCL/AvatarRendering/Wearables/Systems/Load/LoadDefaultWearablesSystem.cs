@@ -107,7 +107,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             replaces = Array.Empty<string>(),
                             hides = Array.Empty<string>(),
                             tags = new[] { "body", "male", "man", "base-wearable" },
-                            category = WearablesConstants.Categories.BODY_SHAPE,
+                            category = WearableCategories.Categories.BODY_SHAPE,
                             representations = new[]
                             {
                                 new AvatarAttachmentDTO.Representation
@@ -180,7 +180,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             replaces = Array.Empty<string>(),
                             hides = Array.Empty<string>(),
                             tags = new[] { "body", "female", "woman", "base-wearable" },
-                            category = WearablesConstants.Categories.BODY_SHAPE,
+                            category = WearableCategories.Categories.BODY_SHAPE,
                             representations = new[]
                             {
                                 new AvatarAttachmentDTO.Representation

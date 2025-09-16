@@ -86,13 +86,13 @@ namespace DCL.UI
         {
             switch (category)
             {
-                case WearablesConstants.Categories.EYES:
+                case WearableCategories.Categories.EYES:
                     eyesColor = newColor;
                     break;
-                case WearablesConstants.Categories.HAIR:
+                case WearableCategories.Categories.HAIR:
                     hairsColor = newColor;
                     break;
-                case WearablesConstants.Categories.BODY_SHAPE:
+                case WearableCategories.Categories.BODY_SHAPE:
                     bodyshapeColor = newColor;
                     break;
             }
@@ -100,21 +100,21 @@ namespace DCL.UI
 
         public void SetColorPickerStatus(string category)
         {
-            view.gameObject.SetActive(WearablesConstants.COLOR_PICKER_CATEGORIES.Contains(category));
+            view.gameObject.SetActive(WearableCategories.COLOR_PICKER_CATEGORIES.Contains(category));
             view.Container.SetActive(false);
             ClearPool();
             currentCategory = category;
             switch (category)
             {
-                case WearablesConstants.Categories.EYES:
+                case WearableCategories.Categories.EYES:
                     SetColors(eyesColors);
                     UpdateSliderValues(eyesColor);
                     break;
-                case WearablesConstants.Categories.HAIR:
+                case WearableCategories.Categories.HAIR:
                     SetColors(hairColors);
                     UpdateSliderValues(hairsColor);
                     break;
-                case WearablesConstants.Categories.BODY_SHAPE:
+                case WearableCategories.Categories.BODY_SHAPE:
                     SetColors(bodyshapeColors);
                     UpdateSliderValues(bodyshapeColor);
                     break;

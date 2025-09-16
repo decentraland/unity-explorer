@@ -121,13 +121,13 @@ namespace DCL.Backpack.CharacterPreview
         {
             switch (category)
             {
-                case WearablesConstants.Categories.EYES:
+                case WearableCategories.Categories.EYES:
                     previewAvatarModel.EyesColor = newColor;
                     break;
-                case WearablesConstants.Categories.HAIR:
+                case WearableCategories.Categories.HAIR:
                     previewAvatarModel.HairColor = newColor;
                     break;
-                case WearablesConstants.Categories.BODY_SHAPE:
+                case WearableCategories.Categories.BODY_SHAPE:
                     previewAvatarModel.SkinColor = newColor;
                     break;
             }
