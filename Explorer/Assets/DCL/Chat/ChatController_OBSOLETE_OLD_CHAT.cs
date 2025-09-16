@@ -341,8 +341,7 @@ namespace DCL.Chat
             //If there is no friends service (like in LSD) these two methods should not be invoked
             if (friendsServiceProxy.Configured)
             {
-                if (chatStorage != null)
-                    chatStorage.LoadAllChannelsWithoutMessages();
+                chatStorage?.LoadAllChannelsWithoutMessages();
 
                 var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
 

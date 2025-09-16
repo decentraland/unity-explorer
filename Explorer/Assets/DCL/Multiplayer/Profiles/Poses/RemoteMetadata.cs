@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using ECS;
@@ -77,7 +78,7 @@ namespace DCL.Multiplayer.Profiles.Poses
                     return;
 
                 IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
-                ISceneData? sceneInfo = sceneRoom.ConnectedScene;
+                MetaData? sceneInfo = sceneRoom.ConnectedScene;
                 if (sceneInfo == null) return;
 
                 SceneRoomMetadata message;
@@ -85,7 +86,7 @@ namespace DCL.Multiplayer.Profiles.Poses
                 try { message = JsonUtility.FromJson<SceneRoomMetadata>(participant.Metadata); }
                 catch (Exception) { return; }
 
-                ParticipantsOnUpdatesFromParticipant(participant, new IRemoteMetadata.ParticipantMetadata(sceneInfo.SceneShortInfo.BaseParcel, URLDomain.FromString(message.lambdasEndpoint)));
+                ParticipantsOnUpdatesFromParticipant(participant, new IRemoteMetadata.ParticipantMetadata(sceneInfo.Value.BaseParcel, URLDomain.FromString(message.lambdasEndpoint)));
             }
         }
 

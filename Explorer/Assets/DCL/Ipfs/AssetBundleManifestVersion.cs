@@ -112,8 +112,13 @@ public class AssetBundleManifestVersion
                 mac = new PlatformInfo(assetBundleManifestVersion, buildDate);
         }
 
-        public bool IsEmpty() =>
-            mac == null &&  windows == null;
+        public bool IsEmpty()
+        {
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+                return windows == null || string.IsNullOrEmpty(windows.version);
+
+            return mac == null || string.IsNullOrEmpty(mac.version);
+        }
     }
 
     public class PlatformInfo
