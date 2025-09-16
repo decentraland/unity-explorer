@@ -21,6 +21,14 @@ namespace CrdtEcsBridge.Components.Conversion
                 z = protoVector.Z,
             };
 
+        public static Decentraland.Common.Vector3 ToProtoVector(this Vector3 unityVector) =>
+            new ()
+            {
+                X = unityVector.x,
+                Y = unityVector.y,
+                Z = unityVector.z,
+            };
+
         public static Quaternion PBQuaternionToUnityQuaternion(Decentraland.Common.Quaternion protoQuaternion) =>
             new ()
             {
@@ -28,6 +36,15 @@ namespace CrdtEcsBridge.Components.Conversion
                 y = protoQuaternion.Y,
                 z = protoQuaternion.Z,
                 w = protoQuaternion.W,
+            };
+
+        public static Decentraland.Common.Quaternion ToProtoQuaternion(this Quaternion unityQuaternion) =>
+            new ()
+            {
+                X = unityQuaternion.x,
+                Y = unityQuaternion.y,
+                Z = unityQuaternion.z,
+                W = unityQuaternion.w,
             };
 
         public static Color PBColorToUnityColor(Color3 protoColor, float alphaValue = 1) =>

@@ -2,10 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
+using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using CrdtEcsBridge.Physics;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.TriggerArea.Components;
 using DCL.SDKComponents.Utils;
@@ -29,6 +32,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
         private readonly IComponentPool<PBTriggerAreaResult> triggerAreaResultPool;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IEntityCollidersSceneCache collidersSceneCache;
 
         public TriggerAreaHandlerSystem(
             World world,
@@ -36,13 +40,15 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IECSToCRDTWriter ecsToCRDTWriter,
             IComponentPool<PBTriggerAreaResult> triggerAreaResultPool,
-            ISceneStateProvider sceneStateProvider) : base(world)
+            ISceneStateProvider sceneStateProvider,
+            IEntityCollidersSceneCache collidersSceneCache) : base(world)
         {
             this.globalWorld = globalWorld;
             this.entitiesMap = entitiesMap;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.triggerAreaResultPool = triggerAreaResultPool;
             this.sceneStateProvider = sceneStateProvider;
+            this.collidersSceneCache = collidersSceneCache;
         }
 
         protected override void Update(float t)
@@ -62,74 +68,73 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
 
         [Query]
-        [All(typeof(TransformComponent))]
-        private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in PBTriggerArea pbTriggerArea, in CharacterTriggerAreaComponent triggerAreaComponent)
+        [All(typeof(PBTriggerArea))]
+        private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, in CharacterTriggerAreaComponent triggerAreaComponent)
         {
-            foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
+            foreach (Transform entityTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
             {
-                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
-
-                // TODO...
-                var resultComponent = triggerAreaResultPool.Get();
-                resultComponent.EventType = TriggerAreaEventType.TaetEnter;
-                resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
-                // resultComponent.Timestamp =
-                // resultComponent.TriggeredEntityPosition =
-                // resultComponent.TriggeredEntityRotation =
-                /*resultComponent.Trigger = new PBTriggerAreaResult.Types.Trigger()
-                {
-                    Entity = ,
-                    Layer = ,
-                    Position = ,
-                    Rotation = ,
-                    Scale =
-                }*/
-
-                PropagateResultComponent(triggerAreaCRDTEntity, resultComponent);
+                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+                    entityTransform, TriggerAreaEventType.TaetEnter);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
 
             // TODO: STAY...
             // TODO: Can we infer the "STAY" state when ENTER was received but not EXIT ???
 
-            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
+            foreach (Transform entityTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
             {
-                if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
-
-                // TODO...
-                var resultComponent = triggerAreaResultPool.Get();
-                resultComponent.EventType = TriggerAreaEventType.TaetExit;
-                resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
-                // resultComponent.Timestamp =
-                // resultComponent.TriggeredEntityPosition =
-                // resultComponent.TriggeredEntityRotation =
-                /*resultComponent.Trigger = new PBTriggerAreaResult.Types.Trigger()
-                {
-                    Entity = ,
-                    Layer = ,
-                    Position = ,
-                    Rotation = ,
-                    Scale =
-                }*/
-
-                PropagateResultComponent(triggerAreaCRDTEntity, resultComponent);
+                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+                    entityTransform, TriggerAreaEventType.TaetExit);
             }
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
         }
 
-        private void PropagateResultComponent(in CRDTEntity triggerAreaCRDTEntity, in PBTriggerAreaResult resultComponent)
+        private void PropagateResultComponent(in CRDTEntity triggerAreaCRDTEntity, Transform triggerAreaTransform,
+            Transform triggerEntityTransform, TriggerAreaEventType eventType)
         {
+            Entity avatarEntity = Entity.Null;
+            ColliderSceneEntityInfo entityInfo = default;
+            if (triggerEntityTransform.gameObject.layer == PhysicsLayers.CHARACTER_LAYER
+                || triggerEntityTransform.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
+            {
+                if (!TryGetAvatarEntity(triggerEntityTransform, out avatarEntity))
+                    return;
+            }
+
+            // TODO: Improve to avoid GetComponent...
+            if (avatarEntity == Entity.Null &&
+                !collidersSceneCache.TryGetEntity(triggerEntityTransform.GetComponent<Collider>(), out entityInfo))
+                return;
+
+            var resultComponent = triggerAreaResultPool.Get();
+            resultComponent.EventType = eventType;
+            resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
+            resultComponent.Timestamp = sceneStateProvider.TickNumber;
+            resultComponent.TriggeredEntityPosition = triggerAreaTransform.localPosition.ToProtoVector();
+            resultComponent.TriggeredEntityRotation = triggerAreaTransform.localRotation.ToProtoQuaternion();
+
+            // TODO: Pool this one as well ???
+            // TODO: Get Players CRDT Entities to to get their relative position, etc...
+            resultComponent.Trigger = new PBTriggerAreaResult.Types.Trigger()
+            {
+                Entity = avatarEntity == Entity.Null ? (uint)entityInfo.SDKEntity.Id : 99999999, // TODO: get scene CRDT Entity for player
+                Layer = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer,
+                Position = triggerEntityTransform.localPosition.ToProtoVector(),
+                Rotation = triggerEntityTransform.localRotation.ToProtoQuaternion(),
+                Scale = triggerEntityTransform.localScale.ToProtoVector(),
+            };
+
             ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>
             (
                 prepareMessage: static (pbTriggerAreaResult, data) =>
                 {
-                    pbTriggerAreaResult.TriggeredEntity = data.result.TriggeredEntity;
                     pbTriggerAreaResult.EventType = data.result.EventType;
+                    pbTriggerAreaResult.TriggeredEntity = data.result.TriggeredEntity;
+                    pbTriggerAreaResult.Timestamp = data.timestamp;
                     pbTriggerAreaResult.TriggeredEntityRotation = data.result.TriggeredEntityRotation;
                     pbTriggerAreaResult.TriggeredEntityPosition = data.result.TriggeredEntityPosition;
                     pbTriggerAreaResult.Trigger = data.result.Trigger;
 
-                    pbTriggerAreaResult.Timestamp = data.timestamp;
                 },
                 triggerAreaCRDTEntity, (int)sceneStateProvider.TickNumber, (resultComponent, sceneStateProvider.TickNumber)
             );
