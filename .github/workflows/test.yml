@@ -24,7 +24,7 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  UNITY_IMAGE_FLAVOR: ubuntu-il2cpp
+  UNITY_IMAGE_FLAVOR: ubuntu-mono
   UNITY_IMAGE_VERSION: 3      
   GHCR_IMAGE_NAME: unityci-editor
   
