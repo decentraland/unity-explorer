@@ -66,30 +66,22 @@ jobs:
           path: Explorer/Library
           key: Library-Explorer-Windows
 
-      - name: Clone Packages To Use Locally
-        env:
-          REPOS_READ_ONLY_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
-        run: |
-            git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com/decentraland/unity-explorer-packages.git
-            git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@@github.com:decentraland/unity-gltf.git
-            git clone -b fix/ssh-submodule https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com:decentraland/client-sdk-unity.git
-            $jsonFilePath = "Explorer/Packages/manifest.json"
-            (Get-Content $jsonFilePath) `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/FileBrowserPro', 'file:../../unity-explorer-packages/FileBrowserPro' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/RenderGraphs/RenderFeatures', 'file:../../unity-explorer-packages/RenderGraphs/RenderFeatures' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' `
-                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' `
-                -replace 'git@github.com:decentraland/client-sdk-unity.git#fix/ssh-submodule', 'file:../../client-sdk-unity' `
-                -replace 'git@github.com:decentraland/unity-gltf.git', 'file:../../unity-gltf' |
-                Set-Content $jsonFilePath
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-            Get-ChildItem
-            Get-Content $jsonFilePath
+      - name: Configure Private Repo Access
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          touch ~/.ssh/known_hosts
+          ssh-keyscan -t rsa github.com | tee github-key-temp | ssh-keygen -lf -
+          cat github-key-temp >> ~/.ssh/known_hosts
+          ssh-keyscan -t ed25519 github.com | tee github-key-temp | ssh-keygen -lf -
+          cat github-key-temp >> ~/.ssh/known_hosts
+          ssh-keyscan -t ecdsa github.com | tee github-key-temp | ssh-keygen -lf -
+          cat github-key-temp >> ~/.ssh/known_hosts
+          ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
@@ -167,6 +159,7 @@ jobs:
         with:
           projectPath: Explorer
           testMode: all
+          sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
 
       - name: Report test results
