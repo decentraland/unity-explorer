@@ -72,7 +72,6 @@ jobs:
 
       - name: Configure Private Repo Access
         run: |
-          mkdir -p ~/.ssh || true
           chmod 700 ~/.ssh
           touch ~/.ssh/known_hosts
           ssh-keyscan -t rsa github.com | tee github-key-temp | ssh-keygen -lf -
