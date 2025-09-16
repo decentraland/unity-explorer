@@ -65,10 +65,8 @@ namespace DCL.UI.SharedSpaceManager
 
         private void OnQuickActionEmotePlayed()
         {
-            if (registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace)
-                return;
-            
-            lastQuickEmoteTime = Time.time;
+            if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace) 
+                lastQuickEmoteTime = Time.time;
         }
 
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
