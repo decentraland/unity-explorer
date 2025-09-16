@@ -362,12 +362,10 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityDescriptionCharCounter.gameObject.SetActive(false);
         }
 
-        private void UpdateCreateButtonAvailability()
-        {
+        private void UpdateCreateButtonAvailability() =>
             creationPanelCreateButton.interactable =
-                !string.IsNullOrEmpty(creationPanelCommunityNameInputField.text) &&
-                !string.IsNullOrEmpty(creationPanelCommunityDescriptionInputField.text);
-        }
+                !string.IsNullOrEmpty(creationPanelCommunityNameInputField.text) && !string.IsNullOrWhiteSpace(creationPanelCommunityNameInputField.text) &&
+                !string.IsNullOrEmpty(creationPanelCommunityDescriptionInputField.text) && !string.IsNullOrWhiteSpace(creationPanelCommunityDescriptionInputField.text);
 
         private void OpenContentPolicyAndCodeOfEthicsLink(string id) =>
             ContentPolicyAndCodeOfEthicsLinksClicked?.Invoke(id);
