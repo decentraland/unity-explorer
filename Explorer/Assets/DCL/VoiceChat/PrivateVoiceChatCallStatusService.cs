@@ -18,13 +18,13 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(PrivateVoiceChatCallStatusService);
         public IReadonlyReactiveProperty<VoiceChatStatus> Status => status;
-        IReadonlyReactiveProperty<string> IVoiceChatCallStatusServiceBase.CallId => callId1;
+        IReadonlyReactiveProperty<string> IVoiceChatCallStatusServiceBase.CallId => callId;
         string IVoiceChatCallStatusServiceBase.ConnectionUrl => connectionUrl;
 
         private readonly IVoiceService voiceChatService;
         private CancellationTokenSource cts;
         private readonly ReactiveProperty<VoiceChatStatus> status = new (VoiceChatStatus.DISCONNECTED);
-        private readonly ReactiveProperty<string> callId1 = new (string.Empty);
+        private readonly ReactiveProperty<string> callId = new (string.Empty);
         private string connectionUrl = string.Empty;
 
         public string CurrentTargetWallet { get; private set; } = string.Empty;
@@ -43,7 +43,7 @@ namespace DCL.VoiceChat
 
         public void SetCallId(string newCallId)
         {
-            callId1.Value = newCallId;
+            callId.Value = newCallId;
         }
 
         public void Dispose()
@@ -166,7 +166,7 @@ namespace DCL.VoiceChat
             cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
 
-            AcceptCallAsync(callId1.Value, cts.Token).Forget();
+            AcceptCallAsync(callId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid AcceptCallAsync(string callId, CancellationToken ct)
@@ -198,7 +198,7 @@ namespace DCL.VoiceChat
 
             cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
-            HangUpAsync(callId1.Value, cts.Token).Forget();
+            HangUpAsync(callId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid HangUpAsync(string callId, CancellationToken ct)
@@ -232,7 +232,7 @@ namespace DCL.VoiceChat
             cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
 
-            RejectCallAsync(callId1.Value, cts.Token).Forget();
+            RejectCallAsync(callId.Value, cts.Token).Forget();
             return;
 
             async UniTaskVoid RejectCallAsync(string callId, CancellationToken ct)
