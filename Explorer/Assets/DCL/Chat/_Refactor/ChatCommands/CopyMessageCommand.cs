@@ -23,7 +23,7 @@ namespace DCL.Chat.ChatCommands
         {
             // The presenter's 'this' context isn't needed for the core copy functionality.
             // If sanitization is required, it can be added here.
-            clipboardManager.Copy(sender, textToCopy);
+            clipboardManager.CopyAndSanitize(sender, textToCopy);
         }
     }
 }
