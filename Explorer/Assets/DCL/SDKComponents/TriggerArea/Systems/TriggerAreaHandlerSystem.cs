@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
         [Query]
         [All(typeof(PBTriggerArea))]
-        private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, in CharacterTriggerAreaComponent triggerAreaComponent)
+        private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
             foreach (Transform entityTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
             {
@@ -144,7 +144,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(DeleteEntityIntention), typeof(PBTriggerArea), typeof(SDKTriggerAreaComponent))]
         private void HandleEntityDestruction(Entity entity)
         {
-            OnExitedArea();
+            // OnExitedArea();
             // activeAreas.Remove(entity);
         }
 
@@ -153,36 +153,9 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(SDKTriggerAreaComponent))]
         private void HandleComponentRemoval(Entity entity)
         {
-            OnExitedArea();
+            // OnExitedArea();
             // activeAreas.Remove(entity);
             World.Remove<SDKTriggerAreaComponent>(entity);
-        }
-
-        internal void OnEnteredArea()
-        {
-            // if (globalWorld.Has<InWorldCameraComponent>(cameraEntityProxy.Object))
-            //     globalWorld.Add(cameraEntityProxy.Object, new ToggleInWorldCameraRequest { IsEnable = false, TargetCameraMode = targetCameraMode});
-            //
-            // ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
-            //
-            // cameraModeBeforeLastAreaEnter = camera.Mode;
-            // camera.Mode = targetCameraMode;
-            // camera.AddCameraInputLock();
-            //
-            // sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
-        }
-
-        internal void OnExitedArea()
-        {
-            // ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
-            //
-            // camera.RemoveCameraInputLock();
-            //
-            // // If there are more locks then there is another newer camera mode area in place
-            // if (camera.CameraInputChangeEnabled)
-            //     camera.Mode = cameraModeBeforeLastAreaEnter == CameraMode.InWorld? CameraMode.ThirdPerson : cameraModeBeforeLastAreaEnter;
-            //
-            // sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
         }
 
         [Query]
