@@ -17,7 +17,10 @@ using Utility;
 
 namespace DCL.Landscape
 {
-    public class WorldTerrainGenerator : IDisposable, IContainParcel
+    /// <summary>
+    ///     Based on the old terrain
+    /// </summary>
+    public class WorldTerrainGenerator : IDisposable, ITerrain
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
@@ -63,6 +66,9 @@ namespace DCL.Landscape
 
             return false;
         }
+
+        public float GetHeight(float x, float z) =>
+            Physics.Raycast(new Vector3(x, 100, z), Vector3.down, out RaycastHit hit) ? hit.point.y : z;
 
         public void Initialize(TerrainGenerationData terrainGenData, ITerrainDetailSetter detailSetter)
         {

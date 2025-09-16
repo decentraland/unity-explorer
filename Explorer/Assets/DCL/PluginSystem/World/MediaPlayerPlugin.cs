@@ -19,6 +19,7 @@ using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Audio;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -31,7 +32,7 @@ namespace DCL.PluginSystem.World
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
         private readonly ExposedCameraData exposedCameraData;
         private readonly ObjectProxy<IRoomHub> roomHub;
         private MediaPlayer mediaPlayerPrefab;
@@ -43,7 +44,7 @@ namespace DCL.PluginSystem.World
             IAssetsProvisioner assetsProvisioner,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             ExposedCameraData exposedCameraData,
             ObjectProxy<IRoomHub> roomHub)
         {
@@ -52,7 +53,7 @@ namespace DCL.PluginSystem.World
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.cacheCleaner = cacheCleaner;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
             this.exposedCameraData = exposedCameraData;
             this.roomHub = roomHub;
         }
@@ -61,7 +62,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, finalizeWorldSystems);
+            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, finalizeWorldSystems, sceneIsCurrentListeners);
         }
 
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
@@ -74,7 +75,7 @@ namespace DCL.PluginSystem.World
                 videoTexturePool,
                 frameTimeBudget,
                 mediaPlayerPrefab,
-                worldVolumeMacBus,
+                volumeBus,
                 exposedCameraData,
                 settings.FadeSpeed,
                 settings.VideoPrioritizationSettings,

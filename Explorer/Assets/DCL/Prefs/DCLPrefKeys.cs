@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace DCL.Prefs
 {
     public static class DCLPrefKeys
@@ -47,6 +49,7 @@ namespace DCL.Prefs
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
         public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
+        public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
         public const string SETTINGS_UPSCALER = "Settings_Upscaler";
 
         public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
@@ -58,5 +61,7 @@ namespace DCL.Prefs
 
         public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
         public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
+        
+        public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";
     }
 }
