@@ -5,7 +5,6 @@ using DCL.Profiles.Self;
 using DCL.SceneBannedUsers;
 using DCL.SceneBannedUsers.Systems;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -14,24 +13,21 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IRoomHub roomHub;
         private readonly ISelfProfile selfProfile;
-        private readonly IRealmNavigator realmNavigator;
         private readonly ECSBannedScene bannedSceneController;
 
         public BannedUsersPlugin(
             IRoomHub roomHub,
             ISelfProfile selfProfile,
-            IRealmNavigator realmNavigator,
             ECSBannedScene bannedSceneController)
         {
             this.roomHub = roomHub;
             this.selfProfile = selfProfile;
-            this.realmNavigator = realmNavigator;
             this.bannedSceneController = bannedSceneController;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, selfProfile, realmNavigator, bannedSceneController));
+            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, selfProfile, bannedSceneController));
             return UniTask.CompletedTask;
         }
 

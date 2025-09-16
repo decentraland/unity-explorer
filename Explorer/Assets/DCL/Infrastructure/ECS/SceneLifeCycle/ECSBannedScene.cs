@@ -27,6 +27,9 @@ namespace ECS.SceneLifeCycle
 
         public async UniTask SetCurrentSceneAsBannedAsync(CancellationToken ct)
         {
+            RemoveAllBannedComponents();
+
+            await UniTask.SwitchToMainThread(ct);
             var parcel = world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
             if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache))
                 return;
@@ -35,7 +38,6 @@ namespace ECS.SceneLifeCycle
             if (foundEntity == Entity.Null)
                 return;
 
-            RemoveAllBannedComponents();
             world.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(foundEntity);
             world.Add<DeleteEntityIntention>(foundEntity);
             world.Add<BannedSceneComponent>(foundEntity);

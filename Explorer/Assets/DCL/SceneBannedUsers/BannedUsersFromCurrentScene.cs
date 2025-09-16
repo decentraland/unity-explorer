@@ -3,8 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles.Self;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
 using LiveKit.Proto;
+using LiveKit.Rooms;
 using Newtonsoft.Json;
 using System;
 using System.Threading;
@@ -19,23 +19,21 @@ namespace DCL.SceneBannedUsers
         private readonly IRoomHub roomHub;
         private readonly ISelfProfile selfProfile;
         private readonly ECSBannedScene bannedSceneController;
-        private readonly IRealmNavigator realmNavigator;
 
         private CancellationTokenSource checkIfPlayerIsBannedCts;
 
         public BannedUsersFromCurrentScene(
             IRoomHub roomHub,
             ISelfProfile selfProfile,
-            IRealmNavigator realmNavigator,
             ECSBannedScene bannedSceneController)
         {
             this.roomHub = roomHub;
             this.selfProfile = selfProfile;
-            this.realmNavigator = realmNavigator;
             this.bannedSceneController = bannedSceneController;
 
-            roomHub.IslandRoom().ConnectionStateChanged += OnConnectionStateChanged;
-            roomHub.SceneRoom().Room().ConnectionStateChanged += OnConnectionStateChanged;
+            //roomHub.IslandRoom().ConnectionStateChanged += OnConnectionStateChanged;
+            //roomHub.SceneRoom().Room().ConnectionStateChanged += OnConnectionStateChanged;
+            roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdated;
             roomHub.SceneRoom().Room().RoomMetadataChanged += OnRoomMetadataChanged;
         }
 
@@ -44,7 +42,7 @@ namespace DCL.SceneBannedUsers
             if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
                 return false;
 
-            Debug.Log($"SANTI LOG -> ROOM METADATA: [{roomHub.SceneRoom().Room().Info.Metadata}]");
+            Debug.Log($"SANTI LOG -> IsUserBanned() -> ROOM METADATA: [{roomHub.SceneRoom().Room().Info.Metadata}]");
 
             // TODO: Remove it!!
             return true;
@@ -75,6 +73,23 @@ namespace DCL.SceneBannedUsers
             CheckIfPlayerIsBannedAsync(checkIfPlayerIsBannedCts.Token).Forget();
         }
 
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        {
+            Debug.Log($"SANTI LOG -> connection state updated: [{room.Info.Sid}] [{connectionUpdate.ToString()}]");
+
+            if (connectionUpdate == ConnectionUpdate.Connected)
+            {
+                checkIfPlayerIsBannedCts = checkIfPlayerIsBannedCts.SafeRestart();
+                CheckIfPlayerIsBannedAsync(checkIfPlayerIsBannedCts.Token).Forget();
+            }
+            else
+            {
+                Debug.Log("SANTI LOG -> ALL BANNED COMPONENTS REMOVED");
+                checkIfPlayerIsBannedCts.SafeCancelAndDispose();
+                bannedSceneController.RemoveAllBannedComponents();
+            }
+        }
+
         private void OnRoomMetadataChanged(string metaData)
         {
             Debug.Log($"SANTI LOG -> OnRoomMetadataChanged: [{metaData}]");
@@ -90,15 +105,8 @@ namespace DCL.SceneBannedUsers
 
             if (IsUserBanned(ownProfile.UserId))
             {
-                //realmNavigator.TeleportToParcelAsync(Vector2Int.zero, ct, false).Forget();
-
                 Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [BANNED]");
                 bannedSceneController.SetCurrentSceneAsBannedAsync(ct).Forget();
-            }
-            else
-            {
-                Debug.Log("SANTI LOG -> ALL BANNED COMPONENTS REMOVED");
-                bannedSceneController.RemoveAllBannedComponents();
             }
         }
     }

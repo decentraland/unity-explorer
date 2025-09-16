@@ -908,7 +908,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new BannedUsersPlugin(roomHub, selfProfile, realmNavigator, bannedSceneController),
+                new BannedUsersPlugin(roomHub, selfProfile, bannedSceneController),
             };
 
             if (includeVoiceChat)
