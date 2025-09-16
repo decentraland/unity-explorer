@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace DCL.VoiceChat
 {
-    public interface ICommunityVoiceChatCallStatusService
+    public interface ICommunityVoiceChatCallStatusService : IVoiceChatCallStatusServiceBase
     {
         bool HasActiveVoiceChatCall(string communityId);
 
@@ -27,5 +27,8 @@ namespace DCL.VoiceChat
         void DemoteFromSpeakerInCurrentCall(string walletId);
 
         void KickPlayerFromCurrentCall(string walletId);
+        void DenySpeakerInCurrentCall(string walletId);
+        void LowerHandInCurrentCall();
+        void EndStreamInCurrentCall();
     }
 }

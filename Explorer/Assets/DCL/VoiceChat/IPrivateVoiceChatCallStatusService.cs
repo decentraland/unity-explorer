@@ -7,10 +7,13 @@ namespace DCL.VoiceChat
     /// <summary>
     /// Interface for private voice chat call status service that exposes private call specific properties
     /// </summary>
-    public interface IPrivateVoiceChatCallStatusService
+    public interface IPrivateVoiceChatCallStatusService : IVoiceChatCallStatusServiceBase
     {
         string CurrentTargetWallet { get; }
-        
         event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
+
+        void AcceptCall();
+        void RejectCall();
+        void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update);
     }
 }
