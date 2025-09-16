@@ -3,9 +3,9 @@ using System.Text;
 using UnityEngine;
 using Random = System.Random;
 
-namespace DCL.Profiles.Helpers
+namespace DCL.Utilities
 {
-    public static class ProfileNameColorHelper
+    public static class NameColorHelper
     {
         private static readonly Color DEFAULT_COLOR = Color.white;
         private static List<Color> nameColors;
