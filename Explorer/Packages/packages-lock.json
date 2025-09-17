@@ -92,7 +92,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "fb650cc3ec25353400ef801b8a67a41a1225d680"
+      "hash": "0e77b1c83047f3e9f7413a8cef47d25f5276575f"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -120,6 +120,13 @@
       "source": "registry",
       "dependencies": {},
       "url": "https://package.openupm.com"
+    },
+    "com.nickkhalow.chrome-devtool-protocol-unity": {
+      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "d254397fd38f65446129a44b4ad72de0c8213137"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
@@ -239,7 +246,7 @@
       "dependencies": {}
     },
     "com.unity.ide.rider": {
-      "version": "3.0.36",
+      "version": "3.0.37",
       "depth": 0,
       "source": "registry",
       "dependencies": {
