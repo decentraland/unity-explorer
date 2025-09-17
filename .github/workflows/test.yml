@@ -42,10 +42,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          lfs: true
           submodules: recursive
 
       - name: Create LFS file list
-        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+        run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
 
       - name: Restore LFS cache
         uses: actions/cache@v4
@@ -65,19 +67,17 @@ jobs:
         with:
           path: Explorer/Library
           key: Library-Explorer-Ubuntu
+          
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          mkdir -p -m 0700 /home/runner/.ssh
+          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
+          chmod 600 /home/runner/.ssh/known_hosts
 
       - uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Configure Private Repo Access
-        run: |
-          chmod 700 ~/.ssh
-          touch ~/.ssh/known_hosts
-          ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
-          ssh-keyscan -t ecdsa github.com >> ~/.ssh/known_hosts
-
+          
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version
@@ -146,6 +146,8 @@ jobs:
         id: testRunner
         timeout-minutes: 80
         continue-on-error: true
+        env:
+          SHELL: /bin/bash
         with:
           projectPath: Explorer
           testMode: all
