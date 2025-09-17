@@ -193,23 +193,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private static IRoom CreateFreshRoom()
         {
             var hub = new ParticipantsHub();
-            var videoStreams = new VideoStreams(hub);
-            var audioRemixConveyor = new ThreadedAudioRemixConveyor();
-            var audioStreams = new AudioStreams(hub, audioRemixConveyor);
-            var tracksFactory = new TracksFactory();
 
             var newRoom = new Room(
                 new ArrayMemoryPool(),
                 new DefaultActiveSpeakers(),
                 hub,
-                tracksFactory,
+                new TracksFactory(),
                 new FfiHandleFactory(),
                 new ParticipantFactory(),
                 new TrackPublicationFactory(),
                 new DataPipe(),
                 new MemoryRoomInfo(),
-                videoStreams,
-                audioStreams,
+                new VideoStreams(hub),
+                new AudioStreams(hub),
                 null!
             );
 

@@ -69,27 +69,22 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             roomPool = new ObjectPool<IRoom>(() =>
             {
-                var hub = new ParticipantsHub();
-                var videoStreams = new VideoStreams(hub);
-
-                var audioRemixConveyor = new ThreadedAudioRemixConveyor();
-                var audioStreams = new AudioStreams(hub, audioRemixConveyor);
-                var tracksFactory = new TracksFactory();
+                ParticipantsHub hub = new ();
 
                 // Pass null for AudioTracks - Room constructor will create it automatically
                 Room origin = new Room(
                     new ArrayMemoryPool(),
                     new DefaultActiveSpeakers(),
                     hub,
-                    tracksFactory,
+                    new TracksFactory(),
                     new FfiHandleFactory(),
                     new ParticipantFactory(),
                     new TrackPublicationFactory(),
                     new DataPipe(),
                     new MemoryRoomInfo(),
-                    videoStreams,
-                    audioStreams,
-                    null!
+                    new VideoStreams(hub),
+                    new AudioStreams(hub),
+                    null
                 );
 
                 return new LogRoom(origin, logPrefix);
