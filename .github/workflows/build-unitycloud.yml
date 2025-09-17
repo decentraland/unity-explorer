@@ -363,34 +363,46 @@ jobs:
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
 
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
       - name: Enforce artifact size budget
         id: size_check
         env:
           MAX_MACOS_MB: 395
           MAX_WINDOWS64_MB: 325
 
-          DELTA_MACOS_MB:    ${{ github.event.inputs.delta_threshold_macos_mb || inputs.delta_threshold_macos_mb || '0' }}
-          DELTA_WINDOWS_MB:  ${{ github.event.inputs.delta_threshold_windows_mb || inputs.delta_threshold_windows_mb || '0' }}
+          # Per-platform delta thresholds (MB); 0 = disabled
+          DELTA_MACOS_MB:   ${{ github.event.inputs.delta_threshold_macos_mb || inputs.delta_threshold_macos_mb || '0' }}
+          DELTA_WINDOWS_MB: ${{ github.event.inputs.delta_threshold_windows_mb || inputs.delta_threshold_windows_mb || '0' }}
 
+          # Enforcement toggles (when true => FAIL build)
           ENFORCE_DELTA: ${{ github.event.inputs.enforce_delta || inputs.enforce_delta || false }}
-          ENFORCE_CAP:   ${{ github.event.inputs.enforce_cap || inputs.enforce_cap || false }}
+          ENFORCE_CAP:   ${{ github.event.inputs.enforce_cap   || inputs.enforce_cap   || false }}
 
           REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+
           FILE="upload_to_s3/${{ env.artifact_name }}.zip"
+
+          echo "=== Artifact to check ==="
+          echo "artifact_name=${{ env.artifact_name }}"
+          echo "matrix.target=${{ matrix.target }}"
+          echo "pwd=$(pwd)"
+          echo "Exists? $( [ -f "$FILE" ] && echo yes || echo no )"
+          ls -la upload_to_s3 || true
 
           if [ ! -f "$FILE" ]; then
             echo "::error::Artifact zip not found: $FILE"
             exit 1
           fi
 
-          # Current size (ceil MB)
           BYTES=$(stat -c%s "$FILE" 2>/dev/null || stat -f%z "$FILE")
           MB=$(( (BYTES + 1000000 - 1) / 1000000 ))
 
-          # Pick per-platform cap and delta
+          # Pick per-platform cap and delta threshold
           case "${{ matrix.target }}" in
             macos)
               MAX=$MAX_MACOS_MB
@@ -401,55 +413,59 @@ jobs:
               MAX_DELTA_MB=$DELTA_WINDOWS_MB
               ;;
             *)
-              echo "::warning::Unknown target '${{ matrix.target }}' — skipping thresholds."
+              echo "::warning::Unknown target '${{ matrix.target }}' — no cap or delta applied."
               MAX=0
               MAX_DELTA_MB=0
               ;;
           esac
 
-          # Baseline lookup from latest GitHub Release
-          BASELINE_NAME="${{ env.artifact_name }}.zip"
-          API_URL="https://api.github.com/repos/$REPO/releases/latest"
+          echo "Cap for target=${{ matrix.target }} => ${MAX:-0} MB"
+          echo "Delta threshold for target=${{ matrix.target }} => ${MAX_DELTA_MB:-0} MB"
 
+          # ---------- Baseline lookup (latest release) ----------
+          BASELINE_NAME="${{ env.artifact_name }}.zip"
+          API_LATEST="https://api.github.com/repos/$REPO/releases/latest"
           echo "=== Baseline lookup ==="
           echo "Repo: $REPO"
           echo "Artifact (baseline target): $BASELINE_NAME"
-          echo "API URL: $API_URL"
+          echo "Latest release API: $API_LATEST"
 
-          # Fetch JSON
-          RELEASE_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" "$API_URL")
-
-          # Log status
+          RELEASE_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" "$API_LATEST")
           if [ -z "$RELEASE_JSON" ]; then
-            echo "::warning::No JSON received from GitHub API"
+            echo "::warning::No JSON returned from $API_LATEST"
+          fi
+          echo "Latest JSON bytes: $(echo "$RELEASE_JSON" | wc -c)"
+
+          # Extract with jq (robust)
+          ASSETS_URL=$(echo "$RELEASE_JSON" | jq -r '.assets_url // empty')
+          RELEASE_TAG=$(echo "$RELEASE_JSON" | jq -r '.tag_name // empty')
+          RELEASE_URL=$(echo "$RELEASE_JSON" | jq -r '.html_url // empty')
+
+          echo "assets_url: ${ASSETS_URL:-<empty>}"
+          echo "release_tag: ${RELEASE_TAG:-<empty>}"
+          echo "release_url: ${RELEASE_URL:-<empty>}"
+
+          BYTES_BASE=""
+          if [ -n "${ASSETS_URL:-}" ]; then
+            ASSETS_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" "$ASSETS_URL")
+            echo "Assets JSON bytes: $(echo "$ASSETS_JSON" | wc -c)"
+            # Find exact asset name and get size
+            BYTES_BASE=$(echo "$ASSETS_JSON" | jq -r --arg NAME "$BASELINE_NAME" '.[] | select(.name==$NAME) | .size // empty')
           else
-            echo "GitHub API returned $(echo "$RELEASE_JSON" | wc -c) bytes"
-            echo "First 20 lines of JSON:"
-            echo "$RELEASE_JSON" | head -20
+            echo "::notice::No assets_url found in latest release payload."
           fi
 
-          # Extract fields (guard against grep/sed failure)
-          set +o pipefail
-          BYTES_BASE=$(echo "$RELEASE_JSON" | grep -A6 -F "\"name\": \"${BASELINE_NAME}\"" \
-                        | grep -m1 '"size":' | sed 's/[^0-9]//g')
-          RELEASE_TAG=$(echo "$RELEASE_JSON" | grep -m1 '"tag_name":' \
-                        | sed -E 's/.*"([^"]+)".*/\1/')
-          RELEASE_URL=$(echo "$RELEASE_JSON" | grep -m1 '"html_url":' \
-                        | sed -E 's/.*"([^"]+)".*/\1/')
-          set -o pipefail
-
           echo "Parsed BYTES_BASE=${BYTES_BASE:-<empty>}"
-          echo "Parsed RELEASE_TAG=${RELEASE_TAG:-<empty>}"
-          echo "Parsed RELEASE_URL=${RELEASE_URL:-<empty>}"
 
           BASELINE_FOUND=false
           if [ -n "${BYTES_BASE:-}" ]; then
             MB_BASE=$(( (BYTES_BASE + 1000000 - 1) / 1000000 ))
             BASELINE_FOUND=true
-            echo "Baseline found: $MB_BASE MB from release $RELEASE_TAG"
+            echo "Baseline found: $MB_BASE MB from release ${RELEASE_TAG:-<unknown>}"
           else
             echo "::notice::No baseline asset named '$BASELINE_NAME' found on latest release."
           fi
+          # ---------- End baseline lookup ----------
 
           # Delta
           DELTA_MB="N/A"
@@ -461,11 +477,10 @@ jobs:
             }')
           fi
 
-          # Flags
+          # Checks
           CAP_EXCEEDED=false
           DELTA_EXCEEDED=false
 
-          # Cap check
           if [ "${MAX:-0}" -gt 0 ] && [ "$MB" -gt "$MAX" ]; then
             CAP_EXCEEDED=true
             if [ "${ENFORCE_CAP}" = "true" ]; then
@@ -475,7 +490,6 @@ jobs:
             fi
           fi
 
-          # Delta check
           if $BASELINE_FOUND && [ "${MAX_DELTA_MB:-0}" -gt 0 ]; then
             ABS_DELTA_MB=${DELTA_MB#-}
             if [ "$ABS_DELTA_MB" -gt "$MAX_DELTA_MB" ]; then
@@ -486,6 +500,8 @@ jobs:
                 echo "::warning::Δ ${DELTA_MB} MB vs ${RELEASE_TAG} exceeds threshold ${MAX_DELTA_MB} MB"
               fi
             fi
+          elif [ "$BASELINE_FOUND" = false ] && [ "${MAX_DELTA_MB:-0}" -gt 0 ]; then
+            echo "::notice::Delta threshold set (${MAX_DELTA_MB} MB) but no baseline found; delta check skipped."
           fi
 
           # Summary
@@ -500,13 +516,13 @@ jobs:
             if $BASELINE_FOUND; then
               echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | $DELTA_MB | $DELTA_PCT | ${MAX_DELTA_MB:-0} | ${RESULT} |"
               echo
-              echo "- Baseline: **$RELEASE_TAG** (${MB_BASE} MB) — $RELEASE_URL"
+              echo "- Baseline: **${RELEASE_TAG:-unknown}** (${MB_BASE} MB) — ${RELEASE_URL:-N/A}"
             else
               echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | N/A | N/A | ${MAX_DELTA_MB:-0} | ${RESULT} |"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # Fail the build if enforce flags are set and thresholds exceeded
+          # Enforce (fail the job) only if toggles are true
           if [ "$CAP_EXCEEDED" = true ] && [ "${ENFORCE_CAP}" = "true" ]; then
             exit 1
           fi
