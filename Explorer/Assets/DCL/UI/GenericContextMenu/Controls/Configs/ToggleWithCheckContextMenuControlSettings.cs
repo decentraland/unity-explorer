@@ -18,5 +18,18 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         {
             this.toggleGroup = toggleGroup;
         }
+
+        public ToggleWithCheckContextMenuControlSettings(string toggleText,
+            Action<bool> toggleAction,
+            Sprite toggleIcon,
+            ToggleGroup toggleGroup = null,
+            RectOffset horizontalLayoutPadding = null,
+            int horizontalLayoutSpacing = 30,
+            bool horizontalLayoutReverseArrangement = false,
+            Color iconColor = default)
+            : base(toggleText, toggleAction, toggleIcon, horizontalLayoutPadding, horizontalLayoutSpacing, horizontalLayoutReverseArrangement, iconColor)
+        {
+            this.toggleGroup = toggleGroup;
+        }
     }
 }
