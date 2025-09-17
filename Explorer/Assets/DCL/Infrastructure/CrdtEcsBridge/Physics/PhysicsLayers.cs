@@ -46,6 +46,9 @@ namespace CrdtEcsBridge.Physics
         public static bool LayerMaskContainsTargetLayer(uint layerMask, ColliderLayer targetLayer) =>
             LayerMaskContainsTargetLayer(layerMask, (uint)targetLayer);
 
+        public static bool LayerMaskContainsTargetLayer(ColliderLayer layerMask, ColliderLayer targetLayer) =>
+            LayerMaskContainsTargetLayer((uint)layerMask, (uint)targetLayer);
+
         public static int CreateUnityLayerMaskFromSDKMask(ColliderLayer sdkMask)
         {
             int unityLayerMask = (1 << CHARACTER_LAYER) | (1 << DEFAULT_LAYER);

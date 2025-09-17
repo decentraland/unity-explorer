@@ -68,8 +68,8 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 new SDKEntityTriggerAreaComponent(
                     areaSize: Vector3.zero,
                     targetOnlyMainPlayer: false,
-                    meshType: (SDKEntityTriggerAreaMeshType)pbTriggerArea.Mesh,
-                    layerMask: pbTriggerArea.CollisionMask));
+                    meshType: (SDKEntityTriggerAreaMeshType)pbTriggerArea.GetMeshType(),
+                    layerMask: pbTriggerArea.GetColliderLayer()));
         }
 
         [Query]
@@ -95,7 +95,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
 
         private void PropagateResultComponent(in CRDTEntity triggerAreaCRDTEntity, Transform triggerAreaTransform,
-            Transform triggerEntityTransform, TriggerAreaEventType eventType, uint areaLayerMask)
+            Transform triggerEntityTransform, TriggerAreaEventType eventType, ColliderLayer areaLayerMask)
         {
             Entity avatarEntity = Entity.Null;
             ColliderSceneEntityInfo entityInfo = default;

@@ -24,7 +24,7 @@ namespace DCL.SDKEntityTriggerArea.Components
 
         public Vector3 AreaSize { get; private set; }
         public SDKEntityTriggerAreaMeshType MeshType { get; private set; }
-        public uint LayerMask { get; private set; }
+        public ColliderLayer LayerMask { get; private set; }
         public bool IsDirty { get; set; }
 
         public readonly IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => hasMonoBehaviour
@@ -44,7 +44,7 @@ namespace DCL.SDKEntityTriggerArea.Components
             bool targetOnlyMainPlayer = false,
             SDKEntityTriggerArea? monoBehaviour = null,
             SDKEntityTriggerAreaMeshType meshType = SDKEntityTriggerAreaMeshType.BOX,
-            uint layerMask = (int)ColliderLayer.ClPlayer)
+            ColliderLayer layerMask = ColliderLayer.ClPlayer)
         {
             AreaSize = areaSize;
             this.MeshType = meshType;
