@@ -76,7 +76,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                     videoStreams,
                     audioStreams,
                     null
-                )
+                ),
+                "Chat"
             );
         }
 

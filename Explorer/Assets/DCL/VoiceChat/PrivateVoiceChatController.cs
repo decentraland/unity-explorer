@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Proto;
