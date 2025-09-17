@@ -64,7 +64,7 @@ namespace DCL.Chat.ChatStates
         }
 
         private void PropagateStateChange() =>
-            MainController.stateBus.InvokeStateChanged(MainController);
+            MainController.stateBus.InvokeStateChanged(fsm.CurrentState);
 
         public void OnViewShow()
         {

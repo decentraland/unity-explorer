@@ -4,9 +4,9 @@ namespace DCL.Chat.ChatStates
 {
     public class ChatStateBus
     {
-        public event Action<ChatMainController>? StateChanged;
+        public event Action<ChatState>? StateChanged;
 
-        internal void InvokeStateChanged(ChatMainController controller) =>
-            StateChanged?.Invoke(controller);
+        internal void InvokeStateChanged(ChatState currentState) =>
+            StateChanged?.Invoke(currentState);
     }
 }

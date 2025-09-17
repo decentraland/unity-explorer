@@ -123,8 +123,8 @@ namespace DCL.UI.Sidebar
             chatStateBus.StateChanged -= OnChatStateChanged;
         }
 
-        private void OnChatStateChanged(ChatMainController chatController) =>
-            OnChatViewFoldingChanged(chatController.IsVisibleInSharedSpace);
+        private void OnChatStateChanged(ChatState currentState) =>
+            OnChatViewFoldingChanged(currentState is not HiddenChatState && currentState is not MinimizedChatState);
 
         protected override void OnViewInstantiated()
         {
