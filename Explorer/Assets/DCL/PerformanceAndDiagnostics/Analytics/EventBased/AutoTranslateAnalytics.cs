@@ -68,16 +68,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnAutoTranslateToggled(TranslationEvents.ConversationAutoTranslateToggled evt)
         {
             ChatChannel.ChatChannelType scope = ResolveScope(evt.ConversationId);
-            string receiverId = scope == ChatChannel.ChatChannelType.USER ? evt.ConversationId : "NULL";
-            string communityId = scope == ChatChannel.ChatChannelType.COMMUNITY ? evt.ConversationId : "NULL";
 
             var props = new JsonObject
             {
                 { "enabled", evt.IsEnabled },
                 { "scope", scope.ToString() },
-                { "receiver_id", receiverId },
-                { "community_id", communityId },
             };
+
+            if (scope == ChatChannel.ChatChannelType.USER)
+                props.Add("receiver_id", evt.ConversationId);
+            else if (scope == ChatChannel.ChatChannelType.COMMUNITY)
+                props.Add("community_id", evt.ConversationId);
 
             analytics.Track(AnalyticsEvents.AutoTranslate.SWITCH_AUTOTRANSLATE, props);
         }
