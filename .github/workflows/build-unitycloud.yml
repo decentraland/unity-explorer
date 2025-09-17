@@ -384,103 +384,61 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-
           FILE="upload_to_s3/${{ env.artifact_name }}.zip"
-
-          echo "=== Artifact to check ==="
-          echo "artifact_name=${{ env.artifact_name }}"
-          echo "matrix.target=${{ matrix.target }}"
-          echo "pwd=$(pwd)"
-          echo "Exists? $( [ -f "$FILE" ] && echo yes || echo no )"
-          ls -la upload_to_s3 || true
-
           if [ ! -f "$FILE" ]; then
             echo "::error::Artifact zip not found: $FILE"
             exit 1
           fi
 
+          # Current size in MB (decimal)
           BYTES=$(stat -c%s "$FILE" 2>/dev/null || stat -f%z "$FILE")
           MB=$(( (BYTES + 1000000 - 1) / 1000000 ))
 
-          # Pick per-platform cap and delta threshold
+          # Per-platform caps and deltas
           case "${{ matrix.target }}" in
-            macos)
-              MAX=$MAX_MACOS_MB
-              MAX_DELTA_MB=$DELTA_MACOS_MB
-              ;;
-            windows64)
-              MAX=$MAX_WINDOWS64_MB
-              MAX_DELTA_MB=$DELTA_WINDOWS_MB
-              ;;
-            *)
-              echo "::warning::Unknown target '${{ matrix.target }}' — no cap or delta applied."
-              MAX=0
-              MAX_DELTA_MB=0
-              ;;
+            macos)     MAX=$MAX_MACOS_MB ; MAX_DELTA_MB=$DELTA_MACOS_MB ;;
+            windows64) MAX=$MAX_WINDOWS64_MB ; MAX_DELTA_MB=$DELTA_WINDOWS_MB ;;
+            *) echo "::warning::Unknown target ${{ matrix.target }} — skipping thresholds."; MAX=0; MAX_DELTA_MB=0 ;;
           esac
 
-          echo "Cap for target=${{ matrix.target }} => ${MAX:-0} MB"
-          echo "Delta threshold for target=${{ matrix.target }} => ${MAX_DELTA_MB:-0} MB"
-
-          # ---------- Baseline lookup (latest release) ----------
-          BASELINE_NAME="${{ env.artifact_name }}.zip"
-          API_LATEST="https://api.github.com/repos/$REPO/releases/latest"
-          echo "=== Baseline lookup ==="
+          echo "=== Latest release lookup ==="
           echo "Repo: $REPO"
-          echo "Artifact (baseline target): $BASELINE_NAME"
-          echo "Latest release API: $API_LATEST"
+          echo "Artifact (latest target): ${{ env.artifact_name }}.zip"
+          echo "API URL: https://api.github.com/repos/$REPO/releases/latest"
 
-          RELEASE_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" "$API_LATEST")
-          if [ -z "$RELEASE_JSON" ]; then
-            echo "::warning::No JSON returned from $API_LATEST"
-          fi
-          echo "Latest JSON bytes: $(echo "$RELEASE_JSON" | wc -c)"
+          RELEASE_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$REPO/releases/latest")
+          echo "GitHub API returned $(echo "$RELEASE_JSON" | wc -c) bytes"
+          echo "First 20 lines of JSON:"
+          echo "$RELEASE_JSON" | head -n 20
 
-          # Extract with jq (robust)
-          ASSETS_URL=$(echo "$RELEASE_JSON" | jq -r '.assets_url // empty')
-          RELEASE_TAG=$(echo "$RELEASE_JSON" | jq -r '.tag_name // empty')
-          RELEASE_URL=$(echo "$RELEASE_JSON" | jq -r '.html_url // empty')
-
-          echo "assets_url: ${ASSETS_URL:-<empty>}"
-          echo "release_tag: ${RELEASE_TAG:-<empty>}"
-          echo "release_url: ${RELEASE_URL:-<empty>}"
-
-          BYTES_BASE=""
-          if [ -n "${ASSETS_URL:-}" ]; then
-            ASSETS_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" "$ASSETS_URL")
-            echo "Assets JSON bytes: $(echo "$ASSETS_JSON" | wc -c)"
-            # Find exact asset name and get size
-            BYTES_BASE=$(echo "$ASSETS_JSON" | jq -r --arg NAME "$BASELINE_NAME" '.[] | select(.name==$NAME) | .size // empty')
-          else
-            echo "::notice::No assets_url found in latest release payload."
-          fi
-
-          echo "Parsed BYTES_BASE=${BYTES_BASE:-<empty>}"
+          BASELINE_NAME="${{ env.artifact_name }}.zip"
+          BYTES_BASE=$(echo "$RELEASE_JSON" | jq -r --arg NAME "$BASELINE_NAME" \
+            '.assets[] | select(.name == $NAME) | .size' || true)
+          RELEASE_TAG=$(echo "$RELEASE_JSON" | jq -r '.tag_name')
+          RELEASE_URL=$(echo "$RELEASE_JSON" | jq -r '.html_url')
 
           BASELINE_FOUND=false
-          if [ -n "${BYTES_BASE:-}" ]; then
+          if [ -n "${BYTES_BASE:-}" ] && [ "$BYTES_BASE" != "null" ]; then
             MB_BASE=$(( (BYTES_BASE + 1000000 - 1) / 1000000 ))
             BASELINE_FOUND=true
-            echo "Baseline found: $MB_BASE MB from release ${RELEASE_TAG:-<unknown>}"
           else
-            echo "::notice::No baseline asset named '$BASELINE_NAME' found on latest release."
+            echo "::notice::No asset named '$BASELINE_NAME' found on latest release."
           fi
-          # ---------- End baseline lookup ----------
 
           # Delta
           DELTA_MB="N/A"
           DELTA_PCT="N/A"
           if $BASELINE_FOUND; then
             DELTA_MB=$(( MB - MB_BASE ))
-            DELTA_PCT=$(awk -v cur="$MB" -v base="$MB_BASE" 'BEGIN {
-              if (base==0){print "N/A"} else {printf("%.2f%%",(cur-base)*100.0/base)}
-            }')
+            DELTA_PCT=$(awk -v cur="$MB" -v base="$MB_BASE" 'BEGIN { if (base==0){print "N/A"} else {printf("%.2f%%",(cur-base)*100.0/base)} }')
           fi
 
-          # Checks
+          # Flags
           CAP_EXCEEDED=false
           DELTA_EXCEEDED=false
 
+          # Cap check
           if [ "${MAX:-0}" -gt 0 ] && [ "$MB" -gt "$MAX" ]; then
             CAP_EXCEEDED=true
             if [ "${ENFORCE_CAP}" = "true" ]; then
@@ -490,45 +448,42 @@ jobs:
             fi
           fi
 
+          # Delta check
           if $BASELINE_FOUND && [ "${MAX_DELTA_MB:-0}" -gt 0 ]; then
             ABS_DELTA_MB=${DELTA_MB#-}
             if [ "$ABS_DELTA_MB" -gt "$MAX_DELTA_MB" ]; then
               DELTA_EXCEEDED=true
               if [ "${ENFORCE_DELTA}" = "true" ]; then
-                echo "::error::Δ ${DELTA_MB} MB vs ${RELEASE_TAG} exceeds threshold ${MAX_DELTA_MB} MB"
+                echo "::error::Δ ${DELTA_MB} MB vs latest release $RELEASE_TAG exceeds threshold ${MAX_DELTA_MB} MB"
               else
-                echo "::warning::Δ ${DELTA_MB} MB vs ${RELEASE_TAG} exceeds threshold ${MAX_DELTA_MB} MB"
+                echo "::warning::Δ ${DELTA_MB} MB vs latest release $RELEASE_TAG exceeds threshold ${MAX_DELTA_MB} MB"
               fi
             fi
-          elif [ "$BASELINE_FOUND" = false ] && [ "${MAX_DELTA_MB:-0}" -gt 0 ]; then
-            echo "::notice::Delta threshold set (${MAX_DELTA_MB} MB) but no baseline found; delta check skipped."
           fi
 
           # Summary
           {
             echo "### Artifact size check"
             echo
-            echo "| Target | File | Size (MB) | Cap (MB) | Δ MB vs baseline | Δ % vs baseline | Δ threshold (MB) | Result |"
+            echo "| Target | File | Size (MB) | Cap (MB) | Δ MB vs latest release | Δ % vs latest release | Δ threshold (MB) | Result |"
             echo "|---|---|---:|---:|---:|---:|---:|---|"
             RESULT="OK"
             [ "$CAP_EXCEEDED" = true ] && RESULT="CAP EXCEEDED"
             [ "$DELTA_EXCEEDED" = true ] && RESULT="${RESULT}${RESULT:+, }DELTA EXCEEDED"
+
             if $BASELINE_FOUND; then
               echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | $DELTA_MB | $DELTA_PCT | ${MAX_DELTA_MB:-0} | ${RESULT} |"
               echo
-              echo "- Baseline: **${RELEASE_TAG:-unknown}** (${MB_BASE} MB) — ${RELEASE_URL:-N/A}"
+              echo "- Latest release: **$RELEASE_TAG** (${MB_BASE} MB) — $RELEASE_URL"
             else
               echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | N/A | N/A | ${MAX_DELTA_MB:-0} | ${RESULT} |"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # Enforce (fail the job) only if toggles are true
-          if [ "$CAP_EXCEEDED" = true ] && [ "${ENFORCE_CAP}" = "true" ]; then
-            exit 1
-          fi
-          if [ "$DELTA_EXCEEDED" = true ] && [ "${ENFORCE_DELTA}" = "true" ]; then
-            exit 1
-          fi
+          # Fail build if enforce flags set
+          if [ "$CAP_EXCEEDED" = true ] && [ "${ENFORCE_CAP}" = "true" ]; then exit 1; fi
+          if [ "$DELTA_EXCEEDED" = true ] && [ "${ENFORCE_DELTA}" = "true" ]; then exit 1; fi
+
 
       - name: Set SHA, branch, and build prefix
         run: |
