@@ -63,7 +63,7 @@ namespace DCL.EmotesWheel
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
-            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
+            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.5f,
                 cancellationToken: ct);
         }
 

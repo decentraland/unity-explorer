@@ -1,5 +1,6 @@
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -68,7 +69,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 string displayName = string.Empty;
 
                 if (string.IsNullOrEmpty(name))
-                    return ProfileNameColorHelper.GetNameColor(name);
+                    return NameColorHelper.GetNameColor(name);
 
                 string result = string.Empty;
                 MatchCollection matches = Profile.VALID_NAME_CHARACTERS.Matches(name);
@@ -81,7 +82,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 if (!hasClaimedName && !string.IsNullOrEmpty(memberAddress) && memberAddress.Length > 4)
                     displayName = $"{result}{memberAddress}";
 
-                return ProfileNameColorHelper.GetNameColor(displayName);
+                return NameColorHelper.GetNameColor(displayName);
             }
 
             public override int GetHashCode() =>

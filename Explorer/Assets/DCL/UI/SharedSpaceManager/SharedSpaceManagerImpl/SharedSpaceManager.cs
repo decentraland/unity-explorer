@@ -13,6 +13,8 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.AvatarRendering.Emotes;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -23,10 +25,12 @@ namespace DCL.UI.SharedSpaceManager
     /// </summary>
     public class SharedSpaceManager : ISharedSpaceManager, IDisposable
     {
+        private const float QUICK_EMOTE_LOCK_TIME = 0.5f;
         private readonly Dictionary<PanelsSharingSpace, PanelRegistration> registrations = new ();
 
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
+        private readonly EmotesBus emotesBus;
         private readonly World ecsWorld;
 
         private readonly bool isFriendsFeatureEnabled;
@@ -37,15 +41,19 @@ namespace DCL.UI.SharedSpaceManager
         private readonly CancellationTokenSource configureShortcutsCts = new ();
         private bool isTransitioning; // true whenever a view is being shown or hidden, so other calls wait for them to finish
         private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
+        private float lastQuickEmoteTime;
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
         private bool isCameraReelPanelVisible { get; set; }
 
-        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
+        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled, 
+            EmotesBus emotesBus)
         {
             this.mvcManager = mvcManager;
+            this.emotesBus = emotesBus;
             mvcManager.OnViewShowed += OnMvcViewShowed;
             mvcManager.OnViewClosed += OnMvcViewClosed;
+            emotesBus.QuickActionEmotePlayed += OnQuickActionEmotePlayed;
 
             dclInput = DCLInput.Instance;
             isFriendsFeatureEnabled = isFriendsEnabled;
@@ -56,12 +64,18 @@ namespace DCL.UI.SharedSpaceManager
             ConfigureShortcutsAsync(configureShortcutsCts.Token).Forget();
         }
 
+        private void OnQuickActionEmotePlayed()
+        {
+            if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace) 
+                lastQuickEmoteTime = Time.time;
+        }
+
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
         {
             if (isFriendsFeatureEnabled)
                 dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
 
-            dclInput.Shortcuts.EmoteWheel.performed += OnInputShortcutsEmoteWheelPerformedAsync;
+            dclInput.Shortcuts.EmoteWheel.canceled += OnInputShortcutsEmoteWheelPerformedAsync;
             dclInput.Shortcuts.Controls.performed += OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.Shortcuts.OpenChat.performed += OnInputShortcutsOpenChatPerformedAsync;
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
@@ -87,7 +101,7 @@ namespace DCL.UI.SharedSpaceManager
             if (isFriendsFeatureEnabled)
                 dclInput.Shortcuts.FriendPanel.performed -= OnInputShortcutsFriendPanelPerformedAsync;
 
-            dclInput.Shortcuts.EmoteWheel.performed -= OnInputShortcutsEmoteWheelPerformedAsync;
+            dclInput.Shortcuts.EmoteWheel.canceled -= OnInputShortcutsEmoteWheelPerformedAsync;
             dclInput.Shortcuts.Controls.performed -= OnInputShortcutsControlsPanelPerformedAsync;
             dclInput.Shortcuts.OpenChat.performed -= OnInputShortcutsOpenChatPerformedAsync;
             dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
@@ -105,6 +119,7 @@ namespace DCL.UI.SharedSpaceManager
 
             mvcManager.OnViewShowed -= OnMvcViewShowed;
             mvcManager.OnViewClosed -= OnMvcViewClosed;
+            emotesBus.QuickActionEmotePlayed -= OnQuickActionEmotePlayed;
 
             cts.SafeCancelAndDispose();
             configureShortcutsCts.SafeCancelAndDispose();
@@ -272,7 +287,9 @@ namespace DCL.UI.SharedSpaceManager
             bool show = !registrations[panel].panel.IsVisibleInSharedSpace;
 
             if (show)
+            {
                 await ShowAsync(panel, parameters);
+            }
             else
             {
                 if (panel == PanelsSharingSpace.Chat)
@@ -463,6 +480,13 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnInputShortcutsEmoteWheelPerformedAsync(InputAction.CallbackContext obj)
         {
+            if (IsEmoteWheelLocked())
+            {
+                // Reset time, we only want to stop one action.
+                lastQuickEmoteTime = 0;
+                return;
+            }
+            
             if (!isExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new EmotesWheelParams());
         }
@@ -518,5 +542,16 @@ namespace DCL.UI.SharedSpaceManager
             // Clue: It is handled by ToggleInWorldCameraActivitySystem
         }
 #endregion
+        
+        /// <summary>
+        /// Emote wheel is locked when quick emote action was executed, but not when wheel is already visible, in that
+        /// case we want to hide it.
+        /// </summary>
+        private bool IsEmoteWheelLocked()
+        {
+            bool isPanelVisible = registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace;
+            
+            return !isPanelVisible && lastQuickEmoteTime + QUICK_EMOTE_LOCK_TIME > Time.time;
+        }
     }
 }
