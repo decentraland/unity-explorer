@@ -67,7 +67,6 @@ using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
@@ -812,7 +811,8 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     voiceChatContainer.VoiceChatOrchestrator,
                     galleryEventBus,
-                    thumbnailProvider
+                    thumbnailProvider,
+                    chatEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),

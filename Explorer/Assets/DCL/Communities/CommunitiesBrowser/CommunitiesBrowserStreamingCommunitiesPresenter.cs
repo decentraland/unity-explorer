@@ -1,12 +1,10 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
+using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
-using DCL.VoiceChat;
 using System;
 using System.Threading;
 using Utility;
@@ -22,8 +20,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly StreamingCommunitiesView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly CommunitiesBrowserStateService browserStateService;
-        private readonly ICommunityCallOrchestrator orchestrator;
-        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly CommunitiesBrowserCommandsLibrary commandsLibrary;
 
         private CancellationTokenSource? loadCts;
         public event Action? ViewAllClicked;
@@ -32,14 +29,12 @@ namespace DCL.Communities.CommunitiesBrowser
             StreamingCommunitiesView view,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             CommunitiesBrowserStateService browserStateService,
-            ICommunityCallOrchestrator orchestrator,
-            ISharedSpaceManager sharedSpaceManager)
+            CommunitiesBrowserCommandsLibrary commandsLibrary)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
-            this.orchestrator = orchestrator;
-            this.sharedSpaceManager = sharedSpaceManager;
+            this.commandsLibrary = commandsLibrary;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
@@ -48,10 +43,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 view.JoinStream += JoinStreamClicked;
                 view.ViewAllStreamingCommunitiesButtonClicked += ViewAllStreamingCommunitiesButtonClicked;
             }
-            else
-            {
-                view.gameObject.SetActive(false);
-            }
+            else { view.gameObject.SetActive(false); }
         }
 
         public void Dispose()
@@ -65,20 +57,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void JoinStreamClicked(string communityId)
         {
-            //If we already joined, we cannot join again
-            if (orchestrator.CurrentCommunityId.Value == communityId) return;
+            if (browserStateService.CurrentCommunityId.Value == communityId)
+                commandsLibrary.GoToStreamCommand.Execute(communityId);
 
-            JoinStreamAsync().Forget();
-            return;
-
-            async UniTaskVoid JoinStreamAsync()
-            {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(false));
-
-                //We wait until the panel has disappeared before starting the call, so the UX feels better.
-                await UniTask.Delay(500);
-                orchestrator.JoinCommunityVoiceChat(communityId, true);
-            }
+            commandsLibrary.JoinStreamCommand.Execute(communityId);
         }
 
         private void ViewAllStreamingCommunitiesButtonClicked()
@@ -88,6 +70,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public async UniTask LoadStreamingCommunitiesAsync(CancellationToken ct)
         {
+            view.HideStreamingSection();
+
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
                 return;
 
