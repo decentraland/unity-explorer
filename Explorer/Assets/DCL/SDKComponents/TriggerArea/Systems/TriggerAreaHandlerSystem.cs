@@ -68,9 +68,8 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 new SDKEntityTriggerAreaComponent(
                     areaSize: Vector3.zero,
                     targetOnlyMainPlayer: false,
-                    meshType: pbTriggerArea.HasMesh ? (SDKEntityTriggerAreaMeshType)pbTriggerArea.Mesh : SDKEntityTriggerAreaMeshType.BOX,
-                    layerMask: pbTriggerArea.HasCollisionMask ? pbTriggerArea.CollisionMask : (uint)ColliderLayer.ClPlayer)
-                );
+                    meshType: (SDKEntityTriggerAreaMeshType)pbTriggerArea.Mesh,
+                    layerMask: pbTriggerArea.CollisionMask));
         }
 
         [Query]
@@ -109,11 +108,9 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             }
 
             // TODO: Improve to avoid GetComponent...
-            if (avatarEntity == Entity.Null &&
-                !collidersSceneCache.TryGetEntity(triggerEntityTransform.GetComponent<Collider>(), out entityInfo))
-                return;
-
-            if (!PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, entityInfo.SDKLayer))
+            if (avatarEntity == Entity.Null
+                && (!collidersSceneCache.TryGetEntity(triggerEntityTransform.GetComponent<Collider>(), out entityInfo)
+                || !PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, entityInfo.SDKLayer)))
                 return;
 
             var resultComponent = triggerAreaResultPool.Get();

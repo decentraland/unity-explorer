@@ -40,11 +40,11 @@ namespace CrdtEcsBridge.Physics
         public static bool LayerMaskHasAnySDKCustomLayer(ColliderLayer layerMask) =>
             (layerMask & ~NON_CUSTOM_LAYERS) != 0;
 
-        public static bool LayerMaskContainsTargetLayer(uint layerMask, int targetLayer)
-            => (layerMask & (1u << targetLayer)) != 0;
+        public static bool LayerMaskContainsTargetLayer(uint layerMask, uint targetLayer)
+            => (layerMask & targetLayer) != 0;
 
         public static bool LayerMaskContainsTargetLayer(uint layerMask, ColliderLayer targetLayer) =>
-            LayerMaskContainsTargetLayer(layerMask, (int)targetLayer);
+            LayerMaskContainsTargetLayer(layerMask, (uint)targetLayer);
 
         public static int CreateUnityLayerMaskFromSDKMask(ColliderLayer sdkMask)
         {
