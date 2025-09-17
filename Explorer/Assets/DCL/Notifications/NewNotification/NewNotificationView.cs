@@ -21,12 +21,6 @@ namespace DCL.Notifications.NewNotification
         public CanvasGroup CommunityNotificationCanvasGroup { get; private set; }
 
         [field: SerializeField]
-        public CommunityNotificationView CommunityVoiceChatNotificationView { get; private set; }
-
-        [field: SerializeField]
-        public CanvasGroup CommunityNotificationCanvasGroup { get; private set; }
-
-        [field: SerializeField]
         public CanvasGroup NotificationViewCanvasGroup { get; private set; }
 
         [field: SerializeField]

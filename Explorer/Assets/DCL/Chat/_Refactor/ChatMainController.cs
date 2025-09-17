@@ -187,8 +187,8 @@ namespace DCL.Chat
                 messageFeedPresenter,
                 inputPresenter,
                 memberListPresenter,
-                voiceChatOrchestrator,
-                communityVoiceChatSubTitleButtonPresenter);
+                communityVoiceChatSubTitleButtonPresenter,
+                voiceChatOrchestrator);
 
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,
