@@ -61,6 +61,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public GameObject CollapseButtonImage  { get; private set; }
 
         [field: SerializeField]
+        public GameObject Separator  { get; private set; }
+
+        [field: SerializeField]
         public GameObject ExpandButtonImage  { get; private set; }
 
         [field: SerializeField]
@@ -104,6 +107,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ContentPanel.SetActive(!isCollapsed);
             FooterPanel.SetActive(!isCollapsed);
             OpenListenersSectionButton.gameObject.SetActive(!isCollapsed);
+            Separator.SetActive(!isCollapsed);
         }
 
         public void SetHiddenButtonsState(bool isHidden)
