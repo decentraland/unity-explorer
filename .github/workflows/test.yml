@@ -38,39 +38,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          
-      # Test cloning unity-gltf repository outside of game-ci
-      - name: Test unity-gltf clone with LFS
-        continue-on-error: false
-        run: |
-          echo "Testing direct clone of unity-gltf repository..."
-          cd /tmp
-          git clone -v git@github.com:decentraland/unity-gltf.git test-unity-gltf || {
-            echo "Clone failed, checking for LFS logs..."
-            if [ -d "test-unity-gltf/.git/lfs/logs" ]; then
-              echo "=== LFS Logs ==="
-              ls -la test-unity-gltf/.git/lfs/logs/
-              echo "=== Latest LFS Log Content ==="
-              cat test-unity-gltf/.git/lfs/logs/*.log 2>/dev/null || echo "No log files found"
-            fi
-            exit 1
-          }
-          echo "Repository cloned successfully"
-          rm -rf test-unity-gltf
-          echo "Test completed"
 
-      - name: 'Add GitHub to the SSH known hosts file'
-        run: |
-          mkdir -p -m 0700 /home/runner/.ssh
-          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
-          chmod 600 /home/runner/.ssh/known_hosts
-
-      - uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -94,6 +62,16 @@ jobs:
           git lfs pull
           git add .
           git reset --hard
+          
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          mkdir -p -m 0700 /home/runner/.ssh
+          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
+          chmod 600 /home/runner/.ssh/known_hosts
 
       - name: Restore Library cache
         uses: actions/cache@v4
