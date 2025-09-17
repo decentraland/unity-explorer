@@ -190,7 +190,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
         }
 
-        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
+        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, DisconnectReason? reason)
         {
             ConnectionUpdated?.Invoke(room, connectionupdate);
         }
