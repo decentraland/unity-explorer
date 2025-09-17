@@ -20,6 +20,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public Button CommunityButton { get; private set; }
 
         [field: SerializeField]
+        public Sprite DefaultCommunitySprite { get; private set; }
+
+        [field: SerializeField]
         public ImageView CommunityThumbnail { get; private set; }
 
         [field: SerializeField]

@@ -104,7 +104,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             view.SetCommunityName(communityData.data.name);
             if (communityData.data.thumbnails != null)
-                thumbnailController.RequestImage(communityData.data.thumbnails.Value.raw);
+                thumbnailController.RequestImage(communityData.data.thumbnails.Value.raw, defaultSprite: view.DefaultCommunitySprite);
+            else
+                view.CommunityThumbnail.SetImage(view.DefaultCommunitySprite);
         }
 
         public void SetTalkingStatus(int speakingCount, string username)
