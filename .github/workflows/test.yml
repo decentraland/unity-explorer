@@ -39,6 +39,46 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          mkdir -p -m 0700 /home/runner/.ssh
+          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
+          chmod 600 /home/runner/.ssh/known_hosts
+
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Test cloning unity-gltf repository outside of game-ci
+      - name: Test unity-gltf clone with LFS
+        continue-on-error: true
+        run: |
+          echo "Testing direct clone of unity-gltf repository..."
+          echo "SSH_AUTH_SOCK: $SSH_AUTH_SOCK"
+          echo "Checking SSH agent:"
+          ssh-add -l || echo "No SSH keys loaded"
+          echo "Testing SSH connection to GitHub:"
+          ssh -T git@github.com || echo "SSH test completed (exit code $?)"
+          echo "Attempting to clone repository..."
+          cd /tmp
+          git clone git@github.com:decentraland/unity-gltf.git test-unity-gltf 2>&1 || {
+            echo "Clone failed with exit code $?"
+            echo "Trying with verbose SSH:"
+            git clone -v git@github.com:decentraland/unity-gltf.git test-unity-gltf-verbose 2>&1 || echo "Verbose clone also failed"
+            exit 0
+          }
+          cd test-unity-gltf
+          echo "Repository cloned successfully"
+          echo "Checking LFS status:"
+          git lfs env
+          echo "Pulling LFS files:"
+          git lfs pull 2>&1 || echo "LFS pull failed with exit code $?"
+          echo "Directory contents:"
+          ls -la
+          cd ..
+          rm -rf test-unity-gltf test-unity-gltf-verbose 2>/dev/null || true
+          echo "Test completed"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -67,31 +107,6 @@ jobs:
         with:
           path: Explorer/Library
           key: Library-Explorer-Ubuntu
-          
-      - name: 'Add GitHub to the SSH known hosts file'
-        run: |
-          mkdir -p -m 0700 /home/runner/.ssh
-          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
-          chmod 600 /home/runner/.ssh/known_hosts
-
-      - uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          
-                
-      # Test cloning unity-gltf repository outside of game-ci
-      - name: Test unity-gltf clone with LFS
-        run: |
-          echo "Testing direct clone of unity-gltf repository..."
-          cd /tmp
-          git clone git@github.com:decentraland/unity-gltf.git test-unity-gltf
-          cd test-unity-gltf
-          echo "Repository cloned successfully"
-          git lfs pull
-          echo "LFS files pulled successfully"
-          ls -la
-          rm -rf /tmp/test-unity-gltf
-          echo "Test completed successfully"
       
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
