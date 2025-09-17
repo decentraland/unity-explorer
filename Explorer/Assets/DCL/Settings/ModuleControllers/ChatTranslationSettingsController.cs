@@ -26,11 +26,17 @@ namespace DCL.Settings.ModuleControllers
             this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.eventBus = eventBus;
 
+            int currentLanguage;
+
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE))
+                currentLanguage = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE);
+            else
             {
-                var currentLanguage = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE);
-                view.DropdownView.Dropdown.SetValueWithoutNotify(currentLanguage);
+                currentLanguage = (int)GetLanguageCodeFromSystem(Application.systemLanguage);
+                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE, currentLanguage, save: true);
             }
+
+            view.DropdownView.Dropdown.SetValueWithoutNotify(currentLanguage);
 
             view.DropdownView.Dropdown.template.sizeDelta = new Vector2(view.DropdownView.Dropdown.template.sizeDelta.x, 300f);
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetPreferredLanguageSettings);
