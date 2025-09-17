@@ -202,7 +202,10 @@ namespace DCL.Chat
         
         private void UpdateTranslationViewVisibility()
         {
-            if (currentViewModel == null || !IsTranslationActivated())
+            if (currentViewModel == null ||
+                currentViewModel.Message.IsSystemMessage ||
+                currentViewModel.Message.IsSentByOwnUser ||
+                !IsTranslationActivated())
             {
                 messageBubbleElement.SetTranslationViewVisibility(false);
                 return;
