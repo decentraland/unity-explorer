@@ -38,6 +38,10 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
       # Test cloning unity-gltf repository outside of game-ci
       - name: Test unity-gltf clone with LFS
         continue-on-error: false
