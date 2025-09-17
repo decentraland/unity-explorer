@@ -121,7 +121,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
-            contextMenuSocialEmoteButton = new GenericContextMenuElement(socialEmoteButtonControlSettings, true);
+            contextMenuSocialEmoteButton = new GenericContextMenuElement(socialEmoteButtonControlSettings, false);
 
             contextMenu = new GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
@@ -143,7 +143,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT)
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, bool enableSocialEmotes = false)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -175,6 +175,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
                                                       friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
                 }
             }
+
+            contextMenuSocialEmoteButton.Enabled = enableSocialEmotes;
 
             userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
 
