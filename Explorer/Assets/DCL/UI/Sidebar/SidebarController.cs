@@ -27,6 +27,7 @@ using System.Threading;
 using CommunicationData.URLHelpers;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.EmotesWheel.Params;
 using DCL.Profiles;
 using UnityEngine;
 using Utility;
@@ -319,7 +320,7 @@ namespace DCL.UI.Sidebar
 
         private async void OnEmotesWheelButtonClickedAsync()
         {
-            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new EmotesWheelParams());
         }
 
         private async void OnFriendsButtonClickedAsync()

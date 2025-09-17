@@ -5,6 +5,7 @@ using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.EmotesWheel.Params;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
@@ -310,20 +311,20 @@ namespace DCL.UI.SharedSpaceManager
             {
                 if(!controllerInSharedSpace.Value.panel.IsVisibleInSharedSpace)
                     continue;
-                
+
                 bool shouldIgnore = false;
                 for (int i = 0; i < panelsToIgnore.Length; i++)
                 {
                     if(panelsToIgnore[i] != controllerInSharedSpace.Key)
                         continue;
-                    
+
                     shouldIgnore = true;
                     break;
                 }
 
                 if (shouldIgnore)
                     continue;
-                
+
                 await HideAsync(controllerInSharedSpace.Key);
             }
         }
@@ -463,13 +464,13 @@ namespace DCL.UI.SharedSpaceManager
         private async void OnInputShortcutsEmoteWheelPerformedAsync(InputAction.CallbackContext obj)
         {
             if (!isExplorePanelVisible)
-                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new ControllerNoData());
+                await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new EmotesWheelParams());
         }
 
         private async void OnInputShortcutsControlsPanelPerformedAsync(InputAction.CallbackContext obj)
         {
             var panel = PanelsSharingSpace.Controls;
-            
+
             // For hiding the panel, use standard logic.
             if (registrations[panel].panel.IsVisibleInSharedSpace)
             {
@@ -477,7 +478,7 @@ namespace DCL.UI.SharedSpaceManager
             }
             else
             {
-                await ShowAsync(PanelsSharingSpace.Controls, new ControllerNoData(), 
+                await ShowAsync(PanelsSharingSpace.Controls, new ControllerNoData(),
                     PanelsSharingSpace.Chat, PanelsSharingSpace.Explore);
             }
         }
