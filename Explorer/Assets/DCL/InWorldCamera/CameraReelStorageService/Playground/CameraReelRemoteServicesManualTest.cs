@@ -1,3 +1,5 @@
+#if UNITY_INCLUDE_TESTS
+
 using DCL.Browser.DecentralandUrls;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -127,3 +129,5 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         }
     }
 }
+
+#endif

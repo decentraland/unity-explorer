@@ -15,8 +15,8 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 using DCL.InWorldCamera.PassportBridge;
-using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
@@ -74,7 +74,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.wearableListLoadingSpinner.SetActive(false);
             view.wearableListEmptyMessage.SetActive(false);
             loadWearablesCts = loadWearablesCts.SafeRestart();
-            Color userColor = ProfileNameColorHelper.GetNameColor(visiblePerson.userName);
+            Color userColor = NameColorHelper.GetNameColor(visiblePerson.userName);
 
             view.userName.text = visiblePerson.userName;
             view.userName.color = userColor;
