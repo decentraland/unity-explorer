@@ -6,7 +6,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
     public class CommunityUserInvitedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Community Invite Received";
-        private const string NOTIFICATION_TITLE = "You've been invited to join the <b>[{0}]</b> Community.";
+        private const string NOTIFICATION_TITLE = "You've been invited to join the <b>{0}</b> Community.";
 
         [JsonProperty("metadata")]
         public CommunityUserInvitedNotificationMetadata Metadata { get; set; }

@@ -338,5 +338,7 @@ namespace DCL.Diagnostics
         public const string SKYBOX = nameof(SKYBOX);
 
         public const string COMMUNITIES = nameof(COMMUNITIES);
+
+        public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
     }
 }

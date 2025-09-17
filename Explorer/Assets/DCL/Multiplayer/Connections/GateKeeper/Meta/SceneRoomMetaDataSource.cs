@@ -69,7 +69,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         {
             // Places API is relevant for Genesis City only
             if (realmData.IsWorld())
-                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, input));
+                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input));
 
             using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
             using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);
@@ -86,11 +86,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
             StreamableLoadingResult<SceneDefinitions> result = promise.Result!.Value;
 
-            return Result<MetaData>.SuccessResult(
-                result.Succeeded && entityDefinitionList.Count > 0
-                    ? new MetaData(entityDefinitionList[0].id, input)
-                    : new MetaData(null, input)
-            );
+            if (result.Succeeded && entityDefinitionList.Count > 0)
+            {
+                SceneEntityDefinition? sceneDefinition = entityDefinitionList[0];
+                string? id = sceneDefinition.id;
+                Vector2Int baseParcel = sceneDefinition.metadata.scene.DecodedBase;
+                return Result<MetaData>.SuccessResult(new MetaData(id, baseParcel, input));
+            }
+
+            return Result<MetaData>.SuccessResult(new MetaData(null, Vector2Int.zero, input));
         }
     }
 }

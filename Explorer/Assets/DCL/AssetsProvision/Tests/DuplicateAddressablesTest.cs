@@ -40,6 +40,11 @@ namespace DCL.AssetsProvision.Tests
             var unexpected = results
                             .Where(r => r.severity == MessageType.Warning)
                             .Select(r => r.resultName)
+                            // Exclude TMP assets that must be in Resources folder for TextMeshPro to work properly
+                            .Where(p => !p.Contains("TMP Settings.asset") && 
+                                       !p.Contains("emojis32.asset") && 
+                                       !p.Contains("emojis32.png") && 
+                                       !p.Contains("TMP_Sprite.shader"))
                             .ToList();
 
             Assert.IsEmpty(unexpected,

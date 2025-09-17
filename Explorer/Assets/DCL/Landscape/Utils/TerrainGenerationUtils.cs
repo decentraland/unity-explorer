@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Landscape.Jobs;
 using StylizedGrass;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -11,6 +12,7 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
+        [Obsolete]
         public static async UniTask<GrassColorMapRenderer> AddColorMapRendererAsync(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
         {
             // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
