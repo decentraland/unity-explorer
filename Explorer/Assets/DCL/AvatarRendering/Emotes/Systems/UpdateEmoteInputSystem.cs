@@ -5,7 +5,6 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
-using DCL.EmotesWheel;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
@@ -23,7 +22,7 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateEmoteInputSystem : BaseUnityLoopSystem
     {
-        private const int AFTER_WHEEL_WAS_CLOSED_FRAMES_DELAY = 30;
+        private readonly EmotesBus emotesBus;
         private readonly Dictionary<string, int> actionNameById = new ();
         private readonly IEmotesMessageBus messageBus;
         private readonly IMVCManager mvcManager;
@@ -32,14 +31,13 @@ namespace DCL.AvatarRendering.Emotes
         private int triggeredEmote = -1;
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
-
-        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, IMVCManager mvcManager) : base(world)
+        
+        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus) 
+            : base(world)
         {
             emotesActions = DCLInput.Instance.Emotes;
             this.messageBus = messageBus;
-            this.mvcManager = mvcManager;
-
-            this.mvcManager.OnViewClosed += OnEmoteWheelClosed;
+            this.emotesBus = emotesBus;
 
             GetReportData();
 
@@ -49,8 +47,6 @@ namespace DCL.AvatarRendering.Emotes
         protected override void OnDispose()
         {
             UnregisterSlotsInput(emotesActions.Get());
-
-            this.mvcManager.OnViewClosed -= OnEmoteWheelClosed;
         }
 
         private void OnSlotPerformed(InputAction.CallbackContext obj)
@@ -58,6 +54,7 @@ namespace DCL.AvatarRendering.Emotes
             int emoteIndex = actionNameById[obj.action.name];
             triggeredEmote = emoteIndex;
             isWheelBlocked = true;
+            emotesBus.OnQuickActionEmotePlayed();
         }
 
         protected override void Update(float t)
@@ -128,11 +125,5 @@ namespace DCL.AvatarRendering.Emotes
 
         private static string GetActionName(int i) =>
             $"Slot {i}";
-
-        private void OnEmoteWheelClosed(IController obj)
-        {
-            if (obj is not EmotesWheelController) return;
-            framesAfterWheelWasClosed = AFTER_WHEEL_WAS_CLOSED_FRAMES_DELAY;
-        }
     }
 }

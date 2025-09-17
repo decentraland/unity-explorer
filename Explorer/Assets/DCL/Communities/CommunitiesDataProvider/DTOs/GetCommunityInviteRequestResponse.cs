@@ -1,4 +1,5 @@
 using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using System;
 using UnityEngine;
 
@@ -42,7 +43,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             private CommunityMemberRole role = CommunityMemberRole.none;
 
             public Color GetUserNameColor() =>
-                ProfileNameColorHelper.GetNameColor(name);
+                NameColorHelper.GetNameColor(name);
         }
 
         [Serializable]

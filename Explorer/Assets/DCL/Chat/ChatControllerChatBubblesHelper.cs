@@ -6,8 +6,7 @@ using DCL.Profiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using Utility.Arch;
-using DCL.Profiles.Helpers;
-using System;
+using DCL.Utilities;
 
 namespace DCL.Chat
 {
@@ -77,7 +76,7 @@ namespace DCL.Chat
                             }
                             else
                             {
-                                Color nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                                Color nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : NameColorHelper.GetNameColor(profile.DisplayName);
                                 GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
                             }
                         }
