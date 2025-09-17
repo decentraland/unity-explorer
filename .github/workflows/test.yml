@@ -49,6 +49,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      # Configure Git LFS to use SSH for decentraland repos
+      - name: Configure Git LFS for SSH
+        run: |
+          echo "Configuring Git LFS to use SSH for decentraland repositories..."
+          git config --global url."git@github.com:decentraland/".insteadOf "https://github.com/decentraland/"
+          git config --global lfs.transfer.maxretries 1
+          echo "Git LFS configuration:"
+          git config --global --list | grep -E "(url\.|lfs\.)" || echo "No LFS config found"
+
       # Test cloning unity-gltf repository outside of game-ci
       - name: Test unity-gltf clone with LFS
         continue-on-error: true
