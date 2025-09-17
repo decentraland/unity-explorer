@@ -1,6 +1,7 @@
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using UnityEngine;
 using DCL.Utilities;
 using UnityEngine;
 using Utility;
@@ -25,17 +26,13 @@ namespace DCL.Settings.ModuleControllers
             this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.eventBus = eventBus;
 
-            int currentLanguage;
-
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE))
-                currentLanguage = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE);
-            else
             {
-                currentLanguage = (int)GetLanguageCodeFromSystem(Application.systemLanguage);
-                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE, currentLanguage, save: true);
+                var currentLanguage = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE);
+                view.DropdownView.Dropdown.SetValueWithoutNotify(currentLanguage);
             }
 
-            view.DropdownView.Dropdown.SetValueWithoutNotify(currentLanguage);
+            view.DropdownView.Dropdown.template.sizeDelta = new Vector2(view.DropdownView.Dropdown.template.sizeDelta.x, 300f);
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetPreferredLanguageSettings);
             view.gameObject.SetActive(this.isTranslationChatEnabled);
         }

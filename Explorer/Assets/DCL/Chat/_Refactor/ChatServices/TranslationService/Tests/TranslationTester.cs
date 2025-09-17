@@ -127,7 +127,6 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
 
         private List<string> tests = new List<string>
         {
-
             "<#00B2FF><link=world>mirko.dcl.eth</link></color>",
             "Hello, my friend! <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> How are you doing today? I want you to go here: <#00B2FF><link=scene>100,100</link></color> and have a good time",
             "Hello, my friend! How are you doing today? <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color>",
@@ -136,7 +135,8 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             "<#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> Hello, my friend! How are you doing today?",
             "Hello <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> my friend! How are you doing today?",
             "Hello <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color>,<#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> my friends! How are you doing today?",
-            "type /help for a list of commands",
+            "type /help for a list of commands", "hello my friend <#00B2FF><link=profile>@Mirko#5e42</link></color> i am looking forward to talk to you 😾😶 go here please <#00B2FF><link=world>mirko.dcl.eth</link></color>", "😾😶 😾😶 hello 😾😶", "😾😶 <#00B2FF><link=world>mirko.dcl.eth</link></color> 😾",
+            "😾😶😾 😾😶 my friend what's up!!! 😾 <#00B2FF><link=profile>@Mirko#5e42</link></color>"
         };
 
         private List<LanguageCode> languageCodes = new List<LanguageCode>

@@ -49,7 +49,7 @@ namespace DCL.Chat
         private GenericContextMenu? contextMenuInstance;
         private readonly GenericContextMenu contextMenuConfiguration;
         private ToggleWithCheckContextMenuControlSettings[]? notificationPingToggles;
-        private ToggleWithCheckContextMenuControlSettings autoTranslateToggle;
+        private ToggleWithIconAndCheckContextMenuControlSettings autoTranslateToggle;
         private GameObject contextMenuToggleGroup;
 
         public ChatTitlebarPresenter(
@@ -420,7 +420,7 @@ namespace DCL.Chat
                         verticalLayoutPadding: chatConfig.chatContextMenuSettings.VerticalPadding,
                         elementsSpacing: chatConfig.chatContextMenuSettings.ElementsSpacing,
                         offsetFromTarget: chatConfig.chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget,
-                        anchorPoint:ContextMenuOpenDirection.TOP_LEFT)
+                        anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
                     .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] =
                         new ToggleWithCheckContextMenuControlSettings("All Messages",
                             x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))
@@ -437,18 +437,21 @@ namespace DCL.Chat
                     chatConfig.chatContextMenuSettings.VerticalPadding,
                     chatConfig.chatContextMenuSettings.ElementsSpacing,
                     anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
-                .AddControl(subMenuSettings)
-                .AddControl(deleteChatHistoryButton);
+                .AddControl(subMenuSettings);
 
-            autoTranslateToggle = new ToggleWithCheckContextMenuControlSettings(
+
+            autoTranslateToggle = new ToggleWithIconAndCheckContextMenuControlSettings(
                 chatConfig.chatContextMenuSettings.AutoTranslateText,
-                isToggled => OnAutoTranslateToggled()
+                isToggled => OnAutoTranslateToggled(),
+                icon: chatConfig.chatContextMenuSettings.AutoTranslateSprite
             );
 
             if (translationSettings.IsTranslationFeatureActive())
             {
                 contextMenuInstance.AddControl(autoTranslateToggle);
             }
+
+            contextMenuInstance .AddControl(deleteChatHistoryButton);
         }
     }
 }

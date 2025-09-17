@@ -677,6 +677,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        GenericContextMenuToggleWithTitleIconAndCheckPrefab:
+          m_AssetGUID: de88bd0dde8feda4393664330ac8afb4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         GenericContextMenuSubMenuButtonPrefab:
           m_AssetGUID: 497073cedbc8540c2b17104cfee96158
           m_SubObjectName: 

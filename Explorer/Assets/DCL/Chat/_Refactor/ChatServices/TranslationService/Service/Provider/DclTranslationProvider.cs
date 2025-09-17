@@ -10,6 +10,7 @@ using UnityEngine;
 using DCL.Translation.Settings;
 using CommunicationData.URLHelpers;
 using DCL.Utilities;
+using DCL.Translation.Service.Debug;
 
 namespace DCL.Translation.Service.Provider
 {
@@ -70,11 +71,17 @@ namespace DCL.Translation.Service.Provider
                 q = texts, source = source, target = target, format = "text"
             };
 
+            TranslationDebug.LogRequest(translateUrl, "application/json;", requestBody);
+
             try
             {
-                return await webRequestController
+                var response =  await webRequestController
                     .PostAsync(translateUrl, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.CHAT_TRANSLATE)
                     .CreateFromJson<TranslationApiResponseBatch>(WRJsonParser.Newtonsoft);
+
+                TranslationDebug.LogResponse(translateUrl, response);
+
+                return response;
             }
             catch (Exception e)
             {
@@ -93,6 +100,8 @@ namespace DCL.Translation.Service.Provider
                 q = text, source = source, target = target, format = "text"
             };
 
+            TranslationDebug.LogRequest(translateUrl, "application/json;", requestBody);
+
             try
             {
                 var commonArgs = new CommonArguments(
@@ -104,6 +113,9 @@ namespace DCL.Translation.Service.Provider
                 var response = await webRequestController
                     .PostAsync(commonArgs, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.CHAT_TRANSLATE)
                     .CreateFromJson<TranslationApiResponse>(WRJsonParser.Newtonsoft);
+
+                TranslationDebug.LogResponse(translateUrl, response);
+
                 return response;
             }
             catch (Exception e)
