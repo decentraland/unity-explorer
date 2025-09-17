@@ -1,6 +1,7 @@
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Settings.ModuleControllers
@@ -29,6 +30,7 @@ namespace DCL.Settings.ModuleControllers
                 view.DropdownView.Dropdown.SetValueWithoutNotify(currentLanguage);
             }
 
+            view.DropdownView.Dropdown.template.sizeDelta = new Vector2(view.DropdownView.Dropdown.template.sizeDelta.x, 300f);
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetPreferredLanguageSettings);
             view.gameObject.SetActive(this.isTranslationChatEnabled);
         }
