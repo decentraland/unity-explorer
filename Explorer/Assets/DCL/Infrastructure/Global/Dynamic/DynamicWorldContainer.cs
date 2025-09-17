@@ -708,7 +708,7 @@ namespace Global.Dynamic
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     userBlockingCacheProxy),
-                new MainUIPlugin(mvcManager, mainUIView, includeFriends, sharedSpaceManager),
+                new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
@@ -1062,10 +1062,11 @@ namespace Global.Dynamic
                     bootstrapContainer.DiagnosticsContainer,
                     staticContainer.InputBlock,
                     assetsProvisioner,
-                    currentSceneInfo,
-                    roomsStatus,
                     debugBuilder
-                ));
+                    ));
+
+            if (!localSceneDevelopment)
+                globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, appArgs));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
