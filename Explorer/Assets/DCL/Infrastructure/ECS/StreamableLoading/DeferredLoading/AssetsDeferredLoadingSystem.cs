@@ -15,10 +15,10 @@ namespace ECS.StreamableLoading.DeferredLoading
     /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [UpdateAfter(typeof(PrepareAssetBundleLoadingParametersSystem))]
+    [UpdateBefore(typeof(LoadAssetBundleSystem))]
     [UpdateBefore(typeof(LoadTextureSystem))]
     [UpdateBefore(typeof(LoadAudioClipSystem))]
     [UpdateBefore(typeof(LoadNFTShapeSystem))]
-    [UpdateBefore(typeof(LoadAssetBundleSystem))]
     public partial class AssetsDeferredLoadingSystem : DeferredLoadingSystem
     {
         private static readonly QueryDescription[] COMPONENT_HANDLERS;

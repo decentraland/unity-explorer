@@ -29,11 +29,11 @@ namespace DCL.GlobalPartitioning
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
+    [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
     [UpdateBefore(typeof(LoadSceneDefinitionListSystem))]
     [UpdateBefore(typeof(LoadSceneSystem))]
     [UpdateBefore(typeof(LoadSceneDefinitionSystem))]
     [UpdateBefore(typeof(LoadAssetBundleManifestSystem))]
-    [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
     [UpdateBefore(typeof(LoadWearablesDTOByPointersSystem))]
     [UpdateBefore(typeof(LoadWearablesByParamSystem))]
     public partial class GlobalDeferredLoadingSystem : DeferredLoadingSystem
