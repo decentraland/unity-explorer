@@ -38,6 +38,16 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
+      # Test cloning unity-gltf repository outside of game-ci
+      - name: Test unity-gltf clone with LFS
+        continue-on-error: false
+        run: |
+          echo "Testing direct clone of unity-gltf repository..."
+          cd /tmp
+          git clone -v git@github.com:decentraland/unity-gltf.git test-unity-gltf
+          echo "Repository cloned successfully"
+          rm -rf test-unity-gltf
+          echo "Test completed"
 
       - name: 'Add GitHub to the SSH known hosts file'
         run: |
@@ -48,45 +58,6 @@ jobs:
       - uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      # Configure Git LFS to use SSH for decentraland repos
-      - name: Configure Git LFS for SSH
-        run: |
-          echo "Configuring Git LFS to use SSH for decentraland repositories..."
-          git config --global url."git@github.com:decentraland/".insteadOf "https://github.com/decentraland/"
-          git config --global lfs.transfer.maxretries 1
-          echo "Git LFS configuration:"
-          git config --global --list | grep -E "(url\.|lfs\.)" || echo "No LFS config found"
-
-      # Test cloning unity-gltf repository outside of game-ci
-      - name: Test unity-gltf clone with LFS
-        continue-on-error: true
-        run: |
-          echo "Testing direct clone of unity-gltf repository..."
-          echo "SSH_AUTH_SOCK: $SSH_AUTH_SOCK"
-          echo "Checking SSH agent:"
-          ssh-add -l || echo "No SSH keys loaded"
-          echo "Testing SSH connection to GitHub:"
-          ssh -T git@github.com || echo "SSH test completed (exit code $?)"
-          echo "Attempting to clone repository..."
-          cd /tmp
-          git clone git@github.com:decentraland/unity-gltf.git test-unity-gltf 2>&1 || {
-            echo "Clone failed with exit code $?"
-            echo "Trying with verbose SSH:"
-            git clone -v git@github.com:decentraland/unity-gltf.git test-unity-gltf-verbose 2>&1 || echo "Verbose clone also failed"
-            exit 0
-          }
-          cd test-unity-gltf
-          echo "Repository cloned successfully"
-          echo "Checking LFS status:"
-          git lfs env
-          echo "Pulling LFS files:"
-          git lfs pull 2>&1 || echo "LFS pull failed with exit code $?"
-          echo "Directory contents:"
-          ls -la
-          cd ..
-          rm -rf test-unity-gltf test-unity-gltf-verbose 2>/dev/null || true
-          echo "Test completed"
 
       - name: Checkout code
         uses: actions/checkout@v4
