@@ -31,6 +31,7 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -61,7 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
-        private readonly ChatStateBus stateBus;
+        private readonly IEventBus eventBus;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -89,7 +90,7 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,
-            ChatStateBus stateBus)
+            IEventBus eventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -116,7 +117,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
-            this.stateBus = stateBus;
+            this.eventBus = eventBus;
         }
 
         public void Dispose() { }
@@ -156,7 +157,7 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                stateBus
+                eventBus
             ));
         }
 

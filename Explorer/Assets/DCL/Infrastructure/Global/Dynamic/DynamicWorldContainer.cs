@@ -613,7 +613,7 @@ namespace Global.Dynamic
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
-            ChatStateBus chatStateBus = new ();
+            IEventBus eventBus = new EventBus(true);
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -723,7 +723,7 @@ namespace Global.Dynamic
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource,
-                    chatStateBus),
+                    eventBus),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -760,7 +760,7 @@ namespace Global.Dynamic
                     includeVoiceChat,
                     realmNavigator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    chatStateBus),
+                    eventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

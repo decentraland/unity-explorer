@@ -9,6 +9,7 @@ namespace DCL.Chat.ChatStates
     {
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly IEventBus eventBus;
         private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
         private readonly EventSubscriptionScope scope = new ();
 
@@ -26,6 +27,7 @@ namespace DCL.Chat.ChatStates
         {
             this.inputBlocker = inputBlocker;
             this.chatClickDetectionService = chatClickDetectionService;
+            this.eventBus = eventBus;
 
             MainController = mainController;
 
@@ -64,7 +66,10 @@ namespace DCL.Chat.ChatStates
         }
 
         private void PropagateStateChange() =>
-            MainController.stateBus.InvokeStateChanged(fsm.CurrentState);
+            eventBus.Publish(new ChatEvents.ChatStateChangedEvent
+            {
+                CurrentState = fsm.CurrentState
+            });
 
         public void OnViewShow()
         {

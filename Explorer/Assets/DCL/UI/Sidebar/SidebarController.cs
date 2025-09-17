@@ -56,7 +56,6 @@ namespace DCL.UI.Sidebar
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly ChatStateBus chatStateBus;
 
         private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
@@ -87,7 +86,7 @@ namespace DCL.UI.Sidebar
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ChatStateBus chatStateBus)
+            IEventBus eventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -107,9 +106,8 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.chatStateBus = chatStateBus;
 
-            chatStateBus.StateChanged += OnChatStateChanged;
+            eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
 
         public override void Dispose()
@@ -120,11 +118,10 @@ namespace DCL.UI.Sidebar
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
-            chatStateBus.StateChanged -= OnChatStateChanged;
         }
 
-        private void OnChatStateChanged(ChatState currentState) =>
-            OnChatViewFoldingChanged(currentState is not HiddenChatState && currentState is not MinimizedChatState);
+        private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
+            OnChatViewFoldingChanged(eventData.CurrentState is not HiddenChatState && eventData.CurrentState is not MinimizedChatState);
 
         protected override void OnViewInstantiated()
         {
@@ -226,10 +223,7 @@ namespace DCL.UI.Sidebar
             if (closedController is EmotesWheelController)
                 viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             else if (closedController is FriendsPanelController)
-            {
                 viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-                OnChatViewFoldingChanged(true);
-            }
         }
 
         private void OnMvcManagerViewShowed(IController showedController)
@@ -238,10 +232,7 @@ namespace DCL.UI.Sidebar
             if (showedController is EmotesWheelController)
                 viewInstance?.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             else if (showedController is FriendsPanelController)
-            {
                 viewInstance?.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
-                OnChatViewFoldingChanged(false);
-            }
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
