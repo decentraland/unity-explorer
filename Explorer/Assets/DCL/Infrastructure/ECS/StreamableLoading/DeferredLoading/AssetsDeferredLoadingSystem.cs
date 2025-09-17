@@ -1,24 +1,21 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
+using ECS.Groups;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.DeferredLoading
 {
     /// <summary>
     ///     Weighs asset bundles and textures against each other according to their partition
     /// </summary>
-    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateAfter(typeof(PrepareAssetBundleLoadingParametersSystem))]
-    [UpdateBefore(typeof(LoadAssetBundleSystem))]
-    [UpdateBefore(typeof(LoadTextureSystem))]
-    [UpdateBefore(typeof(LoadAudioClipSystem))]
-    [UpdateBefore(typeof(LoadNFTShapeSystem))]
+    [UpdateBefore(typeof(StreamableLoadingGroup))]
     public partial class AssetsDeferredLoadingSystem : DeferredLoadingSystem
     {
         private static readonly QueryDescription[] COMPONENT_HANDLERS;
