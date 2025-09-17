@@ -153,6 +153,7 @@ jobs:
           testMode: all
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
+          githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results
         if: always()
