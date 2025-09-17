@@ -14,6 +14,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.Web3;
 using Global.AppArgs;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Linq;

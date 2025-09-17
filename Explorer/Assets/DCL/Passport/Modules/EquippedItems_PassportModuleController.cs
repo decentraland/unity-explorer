@@ -13,6 +13,7 @@ using DCL.Passport.Fields;
 using DCL.Profiles;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;

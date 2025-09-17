@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;

@@ -16,6 +16,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NUnit.Framework;
+using Runtime.Wearables;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;

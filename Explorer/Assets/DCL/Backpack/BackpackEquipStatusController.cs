@@ -12,6 +12,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Web3.Identities;
 using Global.AppArgs;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;

@@ -9,6 +9,7 @@ using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using Runtime.Wearables;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;

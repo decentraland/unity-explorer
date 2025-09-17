@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Utilities.Extensions;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Linq;

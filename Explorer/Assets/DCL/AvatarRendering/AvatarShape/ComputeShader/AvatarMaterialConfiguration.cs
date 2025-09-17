@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

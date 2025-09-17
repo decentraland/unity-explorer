@@ -16,6 +16,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

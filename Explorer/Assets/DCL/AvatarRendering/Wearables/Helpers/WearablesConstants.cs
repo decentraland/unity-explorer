@@ -3,6 +3,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using Decentraland.Common;
+using Runtime.Wearables;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;

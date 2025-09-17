@@ -11,6 +11,7 @@ using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.UI;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;

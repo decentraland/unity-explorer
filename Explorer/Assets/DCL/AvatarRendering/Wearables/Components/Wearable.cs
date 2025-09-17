@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using Runtime.Wearables;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;

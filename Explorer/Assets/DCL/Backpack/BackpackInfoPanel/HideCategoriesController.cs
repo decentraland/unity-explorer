@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using Runtime.Wearables;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;

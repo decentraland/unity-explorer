@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

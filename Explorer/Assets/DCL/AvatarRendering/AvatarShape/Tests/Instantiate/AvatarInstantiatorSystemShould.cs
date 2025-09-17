@@ -21,6 +21,7 @@ using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

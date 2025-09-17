@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.Wearables.Helpers;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
