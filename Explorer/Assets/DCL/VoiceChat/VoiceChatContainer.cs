@@ -1,7 +1,9 @@
+using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SocialService;
+using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -32,7 +34,9 @@ namespace DCL.VoiceChat
             IScenesCache scenesCache,
             IRealmNavigator realmNavigator,
             IRealmData realmData,
-            IDecentralandUrlsSource urlsSource)
+            IDecentralandUrlsSource urlsSource,
+            ISharedSpaceManager sharedSpaceManager,
+            IChatEventBus chatEventBus)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)
@@ -44,7 +48,9 @@ namespace DCL.VoiceChat
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(scenesCache, realmNavigator, realmData);
             CommunityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)
                 ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
-            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService);
+            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService,
+                CommunityVoiceChatCallStatusService, participantsStateService,
+                sceneVoiceChatTrackerService, sharedSpaceManager, chatEventBus);
         }
 
         public void Dispose()

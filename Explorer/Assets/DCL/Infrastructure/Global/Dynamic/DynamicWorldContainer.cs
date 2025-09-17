@@ -546,6 +546,7 @@ namespace Global.Dynamic
 
             var coreBackpackEventBus = new BackpackEventBus();
 
+            IChatEventBus chatEventBus = new ChatEventBus();
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
@@ -558,7 +559,9 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 realmNavigator,
                 staticContainer.RealmData,
-                bootstrapContainer.DecentralandUrlsSource
+                bootstrapContainer.DecentralandUrlsSource,
+                sharedSpaceManager,
+                chatEventBus
                 );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
@@ -609,7 +612,6 @@ namespace Global.Dynamic
             var profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
-            IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
 
