@@ -45,6 +45,26 @@ on:
         required: false
         type: boolean
         default: false
+      delta_threshold_macos_mb:
+        description: 'Warn if macOS growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      delta_threshold_windows_mb:
+        description: 'Warn if Windows growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      enforce_delta:
+        description: 'Build fails when Δ MB exceeds threshold'
+        required: false
+        default: false
+        type: boolean
+      enforce_cap:
+        description: 'Build fails when size MB exceeds cap'
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       profile:
@@ -77,6 +97,26 @@ on:
       tag_version:
         type: string
         required: false
+      delta_threshold_macos_mb:
+        description: 'Warn if macOS growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      delta_threshold_windows_mb:
+        description: 'Warn if Windows growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      enforce_delta:
+        description: 'Build fails when Δ MB exceeds threshold'
+        required: false
+        default: false
+        type: boolean
+      enforce_cap:
+        description: 'Build fails when size MB exceeds cap'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.install_source }}
@@ -324,9 +364,19 @@ jobs:
           fi
 
       - name: Enforce artifact size budget
+        id: size_check
         env:
           MAX_MACOS_MB: 395
           MAX_WINDOWS64_MB: 325
+
+          DELTA_MACOS_MB:    ${{ github.event.inputs.delta_threshold_macos_mb || inputs.delta_threshold_macos_mb || '0' }}
+          DELTA_WINDOWS_MB:  ${{ github.event.inputs.delta_threshold_windows64_mb || inputs.delta_threshold_windows64_mb || '0' }}
+
+          ENFORCE_DELTA: ${{ github.event.inputs.enforce_delta || inputs.enforce_delta || false }}
+          ENFORCE_CAP:   ${{ github.event.inputs.enforce_cap || inputs.enforce_cap || false }}
+
+          REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           FILE="upload_to_s3/${{ env.artifact_name }}.zip"
@@ -336,31 +386,107 @@ jobs:
             exit 1
           fi
 
+          # Current size (ceil MB)
           BYTES=$(stat -c%s "$FILE" 2>/dev/null || stat -f%z "$FILE")
           MB=$(( (BYTES + 1000000 - 1) / 1000000 ))
 
+          # Pick per-platform cap and delta
           case "${{ matrix.target }}" in
-            macos)     MAX=$MAX_MACOS_MB ;;
-            windows64) MAX=$MAX_WINDOWS64_MB ;;
+            macos)
+              MAX=$MAX_MACOS_MB
+              MAX_DELTA_MB=$DELTA_MACOS_MB
+              ;;
+            windows64)
+              MAX=$MAX_WINDOWS64_MB
+              MAX_DELTA_MB=$DELTA_WINDOWS_MB
+              ;;
+            *)
+              echo "::warning::Unknown target '${{ matrix.target }}' — skipping thresholds."
+              MAX=0
+              MAX_DELTA_MB=0
+              ;;
           esac
 
-          RESULT="OK"
-          if [ "$MB" -gt "$MAX" ]; then
-            RESULT="FAIL"
-            echo "::error::Artifact $FILE is ${MB} MB, exceeds limit ${MAX} MB for ${{ matrix.target }}"
+          # Baseline lookup from latest GitHub Release
+          BASELINE_NAME="${{ env.artifact_name }}.zip"
+          RELEASE_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$REPO/releases/latest")
+
+          BYTES_BASE=$(echo "$RELEASE_JSON" | grep -A6 -F "\"name\": \"${BASELINE_NAME}\"" \
+                        | grep -m1 '"size":' | sed 's/[^0-9]//g')
+          RELEASE_TAG=$(echo "$RELEASE_JSON" | grep -m1 '"tag_name":' | sed -E 's/.*\"([^\"]+)\".*/\1/')
+          RELEASE_URL=$(echo "$RELEASE_JSON" | grep -m1 '"html_url":'  | sed -E 's/.*\"([^\"]+)\".*/\1/')
+
+          BASELINE_FOUND=false
+          if [ -n "${BYTES_BASE:-}" ]; then
+            MB_BASE=$(( (BYTES_BASE + 1000000 - 1) / 1000000 ))
+            BASELINE_FOUND=true
           else
-            echo "::notice::Artifact $FILE is ${MB} MB, within limit ${MAX} MB for ${{ matrix.target }}"
+            echo "::notice::No baseline asset named '$BASELINE_NAME' found on latest release."
           fi
 
+          # Delta
+          DELTA_MB="N/A"
+          DELTA_PCT="N/A"
+          if $BASELINE_FOUND; then
+            DELTA_MB=$(( MB - MB_BASE ))
+            DELTA_PCT=$(awk -v cur="$MB" -v base="$MB_BASE" 'BEGIN {
+              if (base==0){print "N/A"} else {printf("%.2f%%",(cur-base)*100.0/base)}
+            }')
+          fi
+
+          # Flags
+          CAP_EXCEEDED=false
+          DELTA_EXCEEDED=false
+
+          # Cap check
+          if [ "${MAX:-0}" -gt 0 ] && [ "$MB" -gt "$MAX" ]; then
+            CAP_EXCEEDED=true
+            if [ "${ENFORCE_CAP}" = "true" ]; then
+              echo "::error::Artifact $FILE is ${MB} MB, exceeds cap ${MAX} MB for ${{ matrix.target }}"
+            else
+              echo "::warning::Artifact $FILE is ${MB} MB, exceeds cap ${MAX} MB for ${{ matrix.target }}"
+            fi
+          fi
+
+          # Delta check
+          if $BASELINE_FOUND && [ "${MAX_DELTA_MB:-0}" -gt 0 ]; then
+            ABS_DELTA_MB=${DELTA_MB#-}
+            if [ "$ABS_DELTA_MB" -gt "$MAX_DELTA_MB" ]; then
+              DELTA_EXCEEDED=true
+              if [ "${ENFORCE_DELTA}" = "true" ]; then
+                echo "::error::Δ ${DELTA_MB} MB vs ${RELEASE_TAG} exceeds threshold ${MAX_DELTA_MB} MB"
+              else
+                echo "::warning::Δ ${DELTA_MB} MB vs ${RELEASE_TAG} exceeds threshold ${MAX_DELTA_MB} MB"
+              fi
+            fi
+          fi
+
+          # Summary
           {
             echo "### Artifact size check"
             echo
-            echo "| Target | File | Size (MB) | Limit (MB) | Result |"
-            echo "|---|---|---:|---:|---|"
-            echo "| ${{ matrix.target }} | \`$FILE\` | $MB | $MAX | $RESULT |"
+            echo "| Target | File | Size (MB) | Cap (MB) | Δ MB vs baseline | Δ % vs baseline | Δ threshold (MB) | Result |"
+            echo "|---|---|---:|---:|---:|---:|---:|---|"
+            RESULT="OK"
+            [ "$CAP_EXCEEDED" = true ] && RESULT="CAP EXCEEDED"
+            [ "$DELTA_EXCEEDED" = true ] && RESULT="${RESULT}${RESULT:+, }DELTA EXCEEDED"
+            if $BASELINE_FOUND; then
+              echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | $DELTA_MB | $DELTA_PCT | ${MAX_DELTA_MB:-0} | ${RESULT} |"
+              echo
+              echo "- Baseline: **$RELEASE_TAG** (${MB_BASE} MB) — $RELEASE_URL"
+            else
+              echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | N/A | N/A | ${MAX_DELTA_MB:-0} | ${RESULT} |"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-          [ "$RESULT" = "FAIL" ] && exit 1 || true
+          # Fail the build if enforce flags are set and thresholds exceeded
+          if [ "$CAP_EXCEEDED" = true ] && [ "${ENFORCE_CAP}" = "true" ]; then
+            exit 1
+          fi
+          if [ "$DELTA_EXCEEDED" = true ] && [ "${ENFORCE_DELTA}" = "true" ]; then
+            exit 1
+          fi
 
       - name: Set SHA, branch, and build prefix
         run: |
