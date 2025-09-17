@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
 using DCL.WebRequests;
@@ -22,7 +21,6 @@ namespace DCL.Notifications.NewNotification
         private static readonly TimeSpan TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN = TimeSpan.FromSeconds(5f);
         private const float ANIMATION_DURATION = 0.5f;
 
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
@@ -38,18 +36,16 @@ namespace DCL.Notifications.NewNotification
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
             IWebRequestController webRequestController) : base(viewFactory)
         {
-            this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
-            notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
         }
@@ -78,7 +74,7 @@ namespace DCL.Notifications.NewNotification
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
             StopAnimation();
-            notificationsBusController.ClickNotification(notificationType, notification);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
         private void QueueNewNotification(INotification newNotification)

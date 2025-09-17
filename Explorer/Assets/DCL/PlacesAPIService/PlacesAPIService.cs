@@ -190,6 +190,9 @@ namespace DCL.PlacesAPIService
 
             placesById[placeInfo.id] = placeInfo;
 
+            //Avoid caching worlds by their coordinates as those are shared with genesis city parcels
+            if (!string.IsNullOrEmpty(placeInfo.world_name)) return;
+
             foreach (Vector2Int placeInfoPosition in placeInfo.Positions)
                 placesByCoords[placeInfoPosition] = placeInfo;
         }

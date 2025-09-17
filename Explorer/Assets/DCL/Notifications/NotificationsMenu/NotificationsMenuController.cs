@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -38,7 +37,6 @@ namespace DCL.Notifications.NotificationsMenu
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly IWebRequestController webRequestController;
@@ -60,7 +58,6 @@ namespace DCL.Notifications.NotificationsMenu
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             IWebRequestController webRequestController,
@@ -72,7 +69,6 @@ namespace DCL.Notifications.NotificationsMenu
 
             this.view = view;
             this.notificationsRequestController = notificationsRequestController;
-            this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.webRequestController = webRequestController;
@@ -83,7 +79,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
-            notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
             this.view.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
 
             if (web3IdentityCache.Identity is { IsExpired: false })
@@ -266,7 +262,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
-            notificationsBusController.ClickNotification(notificationType, notification);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
         private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,

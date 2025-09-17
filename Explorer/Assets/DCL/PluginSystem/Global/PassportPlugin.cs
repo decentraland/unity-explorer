@@ -17,7 +17,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -55,7 +54,6 @@ namespace DCL.PluginSystem.Global
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
@@ -97,7 +95,6 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
@@ -140,7 +137,6 @@ namespace DCL.PluginSystem.Global
             this.badgesAPIClient = badgesAPIClient;
             this.inputBlock = inputBlock;
             this.remoteMetadata = remoteMetadata;
-            this.notificationsBusController = notificationsBusController;
             this.world = world;
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -205,7 +201,6 @@ namespace DCL.PluginSystem.Global
                 badgesAPIClient,
                 webRequestController,
                 inputBlock,
-                notificationsBusController,
                 remoteMetadata,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,

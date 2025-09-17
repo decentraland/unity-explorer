@@ -59,7 +59,13 @@ namespace DCL.UI.DebugMenu
                 }
         }
 
-        public void SetDebugContainerBuilder(IDebugContainerBuilder builder)
+        public void Initialize(IInputBlock newInputBlock, IDebugContainerBuilder newBuilder)
+        {
+            SetInputBlock(newInputBlock);
+            SetDebugContainerBuilder(newBuilder);
+        }
+
+        private void SetDebugContainerBuilder(IDebugContainerBuilder builder)
         {
             debugContainerBuilder = builder;
 
@@ -73,7 +79,7 @@ namespace DCL.UI.DebugMenu
             shouldHideDebugPanelOwnToggle = true;
         }
 
-        public void SetInputBlock(IInputBlock block)
+        private void SetInputBlock(IInputBlock block)
         {
             this.inputBlock = block;
             consolePanelView.SetInputBlock(block);

@@ -225,8 +225,7 @@ namespace Global.Dynamic
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
 
             var mapPathEventBus = new MapPathEventBus();
-            NotificationsBusController notificationsBusController = new NotificationsBusController();
-            NotificationsBusController.Initialize(notificationsBusController);
+            NotificationsBusController.Initialize(new NotificationsBusController());
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
@@ -302,7 +301,7 @@ namespace Global.Dynamic
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
-            ProfileNameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
+            NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
@@ -450,7 +449,8 @@ namespace Global.Dynamic
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
             var chatHistory = new ChatHistory();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel);
+            var emotesBus = new EmotesBus();
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesBus);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -591,7 +591,7 @@ namespace Global.Dynamic
             var clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
-            NotificationsRequestController notificationsRequestController = new (staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
+            NotificationsRequestController notificationsRequestController = new (staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
 
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
@@ -685,7 +685,7 @@ namespace Global.Dynamic
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape),
-                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, mvcManager),
+                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
@@ -710,7 +710,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
-                    assetsProvisioner, mvcManager, mainUIView, notificationsBusController,
+                    assetsProvisioner, mvcManager, mainUIView,
                     notificationsRequestController, identityCache, profileRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
@@ -780,7 +780,6 @@ namespace Global.Dynamic
                     forceRender,
                     staticContainer.RealmData,
                     profileCache,
-                    notificationsBusController,
                     characterPreviewEventBus,
                     mapPathEventBus,
                     backpackEventBus,
@@ -814,7 +813,7 @@ namespace Global.Dynamic
                     thumbnailProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
-                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
+                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
@@ -853,10 +852,9 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     mvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    notificationsBusController,
                     notificationsRequestController,
                     identityCache),
-                new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
+                new RewardPanelPlugin(mvcManager, assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -870,7 +868,6 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
                     badgesAPIClient,
-                    notificationsBusController,
                     staticContainer.InputBlock,
                     remoteMetadata,
                     cameraReelStorageService,
@@ -947,7 +944,6 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     selfProfile,
                     new MVCPassportBridge(mvcManager),
-                    notificationsBusController,
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking,
@@ -1012,7 +1008,6 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
                     mvcManager,
-                    notificationsBusController,
                     staticContainer.RealmData,
                     sharedSpaceManager,
                     identityCache,
@@ -1065,7 +1060,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DiagnosticsContainer,
                     staticContainer.InputBlock,
                     assetsProvisioner,
-                    debugBuilder));
+                    debugBuilder
+                    ));
 
             if (!localSceneDevelopment)
                 globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, appArgs));
