@@ -62,14 +62,15 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
-            // TODO: make the SDKEntityTriggerAreaComponent more versatile, to accept scene entity colliders
             World.Add(
                 entity,
                 new SDKTriggerAreaComponent(),
                 new SDKEntityTriggerAreaComponent(
                     areaSize: Vector3.zero,
                     targetOnlyMainPlayer: false,
-                    meshType: (SDKEntityTriggerAreaMeshType)pbTriggerArea.Mesh));
+                    meshType: pbTriggerArea.HasMesh ? (SDKEntityTriggerAreaMeshType)pbTriggerArea.Mesh : SDKEntityTriggerAreaMeshType.BOX,
+                    layerMask: pbTriggerArea.HasCollisionMask ? pbTriggerArea.CollisionMask : (uint)ColliderLayer.ClPlayer)
+                );
         }
 
         [Query]
@@ -79,7 +80,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             foreach (Transform entityTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
-                    entityTransform, TriggerAreaEventType.TaetEnter);
+                    entityTransform, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
 
@@ -89,26 +90,30 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             foreach (Transform entityTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
-                    entityTransform, TriggerAreaEventType.TaetExit);
+                    entityTransform, TriggerAreaEventType.TaetExit, triggerAreaComponent.LayerMask);
             }
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
         }
 
         private void PropagateResultComponent(in CRDTEntity triggerAreaCRDTEntity, Transform triggerAreaTransform,
-            Transform triggerEntityTransform, TriggerAreaEventType eventType)
+            Transform triggerEntityTransform, TriggerAreaEventType eventType, uint areaLayerMask)
         {
             Entity avatarEntity = Entity.Null;
             ColliderSceneEntityInfo entityInfo = default;
             if (triggerEntityTransform.gameObject.layer == PhysicsLayers.CHARACTER_LAYER
                 || triggerEntityTransform.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
             {
-                if (!TryGetAvatarEntity(triggerEntityTransform, out avatarEntity))
+                if (!PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, ColliderLayer.ClPlayer)
+                    || !TryGetAvatarEntity(triggerEntityTransform, out avatarEntity))
                     return;
             }
 
             // TODO: Improve to avoid GetComponent...
             if (avatarEntity == Entity.Null &&
                 !collidersSceneCache.TryGetEntity(triggerEntityTransform.GetComponent<Collider>(), out entityInfo))
+                return;
+
+            if (!PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, entityInfo.SDKLayer))
                 return;
 
             var resultComponent = triggerAreaResultPool.Get();

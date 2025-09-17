@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5146033326307417348}
   - component: {fileID: 2135576171302094062}
   - component: {fileID: 4770696856363713925}
-  m_Layer: 18
+  m_Layer: 19
   m_Name: SDKEntityTriggerArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
