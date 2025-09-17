@@ -26,7 +26,7 @@ namespace DCL.SkyBox
 
         public float RefreshInterval => refreshIntervalByQuality[refreshIntervalId];
 
-        private int refreshIntervalId;
+        private uint refreshIntervalId;
         private float timeOfDayNormalized;
         private bool isDayCycleEnabled;
 
@@ -81,10 +81,10 @@ namespace DCL.SkyBox
             CurrentSDKControlledScene = null;
         }
 
-        // Mapping: 0 - Low, 1 - Medium, 2 - High
+        // Mapping: 0 - Low, 1 - Medium, 2 - High, 3 - Custom
         public void SetRefreshInterval(int qualityPresetId)
         {
-            refreshIntervalId = qualityPresetId;
+            refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
         }
 
         public static float NormalizeTime(float time)

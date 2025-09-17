@@ -18,7 +18,7 @@ MonoBehaviour:
   - 5
   - 1
   - 0.5
-  <RefreshInterval>k__BackingField: 1
+  - 2.5
   SkyboxRenderControllerPrefab:
     m_AssetGUID: 1dbd1decb60282248bd089c32bec5d02
     m_SubObjectName: 
