@@ -48,7 +48,16 @@ jobs:
         run: |
           echo "Testing direct clone of unity-gltf repository..."
           cd /tmp
-          git clone -v git@github.com:decentraland/unity-gltf.git test-unity-gltf
+          git clone -v git@github.com:decentraland/unity-gltf.git test-unity-gltf || {
+            echo "Clone failed, checking for LFS logs..."
+            if [ -d "test-unity-gltf/.git/lfs/logs" ]; then
+              echo "=== LFS Logs ==="
+              ls -la test-unity-gltf/.git/lfs/logs/
+              echo "=== Latest LFS Log Content ==="
+              cat test-unity-gltf/.git/lfs/logs/*.log 2>/dev/null || echo "No log files found"
+            fi
+            exit 1
+          }
           echo "Repository cloned successfully"
           rm -rf test-unity-gltf
           echo "Test completed"
