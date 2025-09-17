@@ -7,6 +7,7 @@ using DCL.Chat.ChatServices.TranslationService.Utilities;
 using DCL.Translation.Events;
 using DCL.Translation.Models;
 using DCL.Translation.Service.Cache;
+using DCL.Translation.Service.Debug;
 using DCL.Translation.Service.Memory;
 using DCL.Translation.Service.Policy;
 using DCL.Translation.Service.Provider;
@@ -26,7 +27,16 @@ namespace DCL.Translation.Service
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool RequiresProcessing(string text)
         {
-            return !string.IsNullOrEmpty(text) && TagRx.IsMatch(text);
+            if (string.IsNullOrEmpty(text)) return false;
+
+            // Any TMP-style tag? -> yes, batch
+            if (TagRx.IsMatch(text)) return true;
+
+            // Any emoji in the string? -> yes, batch
+            //    (uses your EmojiDetector with ZWJ/VS-16 support)
+            if (EmojiDetector.FindEmoji(text).Count > 0) return true;
+
+            return false;
         }
 
 
@@ -127,6 +137,7 @@ namespace DCL.Translation.Service
             try
             {
                 string original = translation.OriginalBody ?? string.Empty;
+                
                 var result = RequiresProcessing(original)
                     ? await UseBatchTranslation(original, targetLang, ct)
                     : await UseRegularTranslation(original, targetLang, ct);
@@ -165,13 +176,30 @@ namespace DCL.Translation.Service
             return single;
         }
 
+
+        /// <summary>
+        ///     NOTE: Segment → translate only TEXT → stitch
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="target"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         private async UniTask<TranslationResult> UseBatchTranslation(
             string text, LanguageCode target, CancellationToken ct)
         {
-            // Segment → translate only TEXT → stitch
+            TranslationDebug.LogInfo($"[Seg] input: \"{text}\"");
+            
             var toks = ChatSegmenter.SegmentByAngleBrackets(text);
+            TranslationDebug.LogTokens("angle-split", toks);
+            
             toks = ChatSegmenter.ProtectLinkInners(toks);
-            (string[] cores, int[] idxs, string[] leading, string[] trailing) = ChatSegmenter.ExtractTranslatablesPreserveSpaces(toks);
+            TranslationDebug.LogTokens("after-protect-link-inners", toks);
+
+            toks = ChatSegmenter.SplitTextTokensOnEmoji(toks);
+            TranslationDebug.LogTokens("after-split-emoji", toks);
+
+            (string[] cores, int[] idxs, string[] leading, string[] trailing) =
+                ChatSegmenter.ExtractTranslatablesPreserveSpaces(toks);
 
             string[] translated = Array.Empty<string>();
             if (cores.Length > 0)
@@ -179,7 +207,7 @@ namespace DCL.Translation.Service
                 if (provider is IBatchTranslationProvider batchProv)
                 {
                     var resp = await batchProv.TranslateBatchAsync(cores, target, ct);
-                    translated = resp.translatedText; // or translatedTexts in your DTO
+                    translated = resp.translatedText;
                 }
                 else
                 {
@@ -194,7 +222,11 @@ namespace DCL.Translation.Service
                 toks = ChatSegmenter.ApplyTranslationsWithSpaces(toks, idxs, leading, trailing, translated);
             }
 
+            TranslationDebug.LogTokens("after-apply", toks);
+            
             string stitched = ChatSegmenter.Stitch(toks);
+            TranslationDebug.LogInfo($"[Seg] output: \"{stitched}\"");
+            
             return new TranslationResult(stitched, LanguageCode.EN, false);
         }
     }
