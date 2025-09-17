@@ -17,6 +17,8 @@ namespace DCL.PluginSystem.Global
         private readonly ECSBannedScene bannedSceneController;
         private readonly ILoadingStatus loadingStatus;
 
+        private PlayerBannedScenesController playerBannedScenesController;
+
         public BannedUsersPlugin(
             IRoomHub roomHub,
             ISelfProfile selfProfile,
@@ -31,13 +33,15 @@ namespace DCL.PluginSystem.Global
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, selfProfile, bannedSceneController, loadingStatus));
+            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub));
+            playerBannedScenesController = new PlayerBannedScenesController(roomHub, selfProfile, bannedSceneController, loadingStatus);
             return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             BannedUsersSystem.InjectToWorld(ref builder);
 
-        public void Dispose() { }
+        public void Dispose() =>
+            playerBannedScenesController.Dispose();
     }
 }
