@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.SceneBannedUsers;
 using DCL.SceneBannedUsers.Systems;
 using ECS.SceneLifeCycle;
@@ -14,20 +15,23 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomHub roomHub;
         private readonly ISelfProfile selfProfile;
         private readonly ECSBannedScene bannedSceneController;
+        private readonly ILoadingStatus loadingStatus;
 
         public BannedUsersPlugin(
             IRoomHub roomHub,
             ISelfProfile selfProfile,
-            ECSBannedScene bannedSceneController)
+            ECSBannedScene bannedSceneController,
+            ILoadingStatus loadingStatus)
         {
             this.roomHub = roomHub;
             this.selfProfile = selfProfile;
             this.bannedSceneController = bannedSceneController;
+            this.loadingStatus = loadingStatus;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, selfProfile, bannedSceneController));
+            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, selfProfile, bannedSceneController, loadingStatus));
             return UniTask.CompletedTask;
         }
 

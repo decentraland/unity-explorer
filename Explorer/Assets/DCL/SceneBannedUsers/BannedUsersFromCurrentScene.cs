@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -19,17 +20,20 @@ namespace DCL.SceneBannedUsers
         private readonly IRoomHub roomHub;
         private readonly ISelfProfile selfProfile;
         private readonly ECSBannedScene bannedSceneController;
+        private readonly ILoadingStatus loadingStatus;
 
         private CancellationTokenSource checkIfPlayerIsBannedCts;
 
         public BannedUsersFromCurrentScene(
             IRoomHub roomHub,
             ISelfProfile selfProfile,
-            ECSBannedScene bannedSceneController)
+            ECSBannedScene bannedSceneController,
+            ILoadingStatus loadingStatus)
         {
             this.roomHub = roomHub;
             this.selfProfile = selfProfile;
             this.bannedSceneController = bannedSceneController;
+            this.loadingStatus = loadingStatus;
 
             //roomHub.IslandRoom().ConnectionStateChanged += OnConnectionStateChanged;
             //roomHub.SceneRoom().Room().ConnectionStateChanged += OnConnectionStateChanged;
@@ -41,8 +45,6 @@ namespace DCL.SceneBannedUsers
         {
             if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
                 return false;
-
-            Debug.Log($"SANTI LOG -> IsUserBanned() -> ROOM METADATA: [{roomHub.SceneRoom().Room().Info.Metadata}]");
 
             // TODO: Remove it!!
             return true;
@@ -69,8 +71,18 @@ namespace DCL.SceneBannedUsers
         private void OnConnectionStateChanged(ConnectionState connectionState)
         {
             Debug.Log($"SANTI LOG -> connection state changed: [{connectionState.ToString()}]");
-            checkIfPlayerIsBannedCts = checkIfPlayerIsBannedCts.SafeRestart();
-            CheckIfPlayerIsBannedAsync(checkIfPlayerIsBannedCts.Token).Forget();
+
+            if (connectionState == ConnectionState.ConnConnected)
+            {
+                checkIfPlayerIsBannedCts = checkIfPlayerIsBannedCts.SafeRestart();
+                CheckIfPlayerIsBannedAsync(checkIfPlayerIsBannedCts.Token).Forget();
+            }
+            else
+            {
+                Debug.Log("SANTI LOG -> ALL BANNED SCENE COMPONENTS REMOVED!!");
+                checkIfPlayerIsBannedCts.SafeCancelAndDispose();
+                bannedSceneController.RemoveAllBannedSceneComponents();
+            }
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
@@ -84,15 +96,15 @@ namespace DCL.SceneBannedUsers
             }
             else
             {
-                Debug.Log("SANTI LOG -> ALL BANNED COMPONENTS REMOVED");
+                Debug.Log("SANTI LOG -> ALL BANNED SCENE COMPONENTS REMOVED!!");
                 checkIfPlayerIsBannedCts.SafeCancelAndDispose();
-                bannedSceneController.RemoveAllBannedComponents();
+                bannedSceneController.RemoveAllBannedSceneComponents();
             }
         }
 
         private void OnRoomMetadataChanged(string metaData)
         {
-            Debug.Log($"SANTI LOG -> OnRoomMetadataChanged: [{metaData}]");
+            Debug.Log($"SANTI LOG -> room metadata changed: [{metaData}]");
             checkIfPlayerIsBannedCts = checkIfPlayerIsBannedCts.SafeRestart();
             CheckIfPlayerIsBannedAsync(checkIfPlayerIsBannedCts.Token).Forget();
         }
@@ -103,10 +115,12 @@ namespace DCL.SceneBannedUsers
             if (ownProfile == null)
                 return;
 
+            await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+
             if (IsUserBanned(ownProfile.UserId))
             {
-                Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [BANNED]");
-                bannedSceneController.SetCurrentSceneAsBannedAsync(ct).Forget();
+                Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [TRYING TO BAN]");
+                bannedSceneController.TrySetCurrentSceneAsBannedAsync(ct).Forget();
             }
         }
     }

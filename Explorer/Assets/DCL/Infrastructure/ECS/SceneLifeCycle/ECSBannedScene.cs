@@ -25,9 +25,9 @@ namespace ECS.SceneLifeCycle
             this.playerEntity = playerEntity;
         }
 
-        public async UniTask SetCurrentSceneAsBannedAsync(CancellationToken ct)
+        public async UniTask TrySetCurrentSceneAsBannedAsync(CancellationToken ct)
         {
-            RemoveAllBannedComponents();
+            RemoveAllBannedSceneComponents();
 
             await UniTask.SwitchToMainThread(ct);
             var parcel = world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
@@ -52,7 +52,7 @@ namespace ECS.SceneLifeCycle
             }
         }
 
-        public void RemoveAllBannedComponents() =>
+        public void RemoveAllBannedSceneComponents() =>
             world.Query(in new QueryDescription().WithAll<BannedSceneComponent>(), entity => world.Remove<BannedSceneComponent>(entity));
 
         private Entity FindSceneEntity(ISceneFacade targetScene)
