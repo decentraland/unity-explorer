@@ -14,6 +14,7 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
+using DCL.Chat.ChatStates;
 using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
@@ -612,6 +613,7 @@ namespace Global.Dynamic
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
+            ChatStateBus chatStateBus = new ();
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -720,7 +722,8 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
-                    bootstrapContainer.DecentralandUrlsSource),
+                    bootstrapContainer.DecentralandUrlsSource,
+                    chatStateBus),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -756,7 +759,8 @@ namespace Global.Dynamic
                     voiceChatCallStatusService,
                     includeVoiceChat,
                     realmNavigator,
-                    mainUIView.SidebarView.unreadMessagesButton.transform),
+                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    chatStateBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

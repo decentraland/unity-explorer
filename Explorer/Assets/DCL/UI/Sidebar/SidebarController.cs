@@ -25,6 +25,7 @@ using MVC;
 using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
+using DCL.Chat.ChatStates;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -55,6 +56,7 @@ namespace DCL.UI.Sidebar
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
+        private readonly ChatStateBus chatStateBus;
 
         private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
@@ -84,7 +86,8 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ChatStateBus chatStateBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -104,6 +107,9 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.chatStateBus = chatStateBus;
+
+            chatStateBus.StateChanged += OnChatStateChanged;
         }
 
         public override void Dispose()
@@ -114,7 +120,11 @@ namespace DCL.UI.Sidebar
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
+            chatStateBus.StateChanged -= OnChatStateChanged;
         }
+
+        private void OnChatStateChanged(ChatMainController chatController) =>
+            OnChatViewFoldingChanged(chatController.IsVisibleInSharedSpace);
 
         protected override void OnViewInstantiated()
         {

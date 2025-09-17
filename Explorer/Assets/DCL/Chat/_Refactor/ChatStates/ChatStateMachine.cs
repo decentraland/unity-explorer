@@ -37,6 +37,7 @@ namespace DCL.Chat.ChatStates
             fsm.AddState(new MembersChatState());
             fsm.AddState(new MinimizedChatState());
             fsm.AddState(new HiddenChatState());
+            fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
@@ -57,8 +58,13 @@ namespace DCL.Chat.ChatStates
             MainController.PointerEntered -= HandlePointerEntered;
             MainController.PointerExited -= HandlePointerExited;
 
+            fsm.OnStateChanged -= PropagateStateChange;
+
             scope.Dispose();
         }
+
+        private void PropagateStateChange() =>
+            MainController.stateBus.InvokeStateChanged(MainController);
 
         public void OnViewShow()
         {
@@ -130,7 +136,7 @@ namespace DCL.Chat.ChatStates
         {
             fsm.PopState();
         }
-        
+
         /// <summary>
         /// NOTE: called from the SharedSpaceManager
         /// </summary>

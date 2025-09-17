@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Chat.ChatStates;
 using DCL.Chat.History;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
@@ -60,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
+        private readonly ChatStateBus stateBus;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -86,7 +88,8 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            IDecentralandUrlsSource decentralandUrls)
+            IDecentralandUrlsSource decentralandUrls,
+            ChatStateBus stateBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -113,6 +116,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
+            this.stateBus = stateBus;
         }
 
         public void Dispose() { }
@@ -151,7 +155,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
-                decentralandUrls
+                decentralandUrls,
+                stateBus
             ));
         }
 

@@ -42,16 +42,16 @@ namespace DCL.Chat
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatClickDetectionService chatClickDetectionService;
         private readonly HashSet<IBlocksChat> chatBlockers = new ();
+
+        internal readonly ChatStateBus stateBus;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public event Action? PointerEntered;
         public event Action? PointerExited;
 
-        public bool IsVisibleInSharedSpace => chatStateMachine != null &&
-                                              !chatStateMachine.IsMinimized &&
-                                              !chatStateMachine.IsHidden;
+        public bool IsVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
 
-        public bool IsFocused => chatStateMachine != null && chatStateMachine.IsFocused;
+        public bool IsFocused => chatStateMachine is { IsFocused: true };
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig.ChatConfig chatConfig,
@@ -67,7 +67,8 @@ namespace DCL.Chat
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
             CommunityDataService communityDataService,
-            ChatClickDetectionService chatClickDetectionService) : base(viewFactory)
+            ChatClickDetectionService chatClickDetectionService,
+            ChatStateBus stateBus) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
@@ -83,6 +84,7 @@ namespace DCL.Chat
             this.chatContextMenuService = chatContextMenuService;
             this.communityDataService = communityDataService;
             this.chatClickDetectionService = chatClickDetectionService;
+            this.stateBus = stateBus;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;

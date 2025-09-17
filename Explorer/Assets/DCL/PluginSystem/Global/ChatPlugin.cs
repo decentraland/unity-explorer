@@ -36,6 +36,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.ChatStates;
 using DCL.Communities;
 using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
@@ -89,6 +90,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
+        private readonly ChatStateBus stateBus;
         private CommandRegistry commandRegistry;
 
         public ChatPlugin(
@@ -124,7 +126,8 @@ namespace DCL.PluginSystem.Global
             IVoiceChatCallStatusService voiceChatCallStatusService,
             bool isCallEnabled,
             IRealmNavigator realmNavigator,
-            Transform chatViewRectTransform)
+            Transform chatViewRectTransform,
+            ChatStateBus stateBus)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -157,6 +160,7 @@ namespace DCL.PluginSystem.Global
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.isCallEnabled = isCallEnabled;
             this.chatViewRectTransform = chatViewRectTransform;
+            this.stateBus = stateBus;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -285,7 +289,8 @@ namespace DCL.PluginSystem.Global
                 chatMemberService,
                 chatContextMenuService,
                 communityDataService,
-                chatClickDetectionService
+                chatClickDetectionService,
+                stateBus
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);
