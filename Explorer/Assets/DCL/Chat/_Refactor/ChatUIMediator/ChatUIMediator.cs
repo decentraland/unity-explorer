@@ -1,6 +1,7 @@
 ﻿using DCL.Chat.ChatFriends;
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
+using DCL.VoiceChat;
 using DG.Tweening;
 
 namespace DCL.Chat
@@ -9,6 +10,7 @@ namespace DCL.Chat
     {
         private readonly ChatMainView mainView;
         private readonly ChatConfig.ChatConfig config;
+        private readonly CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter;
         internal readonly ChatTitlebarPresenter titleBarPresenter;
         internal readonly ChatChannelsPresenter channelListPresenter;
         internal readonly ChatMessageFeedPresenter messageFeedPresenter;
@@ -22,7 +24,8 @@ namespace DCL.Chat
             ChatChannelsPresenter channelListPresenter,
             ChatMessageFeedPresenter messageFeedPresenter,
             ChatInputPresenter chatInputPresenter,
-            ChatMemberListPresenter memberListPresenter)
+            ChatMemberListPresenter memberListPresenter,
+            CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter)
         {
             this.mainView = mainView;
             this.config = config;
@@ -31,6 +34,7 @@ namespace DCL.Chat
             this.messageFeedPresenter = messageFeedPresenter;
             this.chatInputPresenter = chatInputPresenter;
             this.memberListPresenter = memberListPresenter;
+            this.subTitleButtonPresenter = subTitleButtonPresenter;
         }
 
         public void SetupForDefaultState(bool animate)
@@ -42,6 +46,7 @@ namespace DCL.Chat
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowUnfocused();
             memberListPresenter.Hide();
+            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             SetPanelsFocus(isFocused: false, animate);
         }
@@ -55,6 +60,7 @@ namespace DCL.Chat
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowFocusedAsync().Forget();
             memberListPresenter.Hide();
+            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             SetPanelsFocus(isFocused: true, animate: false);
         }
@@ -64,6 +70,7 @@ namespace DCL.Chat
             titleBarPresenter.Show();
             titleBarPresenter.ShowMembersView(isMemberListVisible:true);
 
+            subTitleButtonPresenter.OnMemberListVisibilityChanged(true);
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();
             chatInputPresenter.Hide();
@@ -76,6 +83,7 @@ namespace DCL.Chat
         {
             titleBarPresenter.Hide();
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
+            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();

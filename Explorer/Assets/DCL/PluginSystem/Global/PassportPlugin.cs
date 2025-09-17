@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables;
@@ -45,7 +44,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly IRealmData realmData;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
@@ -69,11 +67,10 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
-        private readonly bool isCallEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ISystemClipboard systemClipboard;
@@ -88,7 +85,6 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            IRealmData realmData,
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
@@ -113,11 +109,10 @@ namespace DCL.PluginSystem.Global
             bool includeUserBlocking,
             bool includeCommunities,
             bool isNameEditorEnabled,
-            bool isCallEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
@@ -128,7 +123,6 @@ namespace DCL.PluginSystem.Global
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.realmData = realmData;
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
@@ -152,11 +146,10 @@ namespace DCL.PluginSystem.Global
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            this.isCallEnabled = isCallEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
             this.systemClipboard = systemClipboard;
@@ -218,11 +211,10 @@ namespace DCL.PluginSystem.Global
                 includeUserBlocking,
                 includeCommunities,
                 isNameEditorEnabled,
-                isCallEnabled,
                 chatEventBus,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
-                voiceChatCallStatusService,
+                voiceChatOrchestrator,
                 passport3DPreviewCamera,
                 galleryEventBus,
                 systemClipboard,
