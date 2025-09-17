@@ -2,9 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.SocialService;
+using DCL.Utilities;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
@@ -641,7 +641,7 @@ namespace DCL.Friends
                 profile.Name,
                 profile.HasClaimedName,
                 URLAddress.FromString(profile.ProfilePictureUrl),
-                ProfileNameColorHelper.GetNameColor(profile.Name));
+                NameColorHelper.GetNameColor(profile.Name));
 
             return fp;
         }
@@ -653,7 +653,7 @@ namespace DCL.Friends
                 profile.HasClaimedName,
                 URLAddress.FromString(profile.ProfilePictureUrl),
                 DateTimeOffset.FromUnixTimeMilliseconds(profile.BlockedAt).DateTime,
-                ProfileNameColorHelper.GetNameColor(profile.Name));
+                NameColorHelper.GetNameColor(profile.Name));
 
             return fp;
         }
@@ -664,7 +664,7 @@ namespace DCL.Friends
                 profile.Name,
                 profile.HasClaimedName,
                 profile.Avatar.FaceSnapshotUrl,
-                ProfileNameColorHelper.GetNameColor(profile.Name));
+                NameColorHelper.GetNameColor(profile.Name));
 
             return fp;
         }

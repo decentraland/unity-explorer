@@ -213,7 +213,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 null!
             );
 
-            return new LogRoom(newRoom);
+            return new LogRoom(newRoom, "VoiceChat");
         }
 
         public static class Null

@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using LiveKit.Audio;
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Audio;

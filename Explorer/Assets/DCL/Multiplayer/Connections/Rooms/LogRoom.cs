@@ -19,7 +19,8 @@ namespace DCL.Multiplayer.Connections.Rooms
 {
     public class LogRoom : IRoom
     {
-        private const string PREFIX = "LogRoom:";
+        private const string PREFIX_BASE = "LogRoom:";
+        private readonly string prefix;
 
         private readonly IRoom origin;
 
@@ -47,10 +48,12 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public event Room.SidDelegate? RoomSidChanged;
 
-        public LogRoom() : this(new Room()) { }
+        public LogRoom() : this(new Room(), "default") { }
 
-        public LogRoom(IRoom origin)
+        public LogRoom(IRoom origin, string roomName)
         {
+            prefix = $"{PREFIX_BASE} {roomName}:";
+
             this.origin = origin;
 
             ActiveSpeakers = new LogActiveSpeakers(origin.ActiveSpeakers);
@@ -80,7 +83,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} room sid changed {sid}");
+               .Log($"{prefix} room sid changed {sid}");
 
             RoomSidChanged?.Invoke(sid);
         }
@@ -89,7 +92,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} room metadata changed {metadata}");
+               .Log($"{prefix} room metadata changed {metadata}");
 
             RoomMetadataChanged?.Invoke(metadata);
         }
@@ -98,7 +101,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} connection updated {connectionUpdate}");
+               .Log($"{prefix} connection updated {connectionUpdate}");
 
             ConnectionUpdated?.Invoke(room, connectionUpdate, disconnectReason);
         }
@@ -107,7 +110,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} connection state changed {connectionState}");
+               .Log($"{prefix} connection state changed {connectionState}");
 
             ConnectionStateChanged?.Invoke(connectionState);
         }
@@ -116,7 +119,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} connection quality changed {quality} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} connection quality changed {quality} by {participant.Sid} {participant.Name}");
 
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
@@ -125,7 +128,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} track unmuted {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} track unmuted {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             TrackUnmuted?.Invoke(publication, participant);
         }
@@ -134,7 +137,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} track muted {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} track muted {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             TrackMuted?.Invoke(publication, participant);
         }
@@ -143,7 +146,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} track unsubscribed {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} track unsubscribed {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             TrackUnsubscribed?.Invoke(track, publication, participant);
         }
@@ -152,7 +155,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} track subscribed {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} track subscribed {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             TrackSubscribed?.Invoke(track, publication, participant);
         }
@@ -161,7 +164,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} local track published {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} local track published {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             LocalTrackPublished?.Invoke(publication, participant);
         }
@@ -170,7 +173,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             TrackUnpublished?.Invoke(publication, participant);
         }
@@ -179,7 +182,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} local track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} local track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             LocalTrackUnpublished?.Invoke(publication, participant);
         }
@@ -188,7 +191,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} track published {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
+               .Log($"{prefix} track published {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             TrackPublished?.Invoke(publication, participant);
         }
@@ -197,7 +200,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} update local metadata: '{metadata}'");
+               .Log($"{prefix} update local metadata: '{metadata}'");
 
             origin.UpdateLocalMetadata(metadata);
         }
@@ -206,7 +209,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} set local name: '{name}'");
+               .Log($"{prefix} set local name: '{name}'");
 
             origin.SetLocalName(name);
         }
@@ -215,13 +218,13 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} connect start {url} with token {authToken}");
+               .Log($"{prefix} connect start {url} with token {authToken}");
 
             Result result = await origin.ConnectAsync(url, authToken, cancelToken, autoSubscribe);
 
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} connect start {url} with token {authToken} with result {result.Success}");
+               .Log($"{prefix} connect start {url} with token {authToken} with result {result}");
 
             return result;
         }
@@ -230,13 +233,13 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} disconnect start");
+               .Log($"{prefix} disconnect start");
 
             await origin.DisconnectAsync(token);
 
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
-               .Log($"{PREFIX} disconnect end");
+               .Log($"{prefix} disconnect end");
         }
     }
 }

@@ -3,9 +3,9 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ProfileElements;
-using DCL.Profiles.Helpers;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
 using MVC;
@@ -238,7 +238,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
+                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, NameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
                 mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.hasClaimedName);
 
                 if (mutualFriends.thumbnails[i].isPointerEventsSubscribed)
