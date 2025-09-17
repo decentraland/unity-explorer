@@ -370,6 +370,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6ade66d1c3c0b42f389ff610295b9c13
+    m_Address: ConnectionStatusPanelRootCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6b1f7cd8901871f42a19a8244244839e
     m_Address: ChangeRealmPrompt
     m_ReadOnly: 0

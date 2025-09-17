@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/Communities/CommunitiesBrowser/Commands/JoinStreamCommand.cs.meta
 guid: 12345678901234567890123456789013
+========
+guid: 8815ad6a56bc942efbd293d1ea3f0d46
+>>>>>>>> dev:Explorer/Assets/DCL/Notifications/NotificationEntry/CommunityNotificationView.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

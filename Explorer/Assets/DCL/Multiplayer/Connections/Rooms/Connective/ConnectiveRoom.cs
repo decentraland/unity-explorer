@@ -57,8 +57,17 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
 
-        private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
-            () =>
+        private readonly IObjectPool<IRoom> roomPool;
+
+        private CancellationTokenSource? cancellationTokenSource;
+
+        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
+
+        protected ConnectiveRoom()
+        {
+            logPrefix = GetType().Name;
+
+            roomPool = new ObjectPool<IRoom>(() =>
             {
                 var hub = new ParticipantsHub();
                 var videoStreams = new VideoStreams(hub);
@@ -68,7 +77,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 var tracksFactory = new TracksFactory();
 
                 // Pass null for AudioTracks - Room constructor will create it automatically
-                var room = new Room(
+                Room origin = new Room(
                     new ArrayMemoryPool(),
                     new DefaultActiveSpeakers(),
                     hub,
@@ -80,19 +89,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                     new MemoryRoomInfo(),
                     videoStreams,
                     audioStreams,
-                    null
+                    null!
                 );
 
-                return new LogRoom(room);
+                return new LogRoom(origin, logPrefix);
             });
-
-        private CancellationTokenSource? cancellationTokenSource;
-
-        public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
-
-        protected ConnectiveRoom()
-        {
-            logPrefix = GetType().Name;
         }
 
         public void Dispose()
