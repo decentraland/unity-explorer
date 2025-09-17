@@ -127,7 +127,7 @@ namespace DCL.VoiceChat
             isOrderedDisconnection = false;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? reason)
         {
             switch (connectionUpdate)
             {
