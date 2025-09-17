@@ -15,16 +15,18 @@ namespace DCL.SkyBox
     public class SkyboxSettingsAsset : ScriptableObject
     {
         private const int SECONDS_IN_DAY = 86400;
+        private const float INITIAL_TIME_OF_DAY = 0.5f; // Midday
 
         // We need to subtract 1 minute to make the slider range is between 00:00 and 23:59
         public const int TOTAL_MINUTES_IN_DAY = 1439; // 23:59 in minutes
-        public const float INITIAL_TIME_OF_DAY = 0.5f; // Midday
 
         [SerializeField] private float fullDayCycleInMinutes = 120;
         [SerializeField] private float transitionSpeed = 1f;
         [SerializeField] private float[] refreshIntervalByQuality;
-        [field: SerializeField] public float RefreshInterval { get; set; } = 5f;
 
+        public float RefreshInterval => refreshIntervalByQuality[refreshIntervalId];
+
+        private int refreshIntervalId;
         private float timeOfDayNormalized;
         private bool isDayCycleEnabled;
 
@@ -82,7 +84,7 @@ namespace DCL.SkyBox
         // Mapping: 0 - Low, 1 - Medium, 2 - High
         public void SetRefreshInterval(int qualityPresetId)
         {
-            RefreshInterval = refreshIntervalByQuality[qualityPresetId];
+            refreshIntervalId = qualityPresetId;
         }
 
         public static float NormalizeTime(float time)
