@@ -258,10 +258,10 @@ namespace DCL.VoiceChat
 
         private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
         {
-            OnLocalTrackUnpublishedInternal().Forget();
+            OnLocalTrackUnpublishedInternalAsync().Forget();
             return;
 
-            async UniTaskVoid OnLocalTrackUnpublishedInternal()
+            async UniTaskVoid OnLocalTrackUnpublishedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
                 trackManager.HandleLocalTrackUnpublished(publication, participant);
