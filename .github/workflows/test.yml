@@ -78,6 +78,21 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
           
+                
+      # Test cloning unity-gltf repository outside of game-ci
+      - name: Test unity-gltf clone with LFS
+        run: |
+          echo "Testing direct clone of unity-gltf repository..."
+          cd /tmp
+          git clone git@github.com:decentraland/unity-gltf.git test-unity-gltf
+          cd test-unity-gltf
+          echo "Repository cloned successfully"
+          git lfs pull
+          echo "LFS files pulled successfully"
+          ls -la
+          rm -rf /tmp/test-unity-gltf
+          echo "Test completed successfully"
+      
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version
