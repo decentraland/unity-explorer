@@ -364,7 +364,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                                                                                          BAN_MEMBER_CONFIRM_TEXT,
                                                                                          voiceChatContextMenuSettings.BanUserPopupSprite,
                                                                                          false, false,
-                                                                                         userInfo: new ConfirmationDialogParameter.UserData(walletId, participant.ProfilePictureUrl, ProfileNameColorHelper.GetNameColor(participant.Name))),
+                                                                                         userInfo: new ConfirmationDialogParameter.UserData(walletId, participant.ProfilePictureUrl, NameColorHelper.GetNameColor(participant.Name))),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
