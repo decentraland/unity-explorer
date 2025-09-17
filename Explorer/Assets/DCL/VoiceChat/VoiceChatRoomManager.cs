@@ -180,10 +180,10 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            OnConnectionUpdatedInternalAsync().Forget();
+            OnConnectionUpdatedAsync().Forget();
             return;
 
-            async UniTaskVoid OnConnectionUpdatedInternalAsync()
+            async UniTaskVoid OnConnectionUpdatedAsync()
             {
                 await UniTask.SwitchToMainThread();
 
@@ -222,10 +222,10 @@ namespace DCL.VoiceChat
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            OnTrackSubscribedInternalAsync().Forget();
+            OnTrackSubscribedAsync().Forget();
             return;
 
-            async UniTaskVoid OnTrackSubscribedInternalAsync()
+            async UniTaskVoid OnTrackSubscribedAsync()
             {
                 await UniTask.SwitchToMainThread();
                 trackManager.HandleTrackSubscribed(track, publication, participant);
@@ -234,10 +234,10 @@ namespace DCL.VoiceChat
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            OnTrackUnsubscribedInternalAsync().Forget();
+            OnTrackUnsubscribedAsync().Forget();
             return;
 
-            async UniTaskVoid OnTrackUnsubscribedInternalAsync()
+            async UniTaskVoid OnTrackUnsubscribedAsync()
             {
                 await UniTask.SwitchToMainThread();
                 trackManager.HandleTrackUnsubscribed(track, publication, participant);
@@ -246,10 +246,10 @@ namespace DCL.VoiceChat
 
         private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
         {
-            OnLocalTrackPublishedInternalAsync().Forget();
+            OnLocalTrackPublishedAsync().Forget();
             return;
 
-            async UniTaskVoid OnLocalTrackPublishedInternalAsync()
+            async UniTaskVoid OnLocalTrackPublishedAsync()
             {
                 await UniTask.SwitchToMainThread();
                 trackManager.HandleLocalTrackPublished(publication, participant);
@@ -258,10 +258,10 @@ namespace DCL.VoiceChat
 
         private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
         {
-            OnLocalTrackUnpublishedInternal().Forget();
+            OnLocalTrackUnpublishedAsync().Forget();
             return;
 
-            async UniTaskVoid OnLocalTrackUnpublishedInternal()
+            async UniTaskVoid OnLocalTrackUnpublishedAsync()
             {
                 await UniTask.SwitchToMainThread();
                 trackManager.HandleLocalTrackUnpublished(publication, participant);
