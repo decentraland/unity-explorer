@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
@@ -16,13 +17,13 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using AudioSettings = UnityEngine.AudioSettings;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
     public class VoiceChatPlugin : IDCLGlobalPlugin<VoiceChatPlugin.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
         private readonly ProfileRepositoryWrapper profileDataProvider;
@@ -55,7 +56,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
@@ -66,6 +68,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
             this.assetsProvisioner = assetsProvisioner;
+            this.debugContainerBuilder = debugContainerBuilder;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -127,6 +130,14 @@ namespace DCL.PluginSystem.Global
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
             sceneVoiceChatController = new SceneVoiceChatController(mainUIView.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
+
+            debugContainerBuilder
+               .TryAddWidget("Voice Chat")
+              ?.AddToggleField(
+                    "Freeze Playback Hub",
+                    v => PlaybackSourcesHub.UpdateFrozen(v.newValue),
+                    false
+                );
         }
 
         [Serializable]

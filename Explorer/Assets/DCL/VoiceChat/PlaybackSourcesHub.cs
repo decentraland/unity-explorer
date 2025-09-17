@@ -14,19 +14,29 @@ namespace DCL.VoiceChat
     /// <summary>
     /// Thread-safe
     /// </summary>
-    internal readonly struct PlaybackSourcesHub
+    public readonly struct PlaybackSourcesHub
     {
+        private static volatile bool frozen;
+
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> streams;
         private readonly AudioMixerGroup audioMixerGroup;
 
-        public PlaybackSourcesHub(ConcurrentDictionary<StreamKey, LivekitAudioSource> streams, AudioMixerGroup audioMixerGroup)
+        internal PlaybackSourcesHub(ConcurrentDictionary<StreamKey, LivekitAudioSource> streams, AudioMixerGroup audioMixerGroup)
         {
             this.streams = streams;
             this.audioMixerGroup = audioMixerGroup;
         }
 
-        public void AddOrReplaceStream(StreamKey key, WeakReference<IAudioStream> stream)
+        public static void UpdateFrozen(bool enabled)
         {
+            frozen = enabled;
+        }
+
+        internal void AddOrReplaceStream(StreamKey key, WeakReference<IAudioStream> stream)
+        {
+            if (frozen)
+                return;
+
             if (streams.TryRemove(key, out var oldStream))
                 DisposeSource(oldStream!);
 
@@ -43,7 +53,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void RemoveStream(StreamKey key)
+        internal void RemoveStream(StreamKey key)
         {
             if (streams.TryRemove(key, out LivekitAudioSource source))
                 InternalAsync(source!).Forget();
@@ -57,7 +67,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void Reset()
+        internal void Reset()
         {
             using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var list);
             foreach (StreamKey streamsKey in streams.Keys) list.Add(streamsKey);
@@ -65,8 +75,11 @@ namespace DCL.VoiceChat
             foreach (StreamKey streamKey in list) RemoveStream(streamKey);
         }
 
-        public void Play()
+        internal void Play()
         {
+            if (frozen)
+                return;
+
             ExecuteOnMainThread(this, static hub =>
             {
                 foreach (LivekitAudioSource livekitAudioSource in hub.streams.Values)
@@ -74,7 +87,7 @@ namespace DCL.VoiceChat
             });
         }
 
-        public void Stop()
+        internal void Stop()
         {
             ExecuteOnMainThread(this, static hub =>
             {

@@ -921,7 +921,8 @@ namespace Global.Dynamic
                         playerEntity,
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
-                        assetsProvisioner
+                        assetsProvisioner,
+                        debugBuilder
                     )
                 );
 
