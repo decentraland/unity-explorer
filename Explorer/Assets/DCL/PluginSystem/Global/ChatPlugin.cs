@@ -36,7 +36,6 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Communities;
 using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
@@ -73,13 +72,12 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
-        private readonly bool isCallEnabled;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly CommunityDataService communityDataService;
         private readonly ISpriteCache thumbnailCache;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private ChatController chatController;
+        private ChatController_OBSOLETE_OLD_CHAT chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private PrivateConversationUserStateService? chatUserStateService;
@@ -89,6 +87,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus = new EventBus(true);
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
+
         private CommandRegistry commandRegistry;
 
         public ChatPlugin(
@@ -119,11 +118,8 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             CommunityDataService communityDataService,
             ISpriteCache thumbnailCache,
-            WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled,
-            IRealmNavigator realmNavigator,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             Transform chatViewRectTransform)
         {
             this.mvcManager = mvcManager;
@@ -150,12 +146,15 @@ namespace DCL.PluginSystem.Global
             this.chatMessageFactory = chatMessageFactory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.friendsServiceProxy = friendsServiceProxy;
-            communityDataProvider = communitiesDataProvider;
-            this.communityDataService = communityDataService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.socialServiceProxy = socialServiceProxy;
+            this.friendsEventBus = friendsEventBus;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.communityDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.communitiesEventBus = communitiesEventBus;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
-            this.isCallEnabled = isCallEnabled;
+            this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
 
             pluginCts = new CancellationTokenSource();
@@ -227,8 +226,10 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
-            communityUserStateService = new CommunityUserStateService(communityDataProvider,
+            communityUserStateService = new CommunityUserStateService(
+                communityDataProvider,
                 communitiesEventBus,
+                //voiceChatOrchestrator, TODO, CHECK WHAT DID WE USE THIS FOR?
                 eventBus,
                 chatHistory,
                 web3IdentityCache);
@@ -275,7 +276,6 @@ namespace DCL.PluginSystem.Global
                 chatConfig,
                 eventBus,
                 mvcManager,
-                chatMessagesBus,
                 chatEventBus,
                 currentChannelService,
                 chatInputBlockingService,
@@ -285,7 +285,9 @@ namespace DCL.PluginSystem.Global
                 chatMemberService,
                 chatContextMenuService,
                 communityDataService,
-                chatClickDetectionService
+                chatClickDetectionService,
+                voiceChatOrchestrator,
+                communityDataProvider
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);

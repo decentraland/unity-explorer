@@ -19,6 +19,7 @@ namespace DCL.Nametags
         internal const int DEFAULT_OPACITY_MAX_DISTANCE = 20;
         internal const int DEFAULT_ADDITIONAL_MS_PER_CHARACTER = 20;
         internal const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;
+        internal const float DEFAULT_SPEAKING_ICON_SPACING = 0.05f;
 
         internal const float MESSAGE_CONTENT_FONT_SIZE = 1.3f;
         internal const float DISTANCE_THRESHOLD = 0.1f;
