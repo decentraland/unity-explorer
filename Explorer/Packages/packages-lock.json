@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "arch.systemgroups.visualiser": {
-      "version": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
+      "version": "git@github.com:m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
       "depth": 0,
       "source": "git",
       "dependencies": {},
@@ -15,7 +15,7 @@
       "hash": "de7bceffbc41b6d4bb8a43e1e0e786a6348402de"
     },
     "com.arch.systemgroups": {
-      "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
+      "version": "git@github.com:mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
       "depth": 0,
       "source": "git",
       "dependencies": {},
@@ -31,7 +31,7 @@
       "url": "https://package.openupm.com"
     },
     "com.atteneder.gltfast": {
-      "version": "https://github.com/decentraland/unity-gltf.git",
+      "version": "git@github.com:decentraland/unity-gltf.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -50,7 +50,7 @@
       "url": "https://package.openupm.com"
     },
     "com.cysharp.unitask": {
-      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+      "version": "git@github.com:Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
       "depth": 0,
       "source": "git",
       "dependencies": {},
@@ -71,24 +71,24 @@
       "hash": "e2daa643b01fc072db3dd3276e584db705a3d9a9"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
+      "version": "git@github.com:decentraland/client-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-        "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
+        "com.cysharp.unitask": "git@github.com:Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+        "com.nickkhalow.richtypes": "git@github.com:NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
       "hash": "4fb20540bfa25a74e7319534259b20536d416c78"
     },
     "com.decentraland.rpc-csharp": {
-      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
+      "version": "git@github.com:decentraland/rpc-csharp.git?path=rpc-csharp/src",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "https://github.com/decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
@@ -122,14 +122,14 @@
       "url": "https://package.openupm.com"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
-      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
+      "version": "git@github.com:decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "d254397fd38f65446129a44b4ad72de0c8213137"
     },
     "com.nickkhalow.richtypes": {
-      "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
+      "version": "git@github.com:NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
       "depth": 0,
       "source": "git",
       "dependencies": {},
@@ -487,21 +487,21 @@
       "hash": "38c92a2ff23a5e09ba58c84d068a892da7cdbedd"
     },
     "io.sentry.unity": {
-      "version": "https://github.com/getsentry/unity.git#2.1.3",
+      "version": "git@github.com:getsentry/unity.git#2.1.3",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "813f81a6bc5233c2fe9e07c9b901f6e9ee09159b"
     },
     "net.tnrd.nsubstitute": {
-      "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",
+      "version": "git@github.com:decentraland/Unity3D-NSubstitute.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
     "org.decentraland.clearscript": {
-      "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package",
+      "version": "git@github.com:decentraland/ClearScript.git?path=/Unity/Package",
       "depth": 0,
       "source": "git",
       "dependencies": {
