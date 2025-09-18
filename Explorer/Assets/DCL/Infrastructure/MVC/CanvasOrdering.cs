@@ -17,7 +17,7 @@ namespace MVC
             {SortingLayer.Persistent, 0},
             {SortingLayer.Fullscreen, 200},
             {SortingLayer.Popup, 400},
-            {SortingLayer.Overlay, 600},
+            {SortingLayer.Overlay, 600}
         };
 
         public readonly SortingLayer Layer;
