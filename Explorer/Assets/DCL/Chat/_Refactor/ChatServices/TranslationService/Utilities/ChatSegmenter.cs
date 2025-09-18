@@ -11,8 +11,10 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
         Tag,
         Handle,
 
-        Emoji
-        /* add: Url, Command, Number */
+        Emoji,
+
+        Number
+        /* add: Url, Command*/
     }
 
     public readonly struct Tok
@@ -37,6 +39,23 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
         static readonly Regex LinkOpenRx = new(@"<link=[^>]*>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         static readonly Regex LinkCloseRx = new(@"</link>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         static readonly Regex HandleRx = new(@"@[\p{L}\p{N}_.-]+#[0-9a-fA-F]{2,}", RegexOptions.Compiled);
+
+        // Currency: symbol or code before/after amount, dots/commas/nbsp as thousand sep,
+        // optional decimals with dot or comma. Boundaries are Unicode-aware.
+        private static readonly Regex CurrencyAmountRx = new(
+            @"(?<!\p{L})(?:[$€£¥₩₽₹]|USD|EUR|GBP|JPY|KRW|RUB|INR)\s?" +
+            @"(?:[0-9]{1,3}(?:[.,\u202F\u00A0][0-9]{3})*|[0-9]+)(?:[.,][0-9]{1,2})?(?!\p{L})",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static readonly Regex AmountCurrencyRx = new(
+            @"(?<!\p{L})(?:[0-9]{1,3}(?:[.,\u202F\u00A0][0-9]{3})*|[0-9]+)(?:[.,][0-9]{1,2})?\s?" +
+            @"(?:[$€£¥₩₽₹]|USD|EUR|GBP|JPY|KRW|RUB|INR)(?!\p{L})",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // Dates: ISO, slash, dot — simple, robust, language-agnostic.
+        private static readonly Regex IsoDateRx   = new(@"\b\d{4}-\d{2}-\d{2}\b", RegexOptions.Compiled);
+        private static readonly Regex SlashDateRx = new(@"\b[0-3]?\d/[01]?\d/\d{4}\b", RegexOptions.Compiled);
+        private static readonly Regex DotDateRx   = new(@"\b[0-3]?\d\.[01]?\d\.\d{4}\b", RegexOptions.Compiled);
 
         struct Span
         {
@@ -280,6 +299,72 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
             return toks;
         }
 
+        public static List<Tok> SplitTextTokensOnNumbersAndDates(List<Tok> toks)
+        {
+            var outList = new List<Tok>(toks.Count + 8);
+            int nextId = 0;
+
+            foreach (var t in toks)
+            {
+                if (t.Type != TokType.Text || string.IsNullOrEmpty(t.Value))
+                {
+                    outList.Add(new Tok(nextId++, t.Type, t.Value));
+                    continue;
+                }
+
+                string v = t.Value;
+                // Collect matches from all patterns
+                var spans = new List<(int start, int len)>();
+
+                void AddMatches(Regex rx)
+                {
+                    var m = rx.Matches(v);
+                    for (int i = 0; i < m.Count; i++) spans.Add((m[i].Index, m[i].Length));
+                }
+
+                AddMatches(CurrencyAmountRx);
+                AddMatches(AmountCurrencyRx);
+                AddMatches(IsoDateRx);
+                AddMatches(SlashDateRx);
+                AddMatches(DotDateRx);
+
+                if (spans.Count == 0)
+                {
+                    outList.Add(new Tok(nextId++, TokType.Text, v));
+                    continue;
+                }
+
+                // Resolve overlaps: left-to-right, prefer longer match
+                spans.Sort((a, b) => a.start != b.start ? a.start.CompareTo(b.start) : b.len.CompareTo(a.len));
+                var final = new List<(int s, int l)>();
+                int cursor = -1;
+                foreach (var s in spans)
+                {
+                    if (s.start >= cursor)
+                    {
+                        final.Add(s);
+                        cursor = s.start + s.len;
+                    }
+                }
+
+                int last = 0;
+                foreach (var s in final)
+                {
+                    if (s.s > last)
+                        outList.Add(new Tok(nextId++, TokType.Text, v.Substring(last, s.s - last)));
+
+                    outList.Add(new Tok(nextId++, TokType.Number, v.Substring(s.s, s.l)));
+                    last = s.s + s.l;
+                }
+
+                if (last < v.Length)
+                    outList.Add(new Tok(nextId++, TokType.Text, v.Substring(last)));
+            }
+
+            return outList;
+        }
+
+
 
         public static (string[] pieces, int[] tokenIndexes) ExtractTranslatables(List<Tok> toks)
         {
@@ -314,7 +399,13 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
             foreach (var t in toks) sb.Append(t.Value);
             return sb.ToString();
         }
-        
+
+        public static bool HasProtectedNumeric(string s)
+        {
+            return CurrencyAmountRx.IsMatch(s) || AmountCurrencyRx.IsMatch(s) ||
+                   IsoDateRx.IsMatch(s) || SlashDateRx.IsMatch(s) || DotDateRx.IsMatch(s);
+        }
+
         private static string EnforceOriginalTags(List<Tok> toks)
         {
             // Re-stitch only from tokens; Tag tokens are exactly from the source.

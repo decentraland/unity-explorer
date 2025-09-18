@@ -34,8 +34,11 @@ namespace DCL.Translation.Service
             if (TagRx.IsMatch(text)) return true;
 
             // Any emoji in the string? -> yes, batch
-            //    (uses your EmojiDetector with ZWJ/VS-16 support)
+            // (uses your EmojiDetector with ZWJ/VS-16 support)
             if (EmojiDetector.FindEmoji(text).Count > 0) return true;
+
+            // Any dates or currencies? -> yes, batch
+            if (ChatSegmenter.HasProtectedNumeric(text)) return true;
 
             return false;
         }
