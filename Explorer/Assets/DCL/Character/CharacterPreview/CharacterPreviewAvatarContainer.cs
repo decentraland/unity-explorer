@@ -15,6 +15,8 @@ namespace DCL.CharacterPreview
     {
         private const float DRAG_TIMEOUT = 0.1f;
         private const float ANGULAR_VELOCITY_DECELERATION_COEFF = 900f;
+        private const float ANGULAR_VELOCITY_LOWER_THRES = 0.01f;
+        private const float FOW_LOWER_THRES = 0.01f;
         private const float FOV_SPEED_COEFF = 3.5f;
         private const float FOV_SMOOTH_TIME = 0.6f;
 
@@ -31,12 +33,12 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
         [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
 
-        public float TargetFOV { get; set; }
-        public float RotationModifier { get; set; }
-        public float RotationInertia { get; set; }
-        public bool IsDragging { get; set; }
-        public float LastDragTime { get; set; }
-        public float AngularVelocity { get; set; }
+        internal float TargetFOV { get; set; }
+        internal float RotationModifier { get; set; }
+        internal float RotationInertia { get; set; }
+        internal bool IsDragging { get; set; }
+        internal float LastDragTime { get; set; }
+        internal float AngularVelocity { get; set; }
 
         public void Dispose()
         {
@@ -124,7 +126,7 @@ namespace DCL.CharacterPreview
             }
 
             // Apply rotation if there's any angular velocity
-            if (Mathf.Abs(AngularVelocity) > 0.01f)
+            if (Mathf.Abs(AngularVelocity) > ANGULAR_VELOCITY_LOWER_THRES)
             {
                 Vector3 rotation = rotationTarget.rotation.eulerAngles;
 
@@ -140,7 +142,7 @@ namespace DCL.CharacterPreview
             float currentFOV = freeLookCamera.m_Lens.FieldOfView;
 
             // Early return if already at target
-            if (Mathf.Abs(currentFOV - TargetFOV) <= 0.01f)
+            if (Mathf.Abs(currentFOV - TargetFOV) <= FOW_LOWER_THRES)
             {
                 isFOVTransitioning = false;
                 return;

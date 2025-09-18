@@ -9,6 +9,7 @@ namespace DCL.CharacterPreview
 {
     public readonly struct CharacterPreviewCameraController : IDisposable
     {
+        private const float SCROLL_DAMPENING_EXP = 0.7f;
         private const float MAX_ANGULAR_VELOCITY = 900f;
 
         private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
@@ -92,7 +93,7 @@ namespace DCL.CharacterPreview
 
             float scrollDelta = pointerEventData.scrollDelta.y * cameraSettings.scrollModifier;
             float scrollMagnitude = Mathf.Abs(scrollDelta);
-            float scaledScrollDelta = Mathf.Sign(scrollDelta) * Mathf.Pow(scrollMagnitude, 0.7f);
+            float scaledScrollDelta = Mathf.Sign(scrollDelta) * Mathf.Pow(scrollMagnitude, SCROLL_DAMPENING_EXP);
 
             float newFieldOfView = currentFieldOfView - scaledScrollDelta;
 
