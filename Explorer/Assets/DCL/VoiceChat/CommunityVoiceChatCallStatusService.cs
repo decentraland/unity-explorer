@@ -305,6 +305,7 @@ namespace DCL.VoiceChat
 
         public void ResetVoiceChatData()
         {
+            SetCallId(string.Empty);
             communityVoiceChatCalls.Clear();
             activeCommunityVoiceChats.Clear();
             locallyStartedCommunityId = null;
