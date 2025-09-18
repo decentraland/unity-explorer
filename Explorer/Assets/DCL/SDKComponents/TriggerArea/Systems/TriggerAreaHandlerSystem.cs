@@ -76,40 +76,39 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(PBTriggerArea))]
         private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            foreach (Transform entityTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
+            foreach (Collider entityCollider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
-                    entityTransform, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask);
+                    entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
 
             // TODO: STAY...
             // TODO: Can we infer the "STAY" state when ENTER was received but not EXIT ???
 
-            foreach (Transform entityTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
+            foreach (Collider entityCollider in triggerAreaComponent.ExitedEntitiesToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
-                    entityTransform, TriggerAreaEventType.TaetExit, triggerAreaComponent.LayerMask);
+                    entityCollider, TriggerAreaEventType.TaetExit, triggerAreaComponent.LayerMask);
             }
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
         }
 
         private void PropagateResultComponent(in CRDTEntity triggerAreaCRDTEntity, Transform triggerAreaTransform,
-            Transform triggerEntityTransform, TriggerAreaEventType eventType, ColliderLayer areaLayerMask)
+            Collider triggerEntityCollider, TriggerAreaEventType eventType, ColliderLayer areaLayerMask)
         {
             Entity avatarEntity = Entity.Null;
             ColliderSceneEntityInfo entityInfo = default;
-            if (triggerEntityTransform.gameObject.layer == PhysicsLayers.CHARACTER_LAYER
-                || triggerEntityTransform.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
+            if (triggerEntityCollider.gameObject.layer == PhysicsLayers.CHARACTER_LAYER
+                || triggerEntityCollider.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
             {
                 if (!PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, ColliderLayer.ClPlayer)
-                    || !TryGetAvatarEntity(triggerEntityTransform, out avatarEntity))
+                    || !TryGetAvatarEntity(triggerEntityCollider.transform, out avatarEntity))
                     return;
             }
 
-            // TODO: Improve to avoid GetComponent...
             if (avatarEntity == Entity.Null
-                && (!collidersSceneCache.TryGetEntity(triggerEntityTransform.GetComponent<Collider>(), out entityInfo)
+                && (!collidersSceneCache.TryGetEntity(triggerEntityCollider, out entityInfo)
                 || !PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, entityInfo.SDKLayer)))
                 return;
 
@@ -122,6 +121,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
             // TODO: Pool this one as well ???
             // TODO: Get Players CRDT Entities to to get their relative position, etc...
+            Transform triggerEntityTransform = triggerEntityCollider.transform;
             resultComponent.Trigger = new PBTriggerAreaResult.Types.Trigger()
             {
                 Entity = avatarEntity == Entity.Null ? (uint)entityInfo.SDKEntity.Id : 99999999, // TODO: get scene CRDT Entity for player

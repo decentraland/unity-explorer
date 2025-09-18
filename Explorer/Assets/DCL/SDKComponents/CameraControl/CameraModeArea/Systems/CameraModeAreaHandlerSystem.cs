@@ -73,7 +73,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             if (cameraData.CameraMode == CameraMode.SDKCamera) return;
 
-            if (sdkEntityTriggerAreaComponent.EnteredAvatarsToBeProcessed.Count > 0)
+            if (sdkEntityTriggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
             {
                 if (!activeAreas.Contains(entity))
                 {
@@ -82,7 +82,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
                 }
                 sdkEntityTriggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
             }
-            else if (sdkEntityTriggerAreaComponent.ExitedAvatarsToBeProcessed.Count > 0)
+            else if (sdkEntityTriggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
             {
                 if (activeAreas.Contains(entity))
                 {

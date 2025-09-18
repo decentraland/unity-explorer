@@ -9,31 +9,31 @@ namespace DCL.SDKEntityTriggerArea
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
         [field: SerializeField] public SphereCollider SphereCollider { get; private set; }
 
-        internal readonly HashSet<Transform> currentAvatarsInside = new ();
-        internal readonly HashSet<Transform> enteredAvatarsToBeProcessed = new ();
-        internal readonly HashSet<Transform> exitedAvatarsToBeProcessed = new ();
+        internal readonly HashSet<Collider> currentEntitiesInside = new ();
+        internal readonly HashSet<Collider> enteredEntitiesToBeProcessed = new ();
+        internal readonly HashSet<Collider> exitedEntitiesToBeProcessed = new ();
         [NonSerialized] public Transform TargetTransform;
 
-        public IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => enteredAvatarsToBeProcessed;
-        public IReadOnlyCollection<Transform> ExitedAvatarsToBeProcessed => exitedAvatarsToBeProcessed;
-        public IReadOnlyCollection<Transform> CurrentAvatarsInside => currentAvatarsInside;
+        public IReadOnlyCollection<Collider> EnteredEntitiesToBeProcessed => enteredEntitiesToBeProcessed;
+        public IReadOnlyCollection<Collider> ExitedEntitiesToBeProcessed => exitedEntitiesToBeProcessed;
+        public IReadOnlyCollection<Collider> CurrentEntitiesInside => currentEntitiesInside;
 
         public void OnTriggerEnter(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            enteredAvatarsToBeProcessed.Add(other.transform);
-            currentAvatarsInside.Add(other.transform);
-            exitedAvatarsToBeProcessed.Remove(other.transform);
+            enteredEntitiesToBeProcessed.Add(other);
+            currentEntitiesInside.Add(other);
+            exitedEntitiesToBeProcessed.Remove(other);
         }
 
         public void OnTriggerExit(Collider other)
         {
             if (TargetTransform != null && TargetTransform != other.transform) return;
 
-            exitedAvatarsToBeProcessed.Add(other.transform);
-            enteredAvatarsToBeProcessed.Remove(other.transform);
-            currentAvatarsInside.Remove(other.transform);
+            exitedEntitiesToBeProcessed.Add(other);
+            enteredEntitiesToBeProcessed.Remove(other);
+            currentEntitiesInside.Remove(other);
         }
 
         public void Dispose()
@@ -41,22 +41,22 @@ namespace DCL.SDKEntityTriggerArea
             BoxCollider.enabled = false;
             SphereCollider.enabled = false;
 
-            foreach (Transform avatarTransform in currentAvatarsInside)
-                exitedAvatarsToBeProcessed.Add(avatarTransform);
+            foreach (Collider entityCollider in currentEntitiesInside)
+                exitedEntitiesToBeProcessed.Add(entityCollider);
 
-            currentAvatarsInside.Clear();
+            currentEntitiesInside.Clear();
         }
 
         public void Clear()
         {
-            enteredAvatarsToBeProcessed.Clear();
-            exitedAvatarsToBeProcessed.Clear();
+            enteredEntitiesToBeProcessed.Clear();
+            exitedEntitiesToBeProcessed.Clear();
         }
 
-        public void ClearEnteredAvatarsToBeProcessed() =>
-            enteredAvatarsToBeProcessed.Clear();
+        public void ClearEnteredEntitiesToBeProcessed() =>
+            enteredEntitiesToBeProcessed.Clear();
 
-        public void ClearExitedAvatarsToBeProcessed() =>
-            exitedAvatarsToBeProcessed.Clear();
+        public void ClearExitedEntitiesToBeProcessed() =>
+            exitedEntitiesToBeProcessed.Clear();
     }
 }

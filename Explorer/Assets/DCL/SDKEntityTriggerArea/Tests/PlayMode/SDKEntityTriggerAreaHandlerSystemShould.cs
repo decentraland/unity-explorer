@@ -189,16 +189,16 @@ namespace DCL.SDKEntityTriggerArea.Tests
             system.Update(0);
             component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             await WaitForPhysics();
 
-            Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(1, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
             component.TryClear();
 
             // Move character outside area
@@ -206,8 +206,8 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             await WaitForPhysics();
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(1, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(1, component.ExitedEntitiesToBeProcessed.Count);
         }
 
         [Test]
@@ -225,16 +225,16 @@ namespace DCL.SDKEntityTriggerArea.Tests
             system.Update(0);
             component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
 
             // Move character inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
 
             await WaitForPhysics();
 
-            Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(1, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
             component.TryClear();
 
             // Simulate "getting outside current scene"
@@ -242,8 +242,8 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             system.Update(0);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(1, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(1, component.ExitedEntitiesToBeProcessed.Count);
             Assert.IsFalse(sdkEntityTriggerArea.BoxCollider.enabled);
         }
 
@@ -262,15 +262,15 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             world.Add(entity, component, pbComponent);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
 
             system.Update(0);
             await WaitForPhysics();
             component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(1, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
         }
 
         [Test]
@@ -292,15 +292,15 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             world.Add(entity, component, pbComponent);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
 
             system.Update(0);
             await WaitForPhysics();
             component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
 
             mainPlayerAvatarBaseProxy.SetObject(fakeMainPlayerAvatarGO.GetComponent<AvatarBase>());
 
@@ -308,8 +308,8 @@ namespace DCL.SDKEntityTriggerArea.Tests
             await WaitForPhysics();
             component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(1, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(1, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
         }
 
         [Test]
@@ -332,8 +332,8 @@ namespace DCL.SDKEntityTriggerArea.Tests
             system.Update(0);
             component = world.Get<SDKEntityTriggerAreaComponent>(entity);
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
 
             // Move both characters inside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position;
@@ -341,8 +341,8 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             await WaitForPhysics();
 
-            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(0, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(0, component.ExitedEntitiesToBeProcessed.Count);
             component.TryClear();
 
             // Move both characters outside area
@@ -351,8 +351,8 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             await WaitForPhysics();
 
-            Assert.AreEqual(0, component.EnteredAvatarsToBeProcessed.Count);
-            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.ExitedAvatarsToBeProcessed.Count);
+            Assert.AreEqual(0, component.EnteredEntitiesToBeProcessed.Count);
+            Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.ExitedEntitiesToBeProcessed.Count);
 
             // Cleanup
             Object.DestroyImmediate(fakeOtherPlayerGO);

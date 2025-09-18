@@ -17,7 +17,7 @@ namespace DCL.SDKEntityTriggerArea.Components
 
     public struct SDKEntityTriggerAreaComponent : IDirtyMarker
     {
-        private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
+        private static readonly IReadOnlyCollection<Collider> EMPTY_COLLECTION = Array.Empty<Collider>();
         public SDKEntityTriggerArea? monoBehaviour { get; private set; }
 
         private readonly bool targetOnlyMainPlayer;
@@ -28,16 +28,16 @@ namespace DCL.SDKEntityTriggerArea.Components
         public ColliderLayer LayerMask { get; private set; }
         public bool IsDirty { get; set; }
 
-        public readonly IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => hasMonoBehaviour
-            ? monoBehaviour!.EnteredAvatarsToBeProcessed
+        public readonly IReadOnlyCollection<Collider> EnteredEntitiesToBeProcessed => hasMonoBehaviour
+            ? monoBehaviour!.EnteredEntitiesToBeProcessed
             : EMPTY_COLLECTION;
 
-        public readonly IReadOnlyCollection<Transform> ExitedAvatarsToBeProcessed => hasMonoBehaviour
-            ? monoBehaviour!.ExitedAvatarsToBeProcessed
+        public readonly IReadOnlyCollection<Collider> ExitedEntitiesToBeProcessed => hasMonoBehaviour
+            ? monoBehaviour!.ExitedEntitiesToBeProcessed
             : EMPTY_COLLECTION;
 
-        public readonly IReadOnlyCollection<Transform> CurrentAvatarsInside => hasMonoBehaviour
-            ? monoBehaviour!.CurrentAvatarsInside
+        public readonly IReadOnlyCollection<Collider> CurrentEntitiesInside => hasMonoBehaviour
+            ? monoBehaviour!.CurrentEntitiesInside
             : EMPTY_COLLECTION;
 
         public SDKEntityTriggerAreaComponent(
@@ -129,10 +129,10 @@ namespace DCL.SDKEntityTriggerArea.Components
         public void TryClear() => monoBehaviour?.Clear();
 
         public void TryClearEnteredAvatarsToBeProcessed() =>
-            monoBehaviour?.ClearEnteredAvatarsToBeProcessed();
+            monoBehaviour?.ClearEnteredEntitiesToBeProcessed();
 
         public void TryClearExitedAvatarsToBeProcessed() =>
-            monoBehaviour?.ClearExitedAvatarsToBeProcessed();
+            monoBehaviour?.ClearExitedEntitiesToBeProcessed();
 
         public bool TryDispose(ISceneStateProvider sceneStateProvider)
         {
