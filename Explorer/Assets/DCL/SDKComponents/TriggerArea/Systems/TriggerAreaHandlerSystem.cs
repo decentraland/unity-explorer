@@ -76,6 +76,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(PBTriggerArea))]
         private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
+            // Enter
             foreach (Collider entityCollider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
@@ -83,9 +84,14 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
 
-            // TODO: STAY...
-            // TODO: Can we infer the "STAY" state when ENTER was received but not EXIT ???
+            // Stay
+            foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
+            {
+                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+                    entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask);
+            }
 
+            // Exit
             foreach (Collider entityCollider in triggerAreaComponent.ExitedEntitiesToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
