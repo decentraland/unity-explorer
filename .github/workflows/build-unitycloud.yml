@@ -392,9 +392,12 @@ jobs:
             exit 1
           fi
 
-          # Current size in MB (decimal)
+          # Current size in bytes
           BYTES=$(stat -c%s "$FILE" 2>/dev/null || stat -f%z "$FILE")
-          MB=$(( (BYTES + 999999) / 1000000 ))
+
+          # Convert to MB (decimal, 1 MB = 1,000,000) and MiB (binary, 1 MiB = 1,048,576)
+          MB_DEC=$(awk -v b="$BYTES" 'BEGIN { printf("%.1f", b/1000000) }')
+          MIB_BIN=$(awk -v b="$BYTES" 'BEGIN { printf("%.1f", b/1048576) }')
 
           # Per-platform caps and delta thresholds
           case "${{ matrix.target }}" in
@@ -403,7 +406,7 @@ jobs:
             *)         MAX=0; MAX_DELTA_MB=0 ;;
           esac
 
-          echo "Checking ${{ matrix.target }} → ${MB} MB (cap ${MAX} MB, delta threshold ${MAX_DELTA_MB} MB)"
+          echo "Checking ${{ matrix.target }} → ${MB_DEC} MB / ${MIB_BIN} MiB (cap ${MAX} MB, delta threshold ${MAX_DELTA_MB} MB)"
 
           # Lookup latest release tag from GitHub API
           API_LATEST="https://api.github.com/repos/${REPO_FULL}/releases/latest"
@@ -419,23 +422,24 @@ jobs:
             CL=$(curl -sI "$S3_URL" | awk '/[Cc]ontent-[Ll]ength:/ {print $2}' | tr -d '\r')
             if [ -n "$CL" ]; then
               MB_LATEST=$(( (CL + 999999) / 1000000 ))
+              MIB_LATEST=$(awk -v b="$CL" 'BEGIN { printf("%.1f", b/1048576) }')
               LATEST_FOUND=true
-              echo "Latest release: ${RELEASE_TAG} → ${MB_LATEST} MB"
+              echo "Latest release: ${RELEASE_TAG} → ${MB_LATEST} MB / ${MIB_LATEST} MiB"
             fi
           fi
 
           # Delta
           DELTA_MB="N/A"; DELTA_PCT="N/A"
           if $LATEST_FOUND; then
-            DELTA_MB=$(( MB - MB_LATEST ))
-            DELTA_PCT=$(awk -v cur="$MB" -v base="$MB_LATEST" 'BEGIN { if (base==0){print "N/A"} else {printf("%.2f%%",(cur-base)*100.0/base)} }')
+            DELTA_MB=$(awk -v cur="$MB_DEC" -v base="$MB_LATEST" 'BEGIN { printf("%d", cur - base) }')
+            DELTA_PCT=$(awk -v cur="$MB_DEC" -v base="$MB_LATEST" 'BEGIN { if (base==0){print "N/A"} else {printf("%.2f%%",(cur-base)*100.0/base)} }')
           fi
 
           # Flags
           CAP_EXCEEDED=false
           DELTA_EXCEEDED=false
 
-          if [ "${MAX:-0}" -gt 0 ] && [ "$MB" -gt "$MAX" ]; then
+          if [ "${MAX:-0}" -gt 0 ] && (( $(echo "$MB_DEC > $MAX" | bc -l) )); then
             CAP_EXCEEDED=true
             [ "${ENFORCE_CAP}" = "true" ] && echo "::error::Artifact exceeds cap" || echo "::warning::Artifact exceeds cap"
           fi
@@ -451,8 +455,9 @@ jobs:
           # Summary
           {
             echo "### Artifact size check (vs latest release)"
+            echo "_All sizes shown in both decimal MB (1 MB = 1,000,000 bytes) and binary MiB (1 MiB = 1,048,576 bytes)._"
             echo
-            echo "| Target | File | Size (MB) | Cap (MB) | Δ MB vs latest release | Δ % vs latest release | Δ threshold (MB) | Result |"
+            echo "| Target | File | Size (MB / MiB) | Cap (MB) | Δ MB vs latest release | Δ % vs latest release | Δ threshold (MB) | Result |"
             echo "|---|---|---:|---:|---:|---:|---:|---|"
 
             RESULT="✅ OK"
@@ -467,11 +472,11 @@ jobs:
             fi
 
             if $LATEST_FOUND; then
-              echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | $DELTA_MB | $DELTA_PCT | ${MAX_DELTA_MB:-0} | ${RESULT} |"
+              echo "| ${{ matrix.target }} | \`$FILE\` | ${MB_DEC} / ${MIB_BIN} | ${MAX:-0} | $DELTA_MB | $DELTA_PCT | ${MAX_DELTA_MB:-0} | ${RESULT} |"
               echo
-              echo "- Latest release: **${RELEASE_TAG}** (${MB_LATEST} MB)"
+              echo "- Latest release: **${RELEASE_TAG}** (${MB_LATEST} MB / ${MIB_LATEST} MiB)"
             else
-              echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | N/A | N/A | ${MAX_DELTA_MB:-0} | ${RESULT} |"
+              echo "| ${{ matrix.target }} | \`$FILE\` | ${MB_DEC} / ${MIB_BIN} | ${MAX:-0} | N/A | N/A | ${MAX_DELTA_MB:-0} | ${RESULT} |"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
