@@ -1,4 +1,4 @@
-﻿using DCL.Translation.Models;
+﻿using DCL.Utilities;
 
 namespace DCL.Translation.Settings
 {

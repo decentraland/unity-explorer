@@ -12,6 +12,7 @@ using DCL.Translation.Service.Memory;
 using DCL.Translation.Service.Policy;
 using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
+using DCL.Utilities;
 using Utility;
 
 namespace DCL.Translation.Service

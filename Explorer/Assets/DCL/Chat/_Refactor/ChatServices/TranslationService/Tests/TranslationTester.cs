@@ -9,6 +9,7 @@ using DCL.Translation.Models;
 using DCL.Translation.Service;
 using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
+using DCL.Utilities;
 using UnityEngine;
 
 namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
@@ -103,8 +104,8 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TestHarness] Auto-Translate for channel '{TEST_CONVERSATION_ID}' set to: {newStatus}");
         }
 
-        
-        
+
+
     // [ContextMenu("Run Translation Test")]
         // public async void RunTranslationTest()
         // {
@@ -137,7 +138,7 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             "type /help for a list of commands", "hello my friend <#00B2FF><link=profile>@Mirko#5e42</link></color> i am looking forward to talk to you 😾😶 go here please <#00B2FF><link=world>mirko.dcl.eth</link></color>", "😾😶 😾😶 hello 😾😶", "😾😶 <#00B2FF><link=world>mirko.dcl.eth</link></color> 😾",
             "😾😶😾 😾😶 my friend what's up!!! 😾 <#00B2FF><link=profile>@Mirko#5e42</link></color>"
         };
-        
+
         private List<LanguageCode> languageCodes = new List<LanguageCode>
         {
             LanguageCode.DE,
@@ -151,13 +152,13 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             LanguageCode.PT,
             LanguageCode.EN
         };
-        
+
         [ContextMenu("Test Segmentations")]
         public async void TestSegmentations()
         {
             foreach (var code in languageCodes)
             {
-                
+
                 foreach (string test in tests)
                 {
                     string input = test;
@@ -186,7 +187,7 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
                 }
             }
         }
-        
+
         [ContextMenu("Test Segmentations [Batch]")]
         public async void TestSegmentations2()
         {

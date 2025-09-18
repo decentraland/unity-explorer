@@ -9,6 +9,7 @@ using DCL.WebRequests;
 using UnityEngine;
 using DCL.Translation.Settings;
 using CommunicationData.URLHelpers;
+using DCL.Utilities;
 using DCL.Translation.Service.Debug;
 
 namespace DCL.Translation.Service.Provider
@@ -100,7 +101,7 @@ namespace DCL.Translation.Service.Provider
             };
 
             TranslationDebug.LogRequest(translateUrl, "application/json;", requestBody);
-            
+
             try
             {
                 var commonArgs = new CommonArguments(
@@ -114,7 +115,7 @@ namespace DCL.Translation.Service.Provider
                     .CreateFromJson<TranslationApiResponse>(WRJsonParser.Newtonsoft);
 
                 TranslationDebug.LogResponse(translateUrl, response);
-                
+
                 return response;
             }
             catch (Exception e)

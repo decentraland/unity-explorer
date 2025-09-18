@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatServices.TranslationService.Helpers;
 using DCL.Translation.Models;
+using DCL.Utilities;
 using Random = UnityEngine.Random;
 
 namespace DCL.Translation.Service.Provider
