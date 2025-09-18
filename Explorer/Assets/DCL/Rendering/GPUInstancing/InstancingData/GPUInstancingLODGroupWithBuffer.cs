@@ -23,11 +23,10 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
             InstancesBuffer = instances;
         }
 
-        // Конструктор для создания объединенных групп с единственным рендерером
         public GPUInstancingLODGroupWithBuffer(string name, LODGroupData lodGroupData, CombinedLodsRenderer renderer, List<PerInstanceBuffer> instances)
         {
             Name = name;
-            combinedLODGroupData = null; // Не используется для объединенных групп
+            combinedLODGroupData = null;
 
             LODGroupData = lodGroupData;
             CombinedLodsRenderers = new List<CombinedLodsRenderer> { renderer };
