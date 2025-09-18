@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-        internal readonly string logPrefix;
+        private readonly string logPrefix;
 
         private readonly InteriorRoom room = new ();
 
@@ -244,8 +244,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 // Don't disconnect the current room as it can be used instead of the new one according to the SelectValidRoom delegate
                 // Subscribers will miss connection callback
-                var connectResultTuple = await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
-                connectResult = connectResultTuple;
+                connectResult = await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
             }
             catch (Exception)
             {

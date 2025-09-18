@@ -9,6 +9,7 @@ namespace DCL.Communities.CommunitiesCard
     public class CommunityCardVoiceChatView : MonoBehaviour
     {
         private const float ANIMATION_DURATION = 0.5f;
+        private readonly Vector3 startingScale = new (1, 0.2f, 1);
 
         [field: SerializeField]
         public GameObject VoiceChatPanel;
@@ -45,16 +46,21 @@ namespace DCL.Communities.CommunitiesCard
         public void HandleListeningAnimation(bool isAnimationEnabled)
         {
             isSpeakingCurrentSequence?.Kill();
-            isSpeakingCurrentSequence = null;
+            isSpeakingIconRect.DOKill();
+            isSpeakingIconOuterRect.DOKill();
 
+            isSpeakingIconRect.localScale = Vector3.one;
+            isSpeakingIconOuterRect.localScale = startingScale;
+            isSpeakingCurrentSequence = null;
+            
             if (isAnimationEnabled)
             {
                 isSpeakingCurrentSequence = DOTween.Sequence();
+
                 isSpeakingCurrentSequence.Append(isSpeakingIconRect.DOScaleY(0.2f, ANIMATION_DURATION));
-                isSpeakingCurrentSequence.Join(isSpeakingIconOuterRect.DOScaleY(1, ANIMATION_DURATION));
-                isSpeakingCurrentSequence.Append(isSpeakingIconOuterRect.DOScaleY(0.2f, ANIMATION_DURATION));
-                isSpeakingCurrentSequence.Join(isSpeakingIconRect.DOScaleY(1, ANIMATION_DURATION));
-                isSpeakingCurrentSequence.SetLoops(-1);
+                isSpeakingCurrentSequence.Join(isSpeakingIconOuterRect.DOScaleY(1.0f, ANIMATION_DURATION));
+
+                isSpeakingCurrentSequence.SetLoops(-1, LoopType.Yoyo);
                 isSpeakingCurrentSequence.Play();
             }
         }

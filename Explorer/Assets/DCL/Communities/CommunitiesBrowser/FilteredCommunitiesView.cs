@@ -19,8 +19,9 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string>? CommunityProfileOpened;
         public event Action<string>? CommunityJoined;
         public event Action<string>? RequestedToJoinCommunity;
+        public event Action<string>? JoinStreamClicked;
         public event Action<string, string>? RequestToJoinCommunityCanceled;
-
+        public event Action<string>? GoToStreamClicked;
 
         [SerializeField] private Button resultsBackButton = null!;
         [SerializeField] private TMP_Text resultsTitleText = null!;
@@ -37,8 +38,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private ThumbnailLoader? thumbnailLoader;
+        private ActiveViewSection activeViewSection;
 
-        private CancellationTokenSource thumbnailLoadingCts = new();
+        private readonly CancellationTokenSource thumbnailLoadingCts = new ();
 
         public int CurrentResultsCount => currentFilteredIds.Count;
 
@@ -58,6 +60,11 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             browserStateService = communitiesBrowserStateService;
             thumbnailLoader = newThumbnailLoader;
+        }
+
+        public void SetActiveViewSection(ActiveViewSection newActiveSection)
+        {
+            this.activeViewSection = newActiveSection;
         }
 
         public void SetProfileRepositoryWrapper(ProfileRepositoryWrapper profileDataProvider)
@@ -89,7 +96,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (resetPos)
                 resultLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
-
         }
 
         public void SetAsLoading(bool isLoading)
@@ -164,9 +170,19 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetInviteOrRequestId(communityData.inviteOrRequestId);
-            cardView.SetActionButtonsType(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none);
+            var isStreaming = false;
+            var hasJoined = false;
+
+            if (activeViewSection == ActiveViewSection.STREAMING)
+            {
+                isStreaming = true;
+                hasJoined = browserStateService.CurrentCommunityId.Value == communityData.id;
+            }
+
+            cardView.SetActionButtonsState(communityData.privacy, communityData.pendingActionType, communityData.role != CommunityMemberRole.none, isStreaming, hasJoined);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, thumbnailLoadingCts.Token).Forget();
             cardView.SetActionLoadingActive(false);
+            cardView.ConfigureListenersCount(communityData.voiceChatStatus.isActive, communityData.voiceChatStatus.participantCount);
 
             // Setup card events
             cardView.MainButtonClicked -= OnCommunityProfileOpened;
@@ -179,12 +195,26 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.RequestToJoinCommunityButtonClicked += OnCommunityRequestedToJoin;
             cardView.CancelRequestToJoinCommunityButtonClicked -= OnCommunityRequestToJoinCanceled;
             cardView.CancelRequestToJoinCommunityButtonClicked += OnCommunityRequestToJoinCanceled;
+            cardView.JoinStreamButtonClicked -= OnJoinStreamClicked;
+            cardView.JoinStreamButtonClicked += OnJoinStreamClicked;
+            cardView.GoToStreamButtonClicked -= OnGoToStreamClicked;
+            cardView.GoToStreamButtonClicked += OnGoToStreamClicked;
 
             // Setup mutual friends
             if (profileRepositoryWrapper != null)
                 cardView.SetupMutualFriends(profileRepositoryWrapper, communityData);
 
             return gridItem;
+        }
+
+        private void OnGoToStreamClicked(string communityId)
+        {
+            GoToStreamClicked?.Invoke(communityId);
+        }
+
+        private void OnJoinStreamClicked(string communityId)
+        {
+            JoinStreamClicked?.Invoke(communityId);
         }
 
         private void OnCommunityRequestedToJoin(string communityId, CommunityResultCardView cardView)
@@ -208,6 +238,15 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             cardView.SetActionLoadingActive(true);
             CommunityJoined?.Invoke(communityId);
+        }
+
+
+        public enum ActiveViewSection
+        {
+            STREAMING,
+            ALL_COMMUNITIES,
+            SEARCH_COMMUNITIES,
+            MY_COMMUNITIES
         }
     }
 }

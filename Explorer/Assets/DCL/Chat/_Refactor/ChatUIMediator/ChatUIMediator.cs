@@ -50,6 +50,7 @@ namespace DCL.Chat
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowUnfocused();
             memberListPresenter.Hide();
+            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             subTitleButtonPresenter.Hide();
 
@@ -65,6 +66,7 @@ namespace DCL.Chat
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowFocusedAsync().Forget();
             memberListPresenter.Hide();
+            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             subTitleButtonPresenter.Show();
             subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
@@ -90,6 +92,7 @@ namespace DCL.Chat
         {
             titleBarPresenter.Hide();
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
+            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             subTitleButtonPresenter.Hide();
 

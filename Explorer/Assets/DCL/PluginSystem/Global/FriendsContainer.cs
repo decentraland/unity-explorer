@@ -78,7 +78,6 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
@@ -153,7 +152,6 @@ namespace DCL.PluginSystem.Global
 
             var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener,
                 mvcManager,
-                notificationsBusController,
                 passportBridge,
                 friendsService,
                 sharedSpaceManager,

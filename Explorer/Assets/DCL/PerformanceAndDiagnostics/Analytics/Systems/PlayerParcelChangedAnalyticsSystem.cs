@@ -1,9 +1,9 @@
 ﻿using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
+using ECS.SceneLifeCycle;
 using Segment.Serialization;
 using System;
 using UnityEngine;
-using Utility;
 
 namespace DCL.Analytics.Systems
 {
@@ -13,16 +13,20 @@ namespace DCL.Analytics.Systems
 
         private readonly IAnalyticsController analytics;
         private readonly IDisposable? subscription;
+        private readonly IScenesCache scenesCache;
+
         private Vector2Int oldParcel;
 
 
         public PlayerParcelChangedAnalytics(
             IAnalyticsController analytics,
-            PlayerParcelTrackerService parcelTracker)
+            IScenesCache scenesCache)
         {
             this.analytics = analytics;
+            this.scenesCache = scenesCache;
             ResetOldParcel();
-            subscription = parcelTracker.CurrentParcelData.Subscribe(OnParcelChanged);
+
+            subscription = scenesCache.CurrentParcel.Subscribe(OnParcelChanged);
         }
 
         private void ResetOldParcel()
@@ -30,19 +34,19 @@ namespace DCL.Analytics.Systems
             oldParcel = MIN_INT2;
         }
 
-        private void OnParcelChanged(PlayerParcelData newParcelData)
+        private void OnParcelChanged(Vector2Int newParcel)
         {
-            if (newParcelData.ParcelPosition == oldParcel) return;
+            if (newParcel == oldParcel) return;
 
             analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL, new JsonObject
             {
                 { "old_parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
-                { "new_parcel", newParcelData.ParcelPosition.ToString() },
-                { "scene_hash", newParcelData.SceneHash },
-                { "is_empty_scene", newParcelData.IsEmptyScene },
+                { "new_parcel", newParcel.ToString() },
+                { "scene_hash", scenesCache.CurrentScene.Value?.Info.Name},
+                { "is_empty_scene", scenesCache.CurrentScene.Value?.IsEmpty},
             });
 
-            oldParcel = newParcelData.ParcelPosition;
+            oldParcel = newParcel;
         }
 
         public void Dispose()

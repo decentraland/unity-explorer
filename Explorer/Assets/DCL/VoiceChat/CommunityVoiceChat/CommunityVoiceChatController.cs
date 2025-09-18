@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
-using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -133,6 +131,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
             {
                 view.SetConnectedPanel(true);
+                communityVoiceChatSearchController.SetGirdCellSizes(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
                 inCallController.SetEndStreamButtonStatus(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
                 RefreshCounters();
             }

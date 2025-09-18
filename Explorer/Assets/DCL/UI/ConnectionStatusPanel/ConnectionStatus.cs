@@ -1,4 +1,4 @@
-namespace DCL.UI.DebugMenu
+namespace DCL.UI.ConnectionStatusPanel
 {
     public enum ConnectionStatus
     {

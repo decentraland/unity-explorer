@@ -22,6 +22,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public RectTransform ListenersParent { get; private set; }
 
         [field: SerializeField]
+        public GridLayoutGroup RequestToSpeakGridLayout { get; private set; }
+
+        [field: SerializeField]
         public Button BackButton  { get; private set; }
     }
 }

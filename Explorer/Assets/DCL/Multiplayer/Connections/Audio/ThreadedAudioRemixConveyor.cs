@@ -2,7 +2,6 @@
 using LiveKit.Audio;
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
-using LiveKit.Audio;
 using Livekit.Types;
 using System;
 

@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
-using DCL.VoiceChat;
 using System;
 using System.Threading;
 using Utility;
@@ -21,22 +20,21 @@ namespace DCL.Communities.CommunitiesBrowser
         public CommunitiesBrowserMainRightSectionPresenter(
             CommunitiesBrowserRightSectionMainView view,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
-            ISharedSpaceManager sharedSpaceManager,
             CommunitiesBrowserStateService browserStateService,
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ICommunityCallOrchestrator orchestrator,
-            CommunitiesBrowserEventBus browserEventBus)
+            CommunitiesBrowserEventBus browserEventBus,
+            CommunitiesBrowserCommandsLibrary commandsLibrary)
         {
             this.view = view;
             this.browserEventBus = browserEventBus;
 
             streamingCommunitiesPresenter = new CommunitiesBrowserStreamingCommunitiesPresenter(view.StreamingCommunitiesView, dataProvider,
-                browserStateService, orchestrator, sharedSpaceManager);
+                browserStateService, commandsLibrary);
+
             streamingCommunitiesPresenter.ViewAllClicked += OnViewAllStreamingCommunities;
 
-
-            filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, profileRepositoryWrapper, browserStateService, browserEventBus);
+            filteredCommunitiesPresenter = new CommunitiesBrowserFilteredCommunitiesPresenter(view.FilteredCommunitiesView, dataProvider, profileRepositoryWrapper, browserStateService, browserEventBus, commandsLibrary);
             filteredCommunitiesPresenter.ResultsBackButtonClicked += LoadAllCommunities;
 
             view.SetDependencies(thumbnailLoader, browserStateService);
@@ -75,32 +73,36 @@ namespace DCL.Communities.CommunitiesBrowser
             streamingCommunitiesPresenter.Deactivate();
         }
 
-        private void LoadAllCommunities()
-        {
-            LoadAllCommunities(null);
-        }
-
-        public void LoadAllCommunities(Func<CancellationToken, UniTask<int>>? loadJoinRequests)
+        public void LoadAllCommunities()
         {
             browserEventBus.RaiseClearSearchBarEvent();
+            view.SetActiveView(CommunitiesViews.BROWSE_ALL_COMMUNITIES);
 
+            LoadAllCommunitiesAsync().Forget();
+        }
+
+        public void SetAsLoading()
+        {
+            browserEventBus.RaiseClearSearchBarEvent();
             view.SetActiveView(CommunitiesViews.BROWSE_ALL_COMMUNITIES);
             loadCts = loadCts.SafeRestart();
+            streamingCommunitiesPresenter.SetAsLoading(true);
+            filteredCommunitiesPresenter.SetAsLoading(true);
+        }
 
-            LoadAllCommunitiesResultsAsync(loadCts.Token).Forget();
-            return;
+        public async UniTaskVoid LoadAllCommunitiesAsync()
+        {
+            loadCts = loadCts.SafeRestart();
+            CancellationToken ct = loadCts.Token;
 
-            async UniTaskVoid LoadAllCommunitiesResultsAsync(CancellationToken ct)
-            {
-                await UniTask.WhenAll(
-                                  streamingCommunitiesPresenter.LoadStreamingCommunitiesAsync(ct),
-                                  filteredCommunitiesPresenter.LoadAllCommunitiesAsync(loadJoinRequests, ct)
-                              )
-                             .AttachExternalCancellation(ct);
+            await UniTask.WhenAll(
+                              streamingCommunitiesPresenter.LoadStreamingCommunitiesAsync(ct),
+                              filteredCommunitiesPresenter.LoadAllCommunitiesAsync(ct)
+                          )
+                         .AttachExternalCancellation(ct);
 
-                streamingCommunitiesPresenter.SetAsLoading(false);
-                filteredCommunitiesPresenter.SetAsLoading(false);
-            }
+            streamingCommunitiesPresenter.SetAsLoading(false);
+            filteredCommunitiesPresenter.SetAsLoading(false);
         }
 
         public void ViewAllMyCommunitiesResults()

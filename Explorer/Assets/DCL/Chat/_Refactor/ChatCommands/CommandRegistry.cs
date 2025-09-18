@@ -148,7 +148,7 @@ namespace DCL.Chat.ChatCommands
 
             ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand, currentChannelService);
 
-            GetUserCallStatusCommand = new GetUserCallStatusCommand(GetUserChatStatusCommand);
+            GetUserCallStatusCommand = new GetUserCallStatusCommand(privateConversationUserStateService);
         }
 
         public void Dispose()

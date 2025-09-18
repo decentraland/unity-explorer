@@ -38,9 +38,9 @@ namespace DCL.Chat
         [field: SerializeField]
         public ChannelMemberFeedView MemberListView { get; private set; }
 
-        [field: FormerlySerializedAs("<CommunityStreamSubTitleButton>k__BackingField")]
         [field: Header("Voice Chat")]
-        [field: SerializeField] public JoinCommunityLiveStreamChatSubTitleButtonView JoinCommunityLiveStreamSubTitleButton { get; private set; }
+        [field: SerializeField]
+        public JoinCommunityLiveStreamChatSubTitleButtonView JoinCommunityLiveStreamSubTitleButton { get; private set; }
 
         public void Dispose()
         {

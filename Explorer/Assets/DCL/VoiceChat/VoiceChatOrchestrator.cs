@@ -1,7 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
@@ -16,21 +19,23 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(VoiceChatOrchestrator);
 
-        private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
-        private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
+        private readonly IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
+        private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IChatEventBus chatEventBus;
 
-        private readonly IDisposable privateStatusSubscription;
-        private readonly IDisposable communityStatusSubscription;
+        private readonly IDisposable? privateStatusSubscription;
+        private readonly IDisposable? communityStatusSubscription;
 
         private readonly ReactiveProperty<VoiceChatType> currentVoiceChatType = new (VoiceChatType.NONE);
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.DEFAULT);
         private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
 
-        private VoiceChatCallStatusServiceBase activeCallStatusService;
-        private IVoiceChatOrchestrator voiceChatOrchestratorImplementation;
-        private CancellationTokenSource joinCallCts;
+        private IVoiceChatCallStatusServiceBase? activeCallStatusService;
+        private IVoiceChatOrchestrator? voiceChatOrchestratorImplementation;
+        private CancellationTokenSource joinCallCts = new ();
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
@@ -47,14 +52,16 @@ namespace DCL.VoiceChat
         public string CurrentTargetWallet => privateVoiceChatCallStatusService.CurrentTargetWallet;
 
         public VoiceChatOrchestrator(
-            PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
-            CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
+            IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
+            ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             VoiceChatParticipantsStateService participantsStateService,
-            SceneVoiceChatTrackerService sceneVoiceChatTrackerService)
+            SceneVoiceChatTrackerService sceneVoiceChatTrackerService, ISharedSpaceManager sharedSpaceManager, IChatEventBus chatEventBus)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.chatEventBus = chatEventBus;
             ParticipantsStateService = participantsStateService;
 
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
@@ -78,11 +85,11 @@ namespace DCL.VoiceChat
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
 
-            currentVoiceChatType?.ClearSubscriptionsList();
-            currentCallStatus?.ClearSubscriptionsList();
-            currentVoiceChatPanelSize?.ClearSubscriptionsList();
-            currentActiveCommunityData?.ClearSubscriptionsList();
-            ParticipantsStateService?.Dispose();
+            currentVoiceChatType.ClearSubscriptionsList();
+            currentCallStatus.ClearSubscriptionsList();
+            currentVoiceChatPanelSize.ClearSubscriptionsList();
+            currentActiveCommunityData.ClearSubscriptionsList();
+            ParticipantsStateService.Dispose();
         }
 
         private void OnClickedNotification(object[] parameters)
@@ -91,7 +98,17 @@ namespace DCL.VoiceChat
                 return;
 
             var notification = (CommunityVoiceChatStartedNotification)parameters[0];
-            JoinCommunityVoiceChat(notification.CommunityId, true);
+
+            ShowCommunityInChatAndJoinAsync().Forget();
+            return;
+
+            async UniTaskVoid ShowCommunityInChatAndJoinAsync()
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true));
+                chatEventBus.OpenCommunityConversationUsingCommunityId(notification.CommunityId);
+                JoinCommunityVoiceChat(notification.CommunityId, true);
+            }
+
         }
 
         public void StartCall(string callId, VoiceChatType callType)
@@ -99,7 +116,7 @@ namespace DCL.VoiceChat
             if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
             {
                 SetActiveCallService(callType);
-                activeCallStatusService.StartCall(callId);
+                activeCallStatusService?.StartCall(callId);
             }
         }
 

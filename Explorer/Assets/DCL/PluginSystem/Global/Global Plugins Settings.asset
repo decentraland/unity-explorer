@@ -52,6 +52,7 @@ MonoBehaviour:
   - rid: 6144113899072913496
   - rid: 648265872610426982
   - rid: 657752310186246267
+  - rid: 6478896861045588059
   references:
     version: 2
     RefIds:
@@ -781,6 +782,15 @@ MonoBehaviour:
         <MovementSettings>k__BackingField: {fileID: 11400000, guid: 495d936d8dfe78444abfd5ff3e260159, type: 2}
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 6478896861045588059
+      type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        UiDocumentPrefab:
+          m_AssetGUID: 6ade66d1c3c0b42f389ff610295b9c13
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

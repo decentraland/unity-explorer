@@ -23,7 +23,7 @@ namespace DCL.Chat.EventBus
             OpenPrivateConversationRequested?.Invoke(userId);
         }
 
-        public void OpenCommunityConversationUsingUserId(string communityId)
+        public void OpenCommunityConversationUsingCommunityId(string communityId)
         {
             OpenCommunityConversationRequested?.Invoke(communityId);
         }

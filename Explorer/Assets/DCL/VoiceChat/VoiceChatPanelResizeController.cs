@@ -1,5 +1,5 @@
+using DCL.Utilities;
 using System;
-using UnityEngine;
 
 namespace DCL.VoiceChat
 {
@@ -7,6 +7,8 @@ namespace DCL.VoiceChat
     {
         private readonly VoiceChatPanelResizeView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
+        private readonly IDisposable voiceChatPanelSizeUpdateSubscription;
+        private readonly IDisposable voiceChatTypeChangedSubscription;
 
         private const float DEFAULT_VOICE_CHAT_SIZE = 50;
         private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 240;
@@ -20,8 +22,8 @@ namespace DCL.VoiceChat
             this.view = view;
             this.voiceChatState = voiceChatState;
 
-            this.voiceChatState.CurrentVoiceChatPanelSize.OnUpdate += OnUpdateVoiceChatPanelSize;
-            this.voiceChatState.CurrentVoiceChatType.OnUpdate += OnCurrentVoiceChatTypeChanged;
+            voiceChatPanelSizeUpdateSubscription = voiceChatState.CurrentVoiceChatPanelSize.Subscribe(OnUpdateVoiceChatPanelSize);
+            voiceChatTypeChangedSubscription = voiceChatState.CurrentVoiceChatType.Subscribe(OnCurrentVoiceChatTypeChanged);
         }
 
         private void OnCurrentVoiceChatTypeChanged(VoiceChatType type)
@@ -68,6 +70,8 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
+            voiceChatPanelSizeUpdateSubscription.Dispose();
+            voiceChatTypeChangedSubscription.Dispose();
         }
     }
 }

@@ -11,6 +11,7 @@ using DCL.RealmNavigation;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
+using ECS.SceneLifeCycle;
 using Utility.Json;
 using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
 
@@ -40,7 +41,7 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             ICameraReelStorageService cameraReelStorageService,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            PlayerParcelTrackerService playerParcelTracker
+            IScenesCache scenesCache
         )
         {
             this.analytics = analytics;
@@ -54,7 +55,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
 
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
-            playerParcelChangedAnalytics = new PlayerParcelChangedAnalytics(analytics, playerParcelTracker);
+            playerParcelChangedAnalytics = new PlayerParcelChangedAnalytics(analytics, scenesCache);
         }
 
         public void Dispose()
