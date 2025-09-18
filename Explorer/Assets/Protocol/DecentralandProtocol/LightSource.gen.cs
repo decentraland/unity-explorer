@@ -143,7 +143,7 @@ namespace DCL.ECSComponents {
     public const int ColorFieldNumber = 2;
     private global::Decentraland.Common.Color3 color_;
     /// <summary>
-    /// default = Color.white, the tint of the light, in RGB format where each component is a floating point value with a range from 0 to 1.
+    /// default = white, the tint of the light, in RGB format where each component is a floating point value with a range from 0 to 1.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -158,7 +158,7 @@ namespace DCL.ECSComponents {
     public const int IntensityFieldNumber = 3;
     private float intensity_;
     /// <summary>
-    /// default = 250, ranges from 1 (dim) to 100,000 (very bright), expressed in Lumens for Point and Spot.
+    /// default = 16000, light intensity expressed in candels (lumens/m^2 at 1 m distance, or lumens divided by 4*pi)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -186,7 +186,7 @@ namespace DCL.ECSComponents {
     public const int RangeFieldNumber = 4;
     private float range_;
     /// <summary>
-    /// default = 0, how far the light travels, expressed in meters. If left at 0 will be computed automatically
+    /// default = -1, how far the light travels, expressed in meters. If negative will be computed automatically as pow(intensity, 0.25)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

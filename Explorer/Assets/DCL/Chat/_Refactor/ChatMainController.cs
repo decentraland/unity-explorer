@@ -13,9 +13,10 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
-using DCL.Chat.MessageBus;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.UI.Profiles.Helpers;
+using DCL.VoiceChat;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using Utility;
@@ -35,12 +36,16 @@ namespace DCL.Chat
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IMVCManager mvcManager;
-        private ChatStateMachine? chatStateMachine;
-        private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly CommunitiesDataProvider communityDataProvider;
+
+        private ChatStateMachine? chatStateMachine;
+        private EventSubscriptionScope uiScope;
+        private CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
+
         private readonly HashSet<IBlocksChat> chatBlockers = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
@@ -56,7 +61,6 @@ namespace DCL.Chat
             ChatConfig.ChatConfig chatConfig,
             IEventBus eventBus,
             IMVCManager mvcManager,
-            IChatMessagesBus chatMessagesBus,
             IChatEventBus chatEventBus,
             CurrentChannelService currentChannelService,
             ChatInputBlockingService chatInputBlockingService,
@@ -66,12 +70,13 @@ namespace DCL.Chat
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
             CommunityDataService communityDataService,
-            ChatClickDetectionService chatClickDetectionService) : base(viewFactory)
+            ChatClickDetectionService chatClickDetectionService,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            CommunitiesDataProvider communityDataProvider) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
             this.mvcManager = mvcManager;
-            this.chatMessagesBus = chatMessagesBus;
             this.chatEventBus = chatEventBus;
             this.currentChannelService = currentChannelService;
             this.chatInputBlockingService = chatInputBlockingService;
@@ -82,6 +87,8 @@ namespace DCL.Chat
             this.chatContextMenuService = chatContextMenuService;
             this.communityDataService = communityDataService;
             this.chatClickDetectionService = chatClickDetectionService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.communityDataProvider = communityDataProvider;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -100,7 +107,15 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed += OnUIClose;
 
-            var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
+            communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
+                viewInstance.JoinCommunityLiveStreamSubTitleButton,
+                voiceChatOrchestrator,
+                currentChannelService.CurrentChannelProperty,
+                communityDataProvider);
+
+
+            var titleBarPresenter = new ChatTitlebarPresenter(
+                viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,
                 communityDataService,
@@ -109,7 +124,11 @@ namespace DCL.Chat
                 chatContextMenuService,
                 commandRegistry.GetTitlebarViewModel,
                 commandRegistry.GetCommunityThumbnail,
-                commandRegistry.DeleteChatHistory);
+                commandRegistry.DeleteChatHistory,
+                voiceChatOrchestrator,
+                chatEventBus,
+                commandRegistry.GetUserCallStatusCommand);
+
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
@@ -165,7 +184,8 @@ namespace DCL.Chat
                 channelListPresenter,
                 messageFeedPresenter,
                 inputPresenter,
-                memberListPresenter);
+                memberListPresenter,
+                communityVoiceChatSubTitleButtonPresenter);
 
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,
@@ -279,6 +299,7 @@ namespace DCL.Chat
             uiScope?.Dispose();
 
             chatMemberListService.Dispose();
+            communityVoiceChatSubTitleButtonPresenter?.Dispose();
             chatBlockers.Clear();
         }
 
