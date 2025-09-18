@@ -391,8 +391,8 @@ jobs:
         id: size_check
         env:
           # Per-target absolute caps (MB)
-          MAX_MACOS_MB: 395
-          MAX_WINDOWS64_MB: 325
+          MAX_MACOS_MB: 370
+          MAX_WINDOWS64_MB: 280
 
           # Per-platform delta thresholds (MB); 0 = disabled
           DELTA_MACOS_MB:   ${{ github.event.inputs.delta_threshold_macos_mb   || inputs.delta_threshold_macos_mb   || '0' }}
