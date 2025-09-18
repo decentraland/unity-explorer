@@ -614,6 +614,7 @@ namespace Global.Dynamic
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
+            IEventBus eventBus = new EventBus(true);
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -724,7 +725,8 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
-                    bootstrapContainer.DecentralandUrlsSource),
+                    bootstrapContainer.DecentralandUrlsSource,
+                    eventBus),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -757,7 +759,8 @@ namespace Global.Dynamic
                     thumbnailCache,
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
-                    mainUIView.SidebarView.unreadMessagesButton.transform),
+                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    eventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
