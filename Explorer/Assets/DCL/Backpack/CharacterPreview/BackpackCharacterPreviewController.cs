@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -121,13 +122,13 @@ namespace DCL.Backpack.CharacterPreview
         {
             switch (category)
             {
-                case WearablesConstants.Categories.EYES:
+                case WearableCategories.Categories.EYES:
                     previewAvatarModel.EyesColor = newColor;
                     break;
-                case WearablesConstants.Categories.HAIR:
+                case WearableCategories.Categories.HAIR:
                     previewAvatarModel.HairColor = newColor;
                     break;
-                case WearablesConstants.Categories.BODY_SHAPE:
+                case WearableCategories.Categories.BODY_SHAPE:
                     previewAvatarModel.SkinColor = newColor;
                     break;
             }

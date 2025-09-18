@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -33,9 +34,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private static readonly (string suffix, string category, int defaultSlotIndexUsed, GetFacialFeatureColor getColor)[] SUFFIX_CATEGORY_MAP =
         {
-            ("Mask_Eyes", WearablesConstants.Categories.EYES, defaultSlotIndexUsed: 1, (in AvatarShapeComponent shape) => shape.EyesColor),
-            ("Mask_Eyebrows", WearablesConstants.Categories.EYEBROWS, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.HairColor),
-            ("Mask_Mouth", WearablesConstants.Categories.MOUTH, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.SkinColor),
+            ("Mask_Eyes", WearableCategories.Categories.EYES, defaultSlotIndexUsed: 1, (in AvatarShapeComponent shape) => shape.EyesColor),
+            ("Mask_Eyebrows", WearableCategories.Categories.EYEBROWS, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.HairColor),
+            ("Mask_Mouth", WearableCategories.Categories.MOUTH, defaultSlotIndexUsed: 0, (in AvatarShapeComponent shape) => shape.SkinColor),
         };
 
         public static AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
