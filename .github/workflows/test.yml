@@ -68,9 +68,9 @@ jobs:
 
       - name: Patch manifest for HTTPS authentication
         run: |
-          # Replace SSH URLs with HTTPS + token in manifest.json ping
-          sed -i 's|git@github.com:|https://github.com/|g' Explorer/Packages/manifest.json
-          sed -i 's|ssh://git@github.com/|https://github.com/|g' Explorer/Packages/manifest.json
+          # Replace SSH URLs with HTTPS + token in manifest.json
+          sed -i 's|git@github.com:|https://${{ secrets.PAT_MIHA }}@github.com/|g' Explorer/Packages/manifest.json
+          sed -i 's|ssh://git@github.com/|https://${{ secrets.PAT_MIHA }}@github.com/|g' Explorer/Packages/manifest.json
           
           # Show the changes
           echo "Updated manifest.json:"
@@ -163,7 +163,7 @@ jobs:
           projectPath: Explorer
           testMode: all
           customImage: ${{ steps.img.outputs.ghcr }}
-          gitPrivateToken: ${{ secrets.PAT_MIHA }}
+          # gitPrivateToken: ${{ secrets.PAT_MIHA }}
 
       - name: Report test results
         if: always()
