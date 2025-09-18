@@ -124,6 +124,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             #if UNITY_STANDALONE_OSX
             assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac";
             #endif
+            #if UNITY_STANDALONE_LINUX //for ubuntu tests
+            assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac";
+            #endif
             var intention = new GetAssetBundleIntention(new CommonLoadingArguments(assetUrl));
             intention.Hash = $"req{index}";
             var partition = PartitionComponent.TOP_PRIORITY;
