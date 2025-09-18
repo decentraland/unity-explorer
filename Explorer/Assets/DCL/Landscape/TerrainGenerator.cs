@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
@@ -9,10 +8,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
-using GPUInstancerPro;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
 using TerrainProto;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -34,8 +29,8 @@ namespace DCL.Landscape
         private const float PROGRESS_COUNTER_OCCUPANCY_MAP = 0.4f;
         private const float PROGRESS_COUNTER_TERRAIN_COMPONENTS = 0.8f;
 
-        private const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
-        private const int TREE_INSTANCE_LIMIT = 262144; // 2^18 trees
+        internal const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
+        internal const int TREE_INSTANCE_LIMIT = 262144; // 2^18 trees
 
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
@@ -44,7 +39,7 @@ namespace DCL.Landscape
         private TerrainGenerationData terrainGenData;
         private TerrainBoundariesGenerator boundariesGenerator;
         private TerrainFactory factory;
-        private GPUIProfile treesProfile;
+        public TreeData? Trees { get; private set; }
 
         private NativeList<int2> emptyParcels;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
@@ -57,13 +52,6 @@ namespace DCL.Landscape
 
         private NativeArray<byte> occupancyMapData;
         private int occupancyMapSize;
-        private int2 treeMinParcel;
-        private int2 treeMaxParcel;
-        private NativeArray<int> treeIndices;
-        private NativeArray<TreeInstanceData> treeInstances;
-
-        private int[]? gpuInstancerRendererKeys;
-        private int[]? gpuInstancerInstanceCounts;
 
         public Transform TerrainRoot { get; private set; }
 
@@ -82,8 +70,6 @@ namespace DCL.Landscape
         public Texture2D OccupancyMap { get; private set; }
         public int OccupancyFloor { get; private set; }
 
-        private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
-
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false)
         {
             this.profilingProvider = profilingProvider;
@@ -92,12 +78,13 @@ namespace DCL.Landscape
             timeProfiler = new TimeProfiler(measureTime);
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, GPUIProfile treesProfile, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+        public void Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys,
+            ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
-            this.treesProfile = treesProfile;
+            Trees = new TreeData(treeRendererKeys, terrainGenData);
 
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
@@ -139,7 +126,7 @@ namespace DCL.Landscape
             // TODO is it necessary to yield?
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            ShowGPUInstancerInstances();
+            Trees!.Show();
 
             IsTerrainShown = true;
 
@@ -154,7 +141,7 @@ namespace DCL.Landscape
             {
                 TerrainRoot.gameObject.SetActive(false);
 
-                HideGPUInstancerInstances();
+                Trees!.Hide();
 
                 IsTerrainShown = false;
             }
@@ -211,10 +198,16 @@ namespace DCL.Landscape
 
                     processReport?.SetProgress(PROGRESS_COUNTER_TERRAIN_COMPONENTS);
 
-                    await LoadTreesAsync();
-                    InstantiateTrees();
+                    await Trees!.LoadAsync($"{Application.streamingAssetsPath}/GenesisTrees.bin");
+
+                    Trees!.SetTerrainData(TerrainModel.MinParcel, TerrainModel.MaxParcel, OccupancyMap,
+                        OccupancyFloor);
+
+                    Trees.Instantiate();
 
                     processReport?.SetProgress(1f);
+
+                    IsTerrainShown = true;
                 }
             }
             catch (OperationCanceledException)
@@ -229,7 +222,6 @@ namespace DCL.Landscape
                 FreeMemory();
 
                 IsTerrainGenerated = true;
-                IsTerrainShown = true;
 
                 emptyParcels.Dispose();
                 ownedParcels.Dispose();
@@ -262,7 +254,7 @@ namespace DCL.Landscape
             emptyParcelsData.Dispose();
         }
 
-        private static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
+        internal static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
             int2 terrainSize = maxParcel - minParcel + 1;
@@ -350,7 +342,7 @@ namespace DCL.Landscape
             return occupancyMap;
         }
 
-        private static int WriteInteriorChamferOnWhite(Texture2D r8, int2 minParcel, int2 maxParcel, int padding)
+        internal static int WriteInteriorChamferOnWhite(Texture2D r8, int2 minParcel, int2 maxParcel, int padding)
         {
             int w = r8.width, h = r8.height, n = w * h;
             NativeArray<byte> src = r8.GetRawTextureData<byte>();
@@ -532,20 +524,7 @@ namespace DCL.Landscape
             return minValue;
         }
 
-        public bool IsParcelOccupied(int2 parcel)
-        {
-            if (any(parcel < TerrainModel.MinParcel) || any(parcel > TerrainModel.MaxParcel))
-                return false;
-
-            if (occupancyMapSize <= 0)
-                return false;
-
-            parcel += occupancyMapSize / 2;
-            int index = (parcel.y * occupancyMapSize) + parcel.x;
-            return occupancyMapData[index] == 0;
-        }
-
-        private static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
+        internal static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
             int occupancyMapSize, int parcelSize, int occupancyFloor)
         {
             float occupancy;
@@ -594,242 +573,6 @@ namespace DCL.Landscape
             float top = lerp(texture[index.w], texture[index.z], t.x);
             float bottom = lerp(texture[index.x], texture[index.y], t.x);
             return lerp(top, bottom, t.y) * (1f / 255f);
-        }
-
-        public ReadOnlySpan<TreeInstanceData> GetTreeInstances(int2 parcel)
-        {
-            // If tree data has not been loaded, minParcel == maxParcel, and so this is false, and we
-            // don't need to check if treeInstances is empty or anything like that.
-            if (parcel.x < treeMinParcel.x || parcel.x >= treeMaxParcel.x
-                                           || parcel.y < treeMinParcel.y || parcel.y >= treeMaxParcel.y) { return ReadOnlySpan<TreeInstanceData>.Empty; }
-
-            int index = ((parcel.y - treeMinParcel.y) * (treeMaxParcel.x - treeMinParcel.x))
-                + parcel.x - treeMinParcel.x;
-
-            int start = treeIndices[index++];
-            int end = index < treeIndices.Length ? treeIndices[index] : treeInstances.Length;
-            return treeInstances.AsReadOnlySpan().Slice(start, end - start);
-        }
-
-        public bool GetTreeTransform(int2 parcel, TreeInstanceData instance, out Vector3 position,
-            out Quaternion rotation, out Vector3 scale)
-        {
-            position.x = (parcel.x + (instance.PositionX * (1f / 255f))) * ParcelSize;
-            position.z = (parcel.y + (instance.PositionZ * (1f / 255f))) * ParcelSize;
-
-            if (OverlapsOccupiedParcel(float2(position.x, position.z),
-                    terrainGenData.treeAssets[instance.PrototypeIndex].radius))
-            {
-                position.y = 0f;
-                rotation = default(Quaternion);
-                scale = default(Vector3);
-                return false;
-            }
-
-            position.y = GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor);
-
-            rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
-
-            scale = terrainGenData.treeAssets[instance.PrototypeIndex]
-                                  .randomization
-                                  .LerpScale(float2(instance.ScaleXZ, instance.ScaleY) * (1f / 255f))
-                                  .xyx;
-
-            return true;
-        }
-
-        private bool OverlapsOccupiedParcel(float2 position, float radius)
-        {
-            var parcel = (int2)floor(position * (1f / ParcelSize));
-
-            if (IsParcelOccupied(parcel))
-                return true;
-
-            float2 localPosition = position - (parcel * ParcelSize);
-
-            if (localPosition.x < radius)
-            {
-                if (IsParcelOccupied(int2(parcel.x - 1, parcel.y)))
-                    return true;
-
-                if (localPosition.y < radius)
-                {
-                    if (IsParcelOccupied(int2(parcel.x - 1, parcel.y - 1)))
-                        return true;
-                }
-            }
-
-            if (ParcelSize - localPosition.x < radius)
-            {
-                if (IsParcelOccupied(int2(parcel.x + 1, parcel.y)))
-                    return true;
-
-                if (ParcelSize - localPosition.y < radius)
-                {
-                    if (IsParcelOccupied(int2(parcel.x + 1, parcel.y + 1)))
-                        return true;
-                }
-            }
-
-            if (localPosition.y < radius)
-            {
-                if (IsParcelOccupied(int2(parcel.x, parcel.y - 1)))
-                    return true;
-
-                if (ParcelSize - localPosition.x < radius)
-                {
-                    if (IsParcelOccupied(int2(parcel.x + 1, parcel.y - 1)))
-                        return true;
-                }
-            }
-
-            if (ParcelSize - localPosition.y < radius)
-            {
-                if (IsParcelOccupied(int2(parcel.x, parcel.y + 1)))
-                    return true;
-
-                if (localPosition.x < radius)
-                {
-                    if (IsParcelOccupied(int2(parcel.x - 1, parcel.y + 1)))
-                        return true;
-                }
-            }
-
-            return false;
-        }
-
-        private async UniTask LoadTreesAsync()
-        {
-            try
-            {
-                await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,
-                    FileShare.Read);
-
-                using var reader = new BinaryReader(stream, new UTF8Encoding(false), false);
-
-                treeMinParcel.x = reader.ReadInt32();
-                treeMinParcel.y = reader.ReadInt32();
-                treeMaxParcel.x = reader.ReadInt32();
-                treeMaxParcel.y = reader.ReadInt32();
-
-                int2 treeIndexSize = treeMaxParcel - treeMinParcel;
-
-                if (any(treeIndexSize > TERRAIN_SIZE_LIMIT))
-                    throw new IOException(
-                        $"Tree index size of ({treeIndexSize.x}, {treeIndexSize.y}) exceeds the limit of {TERRAIN_SIZE_LIMIT}");
-
-                treeIndices = new NativeArray<int>(treeIndexSize.x * treeIndexSize.y,
-                    Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-
-                ReadReliably(reader, treeIndices);
-
-                int treeInstanceCount = reader.ReadInt32();
-
-                if (treeInstanceCount > TREE_INSTANCE_LIMIT)
-                    throw new IOException(
-                        $"Tree instance count of {treeInstanceCount} exceeds the limit of {TREE_INSTANCE_LIMIT}");
-
-                treeInstances = new NativeArray<TreeInstanceData>(treeInstanceCount, Allocator.Persistent,
-                    NativeArrayOptions.UninitializedMemory);
-
-                ReadReliably(reader, treeInstances);
-            }
-            catch (Exception ex)
-            {
-                if (ex is FileNotFoundException)
-                    ReportHub.LogWarning(ReportCategory.LANDSCAPE,
-                        $"Tree instance data file not found, path: {treeFilePath}");
-                else
-                    ReportHub.LogException(ex, ReportCategory.LANDSCAPE);
-
-                if (treeIndices.IsCreated)
-                    treeIndices.Dispose();
-
-                if (treeInstances.IsCreated)
-                    treeInstances.Dispose();
-
-                treeIndices = new NativeArray<int>(0, Allocator.Persistent);
-                treeInstances = new NativeArray<TreeInstanceData>(0, Allocator.Persistent);
-            }
-        }
-
-        private static unsafe void ReadReliably<T>(BinaryReader reader, NativeArray<T> array)
-            where T: unmanaged
-        {
-            var buffer = new Span<byte>(array.GetUnsafePtr(), array.Length * sizeof(T));
-
-            while (buffer.Length > 0)
-            {
-                int read = reader.Read(buffer);
-
-                if (read <= 0)
-                    throw new EndOfStreamException("Read zero bytes");
-
-                buffer = buffer.Slice(read);
-            }
-        }
-
-        [Conditional("GPUI_PRO_PRESENT")]
-        private void ShowGPUInstancerInstances()
-        {
-            if (gpuInstancerRendererKeys == null || gpuInstancerInstanceCounts == null)
-                return;
-
-            for (var i = 0; i < gpuInstancerRendererKeys.Length; i++)
-                GPUICoreAPI.SetInstanceCount(gpuInstancerRendererKeys[i], gpuInstancerInstanceCounts[i]);
-        }
-
-        [Conditional("GPUI_PRO_PRESENT")]
-        private void HideGPUInstancerInstances()
-        {
-            if (gpuInstancerRendererKeys == null)
-                return;
-
-            for (var i = 0; i < gpuInstancerRendererKeys.Length; i++)
-                GPUICoreAPI.SetInstanceCount(gpuInstancerRendererKeys[i], 0);
-        }
-
-        [Conditional("GPUI_PRO_PRESENT")]
-        private void InstantiateTrees()
-        {
-            LandscapeAsset[] prototypes = terrainGenData.treeAssets;
-            int stride = treeMaxParcel.x - treeMinParcel.x;
-            var transforms = new List<Matrix4x4>[prototypes.Length];
-
-            for (var i = 0; i < transforms.Length; i++)
-                transforms[i] = new List<Matrix4x4>();
-
-            for (var i = 0; i < treeIndices.Length; i++)
-            {
-                int2 parcel = int2(i % stride, i / stride) + treeMinParcel;
-                ReadOnlySpan<TreeInstanceData> instances = GetTreeInstances(parcel);
-
-                foreach (TreeInstanceData instance in instances)
-                {
-                    if (GetTreeTransform(parcel, instance,
-                            out Vector3 position, out Quaternion rotation, out Vector3 scale))
-                    {
-                        transforms[instance.PrototypeIndex]
-                           .Add(Matrix4x4.TRS(position, rotation, scale));
-                    }
-                }
-            }
-
-            gpuInstancerRendererKeys = new int[terrainGenData.treeAssets.Length];
-            gpuInstancerInstanceCounts = new int[gpuInstancerRendererKeys.Length];
-
-            for (var prototypeIndex = 0; prototypeIndex < terrainGenData.treeAssets.Length;
-                 prototypeIndex++)
-            {
-                GPUICoreAPI.RegisterRenderer(TerrainRoot, terrainGenData.treeAssets[prototypeIndex].asset, treesProfile, out gpuInstancerRendererKeys[prototypeIndex]);
-
-                List<Matrix4x4> matrices = transforms[prototypeIndex];
-
-                gpuInstancerInstanceCounts[prototypeIndex] = matrices.Count;
-
-                GPUICoreAPI.SetTransformBufferData(gpuInstancerRendererKeys[prototypeIndex],
-                    matrices, 0, 0, matrices.Count);
-            }
         }
     }
 }

@@ -23,6 +23,8 @@ namespace Global.Dynamic.Landscapes
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly bool landscapeEnabled;
+        public readonly Transform? Root;
+        public Action? TerrainLoaded;
 
         public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled)
         {
@@ -30,9 +32,10 @@ namespace Global.Dynamic.Landscapes
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
             this.landscapeEnabled = landscapeEnabled;
+            Root = new GameObject(nameof(Landscape)).transform;
         }
 
-        private ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() ? genesisTerrain : worldsTerrain;
+        public ITerrain CurrentTerrain => realmController.RealmData.IsGenesis() ? genesisTerrain : worldsTerrain;
 
         public async UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
@@ -63,6 +66,7 @@ namespace Global.Dynamic.Landscapes
                     await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
             }
 
+            TerrainLoaded?.Invoke();
             return EnumResult<LandscapeError>.SuccessResult();
         }
 
@@ -95,7 +99,7 @@ namespace Global.Dynamic.Landscapes
                     foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
                 }
 
-                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
+                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
         }
 
@@ -119,7 +123,7 @@ namespace Global.Dynamic.Landscapes
                         parcels.Add(parcel.ToInt2());
                 }
 
-                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
+                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
         }
     }

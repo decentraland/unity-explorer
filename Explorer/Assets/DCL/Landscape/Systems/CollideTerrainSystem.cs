@@ -20,20 +20,21 @@ using static Unity.Mathematics.math;
 
 namespace DCL.Landscape.Systems
 {
+    using Landscape = Global.Dynamic.Landscapes.Landscape;
+
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public sealed partial class CollideTerrainSystem : BaseUnityLoopSystem
     {
         private readonly LandscapeData landscapeData;
-        private readonly TerrainGenerator terrainGenerator;
+        private readonly Landscape landscape;
         private readonly float collisionRadius;
         private readonly List<ParcelData> dirtyParcels;
         private readonly List<ParcelData> freeParcels;
         private readonly List<ParcelData> usedParcels;
         private readonly short[] indexBuffer;
-        private ObjectPool<GameObject>?[]? treePools;
-        private bool wasTerrainEnabled;
+        private readonly ObjectPool<GameObject>?[] treePools;
 
         private static readonly VertexAttributeDescriptor[] VERTEX_LAYOUT =
         {
@@ -43,52 +44,54 @@ namespace DCL.Landscape.Systems
 #endif
         };
 
-        private CollideTerrainSystem(World world, LandscapeData landscapeData,
-            TerrainGenerator terrainGenerator) : base(world)
+        private CollideTerrainSystem(World world, Landscape landscape, LandscapeData landscapeData)
+            : base(world)
         {
             this.landscapeData = landscapeData;
-            this.terrainGenerator = terrainGenerator;
+            this.landscape = landscape;
+            landscape.TerrainLoaded = OnTerrainLoaded;
             collisionRadius = landscapeData.terrainData.parcelSize * (1f / 3f);
             dirtyParcels = new List<ParcelData>();
             freeParcels = new List<ParcelData>();
             usedParcels = new List<ParcelData>();
             indexBuffer = CreateIndexBuffer(landscapeData.terrainData.parcelSize);
+
+            treePools = new ObjectPool<GameObject>?[
+                landscapeData.terrainData.treeAssets.Length];
+
+            LandscapeAsset[] treePrototypes = landscapeData.terrainData.treeAssets;
+
+            for (int prototypeIndex = 0; prototypeIndex < treePools.Length; prototypeIndex++)
+            {
+                GameObject? collider = treePrototypes[prototypeIndex].Collider;
+
+                if (collider == null)
+                    continue;
+
+                treePools[prototypeIndex] = new ObjectPool<GameObject>(
+                    createFunc: () =>
+                    {
+                        GameObject tree = Object.Instantiate(collider
+#if UNITY_EDITOR
+                          , landscape.Root
+#endif
+                        );
+
+                        tree.name = collider.name;
+                        return tree;
+                    },
+                    actionOnGet: static tree => tree.SetActive(true),
+                    actionOnRelease: static tree => tree.SetActive(false),
+                    actionOnDestroy: static tree => Object.Destroy(tree));
+            }
         }
 
         protected override void Update(float t)
         {
-            bool isTerrainEnabled = landscapeData.RenderGround && terrainGenerator.IsTerrainShown;
+            ITerrain terrain = landscape.CurrentTerrain;
 
-            if (isTerrainEnabled != wasTerrainEnabled)
-            {
-                wasTerrainEnabled = isTerrainEnabled;
-                SetParcelsEnabled(freeParcels, isTerrainEnabled);
-                SetParcelsEnabled(usedParcels, isTerrainEnabled);
-            }
-
-            if (!isTerrainEnabled)
+            if (!terrain.IsTerrainShown)
                 return;
-
-            // Can't put this in the constructor because it runs too early, and TerrainRoot is still
-            // null.
-            if (treePools == null)
-            {
-                treePools = new ObjectPool<GameObject>?[landscapeData.terrainData.treeAssets.Length];
-                Transform terrainRoot = terrainGenerator.TerrainRoot;
-                LandscapeAsset[] treePrototypes = landscapeData.terrainData.treeAssets;
-
-                for (int prototypeIndex = 0; prototypeIndex < treePools.Length; prototypeIndex++)
-                {
-                    GameObject? collider = treePrototypes[prototypeIndex].Collider;
-
-                    if (collider == null)
-                        continue;
-
-                    treePools[prototypeIndex] = new ObjectPool<GameObject>(
-                        createFunc: () => Object.Instantiate(collider, terrainRoot),
-                        actionOnDestroy: static instance => Object.Destroy(instance));
-                }
-            }
 
             ApplyCharacterPositionsQuery(World);
 
@@ -112,9 +115,9 @@ namespace DCL.Landscape.Systems
 
             var generateColliderVerticesJob = new GenerateColliderVertices()
             {
-                OccupancyFloor = terrainGenerator.OccupancyFloor,
-                OccupancyMap = terrainGenerator.OccupancyMap.GetRawTextureData<byte>(),
-                OccupancyMapSize =  terrainGenerator.OccupancyMap.width,
+                OccupancyFloor = terrain.OccupancyFloor,
+                OccupancyMap = terrain.OccupancyMap!.GetRawTextureData<byte>(),
+                OccupancyMapSize = terrain.OccupancyMap.width,
                 Parcels = parcels,
                 ParcelSize = landscapeData.terrainData.parcelSize,
                 Vertices = vertices
@@ -141,10 +144,16 @@ namespace DCL.Landscape.Systems
             var bakeColliderMeshesJob = new BakeColliderMeshes() { Meshes = meshes };
             bakeColliderMeshesJob.Schedule(meshes.Length, 1).Complete();
 
-            // Needed even if the mesh is already assigned to the collider. Doing it will cause the
-            // collider to check if the mesh has changed.
             foreach (var parcelData in dirtyParcels)
+            {
+                // Needed even if the mesh is already assigned to the collider. Doing it will cause the
+                // collider to check if the mesh has changed.
                 parcelData.Collider.sharedMesh = parcelData.Mesh;
+
+                // When the player travels to or from a world, all the ground colliders are recycled and
+                // disabled. This deals with that.
+                parcelData.Collider.enabled = true;
+            }
 
             dirtyParcels.Clear();
         }
@@ -207,7 +216,7 @@ namespace DCL.Landscape.Systems
                             parcel.y * landscapeData.terrainData.parcelSize);
 
                         foreach (TreeInstance tree in parcelData.Trees)
-                            treePools![tree.PrototypeIndex]!.Release(tree.GameObject);
+                            treePools[tree.PrototypeIndex]!.Release(tree.GameObject);
 
                         parcelData.Trees.Clear();
                         InstantiateTrees(int2(parcel.x, parcel.y), parcelData);
@@ -226,7 +235,9 @@ namespace DCL.Landscape.Systems
                     transform.position = new Vector3(parcel.x * landscapeData.terrainData.parcelSize,
                         0f, parcel.y * landscapeData.terrainData.parcelSize);
 
-                    transform.SetParent(terrainGenerator.TerrainRoot, true);
+#if UNITY_EDITOR
+                    transform.SetParent(landscape.Root, true);
+#endif
 
                     var parcelData = new ParcelData(collider, mesh) { Parcel = parcel };
                     dirtyParcels.Add(parcelData);
@@ -297,13 +308,14 @@ namespace DCL.Landscape.Systems
 
         private void InstantiateTrees(int2 parcel, ParcelData parcelData)
         {
-            var instances = terrainGenerator.GetTreeInstances(parcel);
+            ITerrain terrain = landscape.CurrentTerrain;
+            var instances = terrain.Trees!.GetTreeInstances(parcel);
 
             foreach (var instance in instances)
             {
-                var pool = treePools![instance.PrototypeIndex];
+                var pool = treePools[instance.PrototypeIndex];
 
-                if (pool == null || !terrainGenerator.GetTreeTransform(parcel, instance,
+                if (pool == null || !terrain.Trees.GetTreeTransform(parcel, instance,
                         out Vector3 position, out Quaternion rotation, out Vector3 scale))
                     continue;
 
@@ -321,21 +333,30 @@ namespace DCL.Landscape.Systems
             }
         }
 
+        private void OnTerrainLoaded()
+        {
+            freeParcels.AddRange(usedParcels);
+            usedParcels.Clear();
+            Vector2Int mordor = new Vector2Int(int.MinValue, int.MinValue);
+
+            foreach (ParcelData parcel in freeParcels)
+            {
+                parcel.Collider.enabled = false;
+                parcel.Parcel = mordor;
+
+                foreach (TreeInstance tree in parcel.Trees)
+                    treePools[tree.PrototypeIndex]!.Release(tree.GameObject);
+
+                parcel.Trees.Clear();
+            }
+        }
+
         private RectInt PositionToParcelRect(float2 center, float radius)
         {
             float invParcelSize = 1f / landscapeData.terrainData.parcelSize;
             int2 min = (int2)floor((center - radius) * invParcelSize);
             int2 size = (int2)ceil((center + radius) * invParcelSize) - min;
             return new RectInt(min.x, min.y, size.x, size.y);
-        }
-
-        private static void SetParcelsEnabled(List<ParcelData> parcels, bool value)
-        {
-            foreach (ParcelData parcel in parcels)
-            {
-                parcel.Collider.enabled = value;
-                // TODO: Enable/disable trees.
-            }
         }
 
         private sealed class ParcelData
