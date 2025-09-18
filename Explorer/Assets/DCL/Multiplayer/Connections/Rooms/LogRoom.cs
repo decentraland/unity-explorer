@@ -97,13 +97,13 @@ namespace DCL.Multiplayer.Connections.Rooms
             RoomMetadataChanged?.Invoke(metadata);
         }
 
-        private void OriginOnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? reason)
+        private void OriginOnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{prefix} connection updated {connectionUpdate}");
 
-            ConnectionUpdated?.Invoke(room, connectionUpdate);
+            ConnectionUpdated?.Invoke(room, connectionUpdate, disconnectReason);
         }
 
         private void OriginOnConnectionStateChanged(ConnectionState connectionState)

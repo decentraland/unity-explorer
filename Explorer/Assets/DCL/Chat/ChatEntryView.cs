@@ -199,25 +199,61 @@ namespace DCL.Chat
             if (!isPointerInside)
                 messageBubbleElement.Reset();
         }
+
+        // private void UpdateTranslationViewVisibility()
+        // {
+        //     if (currentViewModel == null ||
+        //         currentViewModel.Message.IsSystemMessage ||
+        //         currentViewModel.Message.IsSentByOwnUser ||
+        //         !IsTranslationActivated())
+        //     {
+        //         messageBubbleElement.SetTranslationViewVisibility(false);
+        //         return;
+        //     }
+        //
+        //     bool isVisible =
+        //         currentViewModel.TranslationState == TranslationState.Success ||
+        //         currentViewModel.TranslationState == TranslationState.Pending ||
+        //         currentViewModel.TranslationState == TranslationState.Failed ||
+        //         (isPointerInside && (currentViewModel.TranslationState == TranslationState.Original || 
+        //                              currentViewModel.TranslationState == TranslationState.Failed));
+        //
+        //     messageBubbleElement.SetTranslationViewVisibility(isVisible);
+        // }
         
         private void UpdateTranslationViewVisibility()
         {
+            // Handle universal conditions where the view should always be hidden ---
             if (currentViewModel == null ||
                 currentViewModel.Message.IsSystemMessage ||
-                currentViewModel.Message.IsSentByOwnUser ||
                 !IsTranslationActivated())
             {
                 messageBubbleElement.SetTranslationViewVisibility(false);
                 return;
             }
 
-            bool isVisible =
+            // Handle the special case for the user's own messages ---
+            if (currentViewModel.Message.IsSentByOwnUser)
+            {
+                // For our own messages, we ONLY want to show the translation view
+                // if the translation process has already been started (via the context menu).
+                bool isTranslationInProgressOrFinished =
+                    currentViewModel.TranslationState == TranslationState.Pending ||
+                    currentViewModel.TranslationState == TranslationState.Success ||
+                    currentViewModel.TranslationState == TranslationState.Failed;
+
+                messageBubbleElement.SetTranslationViewVisibility(isTranslationInProgressOrFinished);
+                return; // Logic for own messages is complete.
+            }
+
+            // If not an own message, use the original logic for other users' messages
+            bool isVisibleForOthers =
                 currentViewModel.TranslationState == TranslationState.Success ||
                 currentViewModel.TranslationState == TranslationState.Pending ||
                 currentViewModel.TranslationState == TranslationState.Failed ||
-                (isPointerInside && (currentViewModel.TranslationState == TranslationState.Original || currentViewModel.TranslationState == TranslationState.Failed));
+                (isPointerInside && currentViewModel.TranslationState == TranslationState.Original);
 
-            messageBubbleElement.SetTranslationViewVisibility(isVisible);
+            messageBubbleElement.SetTranslationViewVisibility(isVisibleForOthers);
         }
 
         private void OnDestroy()

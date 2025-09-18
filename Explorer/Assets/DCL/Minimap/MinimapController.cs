@@ -26,6 +26,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Utilities;
 using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -76,6 +77,8 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
 
+        private IDisposable sceneChangeSubscription;
+
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -123,7 +126,8 @@ namespace DCL.Minimap
             disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
-            scenesCache.OnCurrentSceneChanged -= OnSceneChanged;
+
+            sceneChangeSubscription?.Dispose();
             sceneRestrictionsController?.Dispose();
             viewInstance?.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
         }
@@ -162,7 +166,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
-            scenesCache.OnCurrentSceneChanged += OnSceneChanged;
+            sceneChangeSubscription = scenesCache.CurrentScene.Subscribe(OnSceneChanged);
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
 

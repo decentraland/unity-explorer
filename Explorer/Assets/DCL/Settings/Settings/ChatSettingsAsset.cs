@@ -13,6 +13,7 @@ namespace DCL.Settings.Settings
         public ChatPreferredTranslationSettings chatPreferredTranslationSettings = ChatPreferredTranslationSettings.EN;
 
         public delegate void ChatPrivacyDelegate(ChatPrivacySettings privacySettings);
+
         public event ChatPrivacyDelegate? PrivacySettingsSet;
         public event ChatPrivacyDelegate? PrivacySettingsRead;
 

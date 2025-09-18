@@ -11,12 +11,14 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.Chat.EventBus;
 using DCL.Communities;
 using DCL.Settings.Settings;
 using DCL.Translation.Events;
 using DCL.Translation.Settings;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
+using DCL.VoiceChat;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,6 +35,7 @@ namespace DCL.Chat
         private readonly CommunityDataService communityDataService;
         private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+        private readonly GetUserCallStatusCommand getUserCallStatusCommand;
         private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
         private readonly ToggleAutoTranslateCommand toggleAutoTranslateCommand;
         private readonly CurrentChannelService currentChannelService;
@@ -41,8 +44,11 @@ namespace DCL.Chat
         private readonly ITranslationSettings translationSettings;
         private readonly CancellationTokenSource lifeCts = new ();
         private readonly EventSubscriptionScope scope = new ();
+        private readonly CallButtonPresenter callButtonPresenter;
+
         private CancellationTokenSource profileLoadCts = new ();
-        private CancellationTokenSource thumbCts = new ();
+        private CancellationTokenSource thumbCts = new();
+        private CancellationTokenSource callStatusCts = new();
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
         private ChatTitlebarViewModel? currentViewModel;
@@ -62,9 +68,12 @@ namespace DCL.Chat
             ChatContextMenuService chatContextMenuService,
             ITranslationSettings translationSettings,
             GetTitlebarViewModelCommand getTitlebarViewModel,
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
             DeleteChatHistoryCommand deleteChatHistoryCommand,
-            ToggleAutoTranslateCommand toggleAutoTranslateCommand,
-            GetCommunityThumbnailCommand getCommunityThumbnailCommand)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IChatEventBus chatEventBus,
+            GetUserCallStatusCommand getUserCallStatusCommand,
+            ToggleAutoTranslateCommand toggleAutoTranslateCommand)
         {
             this.view = view;
             this.chatConfig = chatConfig;
@@ -78,6 +87,7 @@ namespace DCL.Chat
             this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
             this.deleteChatHistoryCommand = deleteChatHistoryCommand;
             this.toggleAutoTranslateCommand = toggleAutoTranslateCommand;
+            this.getUserCallStatusCommand = getUserCallStatusCommand;
 
             view.Initialize();
             view.OnCloseRequested += OnCloseRequested;
@@ -88,6 +98,8 @@ namespace DCL.Chat
 
             communityDataService.CommunityMetadataUpdated += CommunityMetadataUpdated;
             chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
+
+            callButtonPresenter = new CallButtonPresenter(view.CallButton, voiceChatOrchestrator, chatEventBus, currentChannelService.CurrentChannelProperty);
 
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
@@ -175,6 +187,7 @@ namespace DCL.Chat
         {
             profileLoadCts.SafeCancelAndDispose();
             thumbCts.SafeCancelAndDispose();
+            callStatusCts.SafeCancelAndDispose();
             currentViewModel = null;
             view.defaultTitlebarView.Setup(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
             view.membersTitlebarView.SetChannelName(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
@@ -198,7 +211,7 @@ namespace DCL.Chat
             communityDataService
                 .OpenCommunityCard(currentChannelService.CurrentChannel);
         }
-
+        
         public void Dispose()
         {
             view.OnCloseRequested -= OnCloseRequested;
@@ -208,8 +221,12 @@ namespace DCL.Chat
             view.OnContextMenuRequested -= OnChatContextMenuRequested;
             chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
 
+            callStatusCts.SafeCancelAndDispose();
+            callButtonPresenter.Dispose();
+
             if (contextMenuToggleGroup != null)
                 Object.Destroy(contextMenuToggleGroup);
+
 
             lifeCts.SafeCancelAndDispose();
             profileLoadCts.SafeCancelAndDispose();
@@ -225,7 +242,20 @@ namespace DCL.Chat
                 currentViewModel.ViewMode != TitlebarViewMode.DirectMessage) return;
 
             currentViewModel.IsOnline = @event.OnlineUsers.Contains(currentViewModel.Id);
+
+            if (!currentViewModel.IsOnline)
+                callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.Id);
+            else
+                SetCallStatusForUserAsync().Forget();
+
             view.defaultTitlebarView.Setup(currentViewModel);
+        }
+
+        private async UniTaskVoid SetCallStatusForUserAsync()
+        {
+            callStatusCts = callStatusCts.SafeRestart();
+            var result = await getUserCallStatusCommand.ExecuteAsync(currentViewModel!.Id, callStatusCts.Token);
+            callButtonPresenter.SetCallStatusForUser(result, currentViewModel.Id);
         }
 
         private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
@@ -240,6 +270,11 @@ namespace DCL.Chat
             {
                 currentViewModel.IsOnline = userStatusUpdatedEvent.IsOnline;
                 view.defaultTitlebarView.Setup(currentViewModel);
+
+                if (!currentViewModel.IsOnline)
+                    callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.Id);
+                else
+                    SetCallStatusForUserAsync().Forget();
             }
         }
 
@@ -362,6 +397,13 @@ namespace DCL.Chat
                 view.membersTitlebarView.SetChannelName(finalViewModel);
 
                 UpdateAutoTranslateIndicator();
+
+                if (currentViewModel is not { ViewMode: TitlebarViewMode.DirectMessage }) return;
+
+                if (!currentViewModel.IsOnline)
+                    callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.WalletId);
+                else
+                    SetCallStatusForUserAsync().Forget();
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

@@ -10,6 +10,7 @@ using DCL.Utilities.Extensions;
 using DG.Tweening;
 using MVC;
 using System;
+using System.Text;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -68,10 +69,12 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject acceptOrRejectInvitationButtonsContainer = null!;
         [SerializeField] private Button acceptInvitationButton = null!;
         [SerializeField] private Button rejectInvitationButton = null!;
-
         [SerializeField] private GameObject actionLoadingSpinner = null!;
+        [SerializeField] private ListenersCountView listenersCountView = null!;
+
         [SerializeField] private MutualFriendsConfig mutualFriends;
-        [SerializeField] private ListenersCountView listenersCountView;
+
+        private readonly StringBuilder stringBuilder = new ();
 
         [Serializable]
         internal struct MutualFriendsConfig
@@ -94,6 +97,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private string currentCommunityId = null!;
         private string currentInviteOrRequestId = null!;
         private string currentCommunityName = null!;
+
         private Tweener? headerTween;
         private Tweener? footerTween;
         private Vector2 originalHeaderSizeDelta;
@@ -101,9 +105,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
             viewCommunityButton.onClick.AddListener(() => ViewCommunityButtonClicked?.Invoke(currentCommunityId));
-            joinCommunityButton.onClick.AddListener(() => JoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
+            joinCommunityButton.onClick.AddListener( ()=> JoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
             requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
             cancelJoinRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunityButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this));
             acceptInvitationButton.onClick.AddListener(() => AcceptCommunityInvitationButtonClicked?.Invoke(currentCommunityId, currentInviteOrRequestId, this));
@@ -157,6 +161,15 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetDescription(string description) =>
             communityDescription.text = description;
 
+        public void ConfigureListenersCount(bool isActive, int listenersCount)
+        {
+            listenersCountView.gameObject.SetActive(isActive);
+
+            stringBuilder.Clear();
+            stringBuilder.Append(listenersCount);
+            listenersCountView.ParticipantCount.text = stringBuilder.ToString();
+        }
+
         public void SetPrivacy(CommunityPrivacy privacy)
         {
             communityPrivacyIcon.sprite = privacy == CommunityPrivacy.@public ? publicPrivacySprite : privatePrivacySprite;
@@ -193,7 +206,7 @@ namespace DCL.Communities.CommunitiesBrowser
             acceptInvitationButton.gameObject.SetActive(true);
         }
 
-        public void SetActonLoadingActive(bool isActive)
+        public void SetActionLoadingActive(bool isActive)
         {
             actionLoadingSpinner.SetActive(isActive);
             buttonsContainer.SetActive(!isActive);

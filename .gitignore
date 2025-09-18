@@ -69,6 +69,4 @@ Explorer/UserSettings
 **/.cursor/
 Explorer/.cursorignore
 .cursorignore
-
-.gemini/
-gha-creds-*.json
+CLAUDE.md

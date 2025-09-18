@@ -40,14 +40,14 @@ namespace DCL.Settings.Configuration
 
             // add other features...
         }
-
+        
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
-            Transform parent,
+            Transform parent, 
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset,
+            QualitySettingsAsset qualitySettingsAsset, 
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
@@ -56,9 +56,8 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            IAssetsProvisioner  assetsProvisioner,
+            IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
-            bool isVoiceChatEnabled,
             bool isTranslationChatEnabled,
             IEventBus eventBus)
         {
@@ -89,5 +88,7 @@ namespace DCL.Settings.Configuration
             controller.SetView(viewInstance);
             return controller;
         }
+
+ 
     }
 }

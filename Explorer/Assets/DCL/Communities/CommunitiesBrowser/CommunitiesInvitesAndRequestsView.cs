@@ -17,6 +17,7 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const int INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY = 5;
 
+        public event Action? BackButtonClicked;
         public event Action? InvitesAndRequestsButtonClicked;
         public event Action<string>? CommunityProfileOpened;
         public event Action<string, string, CommunityResultCardView>? RequestToJoinCommunityCanceled;
@@ -24,6 +25,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<string, string, CommunityResultCardView>? CommunityInvitationRejected;
 
         [Header("Invites & Requests Section")]
+        [SerializeField] private Button backButton = null!;
         [SerializeField] private Button invitesAndRequestsButton = null!;
         [SerializeField] private GameObject invitesCounterContainer = null!;
         [SerializeField] private TMP_Text invitesCounterText = null!;
@@ -56,7 +58,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void Awake()
         {
-            invitesAndRequestsButton.onClick.AddListener(() => InvitesAndRequestsButtonClicked?.Invoke());
+            invitesAndRequestsButton.onClick.AddListener(OnInvitesAndRequestsButtonClicked);
+            backButton.onClick.AddListener(OnBackButtonClicked);
 
             invitedCommunityCardsPool = new ObjectPool<CommunityResultCardView>(
                 InstantiateInvitedCommunityCardPrefab,
@@ -71,9 +74,20 @@ namespace DCL.Communities.CommunitiesBrowser
                 actionOnRelease: requestedToJoinCommunityCardView => requestedToJoinCommunityCardView.gameObject.SetActive(false));
         }
 
+        private void OnInvitesAndRequestsButtonClicked()
+        {
+            InvitesAndRequestsButtonClicked?.Invoke();
+        }
+
+        private void OnBackButtonClicked()
+        {
+            BackButtonClicked?.Invoke();
+        }
+
         private void OnDestroy()
         {
             invitesAndRequestsButton.onClick.RemoveAllListeners();
+            backButton.onClick.RemoveAllListeners();
             thumbnailsCts.SafeCancelAndDispose();
         }
 
@@ -166,7 +180,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
                 else
                 {
-                    requestCard.SetActonLoadingActive(false);
+                    requestCard.SetActionLoadingActive(false);
                     ClearSelection();
                 }
 
@@ -193,7 +207,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
                 else
                 {
-                    invitationCard.SetActonLoadingActive(false);
+                    invitationCard.SetActionLoadingActive(false);
                     ClearSelection();
                 }
 
@@ -232,7 +246,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.SetMembersCount(community.membersCount);
             invitedCommunityCardView.SetInviteOrRequestId(community.id);
             invitedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
-            invitedCommunityCardView.SetActonLoadingActive(false);
+            invitedCommunityCardView.SetActionLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events
@@ -271,7 +285,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.SetMembersCount(community.membersCount);
             requestedCommunityCardView.SetInviteOrRequestId(community.id);
             requestedCommunityCardView.SetActionButtonsType(community.privacy, community.type, community.role != CommunityMemberRole.none);
-            requestedCommunityCardView.SetActonLoadingActive(false);
+            requestedCommunityCardView.SetActionLoadingActive(false);
             thumbnailLoader!.LoadCommunityThumbnailAsync(community.thumbnails?.raw, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token).Forget();
 
             // Setup card events

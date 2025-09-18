@@ -44,6 +44,7 @@ namespace DCL.Chat.ChatCommands
         public ResetChatCommand ResetChat { get; }
         public RestartChatServicesCommand RestartChatServices { get; }
         public ResolveInputStateCommand ResolveInputStateCommand { get; }
+        public GetUserCallStatusCommand GetUserCallStatusCommand { get; }
         public ToggleAutoTranslateCommand ToggleAutoTranslateCommand { get; }
         public TranslateMessageCommand TranslateMessageCommand { get; }
         public RevertToOriginalCommand RevertToOriginalCommand { get; }
@@ -169,6 +170,8 @@ namespace DCL.Chat.ChatCommands
             TranslateMessageCommand = new TranslateMessageCommand(translationService);
             RevertToOriginalCommand = new RevertToOriginalCommand(translationService);
             CopyMessageCommand = new CopyMessageCommand(clipboardManager);
+
+            GetUserCallStatusCommand = new GetUserCallStatusCommand(privateConversationUserStateService);
         }
 
         public void Dispose()

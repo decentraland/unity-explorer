@@ -50,6 +50,7 @@ using DCL.Translation.Settings;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
+using Global.AppArgs;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -87,13 +88,12 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
-        private readonly bool isCallEnabled;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly CommunityDataService communityDataService;
         private readonly ISpriteCache thumbnailCache;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private ChatController chatController;
+        private ChatController_OBSOLETE_OLD_CHAT chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private PrivateConversationUserStateService? chatUserStateService;
@@ -102,6 +102,7 @@ namespace DCL.PluginSystem.Global
         private readonly Transform chatViewRectTransform;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
+
         private CommandRegistry commandRegistry;
         private readonly bool includeTranslationChat;
         private FallbackFontsProvider fallbackFontsProvider;
@@ -142,13 +143,10 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             CommunityDataService communityDataService,
             ISpriteCache thumbnailCache,
-            WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled,
-            bool includeTranslationChat,
-            IRealmNavigator realmNavigator,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             Transform chatViewRectTransform,
+            bool includeTranslationChat,
             ITranslationSettings translationSettings,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -180,12 +178,15 @@ namespace DCL.PluginSystem.Global
             this.chatMessageFactory = chatMessageFactory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.friendsServiceProxy = friendsServiceProxy;
-            communityDataProvider = communitiesDataProvider;
-            this.communityDataService = communityDataService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.socialServiceProxy = socialServiceProxy;
+            this.friendsEventBus = friendsEventBus;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.communityDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.communitiesEventBus = communitiesEventBus;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
-            this.isCallEnabled = isCallEnabled;
+            this.communityDataService = communityDataService;
             this.includeTranslationChat = includeTranslationChat;
             this.chatViewRectTransform = chatViewRectTransform;
             this.translationSettings = translationSettings;
@@ -242,7 +243,7 @@ namespace DCL.PluginSystem.Global
                 translationSettings,
                 eventBus,
                 translationMemory);
-
+            
             var translationTester = new GameObject("_TranslationTester")
                 .AddComponent<TranslationTester>();
 
@@ -287,8 +288,10 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
-            communityUserStateService = new CommunityUserStateService(communityDataProvider,
+            communityUserStateService = new CommunityUserStateService(
+                communityDataProvider,
                 communitiesEventBus,
+                //voiceChatOrchestrator, TODO, CHECK WHAT DID WE USE THIS FOR?
                 eventBus,
                 chatHistory,
                 web3IdentityCache);
@@ -338,7 +341,6 @@ namespace DCL.PluginSystem.Global
                 chatConfig,
                 eventBus,
                 mvcManager,
-                chatMessagesBus,
                 chatEventBus,
                 currentChannelService,
                 chatInputBlockingService,
@@ -348,9 +350,11 @@ namespace DCL.PluginSystem.Global
                 chatMemberService,
                 chatContextMenuService,
                 communityDataService,
+                chatClickDetectionService,
+                voiceChatOrchestrator,
+                communityDataProvider,
                 translationSettings,
-                translationMemory,
-                chatClickDetectionService
+                translationMemory
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus,

@@ -17,7 +17,7 @@ namespace DCL.Communities
             this.Cache = spriteCache;
         }
 
-        public async UniTaskVoid LoadCommunityThumbnailAsync(string thumbnailUrl, ImageView thumbnailView, Sprite? defaultThumbnail, CancellationToken ct)
+        public async UniTaskVoid LoadCommunityThumbnailAsync(string? thumbnailUrl, ImageView thumbnailView, Sprite? defaultThumbnail, CancellationToken ct)
         {
             thumbnailView.ImageColor = Color.clear;
             thumbnailView.SetImage(defaultThumbnail!, true);
