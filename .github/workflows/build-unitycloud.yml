@@ -381,7 +381,6 @@ jobs:
           ENFORCE_DELTA: ${{ github.event.inputs.enforce_delta || inputs.enforce_delta || false }}
           ENFORCE_CAP:   ${{ github.event.inputs.enforce_cap   || inputs.enforce_cap   || false }}
 
-          # GitHub context
           REPO_FULL: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -449,15 +448,24 @@ jobs:
             fi
           fi
 
-          # Summary (tag only, no URLs)
+          # Summary
           {
             echo "### Artifact size check (vs latest release)"
             echo
             echo "| Target | File | Size (MB) | Cap (MB) | Δ MB vs latest release | Δ % vs latest release | Δ threshold (MB) | Result |"
             echo "|---|---|---:|---:|---:|---:|---:|---|"
-            RESULT="OK"
-            [ "$CAP_EXCEEDED" = true ] && RESULT="CAP EXCEEDED"
-            [ "$DELTA_EXCEEDED" = true ] && RESULT="${RESULT}${RESULT:+, }DELTA EXCEEDED"
+
+            RESULT="✅ OK"
+            if [ "$CAP_EXCEEDED" = true ] || [ "$DELTA_EXCEEDED" = true ]; then
+              if [ "$CAP_EXCEEDED" = true ] && [ "$DELTA_EXCEEDED" = true ]; then
+                RESULT="❌ CAP & DELTA EXCEEDED"
+              elif [ "$CAP_EXCEEDED" = true ]; then
+                RESULT="❌ CAP EXCEEDED"
+              else
+                RESULT="❌ DELTA EXCEEDED"
+              fi
+            fi
+
             if $LATEST_FOUND; then
               echo "| ${{ matrix.target }} | \`$FILE\` | $MB | ${MAX:-0} | $DELTA_MB | $DELTA_PCT | ${MAX_DELTA_MB:-0} | ${RESULT} |"
               echo
