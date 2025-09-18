@@ -88,12 +88,12 @@ namespace DCL.UI.ProfileElements
                     break;
                 case ProfileThumbnailViewModel.State.FALLBACK:
                 case ProfileThumbnailViewModel.State.LOADED_FROM_CACHE:
-                    thumbnailImageView.SetImage(model.Sprite!);
+                    thumbnailImageView.SetImage(model.Sprite!, model.FitAndCenterImage);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     break;
                 case ProfileThumbnailViewModel.State.LOADED_REMOTELY:
-                    SetThumbnailImageWithAnimationAsync(model.Sprite!, destroyCancellationToken).Forget();
+                    SetThumbnailImageWithAnimationAsync(model.Sprite!, destroyCancellationToken, model.FitAndCenterImage).Forget();
                     break;
                 default:
                     thumbnailImageView.SetImage(defaultEmptyThumbnail);
@@ -145,9 +145,9 @@ namespace DCL.UI.ProfileElements
             currentUrl = null;
         }
 
-        private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
+        private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct, bool fitAndCenterImage = false)
         {
-            thumbnailImageView.SetImage(sprite);
+            thumbnailImageView.SetImage(sprite, fitAndCenterImage);
             thumbnailImageView.ImageEnabled = true;
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
