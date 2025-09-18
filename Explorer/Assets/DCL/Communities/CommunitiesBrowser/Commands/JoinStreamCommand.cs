@@ -11,6 +11,8 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
     /// </summary>
     public class JoinStreamCommand
     {
+        private const int UI_CLOSE_DELAY = 500;
+
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
@@ -43,7 +45,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
                 // We wait until the panel has disappeared before starting the call, so the UX feels better.
-                await UniTask.Delay(500);
+                await UniTask.Delay(UI_CLOSE_DELAY);
                 orchestrator.JoinCommunityVoiceChat(communityId, true);
             }
         }
