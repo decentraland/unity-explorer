@@ -6,18 +6,17 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
-using System.Linq;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Debug
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(LoadSceneSystem))]
+    [UpdateBefore(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.DEBUG)]
     public partial class AbortSceneLoadingDebugSystem : BaseUnityLoopSystem
     {

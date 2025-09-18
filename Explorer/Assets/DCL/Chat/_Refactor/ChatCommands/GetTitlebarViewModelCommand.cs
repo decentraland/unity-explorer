@@ -69,7 +69,7 @@ namespace DCL.Chat.ChatCommands
                 ProfileColor = Color.gray
             };
 
-            viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(thumbnail, false));
+            viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(thumbnail, false, true));
 
             return viewModel;
         }
@@ -78,7 +78,7 @@ namespace DCL.Chat.ChatCommands
         {
             var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
             if (ct.IsCancellationRequested) return null; // TODO can't be null
-            
+
             if (profile == null)
             {
                 var item = new ChatTitlebarViewModel

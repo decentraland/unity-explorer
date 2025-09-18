@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
@@ -53,7 +52,6 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
-        private readonly bool isVoiceChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
@@ -75,7 +73,6 @@ namespace DCL.Settings
             VoiceChatSettingsAsset voiceChatSettings,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
-            bool isVoiceChatEnabled,
             IAssetsProvisioner assetsProvisioner)
         {
             this.view = view;
@@ -94,7 +91,6 @@ namespace DCL.Settings
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
-            this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -195,8 +191,7 @@ namespace DCL.Settings
                             voiceChatSettings,
                             upscalingController,
                             assetsProvisioner,
-                            volumeBus,
-                            isVoiceChatEnabled));
+                            volumeBus));
             }
         }
 
