@@ -1,3 +1,4 @@
+using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Unity.Transforms.Components;
@@ -72,6 +73,9 @@ namespace DCL.SDKEntityTriggerArea.Components
                         monoBehaviour!.SphereCollider.enabled = true;
                         break;
                 }
+
+                // Optimization to use an avatars specific physics layer if the trigger only cares about avatars
+                monoBehaviour!.gameObject.layer = LayerMask == ColliderLayer.ClPlayer ? PhysicsLayers.ALL_AVATARS : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
             }
 
             if (IsDirty == false) return;
