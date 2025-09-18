@@ -1,6 +1,7 @@
 using DCL.Chat.ChatViewModels;
 using DCL.UI;
 using DCL.UI.ProfileElements;
+using DCL.VoiceChat;
 using System;
 using TMPro;
 using UnityEngine;
@@ -19,11 +20,16 @@ namespace DCL.Chat.ChatViews
         public Button ButtonOpenMembers => buttonOpenMembers;
         public Button ButtonOpenContextMenu => buttonOpenContextMenu;
         public Button ButtonOpenProfileContextMenu => buttonOpenProfileContextMenu;
+        public CallButtonView ButtonStartCall => buttonStartCall;
+
 
         [SerializeField] private Button buttonClose;
         [SerializeField] private Button buttonOpenMembers;
         [SerializeField] private Button buttonOpenContextMenu;
         [SerializeField] private Button buttonOpenProfileContextMenu;
+
+        [SerializeField] private CallButtonView buttonStartCall;
+
         [SerializeField] private TMP_Text textChannelName;
         [SerializeField] private TMP_Text textMembersCount;
         [SerializeField] private ChatProfileView chatProfileView;
@@ -54,6 +60,8 @@ namespace DCL.Chat.ChatViews
 
             bool shouldShowMembersButton = model.ViewMode == TitlebarViewMode.Nearby ||
                                            model.ViewMode == TitlebarViewMode.Community;
+
+            buttonStartCall.gameObject.SetActive(model.ViewMode == TitlebarViewMode.DirectMessage);
 
             buttonOpenMembers.gameObject.SetActive(shouldShowMembersButton);
 

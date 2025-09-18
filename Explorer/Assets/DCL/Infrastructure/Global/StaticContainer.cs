@@ -54,7 +54,6 @@ using Global.Dynamic.LaunchModes;
 using PortableExperiences.Controller;
 using System.Buffers;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
@@ -216,8 +215,8 @@ namespace Global
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {
-                if (container.ScenesCache.CurrentScene != null)
-                    diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
+                if (container.ScenesCache.CurrentScene.Value != null)
+                    diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Value.Info);
             });
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
