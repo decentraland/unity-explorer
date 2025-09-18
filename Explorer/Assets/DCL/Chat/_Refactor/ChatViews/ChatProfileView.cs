@@ -24,7 +24,7 @@ namespace DCL.Chat.ChatViews
                 userProfilePictureView.Bind(model.Thumbnail, model.ProfileColor);
                 userProfilePictureView.gameObject.SetActive(true);
                 communityProfilePictureView.gameObject.SetActive(false);
-                
+
                 usernameElement.Setup(
                     model.Username,
                     model.WalletId,
@@ -38,7 +38,7 @@ namespace DCL.Chat.ChatViews
                 communityProfilePictureView.Bind(model.Thumbnail, model.ProfileColor);
                 userProfilePictureView.gameObject.SetActive(false);
                 communityProfilePictureView.gameObject.SetActive(true);
-                
+
                 usernameElement.Setup(
                     model.Username,
                     null,

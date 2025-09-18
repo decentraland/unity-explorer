@@ -299,7 +299,7 @@ namespace DCL.Communities.CommunitiesCard
             try
             {
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-                chatEventBus.OpenCommunityConversationUsingUserId(communityData.id);
+                chatEventBus.OpenCommunityConversationUsingCommunityId(communityData.id);
                 CloseController();
             }
             catch (OperationCanceledException) { }

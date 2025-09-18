@@ -14,6 +14,7 @@ using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat.EventBus;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Landscape.Settings;
@@ -123,6 +124,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IChatEventBus chatEventBus;
 
         private readonly bool includeCameraReel;
 
@@ -199,7 +201,7 @@ namespace DCL.PluginSystem.Global
             ICommunityCallOrchestrator communityCallOrchestrator,
             bool isTranslationChatEnabled,
             GalleryEventBus galleryEventBus,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider, IChatEventBus chatEventBus)
         {
             this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
@@ -257,6 +259,7 @@ namespace DCL.PluginSystem.Global
             this.galleryEventBus = galleryEventBus;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
+            this.chatEventBus = chatEventBus;
         }
 
         public void Dispose()
@@ -436,7 +439,8 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 nftNamesProvider,
                 communityCallOrchestrator,
-                sharedSpaceManager);
+                sharedSpaceManager,
+                chatEventBus);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

@@ -11,6 +11,7 @@ using LiveKit.Rooms.Tracks;
 using RichTypes;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 using Utility.Ownership;
 
@@ -67,6 +68,10 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track already published");
                 return;
             }
+
+            //Raise volume if its Windows because for some reason Mac Volume is way higher than Windows.
+            if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
+                configuration.AudioMixerGroup.audioMixer.SetFloat(nameof(AudioMixerExposedParam.Microphone_Volume), 13);
 
             try
             {

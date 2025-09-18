@@ -50,17 +50,17 @@ namespace DCL.Communities.CommunitiesCard
 
         private void JoinStream()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.StartStreamAudio);
             ClosePanel?.Invoke();
             voiceChatOrchestrator.JoinCommunityVoiceChat(currentCommunityId,true);
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.StartStreamAudio);
             SetPanelStatus(true, false, currentCommunityId);
         }
 
         private void StartStream()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.StartStreamAudio);
             ClosePanel?.Invoke();
             voiceChatOrchestrator.StartCall(currentCommunityId, VoiceChatType.COMMUNITY);
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.StartStreamAudio);
             SetPanelStatus(true, true, currentCommunityId);
         }
 

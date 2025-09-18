@@ -1,6 +1,9 @@
+using DCL.Chat.EventBus;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SocialService;
+using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -30,7 +33,10 @@ namespace DCL.VoiceChat
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
             IRealmNavigator realmNavigator,
-            IRealmData realmData)
+            IRealmData realmData,
+            IDecentralandUrlsSource urlsSource,
+            ISharedSpaceManager sharedSpaceManager,
+            IChatEventBus chatEventBus)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)
@@ -38,11 +44,13 @@ namespace DCL.VoiceChat
 
             participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
 
-            rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController);
+            rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController, urlsSource);
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(scenesCache, realmNavigator, realmData);
             CommunityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)
                 ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
-            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, CommunityVoiceChatCallStatusService, participantsStateService, sceneVoiceChatTrackerService);
+            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService,
+                CommunityVoiceChatCallStatusService, participantsStateService,
+                sceneVoiceChatTrackerService, sharedSpaceManager, chatEventBus);
         }
 
         public void Dispose()

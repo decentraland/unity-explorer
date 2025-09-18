@@ -59,11 +59,13 @@ namespace DCL.UI.ProfileElements
 
         public readonly State ThumbnailState;
         public readonly Sprite? Sprite;
+        public readonly bool FitAndCenterImage;
 
-        private ProfileThumbnailViewModel(State thumbnailState, Sprite? sprite)
+        private ProfileThumbnailViewModel(State thumbnailState, Sprite? sprite, bool fitAndCenterImage = false)
         {
             ThumbnailState = thumbnailState;
             Sprite = sprite;
+            FitAndCenterImage = fitAndCenterImage;
         }
 
         public ProfileThumbnailViewModel TryBind() =>
@@ -81,8 +83,8 @@ namespace DCL.UI.ProfileElements
         public static ProfileThumbnailViewModel Error() =>
             new (State.ERROR, null);
 
-        public static ProfileThumbnailViewModel FromLoaded(Sprite sprite, bool fromCache) =>
-            new (fromCache ? State.LOADED_FROM_CACHE : State.LOADED_REMOTELY, sprite);
+        public static ProfileThumbnailViewModel FromLoaded(Sprite sprite, bool fromCache, bool fitAndCenter = false) =>
+            new (fromCache ? State.LOADED_FROM_CACHE : State.LOADED_REMOTELY, sprite, fitAndCenter);
 
         public bool Equals(ProfileThumbnailViewModel other) =>
             ThumbnailState == other.ThumbnailState && Equals(Sprite, other.Sprite);

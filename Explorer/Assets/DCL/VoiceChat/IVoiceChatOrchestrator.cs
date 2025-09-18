@@ -14,6 +14,7 @@ namespace DCL.VoiceChat
     {
         DEFAULT,
         EXPANDED,
+        EXPANDED_WITHOUT_BUTTONS,
     }
 
     /// <summary>

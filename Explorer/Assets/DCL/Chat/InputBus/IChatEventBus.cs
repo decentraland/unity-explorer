@@ -52,6 +52,6 @@ namespace DCL.Chat.EventBus
         /// Sends the order of opening and focusing a community conversation in the chat.
         /// </summary>
         /// <param name="communityId">The UUID of the community.</param>
-        void OpenCommunityConversationUsingUserId(string communityId);
+        void OpenCommunityConversationUsingCommunityId(string communityId);
     }
 }

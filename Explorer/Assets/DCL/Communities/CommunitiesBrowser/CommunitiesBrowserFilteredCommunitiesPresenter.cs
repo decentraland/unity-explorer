@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
@@ -21,13 +22,12 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
 
-        public event Action? ResultsBackButtonClicked;
-
         private readonly FilteredCommunitiesView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly CommunitiesBrowserStateService browserStateService;
-        private readonly EventSubscriptionScope scope = new();
+        private readonly EventSubscriptionScope scope = new ();
         private readonly CommunitiesBrowserEventBus browserEventBus;
+        private readonly CommunitiesBrowserCommandsLibrary commandsLibrary;
 
         private string currentNameFilter = string.Empty;
         private int currentPageNumberFilter = 1;
@@ -37,29 +37,53 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private CancellationTokenSource? loadResultsCts;
 
+        public event Action? ResultsBackButtonClicked;
+
         public CommunitiesBrowserFilteredCommunitiesPresenter(
             FilteredCommunitiesView view,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             CommunitiesBrowserStateService browserStateService,
-            CommunitiesBrowserEventBus browserEventBus)
+            CommunitiesBrowserEventBus browserEventBus,
+            CommunitiesBrowserCommandsLibrary commandsLibrary)
         {
             this.view = view;
             this.dataProvider = dataProvider;
             this.browserStateService = browserStateService;
             this.browserEventBus = browserEventBus;
+            this.commandsLibrary = commandsLibrary;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.CommunityJoined += OnCommunityJoined;
             view.CommunityProfileOpened += OnCommunityProfileOpened;
             view.RequestedToJoinCommunity += OnRequestedToJoinCommunity;
             view.RequestToJoinCommunityCanceled += OnRequestToJoinCommunityCanceled;
+            view.JoinStreamClicked += OnJoinStream;
+            view.GoToStreamClicked += OnGoToStream;
 
             view.InitializeResultsGrid();
             view.SetProfileRepositoryWrapper(profileRepositoryWrapper);
 
             scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.UpdateJoinedCommunityEvent>(UpdateJoinedCommunity));
             scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.UserRemovedFromCommunityEvent>(RemoveOneMemberFromCounter));
+        }
+
+        private void OnGoToStream(string communityId)
+        {
+            commandsLibrary.GoToStreamCommand.Execute(communityId);
+        }
+
+        public void Dispose()
+        {
+            view.CommunityProfileOpened -= OnCommunityProfileOpened;
+            view.CommunityJoined -= OnCommunityJoined;
+            view.BackButtonClicked -= OnBackButtonClicked;
+            scope.Dispose();
+        }
+
+        private void OnJoinStream(string communityId)
+        {
+            commandsLibrary.JoinStreamCommand.Execute(communityId);
         }
 
         private void OnRequestToJoinCommunityCanceled(string communityId, string requestId)
@@ -82,14 +106,6 @@ namespace DCL.Communities.CommunitiesBrowser
             browserEventBus.RaiseCommunityJoinedClickedEvent(communityId);
         }
 
-        public void Dispose()
-        {
-            view.CommunityProfileOpened -= OnCommunityProfileOpened;
-            view.CommunityJoined -= OnCommunityJoined;
-            view.BackButtonClicked -= OnBackButtonClicked;
-            scope.Dispose();
-        }
-
         private void RemoveOneMemberFromCounter(CommunitiesBrowserEvents.UserRemovedFromCommunityEvent evt)
         {
             view.RemoveOneMemberFromCounter(evt.CommunityId);
@@ -103,6 +119,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void LoadAllMyCommunities()
         {
             view.SetResultsTitleText(MY_COMMUNITIES_RESULTS_TITLE);
+            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.MY_COMMUNITIES);
 
             loadResultsCts = loadResultsCts.SafeRestart();
 
@@ -118,6 +135,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void LoadAllStreamingCommunities()
         {
             view.SetResultsTitleText(STREAMING_COMMUNITIES_RESULTS_TITLE);
+            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.STREAMING);
 
             loadResultsCts = loadResultsCts.SafeRestart();
 
@@ -134,6 +152,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public async UniTask LoadAllCommunitiesAsync(CancellationToken ct)
         {
             view.SetResultsTitleText(BROWSE_COMMUNITIES_TITLE);
+            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.ALL_COMMUNITIES);
             loadResultsCts = loadResultsCts.SafeRestartLinked(ct);
 
             await LoadResultsAsync(
@@ -205,6 +224,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 foreach (GetUserCommunitiesData.CommunityData communityData in result.Value.data.results)
                 {
                     communityData.pendingActionType = InviteRequestAction.none;
+
                     foreach (GetUserInviteRequestData.UserInviteRequestData joinRequest in browserStateService.CurrentJoinRequests)
                     {
                         if (communityData.id == joinRequest.communityId)
@@ -236,6 +256,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void LoadSearchResults(string searchText)
         {
+            view.SetActiveViewSection(FilteredCommunitiesView.ActiveViewSection.SEARCH_COMMUNITIES);
             view.SetResultsBackButtonVisible(true);
             view.SetResultsTitleText(string.Format(SEARCH_RESULTS_TITLE_FORMAT, searchText));
 

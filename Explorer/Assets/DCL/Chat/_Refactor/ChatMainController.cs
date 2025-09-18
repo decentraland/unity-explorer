@@ -57,11 +57,9 @@ namespace DCL.Chat
         public event Action? PointerEntered;
         public event Action? PointerExited;
 
-        public bool IsVisibleInSharedSpace => chatStateMachine != null &&
-                                              !chatStateMachine.IsMinimized &&
-                                              !chatStateMachine.IsHidden;
+        public bool IsVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
 
-        public bool IsFocused => chatStateMachine != null && chatStateMachine.IsFocused;
+        public bool IsFocused => chatStateMachine is { IsFocused: true };
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig.ChatConfig chatConfig,
@@ -203,7 +201,8 @@ namespace DCL.Chat
                 messageFeedPresenter,
                 inputPresenter,
                 memberListPresenter,
-                communityVoiceChatSubTitleButtonPresenter);
+                communityVoiceChatSubTitleButtonPresenter,
+                voiceChatOrchestrator);
 
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,

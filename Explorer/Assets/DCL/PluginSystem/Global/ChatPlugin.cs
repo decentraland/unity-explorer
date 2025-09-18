@@ -189,6 +189,8 @@ namespace DCL.PluginSystem.Global
             this.communityDataService = communityDataService;
             this.includeTranslationChat = includeTranslationChat;
             this.chatViewRectTransform = chatViewRectTransform;
+            this.eventBus = eventBus;
+
             this.translationSettings = translationSettings;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;

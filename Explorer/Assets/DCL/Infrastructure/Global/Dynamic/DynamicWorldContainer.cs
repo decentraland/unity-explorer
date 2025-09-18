@@ -67,7 +67,6 @@ using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
@@ -549,6 +548,7 @@ namespace Global.Dynamic
 
             var coreBackpackEventBus = new BackpackEventBus();
 
+            IChatEventBus chatEventBus = new ChatEventBus();
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
@@ -560,7 +560,10 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.ScenesCache,
                 realmNavigator,
-                staticContainer.RealmData);
+                staticContainer.RealmData,
+                bootstrapContainer.DecentralandUrlsSource,
+                sharedSpaceManager,
+                chatEventBus);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -610,7 +613,6 @@ namespace Global.Dynamic
             var profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
-            IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
 
@@ -727,7 +729,8 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
-                    bootstrapContainer.DecentralandUrlsSource),
+                    bootstrapContainer.DecentralandUrlsSource,
+                    eventBus),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -824,7 +827,8 @@ namespace Global.Dynamic
                     voiceChatContainer.VoiceChatOrchestrator,
                     includeTranslationChat,
                     galleryEventBus,
-                    thumbnailProvider
+                    thumbnailProvider,
+                    chatEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
