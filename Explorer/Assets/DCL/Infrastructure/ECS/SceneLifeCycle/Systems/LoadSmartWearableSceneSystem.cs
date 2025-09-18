@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Ipfs;
@@ -50,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             var sceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(CONTENT_URL), intention.SmartWearable, bodyShape);
 
-            SceneEntityDefinition? sceneDefinition = await GetSceneDefinitionAsync(intention.SmartWearable.DTO.id, sceneContent, ct);
+            SceneEntityDefinition? sceneDefinition = await GetSceneDefinitionAsync(intention.SmartWearable, sceneContent, ct);
             if (sceneDefinition == null || ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
             ReadOnlyMemory<byte> crdt = await GetCrdtAsync(sceneContent, ct);
@@ -82,7 +83,7 @@ namespace ECS.SceneLifeCycle.Systems
             return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>(result);
         }
 
-        private async Task<SceneEntityDefinition?> GetSceneDefinitionAsync(string sceneId, ISceneContent sceneContent, CancellationToken ct)
+        private async Task<SceneEntityDefinition?> GetSceneDefinitionAsync(IWearable smartWearable, ISceneContent sceneContent, CancellationToken ct)
         {
             if (!sceneContent.TryGetContentUrl("scene.json", out URLAddress url))
             {
@@ -94,7 +95,9 @@ namespace ECS.SceneLifeCycle.Systems
             var sceneMetadata = await webRequestController.GetAsync(args, ct, GetReportData())
                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
-            return new SceneEntityDefinition(sceneId, sceneMetadata);
+            string id = smartWearable.DTO.id!;
+            AssetBundleManifestVersion manifestVersion = smartWearable.DTO.assetBundleManifestVersion!;
+            return new SceneEntityDefinition(id, sceneMetadata) { assetBundleManifestVersion = manifestVersion };
         }
 
         private async UniTask<ReadOnlyMemory<byte>> GetCrdtAsync(ISceneContent sceneContent, CancellationToken ct)
