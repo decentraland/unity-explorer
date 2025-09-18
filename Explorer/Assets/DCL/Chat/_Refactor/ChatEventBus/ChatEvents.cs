@@ -1,6 +1,6 @@
-﻿using DCL.Chat.ChatViewModels;
+﻿using DCL.Chat.ChatStates;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
-using DCL.Friends.UserBlocking;
 using System.Collections.Generic;
 
 namespace DCL.Chat
@@ -171,6 +171,7 @@ namespace DCL.Chat
         }
 #endregion
 
+
 #region General Chat Events
         /// <summary>
         ///     Event:          FocusRequestedEvent
@@ -187,6 +188,17 @@ namespace DCL.Chat
         ///     Subscribers:    ChatFsmController: Transitions the UI to the MinimizedChatState.
         /// </summary>
         public struct CloseChatEvent { }
+
+        /// <summary>
+        ///     Event:          ChatStateChangedEvent
+        ///     Triggered By:   ChatStateMachine
+        ///     When:           Every time the chat state changes (Focused, Minimized, Hidden, etc.).
+        ///     Subscribers:    SidebarController: To update the chat icon state in the sidebar.
+        /// </summary>
+        public struct ChatStateChangedEvent
+        {
+            public ChatState CurrentState;
+        }
 #endregion
 
 #region Miscellaneous Events

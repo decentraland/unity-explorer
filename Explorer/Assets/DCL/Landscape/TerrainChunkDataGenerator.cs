@@ -18,6 +18,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace DCL.Landscape
 {
+    [Obsolete]
     public class TerrainChunkDataGenerator
     {
         private const int UNITY_MAX_COVERAGE_VALUE = 255;
@@ -164,7 +165,7 @@ namespace DCL.Landscape
             }
         }
 
-        public async UniTask SetTreesAsync(int2 chunkMinParcel, int chunkSize, TerrainData terrainData, uint baseSeed, CancellationToken cancellationToken,
+        public async UniTask SetTreesAsync(int2 chunkMinParcel, int chunkSize, List<TreeInstance> terrainData, uint baseSeed, CancellationToken cancellationToken,
             bool useCache = true)
         {
             if (useCache && localCache.IsValid())
@@ -172,7 +173,7 @@ namespace DCL.Landscape
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTreesAsync from Cache {t}ms")))
                 {
                     var array = await localCache.GetTreesAsync(chunkMinParcel.x, chunkMinParcel.y);
-                    terrainData.SetTreeInstances(array, true);
+                    terrainData.AddRange(array);
                 }
             }
             else
@@ -255,7 +256,7 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"    - [Trees] SetTreeInstances {t}ms")))
                     {
                         TreeInstance[] instances = array.ToArray();
-                        terrainData.SetTreeInstances(instances, true);
+                        terrainData.AddRange(instances);
 
                         if (useCache)
                             localCache.SaveTreeInstances(chunkMinParcel.x, chunkMinParcel.y, instances);

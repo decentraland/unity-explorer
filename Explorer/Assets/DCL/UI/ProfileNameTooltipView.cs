@@ -1,4 +1,4 @@
-using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using TMPro;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ namespace DCL.UI
         public void Setup(string profileName, bool isVerified)
         {
             nameText.text = profileName;
-            nameText.color = ProfileNameColorHelper.GetNameColor(profileName);
+            nameText.color = NameColorHelper.GetNameColor(profileName);
             verifiedMark.SetActive(isVerified);
         }
     }

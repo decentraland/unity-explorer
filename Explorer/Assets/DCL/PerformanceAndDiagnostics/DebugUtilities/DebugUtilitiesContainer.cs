@@ -1,20 +1,23 @@
 ﻿using DCL.DebugUtilities.Views;
 using System;
 using System.Collections.Generic;
+using UnityEngine.UIElements;
 using Utility.UIToolkit;
 
 namespace DCL.DebugUtilities
 {
     public class DebugUtilitiesContainer
     {
+        public UIDocument RootDocument { get; private set; }
         public IDebugContainerBuilder Builder { get; }
 
-        private DebugUtilitiesContainer(IDebugContainerBuilder builder)
+        private DebugUtilitiesContainer(IDebugContainerBuilder builder, UIDocument rootDocument)
         {
             Builder = builder;
+            RootDocument = rootDocument;
         }
 
-        public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog, bool isFullDebug, bool isLocalSceneDevelopment)
+        public static DebugUtilitiesContainer Create(DebugViewsCatalogSO viewsCatalog, bool isFullDebug, bool isLocalSceneDevelopment)
         {
             ISet<string>? allowedCategories = null;
 
@@ -29,7 +32,6 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.MEMORY_LIMITS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS,
-                        IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
                     };
                 }
                 else
@@ -50,6 +52,8 @@ namespace DCL.DebugUtilities
                     };
                 }
             }
+
+            var rootDocument = UnityEngine.Object.Instantiate(viewsCatalog.RootDocumentPrefab);
 
             return new DebugUtilitiesContainer(
                 new DebugContainerBuilder(
@@ -73,7 +77,8 @@ namespace DCL.DebugUtilities
                         { typeof(DebugDropdownDef), new DebugElementBase<DebugDropdownElement, DebugDropdownDef>.Factory(viewsCatalog.DropdownField) },
                     },
                     allowedCategories
-                )
+                ),
+                rootDocument
             );
         }
     }

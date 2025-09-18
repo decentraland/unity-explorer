@@ -1,6 +1,8 @@
 ﻿using DCL.Landscape.NoiseGeneration;
 using System;
+using Unity.Mathematics;
 using UnityEngine;
+using static Unity.Mathematics.math;
 using Random = Unity.Mathematics.Random;
 
 namespace DCL.Landscape.Config
@@ -57,6 +59,29 @@ namespace DCL.Landscape.Config
 
         public Vector3 GetRandomizedPositionOffset(ref Random random) =>
             RandomVector(ref random, positionOffsetX, positionOffsetY, positionOffsetZ);
+
+        public void GetScaleRange(out float2 min, out float2 max)
+        {
+            if (proportionalScale)
+            {
+                min = randomScale.x;
+                max = randomScale.y;
+            }
+            else
+            {
+                min = float2((randomScaleX.x + randomScaleZ.x) * 0.5f, randomScaleY.x);
+                max = float2((randomScaleX.y + randomScaleZ.y) * 0.5f, randomScaleY.y);
+            }
+        }
+
+        public float2 LerpScale(float2 t)
+        {
+            if (proportionalScale)
+                return lerp(randomScale.x, randomScale.y, t);
+            else
+                return lerp(float2((randomScaleX.x + randomScaleZ.x) * 0.5f, randomScaleY.x),
+                    float2((randomScaleX.y + randomScaleZ.y) * 0.5f, randomScaleY.y), t);
+        }
 
         private Vector3 RandomVector(ref Random random, in Vector2 rangeX, in Vector2 rangeY, in Vector2 rangeZ)
         {

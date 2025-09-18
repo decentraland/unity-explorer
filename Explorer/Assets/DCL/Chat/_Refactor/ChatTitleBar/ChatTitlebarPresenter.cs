@@ -1,24 +1,23 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Web3;
 using DG.Tweening;
-using MVC;
-using System.Collections.Generic;
 using System.Linq;
 using DCL.Chat.ChatCommands;
+using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Settings.Settings;
-using DCL.UI.Communities;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
+using DCL.VoiceChat;
+using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -33,13 +32,19 @@ namespace DCL.Chat
         private readonly IEventBus eventBus;
         private readonly CommunityDataService communityDataService;
         private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
+        private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
+        private readonly GetUserCallStatusCommand getUserCallStatusCommand;
         private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
         private readonly CurrentChannelService currentChannelService;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatMemberListService chatMemberListService;
         private readonly CancellationTokenSource lifeCts = new ();
         private readonly EventSubscriptionScope scope = new ();
+        private readonly CallButtonPresenter callButtonPresenter;
+
         private CancellationTokenSource profileLoadCts = new ();
+        private CancellationTokenSource thumbCts = new();
+        private CancellationTokenSource callStatusCts = new();
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
         private ChatTitlebarViewModel? currentViewModel;
@@ -56,7 +61,11 @@ namespace DCL.Chat
             ChatMemberListService chatMemberListService,
             ChatContextMenuService chatContextMenuService,
             GetTitlebarViewModelCommand getTitlebarViewModel,
-            DeleteChatHistoryCommand deleteChatHistoryCommand)
+            GetCommunityThumbnailCommand getCommunityThumbnailCommand,
+            DeleteChatHistoryCommand deleteChatHistoryCommand,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IChatEventBus chatEventBus,
+            GetUserCallStatusCommand getUserCallStatusCommand)
         {
             this.view = view;
             this.chatConfig = chatConfig;
@@ -66,7 +75,9 @@ namespace DCL.Chat
             this.currentChannelService = currentChannelService;
             this.chatContextMenuService = chatContextMenuService;
             this.getTitlebarViewModel = getTitlebarViewModel;
+            this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
             this.deleteChatHistoryCommand = deleteChatHistoryCommand;
+            this.getUserCallStatusCommand = getUserCallStatusCommand;
 
             view.Initialize();
             view.OnCloseRequested += OnCloseRequested;
@@ -75,7 +86,10 @@ namespace DCL.Chat
             view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
             view.OnCommunityContextMenuRequested += OnCommunityContextMenuRequested;
 
+            communityDataService.CommunityMetadataUpdated += CommunityMetadataUpdated;
             chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
+
+            callButtonPresenter = new CallButtonPresenter(view.CallButton, voiceChatOrchestrator, chatEventBus, currentChannelService.CurrentChannelProperty);
 
             scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
@@ -95,9 +109,28 @@ namespace DCL.Chat
             InitializeChannelContextMenu();
         }
 
+        private void CommunityMetadataUpdated(CommunityMetadataUpdatedEvent evt)
+        {
+            // Only care if we’re viewing a Community channel and it matches
+            if (currentViewModel == null || currentViewModel.ViewMode != TitlebarViewMode.Community)
+                return;
+
+            if (communityDataService.TryGetCommunity(evt.ChannelId, out var cd))
+            {
+                currentViewModel.Username = cd.name;
+                view.defaultTitlebarView.Setup(currentViewModel);
+                view.membersTitlebarView.SetChannelName(currentViewModel);
+
+                if (cd.thumbnails?.raw != null)
+                    RefreshTitlebarCommunityThumbnailAsync(cd.thumbnails?.raw).Forget();
+            }
+        }
+
         private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)
         {
             profileLoadCts.SafeCancelAndDispose();
+            thumbCts.SafeCancelAndDispose();
+            callStatusCts.SafeCancelAndDispose();
             currentViewModel = null;
             view.defaultTitlebarView.Setup(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
             view.membersTitlebarView.SetChannelName(ChatTitlebarViewModel.CreateLoading(TitlebarViewMode.Nearby));
@@ -124,8 +157,12 @@ namespace DCL.Chat
             view.OnContextMenuRequested -= OnChatContextMenuRequested;
             chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
 
+            callStatusCts.SafeCancelAndDispose();
+            callButtonPresenter.Dispose();
+
             if (contextMenuToggleGroup != null)
                 Object.Destroy(contextMenuToggleGroup);
+
 
             lifeCts.SafeCancelAndDispose();
             profileLoadCts.SafeCancelAndDispose();
@@ -141,7 +178,20 @@ namespace DCL.Chat
                 currentViewModel.ViewMode != TitlebarViewMode.DirectMessage) return;
 
             currentViewModel.IsOnline = @event.OnlineUsers.Contains(currentViewModel.Id);
+
+            if (!currentViewModel.IsOnline)
+                callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.Id);
+            else
+                SetCallStatusForUserAsync().Forget();
+
             view.defaultTitlebarView.Setup(currentViewModel);
+        }
+
+        private async UniTaskVoid SetCallStatusForUserAsync()
+        {
+            callStatusCts = callStatusCts.SafeRestart();
+            var result = await getUserCallStatusCommand.ExecuteAsync(currentViewModel!.Id, callStatusCts.Token);
+            callButtonPresenter.SetCallStatusForUser(result, currentViewModel.Id);
         }
 
         private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
@@ -156,6 +206,11 @@ namespace DCL.Chat
             {
                 currentViewModel.IsOnline = userStatusUpdatedEvent.IsOnline;
                 view.defaultTitlebarView.Setup(currentViewModel);
+
+                if (!currentViewModel.IsOnline)
+                    callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.Id);
+                else
+                    SetCallStatusForUserAsync().Forget();
             }
         }
 
@@ -211,6 +266,36 @@ namespace DCL.Chat
             eventBus.Publish(new ChatEvents.ToggleMembersEvent());
         }
 
+
+        private async UniTaskVoid RefreshTitlebarCommunityThumbnailAsync(string? imageUrl)
+        {
+            thumbCts = thumbCts.SafeRestart();
+            var ct = thumbCts.Token;
+
+            if (currentViewModel == null) return;
+
+            if (string.IsNullOrEmpty(imageUrl))
+            {
+                // Optional: clear or set default
+                currentViewModel.SetThumbnail(ProfileThumbnailViewModel.ReadyToLoad());
+                return;
+            }
+
+            var sprite = await getCommunityThumbnailCommand.ExecuteAsync(imageUrl, ct);
+            if (ct.IsCancellationRequested) return;
+
+            // Fallback to your default image if sprite is null
+            var loaded = sprite != null
+                ? ProfileThumbnailViewModel.FromLoaded(sprite, true)
+                : ProfileThumbnailViewModel.ReadyToLoad(); // or build with your default sprite
+
+            currentViewModel.SetThumbnail(loaded);
+
+            // If your view is fully reactive on Thumbnail, no need to call Setup again.
+            // If not, uncomment the next line:
+            // view.defaultTitlebarView.Setup(currentViewModel);
+        }
+
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
             LoadTitlebarDataAsync(evt.Channel).Forget();
@@ -240,6 +325,13 @@ namespace DCL.Chat
                 currentViewModel = finalViewModel;
                 view.defaultTitlebarView.Setup(finalViewModel);
                 view.membersTitlebarView.SetChannelName(finalViewModel);
+
+                if (currentViewModel is not { ViewMode: TitlebarViewMode.DirectMessage }) return;
+
+                if (!currentViewModel.IsOnline)
+                    callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.WalletId);
+                else
+                    SetCallStatusForUserAsync().Forget();
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -297,7 +389,8 @@ namespace DCL.Chat
                 new GenericContextMenu(chatConfig.chatContextMenuSettings.ContextMenuWidth,
                         verticalLayoutPadding: chatConfig.chatContextMenuSettings.VerticalPadding,
                         elementsSpacing: chatConfig.chatContextMenuSettings.ElementsSpacing,
-                        offsetFromTarget: chatConfig.chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget)
+                        offsetFromTarget: chatConfig.chatContextMenuSettings.NotificationPingSubMenuOffsetFromTarget,
+                        anchorPoint:ContextMenuOpenDirection.TOP_LEFT)
                     .AddControl(notificationPingToggles[(int)ChatAudioSettings.ALL] =
                         new ToggleWithCheckContextMenuControlSettings("All Messages",
                             x => OnNotificationPingOptionSelected(ChatAudioSettings.ALL), toggleGroup))

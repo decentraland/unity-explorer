@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
-using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.WebRequests;
 using ECS;
 using Newtonsoft.Json;
@@ -95,12 +95,12 @@ namespace DCL.Profiles
             new (string.Empty, profileJsonRootDto)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
-                content = new List<ContentDefinition>
+                content = new ContentDefinition[]
                 {
                     new () { file = "body.png", hash = bodyHash },
                     new () { file = "face256.png", hash = faceHash },
                 },
-                pointers = new List<string> { profile.UserId },
+                pointers = new[] { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
             };
@@ -144,7 +144,7 @@ namespace DCL.Profiles
                 // the check always fails. So its necessary to get a new instance each time
                 var profile = Profile.Create();
                 profileDto.CopyTo(profile);
-                profile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
 
                 profileCache.Set(id, profile);
 

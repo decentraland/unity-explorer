@@ -8,13 +8,11 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine.Pool;
-using Random = System.Random;
 
 namespace DCL.Character.CharacterMotion.Systems
 {
@@ -22,12 +20,17 @@ namespace DCL.Character.CharacterMotion.Systems
     [LogCategory(ReportCategory.MOTION)]
     public partial class TeleportPositionCalculationSystem : BaseUnityLoopSystem
     {
-        private static readonly Random RANDOM = new ();
+
+
+        private readonly ILandscape landscape;
 
         private SingleInstanceEntity? cameraCached;
         private SingleInstanceEntity cameraEntity => cameraCached ??= World.CacheCamera();
 
-        public TeleportPositionCalculationSystem(World world) : base(world) { }
+        public TeleportPositionCalculationSystem(World world, ILandscape landscape) : base(world)
+        {
+            this.landscape = landscape;
+        }
 
         protected override void Update(float t)
         {
@@ -44,17 +47,16 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (sceneDef == null)
             {
-                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation().WithTerrainOffset();
+                Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
+                teleportIntent.Position = targetWorldPosition.WithTerrainOffset(landscape.GetHeight(targetWorldPosition.x, targetWorldPosition.z));
             }
-            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
-            {
-                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
-            }
+            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan())) { teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation(); }
             else
             {
-                (Vector3 targetWorldPosition, Vector3? cameraTarget) = PickTargetWithOffset(sceneDef, parcel);
+                (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);
 
                 var originalTargetPosition = targetWorldPosition;
+
                 if (!ValidateTeleportPosition(ref targetWorldPosition, parcel, sceneDef))
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Invalid teleport position: {originalTargetPosition}. Adjusted to: {targetWorldPosition}");
 
@@ -68,6 +70,7 @@ namespace DCL.Character.CharacterMotion.Systems
             }
 
             teleportIntent.IsPositionSet = true;
+
             // The component needs to be re-applied to the entity to ensure that changes are properly propagated
             // within the ECS structure. Without this, other systems may receive an outdated version of the component.
             World!.Set(playerEntity, teleportIntent);
@@ -86,107 +89,8 @@ namespace DCL.Character.CharacterMotion.Systems
             return false;
         }
 
-        private static (Vector3 targetWorldPosition, Vector3? cameraTarget) PickTargetWithOffset(SceneEntityDefinition? sceneDef, Vector2Int parcel)
-        {
-            Vector3? cameraTarget = null;
 
-            Vector3 parcelBaseWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
-            Vector3 targetWorldPosition = parcelBaseWorldPosition;
 
-            List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
 
-            if (spawnPoints is { Count: > 0 })
-            {
-                SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints, targetWorldPosition, parcelBaseWorldPosition);
-
-                // TODO validate offset position is within bounds of one of scene parcels
-                targetWorldPosition += GetSpawnPositionOffset(spawnPoint);
-
-                if (spawnPoint.cameraTarget != null)
-                    cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + parcelBaseWorldPosition;
-            }
-
-            return (targetWorldPosition, cameraTarget);
-        }
-
-        private static SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition)
-        {
-            List<SceneMetadata.SpawnPoint> defaults = ListPool<SceneMetadata.SpawnPoint>.Get();
-            defaults.AddRange(spawnPoints.Where(sp => sp.@default));
-
-            IReadOnlyList<SceneMetadata.SpawnPoint> elegibleSpawnPoints = defaults.Count > 0 ? defaults : spawnPoints;
-            var closestIndex = 0;
-
-            if (elegibleSpawnPoints.Count > 1)
-            {
-                float closestDistance = float.MaxValue;
-
-                for (var i = 0; i < elegibleSpawnPoints.Count; i++)
-                {
-                    SceneMetadata.SpawnPoint sp = elegibleSpawnPoints[i];
-                    Vector3 spawnWorldPosition = GetSpawnPositionOffset(sp) + parcelBaseWorldPosition;
-                    float distance = Vector3.Distance(targetWorldPosition, spawnWorldPosition);
-
-                    if (distance < closestDistance)
-                    {
-                        closestIndex = i;
-                        closestDistance = distance;
-                    }
-                }
-            }
-
-            SceneMetadata.SpawnPoint spawnPoint = elegibleSpawnPoints[closestIndex];
-
-            ListPool<SceneMetadata.SpawnPoint>.Release(defaults);
-
-            return spawnPoint;
-        }
-
-        private static Vector3 GetSpawnPositionOffset(SceneMetadata.SpawnPoint spawnPoint)
-        {
-            static float GetRandomPoint(float[] coordArray)
-            {
-                float randomPoint = 0;
-
-                switch (coordArray.Length)
-                {
-                    case 1:
-                        randomPoint = coordArray[0];
-                        break;
-                    case >= 2:
-                    {
-                        float min = coordArray[0];
-                        float max = coordArray[1];
-
-                        if (Mathf.Approximately(min, max))
-                            return max;
-
-                        if (min > max)
-                            (min, max) = (max, min);
-
-                        randomPoint = (float)((RANDOM.NextDouble() * (max - min)) + min);
-                        break;
-                    }
-                }
-
-                return randomPoint;
-            }
-
-            static float? GetSpawnComponent(SceneMetadata.SpawnPoint.Coordinate coordinate)
-            {
-                if (coordinate.SingleValue != null)
-                    return coordinate.SingleValue.Value;
-
-                if (coordinate.MultiValue != null)
-                    return GetRandomPoint(coordinate.MultiValue);
-
-                return null;
-            }
-
-            return new Vector3(
-                GetSpawnComponent(spawnPoint.position.x) ?? ParcelMathHelper.PARCEL_SIZE / 2f,
-                GetSpawnComponent(spawnPoint.position.y) ?? 0,
-                GetSpawnComponent(spawnPoint.position.z) ?? ParcelMathHelper.PARCEL_SIZE / 2f);
-        }
     }
 }

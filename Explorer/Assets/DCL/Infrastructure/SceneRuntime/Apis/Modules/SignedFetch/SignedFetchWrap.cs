@@ -42,14 +42,14 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         };
 
         private readonly IWebRequestController webController;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly string decentralandEnvironment;
         private readonly ISceneData sceneData;
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache identityCache;
 
         public SignedFetchWrap(
             IWebRequestController webController,
-            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment environment,
             ISceneData sceneData,
             IRealmData realmData,
             IWeb3IdentityCache identityCache,
@@ -57,7 +57,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             : base(disposeCts)
         {
             this.webController = webController;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.decentralandEnvironment = environment.ToString().ToLower();
             this.sceneData = sceneData;
             this.realmData = realmData;
             this.identityCache = identityCache;
@@ -275,7 +275,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             {
                 sceneId = sceneData.SceneEntityDefinition.id!,
                 parcel = $"{parcel.x},{parcel.y}",
-                tld = decentralandUrlsSource.DecentralandDomain,
+                tld = decentralandEnvironment,
                 network = "mainnet",
 
                 // TODO: support guest if required in the future

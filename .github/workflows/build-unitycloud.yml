@@ -25,6 +25,15 @@ on:
           - none
           - profile
           - deep
+      compression:
+        description: 'Level of compression'
+        required: true
+        default: 'LZ4HC'
+        type: choice
+        options:
+          - None
+          - LZ4
+          - LZ4HC
       clean_build:
         description: 'Clean Build'
         required: false
@@ -71,6 +80,10 @@ on:
         required: true
         type: string
         default: 'none'
+      compression:
+        required: false
+        type: string
+        default: 'LZ4HC'
       clean_build:
         required: true
         default: true
@@ -235,6 +248,14 @@ jobs:
           #options=("DetailedBuildReport")
           options=()
 
+          # compression - default is LZ4HC
+          compression="${{ github.event.inputs.compression || inputs.compression || 'LZ4HC' }}"
+          if [[ "$compression" == "LZ4" ]]; then
+            options+=("CompressWithLz4")
+          elif [[ "$compression" == "LZ4HC" ]]; then
+            options+=("CompressWithLz4HC")
+          fi
+
           # input.profile
           profile="${{ github.event.inputs.profile || inputs.profile }}"
 
@@ -250,7 +271,7 @@ jobs:
           # Write the array as a comma-separated string
           # Set the Internal Field Separator to comma
           IFS=,
-          echo "options=${options[*]}" >> "$GITHUB_OUTPUT"
+          echo "options=${options[*]}" | tee -a "$GITHUB_OUTPUT"
 
   build:
     name: Build

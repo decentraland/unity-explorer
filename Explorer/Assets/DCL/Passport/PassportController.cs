@@ -7,7 +7,10 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Clipboard;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -23,7 +26,6 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
@@ -47,6 +49,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.InWorldCamera.CameraReelGallery.Components;
+using DCL.UI.GenericContextMenu.Controllers.Communities;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -69,6 +73,8 @@ namespace DCL.Passport
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
+
+        private static readonly Vector2 CONTEXT_MENU_SUBMENU_OFFSET = new Vector2(0.0f, -26.0f);
 
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
@@ -101,6 +107,7 @@ namespace DCL.Passport
         private readonly bool enableCameraReel;
         private readonly bool enableFriendshipInteractions;
         private readonly bool includeUserBlocking;
+        private readonly bool includeCommunities;
         private readonly bool isNameEditorEnabled;
         private readonly bool isCallEnabled;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
@@ -113,7 +120,10 @@ namespace DCL.Passport
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -135,6 +145,7 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
+        private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -168,7 +179,6 @@ namespace DCL.Passport
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            INotificationsBusController notificationBusController,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
@@ -184,14 +194,17 @@ namespace DCL.Passport
             bool enableCameraReel,
             bool enableFriendshipInteractions,
             bool includeUserBlocking,
+            bool includeCommunities,
             bool isNameEditorEnabled,
-            bool isCallEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
-            GalleryEventBus galleryEventBus) : base(viewFactory)
+            GalleryEventBus galleryEventBus,
+            ISystemClipboard systemClipboard,
+            CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
+            CommunitiesDataProvider communitiesDataProvider) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -227,16 +240,20 @@ namespace DCL.Passport
             this.enableFriendshipInteractions = enableFriendshipInteractions;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            this.isCallEnabled = isCallEnabled;
+            this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
+            this.systemClipboard = systemClipboard;
+            this.cameraReelGalleryMessagesConfiguration = cameraReelGalleryMessagesConfiguration;
+            this.includeCommunities = includeCommunities;
+            this.communitiesDataProvider = communitiesDataProvider;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
-            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((_, _) => { });
             badge3DPreviewCamera.gameObject.SetActive(false);
@@ -315,10 +332,18 @@ namespace DCL.Passport
                     gridLayoutFixedColumnCount,
                     thumbnailHeight,
                     thumbnailWidth,
-                    false,
-                    false),
-                false,
-                galleryEventBus);
+                    gridShowMonth: false,
+                    groupByMonth: false,
+                    enableDeleteContextOption: false,
+                    hideReelOnPrivateSet: true),
+                useSignedRequest: false,
+                galleryEventBus,
+                viewInstance.CameraReelGalleryContextMenuView,
+                webBrowser,
+                decentralandUrlsSource,
+                systemClipboard,
+                cameraReelGalleryMessagesConfiguration,
+                mvcManager);
 
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             badgesPassportModules.Add(badgesDetailsPassportModuleController);
@@ -360,6 +385,12 @@ namespace DCL.Passport
                               () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
                                   parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
                          .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+
+            if (includeCommunities)
+            {
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, CONTEXT_MENU_SUBMENU_OFFSET, viewInstance.InviteToCommunityText, viewInstance.InviteToCommunitySprite);
+            }
         }
 
         private void OnStartCallButtonClicked()
@@ -371,7 +402,6 @@ namespace DCL.Passport
         {
             try
             {
-                //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
                 await UniTask.Delay(500);
@@ -403,6 +433,9 @@ namespace DCL.Passport
 
         private void ShowContextMenu()
         {
+            if (includeCommunities)
+                invitationButtonHandler.SetUserToInvite(inputData.UserId);
+
             contextMenuCloseTask = new UniTaskCompletionSource();
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, viewInstance!.ContextMenuButton.transform.position, closeTask: contextMenuCloseTask?.Task))).Forget();
@@ -511,6 +544,11 @@ namespace DCL.Passport
                 if (EnumUtils.HasFlag(alreadyLoadedSections, sectionToLoad))
                     return;
 
+                // Ensure the view is initialized before fetching the profile to prevent rendering artifacts
+                // that may appear while the profile is still loading
+                if (sectionToLoad == PassportSection.OVERVIEW)
+                    characterPreviewController!.OnBeforeShow();
+
                 // Load user profile
                 Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
 
@@ -588,7 +626,8 @@ namespace DCL.Passport
             photoLoadingCts = photoLoadingCts.SafeRestart();
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
 
-            cameraReelGalleryController!.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
+            cameraReelGalleryController!.TryEnableContextMenuButton(isOwnProfile);
+            cameraReelGalleryController.ShowWalletGalleryAsync(currentUserId!, photoLoadingCts.Token).Forget();
 
             currentSection = PassportSection.PHOTOS;
             viewInstance!.OpenSection(currentSection);
@@ -637,7 +676,10 @@ namespace DCL.Passport
             previewGO.SetActive(visible);
 
             if (visible)
+            {
+                characterPreviewController?.OnBeforeShow();
                 characterPreviewController?.OnShow(triggerOnShowBusEvent);
+            }
             else
                 characterPreviewController?.OnHide(triggerOnShowBusEvent);
         }

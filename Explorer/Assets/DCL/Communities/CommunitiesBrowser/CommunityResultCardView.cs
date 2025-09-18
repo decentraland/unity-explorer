@@ -1,26 +1,34 @@
+using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ProfileElements;
-using DCL.Profiles.Helpers;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DG.Tweening;
+using MVC;
 using System;
+using System.Text;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
+using Utility;
+using Utility.Types;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunityResultCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private Tweener? descriptionTween;
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 45f;
-
-        public event Action<string>? MainButtonClicked;
-        public event Action<string>? ViewCommunityButtonClicked;
-        public event Action<string, CommunityResultCardView>? JoinCommunityButtonClicked;
+        private const string DELETE_COMMUNITY_INVITATION_TEXT_FORMAT = "Are you sure you want to delete your invitation to the [{0}] Community?";
+        private const string DELETE_COMMUNITY_INVITATION_CONFIRM_TEXT = "YES";
+        private const string DELETE_COMMUNITY_INVITATION_CANCEL_TEXT = "NO";
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
@@ -41,52 +49,68 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text communityMembersCountText = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private GameObject buttonsContainer = null!;
+        [SerializeField] private GameObject joinOrViewButtonsContainer = null!;
         [SerializeField] private Button viewCommunityButton = null!;
         [SerializeField] private Button joinCommunityButton = null!;
-        [SerializeField] private GameObject joiningLoading = null!;
+        [SerializeField] private GameObject requestOrCancelToJoinButtonsContainer = null!;
+        [SerializeField] private Button requestToJoinButton = null!;
+        [SerializeField] private Button cancelJoinRequestButton = null!;
+        [SerializeField] private GameObject acceptOrRejectInvitationButtonsContainer = null!;
+        [SerializeField] private Button acceptInvitationButton = null!;
+        [SerializeField] private Button rejectInvitationButton = null!;
+        [SerializeField] private GameObject joinStreamButtonContainer = null!;
+        [SerializeField] private Button joinStreamButton = null!;
+        [SerializeField] private Button goToStreamButton = null!;
+        [SerializeField] private GameObject actionLoadingSpinner = null!;
+        [SerializeField] private ListenersCountView listenersCountView = null!;
+
         [SerializeField] private MutualFriendsConfig mutualFriends;
-        [SerializeField] private ListenersCountView listenersCountView;
 
-        [Serializable]
-        internal struct MutualFriendsConfig
-        {
-            public MutualThumbnail[] thumbnails;
+        private readonly StringBuilder stringBuilder = new ();
 
-            [Serializable]
-            public struct MutualThumbnail
-            {
-                public GameObject root;
-                public ProfilePictureView picture;
-                public ProfileNameTooltipView profileNameTooltip;
+        private CancellationTokenSource? confirmationDialogCts;
 
-                internal bool isPointerEventsSubscribed;
-            }
-        }
-
-        private string currentCommunityId;
-        private Tweener? headerTween;
+        private string currentCommunityName = null!;
+        private string currentInviteOrRequestId = null!;
+        private Tweener? descriptionTween;
         private Tweener? footerTween;
-        private Vector2 originalHeaderSizeDelta;
+
+        private Tweener? headerTween;
         private Vector2 originalFooterSizeDelta;
+        private Vector2 originalHeaderSizeDelta;
+
+        public string CommunityId { get; private set; } = null!;
 
         private void Awake()
         {
-            mainButton.onClick.AddListener(() =>
-            {
-                if (currentCommunityId != null)
-                    MainButtonClicked?.Invoke(currentCommunityId);
-            });
+            viewCommunityButton.onClick.AddListener(() => ViewCommunityButtonClicked?.Invoke(CommunityId));
+            joinCommunityButton.onClick.AddListener(() => JoinCommunityButtonClicked?.Invoke(CommunityId, this));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(CommunityId));
+            requestToJoinButton.onClick.AddListener(() => RequestToJoinCommunityButtonClicked?.Invoke(CommunityId, this));
+            cancelJoinRequestButton.onClick.AddListener(() => CancelRequestToJoinCommunityButtonClicked?.Invoke(CommunityId, currentInviteOrRequestId, this));
+            acceptInvitationButton.onClick.AddListener(() => AcceptCommunityInvitationButtonClicked?.Invoke(CommunityId, currentInviteOrRequestId, this));
+            joinStreamButton.onClick.AddListener(OnJoinStreamClicked);
+            goToStreamButton.onClick.AddListener(OnGoToStreamButtonClicked);
 
-            viewCommunityButton.onClick.AddListener(() =>
+            rejectInvitationButton.onClick.AddListener(() =>
             {
-                if (currentCommunityId != null)
-                    ViewCommunityButtonClicked?.Invoke(currentCommunityId);
-            });
+                confirmationDialogCts = confirmationDialogCts.SafeRestart();
+                ShowDeleteInvitationConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+                return;
 
-            joinCommunityButton.onClick.AddListener(() =>
-            {
-                if (currentCommunityId != null)
-                    JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
+                async UniTask ShowDeleteInvitationConfirmationDialogAsync(CancellationToken ct)
+                {
+                    Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_COMMUNITY_INVITATION_TEXT_FORMAT, currentCommunityName),
+                                                                                         DELETE_COMMUNITY_INVITATION_CANCEL_TEXT,
+                                                                                         DELETE_COMMUNITY_INVITATION_CONFIRM_TEXT,
+                                                                                         communityThumbnail.ImageSprite,
+                                                                                         true, false), ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+
+                    RejectCommunityInvitationButtonClicked?.Invoke(CommunityId, currentInviteOrRequestId, this);
+                }
             });
 
             originalHeaderSizeDelta = headerContainer.sizeDelta;
@@ -103,17 +127,55 @@ namespace DCL.Communities.CommunitiesBrowser
             joinCommunityButton.onClick.RemoveAllListeners();
         }
 
-        public void SetCommunityId(string id) =>
-            currentCommunityId = id;
+        public void OnPointerEnter(PointerEventData eventData) =>
+            PlayHoverAnimation();
 
-        public void SetTitle(string title) =>
+        public void OnPointerExit(PointerEventData eventData) =>
+            PlayHoverExitAnimation();
+
+        public event Action<string>? MainButtonClicked;
+        public event Action<string>? ViewCommunityButtonClicked;
+        public event Action<string>? JoinStreamButtonClicked;
+        public event Action<string>? GoToStreamButtonClicked;
+        public event Action<string, CommunityResultCardView>? JoinCommunityButtonClicked;
+        public event Action<string, CommunityResultCardView>? RequestToJoinCommunityButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? CancelRequestToJoinCommunityButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? AcceptCommunityInvitationButtonClicked;
+        public event Action<string, string, CommunityResultCardView>? RejectCommunityInvitationButtonClicked;
+
+        private void OnJoinStreamClicked()
+        {
+            JoinStreamButtonClicked?.Invoke(CommunityId);
+        }
+
+        private void OnGoToStreamButtonClicked()
+        {
+            GoToStreamButtonClicked?.Invoke(CommunityId);
+        }
+
+        public void SetCommunityId(string id) =>
+            CommunityId = id;
+
+        public void SetTitle(string title)
+        {
             communityTitle.text = title;
+            currentCommunityName = title;
+        }
 
         public void SetOwner(string owner) =>
             communityOwner.text = owner;
 
         public void SetDescription(string description) =>
             communityDescription.text = description;
+
+        public void ConfigureListenersCount(bool isActive, int listenersCount)
+        {
+            listenersCountView.gameObject.SetActive(isActive);
+
+            stringBuilder.Clear();
+            stringBuilder.Append(listenersCount);
+            listenersCountView.ParticipantCount.text = stringBuilder.ToString();
+        }
 
         public void SetPrivacy(CommunityPrivacy privacy)
         {
@@ -126,19 +188,97 @@ namespace DCL.Communities.CommunitiesBrowser
             bool showMembers = CommunitiesFeatureAccess.Instance.CanMembersCounterBeDisplayer();
             communityMembersSeparator.SetActive(showMembers);
             communityMembersCountText.gameObject.SetActive(showMembers);
+
             if (showMembers)
                 communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
         }
 
-        public void SetOwnership(bool isMember)
+        public void SetInviteOrRequestId(string id) =>
+            currentInviteOrRequestId = id;
+
+        public void SetActionButtonsState(CommunityPrivacy privacy, InviteRequestAction type, bool isMember, bool isStreaming = false, bool hasJoined = false)
         {
-            joinCommunityButton.gameObject.SetActive(!isMember);
-            viewCommunityButton.gameObject.SetActive(isMember);
+            if (isStreaming)
+                SetActionButtonsState(hasJoined ? ActionButtonsState.STREAMING_GOTO : ActionButtonsState.STREAMING_JOIN);
+            else if ((privacy == CommunityPrivacy.@public || isMember) && type == InviteRequestAction.none)
+                SetActionButtonsState(isMember ? ActionButtonsState.PUBLIC_VIEW : ActionButtonsState.PUBLIC_JOIN);
+            else if (privacy == CommunityPrivacy.@private && !isMember && type != InviteRequestAction.invite)
+                SetActionButtonsState(type == InviteRequestAction.request_to_join ? ActionButtonsState.PRIVATE_CANCEL_JOIN : ActionButtonsState.PRIVATE_REQUEST_JOIN);
+            else if (type == InviteRequestAction.invite)
+                SetActionButtonsState(ActionButtonsState.PRIVATE_WITH_INVITE);
         }
 
-        public void SetJoiningLoadingActive(bool isActive)
+        private void SetActionButtonsState(ActionButtonsState buttonsState)
         {
-            joiningLoading.SetActive(isActive);
+            switch (buttonsState)
+            {
+                case ActionButtonsState.PUBLIC_JOIN:
+                case ActionButtonsState.PUBLIC_VIEW:
+                    SetPublicState(buttonsState, isActiveState: true);
+                    SetStreamingState(buttonsState, isActiveState: false);
+                    SetPrivateJoinRequestState(buttonsState, isActiveState: false);
+                    SetPrivateInvitationState(isActiveState: false);
+                    break;
+                case ActionButtonsState.STREAMING_JOIN:
+                case ActionButtonsState.STREAMING_GOTO:
+                    SetPublicState(buttonsState, isActiveState: false);
+                    SetStreamingState(buttonsState, isActiveState: true);
+                    SetPrivateJoinRequestState(buttonsState, isActiveState: false);
+                    SetPrivateInvitationState(isActiveState: false);
+                    break;
+                case ActionButtonsState.PRIVATE_REQUEST_JOIN:
+                case ActionButtonsState.PRIVATE_CANCEL_JOIN:
+                    SetPublicState(buttonsState, isActiveState: false);
+                    SetStreamingState(buttonsState, isActiveState: false);
+                    SetPrivateJoinRequestState(buttonsState, isActiveState: true);
+                    SetPrivateInvitationState(isActiveState: false);
+                    break;
+                case ActionButtonsState.PRIVATE_WITH_INVITE:
+                    SetPublicState(buttonsState, isActiveState: false);
+                    SetStreamingState(buttonsState, isActiveState: false);
+                    SetPrivateJoinRequestState(buttonsState, isActiveState: false);
+                    SetPrivateInvitationState(isActiveState: true);
+                    break;
+            }
+        }
+
+        private void SetPublicState(ActionButtonsState buttonsState, bool isActiveState)
+        {
+            joinOrViewButtonsContainer.SetActive(isActiveState);
+            if (!isActiveState) return;
+            joinCommunityButton.gameObject.SetActive(buttonsState is ActionButtonsState.PUBLIC_JOIN);
+            viewCommunityButton.gameObject.SetActive(buttonsState is ActionButtonsState.PUBLIC_VIEW);
+        }
+
+        private void SetPrivateJoinRequestState(ActionButtonsState buttonsState, bool isActiveState)
+        {
+            requestOrCancelToJoinButtonsContainer.SetActive(isActiveState);
+            if (!isActiveState) return;
+            requestToJoinButton.gameObject.SetActive(buttonsState is ActionButtonsState.PRIVATE_REQUEST_JOIN);
+            cancelJoinRequestButton.gameObject.SetActive(buttonsState is ActionButtonsState.PRIVATE_CANCEL_JOIN);
+        }
+
+        private void SetPrivateInvitationState(bool isActiveState)
+        {
+            acceptOrRejectInvitationButtonsContainer.SetActive(isActiveState);
+            if (!isActiveState) return;
+            rejectInvitationButton.gameObject.SetActive(true);
+            acceptInvitationButton.gameObject.SetActive(true);
+        }
+
+        private void SetStreamingState(ActionButtonsState buttonsState, bool isActiveState)
+        {
+            joinStreamButtonContainer.SetActive(isActiveState);
+            if (!isActiveState) return;
+            goToStreamButton.gameObject.SetActive(buttonsState is ActionButtonsState.STREAMING_GOTO);
+            joinStreamButton.gameObject.SetActive(buttonsState is ActionButtonsState.STREAMING_JOIN);
+        }
+
+
+
+        public void SetActionLoadingActive(bool isActive)
+        {
+            actionLoadingSpinner.SetActive(isActive);
             buttonsContainer.SetActive(!isActive);
         }
 
@@ -150,7 +290,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
+                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, NameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
                 mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.hasClaimedName);
 
                 if (mutualFriends.thumbnails[i].isPointerEventsSubscribed)
@@ -169,11 +309,26 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        public void OnPointerEnter(PointerEventData eventData) =>
-            PlayHoverAnimation();
+        public void SetupMutualFriends(ProfileRepositoryWrapper profileDataProvider, GetUserInviteRequestData.UserInviteRequestData userInviteRequestData)
+        {
+            var communityFromInviteRequestData = new CommunityData
+            {
+                id = userInviteRequestData.communityId,
+                thumbnails = userInviteRequestData.thumbnails,
+                name = userInviteRequestData.name,
+                description = userInviteRequestData.description,
+                ownerAddress = userInviteRequestData.ownerAddress,
+                ownerName = userInviteRequestData.ownerName,
+                membersCount = userInviteRequestData.membersCount,
+                privacy = userInviteRequestData.privacy,
+                role = userInviteRequestData.role,
+                friends = userInviteRequestData.friends,
+                pendingActionType = userInviteRequestData.type,
+                inviteOrRequestId = userInviteRequestData.id,
+            };
 
-        public void OnPointerExit(PointerEventData eventData) =>
-            PlayHoverExitAnimation();
+            SetupMutualFriends(profileDataProvider, communityFromInviteRequestData);
+        }
 
         private void PlayHoverAnimation()
         {
@@ -182,25 +337,25 @@ namespace DCL.Communities.CommunitiesBrowser
             descriptionTween?.Kill();
 
             headerTween = DOTween.To(() =>
-                          headerContainer.sizeDelta,
-                          newSizeDelta => headerContainer.sizeDelta = newSizeDelta,
-                          new Vector2(headerContainer.sizeDelta.x, originalHeaderSizeDelta.y - HOVER_ANIMATION_HEIGHT_TO_APPLY),
-                          HOVER_ANIMATION_DURATION)
-                     .SetEase(Ease.OutQuad);
+                                          headerContainer.sizeDelta,
+                                      newSizeDelta => headerContainer.sizeDelta = newSizeDelta,
+                                      new Vector2(headerContainer.sizeDelta.x, originalHeaderSizeDelta.y - HOVER_ANIMATION_HEIGHT_TO_APPLY),
+                                      HOVER_ANIMATION_DURATION)
+                                 .SetEase(Ease.OutQuad);
 
             footerTween = DOTween.To(() =>
-                          footerContainer.sizeDelta,
-                          newSizeDelta => footerContainer.sizeDelta = newSizeDelta,
-                          new Vector2(footerContainer.sizeDelta.x, originalFooterSizeDelta.y + HOVER_ANIMATION_HEIGHT_TO_APPLY),
-                          HOVER_ANIMATION_DURATION)
-                     .SetEase(Ease.OutQuad);
+                                          footerContainer.sizeDelta,
+                                      newSizeDelta => footerContainer.sizeDelta = newSizeDelta,
+                                      new Vector2(footerContainer.sizeDelta.x, originalFooterSizeDelta.y + HOVER_ANIMATION_HEIGHT_TO_APPLY),
+                                      HOVER_ANIMATION_DURATION)
+                                 .SetEase(Ease.OutQuad);
 
             descriptionTween = DOTween.To(() =>
-                               communityDescriptionCanvasGroup.alpha,
-                               newAlpha => communityDescriptionCanvasGroup.alpha = newAlpha,
-                               1f,
-                               HOVER_ANIMATION_DURATION)
-                          .SetEase(Ease.OutQuad);
+                                               communityDescriptionCanvasGroup.alpha,
+                                           newAlpha => communityDescriptionCanvasGroup.alpha = newAlpha,
+                                           1f,
+                                           HOVER_ANIMATION_DURATION)
+                                      .SetEase(Ease.OutQuad);
         }
 
         private void PlayHoverExitAnimation(bool instant = false)
@@ -218,26 +373,54 @@ namespace DCL.Communities.CommunitiesBrowser
             else
             {
                 headerTween = DOTween.To(() =>
-                              headerContainer.sizeDelta,
-                              x => headerContainer.sizeDelta = x,
-                              new Vector2(headerContainer.sizeDelta.x, originalHeaderSizeDelta.y),
-                              HOVER_ANIMATION_DURATION)
-                         .SetEase(Ease.OutQuad);
+                                              headerContainer.sizeDelta,
+                                          x => headerContainer.sizeDelta = x,
+                                          new Vector2(headerContainer.sizeDelta.x, originalHeaderSizeDelta.y),
+                                          HOVER_ANIMATION_DURATION)
+                                     .SetEase(Ease.OutQuad);
 
                 footerTween = DOTween.To(() =>
-                              footerContainer.sizeDelta,
-                              x => footerContainer.sizeDelta = x,
-                              new Vector2(footerContainer.sizeDelta.x, originalFooterSizeDelta.y),
-                              HOVER_ANIMATION_DURATION)
-                         .SetEase(Ease.OutQuad);
+                                              footerContainer.sizeDelta,
+                                          x => footerContainer.sizeDelta = x,
+                                          new Vector2(footerContainer.sizeDelta.x, originalFooterSizeDelta.y),
+                                          HOVER_ANIMATION_DURATION)
+                                     .SetEase(Ease.OutQuad);
 
                 descriptionTween = DOTween.To(() =>
-                                   communityDescriptionCanvasGroup.alpha,
-                                   newAlpha => communityDescriptionCanvasGroup.alpha = newAlpha,
-                                   0f,
-                                   HOVER_ANIMATION_DURATION)
-                              .SetEase(Ease.OutQuad);
+                                                   communityDescriptionCanvasGroup.alpha,
+                                               newAlpha => communityDescriptionCanvasGroup.alpha = newAlpha,
+                                               0f,
+                                               HOVER_ANIMATION_DURATION)
+                                          .SetEase(Ease.OutQuad);
             }
+        }
+
+        [Serializable]
+        internal struct MutualFriendsConfig
+        {
+            public MutualThumbnail[] thumbnails;
+
+            [Serializable]
+            public struct MutualThumbnail
+            {
+                public GameObject root;
+                public ProfilePictureView picture;
+                public ProfileNameTooltipView profileNameTooltip;
+
+                internal bool isPointerEventsSubscribed;
+            }
+        }
+
+        private enum ActionButtonsState
+        {
+            PUBLIC_JOIN,
+            PUBLIC_VIEW,
+            STREAMING_JOIN,
+            STREAMING_GOTO,
+            PRIVATE_REQUEST_JOIN,
+            PRIVATE_CANCEL_JOIN,
+            PRIVATE_WITH_INVITE,
+            DEFAULT,
         }
     }
 }

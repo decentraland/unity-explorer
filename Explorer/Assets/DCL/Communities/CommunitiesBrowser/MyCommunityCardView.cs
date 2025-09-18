@@ -1,5 +1,7 @@
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using System;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,8 +18,11 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private ListenersCountView listenersCountView;
+        [SerializeField] private GameObject requestsReceivedContainer = null!;
+        [SerializeField] private TMP_Text requestsReceivedText = null!;
 
         private string currentCommunityId;
+        private readonly StringBuilder stringBuilder = new ();
 
         private void Awake() =>
             mainButton.onClick.AddListener(() =>
@@ -40,6 +45,21 @@ namespace DCL.Communities.CommunitiesBrowser
             userRoleContainer.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             var roleString = role.ToString();
             userRole.text = $"{char.ToUpperInvariant(roleString[0])}{roleString[1..]}";
+        }
+
+        public void ConfigureListenersCount(bool isActive, int listenersCount)
+        {
+            listenersCountView.gameObject.SetActive(isActive);
+
+            stringBuilder.Clear();
+            stringBuilder.Append(listenersCount);
+            listenersCountView.ParticipantCount.text = stringBuilder.ToString();
+        }
+
+        public void SetRequestsReceived(int requestsCount)
+        {
+            requestsReceivedContainer.SetActive(requestsCount > 0);
+            requestsReceivedText.text = $"{requestsCount} Request{(requestsCount > 1 ? "s" : "")} Received";
         }
     }
 }

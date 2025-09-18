@@ -18,7 +18,7 @@ namespace DCL.Chat
 
         void AddConversation(BaseChannelViewModel data);
 
-        void RemoveConversation(ChatChannel channel);
+        void TryRemoveConversation(ChatChannel channel);
 
         void SetUnreadMessages(ChatChannel.ChannelId channelId, int unreadMessages);
 

@@ -11,6 +11,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using System;
 using DCL.Chat.EventBus;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -38,6 +39,7 @@ namespace DCL.Chat.ChatCommands
         public ResetChatCommand ResetChat { get; }
         public RestartChatServicesCommand RestartChatServices { get; }
         public ResolveInputStateCommand ResolveInputStateCommand { get; }
+        public GetUserCallStatusCommand GetUserCallStatusCommand { get; }
 
         public CommandRegistry(
             ChatConfig.ChatConfig chatConfig,
@@ -73,7 +75,7 @@ namespace DCL.Chat.ChatCommands
                 privateConversationUserStateService,
                 communityUserStateService,
                 chatMemberListService);
-            
+
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
 
             InitializeChat = new InitializeChatSystemCommand(eventBus,
@@ -145,6 +147,8 @@ namespace DCL.Chat.ChatCommands
                 GetCommunityThumbnail);
 
             ResolveInputStateCommand = new ResolveInputStateCommand(GetUserChatStatusCommand, currentChannelService);
+
+            GetUserCallStatusCommand = new GetUserCallStatusCommand(privateConversationUserStateService);
         }
 
         public void Dispose()

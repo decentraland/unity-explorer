@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI;
+using DCL.Utilities;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -104,6 +106,7 @@ namespace DCL.Chat
             newItem.TooltipShown += OnItemTooltipShown;
             newItem.Id = channel.Id;
 
+
             items.Add(channel.Id, newItem);
 
             if(items.Count == 1)
@@ -120,10 +123,11 @@ namespace DCL.Chat
             conversationItem.SetClaimedNameIconVisibility(false);
         }
 
-        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, ISpriteCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData, CancellationToken ct)
+        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, ISpriteCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData, ReactiveProperty<bool> communityUpdates, IReadonlyReactiveProperty<string> currentCommunityCallId,
+            CancellationToken ct)
         {
             CommunityChatConversationsToolbarViewItem conversationItem = (CommunityChatConversationsToolbarViewItem)items[channelId];
-            SetupCommunityConversationItem(conversationItem, communityData, thumbnailCache, ct);
+            SetupCommunityConversationItem(conversationItem, communityData, thumbnailCache, communityUpdates, currentCommunityCallId, ct);
         }
 
         public void SetPrivateConversationData(ChatChannel.ChannelId channelId, CancellationToken ct)
@@ -302,10 +306,12 @@ namespace DCL.Chat
             }
         }
 
-        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, ISpriteCache thumbnailCache, CancellationToken ct)
+        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, ISpriteCache thumbnailCache, ReactiveProperty<bool> communityUpdates, IReadonlyReactiveProperty<string> currentCommunityCallId,
+            CancellationToken ct)
         {
             newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails?.raw, ct);
             newItem.SetConversationName(communityData.name);
+            newItem.SetupCommunityUpdates(communityUpdates, currentCommunityCallId);
         }
 
         /// <summary>

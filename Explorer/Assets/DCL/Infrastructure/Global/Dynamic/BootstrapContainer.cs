@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -10,7 +11,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -36,7 +36,7 @@ namespace Global.Dynamic
 {
     public class BootstrapContainer : DCLGlobalContainer<BootstrapSettings>
     {
-        private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
+        private ReportsHandlingSettings reportHandlingSettings;
         private bool enableAnalytics;
 
         public DiagnosticsContainer DiagnosticsContainer { get; private set; }
@@ -50,8 +50,8 @@ namespace Global.Dynamic
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
-        public WorldVolumeMacBus WorldVolumeMacBus { get; private set; }
-        public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
+        public VolumeBus VolumeBus { get; private set; }
+        public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings;
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
@@ -63,13 +63,13 @@ namespace Global.Dynamic
             base.Dispose();
 
             DiagnosticsContainer?.Dispose();
-            reportHandlingSettings.Dispose();
             Web3Authenticator?.Dispose();
             VerifiedEthereumApi?.Dispose();
             IdentityCache?.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(
+            IAssetsProvisioner assetsProvisioner,
             DebugSettings.DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -78,7 +78,7 @@ namespace Global.Dynamic
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
             IAppArgs applicationParametersParser,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             RealmUrls realmUrls,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
@@ -94,23 +94,23 @@ namespace Global.Dynamic
             {
                 IdentityCache = identityCache,
                 Web3AccountFactory = web3AccountFactory,
-                AssetsProvisioner = new AddressablesProvisioner(),
+                AssetsProvisioner = assetsProvisioner,
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
                 LaunchMode = realmLaunchSettings,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
-                WorldVolumeMacBus = new WorldVolumeMacBus(),
+                VolumeBus = new VolumeBus(),
                 Environment = decentralandEnvironment
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
-                container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
+                container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings);
 
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser);
+                (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
 
                 if (container.enableAnalytics)
                 {
@@ -132,10 +132,10 @@ namespace Global.Dynamic
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(
+        private static (IBootstrap, IAnalyticsController) CreateBootstrapperAsync(
             DebugSettings.DebugSettings debugSettings,
             IAppArgs appArgs,
-            ISplashScreen splashScreen,
+            SplashScreen splashScreen,
             RealmUrls realmUrls,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
@@ -148,8 +148,7 @@ namespace Global.Dynamic
             DCLVersion dclVersion,
             CancellationToken ct)
         {
-            AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
-            container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
+            container.enableAnalytics = bootstrapSettings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
 
             var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
             {
@@ -160,13 +159,13 @@ namespace Global.Dynamic
             {
                 LauncherTraits launcherTraits = LauncherTraits.FromAppArgs(appArgs);
                 IAnalyticsService service = CreateAnalyticsService(
-                    analyticsConfig,
+                    bootstrapSettings.AnalyticsConfig,
                     launcherTraits,
                     container.ApplicationParametersParser,
                     realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment,
                     ct);
 
-                var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits, buildData, dclVersion);
+                var analyticsController = new AnalyticsController(service, appArgs, bootstrapSettings.AnalyticsConfig, launcherTraits, buildData, dclVersion);
                 var criticalLogsAnalyticsHandler = new CriticalLogsAnalyticsHandler(analyticsController);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
@@ -211,6 +210,7 @@ namespace Global.Dynamic
                 IWebBrowser webBrowser,
                 BootstrapContainer container,
                 IDecentralandUrlsSource decentralandUrlsSource,
+                DecentralandEnvironment dclEnvironment,
                 IAppArgs appArgs)
         {
 
@@ -224,7 +224,7 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
-                decentralandUrlsSource.Environment,
+                dclEnvironment,
                 new AuthCodeVerificationFeatureFlag(),
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
@@ -237,18 +237,16 @@ namespace Global.Dynamic
             return (dappWeb3Authenticator, coreWeb3Authenticator);
         }
 
-
-
-        public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, BootstrapSettings settings, CancellationToken ct)
+        private static ReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings)
         {
-            BootstrapSettings.ReportHandlingSettingsRef reportHandlingSettings =
+            ReportsHandlingSettings reportHandlingSettings =
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
                 settings.ReportHandlingSettingsDevelopment;
 #else
                 settings.ReportHandlingSettingsProduction;
 #endif
 
-            return await assetsProvisioner.ProvideMainAssetAsync(reportHandlingSettings, ct, nameof(ReportHandlingSettings));
+            return reportHandlingSettings;
         }
     }
 
@@ -260,21 +258,9 @@ namespace Global.Dynamic
     [Serializable]
     public class BootstrapSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
-        [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
-        [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
+        [field: SerializeField] public AnalyticsConfiguration AnalyticsConfig;
+        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsDevelopment { get; private set; }
+        [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsProduction { get; private set; }
         [field: SerializeField] public BuildData BuildData { get; private set; }
-
-        [Serializable]
-        public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>
-        {
-            public ReportHandlingSettingsRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class AnalyticsConfigurationRef : AssetReferenceT<AnalyticsConfiguration>
-        {
-            public AnalyticsConfigurationRef(string guid) : base(guid) { }
-        }
     }
 }

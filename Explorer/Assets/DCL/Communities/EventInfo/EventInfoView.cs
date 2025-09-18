@@ -23,8 +23,6 @@ namespace DCL.Communities.EventInfo
         [SerializeField] private Button closeButton = null!;
         [SerializeField] private EventInfoContextMenuConfiguration contextMenuSettings = null!;
         [SerializeField] private ScrollRect scrollRect = null!;
-        [field: SerializeField] public WarningNotificationView SuccessNotificationView { get; private set; } = null!;
-        [field: SerializeField] public WarningNotificationView ErrorNotificationView { get; private set; } = null!;
 
         [Header("Event Info")]
         [SerializeField] private ImageView eventImage = null!;

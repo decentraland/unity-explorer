@@ -31,7 +31,13 @@ namespace MVC
 
         private void CloseNextUI(InputAction.CallbackContext obj)
         {
-            closeableStack.LastOrDefault().onClose?.TrySetResult();
+            if (closeableStack.Count == 0) return;
+
+            (IController controller, UniTaskCompletionSource? onClose) = closeableStack[^1];
+
+            if (!controller.CanBeClosedByEscape) return;
+
+            onClose?.TrySetResult();
         }
 
         public PopupPushInfo PushPopup(IController controller)

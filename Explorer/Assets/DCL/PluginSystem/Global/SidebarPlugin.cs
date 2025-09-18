@@ -4,11 +4,11 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Chat.ChatStates;
 using DCL.Chat.History;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -30,6 +30,7 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -38,7 +39,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly MainUIView mainUIView;
-        private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
@@ -60,12 +60,12 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
+        private readonly IEventBus eventBus;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MainUIView mainUIView,
-            INotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
@@ -86,12 +86,12 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            IDecentralandUrlsSource decentralandUrls)
+            IDecentralandUrlsSource decentralandUrls,
+            IEventBus eventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mainUIView = mainUIView;
-            this.notificationsBusController = notificationsBusController;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
@@ -113,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
+            this.eventBus = eventBus;
         }
 
         public void Dispose() { }
@@ -122,13 +123,12 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(SidebarSettings settings, CancellationToken ct)
         {
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct)).Value;
+            NotificationDefaultThumbnails notificationDefaultThumbnails = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationDefaultThumbnailsSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
             // TODO move to contextual load pattern
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
-
-            SkyboxSettingsAsset skyboxSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsAsset, ct)).Value;
 
             mvcManager.RegisterController(new SidebarController(() =>
                 {
@@ -137,12 +137,11 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 mvcManager,
-                notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper),
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, skyboxSettings),
-                new ControlsPanelController(() => controlsPanelView, mvcManager),
+                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController),
+                new ControlsPanelController(() => controlsPanelView),
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
@@ -152,8 +151,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
-                sceneRestrictionBusController,
-                decentralandUrls
+                decentralandUrls,
+                eventBus
             ));
         }
 
@@ -163,10 +162,13 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; }
 
             [field: SerializeField]
+            public AssetReferenceT<NotificationDefaultThumbnails> NotificationDefaultThumbnailsSO { get; private set; }
+
+            [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceT<SkyboxSettingsAsset> SettingsAsset { get; private set; }
+            public SkyboxSettingsAsset SettingsAsset { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceGameObject ControlsPanelPrefab;

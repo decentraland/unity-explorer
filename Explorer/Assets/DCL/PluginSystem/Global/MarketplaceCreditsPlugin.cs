@@ -6,7 +6,6 @@ using DCL.Input;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.MainUI;
@@ -31,7 +30,6 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IMVCManager mvcManager;
-        private readonly INotificationsBusController notificationBusController;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -49,7 +47,6 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
-            INotificationsBusController notificationBusController,
             IRealmData realmData,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
@@ -62,7 +59,6 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
-            this.notificationBusController = notificationBusController;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
@@ -94,7 +90,6 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 webRequestController,
                 mvcManager,
-                notificationBusController,
                 mainUIView.SidebarView.marketplaceCreditsButtonAnimator,
                 mainUIView.SidebarView.marketplaceCreditsButtonAlertMark,
                 realmData,

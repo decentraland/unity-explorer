@@ -78,7 +78,6 @@ namespace DCL.MarketplaceCredits
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            INotificationsBusController notificationBusController,
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
@@ -101,8 +100,8 @@ namespace DCL.MarketplaceCredits
             this.loadingStatus = loadingStatus;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
-            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
             CheckForSidebarButtonState();
         }
@@ -110,8 +109,9 @@ namespace DCL.MarketplaceCredits
         protected override void OnViewInstantiated()
         {
             viewInstance!.OnAnyPlaceClick += OnAnyPlaceClicked;
-            viewInstance.InfoLinkButton.onClick.AddListener(OpenInfoLink);
+            viewInstance.InfoLinkButton.onClick.AddListener(OnInfoButtonClicked);
             viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.AddListener(OpenGoShoppingLink);
+            viewInstance.InfoLinkButtonTooltip.OnLearnMoreClicked += OpenInfoLink;
 
             marketplaceCreditsGoalsOfTheWeekSubController = new MarketplaceCreditsGoalsOfTheWeekSubController(
                 viewInstance.GoalsOfTheWeekSubView,
@@ -249,8 +249,9 @@ namespace DCL.MarketplaceCredits
             if (viewInstance != null)
             {
                 viewInstance.OnAnyPlaceClick -= OnAnyPlaceClicked;
-                viewInstance.InfoLinkButton.onClick.RemoveListener(OpenInfoLink);
+                viewInstance.InfoLinkButton.onClick.RemoveListener(OnInfoButtonClicked);
                 viewInstance.TotalCreditsWidget.GoShoppingButton.onClick.RemoveListener(OpenGoShoppingLink);
+                viewInstance.InfoLinkButtonTooltip.OnLearnMoreClicked -= OpenInfoLink;
             }
 
             marketplaceCreditsWelcomeSubController?.Dispose();
@@ -271,6 +272,9 @@ namespace DCL.MarketplaceCredits
 
         private void OnAnyPlaceClicked() =>
             OnAnyPlaceClick.Invoke();
+
+        private void OnInfoButtonClicked() =>
+            viewInstance?.InfoLinkButtonTooltip.Show();
 
         private void OpenInfoLink() =>
             webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
@@ -323,14 +327,14 @@ namespace DCL.MarketplaceCredits
                 if (ownProfile == null)
                     return;
 
-                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, 
+                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true,
                     ownProfile.UserId, ct);
                 if (!isFeatureActivated)
                     return;
-                
-                var creditsProgramProgressResponse = 
+
+                var creditsProgramProgressResponse =
                     await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
-                
+
                 SetSidebarButtonState(creditsProgramProgressResponse);
 
                 if (!creditsProgramProgressResponse.HasUserStartedProgram())
@@ -371,14 +375,14 @@ namespace DCL.MarketplaceCredits
 
             bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
             SetSidebarButtonAnimationAsAlert(
-                !creditsProgramProgressResponse.HasUserStartedProgram() 
-                || !creditsProgramProgressResponse.IsUserEmailVerified() 
-                || (thereIsSomethingToClaim 
+                !creditsProgramProgressResponse.HasUserStartedProgram()
+                || !creditsProgramProgressResponse.IsUserEmailVerified()
+                || (thereIsSomethingToClaim
                 && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
             SetSidebarButtonAsClaimIndicator(
-                creditsProgramProgressResponse.HasUserStartedProgram() 
-                && creditsProgramProgressResponse.IsUserEmailVerified() 
-                && thereIsSomethingToClaim 
+                creditsProgramProgressResponse.HasUserStartedProgram()
+                && creditsProgramProgressResponse.IsUserEmailVerified()
+                && thereIsSomethingToClaim
                 && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
         }
     }

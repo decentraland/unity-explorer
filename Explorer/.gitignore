@@ -87,7 +87,3 @@ Assets/Resources/PerformanceTestRunSettings.*
 
 # Disk caching 
 DiskCache/
-
-#GPUI PRO
-Assets/GPUInstancerPro/
-Assets/GPUInstancerPro.meta

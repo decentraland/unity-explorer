@@ -8,6 +8,8 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
@@ -34,7 +36,6 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Communities;
 using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
@@ -71,22 +72,22 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
-        private readonly bool isCallEnabled;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly CommunityDataService communityDataService;
         private readonly ISpriteCache thumbnailCache;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private ChatController chatController;
+        private ChatController_OBSOLETE_OLD_CHAT chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private PrivateConversationUserStateService? chatUserStateService;
         private ChatHistoryService? chatBusListenerService;
         private CommunityUserStateService communityUserStateService;
         private readonly Transform chatViewRectTransform;
-        private readonly IEventBus eventBus = new EventBus(true);
+        private readonly IEventBus eventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
+
         private CommandRegistry commandRegistry;
 
         public ChatPlugin(
@@ -117,12 +118,10 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             CommunityDataService communityDataService,
             ISpriteCache thumbnailCache,
-            WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled,
-            IRealmNavigator realmNavigator,
-            Transform chatViewRectTransform)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            Transform chatViewRectTransform,
+            IEventBus eventBus)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -148,19 +147,23 @@ namespace DCL.PluginSystem.Global
             this.chatMessageFactory = chatMessageFactory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.friendsServiceProxy = friendsServiceProxy;
-            communityDataProvider = communitiesDataProvider;
-            this.communityDataService = communityDataService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.socialServiceProxy = socialServiceProxy;
+            this.friendsEventBus = friendsEventBus;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.communityDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.communitiesEventBus = communitiesEventBus;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
-            this.isCallEnabled = isCallEnabled;
+            this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
+            this.eventBus = eventBus;
 
             pluginCts = new CancellationTokenSource();
         }
 
         public void Dispose()
-        { 
+        {
             chatStorage?.Dispose();
             chatBusListenerService?.Dispose();
             chatUserStateService?.Dispose();
@@ -177,8 +180,7 @@ namespace DCL.PluginSystem.Global
         {
             var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, pluginCts.Token);
 
-            var chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, linkedCts.Token);
-            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, settings.ChatSettingsAsset);
 
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
             var chatConfig = chatConfigAsset.Value;
@@ -195,7 +197,7 @@ namespace DCL.PluginSystem.Global
                 entityParticipantTable,
                 profileCache,
                 nametagsData,
-                chatSettingsAsset.Value,
+                settings.ChatSettingsAsset,
                 chatHistory,
                 communityDataService);
 
@@ -206,7 +208,7 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 userBlockingCacheProxy,
                 friendsServiceProxy,
-                chatSettingsAsset.Value,
+                settings.ChatSettingsAsset,
                 privacySettings,
                 friendsEventBus,
                 roomHub.ChatRoom());
@@ -226,8 +228,10 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService);
 
             var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
-            communityUserStateService = new CommunityUserStateService(communityDataProvider,
+            communityUserStateService = new CommunityUserStateService(
+                communityDataProvider,
                 communitiesEventBus,
+                //voiceChatOrchestrator, TODO, CHECK WHAT DID WE USE THIS FOR?
                 eventBus,
                 chatHistory,
                 web3IdentityCache);
@@ -241,7 +245,7 @@ namespace DCL.PluginSystem.Global
 
             commandRegistry = new CommandRegistry(
                 chatConfig,
-                chatSettingsAsset.Value,
+                settings.ChatSettingsAsset,
                 eventBus,
                 web3IdentityCache,
                 chatEventBus,
@@ -274,7 +278,6 @@ namespace DCL.PluginSystem.Global
                 chatConfig,
                 eventBus,
                 mvcManager,
-                chatMessagesBus,
                 chatEventBus,
                 currentChannelService,
                 chatInputBlockingService,
@@ -284,10 +287,12 @@ namespace DCL.PluginSystem.Global
                 chatMemberService,
                 chatContextMenuService,
                 communityDataService,
-                chatClickDetectionService
+                chatClickDetectionService,
+                voiceChatOrchestrator,
+                communityDataProvider
             );
 
-            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, chatSettingsAsset.Value);
+            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);
 
             pluginScope.Add(chatMainController);
             pluginScope.Add(chatWorldBubbleService);
@@ -298,7 +303,7 @@ namespace DCL.PluginSystem.Global
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
-            
+
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
         }
 
@@ -312,7 +317,7 @@ namespace DCL.PluginSystem.Global
         {
             ReportHub.Log(ReportData.UNSPECIFIED, "ChatPlugin.OnIdentityCleared");
             commandRegistry.ResetChat.Execute();
-            
+
             if (chatMainController.IsVisibleInSharedSpace)
                 chatMainController.HideViewAsync(CancellationToken.None).Forget();
         }
@@ -354,7 +359,7 @@ namespace DCL.PluginSystem.Global
 
     public class ChatPluginSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
+        [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; }
         [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; }
 
         [Header("Audio")]

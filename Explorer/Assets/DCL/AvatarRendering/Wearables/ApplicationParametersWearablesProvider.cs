@@ -67,8 +67,7 @@ namespace DCL.AvatarRendering.Wearables
 
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
             {
-                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                                   .ToArray();
+                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries).ToArray();
 
                 results ??= new List<IWearable>();
                 var localBuffer = ListPool<IWearable>.Get();
@@ -83,10 +82,48 @@ namespace DCL.AvatarRendering.Wearables
                         needsBuilderAPISigning: true);
                 }
 
-                int pageIndex = pageNumber - 1;
-                results.AddRange(localBuffer.Skip(pageIndex * pageSize).Take(pageSize));
+                // Include ALL user's available wearables (loop pages)
+                // Higher page size to do a lot less requests.
+                const int OWNED_PAGE_SIZE = 200;
+                int ownedPage = 1;
+                int ownedTotal = int.MaxValue;
+                using var ownedPageBufferScope = ListPool<IWearable>.Get(out var ownedPageBuffer);
 
-                int count = localBuffer.Count;
+                while (localBuffer.Count < ownedTotal)
+                {
+                    ownedPageBuffer.Clear();
+                    (IReadOnlyList<IWearable> ownedPageResults, int ownedPageTotal) = await source.GetAsync(
+                        OWNED_PAGE_SIZE,
+                        ownedPage,
+                        ct,
+                        sortingField,
+                        orderBy,
+                        category,
+                        collectionType,
+                        name,
+                        ownedPageBuffer
+                    );
+
+                    ownedTotal = ownedPageTotal;
+
+                    if (ownedPageResults.Count == 0)
+                        break;
+
+                    localBuffer.AddRange(ownedPageResults);
+                    ownedPage++;
+                }
+
+                // De-duplicate by URN and paginate the unified list
+                var unified = localBuffer
+                    .GroupBy(w => w.GetUrn())
+                    .Select(g => g.First())
+                    .ToList();
+
+                int pageIndex = pageNumber - 1;
+                results.AddRange(unified.Skip(pageIndex * pageSize).Take(pageSize));
+
+                int count = unified.Count;
+
                 ListPool<IWearable>.Release(localBuffer);
 
                 return (results, count);

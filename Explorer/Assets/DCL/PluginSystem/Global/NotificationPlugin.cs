@@ -4,7 +4,6 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Notifications;
 using DCL.Notifications.NewNotification;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -21,7 +20,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
-        private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
@@ -31,14 +29,12 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            INotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
-            this.notificationsBusController = notificationsBusController;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
         }
@@ -52,13 +48,14 @@ namespace DCL.PluginSystem.Global
 
             NewNotificationView newNotificationView = (await assetsProvisioner.ProvideMainAssetAsync(settings.NewNotificationView, ct: ct)).Value.GetComponent<NewNotificationView>();
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
+            NotificationDefaultThumbnails notificationDefaultThumbnails = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationDefaultThumbnailsSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
             NewNotificationController newNotificationController =
                 new NewNotificationController(
                     NewNotificationController.CreateLazily(newNotificationView, null),
-                    notificationsBusController,
                     notificationIconTypes,
+                    notificationDefaultThumbnails,
                     rarityBackgroundMapping,
                     webRequestController
                 );
@@ -92,6 +89,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NotificationDefaultThumbnails> NotificationDefaultThumbnailsSO { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }

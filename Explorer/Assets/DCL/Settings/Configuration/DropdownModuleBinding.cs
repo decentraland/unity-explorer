@@ -1,4 +1,7 @@
-﻿using DCL.Friends.UserBlocking;
+﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Audio;
+using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
@@ -12,7 +15,6 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Configuration
 {
@@ -37,7 +39,7 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(
+        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -52,28 +54,28 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus = null,
-            bool isVoiceChatEnabled = false)
+            IAssetsProvisioner  assetsProvisioner,
+            VolumeBus volumeBus)
         {
-            var viewInstance = Object.Instantiate(View, parent);
+            var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
-                                                   {
-                                                       DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset),
-                                                       DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
-                                                       DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                                                       DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController),
-                                                       DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
-                                                       DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
-                                                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap, sceneLoadingLimit),
-                                                       DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer,chatSettingsAsset),
-                                                       DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
-                                                       DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
-                                                       DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance, voiceChatSettings),
-                                                       // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
-                                                   };
+            {
+                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset),
+                DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
+                DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
+                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController),
+                DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
+                DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
+                DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap, sceneLoadingLimit),
+                DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer, chatSettingsAsset),
+                DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
+                DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
+                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance, voiceChatSettings),
+                // add other cases...
+                _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+            };
 
             controller.SetView(viewInstance);
             return controller;

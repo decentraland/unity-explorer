@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -91,11 +92,12 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 await TriggerSceneEmoteFromRealmAsync(
                     sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
-                    sceneData.AssetBundleManifest, hash, loop, ct);
+                    sceneData.SceneEntityDefinition.assetBundleManifestVersion,
+                    hash, loop, ct);
             }
         }
 
-        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
+        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -103,17 +105,20 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!avatarShape.IsVisible) return;
 
             var promise = SceneEmotePromise.Create(world,
-                new GetSceneEmoteFromRealmIntention(sceneId, abManifest, emoteHash, loop, avatarShape.BodyShape),
+                new GetSceneEmoteFromRealmIntention(sceneId, sceneAssetBundleManifestVersion, emoteHash, loop, avatarShape.BodyShape),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            using var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
-            var value = consumed.Value[0]!;
-            URN urn = value.GetUrn();
-            bool isLooping = value.IsLooping();
+            if (promise.Result is {Succeeded: true})
+            {
+                using var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+                var value = consumed.Value[0];
+                URN urn = value.GetUrn();
+                bool isLooping = value.IsLooping();
 
-            TriggerEmote(urn, isLooping);
+                TriggerEmote(urn, isLooping);
+            }
         }
 
         private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
@@ -127,11 +132,15 @@ namespace CrdtEcsBridge.RestrictedActions
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
-            var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
-            var value = consumed.Value[0]!;
-            URN urn = value.GetUrn();
 
-            TriggerEmote(urn, loop);
+            if (promise.Result is {Succeeded: true})
+            {
+                var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+                var value = consumed.Value[0]!;
+                URN urn = value.GetUrn();
+
+                TriggerEmote(urn, loop);
+            }
         }
     }
 }
