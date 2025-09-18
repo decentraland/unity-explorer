@@ -27,22 +27,21 @@ namespace DCL.Landscape
             this.prototypes = prototypes;
         }
 
-        public void AddTerrain(Terrain unityTerrain)
+        public void AddChunk(int2 chunkMinParcel, int chunkSizeInUnits,
+            List<TreeInstance> treeInstances)
         {
-            var terrainData = unityTerrain.terrainData;
-            var treeInstances = terrainData.treeInstances;
-
-            Matrix4x4 unityTerrainToWorld = unityTerrain.transform.localToWorldMatrix
-                                            * Matrix4x4.Scale(terrainData.size);
+            Matrix4x4 chunkToWorld = Matrix4x4.TRS(
+                new Vector3(chunkMinParcel.x * parcelSize, 0f, chunkMinParcel.y * parcelSize),
+                Quaternion.identity, new Vector3(chunkSizeInUnits, 0f, chunkSizeInUnits));
 
             foreach (var treeInstance in treeInstances)
             {
-                Vector3 position = unityTerrainToWorld.MultiplyPoint3x4(treeInstance.position);
+                Vector3 position = chunkToWorld.MultiplyPoint3x4(treeInstance.position);
                 int2 parcel = (int2)floor(float3(position).xz / parcelSize);
 
                 if (!parcelMap.TryGetValue(parcel, out List<TreeInstanceData> treeInstancesInParcel))
                 {
-                    treeInstancesInParcel = new();
+                    treeInstancesInParcel = new List<TreeInstanceData>();
                     parcelMap.Add(parcel, treeInstancesInParcel);
                     minParcel = min(minParcel, parcel);
                     maxParcel = max(maxParcel, parcel);
