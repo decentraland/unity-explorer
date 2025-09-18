@@ -1,4 +1,6 @@
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Utilities;
+using DCL.VoiceChat;
 using System;
 using System.Collections.Generic;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
@@ -11,13 +13,12 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly Dictionary<string, CommunityData> allCommunities = new();
         private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentInvitationRequests = new ();
         private readonly List<GetUserInviteRequestData.UserInviteRequestData> currentJoinRequests = new ();
-        private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
+        public IReadonlyReactiveProperty<string> CurrentCommunityId { get; }
 
-
-        public CommunitiesBrowserStateService(CommunitiesBrowserEventBus browserEventBus)
+        public CommunitiesBrowserStateService(CommunitiesBrowserEventBus browserEventBus, ICommunityCallOrchestrator communityCallOrchestrator)
         {
-            this.browserEventBus = browserEventBus;
+            CurrentCommunityId = communityCallOrchestrator.CurrentCommunityId;
             scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.UpdateJoinedCommunityEvent>(UpdateJoinedCommunity));
             scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.UserRemovedFromCommunityEvent>(RemoveOneMemberFromCounter));
         }

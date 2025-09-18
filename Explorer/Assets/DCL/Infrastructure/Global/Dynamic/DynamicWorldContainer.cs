@@ -67,7 +67,6 @@ using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
@@ -547,6 +546,7 @@ namespace Global.Dynamic
 
             var coreBackpackEventBus = new BackpackEventBus();
 
+            IChatEventBus chatEventBus = new ChatEventBus();
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
@@ -558,7 +558,11 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.ScenesCache,
                 realmNavigator,
-                staticContainer.RealmData);
+                staticContainer.RealmData,
+                bootstrapContainer.DecentralandUrlsSource,
+                sharedSpaceManager,
+                chatEventBus
+                );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -608,7 +612,6 @@ namespace Global.Dynamic
             var profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
-            IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
             IEventBus eventBus = new EventBus(true);
@@ -812,7 +815,8 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     voiceChatContainer.VoiceChatOrchestrator,
                     galleryEventBus,
-                    thumbnailProvider
+                    thumbnailProvider,
+                    chatEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),

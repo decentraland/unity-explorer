@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
-using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -19,6 +18,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField]
         public Button CommunityButton { get; private set; }
+
+        [field: SerializeField]
+        public Sprite DefaultCommunitySprite { get; private set; }
 
         [field: SerializeField]
         public ImageView CommunityThumbnail { get; private set; }
@@ -62,12 +64,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public GameObject CollapseButtonImage  { get; private set; }
 
         [field: SerializeField]
+        public GameObject Separator  { get; private set; }
+
+        [field: SerializeField]
         public GameObject ExpandButtonImage  { get; private set; }
 
         [field: SerializeField]
         public Button CollapseButton  { get; private set; }
-
-
 
         [field: FormerlySerializedAs("<talkingStatusView>k__BackingField")]
         [field: SerializeField]
@@ -107,6 +110,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ContentPanel.SetActive(!isCollapsed);
             FooterPanel.SetActive(!isCollapsed);
             OpenListenersSectionButton.gameObject.SetActive(!isCollapsed);
+            Separator.SetActive(!isCollapsed);
+        }
+
+        public void SetHiddenButtonsState(bool isHidden)
+        {
+            FooterPanel.SetActive(!isHidden);
         }
     }
 }

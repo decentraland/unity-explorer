@@ -402,7 +402,6 @@ namespace DCL.Passport
         {
             try
             {
-                //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
                 await UniTask.Delay(500);

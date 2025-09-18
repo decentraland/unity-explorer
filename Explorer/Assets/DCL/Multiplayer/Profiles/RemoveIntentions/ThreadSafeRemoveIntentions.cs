@@ -48,9 +48,9 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.GATEKEEPER);
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, RoomSource roomSource)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, RoomSource roomSource)
         {
-            if (connectionupdate is ConnectionUpdate.Disconnected)
+            if (connectionUpdate is ConnectionUpdate.Disconnected)
             {
                 using var _ = multithreadSync.GetScope();
 

@@ -24,6 +24,7 @@ namespace DCL.VoiceChat
         private IDisposable? currentCommunityCallStatusSubscription;
 
         private bool isMemberListVisible;
+        private bool canBeVisible;
 
         public CommunityVoiceChatSubTitleButtonPresenter(
             JoinCommunityLiveStreamChatSubTitleButtonView view,
@@ -43,6 +44,7 @@ namespace DCL.VoiceChat
                 view.JoinStreamButton.onClick.AddListener(OnJoinStreamButtonClicked);
             }
 
+            canBeVisible = true;
             view.gameObject.SetActive(false);
         }
 
@@ -109,6 +111,7 @@ namespace DCL.VoiceChat
                 return;
             }
 
+            //We need to check if it can be visible.
             view.gameObject.SetActive(true);
             int participantsCount = communityCallOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
             view.ParticipantsAmount.SetText(participantsCount.ToString());
@@ -117,6 +120,7 @@ namespace DCL.VoiceChat
         private void OnCommunityCallStatusChanged(VoiceChatStatus status)
         {
             if (isMemberListVisible) return;
+            if (!canBeVisible) return;
 
             switch (status)
             {
@@ -154,6 +158,17 @@ namespace DCL.VoiceChat
                 // This will trigger the normal flow to determine if it should be shown or not
                 OnCurrentChannelChanged(currentChannel.Value);
             }
+        }
+
+        public void Hide()
+        {
+            canBeVisible = false;
+            view.gameObject.SetActive(false);
+        }
+
+        public void Show()
+        {
+            canBeVisible = true;
         }
     }
 }
