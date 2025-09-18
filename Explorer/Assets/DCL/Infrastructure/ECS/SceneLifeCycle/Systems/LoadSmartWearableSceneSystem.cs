@@ -43,13 +43,12 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override async UniTask<StreamableLoadingResult<GetSmartWearableSceneIntention.Result>> FlowInternalAsync(GetSmartWearableSceneIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            const string CONTENT_URL = "https://peer.decentraland.org/content/contents/";
-
             var player = World.CachePlayer();
             var avatarShape = World.Get<AvatarShapeComponent>(player);
             var bodyShape = avatarShape.BodyShape;
 
-            var sceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(CONTENT_URL), intention.SmartWearable, bodyShape);
+            string contentUrl = GetContentUrl(intention.SmartWearable);
+            var sceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), intention.SmartWearable, bodyShape);
 
             SceneEntityDefinition? sceneDefinition = await GetSceneDefinitionAsync(intention.SmartWearable, sceneContent, ct);
             if (sceneDefinition == null || ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
@@ -81,6 +80,13 @@ namespace ECS.SceneLifeCycle.Systems
                 SceneFacade = sceneFacade
             };
             return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>(result);
+        }
+
+        private string GetContentUrl(IWearable smartWearable)
+        {
+            const string DEFAULT_CONTENT_URL = "https://peer.decentraland.org/content/contents/";
+            string? dtoContentUrl = smartWearable.DTO.ContentDownloadUrl;
+            return string.IsNullOrEmpty(dtoContentUrl) ? DEFAULT_CONTENT_URL : dtoContentUrl;
         }
 
         private async Task<SceneEntityDefinition?> GetSceneDefinitionAsync(IWearable smartWearable, ISceneContent sceneContent, CancellationToken ct)
