@@ -110,7 +110,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!sceneContent.TryGetContentUrl("assets/scene/main.composite", out var url))
             {
-                ReportHub.LogError(GetReportCategory(), "Could not find 'main.composite'");
+                // We do not report any error since the 'main.composite' file is not mandatory
                 return ReadOnlyMemory<byte>.Empty;
             }
 
