@@ -85,11 +85,11 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
 
             // Stay
-            foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
-            {
-                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
-                    entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask);
-            }
+            // foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
+            // {
+            //     PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+            //         entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask);
+            // }
 
             // Exit
             foreach (Collider entityCollider in triggerAreaComponent.ExitedEntitiesToBeProcessed)
