@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryService? chatBusListenerService;
         private CommunityUserStateService communityUserStateService;
         private readonly Transform chatViewRectTransform;
-        private readonly IEventBus eventBus = new EventBus(true);
+        private readonly IEventBus eventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
 
@@ -120,7 +120,8 @@ namespace DCL.PluginSystem.Global
             ISpriteCache thumbnailCache,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            Transform chatViewRectTransform)
+            Transform chatViewRectTransform,
+            IEventBus eventBus)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -156,6 +157,7 @@ namespace DCL.PluginSystem.Global
             this.communitiesEventBus = communitiesEventBus;
             this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
+            this.eventBus = eventBus;
 
             pluginCts = new CancellationTokenSource();
         }

@@ -24,6 +24,7 @@ using MVC;
 using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
+using DCL.Chat.ChatStates;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -81,7 +82,8 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IEventBus eventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -100,6 +102,8 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
+
+            eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
 
         public override void Dispose()
@@ -111,6 +115,9 @@ namespace DCL.UI.Sidebar
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
+
+        private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
+            OnChatViewFoldingChanged(eventData.CurrentState is not HiddenChatState && eventData.CurrentState is not MinimizedChatState);
 
         protected override void OnViewInstantiated()
         {
@@ -212,10 +219,7 @@ namespace DCL.UI.Sidebar
             if (closedController is EmotesWheelController)
                 viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             else if (closedController is FriendsPanelController)
-            {
                 viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-                OnChatViewFoldingChanged(true);
-            }
         }
 
         private void OnMvcManagerViewShowed(IController showedController)
@@ -224,10 +228,7 @@ namespace DCL.UI.Sidebar
             if (showedController is EmotesWheelController)
                 viewInstance?.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             else if (showedController is FriendsPanelController)
-            {
                 viewInstance?.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
-                OnChatViewFoldingChanged(false);
-            }
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
