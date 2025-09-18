@@ -52,6 +52,15 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
             @"(?:[$€£¥₩₽₹]|USD|EUR|GBP|JPY|KRW|RUB|INR)(?!\p{L})",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+        private static readonly Regex Time24Rx = new(
+            @"\b(?:[01]?\d|2[0-3])[:.][0-5]\d(?:[:.][0-5]\d)?\b",
+            RegexOptions.Compiled);
+
+        // TIME (12h, optional seconds, optional space, AM/PM)
+        private static readonly Regex Time12Rx = new(
+            @"\b(?:0?[1-9]|1[0-2])[:.][0-5]\d(?:[:.][0-5]\d)?\s?(?:[APap][Mm])\b",
+            RegexOptions.Compiled);
+
         // Dates: ISO, slash, dot — simple, robust, language-agnostic.
         private static readonly Regex IsoDateRx   = new(@"\b\d{4}-\d{2}-\d{2}\b", RegexOptions.Compiled);
         private static readonly Regex SlashDateRx = new(@"\b[0-3]?\d/[01]?\d/\d{4}\b", RegexOptions.Compiled);
@@ -313,7 +322,6 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
                 }
 
                 string v = t.Value;
-                // Collect matches from all patterns
                 var spans = new List<(int start, int len)>();
 
                 void AddMatches(Regex rx)
@@ -322,11 +330,16 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
                     for (int i = 0; i < m.Count; i++) spans.Add((m[i].Index, m[i].Length));
                 }
 
+                // Currency & Dates (as you already added)
                 AddMatches(CurrencyAmountRx);
                 AddMatches(AmountCurrencyRx);
                 AddMatches(IsoDateRx);
                 AddMatches(SlashDateRx);
                 AddMatches(DotDateRx);
+
+                // NEW: Times
+                AddMatches(Time24Rx);
+                AddMatches(Time12Rx);
 
                 if (spans.Count == 0)
                 {
@@ -334,8 +347,8 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
                     continue;
                 }
 
-                // Resolve overlaps: left-to-right, prefer longer match
                 spans.Sort((a, b) => a.start != b.start ? a.start.CompareTo(b.start) : b.len.CompareTo(a.len));
+
                 var final = new List<(int s, int l)>();
                 int cursor = -1;
                 foreach (var s in spans)
@@ -356,13 +369,13 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
                     outList.Add(new Tok(nextId++, TokType.Number, v.Substring(s.s, s.l)));
                     last = s.s + s.l;
                 }
-
                 if (last < v.Length)
                     outList.Add(new Tok(nextId++, TokType.Text, v.Substring(last)));
             }
-
+            
             return outList;
         }
+
 
 
 
@@ -404,6 +417,13 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
         {
             return CurrencyAmountRx.IsMatch(s) || AmountCurrencyRx.IsMatch(s) ||
                    IsoDateRx.IsMatch(s) || SlashDateRx.IsMatch(s) || DotDateRx.IsMatch(s);
+        }
+
+        public static bool HasProtectedNumericOrTemporal(string s)
+        {
+            return CurrencyAmountRx.IsMatch(s) || AmountCurrencyRx.IsMatch(s) ||
+                   IsoDateRx.IsMatch(s) || SlashDateRx.IsMatch(s) || DotDateRx.IsMatch(s) ||
+                   Time24Rx.IsMatch(s) || Time12Rx.IsMatch(s);
         }
 
         private static string EnforceOriginalTags(List<Tok> toks)

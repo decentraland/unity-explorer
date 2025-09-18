@@ -38,7 +38,7 @@ namespace DCL.Translation.Service
             if (EmojiDetector.FindEmoji(text).Count > 0) return true;
 
             // Any dates or currencies? -> yes, batch
-            if (ChatSegmenter.HasProtectedNumeric(text)) return true;
+            if (ChatSegmenter.HasProtectedNumericOrTemporal(text)) return true;
 
             return false;
         }
@@ -201,6 +201,9 @@ namespace DCL.Translation.Service
 
             toks = ChatSegmenter.SplitTextTokensOnEmoji(toks);
             TranslationDebug.LogTokens("after-split-emoji", toks);
+
+            toks = ChatSegmenter.SplitTextTokensOnNumbersAndDates(toks);
+            TranslationDebug.LogTokens("after-numbers-and-dates", toks);
 
             (string[] cores, int[] idxs, string[] leading, string[] trailing) =
                 ChatSegmenter.ExtractTranslatablesPreserveSpaces(toks);
