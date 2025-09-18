@@ -175,5 +175,8 @@ namespace DCL.CharacterPreview
 
         public void SetCharacterPreviewAvatarContainerActive(bool isActive) =>
             characterPreviewAvatarContainer.gameObject.SetActive(isActive);
+
+        public void ResetAvatarMovement() =>
+            cameraController.ResetAvatarMovement();
     }
 }

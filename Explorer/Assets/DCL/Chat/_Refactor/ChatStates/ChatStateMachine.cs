@@ -9,6 +9,7 @@ namespace DCL.Chat.ChatStates
     {
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionService chatClickDetectionService;
+        private readonly IEventBus eventBus;
         private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
         private readonly EventSubscriptionScope scope = new ();
 
@@ -26,6 +27,7 @@ namespace DCL.Chat.ChatStates
         {
             this.inputBlocker = inputBlocker;
             this.chatClickDetectionService = chatClickDetectionService;
+            this.eventBus = eventBus;
 
             MainController = mainController;
 
@@ -37,6 +39,7 @@ namespace DCL.Chat.ChatStates
             fsm.AddState(new MembersChatState());
             fsm.AddState(new MinimizedChatState());
             fsm.AddState(new HiddenChatState());
+            fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
@@ -57,8 +60,16 @@ namespace DCL.Chat.ChatStates
             MainController.PointerEntered -= HandlePointerEntered;
             MainController.PointerExited -= HandlePointerExited;
 
+            fsm.OnStateChanged -= PropagateStateChange;
+
             scope.Dispose();
         }
+
+        private void PropagateStateChange() =>
+            eventBus.Publish(new ChatEvents.ChatStateChangedEvent
+            {
+                CurrentState = fsm.CurrentState
+            });
 
         public void OnViewShow()
         {
@@ -130,7 +141,7 @@ namespace DCL.Chat.ChatStates
         {
             fsm.PopState();
         }
-        
+
         /// <summary>
         /// NOTE: called from the SharedSpaceManager
         /// </summary>

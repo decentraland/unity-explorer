@@ -14,12 +14,7 @@ namespace DCL.VoiceChat
         [field: SerializeField]
         public CanvasGroup PanelCanvasGroup;
 
-        private CancellationTokenSource cts;
-
-        private void Start()
-        {
-            cts = new CancellationTokenSource();
-        }
+        private CancellationTokenSource cts = new ();
 
         public void SetActive(bool isActive)
         {
@@ -40,12 +35,9 @@ namespace DCL.VoiceChat
             try
             {
                 await UniTask.Delay(HIDE_ERROR_PANEL_DELAY, cancellationToken: ct);
-                PanelCanvasGroup.DOFade(0, 0.5f).ToUniTask(cancellationToken: ct);
+                await PanelCanvasGroup.DOFade(0, 0.5f).ToUniTask(cancellationToken: ct);
             }
-            catch (Exception e)
-            {
-                PanelCanvasGroup.alpha = 0;
-            }
+            catch (Exception e) { PanelCanvasGroup.alpha = 0; }
             finally
             {
                 PanelCanvasGroup.interactable = false;

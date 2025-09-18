@@ -10,7 +10,7 @@ namespace DCL.RealmNavigation
 {
     public interface ITeleportController
     {
-        WaitForSceneReadiness TeleportToSceneSpawnPoint(SceneEntityDefinition sceneEntityDefinition, CancellationToken ct);
+        void StartTeleportToSpawnPoint(SceneEntityDefinition sceneDataSceneEntityDefinition, CancellationToken ct);
         UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
 
         UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);

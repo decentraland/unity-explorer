@@ -3,9 +3,7 @@ namespace DCL.Chat.EventBus
     public interface IChatEventBus
     {
         public delegate void StartCallDelegate();
-
         public delegate void InsertTextInChatRequestedDelegate(string text);
-
         public delegate void ClearAndInsertTextInChatRequestedDelegate(string text);
         public delegate void OpenPrivateConversationRequestedDelegate(string userId);
         public delegate void OpenCommunityConversationRequestedDelegate(string userId);
@@ -54,6 +52,6 @@ namespace DCL.Chat.EventBus
         /// Sends the order of opening and focusing a community conversation in the chat.
         /// </summary>
         /// <param name="communityId">The UUID of the community.</param>
-        void OpenCommunityConversationUsingUserId(string communityId);
+        void OpenCommunityConversationUsingCommunityId(string communityId);
     }
 }
