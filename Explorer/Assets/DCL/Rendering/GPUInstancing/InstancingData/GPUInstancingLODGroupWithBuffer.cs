@@ -40,7 +40,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 
             return Name == other.Name &&
                    Equals(combinedLODGroupData, other.combinedLODGroupData) &&
-                   LODGroupData.Equals(other.LODGroupData);
+                   LODGroupData.Equals(other.LODGroupData); // for case when both are extracted groups (i.e. combinedLODGroupData == null)
         }
 
         public override bool Equals(object obj) =>
