@@ -25,7 +25,7 @@ namespace DCL.SkyBox
 
         public bool Applies()
         {
-            SceneMetadata? metadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+            SceneMetadata? metadata = scenes.CurrentScene.Value?.SceneData.SceneEntityDefinition.metadata;
 
             if (metadata == null) return false;
 
@@ -36,7 +36,7 @@ namespace DCL.SkyBox
         {
             transition.Enter();
 
-            SceneMetadata? sceneMetadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
+            SceneMetadata? sceneMetadata = scenes.CurrentScene.Value?.SceneData.SceneEntityDefinition.metadata;
 
             if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTime: var worldTime } } })
                 ApplyFixedTime(worldTime);
