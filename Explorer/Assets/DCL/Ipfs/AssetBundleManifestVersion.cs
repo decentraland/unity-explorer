@@ -64,10 +64,7 @@ public class AssetBundleManifestVersion
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
             var assets = new AssetBundleManifestVersionPerPlatform();
             assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDate);
-            ;
             assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDate);
-            ;
-
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 

@@ -94,28 +94,21 @@ namespace DCL.Roads.Settings.Editor
             parcelsMin = EditorGUILayout.Vector2IntField("Parcels Min", parcelsMin);
             parcelsMax = EditorGUILayout.Vector2IntField("Parcels Max", parcelsMax);
 
-            if (GUILayout.Button("Collect GPU Instancing LOD Groups"))
-            {
-                RoadConfigCollect();
-            }
+            var roadsConfig = target as RoadSettingsAsset;
 
-            //
+            if (GUILayout.Button("Collect GPU Instancing LOD Groups"))
+                roadsConfig.CollectGPUInstancingLODGroups(parcelsMin, parcelsMax);
+
+            if (GUILayout.Button("Extract LOD Groups"))
+                roadsConfig.ExtractSameRenderers();
+
             if (GUILayout.Button("Enable Instancing Keywords (Editor-only)"))
-            {
-                RoadSettingsAsset roadsConfig = target as RoadSettingsAsset;
                 roadsConfig.InitializeInstancingKeywords();
-            }
 
             EditorGUILayout.EndVertical();
 
 
             base.OnInspectorGUI();
-        }
-
-        private void RoadConfigCollect()
-        {
-            RoadSettingsAsset roadsConfig = target as RoadSettingsAsset;
-            roadsConfig.CollectGPUInstancingLODGroups(parcelsMin, parcelsMax);
         }
     }
 }
