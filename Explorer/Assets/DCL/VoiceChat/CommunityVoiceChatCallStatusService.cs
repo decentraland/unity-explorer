@@ -307,6 +307,7 @@ namespace DCL.VoiceChat
         {
             communityVoiceChatCalls.Clear();
             activeCommunityVoiceChats.Clear();
+            SetCallId(string.Empty);
             locallyStartedCommunityId = null;
         }
 
