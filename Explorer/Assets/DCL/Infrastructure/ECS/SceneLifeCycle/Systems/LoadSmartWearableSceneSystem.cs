@@ -108,9 +108,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         private async UniTask<ReadOnlyMemory<byte>> GetCrdtAsync(ISceneContent sceneContent, CancellationToken ct)
         {
-            if (!sceneContent.TryGetContentUrl("assets/scene/main.composite", out var url))
+            if (!sceneContent.TryGetContentUrl("main.crdt", out var url))
             {
-                // We do not report any error since the 'main.composite' file is not mandatory
+                // We do not report any error since the 'main.crdt' file is not mandatory
                 return ReadOnlyMemory<byte>.Empty;
             }
 
