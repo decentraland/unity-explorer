@@ -12,9 +12,10 @@ namespace DCL.VoiceChat
 
     public enum VoiceChatPanelSize
     {
-        DEFAULT,
+        COLLAPSED,
         EXPANDED,
         EXPANDED_WITHOUT_BUTTONS,
+        HIDDEN,
     }
 
     /// <summary>

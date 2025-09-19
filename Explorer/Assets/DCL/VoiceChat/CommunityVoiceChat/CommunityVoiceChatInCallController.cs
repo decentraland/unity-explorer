@@ -47,7 +47,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
         {
-            view.SetHiddenButtonsState(panelSize is VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS or VoiceChatPanelSize.DEFAULT);
+            view.SetHiddenButtonsState(panelSize is VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS or VoiceChatPanelSize.COLLAPSED);
         }
 
         private void OnCommunityButtonClicked()
@@ -116,8 +116,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnToggleCollapseButtonClicked()
         {
-            bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.DEFAULT;
-            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.DEFAULT);
+            bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED;
+            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.COLLAPSED);
             view.SetCollapsedState(!isPanelCollapsed);
         }
     }

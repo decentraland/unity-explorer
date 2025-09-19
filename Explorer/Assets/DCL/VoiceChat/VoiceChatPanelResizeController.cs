@@ -15,7 +15,7 @@ namespace DCL.VoiceChat
         private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
         private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100;
         private const float COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 50;
-        private const float EXPANDED_COMMUNITY_VOICE_CHAT_WITH_HIDDEN_BUTTONS_SIZE = 200;
+        private const float HIDDEN_BUTTONS_SIZE_DIFFERENCE = 40;
 
         public VoiceChatPanelResizeController(VoiceChatPanelResizeView view, IVoiceChatOrchestratorState voiceChatState)
         {
@@ -51,18 +51,27 @@ namespace DCL.VoiceChat
                     view.VoiceChatPanelLayoutElement.preferredHeight = DEFAULT_VOICE_CHAT_SIZE;
                     break;
                 case VoiceChatType.PRIVATE:
-                    view.VoiceChatPanelLayoutElement.preferredHeight =
-                        chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_PRIVATE_VOICE_CHAT_SIZE : EXPANDED_PRIVATE_VOICE_CHAT_SIZE;
-                    break;
-                case VoiceChatType.COMMUNITY:
-                    if (chatPanelSize == VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS)
-                    {
-                        view.VoiceChatPanelLayoutElement.preferredHeight = EXPANDED_COMMUNITY_VOICE_CHAT_WITH_HIDDEN_BUTTONS_SIZE;
-                    }
+                    if (chatPanelSize == VoiceChatPanelSize.HIDDEN) { view.gameObject.SetActive(false); }
                     else
                     {
-                        view.VoiceChatPanelLayoutElement.preferredHeight =
-                            chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+                        view.gameObject.SetActive(true);
+                        view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_PRIVATE_VOICE_CHAT_SIZE;
+                    }
+                    break;
+                case VoiceChatType.COMMUNITY:
+                    switch (chatPanelSize)
+                    {
+                        case VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS:
+                            //First steps to handle dynamic sizing
+                            view.gameObject.SetActive(true);
+                            view.VoiceChatPanelLayoutElement.preferredHeight = EXPANDED_COMMUNITY_VOICE_CHAT_SIZE - HIDDEN_BUTTONS_SIZE_DIFFERENCE; break;
+                        case VoiceChatPanelSize.HIDDEN:
+                            view.gameObject.SetActive(false);
+                            break;
+                        default:
+                            view.gameObject.SetActive(true);
+                            view.VoiceChatPanelLayoutElement.preferredHeight =
+                                chatPanelSize == VoiceChatPanelSize.COLLAPSED ? COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_SIZE; break;
                     }
                     break;
             }
