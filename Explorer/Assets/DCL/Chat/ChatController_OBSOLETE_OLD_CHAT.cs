@@ -756,9 +756,9 @@ namespace DCL.Chat
             hasToResetUnreadMessagesWhenNewMessageArrive = true;
         }
 
-        private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
+        private void OnViewInputSubmitted(ChatChannel channel, string message, string _)
         {
-            chatMessagesBus.Send(channel, message, origin);
+            chatMessagesBus.Send(channel, message, ChatMessageOrigin.CHAT);
         }
 
         private void OnViewEmojiSelectionVisibilityChanged(bool isVisible)

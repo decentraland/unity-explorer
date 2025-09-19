@@ -12,7 +12,6 @@ namespace DCL.Chat.ChatCommands
 
     public class SendMessageCommand
     {
-        private const string ORIGIN = "chat";
 
         private readonly CurrentChannelService currentChannelService;
         private readonly IChatMessagesBus chatMessageBus;
@@ -43,7 +42,7 @@ namespace DCL.Chat.ChatCommands
             chatMessageBus.Send(
                 currentChannelService.CurrentChannel,
                 commandPayload.Body,
-                ORIGIN);
+                ChatMessageOrigin.CHAT);
         }
     }
 }

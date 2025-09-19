@@ -52,7 +52,6 @@ namespace DCL.Minimap
             { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" }
         };
         private const float ANIMATION_TIME = 0.2f;
-        private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
@@ -393,7 +392,7 @@ namespace DCL.Minimap
             return () => chatMessagesBus.Send(
                 ChatChannel.NEARBY_CHANNEL,
                 $"/{reloadSceneCommand.Command}",
-                RELOAD_SCENE_COMMAND_ORIGIN
+                ChatMessageOrigin.MINIMAP
             );
         }
 

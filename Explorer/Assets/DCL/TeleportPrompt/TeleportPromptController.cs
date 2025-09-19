@@ -17,7 +17,6 @@ namespace DCL.TeleportPrompt
 {
     public partial class TeleportPromptController : ControllerBase<TeleportPromptView, TeleportPromptController.Params>
     {
-        private const string ORIGIN = "teleport prompt";
 
         private readonly ICursor cursor;
         private readonly IWebRequestController webRequestController;
@@ -58,7 +57,7 @@ namespace DCL.TeleportPrompt
                 if (result != TeleportPromptResultType.Approved)
                     return;
 
-                chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ORIGIN);
+                chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ChatMessageOrigin.TELEPORT_PROMPT);
             });
         }
 
