@@ -10,7 +10,9 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Character;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Profiles;
+using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -18,6 +20,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using PortableExperiences.Controller;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -34,11 +37,11 @@ namespace DCL.SmartWearables
     public partial class SmartWearableSystem : BaseUnityLoopSystem
     {
         private readonly WearableStorage wearableStorage;
-
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IPortableExperiencesController portableExperiencesController;
 
         /// <summary>
-        /// Promises waiting on the loading flow of a smart wearable scene
+        /// Promises waiting on the loading flow of a smart wearable scene.
         /// </summary>
         private readonly Dictionary<string, ScenePromise> pendingScenes = new ();
 
@@ -52,10 +55,11 @@ namespace DCL.SmartWearables
         /// </summary>
         private readonly HashSet<string> toUnload = new ();
 
-        public SmartWearableSystem(World world, WearableStorage wearableStorage, IBackpackEventBus backpackEventBus) : base(world)
+        public SmartWearableSystem(World world, WearableStorage wearableStorage, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
+            this.portableExperiencesController = portableExperiencesController;
         }
 
         public override void Initialize()
@@ -159,18 +163,35 @@ namespace DCL.SmartWearables
                     return;
                 }
 
-                World.Create(
+                Entity scene = World.Create(
                     new SmartWearableId { Value = id },
                     promise.LoadingIntention.Partition,
                     result.Asset.SceneDefinition,
                     result.Asset.SceneFacade,
                     SceneLoadingState.CreateBuiltScene());
 
+                AddPortableExperience(promise.LoadingIntention.SmartWearable, scene);
+
                 loadedScenes.Add(id);
             }
 
             foreach (string id in resolved) pendingScenes.Remove(id);
             resolved.Clear();
+        }
+
+        private void AddPortableExperience(IWearable smartWearable, Entity scene)
+        {
+            var metadata = new PortableExperienceMetadata
+            {
+                Ens = string.Empty,
+                // Notice this is not the ID we use in other places, this is the Ens.
+                Id = smartWearable.DTO.Metadata.id,
+                Name = smartWearable.DTO.Metadata.name,
+                ParentSceneId = "avatar"
+            };
+            World.Add(scene, metadata);
+
+            portableExperiencesController.AddPortableExperience(new ENS(smartWearable.DTO.id), scene);
         }
 
         private void UnloadSmartWearableScene(IWearable smartWearable)

@@ -115,7 +115,15 @@ namespace PortableExperiences.Controller
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
-            Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+            Entity portableExperienceEntity = world.Create();
+            world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+            world.Add(portableExperienceEntity, new PortableExperienceMetadata
+            {
+                Ens = ens.ToString(),
+                Id = portableExperienceEntity.Id.ToString(),
+                Name = realmData.RealmName,
+                ParentSceneId = parentSceneName
+            });
 
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
 
@@ -148,14 +156,14 @@ namespace PortableExperiences.Controller
 
             foreach (KeyValuePair<ENS, Entity> portableExperience in PortableExperienceEntities)
             {
-                PortableExperienceRealmComponent pxRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperience.Value);
+                PortableExperienceMetadata metadata = world.Get<PortableExperienceMetadata>(portableExperience.Value);
 
                 spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse
                 {
-                    name = pxRealmComponent.RealmData.RealmName,
-                    ens = portableExperience.Key.ToString(),
-                    parent_cid = pxRealmComponent.ParentSceneId,
-                    pid = portableExperience.Value.Id.ToString(),
+                    ens = metadata.Ens,
+                    pid = metadata.Id,
+                    name = metadata.Name,
+                    parent_cid = metadata.ParentSceneId
                 });
             }
 
@@ -166,6 +174,11 @@ namespace PortableExperiences.Controller
         {
             foreach (IPortableExperiencesController.SpawnResponse spawnResponse in GetAllPortableExperiences())
                 UnloadPortableExperienceByEns(new ENS(spawnResponse.ens));
+        }
+
+        public void AddPortableExperience(ENS ens, Entity portableExperience)
+        {
+            PortableExperienceEntities.TryAdd(ens, portableExperience);
         }
 
         public IPortableExperiencesController.ExitResponse UnloadPortableExperienceByEns(ENS ens)

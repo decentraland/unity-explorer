@@ -12,6 +12,8 @@ namespace PortableExperiences.Controller
     {
         Dictionary<ENS, Entity> PortableExperienceEntities { get; }
 
+        GlobalWorld GlobalWorld { get; set; }
+
         bool CanKillPortableExperience(ENS ens);
 
         UniTask<SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false);
@@ -19,7 +21,10 @@ namespace PortableExperiences.Controller
         ExitResponse UnloadPortableExperienceByEns(ENS ens);
 
         List<SpawnResponse> GetAllPortableExperiences();
-        GlobalWorld GlobalWorld { get; set; }
+
+        void UnloadAllPortableExperiences();
+
+        void AddPortableExperience(ENS ens, Entity portableExperience);
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         public struct SpawnResponse
@@ -36,6 +41,5 @@ namespace PortableExperiences.Controller
             public bool status;
         }
 
-        void UnloadAllPortableExperiences();
     }
 }
