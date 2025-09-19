@@ -49,10 +49,8 @@ namespace DCL.Landscape
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private bool isInitialized;
-
-        private NativeArray<byte> occupancyMapData;
-        private int occupancyMapSize;
-
+        public NativeArray<byte> OccupancyMapData { get; private set; }
+        public int OccupancyMapSize { get; private set; }
         public Transform TerrainRoot { get; private set; }
 
         public int ParcelSize { get; private set; }
@@ -179,8 +177,8 @@ namespace DCL.Landscape
                     // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
                     OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
 
-                    occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
-                    occupancyMapSize = OccupancyMap.width; // width == height
+                    OccupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                    OccupancyMapSize = OccupancyMap.width; // width == height
 
                     processReport?.SetProgress(PROGRESS_COUNTER_OCCUPANCY_MAP);
 
@@ -200,8 +198,8 @@ namespace DCL.Landscape
 
                     await Trees!.LoadAsync($"{Application.streamingAssetsPath}/GenesisTrees.bin");
 
-                    Trees!.SetTerrainData(TerrainModel.MinParcel, TerrainModel.MaxParcel, OccupancyMap,
-                        OccupancyFloor);
+                    Trees!.SetTerrainData(TerrainModel.MinParcel, TerrainModel.MaxParcel,
+                        OccupancyMapData, OccupancyMapSize, OccupancyFloor);
 
                     Trees.Instantiate();
 
@@ -551,7 +549,7 @@ namespace DCL.Landscape
         }
 
         public float GetHeight(float x, float z) =>
-            GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor);
+            GetParcelNoiseHeight(x, z, OccupancyMapData, OccupancyMapSize, ParcelSize, OccupancyFloor);
 
         public static float GetHeight(float x, float z, int parcelSize,
             NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor)

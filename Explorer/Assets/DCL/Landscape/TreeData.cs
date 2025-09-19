@@ -276,12 +276,13 @@ namespace DCL.Landscape
             }
         }
 
-        public void SetTerrainData(int2 minParcel, int2 maxParcel, Texture2D occupancyMap, int occupancyFloorArg)
+        public void SetTerrainData(int2 minParcel, int2 maxParcel,
+            NativeArray<byte> occupancyMapDataArg, int occupancyMapSizeArg, int occupancyFloorArg)
         {
             terrainMinParcel = minParcel;
             terrainMaxParcel = maxParcel;
-            occupancyMapData = occupancyMap.GetRawTextureData<byte>();
-            occupancyMapSize = occupancyMap.width; // width == height
+            occupancyMapData = occupancyMapDataArg;
+            occupancyMapSize = occupancyMapSizeArg;
             occupancyFloor = occupancyFloorArg;
         }
 

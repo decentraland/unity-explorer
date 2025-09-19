@@ -27,8 +27,10 @@ namespace DCL.Landscape
         public bool IsInitialized { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
-        private TerrainModel terrainModel;
+        public TerrainModel? TerrainModel { get; private set; }
         public Texture2D? OccupancyMap { get; private set; }
+        public NativeArray<byte> OccupancyMapData { get; private set; }
+        public int OccupancyMapSize { get; private set; }
         public int OccupancyFloor { get; private set; }
 
         public void Dispose()
@@ -38,14 +40,15 @@ namespace DCL.Landscape
 
         public bool Contains(Vector2Int parcel)
         {
-            if (IsInitialized)
-                return terrainModel.IsInsideBounds(parcel);
+            if (TerrainModel != null)
+                return TerrainModel.IsInsideBounds(parcel);
 
             return false;
         }
 
         public float GetHeight(float x, float z) =>
-            Physics.Raycast(new Vector3(x, 100, z), Vector3.down, out RaycastHit hit) ? hit.point.y : z;
+            TerrainGenerator.GetParcelNoiseHeight(x, z, OccupancyMapData, OccupancyMapSize,
+                terrainGenData.parcelSize, OccupancyFloor);
 
         public async UniTask Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys)
         {
@@ -75,28 +78,30 @@ namespace DCL.Landscape
             if (!IsInitialized) return;
 
             var worldModel = new WorldModel(ownedParcels);
-            terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
+            TerrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
 
             rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
             factory.CreateOcean(rootGo);
 
-            boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
-            boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
+            boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
+            boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
 
             if (processReport != null) processReport.SetProgress(0.5f);
 
-            OccupancyMap = TerrainGenerator.CreateOccupancyMap(ownedParcels, terrainModel.MinParcel,
-                terrainModel.MaxParcel, 0);
+            OccupancyMap = TerrainGenerator.CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel,
+                TerrainModel.MaxParcel, 0);
 
             OccupancyFloor = TerrainGenerator.WriteInteriorChamferOnWhite(OccupancyMap,
-                terrainModel.MinParcel, terrainModel.MaxParcel, 0);
+                TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
 
             OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+            OccupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+            OccupancyMapSize = OccupancyMap.width; // width == height
 
-            Trees!.SetTerrainData(terrainModel.MinParcel, terrainModel.MaxParcel, OccupancyMap,
-                OccupancyFloor);
+            Trees!.SetTerrainData(TerrainModel.MinParcel, TerrainModel.MaxParcel, OccupancyMapData,
+                OccupancyMapSize, OccupancyFloor);
 
             Trees.Instantiate();
 

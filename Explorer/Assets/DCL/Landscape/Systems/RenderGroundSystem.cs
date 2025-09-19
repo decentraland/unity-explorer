@@ -19,13 +19,15 @@ using ClipVolume = DCL.Landscape.Utils.ClipVolume;
 
 namespace DCL.Landscape.Systems
 {
+    using Landscape = Global.Dynamic.Landscapes.Landscape;
+
     [LogCategory(ReportCategory.LANDSCAPE)]
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(UpdateCinemachineBrainSystem))]
     public sealed partial class RenderGroundSystem : BaseUnityLoopSystem
     {
         private readonly LandscapeData landscapeData;
-        private readonly TerrainGenerator terrainGenerator;
+        private readonly Landscape landscape;
         private MaterialPropertyBlock? materialProperties;
         private readonly GrassIndirectRenderer grassIndirectRenderer;
 
@@ -35,17 +37,19 @@ namespace DCL.Landscape.Systems
         private static readonly int OCCUPANCY_MAP_ID = Shader.PropertyToID("_OccupancyMap");
         private static readonly int TERRAIN_BOUNDS_ID = Shader.PropertyToID("_TerrainBounds");
 
-        private RenderGroundSystem(World world, LandscapeData landscapeData,
-            TerrainGenerator terrainGenerator) : base(world)
+        private RenderGroundSystem(World world, Landscape landscape, LandscapeData landscapeData)
+            : base(world)
         {
             this.landscapeData = landscapeData;
-            this.terrainGenerator = terrainGenerator;
+            this.landscape = landscape;
             grassIndirectRenderer = landscapeData.GrassIndirectRenderer;
         }
 
         protected override void Update(float t)
         {
-            if (!landscapeData.RenderGround || !terrainGenerator.IsTerrainShown)
+            ITerrain terrain = landscape.CurrentTerrain;
+
+            if (!terrain.IsTerrainShown)
                 return;
 
             SingleInstanceEntity cameraEntity = World.CacheCamera();
@@ -62,8 +66,9 @@ namespace DCL.Landscape.Systems
                 const bool RENDER_TO_ALL_CAMERAS = false;
 #endif
 
-                grassIndirectRenderer.Render(landscapeData, terrainGenerator, camera,
-                    RENDER_TO_ALL_CAMERAS);
+                if (terrain is TerrainGenerator terrainGenerator)
+                    grassIndirectRenderer.Render(landscapeData, terrainGenerator, camera,
+                        RENDER_TO_ALL_CAMERAS);
             }
         }
 
@@ -74,16 +79,17 @@ namespace DCL.Landscape.Systems
             if (cameraPosition.y < 0f)
                 return;
 
+            ITerrain terrain = landscape.CurrentTerrain;
             float4x4 worldToClip = camera.projectionMatrix * camera.worldToCameraMatrix;
             var cameraFrustum = new ClipVolume(worldToClip, Allocator.TempJob);
 
             MinMaxAABB terrainBounds;
-            terrainBounds.Min.x = terrainGenerator.TerrainModel.MinInUnits.x;
+            terrainBounds.Min.x = terrain.TerrainModel!.MinInUnits.x;
             terrainBounds.Min.y = -landscapeData.terrainData.minHeight;
-            terrainBounds.Min.z = terrainGenerator.TerrainModel.MinInUnits.y;
-            terrainBounds.Max.x = terrainGenerator.TerrainModel.MaxInUnits.x;
+            terrainBounds.Min.z = terrain.TerrainModel.MinInUnits.y;
+            terrainBounds.Max.x = terrain.TerrainModel.MaxInUnits.x;
             terrainBounds.Max.y = TerrainGenerator.MAX_HEIGHT - landscapeData.terrainData.minHeight;
-            terrainBounds.Max.z = terrainGenerator.TerrainModel.MaxInUnits.y;
+            terrainBounds.Max.z = terrain.TerrainModel.MaxInUnits.y;
 
             if (!cameraFrustum.Overlaps(terrainBounds))
             {
@@ -115,11 +121,11 @@ namespace DCL.Landscape.Systems
             {
                 materialProperties = new MaterialPropertyBlock();
                 materialProperties.SetFloat(PARCEL_SIZE_ID, parcelSize);
-                materialProperties.SetFloat(MIN_DIST_OCCUPANCY_ID, terrainGenerator.OccupancyFloor / 255f);
+                materialProperties.SetFloat(MIN_DIST_OCCUPANCY_ID, terrain.OccupancyFloor / 255f);
                 materialProperties.SetFloat(TERRAIN_HEIGHT_ID, landscapeData.TerrainHeight);
 
-                if (terrainGenerator.OccupancyMap != null)
-                    materialProperties.SetTexture(OCCUPANCY_MAP_ID, terrainGenerator.OccupancyMap);
+                if (terrain.OccupancyMap != null)
+                    materialProperties.SetTexture(OCCUPANCY_MAP_ID, terrain.OccupancyMap);
 
                 materialProperties.SetVector(TERRAIN_BOUNDS_ID, new Vector4(
                     terrainBounds.Min.x, terrainBounds.Min.z, terrainBounds.Max.x,
