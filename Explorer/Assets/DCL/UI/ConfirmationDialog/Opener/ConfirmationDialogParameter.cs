@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using UnityEngine;
 
@@ -23,14 +24,14 @@ namespace DCL.UI.ConfirmationDialog.Opener
         public readonly string SubText;
         public readonly string CancelButtonText;
         public readonly string ConfirmButtonText;
-        public readonly Sprite Image;
+        public readonly Sprite? Image;
         public readonly bool ShowImageRim;
         public readonly bool ShowQuitImage;
         public readonly UserData UserInfo;
         public Action<ConfirmationResult>? ResultCallback;
 
         public ConfirmationDialogParameter(string text, string cancelButtonText, string confirmButtonText,
-            Sprite image, bool showImageRim, bool showQuitImage,
+            Sprite? image, bool showImageRim, bool showQuitImage,
             Action<ConfirmationResult>? resultCallback = null,
             string subText = "", UserData userInfo = default)
         {

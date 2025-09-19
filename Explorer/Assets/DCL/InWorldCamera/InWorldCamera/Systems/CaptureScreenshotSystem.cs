@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
@@ -128,15 +129,19 @@ namespace DCL.InWorldCamera.Systems
 
             metadataBuilder.Init(sceneParcel: World.Get<CharacterTransform>(playerEntity).Position.ToParcel(), frustumPlanes);
 
+            metadataBuilder.AddSelfProfile(UserIsEmoting(playerEntity));
             AddPeopleInFrameToMetadataQuery(World);
             metadataBuilder.BuildAsync(ctx.Token).Forget();
         }
 
         [Query]
-        private void AddPeopleInFrameToMetadata(Profile profile, RemoteAvatarCollider avatarCollider)
+        private void AddPeopleInFrameToMetadata(in Entity entity, Profile profile, RemoteAvatarCollider avatarCollider)
         {
-            metadataBuilder.AddProfile(profile, avatarCollider.Collider);
+            metadataBuilder.AddProfile(profile, avatarCollider.Collider, UserIsEmoting(entity));
         }
+
+        private bool UserIsEmoting(Entity entity) =>
+            World.TryGet(entity, out CharacterEmoteComponent emoteComponent) && emoteComponent.IsPlayingEmote;
 
         private static void GetScaledFrustumPlanes(Camera camera, float scaleFactor, out Plane[] frustumPlanes)
         {

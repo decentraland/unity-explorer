@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.WebRequests;
+using ECS.Groups;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
@@ -14,7 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     We need a separate class to override the UpdateInGroup attribute
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadGlobalAssetBundleSystem : LoadAssetBundleSystem
     {
