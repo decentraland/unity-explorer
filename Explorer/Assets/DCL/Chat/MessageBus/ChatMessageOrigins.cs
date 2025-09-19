@@ -14,7 +14,7 @@ namespace DCL.Chat.MessageBus
 
     public static class ChatMessageOriginExtensions
     {
-        public static string ToString(this ChatMessageOrigin origin)
+        public static string ToStringValue(this ChatMessageOrigin origin)
         {
             return origin switch
                    {

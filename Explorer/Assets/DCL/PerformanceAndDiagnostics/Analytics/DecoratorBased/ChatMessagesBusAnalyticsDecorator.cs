@@ -44,7 +44,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             JsonObject jsonObject = new JsonObject
                 {
                     { "is_command", message[0] == '/' },
-                    { "origin", ChatMessageOriginExtensions.ToString(origin) },
+                    { "length", message.Length },
+                    { "origin", origin.ToStringValue() },
                     { "is_mention", CheckIfIsMention(message)},
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
 
