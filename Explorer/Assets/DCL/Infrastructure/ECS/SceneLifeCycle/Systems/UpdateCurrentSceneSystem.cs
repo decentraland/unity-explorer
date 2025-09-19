@@ -78,8 +78,6 @@ namespace ECS.SceneLifeCycle.Systems
             }
             Vector2Int parcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
-            if (lastParcel == parcel) return;
-
             lastParcel = parcel;
             UpdateSceneReadiness(parcel);
 
