@@ -64,7 +64,7 @@ public class SkyboxRenderController : MonoBehaviour
     private CancellationTokenSource transitionCancellationTokenSource;
 
     [Header("Transition Settings")]
-    [SerializeField] private float transitionDuration = 0.1f;
+    [SerializeField] private float transitionDuration;
 
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay)
     {
