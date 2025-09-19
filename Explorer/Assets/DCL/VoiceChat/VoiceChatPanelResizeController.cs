@@ -7,11 +7,14 @@ namespace DCL.VoiceChat
     {
         private readonly VoiceChatPanelResizeView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
-        private readonly IDisposable voiceChatPanelSizeUpdateSubscription;
-        private readonly IDisposable voiceChatTypeChangedSubscription;
+        private readonly IDisposable panelSizeUpdateSubscription;
+        private readonly IDisposable typeChangedSubscription;
+        private readonly IDisposable speakersChangedSubscription;
 
         private const float DEFAULT_VOICE_CHAT_SIZE = 50;
         private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 240;
+        private const float EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE = 215;
+        private const float EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE = 305;
         private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
         private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100;
         private const float COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 50;
@@ -22,8 +25,21 @@ namespace DCL.VoiceChat
             this.view = view;
             this.voiceChatState = voiceChatState;
 
-            voiceChatPanelSizeUpdateSubscription = voiceChatState.CurrentVoiceChatPanelSize.Subscribe(OnUpdateVoiceChatPanelSize);
-            voiceChatTypeChangedSubscription = voiceChatState.CurrentVoiceChatType.Subscribe(OnCurrentVoiceChatTypeChanged);
+            panelSizeUpdateSubscription = voiceChatState.CurrentVoiceChatPanelSize.Subscribe(OnUpdateVoiceChatPanelSize);
+            typeChangedSubscription = voiceChatState.CurrentVoiceChatType.Subscribe(OnCurrentVoiceChatTypeChanged);
+
+            voiceChatState.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
+            voiceChatState.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
+        }
+
+        private void OnParticipantLeft(string participantId)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnParticipantJoined(string participantId, VoiceChatParticipantsStateService.ParticipantState participantState)
+        {
+            throw new NotImplementedException();
         }
 
         private void OnCurrentVoiceChatTypeChanged(VoiceChatType type)
@@ -79,8 +95,8 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            voiceChatPanelSizeUpdateSubscription.Dispose();
-            voiceChatTypeChangedSubscription.Dispose();
+            panelSizeUpdateSubscription.Dispose();
+            typeChangedSubscription.Dispose();
         }
     }
 }
