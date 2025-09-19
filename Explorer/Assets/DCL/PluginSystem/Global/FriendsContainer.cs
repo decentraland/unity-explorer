@@ -13,7 +13,7 @@ using DCL.Friends.UI.Requests;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Connectivity;
-using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,

@@ -1,4 +1,3 @@
-using DCL.MarketplaceCreditsAPIService;
 using System;
 
 namespace DCL.MarketplaceCredits.Sections

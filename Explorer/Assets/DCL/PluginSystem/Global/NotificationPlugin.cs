@@ -4,7 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Notifications;
 using DCL.Notifications.NewNotification;
-using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController notificationsBusController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache)
         {

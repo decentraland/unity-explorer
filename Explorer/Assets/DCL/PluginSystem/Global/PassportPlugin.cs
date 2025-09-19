@@ -17,7 +17,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -34,6 +33,7 @@ using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
+using DCL.NotificationsBus;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController notificationsBusController;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
@@ -97,7 +97,7 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,

@@ -3,8 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -38,7 +38,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly IWebRequestController webRequestController;
@@ -60,7 +60,7 @@ namespace DCL.Notifications.NotificationsMenu
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             IWebRequestController webRequestController,

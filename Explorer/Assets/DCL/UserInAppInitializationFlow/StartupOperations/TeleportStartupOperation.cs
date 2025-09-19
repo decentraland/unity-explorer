@@ -8,7 +8,7 @@ using ECS.Prioritization.Components;
 using System.Threading;
 using Utility.Types;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public class TeleportStartupOperation : TeleportToSpawnPointOperationBase<IStartupOperation.Params>, IStartupOperation
     {

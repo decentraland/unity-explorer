@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Fields;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;

@@ -49,6 +49,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -103,7 +104,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController notificationsBusController;
         private readonly IInputBlock inputBlock;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISystemMemoryCap systemMemoryCap;
@@ -163,7 +164,7 @@ namespace DCL.PluginSystem.Global
             List<string> forceRender,
             IRealmData realmData,
             IProfileCache profileCache,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             IBackpackEventBus backpackEventBus,

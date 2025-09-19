@@ -1,8 +1,6 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenu.Controllers
+namespace DCL.UI
 {
     [CreateAssetMenu(fileName = "GenericUserProfileContextMenuSettings", menuName = "DCL/UI/Generic User Profile ContextMenu Settings")]
     public class GenericUserProfileContextMenuSettings : ScriptableObject

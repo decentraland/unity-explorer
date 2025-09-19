@@ -1,11 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI;
+using DCL.UI.Controls.Configs;
 using MVC;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.InWorldCamera.CameraReelGallery.Components

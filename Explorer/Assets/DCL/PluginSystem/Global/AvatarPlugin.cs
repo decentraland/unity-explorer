@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -32,8 +31,14 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
+using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
+using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
+using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
+using AvatarShapeVisibilitySystem = DCL.AvatarRendering.AvatarShape.AvatarShapeVisibilitySystem;
+using FinishAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.FinishAvatarMatricesCalculationSystem;
+using MakeVertsOutBufferDefragmentationSystem = DCL.AvatarRendering.AvatarShape.MakeVertsOutBufferDefragmentationSystem;
 using Object = UnityEngine.Object;
-using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
+using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.StartAvatarMatricesCalculationSystem;
 #if UNITY_EDITOR
 using DCL.AvatarAnimation;
 #endif

@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -11,7 +11,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase
     {

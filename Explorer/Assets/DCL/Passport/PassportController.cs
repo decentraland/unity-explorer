@@ -25,17 +25,12 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -50,7 +45,9 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
-using DCL.UI.GenericContextMenu.Controllers.Communities;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.UI.Controls.Configs;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -179,7 +176,7 @@ namespace DCL.Passport
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
+            NotificationsBusController notificationBusController,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,

@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Platforms;
+using DCL.Utility;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;

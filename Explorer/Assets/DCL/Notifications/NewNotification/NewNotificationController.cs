@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
 using DCL.WebRequests;
 using DG.Tweening;
@@ -22,7 +22,7 @@ namespace DCL.Notifications.NewNotification
         private static readonly TimeSpan TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN = TimeSpan.FromSeconds(5f);
         private const float ANIMATION_DURATION = 0.5f;
 
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
@@ -38,7 +38,7 @@ namespace DCL.Notifications.NewNotification
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,

@@ -3,8 +3,6 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.SharedSpaceManager;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;

@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationGuards;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -25,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Prefs;
+using DCL.Utility;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;

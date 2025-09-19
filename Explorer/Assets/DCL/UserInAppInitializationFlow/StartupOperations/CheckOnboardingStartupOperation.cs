@@ -13,7 +13,7 @@ using System;
 using System.Threading;
 using Utility.Types;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public class CheckOnboardingStartupOperation : IStartupOperation
     {

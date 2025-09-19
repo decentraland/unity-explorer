@@ -1,5 +1,5 @@
 using DCL.Audio;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
 using DCL.Profiles.Helpers;
 using System;

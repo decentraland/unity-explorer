@@ -6,7 +6,8 @@ using DCL.CommunicationData.URLHelpers;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -21,7 +22,6 @@ using Utility.Types;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -147,7 +147,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
                 if (!result.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE));
                     return;
                 }
 
@@ -184,7 +184,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             clipboard.Set(GetPlaceCopyLink(place));
 
-            Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private static string GetPlaceCopyLink(PlaceInfo place)
@@ -213,7 +213,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_PLACE_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_PLACE_ERROR_MESSAGE));
                 }
 
                 placeInfo.user_favorite = favoriteValue;
@@ -237,7 +237,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetDislikeToggle(!dislikeValue);
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DISLIKE_PLACE_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DISLIKE_PLACE_ERROR_MESSAGE));
 
                     return;
                 }
@@ -268,7 +268,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetLikeToggle(!likeValue);
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LIKE_PLACE_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LIKE_PLACE_ERROR_MESSAGE));
 
                     return;
                 }
@@ -309,7 +309,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             if (!response.Success || !response.Value.ok)
             {
                 placesFetchData.PageNumber--;
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
                 return placesFetchData.TotalToFetch;
             }
 
@@ -324,7 +324,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!getAvatarsDetailsResult.Success)
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                 else
                     foreach (var avatarDetails in getAvatarsDetailsResult.Value)
                     {

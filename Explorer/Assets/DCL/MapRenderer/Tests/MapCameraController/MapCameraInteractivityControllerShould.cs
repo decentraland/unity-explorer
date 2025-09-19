@@ -3,7 +3,6 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
-using DCL.MapRenderer.MapLayers.Pins;
 using DCL.Navmap;
 using NSubstitute;
 using NUnit.Framework;

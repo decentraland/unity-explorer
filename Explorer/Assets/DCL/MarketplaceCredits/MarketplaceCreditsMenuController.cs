@@ -3,10 +3,9 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
@@ -78,7 +77,7 @@ namespace DCL.MarketplaceCredits
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
+            NotificationsBusController notificationBusController,
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,

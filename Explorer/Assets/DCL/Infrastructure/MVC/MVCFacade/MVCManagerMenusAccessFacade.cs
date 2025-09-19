@@ -10,16 +10,12 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controllers;
-using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
-using DCL.Chat.Services;
 using UnityEngine;
 
 namespace MVC

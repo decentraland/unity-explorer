@@ -14,7 +14,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
-using DCL.InWorldCamera.PassportBridge;
+using DCL.Passport;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using Utility;
@@ -32,7 +32,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IMVCManager mvcManager;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly IPassportBridge passportBridge;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -47,7 +46,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
-            IPassportBridge passportBridge,
             PhotoDetailPoolManager photoDetailPoolManager,
             ProfileRepositoryWrapper profileDataProvider)
         {
@@ -56,7 +54,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
-            this.passportBridge = passportBridge;
             this.photoDetailPoolManager = photoDetailPoolManager;
             this.profileRepositoryWrapper = profileDataProvider;
 
@@ -106,8 +103,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void ShowPersonPassportClicked()
         {
             if (visiblePerson is null) return;
-
-            passportBridge.OpenPassport(mvcManager, visiblePerson.userAddress);
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(visiblePerson.userAddress))).Forget();
         }
 
         private void WearableListButtonClicked()

@@ -2,7 +2,8 @@
     "name": "AppArgs",
     "rootNamespace": "",
     "references": [
-    "GUID:3640f3c0b42946b0b8794a1ed8e06ca5"],
+    "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

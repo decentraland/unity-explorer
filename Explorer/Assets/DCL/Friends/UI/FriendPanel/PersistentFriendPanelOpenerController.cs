@@ -2,8 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.Requests;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
@@ -31,7 +31,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         public PersistentFriendPanelOpenerController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             IPassportBridge passportBridge,
             IFriendsService friendsService,
             ISharedSpaceManager sharedSpaceManager,

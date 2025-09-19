@@ -8,7 +8,7 @@ using DCL.Chat.History;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
-using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly MainUIView mainUIView;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
+        private readonly NotificationsBusController notificationsBusController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
@@ -65,7 +65,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MainUIView mainUIView,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
+            NotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,

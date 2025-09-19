@@ -6,8 +6,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
@@ -65,7 +65,7 @@ namespace DCL.ExplorePanel
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
+            NotificationsBusController notificationBusController,
             IInputBlock inputBlock,
             bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)

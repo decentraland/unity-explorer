@@ -13,7 +13,6 @@ using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
-using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;

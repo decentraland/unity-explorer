@@ -4,7 +4,6 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
-using DCL.ApplicationGuards;
 using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
@@ -49,6 +48,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.UI;
 using DCL.Settings.ModuleControllers;
+using DCL.Utility;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;

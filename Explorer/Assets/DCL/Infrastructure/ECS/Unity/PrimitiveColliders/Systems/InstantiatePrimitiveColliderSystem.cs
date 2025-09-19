@@ -4,19 +4,19 @@ using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components.Defaults;
 using CrdtEcsBridge.Components.Transform;
-using CrdtEcsBridge.Physics;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
+
 
 namespace ECS.Unity.PrimitiveColliders.Systems
 {

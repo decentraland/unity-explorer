@@ -17,9 +17,8 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Settings.Settings;
-using DCL.UI.Communities;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI;
+using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
@@ -43,7 +42,7 @@ namespace DCL.Chat
         private readonly CancellationTokenSource lifeCts = new ();
         private readonly EventSubscriptionScope scope = new ();
         private CancellationTokenSource profileLoadCts = new ();
-        private CancellationTokenSource thumbCts = new();    
+        private CancellationTokenSource thumbCts = new ();
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
         private ChatTitlebarViewModel? currentViewModel;
@@ -265,12 +264,12 @@ namespace DCL.Chat
             // If not, uncomment the next line:
             // view.defaultTitlebarView.Setup(currentViewModel);
         }
-        
+
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
         {
             LoadTitlebarDataAsync(evt.Channel).Forget();
         }
-        
+
         private async UniTaskVoid LoadTitlebarDataAsync(ChatChannel channel)
         {
             profileLoadCts = profileLoadCts.SafeRestart();

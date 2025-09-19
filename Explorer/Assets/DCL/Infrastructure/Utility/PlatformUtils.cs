@@ -1,15 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-
-#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
 using System.Runtime.InteropServices;
-#endif
-
 using System.Text;
 using UnityEngine;
+#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
+#endif
 
-namespace Utility
+namespace DCL.Utility
 {
     public static class PlatformUtils
     {
@@ -45,7 +43,7 @@ namespace Utility
 
             return platformSuffix;
         }
-        
+
         /// <summary>
         /// Retrieves a list of all local, fixed drives with their storage information.
         /// Uses native P/Invoke calls for high performance and reliability.
@@ -68,8 +66,8 @@ namespace Utility
                 return new List<DriveData>();
             }
         }
-        
-        
+
+
 
 
         public static void ShellExecute(string fileName)
@@ -103,9 +101,9 @@ namespace Utility
 #endif
         }
 
-        
+
 #if UNITY_STANDALONE_WIN
-        
+
         private static List<DriveData> GetWindowsDrivesInfo()
         {
             var allDrivesData = new List<DriveData>();
@@ -124,7 +122,7 @@ namespace Utility
             }
             return allDrivesData;
         }
-        
+
         // Kernel32.dll exports GetLogicalDrives, no parameters:
         [DllImport("kernel32.dll")]
         private static extern uint GetLogicalDrives();
@@ -148,7 +146,7 @@ namespace Utility
             out ulong lpFreeBytesAvailable,
             out ulong lpTotalNumberOfBytes,
             out ulong lpTotalNumberOfFreeBytes);
-        
+
         [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern uint FormatMessage(uint dwFlags, IntPtr lpSource, int dwMessageId,
             uint dwLanguageId, StringBuilder lpBuffer, int nSize, IntPtr Arguments);
@@ -162,7 +160,7 @@ namespace Utility
         private const int SW_NORMAL = 1;
 
 #elif UNITY_STANDALONE_OSX
-         
+
          // This struct mirrors the native `statfs` structure on macOS.
          // It's used to receive file system statistics from the getfsstat call.
          [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
@@ -197,7 +195,7 @@ namespace Utility
          private static List<DriveData> GetMacDrivesInfo()
          {
              var allDrivesData = new List<DriveData>();
-             
+
              // MNT_NOWAIT tells the system not to block if a filesystem is unresponsive.
              const int MNT_NOWAIT = 2;
 
@@ -228,7 +226,7 @@ namespace Utility
                  {
                      // Calculate the pointer to the current struct in the array
                      IntPtr currentPtr = new IntPtr(buffer.ToInt64() + (i * structSize));
-                     
+
                      // Marshal the unmanaged data to our managed C# struct
                      Statfs stat = Marshal.PtrToStructure<Statfs>(currentPtr);
 
@@ -237,7 +235,7 @@ namespace Utility
                      {
                          continue;
                      }
-                     
+
                      allDrivesData.Add(new DriveData
                      {
                          Name = stat.f_mntonname, // The mount point path (e.g., "/")

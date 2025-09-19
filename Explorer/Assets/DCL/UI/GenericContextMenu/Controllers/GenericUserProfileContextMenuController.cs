@@ -13,9 +13,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
-using DCL.UI.GenericContextMenu.Controllers.Communities;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -30,7 +28,7 @@ using Utility;
 using Utility.Types;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
-namespace DCL.UI.GenericContextMenu.Controllers
+namespace DCL.UI
 {
     public class GenericUserProfileContextMenuController
     {
@@ -56,7 +54,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
-        private readonly GenericContextMenuParameter.GenericContextMenu contextMenu;
+        private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
@@ -117,7 +115,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
 
-            contextMenu = new GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(mentionUserButtonControlSettings)
@@ -192,7 +190,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 invitationButtonHandler.SetUserToInvite(profile.UserId);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter.GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)

@@ -1,12 +1,13 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationGuards;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Passport;
+
+//using DCL.Passport;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -110,7 +111,8 @@ namespace DCL.UI.SystemMenu
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId, isOwnProfile: true))).Forget();
+            // TODO
+            // mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId, isOwnProfile: true))).Forget();
         }
 
         private void Logout()
