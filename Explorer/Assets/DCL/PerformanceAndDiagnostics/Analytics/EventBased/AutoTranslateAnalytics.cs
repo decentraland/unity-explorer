@@ -33,11 +33,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
             scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationReverted>(_ => { analytics.Track(AnalyticsEvents.AutoTranslate.SEE_ORIGINAL_MESSAGE); }));
 
-            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationRequested>(_ =>
+            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationRequested>(msg =>
             {
                 analytics.Track(AnalyticsEvents.AutoTranslate.TRANSLATE_MESSAGE_MANUALLY, new JsonObject
                 {
                     { "language_chosen", translationSettings.PreferredLanguage.ToString() },
+                    { "message_id", msg.MessageId },
                 });
             }));
 
