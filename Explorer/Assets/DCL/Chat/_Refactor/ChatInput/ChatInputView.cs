@@ -110,32 +110,27 @@ namespace DCL.Chat.ChatInput
             inputOverlayText.text = input;
 
             inputOverlayText.ForceMeshUpdate();
-            bool mentionFound = false;
             bool mentionEverFound = false;
 
-            for (int i = 0; i < inputOverlayText.textInfo.characterCount; i++)
+            for (int j = 0; j < inputOverlayText.textInfo.wordCount; j++)
             {
-                if (!inputOverlayText.textInfo.characterInfo[i].isVisible)
-                {
-                    mentionFound = false;
-                    continue;
-                }
-
-                if (input[i] == '@') mentionFound = true;
-
-                if (!mentionFound) continue;
-
+                TMP_WordInfo info = inputOverlayText.textInfo.wordInfo[j];
+                if (input[Math.Max(0, info.firstCharacterIndex - 1)] != '@') continue;
                 mentionEverFound = true;
 
-                int meshIndex = inputOverlayText.textInfo.characterInfo[i].materialReferenceIndex;
-                int vertexIndex = inputOverlayText.textInfo.characterInfo[i].vertexIndex;
-                Color32[] vertexColors = inputOverlayText.textInfo.meshInfo[meshIndex].colors32;
-                vertexColors[vertexIndex + 0] = mentionColor;
-                vertexColors[vertexIndex + 1] = mentionColor;
-                vertexColors[vertexIndex + 2] = mentionColor;
-                vertexColors[vertexIndex + 3] = mentionColor;
-            }
+                for (int i = -1; i < info.characterCount; i++)
+                {
+                    int charIndex = info.firstCharacterIndex + i;
+                    int meshIndex = inputOverlayText.textInfo.characterInfo[charIndex].materialReferenceIndex;
+                    int vertexIndex = inputOverlayText.textInfo.characterInfo[charIndex].vertexIndex;
 
+                    Color32[] vertexColors = inputOverlayText.textInfo.meshInfo[meshIndex].colors32;
+                    vertexColors[vertexIndex + 0] = mentionColor;
+                    vertexColors[vertexIndex + 1] = mentionColor;
+                    vertexColors[vertexIndex + 2] = mentionColor;
+                    vertexColors[vertexIndex + 3] = mentionColor;
+                }
+            }
 
             if (mentionEverFound)
                 inputOverlayText.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
