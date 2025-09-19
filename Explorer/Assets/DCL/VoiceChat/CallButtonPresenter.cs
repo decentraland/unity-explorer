@@ -22,10 +22,10 @@ namespace DCL.VoiceChat
             OWN_USER_REJECTS_CALLS,
         }
 
-        private const string USER_OFFLINE_TOOLTIP_TEXT = "User is offline.";
-        private const string USER_REJECTS_CALLS_TOOLTIP_TEXT = "User only accepts calls from friends.";
-        private const string OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT = "Add User as a friend, or update your DM & Call settings to connect with everyone.";
-        private const string USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "User is in another call.";
+        private const string USER_OFFLINE_TOOLTIP_TEXT = "[User] is offline.";
+        private const string USER_REJECTS_CALLS_TOOLTIP_TEXT = "[User] only accepts calls from friends.";
+        private const string OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT = "Add [User] as a friend, or update your \n <u><b>DM & Call settings</u></b> to connect with everyone.";
+        private const string USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "[User] is in another call.";
         private const string OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "End your current call to start a new one.";
         private const string COMMUNITY_CALL_ACTIVE_TOOLTIP_TEXT = "You are in a community call. End it to start a private call.";
         private const float ANIMATION_DURATION = 0.5f;
@@ -35,15 +35,16 @@ namespace DCL.VoiceChat
         private readonly IDisposable? orchestratorTypeSubscription;
         private readonly IDisposable? privateVoiceChatAvailableSubscription;
         private readonly IDisposable? currentChannelSubscription;
-        //private readonly GetUserCallStatusCommand getUserCallStatusCommand;
 
         private readonly CallButtonView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
         private readonly IChatEventBus chatEventBus;
+
         private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
         private CancellationTokenSource cts;
-        private string currentUserId;
+        private string currentUserId = string.Empty;
+        private string currentUserName = string.Empty;
 
 
         public CallButtonPresenter(
@@ -79,7 +80,7 @@ namespace DCL.VoiceChat
             OnCallButtonClicked();
         }
 
-        public void Reset()
+        private void Reset()
         {
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
 
@@ -99,10 +100,11 @@ namespace DCL.VoiceChat
         }
 
 
-        public void SetCallStatusForUser(OtherUserCallStatus status, string userId)
+        public void SetCallStatusForUser(OtherUserCallStatus status, string userId, string userName)
         {
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
 
+            currentUserName = userName;
             currentUserId = userId;
             otherUserStatus = status;
             Reset();
@@ -111,7 +113,7 @@ namespace DCL.VoiceChat
         private void OnCallButtonClicked()
         {
             cts = cts.SafeRestart();
-            HandleCallButtonClickAsync(cts!.Token).Forget();
+            HandleCallButtonClickAsync(cts.Token).Forget();
         }
 
         private async UniTaskVoid HandleCallButtonClickAsync(CancellationToken ct)
@@ -173,6 +175,8 @@ namespace DCL.VoiceChat
             view.TooltipParent.gameObject.SetActive(true);
             view.TooltipParentCanvas.interactable = true;
             view.TooltipParentCanvas.blocksRaycasts = true;
+
+            tooltipText = tooltipText.Replace("User", currentUserName);
             view.TooltipText.text = tooltipText;
 
             await view.TooltipParentCanvas.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: ct);

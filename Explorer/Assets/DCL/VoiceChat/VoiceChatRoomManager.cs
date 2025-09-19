@@ -85,6 +85,7 @@ namespace DCL.VoiceChat
             reconnectionManager.ReconnectionSuccessful -= OnReconnectionSuccessful;
             reconnectionManager.ReconnectionFailed -= OnReconnectionFailed;
 
+            localParticipantIsSpeakerSubscription.Dispose();
             callStatusSubscription?.Dispose();
             reconnectionManager?.Dispose();
             trackManager?.Dispose();
