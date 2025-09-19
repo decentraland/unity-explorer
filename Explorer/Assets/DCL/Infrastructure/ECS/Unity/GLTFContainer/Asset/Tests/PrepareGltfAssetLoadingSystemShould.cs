@@ -19,7 +19,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>(), false, false);
+            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>(), default);
         }
 
         private IGltfContainerAssetsCache cache;
