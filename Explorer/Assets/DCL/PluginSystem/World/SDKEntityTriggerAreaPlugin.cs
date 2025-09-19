@@ -41,6 +41,7 @@ namespace DCL.PluginSystem.World
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>? sdkEntityTriggerAreaPoolRegistry;
+        private IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool;
 
         public SDKEntityTriggerAreaPlugin(
             Arch.Core.World globalWorld,
@@ -52,7 +53,8 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IExposedCameraData cameraData,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool)
         {
             this.globalWorld = globalWorld;
             this.assetsProvisioner = assetsProvisioner;
@@ -64,6 +66,7 @@ namespace DCL.PluginSystem.World
             this.cameraData = cameraData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.web3IdentityCache = web3IdentityCache;
+            this.triggerAreaResultTriggerPool = triggerAreaResultTriggerPool;
         }
 
         public void Dispose()
@@ -84,7 +87,15 @@ namespace DCL.PluginSystem.World
 
             finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
             finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
-            finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sharedDependencies.EcsToCRDTWriter, componentPoolsRegistry.GetReferenceTypePool<PBTriggerAreaResult>(), sharedDependencies.SceneStateProvider, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData));
+            finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(
+                ref builder,
+                globalWorld,
+                sharedDependencies.EcsToCRDTWriter,
+                componentPoolsRegistry.GetReferenceTypePool<PBTriggerAreaResult>(),
+                triggerAreaResultTriggerPool,
+                sharedDependencies.SceneStateProvider,
+                sharedDependencies.EntityCollidersSceneCache,
+                sharedDependencies.SceneData));
             finalizeWorldSystems.Add(SDKEntityTriggerAreaCleanupSystem.InjectToWorld(ref builder, sdkEntityTriggerAreaPoolRegistry!));
         }
 

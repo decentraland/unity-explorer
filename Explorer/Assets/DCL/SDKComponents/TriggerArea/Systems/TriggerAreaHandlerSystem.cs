@@ -31,6 +31,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private readonly World globalWorld;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IComponentPool<PBTriggerAreaResult> triggerAreaResultPool;
+        private readonly IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IEntityCollidersSceneCache collidersSceneCache;
         private readonly ISceneData sceneData;
@@ -40,6 +41,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             World globalWorld,
             IECSToCRDTWriter ecsToCRDTWriter,
             IComponentPool<PBTriggerAreaResult> triggerAreaResultPool,
+            IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool,
             ISceneStateProvider sceneStateProvider,
             IEntityCollidersSceneCache collidersSceneCache,
             ISceneData sceneData) : base(world)
@@ -47,6 +49,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             this.globalWorld = globalWorld;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.triggerAreaResultPool = triggerAreaResultPool;
+            this.triggerAreaResultTriggerPool = triggerAreaResultTriggerPool;
             this.sceneStateProvider = sceneStateProvider;
             this.collidersSceneCache = collidersSceneCache;
             this.sceneData = sceneData;
@@ -143,15 +146,13 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             resultComponent.TriggeredEntityPosition = triggerAreaTransform.localPosition.ToProtoVector();
             resultComponent.TriggeredEntityRotation = triggerAreaTransform.localRotation.ToProtoQuaternion();
 
-            // TODO: Pool this one as well ???
-            resultComponent.Trigger = new PBTriggerAreaResult.Types.Trigger
-            {
-                Entity = avatarEntity == Entity.Null ? (uint)entityInfo.SDKEntity.Id : 99999999, // TODO: get scene CRDT Entity for player
-                Layer = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer,
-                Position = triggerEntityPos,
-                Rotation = triggerEntityRot,
-                Scale = triggerEntityScale,
-            };
+            // 'Trigger' Entity (the entity that provokes the trigger event)
+            resultComponent.Trigger = triggerAreaResultTriggerPool.Get();
+            resultComponent.Trigger.Entity = avatarEntity == Entity.Null ? (uint)entityInfo.SDKEntity.Id : 99999999; // TODO: get scene CRDT Entity for player
+            resultComponent.Trigger.Layer = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
+            resultComponent.Trigger.Position = triggerEntityPos;
+            resultComponent.Trigger.Rotation = triggerEntityRot;
+            resultComponent.Trigger.Scale = triggerEntityScale;
 
             ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>
             (
@@ -166,6 +167,9 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 },
                 triggerAreaCRDTEntity, (int)sceneStateProvider.TickNumber, (resultComponent, sceneStateProvider.TickNumber)
             );
+
+            triggerAreaResultTriggerPool.Release(resultComponent.Trigger);
+            triggerAreaResultPool.Release(resultComponent);
         }
 
         [Query]
