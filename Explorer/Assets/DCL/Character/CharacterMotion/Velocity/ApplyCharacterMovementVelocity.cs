@@ -16,9 +16,10 @@ namespace DCL.CharacterMotion
         {
             Vector3 cameraForward = cameraTransform.forward;
 
-            // if we're looking straight up / down use the inverted camera up instead of forward
+            // if we're looking straight up / down use the camera up instead of forward
+            // we use negative sign of Y because up (y=+1) needs -up to go forward, down (y=-1) needs +up
             if (Mathf.Approximately(Mathf.Abs(cameraTransform.forward.y), 1f))
-                cameraForward = -cameraTransform.up;
+                cameraForward = -Mathf.Sign(cameraTransform.forward.y) * cameraTransform.up;
 
             cameraForward.y = 0;
             cameraForward.Normalize(); // Normalize the forward to avoid slower forward speeds when looking up/down
