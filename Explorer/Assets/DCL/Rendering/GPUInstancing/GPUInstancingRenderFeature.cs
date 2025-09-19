@@ -1,9 +1,7 @@
-﻿using DCL.Landscape.Settings;
-using ECS;
+﻿using ECS;
 using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
-using Utility;
 
 namespace DCL.Rendering.GPUInstancing
 {

@@ -21,6 +21,7 @@ using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -75,9 +76,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 
             world.Add(wearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable>
             {
-                GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE),
-                GetMockWearable("skin", WearablesConstants.Categories.UPPER_BODY),
-                GetMockWearable("hair", WearablesConstants.Categories.HAIR),
+                GetMockWearable("body_shape", WearableCategories.Categories.BODY_SHAPE),
+                GetMockWearable("skin", WearableCategories.Categories.UPPER_BODY),
+                GetMockWearable("hair", WearableCategories.Categories.HAIR),
             })));
 
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise,
@@ -95,9 +96,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 
             var facialFeatureTextures = new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>
             {
-                [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
-                [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
-                [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
+                [WearableCategories.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
+                [WearableCategories.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
+                [WearableCategories.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
             });
 
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
@@ -195,7 +196,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>(), Array.Empty<string>()),
                 new PartitionComponent());
 
-            world.Add(newWearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) })));
+            world.Add(newWearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearableCategories.Categories.BODY_SHAPE) })));
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
             world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newWearablePromise;

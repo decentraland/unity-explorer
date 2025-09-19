@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Utilities;
 using DCL.WebRequests;
+using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
@@ -31,7 +32,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     /// <summary>
     ///     Loads a scene list originated from pointers
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadSceneDefinitionListSystem : LoadSystemBase<SceneDefinitions, GetSceneDefinitionList>
     {
