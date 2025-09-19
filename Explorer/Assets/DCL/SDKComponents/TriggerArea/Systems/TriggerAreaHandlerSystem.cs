@@ -80,13 +80,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(PBTriggerArea))]
         private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            // Enter
-            foreach (Collider entityCollider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
-            {
-                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
-                    entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask);
-            }
-            triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+            ProcessOnEnterTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
 
             // Stay
             // foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
@@ -95,7 +89,21 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             //         entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask);
             // }
 
-            // Exit
+            ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+        }
+
+        private void ProcessOnEnterTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        {
+            foreach (Collider entityCollider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
+            {
+                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+                    entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask);
+            }
+            triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+        }
+
+        private void ProcessOnExitTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        {
             foreach (Collider entityCollider in triggerAreaComponent.ExitedEntitiesToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
@@ -173,30 +181,24 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), typeof(PBTriggerArea), typeof(SDKTriggerAreaComponent))]
-        private void HandleEntityDestruction(Entity entity)
+        [All(typeof(DeleteEntityIntention), typeof(PBTriggerArea))]
+        private void HandleEntityDestruction(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            // OnExitedArea();
-            // activeAreas.Remove(entity);
+            ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBTriggerArea))]
-        [All(typeof(SDKTriggerAreaComponent))]
-        private void HandleComponentRemoval(Entity entity)
+        private void HandleComponentRemoval(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            // OnExitedArea();
-            // activeAreas.Remove(entity);
+            ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
             World.Remove<SDKTriggerAreaComponent>(entity);
         }
 
         [Query]
-        [All(typeof(SDKTriggerAreaComponent))]
-        private void FinalizeComponents(Entity entity)
+        private void FinalizeComponents(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            // if (activeAreas.Remove(entity))
-            //     OnExitedArea();
-
+            ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
             World.Remove<SDKTriggerAreaComponent>(entity);
         }
 
