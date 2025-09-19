@@ -4,6 +4,7 @@ using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.Requests;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Passport;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
 using DCL.Web3;

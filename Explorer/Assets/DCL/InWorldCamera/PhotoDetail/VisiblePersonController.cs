@@ -103,7 +103,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void ShowPersonPassportClicked()
         {
             if (visiblePerson is null) return;
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(visiblePerson.userAddress))).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(visiblePerson.userAddress))).Forget();
         }
 
         private void WearableListButtonClicked()

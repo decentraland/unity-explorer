@@ -14,6 +14,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Connectivity;
 using DCL.NotificationsBus;
+using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;

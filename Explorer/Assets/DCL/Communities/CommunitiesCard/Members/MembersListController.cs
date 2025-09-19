@@ -387,7 +387,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private void OpenProfilePassport(ICommunityMemberData profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address)), cancellationToken).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(profile.Address)), cancellationToken).Forget();
 
         public override void Reset()
         {

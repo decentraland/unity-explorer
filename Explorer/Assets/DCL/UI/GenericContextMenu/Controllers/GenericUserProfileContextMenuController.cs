@@ -343,7 +343,7 @@ namespace DCL.UI
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct);
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
             analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject

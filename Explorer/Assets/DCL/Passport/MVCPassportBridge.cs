@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Passport;
 using DCL.Web3;
 using MVC;
+using System;
 
 namespace DCL.Friends.Passport
 {
@@ -14,9 +15,7 @@ namespace DCL.Friends.Passport
             this.mvcManager = mvcManager;
         }
 
-        public async UniTask ShowAsync(Web3Address userId)
-        {
-            await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId.ToString())));
-        }
+        public UniTask ShowAsync(PassportParams passportParams) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(passportParams));
     }
 }

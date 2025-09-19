@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
@@ -32,12 +33,12 @@ namespace DCL.UI.Profiles
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            IMVCManager mvcManager,
+            IPassportBridge passportBridge,
             ProfileRepositoryWrapper profileDataProvider
         ) : base(viewFactory)
         {
             profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, profileDataProvider);
-            systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
+            systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, passportBridge);
             systemSectionController.OnClosed += OnClose;
         }
 

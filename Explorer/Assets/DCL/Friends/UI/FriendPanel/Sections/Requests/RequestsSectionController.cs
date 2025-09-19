@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
+using DCL.Passport;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;

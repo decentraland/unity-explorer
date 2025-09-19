@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Friends.UI.BlockUserPrompt;
+using DCL.Passport;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using MVC;

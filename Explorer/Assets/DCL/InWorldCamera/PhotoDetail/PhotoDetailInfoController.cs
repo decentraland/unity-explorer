@@ -112,7 +112,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             if (string.IsNullOrEmpty(reelOwnerAddress)) return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(reelOwnerAddress))).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(reelOwnerAddress))).Forget();
         }
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)

@@ -55,7 +55,7 @@ using Utility.Types;
 
 namespace DCL.Passport
 {
-    public partial class PassportController : ControllerBase<PassportView, PassportController.Params>, IBlocksChat
+    public class PassportController : ControllerBase<PassportView, PassportParams>, IBlocksChat
     {
         private enum OpenBadgeSectionOrigin
         {
@@ -708,7 +708,7 @@ namespace DCL.Passport
 
             async UniTaskVoid OpenPassportAsync(CancellationToken ct)
             {
-                try { await mvcManager.ShowAsync(IssueCommand(new Params(notification.Metadata.invitedUserAddress)), ct); }
+                try { await mvcManager.ShowAsync(IssueCommand(new PassportParams(notification.Metadata.invitedUserAddress)), ct); }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
             }
@@ -723,7 +723,7 @@ namespace DCL.Passport
                 if (ownProfile != null)
                 {
                     BadgesSectionOpened?.Invoke(ownProfile.UserId, true, OpenBadgeSectionOrigin.NOTIFICATION.ToString());
-                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
+                    mvcManager.ShowAsync(IssueCommand(new PassportParams(ownProfile.UserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
                 }
             }
             catch (OperationCanceledException) { }

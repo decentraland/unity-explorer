@@ -51,6 +51,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Passport;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
@@ -140,6 +141,7 @@ namespace DCL.PluginSystem.Global
         private CommunitiesBrowserController? communitiesBrowserController;
         private readonly bool isVoiceChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
+        private readonly IPassportBridge passportBridge;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -195,7 +197,7 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             bool isVoiceChatEnabled,
             GalleryEventBus galleryEventBus,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider, IPassportBridge passportBridge)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -252,6 +254,7 @@ namespace DCL.PluginSystem.Global
             this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.galleryEventBus = galleryEventBus;
             this.thumbnailProvider = thumbnailProvider;
+            this.passportBridge = passportBridge;
         }
 
         public void Dispose()
@@ -433,7 +436,7 @@ namespace DCL.PluginSystem.Global
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
                     communitiesBrowserController, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);

@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Multiplayer.Connectivity;
+using DCL.Passport;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;

@@ -616,6 +616,8 @@ namespace Global.Dynamic
                 communitiesDataProvider,
                 identityCache);
 
+            var passportBridge = new MVCPassportBridge(mvcManager);
+
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
                 profileCache,
@@ -712,7 +714,7 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
-                    bootstrapContainer.DecentralandUrlsSource),
+                    bootstrapContainer.DecentralandUrlsSource, passportBridge),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -804,7 +806,8 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     includeVoiceChat,
                     galleryEventBus,
-                    thumbnailProvider
+                    thumbnailProvider,
+                    passportBridge
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -939,7 +942,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
                     selfProfile,
-                    new MVCPassportBridge(mvcManager),
+                    passportBridge,
                     notificationsBusController,
                     onlineUsersProvider,
                     realmNavigator,
