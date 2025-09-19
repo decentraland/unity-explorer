@@ -114,30 +114,26 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     return;
             }
 
-            if (avatarEntity == Entity.Null
-                && (!collidersSceneCache.TryGetEntity(triggerEntityCollider, out entityInfo)
-                || !PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, entityInfo.SDKLayer)))
-                return;
-
             Decentraland.Common.Vector3 triggerEntityPos = default;
             Decentraland.Common.Quaternion triggerEntityRot = default;
             Decentraland.Common.Vector3 triggerEntityScale = default;
-            if (avatarEntity != Entity.Null)
+            if (avatarEntity == Entity.Null)
+            {
+                if (!collidersSceneCache.TryGetEntity(triggerEntityCollider, out entityInfo)
+                 || !PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, entityInfo.SDKLayer)
+                 || !World.TryGet(entityInfo.EntityReference, out TransformComponent transformComponent))
+                    return;
+                triggerEntityPos = transformComponent.Transform.localPosition.ToProtoVector();
+                triggerEntityRot = transformComponent.Transform.localRotation.ToProtoQuaternion();
+                triggerEntityScale = transformComponent.Transform.localScale.ToProtoVector();
+            }
+            else
             {
                 if (!globalWorld.TryGet(avatarEntity, out CharacterTransform characterTransform))
                     return;
                 triggerEntityPos = characterTransform.Transform.localPosition.FromGlobalToSceneRelativePosition(sceneData.SceneShortInfo.BaseParcel).ToProtoVector();
                 triggerEntityRot = characterTransform.Transform.localRotation.ToProtoQuaternion();
                 triggerEntityScale = characterTransform.Transform.localScale.ToProtoVector();
-            }
-            else
-            {
-                if (!World.TryGet(entityInfo.EntityReference, out TransformComponent transformComponent))
-                    return;
-
-                triggerEntityPos = transformComponent.Transform.localPosition.ToProtoVector();
-                triggerEntityRot = transformComponent.Transform.localRotation.ToProtoQuaternion();
-                triggerEntityScale = transformComponent.Transform.localScale.ToProtoVector();
             }
 
             var resultComponent = triggerAreaResultPool.Get();
