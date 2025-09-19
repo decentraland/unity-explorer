@@ -27,7 +27,7 @@ namespace DCL.VoiceChat
                        DisconnectReason.ConnectionTimeout => true,
                        DisconnectReason.StateMismatch => true,
                        DisconnectReason.Migration => true,
-                       DisconnectReason.UnknownReason => false,
+                       DisconnectReason.UnknownReason => true,
                        DisconnectReason.UserUnavailable => true,
                        DisconnectReason.SipTrunkFailure => true,
                        _ => false,
