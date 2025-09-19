@@ -81,14 +81,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             ProcessOnEnterTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
-
-            // Stay
-            // foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
-            // {
-            //     PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
-            //         entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask);
-            // }
-
+            // ProcessOnStayInTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
             ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
         }
 
@@ -100,6 +93,15 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+        }
+
+        private void ProcessOnStayInTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        {
+            foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
+            {
+                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+                    entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask);
+            }
         }
 
         private void ProcessOnExitTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
@@ -161,6 +163,8 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             resultComponent.Trigger.Position = triggerEntityPos;
             resultComponent.Trigger.Rotation = triggerEntityRot;
             resultComponent.Trigger.Scale = triggerEntityScale;
+
+            // Debug.Log($"PRAVS - Propagate '{eventType}' event!");
 
             ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>
             (
