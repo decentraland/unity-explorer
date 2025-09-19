@@ -5,20 +5,21 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatPanelResizeController : IDisposable
     {
+        private const float DEFAULT_VOICE_CHAT_SIZE = 50;
+        //private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 240; Legacy value, kept for now
+        private const int EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE = 215;
+        private const int EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE = 305;
+        private const int COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
+        //private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100; Not used yet value, kept for now
+        private const int COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 50;
+        private const int HIDDEN_BUTTONS_SIZE_DIFFERENCE = 40;
+        private const int MAX_SPEAKERS_PER_LINE = 4;
+
         private readonly VoiceChatPanelResizeView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
         private readonly IDisposable panelSizeUpdateSubscription;
         private readonly IDisposable typeChangedSubscription;
-        private readonly IDisposable speakersChangedSubscription;
 
-        private const float DEFAULT_VOICE_CHAT_SIZE = 50;
-        private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 240;
-        private const float EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE = 215;
-        private const float EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE = 305;
-        private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
-        private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100;
-        private const float COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 50;
-        private const float HIDDEN_BUTTONS_SIZE_DIFFERENCE = 40;
 
         public VoiceChatPanelResizeController(VoiceChatPanelResizeView view, IVoiceChatOrchestratorState voiceChatState)
         {
@@ -28,18 +29,23 @@ namespace DCL.VoiceChat
             panelSizeUpdateSubscription = voiceChatState.CurrentVoiceChatPanelSize.Subscribe(OnUpdateVoiceChatPanelSize);
             typeChangedSubscription = voiceChatState.CurrentVoiceChatType.Subscribe(OnCurrentVoiceChatTypeChanged);
 
-            voiceChatState.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
-            voiceChatState.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
+            voiceChatState.ParticipantsStateService.SpeakersUpdated += OnSpeakersUpdated;
         }
 
-        private void OnParticipantLeft(string participantId)
+        private void OnSpeakersUpdated(int speakersAmount)
         {
-            throw new NotImplementedException();
+            if (voiceChatState.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+
+            if (voiceChatState.CurrentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED) return;
+
+            CalculateCommunitiesLayoutHeight(speakersAmount);
         }
 
-        private void OnParticipantJoined(string participantId, VoiceChatParticipantsStateService.ParticipantState participantState)
+        private void CalculateCommunitiesLayoutHeight(int speakersAmount)
         {
-            throw new NotImplementedException();
+            int newHeight = speakersAmount <= MAX_SPEAKERS_PER_LINE ? EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE;
+
+            view.VoiceChatPanelLayoutElement.preferredHeight = newHeight - (voiceChatState.CurrentVoiceChatPanelSize.Value == VoiceChatPanelSize.EXPANDED ? 0 : HIDDEN_BUTTONS_SIZE_DIFFERENCE);
         }
 
         private void OnCurrentVoiceChatTypeChanged(VoiceChatType type)
@@ -50,7 +56,7 @@ namespace DCL.VoiceChat
                     view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_PRIVATE_VOICE_CHAT_SIZE;
                     break;
                 case VoiceChatType.COMMUNITY:
-                    view.VoiceChatPanelLayoutElement.preferredHeight = EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+                    CalculateCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.ActiveSpeakers.Count);
                     break;
                 case VoiceChatType.NONE:
                 default:
@@ -77,17 +83,18 @@ namespace DCL.VoiceChat
                 case VoiceChatType.COMMUNITY:
                     switch (chatPanelSize)
                     {
+                        case VoiceChatPanelSize.EXPANDED:
                         case VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS:
-                            //First steps to handle dynamic sizing
                             view.gameObject.SetActive(true);
-                            view.VoiceChatPanelLayoutElement.preferredHeight = EXPANDED_COMMUNITY_VOICE_CHAT_SIZE - HIDDEN_BUTTONS_SIZE_DIFFERENCE; break;
+                            CalculateCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.ActiveSpeakers.Count);
+                            break;
                         case VoiceChatPanelSize.HIDDEN:
                             view.gameObject.SetActive(false);
                             break;
                         default:
                             view.gameObject.SetActive(true);
-                            view.VoiceChatPanelLayoutElement.preferredHeight =
-                                chatPanelSize == VoiceChatPanelSize.COLLAPSED ? COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_SIZE; break;
+                            view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE;
+                            break;
                     }
                     break;
             }
