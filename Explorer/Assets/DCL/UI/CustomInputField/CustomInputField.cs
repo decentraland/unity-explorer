@@ -18,7 +18,7 @@ namespace DCL.UI.CustomInputField
 
         public event Action<PointerEventData.InputButton>? Clicked;
         public event Action? PasteShortcutPerformed;
-        public event Action<string>? TextReplaced;
+        public event Action<string>? TextReplacedWithoutNotification;
 
         public bool UpAndDownArrowsEnabled { get; set; }
 
@@ -151,10 +151,12 @@ namespace DCL.UI.CustomInputField
             if (notify)
                 text = stringBuilder.ToString();
             else
+            {
                 SetTextWithoutNotify(stringBuilder.ToString());
+                TextReplacedWithoutNotification?.Invoke(text);
+            }
 
             stringPosition += replaceAt + newValue.Length + 1;
-            TextReplaced?.Invoke(text);
         }
     }
 }

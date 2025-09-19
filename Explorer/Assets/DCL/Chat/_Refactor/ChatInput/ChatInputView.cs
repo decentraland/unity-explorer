@@ -102,7 +102,7 @@ namespace DCL.Chat.ChatInput
             characterCounter.SetMaximumLength(inputField.characterLimit);
             this.chatConfig = chatConfig;
             inputField.onValueChanged.AddListener(ColorMentions);
-            inputField.TextReplaced += ColorMentions;
+            inputField.TextReplacedWithoutNotification += ColorMentions;
         }
 
         private void ColorMentions(string input)
@@ -118,7 +118,8 @@ namespace DCL.Chat.ChatInput
                 if (input[Math.Max(0, info.firstCharacterIndex - 1)] != '@') continue;
                 mentionEverFound = true;
 
-                for (int i = -1; i < info.characterCount; i++)
+                int startingIndex = input[info.firstCharacterIndex] == '@' ? info.firstCharacterIndex : -1;
+                for (int i = startingIndex; i < info.characterCount; i++)
                 {
                     int charIndex = info.firstCharacterIndex + i;
                     int meshIndex = inputOverlayText.textInfo.characterInfo[charIndex].materialReferenceIndex;
