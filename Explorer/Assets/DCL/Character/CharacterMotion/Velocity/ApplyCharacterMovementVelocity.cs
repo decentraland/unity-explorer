@@ -1,5 +1,4 @@
-﻿
-using DCL.CharacterMotion.Components;
+﻿using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
 using System.Runtime.CompilerServices;
@@ -16,10 +15,14 @@ namespace DCL.CharacterMotion
             float dt)
         {
             Vector3 cameraForward = cameraTransform.forward;
-            cameraForward.y = 0;
 
-            // Normalize the forward to avoid slower forward speeds when looking up/down
-            cameraForward.Normalize();
+            // if we're looking straight up / down use the inverted camera up instead of forward
+            if (Mathf.Approximately(Mathf.Abs(cameraTransform.forward.y), 1f))
+                cameraForward = -cameraTransform.up;
+
+            cameraForward.y = 0;
+            cameraForward.Normalize(); // Normalize the forward to avoid slower forward speeds when looking up/down
+
             Vector3 cameraRight = cameraTransform.right;
             cameraRight.y = 0;
 
@@ -45,6 +48,7 @@ namespace DCL.CharacterMotion
                 rigidTransform.MoveVelocity.XVelocity = Mathf.MoveTowards(rigidTransform.MoveVelocity.XVelocity, xAxis, currentAcceleration * dt);
             }
             else
+
                 // Currently the de-acceleration is set to 0, deprecating this damping
                 // We need it since scenes like avatar-swap in goerli 75,-7 changes the animation depending on the position change of the character
                 // Any minimal movement in the position will be reflected, producing undesired results
@@ -56,6 +60,7 @@ namespace DCL.CharacterMotion
                 rigidTransform.MoveVelocity.ZVelocity = Mathf.MoveTowards(rigidTransform.MoveVelocity.ZVelocity, yAxis, currentAcceleration * dt);
             }
             else
+
                 // Currently the de-acceleration is set to 0, deprecating this damping
                 // We need it since scenes like avatar-swap in goerli 75,-7 changes the animation depending on the position change of the character
                 // Any minimal movement in the position will be reflected, producing undesired results
@@ -75,7 +80,6 @@ namespace DCL.CharacterMotion
                 rigidTransform.MoveVelocity.Velocity = Vector3.MoveTowards(rigidTransform.MoveVelocity.Velocity, targetForward, currentAcceleration * dt);
             }
         }
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float GetAcceleration(CharacterRigidTransform rigidTransform, ICharacterControllerSettings settings, CharacterRigidTransform.MovementVelocity moveVelocity)
