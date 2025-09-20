@@ -21,14 +21,13 @@ namespace DCL.PluginSystem.Global
         private readonly NotificationsBusController notificationsBusController;
         private readonly IWebRequestController webRequestController;
 
-        public RewardPanelPlugin(IMVCManager mvcManager, IAssetsProvisioner assetsProvisioner, NotificationsBusController notificationsBusController, IWebRequestController webRequestController)
+        public RewardPanelPlugin(IMVCManager mvcManager, IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
-            this.notificationsBusController = notificationsBusController;
             this.webRequestController = webRequestController;
 
-            this.notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_IN_PROGRESS, OnNewRewardReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_IN_PROGRESS, OnNewRewardReceived);
         }
 
         private void OnNewRewardReceived(INotification notification)

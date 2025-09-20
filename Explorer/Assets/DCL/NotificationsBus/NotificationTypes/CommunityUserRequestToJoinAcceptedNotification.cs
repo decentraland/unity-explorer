@@ -6,7 +6,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class CommunityUserRequestToJoinAcceptedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Membership Request Accepted";
-        private const string NOTIFICATION_TITLE = "Congrats! You're now a member of the <b>[{0}]</b> Community.";
+        private const string NOTIFICATION_TITLE = "Congrats! You're now a member of the <b>{0}</b> Community.";
 
         [JsonProperty("metadata")]
         public CommunityUserRequestToJoinAcceptedNotificationMetadata Metadata { get; set; }

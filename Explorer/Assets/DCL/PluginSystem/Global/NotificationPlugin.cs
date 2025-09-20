@@ -21,7 +21,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
-        private readonly NotificationsBusController notificationsBusController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
@@ -31,14 +30,12 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            NotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
-            this.notificationsBusController = notificationsBusController;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
         }
@@ -58,7 +55,6 @@ namespace DCL.PluginSystem.Global
             NewNotificationController newNotificationController =
                 new NewNotificationController(
                     NewNotificationController.CreateLazily(newNotificationView, null),
-                    notificationsBusController,
                     notificationIconTypes,
                     notificationDefaultThumbnails,
                     rarityBackgroundMapping,

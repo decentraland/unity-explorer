@@ -49,13 +49,12 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
         private readonly bool includeUserBlocking;
-        private readonly bool includeCall;
         private readonly IAppArgs appArgs;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
         private CancellationTokenSource friendServiceSubscriptionCts = new ();
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
@@ -80,11 +79,9 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
-            NotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
-            bool includeCall,
             IAppArgs appArgs,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
@@ -98,7 +95,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -108,11 +105,10 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
             this.includeUserBlocking = includeUserBlocking;
-            this.includeCall = includeCall;
             this.appArgs = appArgs;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.profileRepositoryWrapper = profileDataProvider;
 
@@ -145,11 +141,10 @@ namespace DCL.PluginSystem.Global
                 friendsConnectivityStatusTracker,
                 chatEventBus,
                 includeUserBlocking,
-                includeCall,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
-                voiceChatCallStatusService
+                voiceChatOrchestrator
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
@@ -158,7 +153,6 @@ namespace DCL.PluginSystem.Global
 
             var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener,
                 mvcManager,
-                notificationsBusController,
                 passportBridge,
                 friendsService,
                 sharedSpaceManager,

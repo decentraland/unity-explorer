@@ -344,81 +344,10 @@
     background-image: var(--sprite-common__icon-debug);
 }
 
-.sidebar__button--connection {
-    background-image: var(--sprite-common__icon-connection);
-}
-
 .debug-panel__header-spacer {
     flex-grow: 1;
 }
 
 .settings-panel {
     width: 350px;
-}
-
-.connection-panel {
-    width: 350px;
-}
-
-.connection-panel__divider {
-    height: 2px;
-    background-color: var(--dcl-color-white-10);
-}
-
-.connection-status {
-    height: 52px;
-    flex-direction: row;
-    align-items: center;
-    padding-left: 20px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-.connection-status__description-container {
-    flex-direction: column;
-    width: 223px;
-}
-
-.connection-status__title {
-    font-size: 14px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    margin-bottom: 2px;
-}
-
-.connection-status__subtitle {
-    font-size: 12px;
-    color: var(--dcl-color-silver);
-}
-
-.connection-status__status {
-    font-size: 12px;
-    -unity-font-definition: var(--dcl-font-inter-semibold);
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    border-bottom-left-radius: 10px;
-    height: 20px;
-    padding-right: 6px;
-    padding-left: 6px;
-    -unity-text-align: middle-left;
-}
-
-.connection-status__status--good {
-    background-color: rgba(16, 193, 1, 0.15);
-    color: rgb(16, 193, 1);
-}
-
-.connection-status__status--excellent {
-    background-color: rgba(67, 143, 255, 0.15);
-    color: rgb(56, 171, 255);
-}
-
-.connection-status__status--poor {
-    background-color: rgba(255, 184, 0, 0.15);
-    color: rgb(255, 184, 0);
-}
-
-.connection-status__status--lost {
-    background-color: rgba(255, 36, 36, 0.15);
-    color: rgb(255, 36, 36);
 }

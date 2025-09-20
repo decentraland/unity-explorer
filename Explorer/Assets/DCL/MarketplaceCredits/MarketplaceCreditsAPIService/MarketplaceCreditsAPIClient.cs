@@ -1,12 +1,15 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
+using Utility.Types;
 
 namespace DCL.MarketplaceCredits
 {
@@ -114,7 +117,7 @@ namespace DCL.MarketplaceCredits
             return claimCreditsResponseData;
         }
 
-        public async UniTask SubscribeEmailAsync(string email, CancellationToken ct)
+        public async UniTask<EnumResult<EmailSubscriptionError>> SubscribeEmailAsync(string email, CancellationToken ct)
         {
             var url = $"{emailSubscriptionsBaseUrl}/set-email";
             string jsonBody = JsonUtility.ToJson(new EmailSubscriptionBody
@@ -123,8 +126,47 @@ namespace DCL.MarketplaceCredits
                 isCreditsWorkflow = true,
             });
 
-            await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
-                                      .WithNoOpAsync();
+            try
+            {
+                await webRequestController.SignedFetchPutAsync(url, GenericPutArguments.CreateJson(jsonBody), string.Empty, ct)
+                    .WithNoOpAsync();
+
+                return EnumResult<EmailSubscriptionError>.SuccessResult();
+            }
+            catch (OperationCanceledException)
+            {
+                return EnumResult<EmailSubscriptionError>.ErrorResult(EmailSubscriptionError.Cancelled, "Operation was cancelled");
+            }
+            catch (UnityWebRequestException webRequestException)
+            {
+                // `email already registered` and `Email domain not allowed` errors are passed under that code
+                if (webRequestException.ResponseCode == (long)HttpStatusCode.BadRequest)
+                {
+                    try
+                    {
+                        var errorResponse = JsonUtility.FromJson<EmailSubscriptionErrorResponse>(webRequestException.Text);
+
+                        if (!string.IsNullOrEmpty(errorResponse?.message))
+                        {
+                            return EnumResult<EmailSubscriptionError>.ErrorResult(
+                                EmailSubscriptionError.HandledError, 
+                                errorResponse.message);
+                        }
+                    }
+                    catch (ArgumentException e)
+                    {
+                        ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"SubscribeEmailAsync - Backend error message failed to be parsed from json, falling back to generic message. \n{e.Message}");
+                        // JSON parsing failed, fall through to generic error
+                    }
+                }
+        
+                // All other errors return generic error
+                return EnumResult<EmailSubscriptionError>.ErrorResult(EmailSubscriptionError.EmptyError);
+            }
+            catch (Exception e)
+            {
+                return EnumResult<EmailSubscriptionError>.ErrorResult(EmailSubscriptionError.EmptyError, e.Message);
+            }
         }
 
         private async UniTask<EmailSubscriptionResponse> GetEmailSubscriptionInfoAsync(CancellationToken ct)

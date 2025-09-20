@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Emotes
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
 
-        private AssetBundleManifestVersion SceneAssetBundleManifestVersion;
+        public AssetBundleManifestVersion SceneAssetBundleManifestVersion;
 
         public LoadTimeout Timeout { get; private set; }
 

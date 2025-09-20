@@ -32,7 +32,6 @@ namespace DCL.Friends.UI.FriendPanel
 
         public PersistentFriendPanelOpenerController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            NotificationsBusController notificationsBusController,
             IPassportBridge passportBridge,
             IFriendsService friendsService,
             ISharedSpaceManager sharedSpaceManager,
@@ -45,8 +44,8 @@ namespace DCL.Friends.UI.FriendPanel
             this.sharedSpaceManager = sharedSpaceManager;
             this.friendsPanelController = friendsPanelController;
 
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED, FriendRequestAccepted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED, FriendRequestAccepted);
         }
 
         public override void Dispose()

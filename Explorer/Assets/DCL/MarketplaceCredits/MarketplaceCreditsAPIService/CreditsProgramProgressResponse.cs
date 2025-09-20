@@ -58,6 +58,7 @@ namespace DCL.MarketplaceCredits
     public struct GoalData
     {
         public string title;
+        public string description;
         public string thumbnail;
         public GoalProgressData progress;
         public float reward;

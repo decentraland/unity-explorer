@@ -40,8 +40,7 @@ namespace DCL.Settings.Configuration
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
-            VolumeBus volumeBus,
-            bool isVoiceChatEnabled);
+            VolumeBus volumeBus);
     }
 
     [Serializable]

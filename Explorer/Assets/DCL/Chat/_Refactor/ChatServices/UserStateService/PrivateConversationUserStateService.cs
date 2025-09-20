@@ -249,7 +249,7 @@ namespace DCL.Chat.ChatServices
             return UserIsConsideredAsOnline(userId, true) ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED;
         }
 
-        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate)
+        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
         {
             lock (onlineParticipants)
             {

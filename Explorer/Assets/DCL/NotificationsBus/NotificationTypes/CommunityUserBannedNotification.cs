@@ -6,7 +6,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class CommunityUserBannedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Banned From Community";
-        private const string NOTIFICATION_TITLE = "You've been banned from the <b>[{0}]</b> Community.";
+        private const string NOTIFICATION_TITLE = "You've been banned from the <b>{0}</b> Community.";
 
         [JsonProperty("metadata")]
         public CommunityUserBannedNotificationMetadata Metadata { get; set; }

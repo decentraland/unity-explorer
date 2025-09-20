@@ -6,7 +6,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class CommunityDeletedContenViolationNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Your Community Has Been Deleted";
-        private const string NOTIFICATION_TITLE = "The <b>[{0}]</b> Community was deleted for violating Decentraland's Guidelines.";
+        private const string NOTIFICATION_TITLE = "The <b>{0}</b> Community was deleted for violating Decentraland's Guidelines.";
 
         [JsonProperty("metadata")]
         public OwnerCommunityDeletedNotificationMetadata Metadata { get; set; }

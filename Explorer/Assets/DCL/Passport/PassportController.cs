@@ -10,6 +10,7 @@ using DCL.Chat.EventBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -117,7 +118,7 @@ namespace DCL.Passport
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ISystemClipboard systemClipboard;
         private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -176,7 +177,6 @@ namespace DCL.Passport
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            NotificationsBusController notificationBusController,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
@@ -194,11 +194,10 @@ namespace DCL.Passport
             bool includeUserBlocking,
             bool includeCommunities,
             bool isNameEditorEnabled,
-            bool isCallEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
@@ -239,10 +238,10 @@ namespace DCL.Passport
             this.enableFriendshipInteractions = enableFriendshipInteractions;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            this.isCallEnabled = isCallEnabled;
+            this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             this.systemClipboard = systemClipboard;
             this.cameraReelGalleryMessagesConfiguration = cameraReelGalleryMessagesConfiguration;
@@ -250,9 +249,9 @@ namespace DCL.Passport
             this.communitiesDataProvider = communitiesDataProvider;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
-            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((_, _) => { });
             badge3DPreviewCamera.gameObject.SetActive(false);
@@ -401,7 +400,6 @@ namespace DCL.Passport
         {
             try
             {
-                //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
                 await UniTask.Delay(500);

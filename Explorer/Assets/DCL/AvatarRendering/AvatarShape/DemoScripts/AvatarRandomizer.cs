@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using Runtime.Wearables;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ namespace DCL.AvatarRendering.DemoScripts
 
         public void AddWearable(IWearable wearable)
         {
-            if (wearable.GetCategory().Equals(WearablesConstants.Categories.BODY_SHAPE))
+            if (wearable.GetCategory().Equals(WearableCategories.Categories.BODY_SHAPE))
                 return;
 
             if (!wearable.IsCompatibleWithBodyShape(BodyShape))

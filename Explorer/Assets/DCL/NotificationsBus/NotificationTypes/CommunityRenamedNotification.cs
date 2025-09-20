@@ -6,7 +6,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class CommunityRenamedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Community Renamed";
-        private const string NOTIFICATION_TITLE = "The <b>[{0}]</b> Community has been renamed to <b>[{1}]</b>.";
+        private const string NOTIFICATION_TITLE = "The <b>{0}</b> Community has been renamed to <b>{1}</b>.";
 
         [JsonProperty("metadata")]
         public CommunityRenamedNotificationMetadata Metadata { get; set; }

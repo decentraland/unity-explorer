@@ -7,7 +7,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class CommunityEventCreatedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Community Event Added";
-        private const string NOTIFICATION_TITLE = "The <b>[{0}]</b> Community has added a new event.";
+        private const string NOTIFICATION_TITLE = "The <b>{0}</b> Community has added a new event.";
 
         [JsonProperty("metadata")]
         public CommunityEventCreatedNotificationMetadata Metadata { get; set; }

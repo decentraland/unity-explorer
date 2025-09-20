@@ -32,13 +32,13 @@ namespace DCL.Notifications.NotificationsMenu
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
             NotificationType.INTERNAL_ARRIVED_TO_DESTINATION,
+            NotificationType.COMMUNITY_VOICE_CHAT_STARTED,
             NotificationType.INTERNAL_DEFAULT_SUCCESS,
-            NotificationType.INTERNAL_SERVER_ERROR
+            NotificationType.INTERNAL_SERVER_ERROR,
         };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
-        private readonly NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly IWebRequestController webRequestController;
@@ -60,7 +60,6 @@ namespace DCL.Notifications.NotificationsMenu
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
-            NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             IWebRequestController webRequestController,
@@ -72,7 +71,6 @@ namespace DCL.Notifications.NotificationsMenu
 
             this.view = view;
             this.notificationsRequestController = notificationsRequestController;
-            this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.webRequestController = webRequestController;
@@ -83,7 +81,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
-            notificationsBusController.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
             this.view.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
 
             if (web3IdentityCache.Identity is { IsExpired: false })
@@ -266,7 +264,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
-            notificationsBusController.ClickNotification(notificationType, notification);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
         private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,

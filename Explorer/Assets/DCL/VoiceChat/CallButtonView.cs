@@ -6,16 +6,9 @@ namespace DCL.VoiceChat
 {
     public class CallButtonView : MonoBehaviour
     {
-        [field: SerializeField]
-        public Button CallButton { get; private set; }
-
-        [field: SerializeField]
-        public GameObject TooltipParent { get; private set; }
-
-        [field: SerializeField]
-        public CanvasGroup TooltipParentCanvas { get; private set; }
-
-        [field: SerializeField]
-        public TMP_Text TooltipText { get; private set; }
+        [field: SerializeField] public Button CallButton { get; private set; } = null!;
+        [field: SerializeField] public GameObject TooltipParent { get; private set; } = null!;
+        [field: SerializeField] public CanvasGroup TooltipParentCanvas { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text TooltipText { get; private set; } = null!;
     }
 }

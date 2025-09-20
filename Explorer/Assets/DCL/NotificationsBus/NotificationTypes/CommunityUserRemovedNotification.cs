@@ -6,7 +6,7 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class CommunityUserRemovedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Removed from Community";
-        private const string NOTIFICATION_TITLE = "You've been removed from the <b>[{0}]</b> Community.";
+        private const string NOTIFICATION_TITLE = "You've been removed from the <b>{0}</b> Community.";
 
         [JsonProperty("metadata")]
         public CommunityUserRemovedNotificationMetadata Metadata { get; set; }

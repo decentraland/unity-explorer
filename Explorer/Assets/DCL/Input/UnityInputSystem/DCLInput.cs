@@ -2277,19 +2277,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""OpenChat"",
-                    ""type"": ""Button"",
-                    ""id"": ""430e31be-9d28-4c75-a904-851e595a70c1"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""OpenChatCommandLine"",
                     ""type"": ""Button"",
                     ""id"": ""df66082b-5afe-4795-a9eb-e5d25d40111e"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2468,17 +2459,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""936aa25d-52b8-4067-ab14-76c9c847d3f5"",
-                    ""path"": ""<Keyboard>/t"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""OpenChat"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""978158e8-1961-43a6-98e4-754ab341d611"",
                     ""path"": ""<Keyboard>/slash"",
                     ""interactions"": """",
@@ -2531,7 +2511,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Slot 1"",
                     ""type"": ""Button"",
                     ""id"": ""3f73f314-6df3-499a-97a9-cc7a8f53da15"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2959,7 +2939,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Customize"",
                     ""type"": ""Button"",
                     ""id"": ""309cfaf7-2700-4db1-8e05-41175ff3ad09"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -3895,7 +3875,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsole = m_Shortcuts.FindAction("ToggleSceneDebugConsole", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsoleLarger = m_Shortcuts.FindAction("ToggleSceneDebugConsoleLarger", throwIfNotFound: true);
-        m_Shortcuts_OpenChat = m_Shortcuts.FindAction("OpenChat", throwIfNotFound: true);
         m_Shortcuts_OpenChatCommandLine = m_Shortcuts.FindAction("OpenChatCommandLine", throwIfNotFound: true);
         m_Shortcuts_Controls = m_Shortcuts.FindAction("Controls", throwIfNotFound: true);
         m_Shortcuts_FriendPanel = m_Shortcuts.FindAction("FriendPanel", throwIfNotFound: true);
@@ -4944,7 +4923,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleNametags;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsole;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsoleLarger;
-    private readonly InputAction m_Shortcuts_OpenChat;
     private readonly InputAction m_Shortcuts_OpenChatCommandLine;
     private readonly InputAction m_Shortcuts_Controls;
     private readonly InputAction m_Shortcuts_FriendPanel;
@@ -5004,10 +4982,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Shortcuts/ToggleSceneDebugConsoleLarger".
         /// </summary>
         public InputAction @ToggleSceneDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsoleLarger;
-        /// <summary>
-        /// Provides access to the underlying input action "Shortcuts/OpenChat".
-        /// </summary>
-        public InputAction @OpenChat => m_Wrapper.m_Shortcuts_OpenChat;
         /// <summary>
         /// Provides access to the underlying input action "Shortcuts/OpenChatCommandLine".
         /// </summary>
@@ -5083,9 +5057,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleSceneDebugConsoleLarger.started += instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.performed += instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.canceled += instance.OnToggleSceneDebugConsoleLarger;
-            @OpenChat.started += instance.OnOpenChat;
-            @OpenChat.performed += instance.OnOpenChat;
-            @OpenChat.canceled += instance.OnOpenChat;
             @OpenChatCommandLine.started += instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.performed += instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.canceled += instance.OnOpenChatCommandLine;
@@ -5142,9 +5113,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleSceneDebugConsoleLarger.started -= instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.performed -= instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.canceled -= instance.OnToggleSceneDebugConsoleLarger;
-            @OpenChat.started -= instance.OnOpenChat;
-            @OpenChat.performed -= instance.OnOpenChat;
-            @OpenChat.canceled -= instance.OnOpenChat;
             @OpenChatCommandLine.started -= instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.performed -= instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.canceled -= instance.OnOpenChatCommandLine;
@@ -6412,13 +6380,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleSceneDebugConsoleLarger(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "OpenChat" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnOpenChat(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "OpenChatCommandLine" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

@@ -67,11 +67,10 @@ namespace DCL.Friends.UI.FriendPanel
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
             bool includeUserBlocking,
-            bool includeCall,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.chatEventBus = chatEventBus;
@@ -104,8 +103,7 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     chatEventBus,
                     sharedSpaceManager,
-                    includeCall,
-                    voiceChatCallStatusService);
+                    voiceChatOrchestrator);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,

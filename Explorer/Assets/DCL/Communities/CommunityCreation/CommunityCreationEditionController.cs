@@ -622,7 +622,7 @@ namespace DCL.Communities.CommunityCreation
         private void ShowModerationErrorModal(CommunityModerationResponse communityModerationData)
         {
             string formattedErrorMessage = string.Empty;
-            if (communityModerationData.data != null)
+            if (communityModerationData.data is { issues: not null })
             {
                 if (communityModerationData.data.issues.name is { Length: > 0 })
                     formattedErrorMessage += $"COMMUNITY NAME: {string.Join(", ", communityModerationData.data.issues.name.Select(s => $"[{s}]"))}\n\n";

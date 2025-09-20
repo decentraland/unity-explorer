@@ -19,7 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -35,15 +35,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IRealmNavigator realmNavigator,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
-            bool includeCall,
-            IVoiceChatCallStatusService voiceChatCallStatusService) : base(view, requestManager)
+            IVoiceChatOrchestrator voiceChatOrchestrator) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;

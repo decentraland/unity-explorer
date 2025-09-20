@@ -101,6 +101,12 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureConsumer))]
         private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent, ref VideoTextureConsumer videoTextureConsumer, [Data] float dt)
         {
+            var address = MediaAddress.New(sdkComponent.Src!);
+
+            //Streams rely on livekit room being active; which can only be in we are on the same scene. Lets not create media that is wrong
+            if (address.IsLivekitAddress(out _) && !sceneStateProvider.IsCurrent)
+                return;
+
             videoTextureConsumer.IsDirty = true;
             CreateMediaPlayer(dt, entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
         }
@@ -108,6 +114,7 @@ namespace DCL.SDKComponents.MediaStream
         private void CreateMediaPlayer(float dt, Entity entity, string url, bool hasVolume, float volume)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
+
 
             MediaPlayerComponent component = CreateMediaPlayerComponent(entity, url, hasVolume, volume);
 
