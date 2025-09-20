@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities.Extensions;
 using System;
 using System.Threading;
 using Utility;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -87,7 +87,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
                 if (!result.Success)
                 {
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MY_COMMUNITIES_LOADING_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(MY_COMMUNITIES_LOADING_ERROR_MESSAGE));
                     return;
                 }
 

@@ -6,11 +6,11 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace DCL.UI
 {

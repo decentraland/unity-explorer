@@ -9,6 +9,7 @@ using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Communities.CommunitiesCard
 {

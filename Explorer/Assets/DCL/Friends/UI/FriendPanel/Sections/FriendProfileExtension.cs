@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI.Controls.Configs;
+using DCL.Utilities;
 using DCL.Web3;
 
 namespace DCL.Friends.UI.FriendPanel.Sections

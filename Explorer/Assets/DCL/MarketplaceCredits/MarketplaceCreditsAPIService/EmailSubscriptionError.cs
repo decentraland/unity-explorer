@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.MarketplaceCreditsAPIService
+namespace DCL.MarketplaceCredits
 {
 	public enum EmailSubscriptionError
 	{
@@ -8,7 +8,7 @@ namespace DCL.MarketplaceCreditsAPIService
 		EmptyError,
 		Cancelled
 	}
-    
+
 	[Serializable]
 	public class EmailSubscriptionErrorResponse
 	{

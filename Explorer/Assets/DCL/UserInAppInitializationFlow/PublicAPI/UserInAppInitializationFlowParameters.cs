@@ -1,5 +1,5 @@
 using Arch.Core;
-using Utility.Types;
+using DCL.Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
 {

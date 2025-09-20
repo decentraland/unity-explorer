@@ -14,13 +14,13 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
 using Utility;
-using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
 {

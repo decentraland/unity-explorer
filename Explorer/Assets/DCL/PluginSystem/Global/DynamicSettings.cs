@@ -1,3 +1,4 @@
+using DCL.Communities.CommunitiesCard.Members;
 using DCL.DebugUtilities;
 using DCL.Input;
 using DCL.Multiplayer.Movement.Settings;

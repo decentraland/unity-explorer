@@ -15,6 +15,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -23,7 +24,6 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Communities.CommunityCreation
 {

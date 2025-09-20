@@ -264,7 +264,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.ClickNotification(notificationType, notification);
+            NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
         private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,

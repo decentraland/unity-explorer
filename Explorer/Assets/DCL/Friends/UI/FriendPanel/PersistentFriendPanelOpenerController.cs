@@ -7,12 +7,12 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Friends.UI.FriendPanel
 {

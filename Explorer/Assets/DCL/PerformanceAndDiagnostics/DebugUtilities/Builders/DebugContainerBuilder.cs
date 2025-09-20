@@ -1,8 +1,8 @@
 ﻿using DCL.DebugUtilities.Views;
+using DCL.Utility.Types;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
-using Utility.Types;
 
 namespace DCL.DebugUtilities
 {

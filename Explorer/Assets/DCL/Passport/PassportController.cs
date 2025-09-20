@@ -49,10 +49,10 @@ using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI.Controls.Configs;
+using DCL.Utility.Types;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Passport
 {

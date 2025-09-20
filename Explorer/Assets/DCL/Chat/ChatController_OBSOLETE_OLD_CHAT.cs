@@ -32,6 +32,7 @@ using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using Utility;
 using Utility.Arch;
 using DCL.VoiceChat;
@@ -44,7 +45,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
-using Utility.Types;
 using ChatMessage = DCL.Chat.History.ChatMessage;
 // ReSharper disable InconsistentNaming
 

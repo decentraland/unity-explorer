@@ -25,6 +25,7 @@ using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
@@ -34,7 +35,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace DCL.PluginSystem.Global
 {

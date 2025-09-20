@@ -65,7 +65,6 @@ namespace DCL.ExplorePanel
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
-            NotificationsBusController notificationBusController,
             IInputBlock inputBlock,
             bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)
@@ -78,8 +77,8 @@ namespace DCL.ExplorePanel
             this.profileWidgetController = profileWidgetController;
             dclInput = DCLInput.Instance;
             this.profileMenuController = profileMenuController;
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;

@@ -16,6 +16,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
@@ -23,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
-using Utility.Types;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
 namespace DCL.Communities.CommunitiesCard.Members

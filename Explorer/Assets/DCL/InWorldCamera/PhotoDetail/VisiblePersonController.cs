@@ -16,6 +16,7 @@ using UnityEngine.Pool;
 using UnityEngine.UI;
 using DCL.Passport;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail

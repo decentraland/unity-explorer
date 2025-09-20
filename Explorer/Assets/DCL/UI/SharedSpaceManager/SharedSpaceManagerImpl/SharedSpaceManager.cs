@@ -66,7 +66,7 @@ namespace DCL.UI.SharedSpaceManager
         private void OnQuickActionEmotePlayed()
         {
             if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace)
-                lastQuickEmoteTime = Time.time;
+                lastQuickEmoteTime = UnityEngine.Time.time;
         }
 
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
@@ -541,7 +541,7 @@ namespace DCL.UI.SharedSpaceManager
         {
             bool isPanelVisible = registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace;
 
-            return !isPanelVisible && lastQuickEmoteTime + QUICK_EMOTE_LOCK_TIME > Time.time;
+            return !isPanelVisible && lastQuickEmoteTime + QUICK_EMOTE_LOCK_TIME > UnityEngine.Time.time;
         }
     }
 }

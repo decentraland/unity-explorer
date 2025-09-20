@@ -69,7 +69,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MainUIView mainUIView,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,

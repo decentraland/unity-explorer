@@ -10,13 +10,13 @@ using SuperScrollView;
 using UnityEngine;
 using DCL.UI.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using Nethereum.Siwe.Core.Recap;
 using System;
 using System.Threading;
 using UnityEngine.UI;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {

@@ -48,12 +48,13 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.Settings.ModuleControllers;
+using DCL.Utility;
+using DCL.Utility.Types;
 #if UNITY_EDITOR
 #endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
-using Utility.Types;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
 namespace Global.Dynamic

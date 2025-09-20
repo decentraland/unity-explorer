@@ -1,9 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.Utilities
 {

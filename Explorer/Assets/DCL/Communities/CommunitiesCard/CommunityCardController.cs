@@ -26,6 +26,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -36,7 +37,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Communities.CommunitiesCard
 {

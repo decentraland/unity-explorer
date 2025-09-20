@@ -18,6 +18,7 @@ using DCL.UI.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -26,7 +27,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
 namespace DCL.UI

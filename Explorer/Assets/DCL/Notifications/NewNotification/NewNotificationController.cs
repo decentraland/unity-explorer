@@ -48,7 +48,7 @@ namespace DCL.Notifications.NewNotification
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
+            NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
         }
@@ -83,7 +83,7 @@ namespace DCL.Notifications.NewNotification
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
             StopAnimation();
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.ClickNotification(notificationType, notification);
+            NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
         private void QueueNewNotification(INotification newNotification)

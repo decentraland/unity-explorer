@@ -1,7 +1,7 @@
 using System;
 using Utility.Times;
 
-namespace DCL.NotificationsBusController.NotificationTypes
+namespace DCL.NotificationsBus.NotificationTypes
 {
     public class CommunityVoiceChatStartedNotification : NotificationBase
     {

@@ -13,12 +13,12 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
-using Utility.Types;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 

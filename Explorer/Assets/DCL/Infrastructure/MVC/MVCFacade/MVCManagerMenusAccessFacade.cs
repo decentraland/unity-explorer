@@ -48,7 +48,7 @@ namespace MVC
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
-        private CommunityPlayerEntryContextMenu communityPlayerEntryContextMenu;
+        private CommunityPlayerEntryContextMenu? communityPlayerEntryContextMenu;
         private ChatOptionsContextMenuController chatOptionsContextMenuController;
         private CommunityContextMenuController communityContextMenuController;
 
@@ -162,8 +162,8 @@ namespace MVC
 
         public async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
         {
-            try { await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct); }
-            catch (Exception ex) { UnityEngine.Debug.LogError($"Failed to open passport for user {userId}: {ex.Message}"); }
+            try { await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct); }
+            catch (Exception ex) { Debug.LogError($"Failed to open passport for user {userId}: {ex.Message}"); }
         }
         public async UniTask ShowGenericContextMenuAsync(GenericContextMenuParameter parameter)
         {

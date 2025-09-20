@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using System;
 using System.Net;
@@ -9,7 +10,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
-using Utility.Types;
 
 namespace DCL.MarketplaceCredits
 {
@@ -149,7 +149,7 @@ namespace DCL.MarketplaceCredits
                         if (!string.IsNullOrEmpty(errorResponse?.message))
                         {
                             return EnumResult<EmailSubscriptionError>.ErrorResult(
-                                EmailSubscriptionError.HandledError, 
+                                EmailSubscriptionError.HandledError,
                                 errorResponse.message);
                         }
                     }
@@ -159,7 +159,7 @@ namespace DCL.MarketplaceCredits
                         // JSON parsing failed, fall through to generic error
                     }
                 }
-        
+
                 // All other errors return generic error
                 return EnumResult<EmailSubscriptionError>.ErrorResult(EmailSubscriptionError.EmptyError);
             }
