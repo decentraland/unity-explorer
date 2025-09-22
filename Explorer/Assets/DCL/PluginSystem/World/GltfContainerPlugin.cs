@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, ILaunchMode launchMode, bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, ILaunchMode launchMode, bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus, IGltfContainerAssetsCache assetsCache)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.World
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
-            assetsCache = new GltfContainerAssetsCache(poolsRegistry);
+            this.assetsCache = (GltfContainerAssetsCache)assetsCache;
 
             cacheCleaner.Register(assetsCache);
         }

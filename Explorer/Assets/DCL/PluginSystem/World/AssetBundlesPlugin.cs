@@ -7,10 +7,12 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
+using ECS.SceneLifeCycle.Systems.InitialSceneState;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using SceneRunner.Scene;
 using System;
 using System.Buffers;
@@ -39,10 +41,12 @@ namespace DCL.PluginSystem.World
         private readonly ArrayPool<byte> buffersPool;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly URLDomain assetBundleURL;
+        private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
+
 
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
-            URLDomain assetBundleURL)
+            URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
@@ -51,6 +55,7 @@ namespace DCL.PluginSystem.World
             this.assetBundleURL = assetBundleURL;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
+            this.gltfContainerAssetsCache = gltfContainerAssetsCache;
 
             cacheCleaner.Register(assetBundleCache);
         }
@@ -74,6 +79,7 @@ namespace DCL.PluginSystem.World
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);
+            ResolveInitialSceneStateSystem.InjectToWorld(ref builder, gltfContainerAssetsCache);
         }
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
