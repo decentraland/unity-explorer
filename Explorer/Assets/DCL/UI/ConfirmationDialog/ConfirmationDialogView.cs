@@ -47,13 +47,23 @@ namespace DCL.UI.ConfirmationDialog
             confirmButtonText.text = dialogData.ConfirmButtonText;
             rimImage.enabled = dialogData.ShowImageRim;
             quitImage.SetActive(dialogData.ShowQuitImage);
-            mainImage.SetImage(dialogData.Image, true);
 
             bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.Address);
 
-            rimImage.gameObject.SetActive(!hasProfileImage);
             profilePictureView.gameObject.SetActive(hasProfileImage);
             profileActionIcon.sprite = dialogData.Image;
+
+            if (dialogData.Image == null)
+            {
+                mainImage.gameObject.SetActive(false);
+                rimImage.gameObject.SetActive(false);
+            }
+            else
+            {
+                mainImage.gameObject.SetActive(true);
+                rimImage.gameObject.SetActive(!hasProfileImage);
+                mainImage.SetImage(dialogData.Image, true);
+            }
 
             if (!hasProfileImage) return;
 

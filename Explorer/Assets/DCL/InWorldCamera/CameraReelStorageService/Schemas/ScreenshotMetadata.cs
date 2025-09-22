@@ -41,6 +41,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
         public string userName;
         public string userAddress;
         public bool isGuest;
+        public bool isEmoting;
 
         public string[] wearables;
     }

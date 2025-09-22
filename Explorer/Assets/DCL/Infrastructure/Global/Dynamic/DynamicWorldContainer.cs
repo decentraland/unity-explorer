@@ -1031,7 +1031,8 @@ namespace Global.Dynamic
                     staticContainer.RealmData,
                     sharedSpaceManager,
                     identityCache,
-                    staticContainer.LoadingStatus));
+                    staticContainer.LoadingStatus,
+                    hyperlinkTextFormatter));
             }
 
             if (includeCommunities)
