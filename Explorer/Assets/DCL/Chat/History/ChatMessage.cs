@@ -6,7 +6,7 @@ namespace DCL.Chat.History
     public readonly struct ChatMessage : IEquatable<ChatMessage>
     {
         private const string DCL_SYSTEM_SENDER = "DCL System";
-        
+
         public readonly string Message;
         public readonly string MessageId;
         public readonly string SenderValidatedName;
@@ -37,8 +37,8 @@ namespace DCL.Chat.History
             // NOTE: pseudo-unique ID generation for non-system messages
             MessageId = isSystemMessage
                 ? Guid.NewGuid().ToString()
-                : GetId(senderWalletAddress, sentTimestamp);
-            
+                : ChatUtils.GetId(senderWalletAddress, sentTimestamp);
+
             Message = message;
             SenderValidatedName = senderValidatedName;
             SenderWalletAddress = senderWalletAddress;
@@ -69,16 +69,17 @@ namespace DCL.Chat.History
         public override bool Equals(object? obj) => obj is ChatMessage other && Equals(other);
         public override int GetHashCode() => (MessageId != null ? MessageId.GetHashCode() : 0);
 
-        /// <summary>
-        ///     Creates a composite, pseudo-unique identifier for a chat message.
-        /// </summary>
-        private static string GetId(string walletId, double timestampRaw)
-        {
-            return $"{walletId}:{timestampRaw.ToString(CultureInfo.InvariantCulture)}";
-        }
-        
         public override string ToString() =>
             IsSystemMessage ? $"[System] {Message}" :
             $"[{SenderValidatedName}] {Message}";
+    }
+
+    public static class ChatUtils
+    {
+        /// <summary>
+        ///     Creates a composite, pseudo-unique identifier for a chat message.
+        /// </summary>
+        public static string GetId(string walletId, double timestampRaw) =>
+            $"{walletId}:{timestampRaw.ToString(CultureInfo.InvariantCulture)}";
     }
 }

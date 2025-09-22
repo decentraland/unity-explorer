@@ -4,6 +4,9 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -23,9 +26,6 @@ using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
-using DCL.Chat.Commands;
-using DCL.Chat.History;
-using DCL.Chat.MessageBus;
 using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -382,7 +382,8 @@ namespace DCL.Minimap
             return () => chatMessagesBus.Send(
                 ChatChannel.NEARBY_CHANNEL,
                 $"/{reloadSceneCommand.Command}",
-                ChatMessageOrigin.MINIMAP
+                ChatMessageOrigin.MINIMAP,
+                DateTime.UtcNow.ToOADate()
             );
         }
 

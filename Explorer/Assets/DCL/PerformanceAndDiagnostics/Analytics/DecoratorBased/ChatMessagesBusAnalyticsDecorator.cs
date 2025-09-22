@@ -37,13 +37,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void ReEmit(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage obj) =>
             MessageAdded?.Invoke(channelId, channelType, obj);
 
-        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, string topic)
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp, string topic)
         {
-            core.Send(channel, message, origin, topic);
+            core.Send(channel, message, origin, timestamp, topic);
 
             JsonObject jsonObject = new JsonObject
                 {
                     { "is_command", message[0] == '/' },
+                    { "message_id", selfProfile is { OwnProfile: not null } ? ChatUtils.GetId(selfProfile.OwnProfile.WalletId, timestamp) : 0 },
                     { "length", message.Length },
                     { "origin", origin.ToStringValue() },
                     { "is_mention", CheckIfIsMention(message)},
