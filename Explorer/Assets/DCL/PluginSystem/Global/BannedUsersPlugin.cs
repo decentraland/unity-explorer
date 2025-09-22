@@ -16,6 +16,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly ECSBannedScene bannedSceneController;
         private readonly ILoadingStatus loadingStatus;
+        private readonly bool includeBannedUsersFromScene;
 
         private PlayerBannedScenesController playerBannedScenesController;
 
@@ -23,23 +24,33 @@ namespace DCL.PluginSystem.Global
             IRoomHub roomHub,
             ISelfProfile selfProfile,
             ECSBannedScene bannedSceneController,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            bool includeBannedUsersFromScene)
         {
             this.roomHub = roomHub;
             this.selfProfile = selfProfile;
             this.bannedSceneController = bannedSceneController;
             this.loadingStatus = loadingStatus;
+            this.includeBannedUsersFromScene = includeBannedUsersFromScene;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub));
-            playerBannedScenesController = new PlayerBannedScenesController(roomHub, selfProfile, bannedSceneController, loadingStatus);
+            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, includeBannedUsersFromScene));
+
+            if (includeBannedUsersFromScene)
+                playerBannedScenesController = new PlayerBannedScenesController(roomHub, selfProfile, bannedSceneController, loadingStatus);
+
             return UniTask.CompletedTask;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            if (!includeBannedUsersFromScene)
+                return;
+
             BannedUsersSystem.InjectToWorld(ref builder);
+        }
 
         public void Dispose() =>
             playerBannedScenesController.Dispose();

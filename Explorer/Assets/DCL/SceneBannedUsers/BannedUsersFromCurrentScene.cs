@@ -11,16 +11,25 @@ namespace DCL.SceneBannedUsers
     public partial class BannedUsersFromCurrentScene
     {
         private readonly IRoomHub roomHub;
+        private readonly bool includeBannedUsersFromScene;
 
         private CancellationTokenSource checkIfPlayerIsBannedCts;
 
-        public BannedUsersFromCurrentScene(IRoomHub roomHub)
+        public BannedUsersFromCurrentScene(
+            IRoomHub roomHub,
+            bool includeBannedUsersFromScene)
         {
             this.roomHub = roomHub;
+            this.includeBannedUsersFromScene = includeBannedUsersFromScene;
         }
 
         public bool IsUserBanned(string userId)
         {
+            if (!includeBannedUsersFromScene)
+                return false;
+
+            return true;
+
             if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
                 return false;
 
