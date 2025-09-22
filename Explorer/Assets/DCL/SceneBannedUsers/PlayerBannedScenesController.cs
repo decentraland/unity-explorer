@@ -31,35 +31,14 @@ namespace DCL.SceneBannedUsers
             this.bannedSceneController = bannedSceneController;
             this.loadingStatus = loadingStatus;
 
-            //roomHub.IslandRoom().ConnectionStateChanged += OnConnectionStateChanged;
-            //roomHub.SceneRoom().Room().ConnectionStateChanged += OnConnectionStateChanged;
             roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdated;
             roomHub.SceneRoom().Room().RoomMetadataChanged += OnRoomMetadataChanged;
         }
 
         public void Dispose()
         {
-            //roomHub.IslandRoom().ConnectionStateChanged -= OnConnectionStateChanged;
-            //roomHub.SceneRoom().Room().ConnectionStateChanged -= OnConnectionStateChanged;
             roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectionUpdated;
             roomHub.SceneRoom().Room().RoomMetadataChanged -= OnRoomMetadataChanged;
-        }
-
-        private void OnConnectionStateChanged(ConnectionState connectionState)
-        {
-            Debug.Log($"SANTI LOG -> connection state changed: [{connectionState.ToString()}]");
-
-            if (connectionState == ConnectionState.ConnConnected)
-            {
-                checkIfPlayerIsBannedCts = checkIfPlayerIsBannedCts.SafeRestart();
-                CheckIfPlayerIsBannedAsync(checkIfPlayerIsBannedCts.Token).Forget();
-            }
-            else
-            {
-                Debug.Log("SANTI LOG -> ALL BANNED SCENE COMPONENTS REMOVED!!");
-                checkIfPlayerIsBannedCts.SafeCancelAndDispose();
-                bannedSceneController.RemoveAllBannedSceneComponents();
-            }
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)

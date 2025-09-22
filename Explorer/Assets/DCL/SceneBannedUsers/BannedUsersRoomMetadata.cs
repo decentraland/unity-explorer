@@ -3,7 +3,7 @@
 namespace DCL.SceneBannedUsers
 {
     [Serializable]
-    public struct BannedUsersMetadata
+    public struct BannedUsersRoomMetadata
     {
         public string[] bannedAddresses;
     }

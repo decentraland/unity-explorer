@@ -24,20 +24,17 @@ namespace DCL.SceneBannedUsers
             if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
                 return false;
 
-            // TODO: Remove it!!
-            return true;
-
             string roomMetadata = roomHub.SceneRoom().Room().Info.Metadata;
 
             if (string.IsNullOrEmpty(roomMetadata))
                 return false;
 
-            BannedUsersMetadata bannedUsers = JsonConvert.DeserializeObject<BannedUsersMetadata>(roomMetadata);
+            BannedUsersRoomMetadata bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
 
-            if (bannedUsers.bannedAddresses == null)
+            if (bannedUsersRoomMetadata.bannedAddresses == null)
                 return false;
 
-            foreach (string wallet in bannedUsers.bannedAddresses)
+            foreach (string wallet in bannedUsersRoomMetadata.bannedAddresses)
             {
                 if (string.Equals(wallet, userId, StringComparison.OrdinalIgnoreCase))
                     return true;
