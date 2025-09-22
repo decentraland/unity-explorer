@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
@@ -10,15 +9,12 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Character;
 using DCL.Diagnostics;
-using DCL.Ipfs;
 using DCL.Profiles;
 using ECS;
 using ECS.Abstract;
-using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using PortableExperiences.Controller;
 using System;
@@ -50,11 +46,6 @@ namespace DCL.SmartWearables
         /// </summary>
         private readonly HashSet<string> loadedScenes = new ();
 
-        /// <summary>
-        /// IDs of the scenes waiting to be unloaded.
-        /// </summary>
-        private readonly HashSet<string> toUnload = new ();
-
         public SmartWearableSystem(World world, WearableStorage wearableStorage, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController) : base(world)
         {
             this.wearableStorage = wearableStorage;
@@ -68,6 +59,7 @@ namespace DCL.SmartWearables
 
             backpackEventBus.EquipWearableEvent += OnEquipWearable;
             backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
+            portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
 
             HandleInitialEquipmentAsync().Forget();
         }
@@ -75,7 +67,6 @@ namespace DCL.SmartWearables
         protected override void Update(float t)
         {
             ResolveScenePromises();
-            UnloadSmartWearableScenesQuery(World);
         }
 
         private async UniTask HandleInitialEquipmentAsync()
@@ -103,7 +94,8 @@ namespace DCL.SmartWearables
 
         private void OnEquipWearable(IWearable wearable)
         {
-            if (!IsSmartWearable(wearable) || pendingScenes.ContainsKey(wearable.DTO.id) || loadedScenes.Contains(wearable.DTO.id)) return;
+            string id = wearable.DTO.Metadata.id;
+            if (!IsSmartWearable(wearable) || pendingScenes.ContainsKey(id) || loadedScenes.Contains(id)) return;
 
             BeginLoadingSmartWearableScene(wearable);
         }
@@ -112,13 +104,15 @@ namespace DCL.SmartWearables
         {
             if (!IsSmartWearable(wearable)) return;
 
-            if (pendingScenes.Remove(wearable.DTO.id, out var promise))
+            string id = wearable.DTO.Metadata.id;
+
+            if (pendingScenes.Remove(id, out var promise))
             {
                 promise.ForgetLoading(World);
                 return;
             }
 
-            if (!loadedScenes.Remove(wearable.DTO.id)) return;
+            if (!loadedScenes.Remove(id)) return;
 
             UnloadSmartWearableScene(wearable);
         }
@@ -138,13 +132,13 @@ namespace DCL.SmartWearables
         private void BeginLoadingSmartWearableScene(IWearable smartWearable)
         {
             AvatarAttachmentDTO.MetadataBase metadata = smartWearable.DTO.Metadata;
-            ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable {metadata.id}:{metadata.name}. Loading scene...");
+            ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{metadata.name}'. Loading scene...");
 
             var partition = PartitionComponent.TOP_PRIORITY;
             var intention = GetSmartWearableSceneIntention.Create(smartWearable, partition);
             var promise = ScenePromise.Create(World, intention, partition);
 
-            pendingScenes.Add(smartWearable.DTO.id, promise);
+            pendingScenes.Add(metadata.id, promise);
         }
 
         private void ResolveScenePromises()
@@ -160,7 +154,7 @@ namespace DCL.SmartWearables
                 if (!result.Succeeded)
                 {
                     if (result.Exception != null) ReportHub.LogError(GetReportCategory(), result.Exception);
-                    return;
+                    continue;
                 }
 
                 Entity scene = World.Create(
@@ -176,40 +170,36 @@ namespace DCL.SmartWearables
             }
 
             foreach (string id in resolved) pendingScenes.Remove(id);
-            resolved.Clear();
         }
 
         private void AddPortableExperience(IWearable smartWearable, Entity scene)
         {
+            string id = smartWearable.DTO.Metadata.id;
+
             var metadata = new PortableExperienceMetadata
             {
                 Ens = string.Empty,
-                // Notice this is not the ID we use in other places, this is the Ens.
-                Id = smartWearable.DTO.Metadata.id,
+                Id = id,
                 Name = smartWearable.DTO.Metadata.name,
                 ParentSceneId = "avatar"
             };
             World.Add(scene, metadata);
 
-            portableExperiencesController.AddPortableExperience(new ENS(smartWearable.DTO.id), scene);
+            portableExperiencesController.AddPortableExperience(id, scene);
+        }
+
+        private void OnPortableExperienceUnloaded(string id)
+        {
+            loadedScenes.Remove(id);
         }
 
         private void UnloadSmartWearableScene(IWearable smartWearable)
         {
             AvatarAttachmentDTO.MetadataBase metadata = smartWearable.DTO.Metadata;
-            ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable {metadata.id}:{metadata.name}. Unloading scene...");
+            ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{metadata.name}'. Unloading scene...");
 
-            toUnload.Add(smartWearable.DTO.id);
-        }
-
-        [Query]
-        [All(typeof(SceneDefinitionComponent))]
-        [None(typeof(DeleteEntityIntention))]
-        private void UnloadSmartWearableScenes(Entity entity, SmartWearableId id)
-        {
-            if (!toUnload.Remove(id.Value)) return;
-
-            World.Add<DeleteEntityIntention>(entity);
+            string ens = smartWearable.DTO.Metadata.id;
+            portableExperiencesController.UnloadPortableExperienceById(ens);
         }
     }
 }

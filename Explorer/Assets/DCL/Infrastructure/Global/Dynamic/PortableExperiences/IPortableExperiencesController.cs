@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using Global.Dynamic;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -10,21 +11,25 @@ namespace PortableExperiences.Controller
 {
     public interface IPortableExperiencesController
     {
-        Dictionary<ENS, Entity> PortableExperienceEntities { get; }
+        event Action<string> PortableExperienceLoaded;
+
+        event Action<string> PortableExperienceUnloaded;
+
+        Dictionary<string, Entity> PortableExperienceEntities { get; }
 
         GlobalWorld GlobalWorld { get; set; }
 
-        bool CanKillPortableExperience(ENS ens);
+        bool CanKillPortableExperience(string id);
 
         UniTask<SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false);
 
-        ExitResponse UnloadPortableExperienceByEns(ENS ens);
+        ExitResponse UnloadPortableExperienceById(string id);
 
         List<SpawnResponse> GetAllPortableExperiences();
 
         void UnloadAllPortableExperiences();
 
-        void AddPortableExperience(ENS ens, Entity portableExperience);
+        void AddPortableExperience(string id, Entity portableExperience);
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         public struct SpawnResponse
