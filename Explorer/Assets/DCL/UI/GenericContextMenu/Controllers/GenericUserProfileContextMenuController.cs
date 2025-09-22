@@ -355,8 +355,6 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private void OnSocialEmoteButtonClicked(string userId)
         {
-            // TODO: Disable Emote button if not clicking on a avatar
-            //chatEventBus.InsertText("");
             // FriendsPushNotifications
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.EmotesWheel,
                                          new EmotesWheelParams()

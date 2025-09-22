@@ -228,6 +228,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     emoteComponent.EmoteUrn = emoteId;
+                    emoteComponent.Metadata = (EmoteDTO.EmoteMetadataDto)emote.DTO.Metadata;
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 

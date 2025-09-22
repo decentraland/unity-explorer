@@ -10,6 +10,7 @@ namespace DCL.AvatarRendering.Emotes
         public EmoteReferences? CurrentEmoteReference;
         public int CurrentAnimationTag;
         public bool StopEmote;
+        public EmoteDTO.EmoteMetadataDto Metadata;
 
         public bool IsPlayingEmote => CurrentAnimationTag == AnimationHashes.EMOTE || CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
 
