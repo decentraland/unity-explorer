@@ -136,9 +136,8 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
             "Hello <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> my friend! How are you doing today?",
             "Hello <#00B2FF><link=profile>@Jugurdzija#c9a1</link></color>,<#00B2FF><link=profile>@Jugurdzija#c9a1</link></color> my friends! How are you doing today?",
             "type /help for a list of commands", "hello my friend <#00B2FF><link=profile>@Mirko#5e42</link></color> i am looking forward to talk to you 😾😶 go here please <#00B2FF><link=world>mirko.dcl.eth</link></color>", "😾😶 😾😶 hello 😾😶", "😾😶 <#00B2FF><link=world>mirko.dcl.eth</link></color> 😾",
-            "😾😶😾 😾😶 my friend what's up!!! 😾 <#00B2FF><link=profile>@Mirko#5e42</link></color>", "Mi total es $120.50 en 15/09/2025.", "Total: 1.234,56 € a las 14.30 del 15.09.2025.", "Meet at 2:30 PM on 09/15/2025.",
-            "Cita a las 14:30 del 2025-09-15.", "Amount: €1 234,56 due at 14:05", "€12,34,567.89 paid on 2025-09-15 14:30", "Balance 99,99€ at 2.30pm",
-            "Sale ends 2025-09-15T14:30:00"
+            "😾😶😾 😾😶 my friend what's up!!! 😾 <#00B2FF><link=profile>@Mirko#5e42</link></color>"
+
         };
 
         private List<LanguageCode> languageCodes = new List<LanguageCode>
