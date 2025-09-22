@@ -17,6 +17,7 @@ namespace DCL.UI.CustomInputField
     {
         private bool isControlPressed;
         private bool isDirty;
+        private int lastCaretPosition = -1;
         private readonly StringBuilder stringBuilder = new ();
         private Color32 mentionColor { get; set; } = new (0, 179, 255, 255);
 
@@ -44,8 +45,9 @@ namespace DCL.UI.CustomInputField
         {
             base.LateUpdate();
 
-            if (!isDirty || string.IsNullOrEmpty(text)) return;
+            if (!isDirty && lastCaretPosition == caretPosition) return;
 
+            lastCaretPosition = caretPosition;
             ApplyVertexColors();
             isDirty = false;
         }
@@ -58,6 +60,8 @@ namespace DCL.UI.CustomInputField
 
         private void ApplyVertexColors()
         {
+            if (string.IsNullOrEmpty(text)) return;
+
             bool mentionEverFound = false;
 
             foreach ((TextFormatMatchType _, Match match) info in TextFormatter.GetMatches(text))
