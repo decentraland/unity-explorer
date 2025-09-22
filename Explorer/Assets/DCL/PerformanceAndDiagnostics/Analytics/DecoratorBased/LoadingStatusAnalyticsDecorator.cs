@@ -9,6 +9,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly ILoadingStatus core;
         private const string STAGE_KEY = "state";
+        private const string STAGE_NAME = "stage_name";
         private int loadingScreenStageId;
 
         private readonly IAnalyticsController analytics;
@@ -54,7 +55,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (mainLoadingTransaction != null && stage != LoadingStatus.LoadingStage.Completed)
             {
                 currentStageSpan = mainLoadingTransaction.StartChild($"loading_stage_{stage.ToString().ToLower()}", stage.ToString());
-                currentStageSpan.SetTag("stage_name", stage.ToString());
+                currentStageSpan.SetTag(STAGE_NAME, stage.ToString());
             }
 
             if (stage == LoadingStatus.LoadingStage.Completed && mainLoadingTransaction != null)
