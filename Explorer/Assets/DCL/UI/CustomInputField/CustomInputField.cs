@@ -18,6 +18,7 @@ namespace DCL.UI.CustomInputField
         private bool isControlPressed;
         private bool isDirty;
         private int lastCaretPosition = -1;
+        private int lastLineCount = -1;
         private readonly StringBuilder stringBuilder = new ();
         private Color32 mentionColor { get; set; } = new (0, 179, 255, 255);
 
@@ -41,13 +42,20 @@ namespace DCL.UI.CustomInputField
             Clicked?.Invoke(eventData.button);
         }
 
+        public override void OnSelect(BaseEventData eventData)
+        {
+            base.OnSelect(eventData);
+            isDirty = true;
+        }
+
         protected override void LateUpdate()
         {
             base.LateUpdate();
 
-            if (!isDirty && lastCaretPosition == caretPosition) return;
+            if (!isDirty && lastCaretPosition == caretPosition && lastLineCount == textComponent.textInfo.lineCount) return;
 
             lastCaretPosition = caretPosition;
+            lastLineCount = textComponent.textInfo.lineCount;
             ApplyVertexColors();
             isDirty = false;
         }
