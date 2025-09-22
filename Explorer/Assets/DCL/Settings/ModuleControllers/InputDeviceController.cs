@@ -12,12 +12,10 @@ namespace DCL.Settings.ModuleControllers
     public class InputDeviceController : SettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
-        private readonly VoiceChatSettingsAsset voiceChatSettings;
 
-        public InputDeviceController(SettingsDropdownModuleView view, VoiceChatSettingsAsset voiceChatSettings)
+        public InputDeviceController(SettingsDropdownModuleView view)
         {
             this.view = view;
-            this.voiceChatSettings = voiceChatSettings;
 
             LoadInputDeviceOptions();
             SetSelection();
@@ -39,7 +37,7 @@ namespace DCL.Settings.ModuleControllers
             MicrophoneSelection microphoneSelection = result.Value;
 
             DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME, microphoneSelection.name);
-            voiceChatSettings.OnMicrophoneChanged(microphoneSelection);
+            VoiceChatSettings.OnMicrophoneChanged(microphoneSelection);
         }
 
         private void AudioConfigChanged(bool deviceWasChanged)
@@ -82,7 +80,7 @@ namespace DCL.Settings.ModuleControllers
             MicrophoneSelection microphoneSelection = result.Value;
 
             view.DropdownView.Dropdown.value = index;
-            voiceChatSettings.OnMicrophoneChanged(microphoneSelection);
+            VoiceChatSettings.OnMicrophoneChanged(microphoneSelection);
             view.DropdownView.Dropdown.RefreshShownValue();
         }
 

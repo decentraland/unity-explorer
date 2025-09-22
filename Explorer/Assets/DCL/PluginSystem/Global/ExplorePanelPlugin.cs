@@ -375,7 +375,6 @@ namespace DCL.PluginSystem.Global
                 settings.ChatSettingsAsset,
                 userBlockingCacheProxy,
                 sceneLoadingLimit,
-                settings.VoiceChatSettings,
                 volumeBus,
                 upscalingController,
                 assetsProvisioner
@@ -534,9 +533,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; }
-
-            [field: SerializeField]
-            public VoiceChatSettingsAsset VoiceChatSettings { get; private set; }
 
             [field: SerializeField]
             public VideoPrioritizationSettings VideoPrioritizationSettings { get; private set; }

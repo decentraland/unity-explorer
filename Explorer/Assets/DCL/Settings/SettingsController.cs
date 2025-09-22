@@ -42,7 +42,6 @@ namespace DCL.Settings
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly SkyboxSettingsAsset skyboxSettingsAsset;
-        private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly VolumeBus volumeBus;
@@ -70,7 +69,6 @@ namespace DCL.Settings
             ChatSettingsAsset chatSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
-            VoiceChatSettingsAsset voiceChatSettings,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner)
@@ -89,7 +87,6 @@ namespace DCL.Settings
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
-            this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
             this.assetsProvisioner = assetsProvisioner;
 
@@ -188,7 +185,6 @@ namespace DCL.Settings
                             sceneLoadingLimit,
                             userBlockingCacheProxy,
                             this,
-                            voiceChatSettings,
                             upscalingController,
                             assetsProvisioner,
                             volumeBus));

@@ -13,7 +13,6 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
-        private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly VoiceChatConfiguration voiceChatConfiguration;
 
         private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty;
@@ -22,22 +21,16 @@ namespace DCL.VoiceChat
 
         private Weak<MicrophoneRtcAudioSource> microphoneSource = Weak<MicrophoneRtcAudioSource>.Null;
 
-        public MicrophoneSelection? CurrentMicrophoneName => voiceChatSettings.SelectedMicrophone;
-
         public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
 
-        public VoiceChatMicrophoneHandler(
-            VoiceChatSettingsAsset voiceChatSettings,
-            VoiceChatConfiguration voiceChatConfiguration
-        )
+        public VoiceChatMicrophoneHandler(VoiceChatConfiguration voiceChatConfiguration)
         {
-            this.voiceChatSettings = voiceChatSettings;
             this.voiceChatConfiguration = voiceChatConfiguration;
             isMicrophoneEnabledProperty = new ReactiveProperty<bool>(false);
 
             DCLInput.Instance.VoiceChat.Talk!.performed += OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnReleased;
-            voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
+            VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
         }
 
         public void Dispose()
@@ -45,7 +38,7 @@ namespace DCL.VoiceChat
             isMicrophoneEnabledProperty.ClearSubscriptionsList();
             DCLInput.Instance.VoiceChat.Talk!.performed -= OnPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled -= OnReleased;
-            voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
+            VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
         }
 
         /// <summary>

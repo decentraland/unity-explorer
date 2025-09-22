@@ -100,12 +100,11 @@ namespace DCL.PluginSystem.Global
             voiceChatPluginSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
             var pluginSettings = this.voiceChatPluginSettingsAsset.Value;
 
-            VoiceChatSettingsAsset voiceChatSettings = pluginSettings.VoiceChatSettings;
             VoiceChatConfiguration voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
 
             var combinedAudioSource = Object.Instantiate(pluginSettings.CombinedAudioSource);
 
-            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration);
+            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
 
             trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, combinedAudioSource, voiceChatHandler);

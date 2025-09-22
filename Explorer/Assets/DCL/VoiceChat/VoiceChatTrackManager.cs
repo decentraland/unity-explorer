@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
+using DCL.Settings.Settings;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -76,7 +77,7 @@ namespace DCL.VoiceChat
             try
             {
                 Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
-                    microphoneHandler.CurrentMicrophoneName,
+                    VoiceChatSettings.SelectedMicrophone,
                     (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
                     configuration.microphonePlaybackToSpeakers
                 );

@@ -1,18 +1,19 @@
 using LiveKit.Runtime.Scripts.Audio;
-using UnityEngine;
 
 namespace DCL.Settings.Settings
 {
-    //Commented creator as we only need one of these.
-    //    [CreateAssetMenu(fileName = "VoiceChatSettings", menuName = "DCL/Settings/Voice Chat Settings")]
-    public class VoiceChatSettingsAsset : ScriptableObject
+    /// <summary>
+    /// Exists as a single selection per time
+    /// </summary>
+    public static class VoiceChatSettings
     {
         public delegate void MicrophoneChangedDelegate(MicrophoneSelection newMicrophoneSelection);
-        public event MicrophoneChangedDelegate MicrophoneChanged;
 
-        public MicrophoneSelection? SelectedMicrophone;
+        public static event MicrophoneChangedDelegate MicrophoneChanged;
 
-        public void OnMicrophoneChanged(MicrophoneSelection microphoneSelection)
+        public static MicrophoneSelection? SelectedMicrophone { get; private set; }
+
+        public static void OnMicrophoneChanged(MicrophoneSelection microphoneSelection)
         {
             SelectedMicrophone = microphoneSelection;
             MicrophoneChanged?.Invoke(microphoneSelection);
