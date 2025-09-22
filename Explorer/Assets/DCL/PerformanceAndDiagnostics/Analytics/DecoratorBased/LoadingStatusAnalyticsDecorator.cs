@@ -1,6 +1,8 @@
+using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using Segment.Serialization;
+using Sentry;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -11,6 +13,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private int loadingScreenStageId;
 
         private readonly IAnalyticsController analytics;
+
+        private ITransactionTracer mainLoadingTransaction;
+        private ISpan currentStageSpan;
 
         public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
         public ReactiveProperty<string> AssetState => core.AssetState;
@@ -29,6 +34,37 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { STAGE_KEY, $"7.{(byte)stage} - loading screen: {stage.ToString()}" },
             });
+
+            TrackLoadingStageWithSentry(stage);
+        }
+
+        private void TrackLoadingStageWithSentry(LoadingStatus.LoadingStage stage)
+        {
+            if (mainLoadingTransaction == null && stage == LoadingStatus.LoadingStage.Init)
+            {
+                mainLoadingTransaction = SentrySdk.StartTransaction("loading_process", "loading");
+                mainLoadingTransaction.SetTag("loading_type", "initial_loading");
+            }
+
+            if (currentStageSpan != null)
+            {
+                currentStageSpan.Finish();
+                currentStageSpan = null;
+            }
+
+            if (mainLoadingTransaction != null && stage != LoadingStatus.LoadingStage.Completed)
+            {
+                currentStageSpan = mainLoadingTransaction.StartChild($"loading_stage_{stage.ToString().ToLower()}", stage.ToString());
+                currentStageSpan.SetTag("stage_name", stage.ToString());
+            }
+
+            if (stage == LoadingStatus.LoadingStage.Completed && mainLoadingTransaction != null)
+            {
+                mainLoadingTransaction.SetTag("completed", "true");
+                mainLoadingTransaction.Finish();
+                mainLoadingTransaction = null;
+                currentStageSpan = null;
+            }
         }
 
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
@@ -46,7 +82,5 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             }
             return core.SetCurrentStage(stage);
         }
-
-
     }
 }
