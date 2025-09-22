@@ -9,6 +9,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.Communities;
+using DCL.VoiceChat;
 using DCL.Web3;
 using MVC;
 using DG.Tweening;
@@ -16,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Diagnostics;
+using DCL.Utilities;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -119,6 +121,12 @@ namespace DCL.Chat
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio {get; private set;}
+
+        [field: FormerlySerializedAs("<CommunityStreamSubTitleBar>k__BackingField")]
+        [field: Header("Voice Chat")]
+        [field: SerializeField] public JoinCommunityLiveStreamChatSubTitleButtonView CommunityStreamSubTitleButton { get; private set; }
+
+        [field: SerializeField] public CanvasGroup CommunitySubTitleBarCanvasGroup { get; private set; }
 
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.
@@ -231,7 +239,6 @@ namespace DCL.Chat
         /// </summary>
         public string InputBoxText
         {
-            //TODO FRAN: This should not exist at all ever
             get => chatInputBox.InputBoxText;
             set => chatInputBox.InputBoxText = value;
         }
@@ -286,14 +293,14 @@ namespace DCL.Chat
                     switch (currentChannel.ChannelType)
                     {
                         case ChatChannel.ChatChannelType.NEARBY:
-                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED);
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id), profileRepositoryWrapper);
                             break;
                         case ChatChannel.ChatChannelType.COMMUNITY:
-                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED);
                             GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
                             communityTitleCts = communityTitleCts.SafeRestart();
                             chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : null, openContextMenuAction, communityTitleCts.Token);
@@ -822,11 +829,13 @@ namespace DCL.Chat
         /// </summary>
         /// <param name="channelToAdd">The channel for which the item will be created.</param>
         /// <param name="thumbnailCache">A reference to the thumbnail cache to get the icon of the toolbar.</param>
-        public void AddCommunityConversation(ChatChannel channelToAdd, ISpriteCache thumbnailCache)
+        /// <param name="communityUpdates"></param>
+        /// <param name="currentCommunityCallId"></param>
+        public void AddCommunityConversation(ChatChannel channelToAdd, ISpriteCache thumbnailCache, ReactiveProperty<bool> communityUpdates, IReadonlyReactiveProperty<string> currentCommunityCallId)
         {
             conversationsToolbar.AddConversation(channelToAdd);
             GetUserCommunitiesData.CommunityData communityData = communitiesData[channelToAdd.Id];
-            conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData, communityConversationItemCts.Token);
+            conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData, communityUpdates, currentCommunityCallId, communityConversationItemCts.Token);
         }
 
         /// <summary>
@@ -858,13 +867,12 @@ namespace DCL.Chat
         /// Must be called from MainThread or will fail.
         /// </summary>
         /// <param name="userState"></param>
-        public void SetupViewWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        public void SetupViewWithUserState(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState userState)
         {
-            bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
+            bool isOtherUserConnected = userState == ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
 
-            //TODO: re-enable this
-            //chatTitleBar.SetCallButtonStatus(currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            chatTitleBar.SetCallButtonStatus(currentChannel.ChannelType is ChatChannel.ChatChannelType.USER);
             chatInputBoxGameObject.SetActive(isOtherUserConnected);
             inputMaskGameObject.SetActive(!isOtherUserConnected);
 
@@ -1073,6 +1081,7 @@ namespace DCL.Chat
             messagesPanelBackgroundCanvasGroup.DOKill();
             conversationsToolbarCanvasGroup.DOKill();
             titlebarCanvasGroup.DOKill();
+            CommunitySubTitleBarCanvasGroup.DOKill();
 
             if (useAnimation)
             {
@@ -1084,12 +1093,14 @@ namespace DCL.Chat
                     messagesPanelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
                     conversationsToolbarCanvasGroup.DOFade(1, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(1, BackgroundFadeTime);
+                    CommunitySubTitleBarCanvasGroup.DOFade(1, BackgroundFadeTime);
                 }
                 else
                 {
                     messagesPanelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime).OnComplete(() => { SetBackgroundVisibility(false, false); });
                     conversationsToolbarCanvasGroup.DOFade(0, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(0, BackgroundFadeTime);
+                    CommunitySubTitleBarCanvasGroup.DOFade(0, BackgroundFadeTime);
                 }
             }
             else
@@ -1100,6 +1111,7 @@ namespace DCL.Chat
                 conversationsToolbarCanvasGroup.gameObject.SetActive(isVisible);
                 titlebarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
                 titlebarCanvasGroup.gameObject.SetActive(isVisible);
+                CommunitySubTitleBarCanvasGroup.alpha = isVisible? 1.0f : 0.0f;
             }
         }
 
@@ -1109,6 +1121,7 @@ namespace DCL.Chat
                 OnMemberListClosingButtonClicked();
 
             Blur();
+            ;
         }
 
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)

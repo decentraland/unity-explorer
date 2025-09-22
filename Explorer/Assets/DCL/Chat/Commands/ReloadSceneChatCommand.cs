@@ -1,14 +1,10 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
-using DCL.CharacterMotion.Components;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Threading;
-using UnityEngine;
-using Utility;
 
 namespace DCL.Chat.Commands
 {

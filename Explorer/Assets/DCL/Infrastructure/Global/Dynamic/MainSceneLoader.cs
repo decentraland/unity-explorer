@@ -47,16 +47,12 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.UI;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.Settings.ModuleControllers;
-using TMPro;
 #if UNITY_EDITOR
-using UnityEditor;
 #endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.UIElements;
 using Utility;
 using Utility.Types;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
@@ -223,6 +219,8 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                bootstrap.InitializeFeaturesRegistry();
+
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
@@ -309,7 +307,10 @@ namespace Global.Dynamic
 
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
-            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
+            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
+                new UnitySystemInfoProvider(),
+                new PlatformDriveInfoProvider());
+
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
             if (!hasMinimumSpecs)
             {

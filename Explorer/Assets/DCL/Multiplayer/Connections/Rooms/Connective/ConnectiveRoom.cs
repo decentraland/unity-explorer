@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-        internal readonly string logPrefix;
+        private readonly string logPrefix;
 
         private readonly InteriorRoom room = new ();
 

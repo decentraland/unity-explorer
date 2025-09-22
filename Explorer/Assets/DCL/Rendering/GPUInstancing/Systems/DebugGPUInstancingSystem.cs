@@ -3,10 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS.Abstract;
-using Plugins.RustSegment.SegmentServerWrap;
-using System;
 using UnityEngine.UIElements;
 
 namespace DCL.Rendering.GPUInstancing.Systems

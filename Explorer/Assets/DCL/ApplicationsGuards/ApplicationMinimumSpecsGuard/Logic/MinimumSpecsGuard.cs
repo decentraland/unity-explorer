@@ -4,7 +4,6 @@ using System.IO;
 using DCL.Diagnostics;
 using UnityEngine;
 using Application = UnityEngine.Device.Application;
-using SystemInfo = UnityEngine.Device.SystemInfo;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -27,7 +26,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
     ///         results = specsGuard.Results;
     ///         if (!hasMinimumSpecs)
     ///         {
-    ///          
+    ///
     ///         }
     /// </summary>
     public class MinimumSpecsGuard
@@ -35,11 +34,17 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public IReadOnlyList<SpecResult> Results => cachedResults;
 
         private readonly ISpecProfileProvider profileProvider;
+        private readonly ISystemInfoProvider systemInfoProvider;
+        private readonly IDriveInfoProvider driveInfoProvider;
         private List<SpecResult> cachedResults = new();
 
-        public MinimumSpecsGuard(ISpecProfileProvider profileProvider)
+        public MinimumSpecsGuard(ISpecProfileProvider profileProvider,
+            ISystemInfoProvider systemInfoProvider,
+            IDriveInfoProvider driveInfoProvider)
         {
             this.profileProvider = profileProvider;
+            this.systemInfoProvider = systemInfoProvider;
+            this.driveInfoProvider = driveInfoProvider;
         }
 
         public bool HasMinimumSpecs()
@@ -69,88 +74,116 @@ namespace DCL.ApplicationMinimumSpecsGuard
             var results = new List<SpecResult>();
 
             // OS
-            string os = SystemInfo.operatingSystem;
+            string os = systemInfoProvider.OperatingSystem;
             results.Add(new SpecResult(SpecCategory.OS, profile.OsCheck(os), profile.OsRequirement, os));
 
             // CPU
-            string cpu = SystemInfo.processorType;
+            string cpu = systemInfoProvider.ProcessorType;
             results.Add(new SpecResult(SpecCategory.CPU, profile.CpuCheck(cpu), profile.CpuRequirement, cpu));
 
             // GPU
-            string gpuName = SystemInfo.graphicsDeviceName;
+            string gpuName = systemInfoProvider.GraphicsDeviceName;
             bool isGpuModelAcceptable = profile.GpuCheck(gpuName);
             bool hasRequiredFeatures = profile.ShaderCheck();
             bool isGpuSpecMet = isGpuModelAcceptable && hasRequiredFeatures;
+
+            // Integrated GPU check
+            string gpuRequirementMessage = profile.GpuRequirement;
+            if (!isGpuModelAcceptable && profile.IsIntegratedGpuCheck(gpuName))
+            {
+                gpuRequirementMessage = profile.GpuIntegratedRequirement;
+            }
 
             string actualGpuDisplayString = $"{gpuName}".Trim();
 
             results.Add(new SpecResult(
                 SpecCategory.GPU,
                 isGpuSpecMet,
-                profile.GpuRequirement,
+                gpuRequirementMessage,
                 actualGpuDisplayString
             ));
 
             // VRAM
-            int actualVramMB = SystemInfo.graphicsMemorySize;
+            int actualVramMB = systemInfoProvider.GraphicsMemorySize;
             bool isVramMet = SystemSpecUtils.IsMemorySizeSufficient(actualVramMB, profile.MinVramMB);
             int roundedActualVramGB = Mathf.RoundToInt(actualVramMB / 1024f);
-            
+
             // NOTE: e.g., shows "16 GB" not "15.7 GB"
             string actualVramDisplay = $"{roundedActualVramGB} GB";
             results.Add(new SpecResult(SpecCategory.VRAM, isVramMet, profile.VramRequirement, actualVramDisplay));
 
             // RAM
-            int actualRamMB = SystemInfo.systemMemorySize;
+            int actualRamMB = systemInfoProvider.SystemMemorySize;
             bool isRamMet = SystemSpecUtils.IsMemorySizeSufficient(actualRamMB, profile.MinRamMB);
             int roundedActualRamGB = Mathf.RoundToInt(actualRamMB / 1024f);
-            
+
             // NOTE: e.g., shows "16 GB" not "15.7 GB"
             string actualRamDisplay = $"{roundedActualRamGB} GB";
             results.Add(new SpecResult(SpecCategory.RAM, isRamMet, profile.RamRequirement, actualRamDisplay));
 
             try
             {
-                var allDrives = Utility.PlatformUtils.GetAllDrivesInfo();
+                const float BYTES_TO_MB = 1f / (1024f * 1024f);
+                const float BYTES_TO_GB = 1f / (1024f * 1024f * 1024f);
 
-                if (allDrives.Count > 0)
+                // 1) Prefer the direct probe of the volume we actually use
+                var primary = Utility.PlatformUtils.GetPrimaryStorageInfoUsingPersistentPath();
+
+                if (primary != null)
                 {
-                    var persistentPath = Application.persistentDataPath;
-                    persistentPath = persistentPath.Replace('/', Path.DirectorySeparatorChar);
-                    Utility.PlatformUtils.DriveData targetDrive = null;
-                    int longestMatchLength = -1;
+                    float availableMB = primary.AvailableFreeSpace * BYTES_TO_MB;
+                    float availableGB = primary.AvailableFreeSpace * BYTES_TO_GB;
 
-                    // This loop finds the best match. On macOS, paths can be nested (e.g., "/" and "/System/Volumes/Data").
-                    // We need to find the longest mount point that is a prefix of our path. This works for both macOS and Windows.
-                    foreach (var drive in allDrives)
-                    {
-                        if (persistentPath.StartsWith(drive.Name, StringComparison.OrdinalIgnoreCase) && drive.Name.Length > longestMatchLength)
-                        {
-                            targetDrive = drive;
-                            longestMatchLength = drive.Name.Length;
-                        }
-                    }
-
-                    if (targetDrive != null)
-                    {
-                        float actualAvailableStorageMB = targetDrive.AvailableFreeSpace / (1024f * 1024f);
-                        float availableStorageGB = targetDrive.AvailableFreeSpace / (1024f * 1024f * 1024f);
-
-                        results.Add(new SpecResult(
-                            SpecCategory.Storage,
-                            actualAvailableStorageMB >= profile.MinStorageMB,
-                            profile.StorageRequirement,
-                            $"{availableStorageGB:F1} GB"
-                        ));
-                    }
-                    else
-                    {
-                        throw new Exception($"Could not find a mounted drive corresponding to the path: {persistentPath}");
-                    }
+                    results.Add(new SpecResult(
+                        SpecCategory.Storage,
+                        availableMB >= profile.MinStorageMB,
+                        profile.StorageRequirement,
+                        $"{availableGB:F1} GB"
+                    ));
                 }
                 else
                 {
-                    results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "No drives found"));
+                    var allDrives = driveInfoProvider.GetDrivesInfo();
+
+                    if (allDrives.Count > 0)
+                    {
+                        string persistentPath = driveInfoProvider.GetPersistentDataPath();
+                        persistentPath = persistentPath.Replace('/', Path.DirectorySeparatorChar);
+                        Utility.PlatformUtils.DriveData targetDrive = null;
+                        int longestMatchLength = -1;
+
+                        // This loop finds the best match. On macOS, paths can be nested (e.g., "/" and "/System/Volumes/Data").
+                        // We need to find the longest mount point that is a prefix of our path. This works for both macOS and Windows.
+                        foreach (var drive in allDrives)
+                        {
+                            if (persistentPath.StartsWith(drive.Name, StringComparison.OrdinalIgnoreCase) && drive.Name.Length > longestMatchLength)
+                            {
+                                targetDrive = drive;
+                                longestMatchLength = drive.Name.Length;
+                            }
+                        }
+
+                        if (targetDrive != null)
+                        {
+                            float actualAvailableStorageMB = targetDrive.AvailableFreeSpace / (1024f * 1024f);
+                            float availableStorageGB = targetDrive.AvailableFreeSpace / (1024f * 1024f * 1024f);
+
+                            results.Add(new SpecResult(
+                                SpecCategory.Storage,
+                                actualAvailableStorageMB >= profile.MinStorageMB,
+                                profile.StorageRequirement,
+                                $"{availableStorageGB:F1} GB"
+                            ));
+                        }
+                        else
+                        {
+                            throw new Exception($"Could not find a mounted drive corresponding to the path: {persistentPath}");
+                        }
+                    }
+                    else
+                    {
+                        results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "No drives found"));
+                    }
                 }
             }
             catch (Exception e)

@@ -2191,19 +2191,10 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "OpenChat",
-                    "type": "Button",
-                    "id": "430e31be-9d28-4c75-a904-851e595a70c1",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "OpenChatCommandLine",
                     "type": "Button",
                     "id": "df66082b-5afe-4795-a9eb-e5d25d40111e",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2382,17 +2373,6 @@
                 },
                 {
                     "name": "",
-                    "id": "936aa25d-52b8-4067-ab14-76c9c847d3f5",
-                    "path": "<Keyboard>/t",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "OpenChat",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "978158e8-1961-43a6-98e4-754ab341d611",
                     "path": "<Keyboard>/slash",
                     "interactions": "",
@@ -2445,7 +2425,7 @@
                     "name": "Slot 1",
                     "type": "Button",
                     "id": "3f73f314-6df3-499a-97a9-cc7a8f53da15",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2873,7 +2853,7 @@
                     "name": "Customize",
                     "type": "Button",
                     "id": "309cfaf7-2700-4db1-8e05-41175ff3ad09",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false

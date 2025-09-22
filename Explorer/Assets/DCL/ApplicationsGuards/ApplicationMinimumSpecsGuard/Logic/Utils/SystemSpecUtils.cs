@@ -1,3 +1,4 @@
+using DCL.FeatureFlags;
 using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -11,97 +12,80 @@ namespace DCL.ApplicationMinimumSpecsGuard
     /// </summary>
     public static class SystemSpecUtils
     {
-        // Platform Requirements
-        private static readonly string[] ACCEPTABLE_WINDOWS_VERSIONS =
-        {
-            "Windows 10", "Windows 11"
-        };
-
-        private static readonly string[] MACOS_IDENTIFIER_KEYWORDS =
-        {
-            "Mac OS X", "macOS"
-        };
-
-        private const int MIN_MACOS_MAJOR_VERSION = 11;
-        private const string MACOS_VERSION_PATTERN = @"(\d+)\.\d+";
-
-        // CPU Requirement Constants
-        // Keywords and Patterns
-        private const string RYZEN_CPU_PATTERN = @"ryzen\s*(\d)";
-        private const string INTEL_CPU_PATTERN = @"i([3579])-?(\d{4,5})";
-
-        private static readonly string[] ALWAYS_ACCEPTED_CPU_KEYWORDS =
-        {
-            "threadripper"
-        };
-
-        // Numeric Thresholds
-        private const int MIN_RYZEN_SERIES = 5;
-        private const int MIN_INTEL_SERIES = 5;
-        private const int MIN_INTEL_GENERATION = 7;
-
-        // GPU Requirement Constants
-        // Keywords and Patterns
-        private const string RTX_GPU_PATTERN = @"rtx\s*(\d{4})";
-        private const string RX_GPU_PATTERN = @"rx\s*(\d{4})";
-        private const string ARC_GPU_PATTERN = @"a(\d{3})";
-
-        // Numeric Thresholds
-        private const int MIN_RTX_SERIES = 2000;
-        private const int MIN_RX_SERIES = 5000;
-        private const int MIN_ARC_SERIES = 500;
-
-        // Mac Silicon Requirement Constants
-        private const string APPLE_SILICON_PATTERN = @"apple\s+m\d";
-        
+        private const string FEATURE_FLAG_VARIANT = "minimum_requirements";
 
         public static bool IsWindowsCpuAcceptable(string cpu)
         {
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+
             cpu = cpu.ToLowerInvariant();
 
-            foreach (string keyword in ALWAYS_ACCEPTED_CPU_KEYWORDS)
+            foreach (string keyword in minimumRequirements.always_accepted_cpus)
             {
                 if (cpu.Contains(keyword))
                     return true;
             }
 
-            var ryzenMatch = Regex.Match(cpu, RYZEN_CPU_PATTERN);
+            var ryzenMatch = Regex.Match(cpu, minimumRequirements.ryzen_supported_cpu_regex);
             if (ryzenMatch.Success && int.TryParse(ryzenMatch.Groups[1].Value, out int model))
-                return model >= MIN_RYZEN_SERIES;
+                return model >= minimumRequirements.ryzen_supported_minimum_series;
 
-            var intelMatch = Regex.Match(cpu, INTEL_CPU_PATTERN);
+            var intelUltraMatch = Regex.Match(cpu, minimumRequirements.intel_ultra_cpu_supported_version_regex);
+            if (intelUltraMatch.Success && int.TryParse(intelUltraMatch.Groups[1].Value, out int ultraSeries))
+                return ultraSeries >= minimumRequirements.intel_ultra_supported_minimum_generation;
+
+            var intelMatch = Regex.Match(cpu, minimumRequirements.intel_cpu_supported_version_regex);
             if (intelMatch.Success)
             {
                 if (int.TryParse(intelMatch.Groups[1].Value, out int series) &&
                     int.TryParse(intelMatch.Groups[2].Value, out int modelNumber))
                 {
-                    if (series < MIN_INTEL_SERIES) return false;
+                    if (series < minimumRequirements.intel_supported_minimum_series) return false;
                     int generation = modelNumber / 1000;
-                    return generation >= MIN_INTEL_GENERATION;
+                    return generation >= minimumRequirements.intel_supported_minimum_generation;
                 }
             }
             return false;
         }
 
-        public static bool IsWindowsGpuAcceptable(string gpu)
+        public static bool IsIntegratedGpu(string gpuName)
         {
-            gpu = gpu.ToLowerInvariant();
+            if (string.IsNullOrEmpty(gpuName))
+                return false;
 
-            var rtxMatch = Regex.Match(gpu, RTX_GPU_PATTERN);
-            if (rtxMatch.Success && int.TryParse(rtxMatch.Groups[1].Value, out int rtxModel))
-                return rtxModel >= MIN_RTX_SERIES;
+            string lowerGpuName = gpuName.ToLowerInvariant();
 
-            var rxMatch = Regex.Match(gpu, RX_GPU_PATTERN);
-            if (rxMatch.Success && int.TryParse(rxMatch.Groups[1].Value, out int rxModel))
-                return rxModel >= MIN_RX_SERIES;
-
-            var arcMatch = Regex.Match(gpu, ARC_GPU_PATTERN);
-            if (arcMatch.Success && int.TryParse(arcMatch.Groups[1].Value, out int arcModel))
-                return arcModel >= MIN_ARC_SERIES;
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+            foreach (string keyword in minimumRequirements.integrated_gpu_supported_versions)
+            {
+                if (lowerGpuName.Contains(keyword))
+                    return true;
+            }
 
             return false;
         }
-        
+
+        public static bool IsWindowsGpuAcceptable(string gpu)
+        {
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+
+            gpu = gpu.ToLowerInvariant();
+
+            var rtxMatch = Regex.Match(gpu, minimumRequirements.rtx_gpu_supported_version_regex);
+            if (rtxMatch.Success && int.TryParse(rtxMatch.Groups[1].Value, out int rtxModel))
+                return rtxModel >= minimumRequirements.minimum_rtx_supported_version;
+
+            var rxMatch = Regex.Match(gpu, minimumRequirements.rx_gpu_supported_version_regex);
+            if (rxMatch.Success && int.TryParse(rxMatch.Groups[1].Value, out int rxModel))
+                return rxModel >= minimumRequirements.minimum_rx_supported_version;
+
+            var arcMatch = Regex.Match(gpu, minimumRequirements.arc_gpu_supported_version_regex);
+            if (arcMatch.Success && int.TryParse(arcMatch.Groups[1].Value, out int arcModel))
+                return arcModel >= minimumRequirements.minimum_arc_supported_version;
+
+            return false;
+        }
+
         public static bool IsDirectX12Compatible()
         {
             // Check current graphics API
@@ -120,7 +104,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public static bool IsWindowsVersionAcceptable(string os)
         {
-            foreach (string version in ACCEPTABLE_WINDOWS_VERSIONS)
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+            foreach (string version in minimumRequirements.windows_supported_versions)
             {
                 if (os.IndexOf(version, StringComparison.OrdinalIgnoreCase) >= 0)
                     return true;
@@ -131,7 +116,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public static bool IsMacOSVersionAcceptable(string os)
         {
             bool isMac = false;
-            foreach (string keyword in MACOS_IDENTIFIER_KEYWORDS)
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+            foreach (string keyword in minimumRequirements.mac_supported_versions)
             {
                 if (os.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
                 {
@@ -143,10 +129,10 @@ namespace DCL.ApplicationMinimumSpecsGuard
             if (!isMac)
                 return false;
 
-            var match = Regex.Match(os, MACOS_VERSION_PATTERN);
+            var match = Regex.Match(os, minimumRequirements.macos_supported_version_regex);
             if (match.Success && int.TryParse(match.Groups[1].Value, out int majorVersion))
             {
-                return majorVersion >= MIN_MACOS_MAJOR_VERSION;
+                return majorVersion >= minimumRequirements.minimum_macos_major_version;
             }
 
             return false;
@@ -154,14 +140,16 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public static bool IsAppleSilicon(string deviceName)
         {
-            return Regex.IsMatch(deviceName, APPLE_SILICON_PATTERN, RegexOptions.IgnoreCase);
+            FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.MINIMUM_REQUIREMENTS, FEATURE_FLAG_VARIANT, out MinimumRequirementsDefinition minimumRequirements);
+
+            return Regex.IsMatch(deviceName, minimumRequirements.apple_silicon_supported_regex, RegexOptions.IgnoreCase);
         }
-        
+
         public static bool ComputeShaderCheck()
         {
             return SystemInfo.supportsComputeShaders;
         }
-        
+
         /// <summary>
         ///     Checks if the provided memory size meets the minimum requirement,
         ///     accounting for reporting discrepancies (e.g., 15.9 GB for a 16 GB module).
@@ -190,6 +178,31 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             // 4. Compare the effective (rounded) GB against the required GB.
             return roundedActualGB >= requiredGB;
+        }
+
+        [Serializable]
+        private struct MinimumRequirementsDefinition
+        {
+            public string[] windows_supported_versions;
+            public string[] mac_supported_versions;
+            public string[] integrated_gpu_supported_versions;
+            public string[] always_accepted_cpus;
+            public int minimum_macos_major_version;
+            public string macos_supported_version_regex;
+            public string ryzen_supported_cpu_regex;
+            public int ryzen_supported_minimum_series;
+            public int intel_supported_minimum_series;
+            public int intel_supported_minimum_generation;
+            public int intel_ultra_supported_minimum_generation;
+            public string intel_cpu_supported_version_regex;
+            public string intel_ultra_cpu_supported_version_regex;
+            public string rtx_gpu_supported_version_regex;
+            public string rx_gpu_supported_version_regex;
+            public string arc_gpu_supported_version_regex;
+            public int minimum_rtx_supported_version;
+            public int minimum_rx_supported_version;
+            public int minimum_arc_supported_version;
+            public string apple_silicon_supported_regex;
         }
     }
 }

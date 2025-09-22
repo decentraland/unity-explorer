@@ -51,15 +51,14 @@ namespace DCL.SDKComponents.NFTShape.System
 
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
 
-            if (!result.Succeeded)
+            if (!result.Succeeded || result.Asset == null || result.Asset.Asset == null)
             {
                 nftRenderer.NotifyFailed();
                 return;
             }
 
             nftRenderer.Apply(result.Asset!);
-
-            if (result.Asset?.VideoURL != null) InitializeNftVideo(entity, result.Asset, nftRenderer);
+            if (result.Asset.VideoURL != null) InitializeNftVideo(entity, result.Asset, nftRenderer);
         }
 
         private void InitializeNftVideo(Entity entity, Texture2DData textureData, INftShapeRenderer nftRenderer)

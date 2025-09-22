@@ -58,6 +58,7 @@ namespace DCL.MarketplaceCreditsAPIService
     public struct GoalData
     {
         public string title;
+        public string description;
         public string thumbnail;
         public GoalProgressData progress;
         public float reward;
@@ -70,7 +71,7 @@ namespace DCL.MarketplaceCreditsAPIService
         public uint totalSteps;
         public uint completedSteps;
     }
-	
+
 	/// <summary>
 	/// Struct used to deserialize backend json data.
 	/// </summary>

@@ -54,7 +54,6 @@ using Global.Dynamic.LaunchModes;
 using PortableExperiences.Controller;
 using System.Buffers;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 

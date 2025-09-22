@@ -266,12 +266,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  whitelistedShaders:
-  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
-  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
-  Name: HedgeCapsule
+  GPUInstancingSettings: {fileID: 11400000, guid: fb981fee23899ef4eacd98e0c788b4e0, type: 2}
   Reference: {fileID: 7303024313507133109}
-  Transform: {fileID: 2523021031970210244}
   RefRenderers:
   - {fileID: 5542500168062412816}
   - {fileID: 7995096774285064808}
@@ -279,34 +275,36 @@ MonoBehaviour:
   - {fileID: 5186840062009038125}
   - {fileID: 4956359309732666291}
   - {fileID: 7119635968101255482}
-  ObjectSize: 4.2895346
-  Bounds:
-    m_Center: {x: -0.03240204, y: 1.5341537, z: 0.08085942}
-    m_Extent: {x: 2.0498595, y: 1.9794052, z: 2.1447668}
-  LodsScreenSpaceSizes:
-  - 0.039137103
-  - 0.017299049
-  - 0.0046764873
-  LODSizesMatrix:
-    e00: 1
-    e01: 0.043504715
-    e02: 0.01982356
-    e03: 0
-    e10: 0
-    e11: 0
-    e12: 0
-    e13: 0
-    e20: 0.039137103
-    e21: 0.017299049
-    e22: 0
-    e23: 0
-    e30: 0
-    e31: 0
-    e32: 0
-    e33: 0
-  CombinedLodsRenderers:
+  <LODGroupData>k__BackingField:
+    lodsScreenSpaceSizes:
+    - 0.039137103
+    - 0.017299049
+    - 0.0046764873
+    objectSize: 4.2895346
+    LODSizesMatrix:
+      e00: 1
+      e01: 0.043504715
+      e02: 0.01982356
+      e03: 0
+      e10: 0
+      e11: 0
+      e12: 0
+      e13: 0
+      e20: 0.039137103
+      e21: 0.017299049
+      e22: 0
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 0
+    Bounds:
+      m_Center: {x: -0.03240204, y: 1.5341537, z: 0.08085942}
+      m_Extent: {x: 2.0498595, y: 1.9794052, z: 2.1447668}
+    LODCount: 3
+  <CombinedLodsRenderers>k__BackingField:
   - SubMeshId: 0
-    CombinedMesh: {fileID: -7636029565010483287}
+    CombinedMesh: {fileID: -4958169514498033119}
     SharedMaterial: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 5542500168062412816}
@@ -319,7 +317,7 @@ MonoBehaviour:
       lightProbeUsage: 1
       motionVectorMode: 1
   - SubMeshId: 0
-    CombinedMesh: {fileID: -5855972365155614068}
+    CombinedMesh: {fileID: 2517906203556543537}
     SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 7995096774285064808}
@@ -466,7 +464,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
   m_PrefabInstance: {fileID: 8847022932572654079}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-7636029565010483287
+--- !u!43 &-4958169514498033119
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -651,7 +649,7 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!43 &-5855972365155614068
+--- !u!43 &2517906203556543537
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

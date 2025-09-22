@@ -10,6 +10,7 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -55,6 +56,7 @@ namespace DCL.MarketplaceCredits
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
+        private readonly ITextFormatter textFormatter;
 
         private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
         private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
@@ -78,13 +80,13 @@ namespace DCL.MarketplaceCredits
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationBusController,
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
-            ILoadingStatus loadingStatus) : base(viewFactory)
+            ILoadingStatus loadingStatus,
+            ITextFormatter textFormatter) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -99,10 +101,11 @@ namespace DCL.MarketplaceCredits
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
+            this.textFormatter = textFormatter;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
-            notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
             CheckForSidebarButtonState();
         }
@@ -119,7 +122,8 @@ namespace DCL.MarketplaceCredits
                 marketplaceCreditsAPIClient,
                 webRequestController,
                 viewInstance.TotalCreditsWidget,
-                this);
+                this,
+                textFormatter);
 
             marketplaceCreditsWeekGoalsCompletedSubController = new MarketplaceCreditsWeekGoalsCompletedSubController(
                 viewInstance.WeekGoalsCompletedSubView);

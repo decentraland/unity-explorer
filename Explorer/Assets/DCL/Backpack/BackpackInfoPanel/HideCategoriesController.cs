@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using Runtime.Wearables;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
@@ -67,7 +68,7 @@ namespace DCL.Backpack
 
             ClearPool();
 
-            IWearable? bodyShapeWearable = equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE);
+            IWearable? bodyShapeWearable = equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE);
 
             if (bodyShapeWearable == null)
             {
