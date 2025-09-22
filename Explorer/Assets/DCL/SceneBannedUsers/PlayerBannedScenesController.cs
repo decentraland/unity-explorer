@@ -75,8 +75,13 @@ namespace DCL.SceneBannedUsers
 
             if (BannedUsersFromCurrentScene.Instance.IsUserBanned(ownProfile.UserId))
             {
-                Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [TRYING TO BAN]");
+                Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [BANNED!]");
                 bannedSceneController.TrySetCurrentSceneAsBannedAsync(ct).Forget();
+            }
+            else
+            {
+                Debug.Log("SANTI LOG -> CheckIfPlayerIsBannedAsync: [NOT BANNED!]");
+                bannedSceneController.RemoveAllBannedSceneComponents();
             }
         }
     }
