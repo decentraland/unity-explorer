@@ -26,7 +26,6 @@ namespace DCL.Chat.ChatInput
         }
 
         [field: SerializeField] public CustomInputField inputField { get; private set; }
-        [SerializeField] private TMP_Text inputOverlayText;
         [field: SerializeField] internal RectTransform pastePopupPosition { get; private set; }
 
         [SerializeField] private GameObject inputFieldContainer;
@@ -39,7 +38,6 @@ namespace DCL.Chat.ChatInput
 
         [Header("Suggestion Panel")]
         [field: SerializeField] internal InputSuggestionPanelView suggestionPanel { get; private set; }
-        [field: SerializeField] internal Color32 mentionColor { get; private set; } = new (0, 179, 255, 255);
 
         [Header("Focus Visuals")]
         [SerializeField] private GameObject outlineObject;
@@ -101,40 +99,6 @@ namespace DCL.Chat.ChatInput
         {
             characterCounter.SetMaximumLength(inputField.characterLimit);
             this.chatConfig = chatConfig;
-            inputField.onValueChanged.AddListener(ColorMentions);
-            inputField.TextReplacedWithoutNotification += ColorMentions;
-        }
-
-        private void ColorMentions(string input)
-        {
-            inputOverlayText.text = input;
-
-            inputOverlayText.ForceMeshUpdate();
-            bool mentionEverFound = false;
-
-            for (int j = 0; j < inputOverlayText.textInfo.wordCount; j++)
-            {
-                TMP_WordInfo info = inputOverlayText.textInfo.wordInfo[j];
-                if (input[Math.Max(0, info.firstCharacterIndex - 1)] != '@') continue;
-                mentionEverFound = true;
-
-                int startingIndex = input[info.firstCharacterIndex] == '@' ? info.firstCharacterIndex : -1;
-                for (int i = startingIndex; i < info.characterCount; i++)
-                {
-                    int charIndex = info.firstCharacterIndex + i;
-                    int meshIndex = inputOverlayText.textInfo.characterInfo[charIndex].materialReferenceIndex;
-                    int vertexIndex = inputOverlayText.textInfo.characterInfo[charIndex].vertexIndex;
-
-                    Color32[] vertexColors = inputOverlayText.textInfo.meshInfo[meshIndex].colors32;
-                    vertexColors[vertexIndex + 0] = mentionColor;
-                    vertexColors[vertexIndex + 1] = mentionColor;
-                    vertexColors[vertexIndex + 2] = mentionColor;
-                    vertexColors[vertexIndex + 3] = mentionColor;
-                }
-            }
-
-            if (mentionEverFound)
-                inputOverlayText.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
         }
 
         public void InsertTextAtCaretPosition(string text)

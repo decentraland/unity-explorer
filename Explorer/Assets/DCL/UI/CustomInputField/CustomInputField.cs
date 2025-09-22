@@ -14,11 +14,12 @@ namespace DCL.UI.CustomInputField
     public class CustomInputField : TMP_InputField
     {
         private bool isControlPressed;
+        private bool isDirty;
         private readonly StringBuilder stringBuilder = new ();
+        private Color32 mentionColor { get; set; } = new (0, 179, 255, 255);
 
         public event Action<PointerEventData.InputButton>? Clicked;
         public event Action? PasteShortcutPerformed;
-        public event Action<string>? TextReplacedWithoutNotification;
 
         public bool UpAndDownArrowsEnabled { get; set; }
 
@@ -34,6 +35,51 @@ namespace DCL.UI.CustomInputField
                 base.OnPointerClick(eventData);
 
             Clicked?.Invoke(eventData.button);
+        }
+
+        protected override void LateUpdate()
+        {
+            base.LateUpdate();
+
+            if (!isDirty && !isFocused) return;
+
+            ApplyVertexColors();
+            isDirty = false;
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            onValueChanged.AddListener(_ => isDirty = true);
+        }
+
+        private void ApplyVertexColors()
+        {
+            bool mentionEverFound = false;
+
+            for (int j = 0; j < textComponent.textInfo.wordCount; j++)
+            {
+                TMP_WordInfo info = textComponent.textInfo.wordInfo[j];
+                if (text[Math.Max(0, info.firstCharacterIndex - 1)] != '@') continue;
+                mentionEverFound = true;
+
+                int startingIndex = text[info.firstCharacterIndex] == '@' ? info.firstCharacterIndex : -1;
+                for (int i = startingIndex; i < info.characterCount; i++)
+                {
+                    int charIndex = info.firstCharacterIndex + i;
+                    int meshIndex = textComponent.textInfo.characterInfo[charIndex].materialReferenceIndex;
+                    int vertexIndex = textComponent.textInfo.characterInfo[charIndex].vertexIndex;
+
+                    Color32[] vertexColors = textComponent.textInfo.meshInfo[meshIndex].colors32;
+                    vertexColors[vertexIndex + 0] = mentionColor;
+                    vertexColors[vertexIndex + 1] = mentionColor;
+                    vertexColors[vertexIndex + 2] = mentionColor;
+                    vertexColors[vertexIndex + 3] = mentionColor;
+                }
+            }
+
+            if (mentionEverFound)
+                textComponent.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
         }
 
         public override void OnDeselect(BaseEventData eventData)
@@ -151,10 +197,7 @@ namespace DCL.UI.CustomInputField
             if (notify)
                 text = stringBuilder.ToString();
             else
-            {
                 SetTextWithoutNotify(stringBuilder.ToString());
-                TextReplacedWithoutNotification?.Invoke(text);
-            }
 
             stringPosition += replaceAt + newValue.Length + 1;
         }
