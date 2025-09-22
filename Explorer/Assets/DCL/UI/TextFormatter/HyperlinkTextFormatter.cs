@@ -2,6 +2,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Utilities;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -70,6 +71,32 @@ namespace DCL.UI.InputFieldFormatting
             ProcessMainStringBuilder();
 
             return mainStringBuilder.ToString();
+        }
+
+        public IReadOnlyList<(TextFormatMatchType, Match)> GetMatches(string text)
+        {
+            List<(TextFormatMatchType, Match)> matches = new ();
+
+            if (string.IsNullOrEmpty(text))
+                return matches;
+
+            var currentMatch = COMBINED_LINK_REGEX.Match(text);
+
+            while (currentMatch.Success)
+            {
+                if (currentMatch.Groups[URL_GROUP_NAME].Success)
+                    matches.Add((TextFormatMatchType.URL, currentMatch));
+                else if (currentMatch.Groups[SCENE_GROUP_NAME].Success)
+                    matches.Add((TextFormatMatchType.SCENE, currentMatch));
+                else if (currentMatch.Groups[WORLD_GROUP_NAME].Success)
+                    matches.Add((TextFormatMatchType.WORLD, currentMatch));
+                else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success)
+                    matches.Add((TextFormatMatchType.NAME, currentMatch));
+
+                currentMatch = currentMatch.NextMatch();
+            }
+
+            return matches;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

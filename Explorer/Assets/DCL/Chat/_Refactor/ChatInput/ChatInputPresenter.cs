@@ -3,6 +3,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.EventBus;
 using DCL.Emoji;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
@@ -31,10 +32,11 @@ namespace DCL.Chat.ChatInput
             ResolveInputStateCommand resolveInputStateCommand,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            SendMessageCommand sendMessageCommand)
+            SendMessageCommand sendMessageCommand,
+            ITextFormatter textFormatter)
         {
             this.view = view;
-            this.view.Initialize(chatConfig);
+            this.view.Initialize(chatConfig, textFormatter);
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 

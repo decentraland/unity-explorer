@@ -1,5 +1,7 @@
+using DCL.UI.InputFieldFormatting;
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -22,6 +24,7 @@ namespace DCL.UI.CustomInputField
         public event Action? PasteShortcutPerformed;
 
         public bool UpAndDownArrowsEnabled { get; set; }
+        public ITextFormatter TextFormatter { get; set; }
 
         public override void OnPointerClick(PointerEventData eventData)
         {
@@ -57,18 +60,14 @@ namespace DCL.UI.CustomInputField
         {
             bool mentionEverFound = false;
 
-            for (int j = 0; j < textComponent.textInfo.wordCount; j++)
+            foreach ((TextFormatMatchType _, Match match) info in TextFormatter.GetMatches(text))
             {
-                TMP_WordInfo info = textComponent.textInfo.wordInfo[j];
-                if (text[Math.Max(0, info.firstCharacterIndex - 1)] != '@') continue;
                 mentionEverFound = true;
 
-                int startingIndex = text[info.firstCharacterIndex] == '@' ? info.firstCharacterIndex : -1;
-                for (int i = startingIndex; i < info.characterCount; i++)
+                for (int i = info.match.Index; i < info.match.Index + info.match.Length; i++)
                 {
-                    int charIndex = info.firstCharacterIndex + i;
-                    int meshIndex = textComponent.textInfo.characterInfo[charIndex].materialReferenceIndex;
-                    int vertexIndex = textComponent.textInfo.characterInfo[charIndex].vertexIndex;
+                    int meshIndex = textComponent.textInfo.characterInfo[i].materialReferenceIndex;
+                    int vertexIndex = textComponent.textInfo.characterInfo[i].vertexIndex;
 
                     Color32[] vertexColors = textComponent.textInfo.meshInfo[meshIndex].colors32;
                     vertexColors[vertexIndex + 0] = mentionColor;

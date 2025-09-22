@@ -1,6 +1,7 @@
 ﻿using DCL.Audio;
 using DCL.Emoji;
 using DCL.UI.CustomInputField;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
@@ -94,10 +95,11 @@ namespace DCL.Chat.ChatInput
             inputField.DeactivateInputField();
         }
 
-        public void Initialize(ChatConfig.ChatConfig chatConfig)
+        public void Initialize(ChatConfig.ChatConfig chatConfig, ITextFormatter textFormatter)
         {
             characterCounter.SetMaximumLength(inputField.characterLimit);
             this.chatConfig = chatConfig;
+            inputField.TextFormatter = textFormatter;
         }
 
         public void InsertTextAtCaretPosition(string text)
