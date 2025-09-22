@@ -15,7 +15,9 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     input.positionWS = TransformObjectToWorld(positionOS);
     input.positionWS = ClampPosition(input.positionWS, terrainBounds);
 
-    float2 heightUV = (input.positionWS.xz + 4096.0f) / 8192.0f;
+    float2 terrainSize = terrainBounds.zw - terrainBounds.xy;
+    float nextPow2 = exp2(ceil(log2(max(terrainSize.x, terrainSize.y) + 32.0)));
+    float2 heightUV = (input.positionWS.xz + nextPow2 * 0.5f) / nextPow2;
    
     float fHeightMapValue = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, heightUV, 0).x;
     fOccupancy = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, heightUV, 0).r;

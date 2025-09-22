@@ -538,14 +538,27 @@ namespace DCL.Landscape
             else
                 occupancy = 0f;
 
-            // float height = SAMPLE_TEXTURE2D_LOD(HeightMap, HeightMap.samplerstate, uv, 0.0).r;
             float minValue = occupancyFloor / 255.0f; // 0.68
 
-            if (occupancy <= minValue) return 0f;
+            if (occupancy <= minValue)
+            {
+                // Flat surface (occupied parcels and above minValue threshold)
+                return 0f;
+            }
+            else
+            {
+                // Calculate normalized height first
+                float normalizedHeight = (occupancy - minValue) / (1f - minValue);
 
-            const float SATURATION_FACTOR = 20;
-            float normalizedHeight = (occupancy - minValue) / (1 - minValue);
-            return (normalizedHeight * MAX_HEIGHT) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
+                // the result from the heightmap should be equal to this function
+                float noiseH = MountainsNoise.GetHeight(x, z);
+
+                const float SATURATION_FACTOR = 20;
+                float y = (normalizedHeight * MAX_HEIGHT) + (noiseH * saturate(normalizedHeight * SATURATION_FACTOR));
+
+                // Ensure no negative heights
+                return max(0f, y);
+            }
         }
 
         public float GetHeight(float x, float z) =>
