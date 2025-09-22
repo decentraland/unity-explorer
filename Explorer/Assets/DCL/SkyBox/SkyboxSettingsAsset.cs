@@ -14,17 +14,19 @@ namespace DCL.SkyBox
     [CreateAssetMenu(menuName = "DCL/SO/Skybox Settings", fileName = "SkyboxSettings")]
     public class SkyboxSettingsAsset : ScriptableObject
     {
-        private const float DEFAULT_SPEED = 1 * 60f; // 1 minute per second
+        private const int SECONDS_IN_DAY = 86400;
+        private const float INITIAL_TIME_OF_DAY = 0.5f; // Midday
 
         // We need to subtract 1 minute to make the slider range is between 00:00 and 23:59
         public const int TOTAL_MINUTES_IN_DAY = 1439; // 23:59 in minutes
-        public const int SECONDS_IN_DAY = 86400;
-        public const float INITIAL_TIME_OF_DAY = 0.5f; // Midday
-        public const float REFRESH_INTERVAL = 5f;
 
-        [SerializeField] private float speedMultiplier = DEFAULT_SPEED;
+        [SerializeField] private float fullDayCycleInMinutes = 120;
         [SerializeField] private float transitionSpeed = 1f;
+        [SerializeField] private float[] refreshIntervalByQuality;
 
+        public float RefreshInterval => refreshIntervalByQuality[refreshIntervalId];
+
+        private uint refreshIntervalId;
         private float timeOfDayNormalized;
         private bool isDayCycleEnabled;
 
@@ -35,6 +37,7 @@ namespace DCL.SkyBox
         public Material SkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
+        public float FullCycleSpeed => 1f / (fullDayCycleInMinutes * 60f);
         public bool IsUIControlled { get; set; }
         public float UIOverrideTimeOfDayNormalized { get; set; }
         public Vector2Int? CurrentSDKControlledScene { get; set; }
@@ -51,8 +54,6 @@ namespace DCL.SkyBox
 
         }
         public TransitionMode TransitionMode { get; set; }
-
-        public float SpeedMultiplier => speedMultiplier;
 
         public float TransitionSpeed => transitionSpeed;
 
@@ -78,6 +79,12 @@ namespace DCL.SkyBox
             TransitionMode = TransitionMode.FORWARD;
             IsUIControlled = false;
             CurrentSDKControlledScene = null;
+        }
+
+        // Mapping: 0 - Low, 1 - Medium, 2 - High, 3 - Custom
+        public void SetRefreshInterval(int qualityPresetId)
+        {
+            refreshIntervalId = (uint)Math.Min(qualityPresetId, refreshIntervalByQuality.Length - 1);
         }
 
         public static float NormalizeTime(float time)

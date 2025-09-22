@@ -10,7 +10,6 @@ using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
 namespace DCL.SkyBox
