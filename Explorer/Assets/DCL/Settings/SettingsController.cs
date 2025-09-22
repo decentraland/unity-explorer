@@ -11,6 +11,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
+using DCL.SkyBox;
 using DCL.UI;
 using DCL.Utilities;
 using ECS.Prioritization;
@@ -40,6 +41,7 @@ namespace DCL.Settings
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly SkyboxSettingsAsset skyboxSettingsAsset;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
@@ -62,6 +64,7 @@ namespace DCL.Settings
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
             ChatSettingsAsset chatSettingsAsset,
@@ -78,6 +81,7 @@ namespace DCL.Settings
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
+            this.skyboxSettingsAsset = skyboxSettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
             this.volumeBus = volumeBus;
@@ -177,6 +181,7 @@ namespace DCL.Settings
                             landscapeData,
                             generalAudioMixer,
                             qualitySettingsAsset,
+                            skyboxSettingsAsset,
                             controlsSettingsAsset,
                             chatSettingsAsset,
                             memoryCap,

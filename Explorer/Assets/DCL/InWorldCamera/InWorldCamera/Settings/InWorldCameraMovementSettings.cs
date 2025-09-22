@@ -9,6 +9,7 @@ namespace DCL.InWorldCamera.Settings
         [field: SerializeField] public float TranslationSpeed { get; private set; } = 5f;
         [field: SerializeField] public float MouseTranslationSpeed { get; private set; } = 0.05f;
         [field: SerializeField] public float RunSpeedMultiplayer { get; private set; } = 2;
+        [field: SerializeField] public float WalkSpeedMultiplayer { get; private set; } = .5f;
 
         [field: Header("FOV")]
         [field: SerializeField] public float FOVChangeSpeed { get; private set; } = 3;
