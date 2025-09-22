@@ -38,7 +38,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             currentVoiceChatPanelSize = voiceChatOrchestrator.CurrentVoiceChatPanelSize;
             thumbnailController = new ImageController(view.CommunityThumbnail, webRequestController);
 
-            view.EndStreamButton.onClick.AddListener(OnEndStreamButtonClicked);
+            view.EndStreamButtonCLicked += OnEndStreamButtonClicked;
             view.CommunityButton.onClick.AddListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.AddListener(OnToggleCollapseButtonClicked);
 
@@ -70,10 +70,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
+            view.EndStreamButtonCLicked -= OnEndStreamButtonClicked;
+
             expandedPanelButtonsPresenter.Dispose();
             collapsedPanelButtonsPresenter.Dispose();
             panelSizeChangeSubscription.Dispose();
-            view.EndStreamButton.onClick.RemoveListener(OnEndStreamButtonClicked);
             view.CommunityButton.onClick.RemoveListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);
         }
