@@ -41,7 +41,7 @@ namespace DCL.UI.CustomInputField
         {
             base.LateUpdate();
 
-            if (!isDirty && !isFocused) return;
+            if (!isDirty || string.IsNullOrEmpty(text)) return;
 
             ApplyVertexColors();
             isDirty = false;
@@ -197,7 +197,10 @@ namespace DCL.UI.CustomInputField
             if (notify)
                 text = stringBuilder.ToString();
             else
+            {
                 SetTextWithoutNotify(stringBuilder.ToString());
+                isDirty = true;
+            }
 
             stringPosition += replaceAt + newValue.Length + 1;
         }

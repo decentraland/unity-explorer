@@ -4,7 +4,6 @@ using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
-using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
