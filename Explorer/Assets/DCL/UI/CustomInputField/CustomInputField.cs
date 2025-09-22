@@ -1,11 +1,13 @@
 using DCL.UI.InputFieldFormatting;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace DCL.UI.CustomInputField
 {
@@ -16,11 +18,9 @@ namespace DCL.UI.CustomInputField
     public class CustomInputField : TMP_InputField
     {
         private bool isControlPressed;
-        private bool isDirty;
-        private int lastCaretPosition = -1;
-        private int lastLineCount = -1;
         private readonly StringBuilder stringBuilder = new ();
         private Color32 mentionColor { get; set; } = new (0, 179, 255, 255);
+        private IReadOnlyList<(TextFormatMatchType _, Match match)>? inputMatchesInfo;
 
         public event Action<PointerEventData.InputButton>? Clicked;
         public event Action? PasteShortcutPerformed;
@@ -42,40 +42,28 @@ namespace DCL.UI.CustomInputField
             Clicked?.Invoke(eventData.button);
         }
 
-        public override void OnSelect(BaseEventData eventData)
+        public override void Rebuild(CanvasUpdate update)
         {
-            base.OnSelect(eventData);
-            isDirty = true;
-        }
+            base.Rebuild(update);
 
-        protected override void LateUpdate()
-        {
-            base.LateUpdate();
-
-            if (!isDirty && lastCaretPosition == caretPosition && lastLineCount == textComponent.textInfo.lineCount) return;
-
-            lastCaretPosition = caretPosition;
-            lastLineCount = textComponent.textInfo.lineCount;
-            ApplyVertexColors();
-            isDirty = false;
+            if (update == CanvasUpdate.LatePreRender)
+                ApplyVertexColors();
         }
 
         protected override void Awake()
         {
             base.Awake();
-            onValueChanged.AddListener(_ => isDirty = true);
+            onValueChanged.AddListener(_ => CacheMatchInfo());
         }
+
+        private void CacheMatchInfo() =>
+            inputMatchesInfo = TextFormatter.GetMatches(text);
 
         private void ApplyVertexColors()
         {
-            if (string.IsNullOrEmpty(text)) return;
+            if (string.IsNullOrEmpty(text) || inputMatchesInfo == null) return;
 
-            bool mentionEverFound = false;
-
-            foreach ((TextFormatMatchType _, Match match) info in TextFormatter.GetMatches(text))
-            {
-                mentionEverFound = true;
-
+            foreach (var info in inputMatchesInfo)
                 for (int i = info.match.Index; i < info.match.Index + info.match.Length; i++)
                 {
                     int meshIndex = textComponent.textInfo.characterInfo[i].materialReferenceIndex;
@@ -87,9 +75,8 @@ namespace DCL.UI.CustomInputField
                     vertexColors[vertexIndex + 2] = mentionColor;
                     vertexColors[vertexIndex + 3] = mentionColor;
                 }
-            }
 
-            if (mentionEverFound)
+            if (inputMatchesInfo.Count > 0)
                 textComponent.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
         }
 
@@ -210,7 +197,7 @@ namespace DCL.UI.CustomInputField
             else
             {
                 SetTextWithoutNotify(stringBuilder.ToString());
-                isDirty = true;
+                CacheMatchInfo();
             }
 
             stringPosition += replaceAt + newValue.Length + 1;
