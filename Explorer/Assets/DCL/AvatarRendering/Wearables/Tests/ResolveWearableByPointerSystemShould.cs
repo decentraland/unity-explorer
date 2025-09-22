@@ -16,6 +16,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NUnit.Framework;
+using Runtime.Wearables;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -80,7 +81,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                             representations = isUnisex
                                 ? new[] { AvatarAttachmentDTO.Representation.NewFakeRepresentation(), AvatarAttachmentDTO.Representation.NewFakeRepresentation() }
                                 : new[] { AvatarAttachmentDTO.Representation.NewFakeRepresentation() },
-                            category = WearablesConstants.Categories.UPPER_BODY,
+                            category = WearableCategories.Categories.UPPER_BODY,
                         },
                     }
                 },

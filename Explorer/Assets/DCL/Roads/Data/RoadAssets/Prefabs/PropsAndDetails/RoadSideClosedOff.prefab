@@ -107,11 +107,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: -5906553407265383160}
   m_SourcePrefab: {fileID: 100100000, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
---- !u!4 &3937374822286885029 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
-  m_PrefabInstance: {fileID: 3544021707692402510}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4462940953170827807 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
@@ -151,42 +146,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  whitelistedShaders:
-  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
-  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
-  Name: RoadSideClosedOff
+  GPUInstancingSettings: {fileID: 11400000, guid: fb981fee23899ef4eacd98e0c788b4e0, type: 2}
   Reference: {fileID: 8142017896406890452}
-  Transform: {fileID: 3937374822286885029}
   RefRenderers:
   - {fileID: 9183869298469079119}
   - {fileID: 4753500650892868748}
-  ObjectSize: 16.000002
-  Bounds:
-    m_Center: {x: 0, y: 0.049999997, z: -0.00000047683716}
-    m_Extent: {x: 8.000001, y: 0.049999997, z: 8}
-  LodsScreenSpaceSizes:
-  - 0.13831817
-  - 0.048087455
-  LODSizesMatrix:
-    e00: 1
-    e01: 0.1563643
-    e02: 0
-    e03: 0
-    e10: 0
-    e11: 0
-    e12: 0
-    e13: 0
-    e20: 0.13831817
-    e21: 0
-    e22: 0
-    e23: 0
-    e30: 0
-    e31: 0
-    e32: 0
-    e33: 0
-  CombinedLodsRenderers:
+  <LODGroupData>k__BackingField:
+    lodsScreenSpaceSizes:
+    - 0.13831817
+    - 0.048087455
+    objectSize: 16.000002
+    LODSizesMatrix:
+      e00: 1
+      e01: 0.1563643
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 0
+      e12: 0
+      e13: 0
+      e20: 0.13831817
+      e21: 0
+      e22: 0
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 0
+    Bounds:
+      m_Center: {x: 0, y: 0.049999997, z: -0.00000047683716}
+      m_Extent: {x: 8.000001, y: 0.049999997, z: 8}
+    LODCount: 2
+  <CombinedLodsRenderers>k__BackingField:
   - SubMeshId: 0
-    CombinedMesh: {fileID: 752386461921793393}
+    CombinedMesh: {fileID: -8333532971529606221}
     SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 9183869298469079119}
@@ -213,7 +206,7 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 5646753623344606977, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
   m_PrefabInstance: {fileID: 3544021707692402510}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &752386461921793393
+--- !u!43 &-8333532971529606221
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

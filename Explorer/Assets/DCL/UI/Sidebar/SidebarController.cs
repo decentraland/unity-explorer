@@ -383,7 +383,7 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
             // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection), PanelsSharingSpace.Chat);
         }
 #endregion
     }

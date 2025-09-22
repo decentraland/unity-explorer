@@ -43,14 +43,14 @@ namespace DCL.SkyBox
                 isTransitioning = false;
             }
 
-            globalTimeOfDay += dt * (settings.SpeedMultiplier / SkyboxSettingsAsset.SECONDS_IN_DAY);
+            globalTimeOfDay += dt * settings.FullCycleSpeed;
 
             while (globalTimeOfDay >= 1f)
                 globalTimeOfDay -= 1f;
 
             refreshAccumulatedTime += dt;
 
-            if (refreshAccumulatedTime >= SkyboxSettingsAsset.REFRESH_INTERVAL)
+            if (refreshAccumulatedTime >= settings.RefreshInterval)
             {
                 settings.TimeOfDayNormalized = globalTimeOfDay;
                 refreshAccumulatedTime = 0f;

@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Utilities.Extensions;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace DCL.Profiles
             var uniqueEmotes = new URN[profile.Avatar.Emotes.Count];
             ConvertEquippedEmotesIntoUniqueUrns();
 
-            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
+            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
 
             ProfileBuilder builder = PROFILE_BUILDER.From(profile)
                                                            .WithBodyShape(bodyShape)
@@ -54,7 +55,7 @@ namespace DCL.Profiles
                 foreach ((string category, IWearable? w) in equippedWearables.Items())
                 {
                     if (w == null) continue;
-                    if (category == WearablesConstants.Categories.BODY_SHAPE) continue;
+                    if (category == WearableCategories.Categories.BODY_SHAPE) continue;
 
                     URN uniqueUrn = w.GetUrn();
 

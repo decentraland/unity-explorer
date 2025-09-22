@@ -46,7 +46,7 @@ namespace DCL.UI.SharedSpaceManager
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
         private bool isCameraReelPanelVisible { get; set; }
 
-        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled, 
+        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled,
             EmotesBus emotesBus)
         {
             this.mvcManager = mvcManager;
@@ -66,7 +66,7 @@ namespace DCL.UI.SharedSpaceManager
 
         private void OnQuickActionEmotePlayed()
         {
-            if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace) 
+            if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace)
                 lastQuickEmoteTime = Time.time;
         }
 
@@ -77,7 +77,6 @@ namespace DCL.UI.SharedSpaceManager
 
             dclInput.Shortcuts.EmoteWheel.canceled += OnInputShortcutsEmoteWheelPerformedAsync;
             dclInput.Shortcuts.Controls.performed += OnInputShortcutsControlsPanelPerformedAsync;
-            dclInput.Shortcuts.OpenChat.performed += OnInputShortcutsOpenChatPerformedAsync;
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
 
             dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformedAsync;
@@ -103,7 +102,6 @@ namespace DCL.UI.SharedSpaceManager
 
             dclInput.Shortcuts.EmoteWheel.canceled -= OnInputShortcutsEmoteWheelPerformedAsync;
             dclInput.Shortcuts.Controls.performed -= OnInputShortcutsControlsPanelPerformedAsync;
-            dclInput.Shortcuts.OpenChat.performed -= OnInputShortcutsOpenChatPerformedAsync;
             dclInput.UI.Submit.performed -= OnUISubmitPerformedAsync;
 
             dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
@@ -486,7 +484,7 @@ namespace DCL.UI.SharedSpaceManager
                 lastQuickEmoteTime = 0;
                 return;
             }
-            
+
             if (!isExplorePanelVisible)
                 await ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new EmotesWheelParams());
         }
@@ -513,13 +511,6 @@ namespace DCL.UI.SharedSpaceManager
                 await ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
         }
 
-        private async void OnInputShortcutsOpenChatPerformedAsync(InputAction.CallbackContext obj)
-        {
-            if (!isExplorePanelVisible && !isTransitioning)
-                await ToggleVisibilityAsync(PanelsSharingSpace.Chat,
-                    new ChatControllerShowParams(true, true, forceFocusFromShortcut: true));
-        }
-
         private async void OnInputShortcutsCommunitiesPerformedAsync(InputAction.CallbackContext obj)
         {
             if (!isExplorePanelVisible && isCommunitiesFeatureEnabled)
@@ -542,7 +533,7 @@ namespace DCL.UI.SharedSpaceManager
             // Clue: It is handled by ToggleInWorldCameraActivitySystem
         }
 #endregion
-        
+
         /// <summary>
         /// Emote wheel is locked when quick emote action was executed, but not when wheel is already visible, in that
         /// case we want to hide it.
@@ -550,7 +541,7 @@ namespace DCL.UI.SharedSpaceManager
         private bool IsEmoteWheelLocked()
         {
             bool isPanelVisible = registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace;
-            
+
             return !isPanelVisible && lastQuickEmoteTime + QUICK_EMOTE_LOCK_TIME > Time.time;
         }
     }
