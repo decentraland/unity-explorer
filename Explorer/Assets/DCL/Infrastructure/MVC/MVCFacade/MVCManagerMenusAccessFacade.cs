@@ -5,6 +5,7 @@ using DCL.Chat.EventBus;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
 using DCL.Multiplayer.Connectivity;
@@ -163,7 +164,7 @@ namespace MVC
         public async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
         {
             try { await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct); }
-            catch (Exception ex) { Debug.LogError($"Failed to open passport for user {userId}: {ex.Message}"); }
+            catch (Exception ex) { ReportHub.LogError(ReportCategory.UI, $"Failed to open passport for user {userId}: {ex.Message}"); }
         }
         public async UniTask ShowGenericContextMenuAsync(GenericContextMenuParameter parameter)
         {
