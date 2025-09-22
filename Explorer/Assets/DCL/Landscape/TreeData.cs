@@ -135,7 +135,7 @@ namespace DCL.Landscape
         private bool IsParcelOccupied(int2 parcel)
         {
             if (any(parcel < terrainMinParcel) || any(parcel > terrainMaxParcel))
-                return false;
+                return true; // Treat out of bounds as occupied.
 
             if (occupancyMapSize <= 0)
                 return false;
