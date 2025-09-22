@@ -19,10 +19,13 @@ namespace DCL.VoiceChat
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> streams;
         private readonly AudioMixerGroup audioMixerGroup;
 
+        private readonly Transform parent;
+
         internal PlaybackSourcesHub(ConcurrentDictionary<StreamKey, LivekitAudioSource> streams, AudioMixerGroup audioMixerGroup)
         {
             this.streams = streams;
             this.audioMixerGroup = audioMixerGroup;
+            parent = new GameObject(nameof(PlaybackSourcesHub)).transform;
         }
 
         internal void AddOrReplaceStream(StreamKey key, WeakReference<IAudioStream> stream)
@@ -35,6 +38,7 @@ namespace DCL.VoiceChat
             AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
             audioSource.outputAudioMixerGroup = audioMixerGroup;
             source.name = $"LivekitSource_{key.Identity}";
+            source.transform.SetParent(parent);
 
             if (streams.TryAdd(key, source) == false)
             {
