@@ -130,14 +130,6 @@ namespace DCL.PluginSystem.Global
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
             sceneVoiceChatController = new SceneVoiceChatController(mainUIView.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
-
-            debugContainerBuilder
-               .TryAddWidget("Voice Chat")
-              ?.AddToggleField(
-                    "Freeze Playback Hub",
-                    v => PlaybackSourcesHub.UpdateFrozen(v.newValue),
-                    false
-                );
         }
 
         [Serializable]

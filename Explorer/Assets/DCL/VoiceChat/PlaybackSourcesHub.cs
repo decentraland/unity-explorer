@@ -16,8 +16,6 @@ namespace DCL.VoiceChat
     /// </summary>
     public readonly struct PlaybackSourcesHub
     {
-        private static volatile bool frozen;
-
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> streams;
         private readonly AudioMixerGroup audioMixerGroup;
 
@@ -27,16 +25,8 @@ namespace DCL.VoiceChat
             this.audioMixerGroup = audioMixerGroup;
         }
 
-        public static void UpdateFrozen(bool enabled)
-        {
-            frozen = enabled;
-        }
-
         internal void AddOrReplaceStream(StreamKey key, WeakReference<IAudioStream> stream)
         {
-            if (frozen)
-                return;
-
             if (streams.TryRemove(key, out var oldStream))
                 DisposeSource(oldStream!);
 
@@ -77,9 +67,6 @@ namespace DCL.VoiceChat
 
         internal void Play()
         {
-            if (frozen)
-                return;
-
             ExecuteOnMainThread(this, static hub =>
             {
                 foreach (LivekitAudioSource livekitAudioSource in hub.streams.Values)
