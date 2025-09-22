@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using Segment.Serialization;
