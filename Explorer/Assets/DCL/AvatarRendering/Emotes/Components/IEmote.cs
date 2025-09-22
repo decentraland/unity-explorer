@@ -10,6 +10,8 @@ namespace DCL.AvatarRendering.Emotes
         StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
         StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
 
+        bool IsSocial { get; }
+
         bool IsLooping();
 
         bool HasSameClipForAllGenders();

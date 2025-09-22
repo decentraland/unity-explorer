@@ -11,8 +11,25 @@ namespace DCL.AvatarRendering.Emotes
     public class EmoteDTO : AvatarAttachmentDTO<EmoteDTO.EmoteMetadataDto>
     {
         [Serializable]
+        public class EmoteOutcomeDTO
+        {
+            public string title;
+            public EmoteAnimationDTO[] clips;
+        }
+
+        [Serializable]
+        public class EmoteAnimationDTO
+        {
+            public string armature;
+            public string animation;
+            public bool loop;
+        }
+
+        [Serializable]
         public class EmoteMetadataDto : MetadataBase
         {
+            public bool IsSocialEmote => emoteDataADR74.outcomes != null && emoteDataADR74.outcomes.Length > 0;
+
             // emotes DTO fetched from builder-API use the normal 'data' property
             // emotes DTO fetched from realm use 'emoteDataADR74' property...
             public Data emoteDataADR74;
@@ -27,10 +44,14 @@ namespace DCL.AvatarRendering.Emotes
 
             public override DataBase AbstractData => emoteDataADR74;
 
+            // Data structure extended in ADR-287 to support social emotes
             [Serializable]
             public class Data : DataBase
             {
                 public bool loop;
+                public bool randomizeOutcomes;
+                public EmoteAnimationDTO[] startAnimation;
+                public EmoteOutcomeDTO[] outcomes;
             }
         }
     }

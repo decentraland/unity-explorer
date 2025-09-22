@@ -16,6 +16,7 @@ namespace DCL.AvatarRendering.Emotes
     {
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; } = new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT];
+        public bool IsSocial => ((EmoteDTO.EmoteMetadataDto)this.DTO.Metadata).IsSocialEmote;
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
         public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; } = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
