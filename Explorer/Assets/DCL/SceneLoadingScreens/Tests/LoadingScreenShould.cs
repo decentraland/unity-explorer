@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -8,7 +9,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.TestTools;
-using Utility.Types;
 
 namespace DCL.SceneLoadingScreens.Tests
 {

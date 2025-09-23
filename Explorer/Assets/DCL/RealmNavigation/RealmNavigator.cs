@@ -8,6 +8,7 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
@@ -15,7 +16,6 @@ using Segment.Serialization;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.RealmNavigation
 {

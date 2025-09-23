@@ -6,7 +6,8 @@ using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -14,14 +15,13 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using Utility;
 using DCL.UI.SharedSpaceManager;
+using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -125,11 +125,11 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityInvitationRejected += RejectCommunityInvitation;
             view.CreateCommunityButtonClicked += CreateCommunity;
 
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnJoinRequestReceived);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_INVITE_RECEIVED, OnInvitationReceived);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnJoinRequestReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_INVITE_RECEIVED, OnInvitationReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
         }
 
         public void Dispose()
@@ -287,7 +287,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!invitesResult.Success)
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INVITATIONS_COMMUNITIES_LOADING_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INVITATIONS_COMMUNITIES_LOADING_ERROR_MESSAGE));
                 return 0;
             }
 
@@ -319,7 +319,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             if (!requestsResult.Success)
             {
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUESTS_COMMUNITIES_LOADING_ERROR_MESSAGE));
                 return 0;
             }
 
@@ -438,7 +438,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     return;
 
                 if (!result.Success)
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
             }
         }
 
@@ -462,7 +462,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ct.IsCancellationRequested)
                 return;
 
-            if (!result.Success || !result.Value) { Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE)); }
+            if (!result.Success || !result.Value) { NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE)); }
 
             int? indexToRemove = null;
 
@@ -495,7 +495,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ct.IsCancellationRequested)
                 return;
 
-            if (!result.Success || !result.Value) { Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE)); }
+            if (!result.Success || !result.Value) { NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE)); }
         }
 
         private void RejectCommunityInvitation(string communityId, string invitationId)
@@ -512,7 +512,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (ct.IsCancellationRequested)
                 return;
 
-            if (!result.Success || !result.Value) { Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE)); }
+            if (!result.Success || !result.Value) { NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE)); }
         }
 
         private void OnOpenCommunityProfile(string communityId) =>

@@ -1,8 +1,8 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuButtonWithTextView : GenericContextMenuSimpleButtonView
     {

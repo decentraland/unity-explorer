@@ -6,13 +6,13 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using Decentraland.SocialService.V2;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Web3.Identities;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat.ChatServices
 {

@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Pool;
-using Utility.Types;
 
 namespace SceneRuntime.Factory.Tests
 {

@@ -1,10 +1,9 @@
-using DCL.UI.Buttons;
-using DCL.UI.GenericContextMenu.Controls;
+using DCL.UI.Controls;
 using MVC;
 using System;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenu
+namespace DCL.UI
 {
     public class GenericContextMenuView : ViewBase, IView, IDisposable
     {

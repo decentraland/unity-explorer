@@ -14,7 +14,7 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using ECS.Unity.Textures.Components;
 #if UNITY_EDITOR
 using RenderHeads.Media.AVProVideo;

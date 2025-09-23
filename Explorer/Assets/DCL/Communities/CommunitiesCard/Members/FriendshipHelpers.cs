@@ -1,5 +1,5 @@
 using DCL.Communities.CommunitiesDataProvider.DTOs;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using System;
 
 namespace DCL.Communities.CommunitiesCard.Members

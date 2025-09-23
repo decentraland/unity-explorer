@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public FixedComputeBufferHandler.Slice VertsOutRegion;
 
-        internal readonly int vertCount;
+        public readonly int VertCount;
 
         internal Buffers buffers;
         internal readonly List<MaterialSetup> materials;
@@ -73,7 +73,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         internal AvatarCustomSkinningComponent(int vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance, Bounds localBounds)
         {
-            this.vertCount = vertCount;
+            VertCount = vertCount;
             this.buffers = buffers;
             this.materials = materials;
             this.computeShaderInstance = computeShaderInstance;
