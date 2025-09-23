@@ -81,7 +81,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             ProcessOnEnterTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
-            // ProcessOnStayInTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+            ProcessOnStayInTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
             ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
         }
 
