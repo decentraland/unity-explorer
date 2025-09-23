@@ -67,7 +67,7 @@ namespace DCL.UI.SuggestionPanel
         private async UniTaskVoid SearchAndSetSuggestionsAsync<T>(string value, InputSuggestionType suggestionType, Dictionary<string, T> suggestionDataMap, CancellationToken ct) where T : IInputSuggestionElementData
         {
             var resultList = new List<T>();
-            await DictionaryUtils.GetKeysWithPrefixAsync(suggestionDataMap, value, resultList, ct);
+            await DictionaryUtils.GetKeysContainingTextAsync(suggestionDataMap, value, resultList, ct);
 
 
             suggestionPanel.SetSuggestionValues(suggestionType, resultList);

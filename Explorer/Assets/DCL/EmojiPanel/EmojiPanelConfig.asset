@@ -16,302 +16,909 @@ MonoBehaviour:
   - title: Smileys and People
     sectionName: 0
     emojis:
-    - key: ':grinning:'
+    - key: ':grinning_face:'
       value: 128512
-    - key: ':grin:'
-      value: 128513
-    - key: ':joy:'
-      value: 128514
-    - key: ':smiley:'
+    - key: ':grinning_face_with_big_eyes:'
       value: 128515
-    - key: ':smile:'
+    - key: ':grinning_face_with_smiling_eyes:'
       value: 128516
-    - key: ':sweat_smile:'
-      value: 128517
-    - key: ':laughing:'
+    - key: ':beaming_face_with_smiling_eyes:'
+      value: 128513
+    - key: ':grinning_squinting_face:'
       value: 128518
-    - key: ':innocent:'
-      value: 128519
-    - key: ':smiling_imp:'
-      value: 128520
-    - key: ':wink:'
-      value: 128521
-    - key: ':blush:'
-      value: 128522
-    - key: ':yum:'
-      value: 128523
-    - key: ':relieved:'
-      value: 128524
-    - key: ':heart_eyes:'
-      value: 128525
-    - key: ':sunglasses:'
-      value: 128526
-    - key: ':smirk:'
-      value: 128527
-    - key: ':neutral_face:'
-      value: 128528
-    - key: ':expressionless:'
-      value: 128529
-    - key: ':unamused:'
-      value: 128530
-    - key: ':sweat:'
-      value: 128531
-    - key: ':pensive:'
-      value: 128532
-    - key: ':confused:'
-      value: 128533
-    - key: ':confounded:'
-      value: 128534
-    - key: ':kissing:'
-      value: 128535
-    - key: ':kissing_heart:'
-      value: 128536
-    - key: ':kissing_smiling_eyes:'
-      value: 128537
-    - key: ':kissing_closed_eyes:'
-      value: 128538
-    - key: ':stuck_out_tongue:'
-      value: 128539
-    - key: ':stuck_out_tongue_winking_eye:'
-      value: 128540
-    - key: ':stuck_out_tongue_closed_eyes:'
-      value: 128541
-    - key: ':disappointed:'
-      value: 128542
-    - key: ':worried:'
-      value: 128543
-    - key: ':angry:'
-      value: 128544
-    - key: ':rage:'
-      value: 128545
-    - key: ':cry:'
-      value: 128546
-    - key: ':persevere:'
-      value: 128547
-    - key: ':triumph:'
-      value: 128548
-    - key: ':disappointed_relieved:'
-      value: 128549
-    - key: ':frowning:'
-      value: 128550
-    - key: ':anguished:'
-      value: 128551
-    - key: ':fearful:'
-      value: 128552
-    - key: ':weary:'
-      value: 128553
-    - key: ':sleepy:'
-      value: 128554
-    - key: ':tired_face:'
-      value: 128555
-    - key: ':grimacing:'
-      value: 128556
-    - key: ':sob:'
-      value: 128557
-    - key: ':open_mouth:'
-      value: 128558
-    - key: ':hushed:'
-      value: 128559
-    - key: ':cold_sweat:'
-      value: 128560
-    - key: ':scream:'
-      value: 128561
-    - key: ':astonished:'
-      value: 128562
-    - key: ':flushed:'
-      value: 128563
-    - key: ':sleeping:'
-      value: 128564
-    - key: ':dizzy_face:'
-      value: 128565
-    - key: ':no_mouth:'
-      value: 128566
-    - key: ':mask:'
-      value: 128567
-    - key: ':smile_cat:'
-      value: 128568
-    - key: ':joy_cat:'
-      value: 128569
-    - key: ':smiley_cat:'
-      value: 128570
-    - key: ':heart_eyes_cat:'
-      value: 128571
-    - key: ':smirk_cat:'
-      value: 128572
-    - key: ':kissing_cat:'
-      value: 128573
-    - key: ':pouting_cat:'
-      value: 128574
-    - key: ':crying_cat_face:'
-      value: 128575
-    - key: ':scream_cat:'
-      value: 128576
-    - key: ':slightly_frowning_face:'
-      value: 128577
+    - key: ':grinning_face_with_sweat:'
+      value: 128517
+    - key: ':rolling_on_the_floor_laughing:'
+      value: 129315
+    - key: ':face_with_tears_of_joy:'
+      value: 128514
     - key: ':slightly_smiling_face:'
       value: 128578
     - key: ':upside_down_face:'
       value: 128579
-    - key: ':face_with_rolling_eyes:'
-      value: 128580
-    - key: ':no_good:'
-      value: 128581
-    - key: ':ok_woman:'
-      value: 128582
-    - key: ':bow:'
-      value: 128583
-    - key: ':see_no_evil:'
-      value: 128584
-    - key: ':hear_no_evil:'
-      value: 128585
-    - key: ':speak_no_evil:'
-      value: 128586
-    - key: ':raising_hand:'
-      value: 128587
-    - key: ':raised_hands:'
-      value: 128588
-    - key: ':person_frowning:'
-      value: 128589
-    - key: ':person_with_pouting_face:'
-      value: 128590
-    - key: ':zipper_mouth_face:'
-      value: 129296
+    - key: ':melting_face:'
+      value: 129760
+    - key: ':winking_face:'
+      value: 128521
+    - key: ':smiling_face_with_smiling_eyes:'
+      value: 128522
+    - key: ':smiling_face_with_halo:'
+      value: 128519
+    - key: ':smiling_face_with_hearts:'
+      value: 129392
+    - key: ':smiling_face_with_heart_eyes:'
+      value: 128525
+    - key: ':star_struck:'
+      value: 129321
+    - key: ':face_blowing_a_kiss:'
+      value: 128536
+    - key: ':kissing_face:'
+      value: 128535
+    - key: ':smiling_face:'
+      value: 9786
+    - key: ':kissing_face_with_closed_eyes:'
+      value: 128538
+    - key: ':kissing_face_with_smiling_eyes:'
+      value: 128537
+    - key: ':smiling_face_with_tear:'
+      value: 129394
+    - key: ':face_savoring_food:'
+      value: 128523
+    - key: ':face_with_tongue:'
+      value: 128539
+    - key: ':winking_face_with_tongue:'
+      value: 128540
+    - key: ':zany_face:'
+      value: 129322
+    - key: ':squinting_face_with_tongue:'
+      value: 128541
     - key: ':money_mouth_face:'
       value: 129297
-    - key: ':face_with_thermometer:'
-      value: 129298
-    - key: ':nerd_face:'
-      value: 129299
+    - key: ':smiling_face_with_open_hands:'
+      value: 129303
+    - key: ':face_with_hand_over_mouth:'
+      value: 129325
+    - key: ':face_with_open_eyes_and_hand_over_mouth:'
+      value: 129762
+    - key: ':face_with_peeking_eye:'
+      value: 129763
+    - key: ':shushing_face:'
+      value: 129323
     - key: ':thinking_face:'
       value: 129300
+    - key: ':saluting_face:'
+      value: 129761
+    - key: ':zipper_mouth_face:'
+      value: 129296
+    - key: ':face_with_raised_eyebrow:'
+      value: 129320
+    - key: ':neutral_face:'
+      value: 128528
+    - key: ':expressionless_face:'
+      value: 128529
+    - key: ':face_without_mouth:'
+      value: 128566
+    - key: ':dotted_line_face:'
+      value: 129765
+    - key: ':smirking_face:'
+      value: 128527
+    - key: ':unamused_face:'
+      value: 128530
+    - key: ':face_with_rolling_eyes:'
+      value: 128580
+    - key: ':grimacing_face:'
+      value: 128556
+    - key: ':lying_face:'
+      value: 129317
+    - key: ':shaking_face:'
+      value: 129768
+    - key: ':relieved_face:'
+      value: 128524
+    - key: ':pensive_face:'
+      value: 128532
+    - key: ':sleepy_face:'
+      value: 128554
+    - key: ':drooling_face:'
+      value: 129316
+    - key: ':sleeping_face:'
+      value: 128564
+    - key: ':face_with_medical_mask:'
+      value: 128567
+    - key: ':face_with_thermometer:'
+      value: 129298
     - key: ':face_with_head_bandage:'
       value: 129301
-    - key: ':robot_face:'
+    - key: ':nauseated_face:'
+      value: 129314
+    - key: ':face_vomiting:'
+      value: 129326
+    - key: ':sneezing_face:'
+      value: 129319
+    - key: ':hot_face:'
+      value: 129397
+    - key: ':cold_face:'
+      value: 129398
+    - key: ':woozy_face:'
+      value: 129396
+    - key: ':face_with_crossed_out_eyes:'
+      value: 128565
+    - key: ':exploding_head:'
+      value: 129327
+    - key: ':cowboy_hat_face:'
+      value: 129312
+    - key: ':partying_face:'
+      value: 129395
+    - key: ':disguised_face:'
+      value: 129400
+    - key: ':smiling_face_with_sunglasses:'
+      value: 128526
+    - key: ':nerd_face:'
+      value: 129299
+    - key: ':face_with_monocle:'
+      value: 129488
+    - key: ':confused_face:'
+      value: 128533
+    - key: ':face_with_diagonal_mouth:'
+      value: 129764
+    - key: ':worried_face:'
+      value: 128543
+    - key: ':slightly_frowning_face:'
+      value: 128577
+    - key: ':frowning_face:'
+      value: 9785
+    - key: ':face_with_open_mouth:'
+      value: 128558
+    - key: ':hushed_face:'
+      value: 128559
+    - key: ':astonished_face:'
+      value: 128562
+    - key: ':flushed_face:'
+      value: 128563
+    - key: ':pleading_face:'
+      value: 129402
+    - key: ':face_holding_back_tears:'
+      value: 129401
+    - key: ':frowning_face_with_open_mouth:'
+      value: 128550
+    - key: ':anguished_face:'
+      value: 128551
+    - key: ':fearful_face:'
+      value: 128552
+    - key: ':anxious_face_with_sweat:'
+      value: 128560
+    - key: ':sad_but_relieved_face:'
+      value: 128549
+    - key: ':crying_face:'
+      value: 128546
+    - key: ':loudly_crying_face:'
+      value: 128557
+    - key: ':face_screaming_in_fear:'
+      value: 128561
+    - key: ':confounded_face:'
+      value: 128534
+    - key: ':persevering_face:'
+      value: 128547
+    - key: ':disappointed_face:'
+      value: 128542
+    - key: ':downcast_face_with_sweat:'
+      value: 128531
+    - key: ':weary_face:'
+      value: 128553
+    - key: ':tired_face:'
+      value: 128555
+    - key: ':yawning_face:'
+      value: 129393
+    - key: ':face_with_steam_from_nose:'
+      value: 128548
+    - key: ':enraged_face:'
+      value: 128545
+    - key: ':angry_face:'
+      value: 128544
+    - key: ':face_with_symbols_on_mouth:'
+      value: 129324
+    - key: ':smiling_face_with_horns:'
+      value: 128520
+    - key: ':angry_face_with_horns:'
+      value: 128127
+    - key: ':skull:'
+      value: 128128
+    - key: ':skull_and_crossbones:'
+      value: 9760
+    - key: ':pile_of_poo:'
+      value: 128169
+    - key: ':clown_face:'
+      value: 129313
+    - key: ':ogre:'
+      value: 128121
+    - key: ':goblin:'
+      value: 128122
+    - key: ':ghost:'
+      value: 128123
+    - key: ':alien:'
+      value: 128125
+    - key: ':alien_monster:'
+      value: 128126
+    - key: ':robot:'
       value: 129302
+    - key: ':grinning_cat:'
+      value: 128570
+    - key: ':grinning_cat_with_smiling_eyes:'
+      value: 128568
+    - key: ':cat_with_tears_of_joy:'
+      value: 128569
+    - key: ':smiling_cat_with_heart_eyes:'
+      value: 128571
+    - key: ':cat_with_wry_smile:'
+      value: 128572
+    - key: ':kissing_cat:'
+      value: 128573
+    - key: ':weary_cat:'
+      value: 128576
+    - key: ':crying_cat:'
+      value: 128575
+    - key: ':pouting_cat:'
+      value: 128574
+    - key: ':see_no_evil_monkey:'
+      value: 128584
+    - key: ':hear_no_evil_monkey:'
+      value: 128585
+    - key: ':speak_no_evil_monkey:'
+      value: 128586
+    - key: ':love_letter:'
+      value: 128140
+    - key: ':heart_with_arrow:'
+      value: 128152
+    - key: ':heart_with_ribbon:'
+      value: 128157
+    - key: ':sparkling_heart:'
+      value: 128150
+    - key: ':growing_heart:'
+      value: 128151
+    - key: ':beating_heart:'
+      value: 128147
+    - key: ':revolving_hearts:'
+      value: 128158
+    - key: ':two_hearts:'
+      value: 128149
+    - key: ':heart_decoration:'
+      value: 128159
+    - key: ':heart_exclamation:'
+      value: 10083
+    - key: ':broken_heart:'
+      value: 128148
+    - key: ':red_heart:'
+      value: 10084
+    - key: ':pink_heart:'
+      value: 129655
+    - key: ':orange_heart:'
+      value: 129505
+    - key: ':yellow_heart:'
+      value: 128155
+    - key: ':green_heart:'
+      value: 128154
+    - key: ':blue_heart:'
+      value: 128153
+    - key: ':light_blue_heart:'
+      value: 129653
+    - key: ':purple_heart:'
+      value: 128156
+    - key: ':brown_heart:'
+      value: 129294
+    - key: ':black_heart:'
+      value: 128420
+    - key: ':grey_heart:'
+      value: 129654
+    - key: ':white_heart:'
+      value: 129293
+    - key: ':kiss_mark:'
+      value: 128139
+    - key: ':hundred_points:'
+      value: 128175
+    - key: ':anger_symbol:'
+      value: 128162
+    - key: ':collision:'
+      value: 128165
+    - key: ':dizzy:'
+      value: 128171
+    - key: ':sweat_droplets:'
+      value: 128166
+    - key: ':dashing_away:'
+      value: 128168
+    - key: ':hole:'
+      value: 128371
+    - key: ':speech_balloon:'
+      value: 128172
+    - key: ':left_speech_bubble:'
+      value: 128488
+    - key: ':right_anger_bubble:'
+      value: 128495
+    - key: ':thought_balloon:'
+      value: 128173
+    - key: ':zzz:'
+      value: 128164
+    - key: ':waving_hand:'
+      value: 128075
+    - key: ':raised_back_of_hand:'
+      value: 129306
+    - key: ':hand_with_fingers_splayed:'
+      value: 128400
+    - key: ':raised_hand:'
+      value: 9995
+    - key: ':vulcan_salute:'
+      value: 128406
+    - key: ':rightwards_hand:'
+      value: 129777
+    - key: ':leftwards_hand:'
+      value: 129778
+    - key: ':palm_down_hand:'
+      value: 129779
+    - key: ':palm_up_hand:'
+      value: 129780
+    - key: ':leftwards_pushing_hand:'
+      value: 129783
+    - key: ':rightwards_pushing_hand:'
+      value: 129784
+    - key: ':ok_hand:'
+      value: 128076
+    - key: ':pinched_fingers:'
+      value: 129292
+    - key: ':pinching_hand:'
+      value: 129295
+    - key: ':victory_hand:'
+      value: 9996
+    - key: ':crossed_fingers:'
+      value: 129310
+    - key: ':hand_with_index_finger_and_thumb_crossed:'
+      value: 129776
+    - key: ':love_you_gesture:'
+      value: 129311
+    - key: ':sign_of_the_horns:'
+      value: 129304
+    - key: ':call_me_hand:'
+      value: 129305
+    - key: ':backhand_index_pointing_left:'
+      value: 128072
+    - key: ':backhand_index_pointing_right:'
+      value: 128073
+    - key: ':backhand_index_pointing_up:'
+      value: 128070
+    - key: ':middle_finger:'
+      value: 128405
+    - key: ':backhand_index_pointing_down:'
+      value: 128071
+    - key: ':index_pointing_up:'
+      value: 9757
+    - key: ':index_pointing_at_the_viewer:'
+      value: 129781
+    - key: ':thumbs_up:'
+      value: 128077
+    - key: ':thumbs_down:'
+      value: 128078
+    - key: ':raised_fist:'
+      value: 9994
+    - key: ':oncoming_fist:'
+      value: 128074
+    - key: ':left_facing_fist:'
+      value: 129307
+    - key: ':right_facing_fist:'
+      value: 129308
+    - key: ':clapping_hands:'
+      value: 128079
+    - key: ':raising_hands:'
+      value: 128588
+    - key: ':heart_hands:'
+      value: 129782
+    - key: ':open_hands:'
+      value: 128080
+    - key: ':palms_up_together:'
+      value: 129330
+    - key: ':handshake:'
+      value: 129309
+    - key: ':folded_hands:'
+      value: 128591
+    - key: ':writing_hand:'
+      value: 9997
+    - key: ':nail_polish:'
+      value: 128133
+    - key: ':selfie:'
+      value: 129331
+    - key: ':flexed_biceps:'
+      value: 128170
+    - key: ':mechanical_arm:'
+      value: 129470
+    - key: ':mechanical_leg:'
+      value: 129471
+    - key: ':leg:'
+      value: 129461
+    - key: ':foot:'
+      value: 129462
+    - key: ':ear:'
+      value: 128066
+    - key: ':ear_with_hearing_aid:'
+      value: 129467
+    - key: ':nose:'
+      value: 128067
+    - key: ':brain:'
+      value: 129504
+    - key: ':anatomical_heart:'
+      value: 129728
+    - key: ':lungs:'
+      value: 129729
+    - key: ':tooth:'
+      value: 129463
+    - key: ':bone:'
+      value: 129460
+    - key: ':eyes:'
+      value: 128064
+    - key: ':eye:'
+      value: 128065
+    - key: ':tongue:'
+      value: 128069
+    - key: ':mouth:'
+      value: 128068
+    - key: ':biting_lip:'
+      value: 129766
+    - key: ':baby:'
+      value: 128118
+    - key: ':child:'
+      value: 129490
+    - key: ':boy:'
+      value: 128102
+    - key: ':girl:'
+      value: 128103
+    - key: ':person:'
+      value: 129489
+    - key: ':person_blond_hair:'
+      value: 128113
+    - key: ':man:'
+      value: 128104
+    - key: ':person_beard:'
+      value: 129492
+    - key: ':woman:'
+      value: 128105
+    - key: ':older_person:'
+      value: 129491
+    - key: ':old_man:'
+      value: 128116
+    - key: ':old_woman:'
+      value: 128117
+    - key: ':person_frowning:'
+      value: 128589
+    - key: ':person_pouting:'
+      value: 128590
+    - key: ':person_gesturing_no:'
+      value: 128581
+    - key: ':person_gesturing_ok:'
+      value: 128582
+    - key: ':person_tipping_hand:'
+      value: 128129
+    - key: ':person_raising_hand:'
+      value: 128587
+    - key: ':deaf_person:'
+      value: 129487
+    - key: ':person_bowing:'
+      value: 128583
+    - key: ':person_facepalming:'
+      value: 129318
+    - key: ':person_shrugging:'
+      value: 129335
+    - key: ':police_officer:'
+      value: 128110
+    - key: ':detective:'
+      value: 128373
+    - key: ':guard:'
+      value: 128130
+    - key: ':ninja:'
+      value: 129399
+    - key: ':construction_worker:'
+      value: 128119
+    - key: ':person_with_crown:'
+      value: 129733
+    - key: ':prince:'
+      value: 129332
+    - key: ':princess:'
+      value: 128120
+    - key: ':person_wearing_turban:'
+      value: 128115
+    - key: ':person_with_skullcap:'
+      value: 128114
+    - key: ':woman_with_headscarf:'
+      value: 129493
+    - key: ':person_in_tuxedo:'
+      value: 129333
+    - key: ':person_with_veil:'
+      value: 128112
+    - key: ':pregnant_woman:'
+      value: 129328
+    - key: ':pregnant_man:'
+      value: 129731
+    - key: ':pregnant_person:'
+      value: 129732
+    - key: ':breast_feeding:'
+      value: 129329
+    - key: ':baby_angel:'
+      value: 128124
+    - key: ':santa_claus:'
+      value: 127877
+    - key: ':mrs_claus:'
+      value: 129334
+    - key: ':superhero:'
+      value: 129464
+    - key: ':supervillain:'
+      value: 129465
+    - key: ':mage:'
+      value: 129497
+    - key: ':fairy:'
+      value: 129498
+    - key: ':vampire:'
+      value: 129499
+    - key: ':merperson:'
+      value: 129500
+    - key: ':elf:'
+      value: 129501
+    - key: ':genie:'
+      value: 129502
+    - key: ':zombie:'
+      value: 129503
+    - key: ':troll:'
+      value: 129484
+    - key: ':person_getting_massage:'
+      value: 128134
+    - key: ':person_getting_haircut:'
+      value: 128135
+    - key: ':person_walking:'
+      value: 128694
+    - key: ':person_standing:'
+      value: 129485
+    - key: ':person_kneeling:'
+      value: 129486
+    - key: ':person_running:'
+      value: 127939
+    - key: ':woman_dancing:'
+      value: 128131
+    - key: ':man_dancing:'
+      value: 128378
+    - key: ':person_in_suit_levitating:'
+      value: 128372
+    - key: ':people_with_bunny_ears:'
+      value: 128111
+    - key: ':person_in_steamy_room:'
+      value: 129494
+    - key: ':person_climbing:'
+      value: 129495
+    - key: ':person_fencing:'
+      value: 129338
+    - key: ':horse_racing:'
+      value: 127943
+    - key: ':skier:'
+      value: 9975
+    - key: ':snowboarder:'
+      value: 127938
+    - key: ':person_golfing:'
+      value: 127948
+    - key: ':person_surfing:'
+      value: 127940
+    - key: ':person_rowing_boat:'
+      value: 128675
+    - key: ':person_swimming:'
+      value: 127946
+    - key: ':person_bouncing_ball:'
+      value: 9977
+    - key: ':person_lifting_weights:'
+      value: 127947
+    - key: ':person_biking:'
+      value: 128692
+    - key: ':person_mountain_biking:'
+      value: 128693
+    - key: ':person_cartwheeling:'
+      value: 129336
+    - key: ':people_wrestling:'
+      value: 129340
+    - key: ':person_playing_water_polo:'
+      value: 129341
+    - key: ':person_playing_handball:'
+      value: 129342
+    - key: ':person_juggling:'
+      value: 129337
+    - key: ':person_in_lotus_position:'
+      value: 129496
+    - key: ':person_taking_bath:'
+      value: 128704
+    - key: ':person_in_bed:'
+      value: 128716
+    - key: ':women_holding_hands:'
+      value: 128109
+    - key: ':woman_and_man_holding_hands:'
+      value: 128107
+    - key: ':men_holding_hands:'
+      value: 128108
+    - key: ':kiss:'
+      value: 128143
+    - key: ':couple_with_heart:'
+      value: 128145
+    - key: ':speaking_head:'
+      value: 128483
+    - key: ':bust_in_silhouette:'
+      value: 128100
+    - key: ':busts_in_silhouette:'
+      value: 128101
+    - key: ':people_hugging:'
+      value: 129730
+    - key: ':family:'
+      value: 128106
+    - key: ':footprints:'
+      value: 128099
   - title: Animals and Nature
     sectionName: 1
     emojis:
-    - key: ':crocodile:'
-      value: 128010
-    - key: ':whale2:'
-      value: 128011
-    - key: ':snail:'
-      value: 128012
-    - key: ':snake:'
-      value: 128013
-    - key: ':racehorse:'
-      value: 128014
-    - key: ':ram:'
-      value: 128015
-    - key: ':goat:'
-      value: 128016
-    - key: ':sheep:'
-      value: 128017
+    - key: ':monkey_face:'
+      value: 128053
     - key: ':monkey:'
       value: 128018
-    - key: ':rooster:'
-      value: 128019
-    - key: ':chicken:'
-      value: 128020
-    - key: ':dog2:'
+    - key: ':gorilla:'
+      value: 129421
+    - key: ':orangutan:'
+      value: 129447
+    - key: ':dog_face:'
+      value: 128054
+    - key: ':dog:'
       value: 128021
-    - key: ':pig2:'
+    - key: ':guide_dog:'
+      value: 129454
+    - key: ':poodle:'
+      value: 128041
+    - key: ':wolf:'
+      value: 128058
+    - key: ':fox:'
+      value: 129418
+    - key: ':raccoon:'
+      value: 129437
+    - key: ':cat_face:'
+      value: 128049
+    - key: ':cat:'
+      value: 128008
+    - key: ':lion:'
+      value: 129409
+    - key: ':tiger_face:'
+      value: 128047
+    - key: ':tiger:'
+      value: 128005
+    - key: ':leopard:'
+      value: 128006
+    - key: ':horse_face:'
+      value: 128052
+    - key: ':moose:'
+      value: 129742
+    - key: ':donkey:'
+      value: 129743
+    - key: ':horse:'
+      value: 128014
+    - key: ':unicorn:'
+      value: 129412
+    - key: ':zebra:'
+      value: 129427
+    - key: ':deer:'
+      value: 129420
+    - key: ':bison:'
+      value: 129452
+    - key: ':cow_face:'
+      value: 128046
+    - key: ':ox:'
+      value: 128002
+    - key: ':water_buffalo:'
+      value: 128003
+    - key: ':cow:'
+      value: 128004
+    - key: ':pig_face:'
+      value: 128055
+    - key: ':pig:'
       value: 128022
     - key: ':boar:'
       value: 128023
+    - key: ':pig_nose:'
+      value: 128061
+    - key: ':ram:'
+      value: 128015
+    - key: ':ewe:'
+      value: 128017
+    - key: ':goat:'
+      value: 128016
+    - key: ':camel:'
+      value: 128042
+    - key: ':two_hump_camel:'
+      value: 128043
+    - key: ':llama:'
+      value: 129433
+    - key: ':giraffe:'
+      value: 129426
     - key: ':elephant:'
       value: 128024
-    - key: ':octopus:'
-      value: 128025
-    - key: ':shell:'
-      value: 128026
-    - key: ':bug:'
-      value: 128027
-    - key: ':ant:'
-      value: 128028
-    - key: ':bee:'
-      value: 128029
-    - key: ':beetle:'
-      value: 128030
+    - key: ':mammoth:'
+      value: 129443
+    - key: ':rhinoceros:'
+      value: 129423
+    - key: ':hippopotamus:'
+      value: 129435
+    - key: ':mouse_face:'
+      value: 128045
+    - key: ':mouse:'
+      value: 128001
+    - key: ':rat:'
+      value: 128000
+    - key: ':hamster:'
+      value: 128057
+    - key: ':rabbit_face:'
+      value: 128048
+    - key: ':rabbit:'
+      value: 128007
+    - key: ':chipmunk:'
+      value: 128063
+    - key: ':beaver:'
+      value: 129451
+    - key: ':hedgehog:'
+      value: 129428
+    - key: ':bat:'
+      value: 129415
+    - key: ':bear:'
+      value: 128059
+    - key: ':koala:'
+      value: 128040
+    - key: ':panda:'
+      value: 128060
+    - key: ':sloth:'
+      value: 129445
+    - key: ':otter:'
+      value: 129446
+    - key: ':skunk:'
+      value: 129448
+    - key: ':kangaroo:'
+      value: 129432
+    - key: ':badger:'
+      value: 129441
+    - key: ':paw_prints:'
+      value: 128062
+    - key: ':turkey:'
+      value: 129411
+    - key: ':chicken:'
+      value: 128020
+    - key: ':rooster:'
+      value: 128019
+    - key: ':hatching_chick:'
+      value: 128035
+    - key: ':baby_chick:'
+      value: 128036
+    - key: ':front_facing_baby_chick:'
+      value: 128037
+    - key: ':bird:'
+      value: 128038
+    - key: ':penguin:'
+      value: 128039
+    - key: ':dove:'
+      value: 128330
+    - key: ':eagle:'
+      value: 129413
+    - key: ':duck:'
+      value: 129414
+    - key: ':swan:'
+      value: 129442
+    - key: ':owl:'
+      value: 129417
+    - key: ':dodo:'
+      value: 129444
+    - key: ':feather:'
+      value: 129718
+    - key: ':flamingo:'
+      value: 129449
+    - key: ':peacock:'
+      value: 129434
+    - key: ':parrot:'
+      value: 129436
+    - key: ':wing:'
+      value: 129725
+    - key: ':goose:'
+      value: 129727
+    - key: ':frog:'
+      value: 128056
+    - key: ':crocodile:'
+      value: 128010
+    - key: ':turtle:'
+      value: 128034
+    - key: ':lizard:'
+      value: 129422
+    - key: ':snake:'
+      value: 128013
+    - key: ':dragon_face:'
+      value: 128050
+    - key: ':dragon:'
+      value: 128009
+    - key: ':sauropod:'
+      value: 129429
+    - key: ':t_rex:'
+      value: 129430
+    - key: ':spouting_whale:'
+      value: 128051
+    - key: ':whale:'
+      value: 128011
+    - key: ':dolphin:'
+      value: 128044
+    - key: ':seal:'
+      value: 129453
     - key: ':fish:'
       value: 128031
     - key: ':tropical_fish:'
       value: 128032
     - key: ':blowfish:'
       value: 128033
-    - key: ':turtle:'
-      value: 128034
-    - key: ':hatching_chick:'
-      value: 128035
-    - key: ':baby_chick:'
-      value: 128036
-    - key: ':hatched_chick:'
-      value: 128037
-    - key: ':bird:'
-      value: 128038
-    - key: ':penguin:'
-      value: 128039
-    - key: ':koala:'
-      value: 128040
-    - key: ':poodle:'
-      value: 128041
-    - key: ':dromedary_camel:'
-      value: 128042
-    - key: ':camel:'
-      value: 128043
-    - key: ':dolphin:'
-      value: 128044
-    - key: ':mouse:'
-      value: 128045
-    - key: ':cow:'
-      value: 128046
-    - key: ':tiger:'
-      value: 128047
-    - key: ':rabbit:'
-      value: 128048
-    - key: ':cat:'
-      value: 128049
-    - key: ':dragon_face:'
-      value: 128050
-    - key: ':whale:'
-      value: 128051
-    - key: ':horse:'
-      value: 128052
-    - key: ':monkey_face:'
-      value: 128053
-    - key: ':dog:'
-      value: 128054
-    - key: ':pig:'
-      value: 128055
-    - key: ':frog:'
-      value: 128056
-    - key: ':hamster:'
-      value: 128057
-    - key: ':wolf:'
-      value: 128058
-    - key: ':bear:'
-      value: 128059
-    - key: ':panda_face:'
-      value: 128060
-    - key: ':pig_nose:'
-      value: 128061
-    - key: ':feet:'
-      value: 128062
-  - title: Foods and Drinks
-    sectionName: 2
-    emojis:
-    - key: ':cheese_wedge:'
-      value: 129472
-    - key: ':hotdog:'
-      value: 127789
-    - key: ':taco:'
-      value: 127790
-    - key: ':burrito:'
-      value: 127791
-    - key: ':chestnut:'
-      value: 127792
+    - key: ':shark:'
+      value: 129416
+    - key: ':octopus:'
+      value: 128025
+    - key: ':spiral_shell:'
+      value: 128026
+    - key: ':coral:'
+      value: 129720
+    - key: ':jellyfish:'
+      value: 129724
+    - key: ':snail:'
+      value: 128012
+    - key: ':butterfly:'
+      value: 129419
+    - key: ':bug:'
+      value: 128027
+    - key: ':ant:'
+      value: 128028
+    - key: ':honeybee:'
+      value: 128029
+    - key: ':beetle:'
+      value: 129714
+    - key: ':lady_beetle:'
+      value: 128030
+    - key: ':cricket:'
+      value: 129431
+    - key: ':cockroach:'
+      value: 129715
+    - key: ':spider:'
+      value: 128375
+    - key: ':spider_web:'
+      value: 128376
+    - key: ':scorpion:'
+      value: 129410
+    - key: ':mosquito:'
+      value: 129439
+    - key: ':fly:'
+      value: 129712
+    - key: ':worm:'
+      value: 129713
+    - key: ':microbe:'
+      value: 129440
+    - key: ':bouquet:'
+      value: 128144
+    - key: ':cherry_blossom:'
+      value: 127800
+    - key: ':white_flower:'
+      value: 128174
+    - key: ':lotus:'
+      value: 129719
+    - key: ':rosette:'
+      value: 127989
+    - key: ':rose:'
+      value: 127801
+    - key: ':wilted_flower:'
+      value: 129344
+    - key: ':hibiscus:'
+      value: 127802
+    - key: ':sunflower:'
+      value: 127803
+    - key: ':blossom:'
+      value: 127804
+    - key: ':tulip:'
+      value: 127799
+    - key: ':hyacinth:'
+      value: 129723
     - key: ':seedling:'
       value: 127793
+    - key: ':potted_plant:'
+      value: 129716
     - key: ':evergreen_tree:'
       value: 127794
     - key: ':deciduous_tree:'
@@ -320,40 +927,29 @@ MonoBehaviour:
       value: 127796
     - key: ':cactus:'
       value: 127797
-    - key: ':hot_pepper:'
-      value: 127798
-    - key: ':tulip:'
-      value: 127799
-    - key: ':cherry_blossom:'
-      value: 127800
-    - key: ':rose:'
-      value: 127801
-    - key: ':hibiscus:'
-      value: 127802
-    - key: ':sunflower:'
-      value: 127803
-    - key: ':blossom:'
-      value: 127804
-    - key: ':corn:'
-      value: 127805
-    - key: ':ear_of_rice:'
+    - key: ':sheaf_of_rice:'
       value: 127806
     - key: ':herb:'
       value: 127807
+    - key: ':shamrock:'
+      value: 9752
     - key: ':four_leaf_clover:'
       value: 127808
     - key: ':maple_leaf:'
       value: 127809
     - key: ':fallen_leaf:'
       value: 127810
-    - key: ':leaves:'
+    - key: ':leaf_fluttering_in_wind:'
       value: 127811
+    - key: ':empty_nest:'
+      value: 129721
+    - key: ':nest_with_eggs:'
+      value: 129722
     - key: ':mushroom:'
       value: 127812
-    - key: ':tomato:'
-      value: 127813
-    - key: ':eggplant:'
-      value: 127814
+  - title: Foods and Drinks
+    sectionName: 2
+    emojis:
     - key: ':grapes:'
       value: 127815
     - key: ':melon:'
@@ -368,7 +964,9 @@ MonoBehaviour:
       value: 127820
     - key: ':pineapple:'
       value: 127821
-    - key: ':apple:'
+    - key: ':mango:'
+      value: 129389
+    - key: ':red_apple:'
       value: 127822
     - key: ':green_apple:'
       value: 127823
@@ -380,43 +978,163 @@ MonoBehaviour:
       value: 127826
     - key: ':strawberry:'
       value: 127827
-    - key: ':hamburger:'
-      value: 127828
-    - key: ':pizza:'
-      value: 127829
+    - key: ':blueberries:'
+      value: 129744
+    - key: ':kiwi_fruit:'
+      value: 129373
+    - key: ':tomato:'
+      value: 127813
+    - key: ':olive:'
+      value: 129746
+    - key: ':coconut:'
+      value: 129381
+    - key: ':avocado:'
+      value: 129361
+    - key: ':eggplant:'
+      value: 127814
+    - key: ':potato:'
+      value: 129364
+    - key: ':carrot:'
+      value: 129365
+    - key: ':ear_of_corn:'
+      value: 127805
+    - key: ':hot_pepper:'
+      value: 127798
+    - key: ':bell_pepper:'
+      value: 129745
+    - key: ':cucumber:'
+      value: 129362
+    - key: ':leafy_green:'
+      value: 129388
+    - key: ':broccoli:'
+      value: 129382
+    - key: ':garlic:'
+      value: 129476
+    - key: ':onion:'
+      value: 129477
+    - key: ':peanuts:'
+      value: 129372
+    - key: ':beans:'
+      value: 129752
+    - key: ':chestnut:'
+      value: 127792
+    - key: ':ginger_root:'
+      value: 129754
+    - key: ':pea_pod:'
+      value: 129755
+    - key: ':bread:'
+      value: 127838
+    - key: ':croissant:'
+      value: 129360
+    - key: ':baguette_bread:'
+      value: 129366
+    - key: ':flatbread:'
+      value: 129747
+    - key: ':pretzel:'
+      value: 129384
+    - key: ':bagel:'
+      value: 129391
+    - key: ':pancakes:'
+      value: 129374
+    - key: ':waffle:'
+      value: 129479
+    - key: ':cheese_wedge:'
+      value: 129472
     - key: ':meat_on_bone:'
       value: 127830
     - key: ':poultry_leg:'
       value: 127831
+    - key: ':cut_of_meat:'
+      value: 129385
+    - key: ':bacon:'
+      value: 129363
+    - key: ':hamburger:'
+      value: 127828
+    - key: ':french_fries:'
+      value: 127839
+    - key: ':pizza:'
+      value: 127829
+    - key: ':hot_dog:'
+      value: 127789
+    - key: ':sandwich:'
+      value: 129386
+    - key: ':taco:'
+      value: 127790
+    - key: ':burrito:'
+      value: 127791
+    - key: ':tamale:'
+      value: 129748
+    - key: ':stuffed_flatbread:'
+      value: 129369
+    - key: ':falafel:'
+      value: 129478
+    - key: ':egg:'
+      value: 129370
+    - key: ':cooking:'
+      value: 127859
+    - key: ':shallow_pan_of_food:'
+      value: 129368
+    - key: ':pot_of_food:'
+      value: 127858
+    - key: ':fondue:'
+      value: 129749
+    - key: ':bowl_with_spoon:'
+      value: 129379
+    - key: ':green_salad:'
+      value: 129367
+    - key: ':popcorn:'
+      value: 127871
+    - key: ':butter:'
+      value: 129480
+    - key: ':salt:'
+      value: 129474
+    - key: ':canned_food:'
+      value: 129387
+    - key: ':bento_box:'
+      value: 127857
     - key: ':rice_cracker:'
       value: 127832
     - key: ':rice_ball:'
       value: 127833
-    - key: ':rice:'
+    - key: ':cooked_rice:'
       value: 127834
-    - key: ':curry:'
+    - key: ':curry_rice:'
       value: 127835
-    - key: ':ramen:'
+    - key: ':steaming_bowl:'
       value: 127836
     - key: ':spaghetti:'
       value: 127837
-    - key: ':bread:'
-      value: 127838
-    - key: ':fries:'
-      value: 127839
-    - key: ':sweet_potato:'
+    - key: ':roasted_sweet_potato:'
       value: 127840
-    - key: ':dango:'
-      value: 127841
     - key: ':oden:'
       value: 127842
     - key: ':sushi:'
       value: 127843
     - key: ':fried_shrimp:'
       value: 127844
-    - key: ':fish_cake:'
+    - key: ':fish_cake_with_swirl:'
       value: 127845
-    - key: ':icecream:'
+    - key: ':moon_cake:'
+      value: 129390
+    - key: ':dango:'
+      value: 127841
+    - key: ':dumpling:'
+      value: 129375
+    - key: ':fortune_cookie:'
+      value: 129376
+    - key: ':takeout_box:'
+      value: 129377
+    - key: ':crab:'
+      value: 129408
+    - key: ':lobster:'
+      value: 129438
+    - key: ':shrimp:'
+      value: 129424
+    - key: ':squid:'
+      value: 129425
+    - key: ':oyster:'
+      value: 129450
+    - key: ':soft_ice_cream:'
       value: 127846
     - key: ':shaved_ice:'
       value: 127847
@@ -426,6 +1144,14 @@ MonoBehaviour:
       value: 127849
     - key: ':cookie:'
       value: 127850
+    - key: ':birthday_cake:'
+      value: 127874
+    - key: ':shortcake:'
+      value: 127856
+    - key: ':cupcake:'
+      value: 129473
+    - key: ':pie:'
+      value: 129383
     - key: ':chocolate_bar:'
       value: 127851
     - key: ':candy:'
@@ -436,166 +1162,262 @@ MonoBehaviour:
       value: 127854
     - key: ':honey_pot:'
       value: 127855
-    - key: ':cake:'
-      value: 127856
-    - key: ':bento:'
-      value: 127857
-    - key: ':stew:'
-      value: 127858
-    - key: ':egg:'
-      value: 127859
-    - key: ':fork_and_knife:'
-      value: 127860
-    - key: ':tea:'
+    - key: ':baby_bottle:'
+      value: 127868
+    - key: ':glass_of_milk:'
+      value: 129371
+    - key: ':hot_beverage:'
+      value: 9749
+    - key: ':teapot:'
+      value: 129750
+    - key: ':teacup_without_handle:'
       value: 127861
     - key: ':sake:'
       value: 127862
+    - key: ':bottle_with_popping_cork:'
+      value: 127870
     - key: ':wine_glass:'
       value: 127863
-    - key: ':cocktail:'
+    - key: ':cocktail_glass:'
       value: 127864
     - key: ':tropical_drink:'
       value: 127865
-    - key: ':beer:'
+    - key: ':beer_mug:'
       value: 127866
-    - key: ':beers:'
+    - key: ':clinking_beer_mugs:'
       value: 127867
-    - key: ':baby_bottle:'
-      value: 127868
-    - key: ':knife_fork_plate:'
+    - key: ':clinking_glasses:'
+      value: 129346
+    - key: ':tumbler_glass:'
+      value: 129347
+    - key: ':pouring_liquid:'
+      value: 129751
+    - key: ':cup_with_straw:'
+      value: 129380
+    - key: ':bubble_tea:'
+      value: 129483
+    - key: ':beverage_box:'
+      value: 129475
+    - key: ':mate:'
+      value: 129481
+    - key: ':ice:'
+      value: 129482
+    - key: ':chopsticks:'
+      value: 129378
+    - key: ':fork_and_knife_with_plate:'
       value: 127869
-    - key: ':champagne:'
-      value: 127870
+    - key: ':fork_and_knife:'
+      value: 127860
+    - key: ':spoon:'
+      value: 129348
+    - key: ':kitchen_knife:'
+      value: 128298
+    - key: ':jar:'
+      value: 129753
+    - key: ':amphora:'
+      value: 127994
   - title: Activities
     sectionName: 3
     emojis:
-    - key: ':carousel_horse:'
-      value: 127904
-    - key: ':ferris_wheel:'
-      value: 127905
-    - key: ':roller_coaster:'
-      value: 127906
-    - key: ':fishing_pole_and_fish:'
-      value: 127907
-    - key: ':microphone:'
-      value: 127908
-    - key: ':movie_camera:'
-      value: 127909
-    - key: ':cinema:'
-      value: 127910
-    - key: ':headphones:'
-      value: 127911
-    - key: ':art:'
-      value: 127912
-    - key: ':tophat:'
-      value: 127913
-    - key: ':circus_tent:'
-      value: 127914
+    - key: ':jack_o_lantern:'
+      value: 127875
+    - key: ':christmas_tree:'
+      value: 127876
+    - key: ':fireworks:'
+      value: 127878
+    - key: ':sparkler:'
+      value: 127879
+    - key: ':firecracker:'
+      value: 129512
+    - key: ':sparkles:'
+      value: 10024
+    - key: ':balloon:'
+      value: 127880
+    - key: ':party_popper:'
+      value: 127881
+    - key: ':confetti_ball:'
+      value: 127882
+    - key: ':tanabata_tree:'
+      value: 127883
+    - key: ':pine_decoration:'
+      value: 127885
+    - key: ':japanese_dolls:'
+      value: 127886
+    - key: ':carp_streamer:'
+      value: 127887
+    - key: ':wind_chime:'
+      value: 127888
+    - key: ':moon_viewing_ceremony:'
+      value: 127889
+    - key: ':red_envelope:'
+      value: 129511
+    - key: ':ribbon:'
+      value: 127872
+    - key: ':wrapped_gift:'
+      value: 127873
+    - key: ':reminder_ribbon:'
+      value: 127895
+    - key: ':admission_tickets:'
+      value: 127903
     - key: ':ticket:'
       value: 127915
-    - key: ':clapper:'
-      value: 127916
-    - key: ':performing_arts:'
-      value: 127917
-    - key: ':video_game:'
-      value: 127918
-    - key: ':dart:'
-      value: 127919
-    - key: ':slot_machine:'
-      value: 127920
-    - key: ':8ball:'
-      value: 127921
-    - key: ':game_die:'
-      value: 127922
-    - key: ':bowling:'
-      value: 127923
-    - key: ':flower_playing_cards:'
-      value: 127924
-    - key: ':musical_note:'
-      value: 127925
-    - key: ':notes:'
-      value: 127926
-    - key: ':saxophone:'
-      value: 127927
-    - key: ':guitar:'
-      value: 127928
-    - key: ':musical_keyboard:'
-      value: 127929
-    - key: ':trumpet:'
-      value: 127930
-    - key: ':violin:'
-      value: 127931
-    - key: ':musical_score:'
-      value: 127932
-    - key: ':running_shirt_with_sash:'
-      value: 127933
-    - key: ':tennis:'
-      value: 127934
-    - key: ':ski:'
-      value: 127935
-    - key: ':basketball:'
-      value: 127936
-    - key: ':checkered_flag:'
-      value: 127937
-    - key: ':snowboarder:'
-      value: 127938
-    - key: ':runner:'
-      value: 127939
-    - key: ':surfer:'
-      value: 127940
-    - key: ':sports_medal:'
-      value: 127941
+    - key: ':military_medal:'
+      value: 127894
     - key: ':trophy:'
       value: 127942
-    - key: ':horse_racing:'
-      value: 127943
-    - key: ':football:'
+    - key: ':sports_medal:'
+      value: 127941
+    - key: ':1st_place_medal:'
+      value: 129351
+    - key: ':2nd_place_medal:'
+      value: 129352
+    - key: ':3rd_place_medal:'
+      value: 129353
+    - key: ':soccer_ball:'
+      value: 9917
+    - key: ':baseball:'
+      value: 9918
+    - key: ':softball:'
+      value: 129358
+    - key: ':basketball:'
+      value: 127936
+    - key: ':volleyball:'
+      value: 127952
+    - key: ':american_football:'
       value: 127944
     - key: ':rugby_football:'
       value: 127945
-    - key: ':swimmer:'
-      value: 127946
-    - key: ':weight_lifter:'
-      value: 127947
-    - key: ':golfer:'
-      value: 127948
-    - key: ':racing_motorcycle:'
-      value: 127949
-    - key: ':racing_car:'
-      value: 127950
-    - key: ':cricket_bat_and_ball:'
+    - key: ':tennis:'
+      value: 127934
+    - key: ':flying_disc:'
+      value: 129359
+    - key: ':bowling:'
+      value: 127923
+    - key: ':cricket_game:'
       value: 127951
-    - key: ':volleyball:'
-      value: 127952
-    - key: ':field_hockey_stick_and_ball:'
+    - key: ':field_hockey:'
       value: 127953
-    - key: ':ice_hockey_stick_and_puck:'
+    - key: ':ice_hockey:'
       value: 127954
-    - key: ':badminton_racquet_and_shuttlecock:'
+    - key: ':lacrosse:'
+      value: 129357
+    - key: ':ping_pong:'
+      value: 127955
+    - key: ':badminton:'
       value: 127992
-    - key: ':bicyclist:'
-      value: 128692
-    - key: ':mountain_bicyclist:'
-      value: 128693
+    - key: ':boxing_glove:'
+      value: 129354
+    - key: ':martial_arts_uniform:'
+      value: 129355
+    - key: ':goal_net:'
+      value: 129349
+    - key: ':flag_in_hole:'
+      value: 9971
+    - key: ':ice_skate:'
+      value: 9976
+    - key: ':fishing_pole:'
+      value: 127907
+    - key: ':diving_mask:'
+      value: 129343
+    - key: ':running_shirt:'
+      value: 127933
+    - key: ':skis:'
+      value: 127935
+    - key: ':sled:'
+      value: 128759
+    - key: ':curling_stone:'
+      value: 129356
+    - key: ':bullseye:'
+      value: 127919
+    - key: ':yo_yo:'
+      value: 129664
+    - key: ':kite:'
+      value: 129665
+    - key: ':water_pistol:'
+      value: 128299
+    - key: ':pool_8_ball:'
+      value: 127921
+    - key: ':crystal_ball:'
+      value: 128302
+    - key: ':magic_wand:'
+      value: 129668
+    - key: ':video_game:'
+      value: 127918
+    - key: ':joystick:'
+      value: 128377
+    - key: ':slot_machine:'
+      value: 127920
+    - key: ':game_die:'
+      value: 127922
+    - key: ':puzzle_piece:'
+      value: 129513
+    - key: ':teddy_bear:'
+      value: 129528
+    - key: ':piata:'
+      value: 129669
+    - key: ':mirror_ball:'
+      value: 129705
+    - key: ':nesting_dolls:'
+      value: 129670
+    - key: ':spade_suit:'
+      value: 9824
+    - key: ':heart_suit:'
+      value: 9829
+    - key: ':diamond_suit:'
+      value: 9830
+    - key: ':club_suit:'
+      value: 9827
+    - key: ':chess_pawn:'
+      value: 9823
+    - key: ':joker:'
+      value: 127183
+    - key: ':mahjong_red_dragon:'
+      value: 126980
+    - key: ':flower_playing_cards:'
+      value: 127924
+    - key: ':performing_arts:'
+      value: 127917
+    - key: ':framed_picture:'
+      value: 128444
+    - key: ':artist_palette:'
+      value: 127912
+    - key: ':thread:'
+      value: 129525
+    - key: ':sewing_needle:'
+      value: 129697
+    - key: ':yarn:'
+      value: 129526
+    - key: ':knot:'
+      value: 129698
   - title: Travel and Places
     sectionName: 4
     emojis:
+    - key: ':globe_showing_europe_africa:'
+      value: 127757
+    - key: ':globe_showing_americas:'
+      value: 127758
+    - key: ':globe_showing_asia_australia:'
+      value: 127759
+    - key: ':globe_with_meridians:'
+      value: 127760
+    - key: ':world_map:'
+      value: 128506
+    - key: ':map_of_japan:'
+      value: 128510
+    - key: ':compass:'
+      value: 129517
     - key: ':snow_capped_mountain:'
       value: 127956
+    - key: ':mountain:'
+      value: 9968
+    - key: ':volcano:'
+      value: 127755
+    - key: ':mount_fuji:'
+      value: 128507
     - key: ':camping:'
       value: 127957
     - key: ':beach_with_umbrella:'
       value: 127958
-    - key: ':building_construction:'
-      value: 127959
-    - key: ':house_buildings:'
-      value: 127960
-    - key: ':cityscape:'
-      value: 127961
-    - key: ':derelict_house_building:'
-      value: 127962
-    - key: ':classical_building:'
-      value: 127963
     - key: ':desert:'
       value: 127964
     - key: ':desert_island:'
@@ -604,22 +1426,36 @@ MonoBehaviour:
       value: 127966
     - key: ':stadium:'
       value: 127967
+    - key: ':classical_building:'
+      value: 127963
+    - key: ':building_construction:'
+      value: 127959
+    - key: ':brick:'
+      value: 129521
+    - key: ':rock:'
+      value: 129704
+    - key: ':wood:'
+      value: 129717
+    - key: ':hut:'
+      value: 128726
+    - key: ':houses:'
+      value: 127960
+    - key: ':derelict_house:'
+      value: 127962
     - key: ':house:'
       value: 127968
     - key: ':house_with_garden:'
       value: 127969
-    - key: ':office:'
+    - key: ':office_building:'
       value: 127970
-    - key: ':post_office:'
+    - key: ':japanese_post_office:'
       value: 127971
-    - key: ':european_post_office:'
+    - key: ':post_office:'
       value: 127972
     - key: ':hospital:'
       value: 127973
     - key: ':bank:'
       value: 127974
-    - key: ':atm:'
-      value: 127975
     - key: ':hotel:'
       value: 127976
     - key: ':love_hotel:'
@@ -632,17 +1468,85 @@ MonoBehaviour:
       value: 127980
     - key: ':factory:'
       value: 127981
-    - key: ':izakaya_lantern:'
-      value: 127982
     - key: ':japanese_castle:'
       value: 127983
-    - key: ':motorway:'
-      value: 128739
-    - key: ':railway_track:'
-      value: 128740
+    - key: ':castle:'
+      value: 127984
+    - key: ':wedding:'
+      value: 128146
+    - key: ':tokyo_tower:'
+      value: 128508
+    - key: ':statue_of_liberty:'
+      value: 128509
+    - key: ':church:'
+      value: 9962
+    - key: ':mosque:'
+      value: 128332
+    - key: ':hindu_temple:'
+      value: 128725
+    - key: ':synagogue:'
+      value: 128333
+    - key: ':shinto_shrine:'
+      value: 9961
+    - key: ':kaaba:'
+      value: 128331
+    - key: ':fountain:'
+      value: 9970
+    - key: ':tent:'
+      value: 9978
+    - key: ':foggy:'
+      value: 127745
+    - key: ':night_with_stars:'
+      value: 127747
+    - key: ':cityscape:'
+      value: 127961
+    - key: ':sunrise_over_mountains:'
+      value: 127748
+    - key: ':sunrise:'
+      value: 127749
+    - key: ':cityscape_at_dusk:'
+      value: 127750
+    - key: ':sunset:'
+      value: 127751
+    - key: ':bridge_at_night:'
+      value: 127753
+    - key: ':hot_springs:'
+      value: 9832
+    - key: ':carousel_horse:'
+      value: 127904
+    - key: ':playground_slide:'
+      value: 128733
+    - key: ':ferris_wheel:'
+      value: 127905
+    - key: ':roller_coaster:'
+      value: 127906
+    - key: ':barber_pole:'
+      value: 128136
+    - key: ':circus_tent:'
+      value: 127914
+    - key: ':locomotive:'
+      value: 128642
+    - key: ':railway_car:'
+      value: 128643
+    - key: ':high_speed_train:'
+      value: 128644
+    - key: ':bullet_train:'
+      value: 128645
+    - key: ':train:'
+      value: 128646
+    - key: ':metro:'
+      value: 128647
+    - key: ':light_rail:'
+      value: 128648
+    - key: ':station:'
+      value: 128649
     - key: ':tram:'
       value: 128650
-    - key: ':train:'
+    - key: ':monorail:'
+      value: 128669
+    - key: ':mountain_railway:'
+      value: 128670
+    - key: ':tram_car:'
       value: 128651
     - key: ':bus:'
       value: 128652
@@ -650,8 +1554,6 @@ MonoBehaviour:
       value: 128653
     - key: ':trolleybus:'
       value: 128654
-    - key: ':busstop:'
-      value: 128655
     - key: ':minibus:'
       value: 128656
     - key: ':ambulance:'
@@ -666,86 +1568,608 @@ MonoBehaviour:
       value: 128661
     - key: ':oncoming_taxi:'
       value: 128662
-    - key: ':car:'
+    - key: ':automobile:'
       value: 128663
     - key: ':oncoming_automobile:'
       value: 128664
-    - key: ':blue_car:'
+    - key: ':sport_utility_vehicle:'
       value: 128665
-    - key: ':truck:'
+    - key: ':pickup_truck:'
+      value: 128763
+    - key: ':delivery_truck:'
       value: 128666
     - key: ':articulated_lorry:'
       value: 128667
     - key: ':tractor:'
       value: 128668
-    - key: ':monorail:'
-      value: 128669
-    - key: ':mountain_railway:'
-      value: 128670
+    - key: ':racing_car:'
+      value: 127950
+    - key: ':motorcycle:'
+      value: 127949
+    - key: ':motor_scooter:'
+      value: 128757
+    - key: ':manual_wheelchair:'
+      value: 129469
+    - key: ':motorized_wheelchair:'
+      value: 129468
+    - key: ':auto_rickshaw:'
+      value: 128762
+    - key: ':bicycle:'
+      value: 128690
+    - key: ':kick_scooter:'
+      value: 128756
+    - key: ':skateboard:'
+      value: 128761
+    - key: ':roller_skate:'
+      value: 128764
+    - key: ':bus_stop:'
+      value: 128655
+    - key: ':motorway:'
+      value: 128739
+    - key: ':railway_track:'
+      value: 128740
+    - key: ':oil_drum:'
+      value: 128738
+    - key: ':fuel_pump:'
+      value: 9981
+    - key: ':wheel:'
+      value: 128734
+    - key: ':police_car_light:'
+      value: 128680
+    - key: ':horizontal_traffic_light:'
+      value: 128677
+    - key: ':vertical_traffic_light:'
+      value: 128678
+    - key: ':stop_sign:'
+      value: 128721
+    - key: ':construction:'
+      value: 128679
+    - key: ':anchor:'
+      value: 9875
+    - key: ':ring_buoy:'
+      value: 128735
+    - key: ':sailboat:'
+      value: 9973
+    - key: ':canoe:'
+      value: 128758
+    - key: ':speedboat:'
+      value: 128676
+    - key: ':passenger_ship:'
+      value: 128755
+    - key: ':ferry:'
+      value: 9972
+    - key: ':motor_boat:'
+      value: 128741
+    - key: ':ship:'
+      value: 128674
+    - key: ':airplane:'
+      value: 9992
+    - key: ':small_airplane:'
+      value: 128745
+    - key: ':airplane_departure:'
+      value: 128747
+    - key: ':airplane_arrival:'
+      value: 128748
+    - key: ':parachute:'
+      value: 129666
+    - key: ':seat:'
+      value: 128186
+    - key: ':helicopter:'
+      value: 128641
+    - key: ':suspension_railway:'
+      value: 128671
+    - key: ':mountain_cableway:'
+      value: 128672
+    - key: ':aerial_tramway:'
+      value: 128673
+    - key: ':satellite:'
+      value: 128752
+    - key: ':rocket:'
+      value: 128640
+    - key: ':flying_saucer:'
+      value: 128760
+    - key: ':bellhop_bell:'
+      value: 128718
+    - key: ':luggage:'
+      value: 129523
+    - key: ':hourglass_done:'
+      value: 8987
+    - key: ':hourglass_not_done:'
+      value: 9203
+    - key: ':watch:'
+      value: 8986
+    - key: ':alarm_clock:'
+      value: 9200
+    - key: ':stopwatch:'
+      value: 9201
+    - key: ':timer_clock:'
+      value: 9202
+    - key: ':mantelpiece_clock:'
+      value: 128368
+    - key: ':twelve_oclock:'
+      value: 128347
+    - key: ':twelve_thirty:'
+      value: 128359
+    - key: ':one_oclock:'
+      value: 128336
+    - key: ':one_thirty:'
+      value: 128348
+    - key: ':two_oclock:'
+      value: 128337
+    - key: ':two_thirty:'
+      value: 128349
+    - key: ':three_oclock:'
+      value: 128338
+    - key: ':three_thirty:'
+      value: 128350
+    - key: ':four_oclock:'
+      value: 128339
+    - key: ':four_thirty:'
+      value: 128351
+    - key: ':five_oclock:'
+      value: 128340
+    - key: ':five_thirty:'
+      value: 128352
+    - key: ':six_oclock:'
+      value: 128341
+    - key: ':six_thirty:'
+      value: 128353
+    - key: ':seven_oclock:'
+      value: 128342
+    - key: ':seven_thirty:'
+      value: 128354
+    - key: ':eight_oclock:'
+      value: 128343
+    - key: ':eight_thirty:'
+      value: 128355
+    - key: ':nine_oclock:'
+      value: 128344
+    - key: ':nine_thirty:'
+      value: 128356
+    - key: ':ten_oclock:'
+      value: 128345
+    - key: ':ten_thirty:'
+      value: 128357
+    - key: ':eleven_oclock:'
+      value: 128346
+    - key: ':eleven_thirty:'
+      value: 128358
+    - key: ':new_moon:'
+      value: 127761
+    - key: ':waxing_crescent_moon:'
+      value: 127762
+    - key: ':first_quarter_moon:'
+      value: 127763
+    - key: ':waxing_gibbous_moon:'
+      value: 127764
+    - key: ':full_moon:'
+      value: 127765
+    - key: ':waning_gibbous_moon:'
+      value: 127766
+    - key: ':last_quarter_moon:'
+      value: 127767
+    - key: ':waning_crescent_moon:'
+      value: 127768
+    - key: ':crescent_moon:'
+      value: 127769
+    - key: ':new_moon_face:'
+      value: 127770
+    - key: ':first_quarter_moon_face:'
+      value: 127771
+    - key: ':last_quarter_moon_face:'
+      value: 127772
+    - key: ':thermometer:'
+      value: 127777
+    - key: ':sun:'
+      value: 9728
+    - key: ':full_moon_face:'
+      value: 127773
+    - key: ':sun_with_face:'
+      value: 127774
+    - key: ':ringed_planet:'
+      value: 129680
+    - key: ':star:'
+      value: 11088
+    - key: ':glowing_star:'
+      value: 127775
+    - key: ':shooting_star:'
+      value: 127776
+    - key: ':milky_way:'
+      value: 127756
+    - key: ':cloud:'
+      value: 9729
+    - key: ':sun_behind_cloud:'
+      value: 9925
+    - key: ':cloud_with_lightning_and_rain:'
+      value: 9928
+    - key: ':sun_behind_small_cloud:'
+      value: 127780
+    - key: ':sun_behind_large_cloud:'
+      value: 127781
+    - key: ':sun_behind_rain_cloud:'
+      value: 127782
+    - key: ':cloud_with_rain:'
+      value: 127783
+    - key: ':cloud_with_snow:'
+      value: 127784
+    - key: ':cloud_with_lightning:'
+      value: 127785
+    - key: ':tornado:'
+      value: 127786
+    - key: ':fog:'
+      value: 127787
+    - key: ':wind_face:'
+      value: 127788
+    - key: ':cyclone:'
+      value: 127744
+    - key: ':rainbow:'
+      value: 127752
+    - key: ':closed_umbrella:'
+      value: 127746
+    - key: ':umbrella:'
+      value: 9730
+    - key: ':umbrella_with_rain_drops:'
+      value: 9748
+    - key: ':umbrella_on_ground:'
+      value: 9969
+    - key: ':high_voltage:'
+      value: 9889
+    - key: ':snowflake:'
+      value: 10052
+    - key: ':snowman:'
+      value: 9731
+    - key: ':snowman_without_snow:'
+      value: 9924
+    - key: ':comet:'
+      value: 9732
+    - key: ':fire:'
+      value: 128293
+    - key: ':droplet:'
+      value: 128167
+    - key: ':water_wave:'
+      value: 127754
   - title: Objects
     sectionName: 5
     emojis:
-    - key: ':dizzy:'
-      value: 128171
-    - key: ':speech_balloon:'
-      value: 128172
-    - key: ':thought_balloon:'
-      value: 128173
-    - key: ':white_flower:'
-      value: 128174
-    - key: ':100:'
-      value: 128175
-    - key: ':moneybag:'
-      value: 128176
-    - key: ':currency_exchange:'
-      value: 128177
-    - key: ':heavy_dollar_sign:'
-      value: 128178
-    - key: ':credit_card:'
-      value: 128179
-    - key: ':yen:'
-      value: 128180
-    - key: ':dollar:'
-      value: 128181
-    - key: ':euro:'
-      value: 128182
-    - key: ':pound:'
-      value: 128183
-    - key: ':money_with_wings:'
-      value: 128184
-    - key: ':chart:'
-      value: 128185
-    - key: ':seat:'
-      value: 128186
-    - key: ':computer:'
+    - key: ':glasses:'
+      value: 128083
+    - key: ':sunglasses:'
+      value: 128374
+    - key: ':goggles:'
+      value: 129405
+    - key: ':lab_coat:'
+      value: 129404
+    - key: ':safety_vest:'
+      value: 129466
+    - key: ':necktie:'
+      value: 128084
+    - key: ':t_shirt:'
+      value: 128085
+    - key: ':jeans:'
+      value: 128086
+    - key: ':scarf:'
+      value: 129507
+    - key: ':gloves:'
+      value: 129508
+    - key: ':coat:'
+      value: 129509
+    - key: ':socks:'
+      value: 129510
+    - key: ':dress:'
+      value: 128087
+    - key: ':kimono:'
+      value: 128088
+    - key: ':sari:'
+      value: 129403
+    - key: ':one_piece_swimsuit:'
+      value: 129649
+    - key: ':briefs:'
+      value: 129650
+    - key: ':shorts:'
+      value: 129651
+    - key: ':bikini:'
+      value: 128089
+    - key: ':womans_clothes:'
+      value: 128090
+    - key: ':folding_hand_fan:'
+      value: 129709
+    - key: ':purse:'
+      value: 128091
+    - key: ':handbag:'
+      value: 128092
+    - key: ':clutch_bag:'
+      value: 128093
+    - key: ':shopping_bags:'
+      value: 128717
+    - key: ':backpack:'
+      value: 127890
+    - key: ':thong_sandal:'
+      value: 129652
+    - key: ':mans_shoe:'
+      value: 128094
+    - key: ':running_shoe:'
+      value: 128095
+    - key: ':hiking_boot:'
+      value: 129406
+    - key: ':flat_shoe:'
+      value: 129407
+    - key: ':high_heeled_shoe:'
+      value: 128096
+    - key: ':womans_sandal:'
+      value: 128097
+    - key: ':ballet_shoes:'
+      value: 129648
+    - key: ':womans_boot:'
+      value: 128098
+    - key: ':hair_pick:'
+      value: 129710
+    - key: ':crown:'
+      value: 128081
+    - key: ':womans_hat:'
+      value: 128082
+    - key: ':top_hat:'
+      value: 127913
+    - key: ':graduation_cap:'
+      value: 127891
+    - key: ':billed_cap:'
+      value: 129506
+    - key: ':military_helmet:'
+      value: 129686
+    - key: ':rescue_workers_helmet:'
+      value: 9937
+    - key: ':prayer_beads:'
+      value: 128255
+    - key: ':lipstick:'
+      value: 128132
+    - key: ':ring:'
+      value: 128141
+    - key: ':gem_stone:'
+      value: 128142
+    - key: ':muted_speaker:'
+      value: 128263
+    - key: ':speaker_low_volume:'
+      value: 128264
+    - key: ':speaker_medium_volume:'
+      value: 128265
+    - key: ':speaker_high_volume:'
+      value: 128266
+    - key: ':loudspeaker:'
+      value: 128226
+    - key: ':megaphone:'
+      value: 128227
+    - key: ':postal_horn:'
+      value: 128239
+    - key: ':bell:'
+      value: 128276
+    - key: ':bell_with_slash:'
+      value: 128277
+    - key: ':musical_score:'
+      value: 127932
+    - key: ':musical_note:'
+      value: 127925
+    - key: ':musical_notes:'
+      value: 127926
+    - key: ':studio_microphone:'
+      value: 127897
+    - key: ':level_slider:'
+      value: 127898
+    - key: ':control_knobs:'
+      value: 127899
+    - key: ':microphone:'
+      value: 127908
+    - key: ':headphone:'
+      value: 127911
+    - key: ':radio:'
+      value: 128251
+    - key: ':saxophone:'
+      value: 127927
+    - key: ':accordion:'
+      value: 129687
+    - key: ':guitar:'
+      value: 127928
+    - key: ':musical_keyboard:'
+      value: 127929
+    - key: ':trumpet:'
+      value: 127930
+    - key: ':violin:'
+      value: 127931
+    - key: ':banjo:'
+      value: 129685
+    - key: ':drum:'
+      value: 129345
+    - key: ':long_drum:'
+      value: 129688
+    - key: ':maracas:'
+      value: 129671
+    - key: ':flute:'
+      value: 129672
+    - key: ':mobile_phone:'
+      value: 128241
+    - key: ':mobile_phone_with_arrow:'
+      value: 128242
+    - key: ':telephone:'
+      value: 9742
+    - key: ':telephone_receiver:'
+      value: 128222
+    - key: ':pager:'
+      value: 128223
+    - key: ':fax_machine:'
+      value: 128224
+    - key: ':battery:'
+      value: 128267
+    - key: ':low_battery:'
+      value: 129707
+    - key: ':electric_plug:'
+      value: 128268
+    - key: ':laptop:'
       value: 128187
-    - key: ':briefcase:'
-      value: 128188
-    - key: ':minidisc:'
+    - key: ':desktop_computer:'
+      value: 128421
+    - key: ':printer:'
+      value: 128424
+    - key: ':keyboard:'
+      value: 9000
+    - key: ':computer_mouse:'
+      value: 128433
+    - key: ':trackball:'
+      value: 128434
+    - key: ':computer_disk:'
       value: 128189
     - key: ':floppy_disk:'
       value: 128190
-    - key: ':cd:'
+    - key: ':optical_disk:'
       value: 128191
     - key: ':dvd:'
       value: 128192
+    - key: ':abacus:'
+      value: 129518
+    - key: ':movie_camera:'
+      value: 127909
+    - key: ':film_frames:'
+      value: 127902
+    - key: ':film_projector:'
+      value: 128253
+    - key: ':clapper_board:'
+      value: 127916
+    - key: ':television:'
+      value: 128250
+    - key: ':camera:'
+      value: 128247
+    - key: ':camera_with_flash:'
+      value: 128248
+    - key: ':video_camera:'
+      value: 128249
+    - key: ':videocassette:'
+      value: 128252
+    - key: ':magnifying_glass_tilted_left:'
+      value: 128269
+    - key: ':magnifying_glass_tilted_right:'
+      value: 128270
+    - key: ':candle:'
+      value: 128367
+    - key: ':light_bulb:'
+      value: 128161
+    - key: ':flashlight:'
+      value: 128294
+    - key: ':red_paper_lantern:'
+      value: 127982
+    - key: ':diya_lamp:'
+      value: 129684
+    - key: ':notebook_with_decorative_cover:'
+      value: 128212
+    - key: ':closed_book:'
+      value: 128213
+    - key: ':open_book:'
+      value: 128214
+    - key: ':green_book:'
+      value: 128215
+    - key: ':blue_book:'
+      value: 128216
+    - key: ':orange_book:'
+      value: 128217
+    - key: ':books:'
+      value: 128218
+    - key: ':notebook:'
+      value: 128211
+    - key: ':ledger:'
+      value: 128210
+    - key: ':page_with_curl:'
+      value: 128195
+    - key: ':scroll:'
+      value: 128220
+    - key: ':page_facing_up:'
+      value: 128196
+    - key: ':newspaper:'
+      value: 128240
+    - key: ':rolled_up_newspaper:'
+      value: 128478
+    - key: ':bookmark_tabs:'
+      value: 128209
+    - key: ':bookmark:'
+      value: 128278
+    - key: ':label:'
+      value: 127991
+    - key: ':money_bag:'
+      value: 128176
+    - key: ':coin:'
+      value: 129689
+    - key: ':yen_banknote:'
+      value: 128180
+    - key: ':dollar_banknote:'
+      value: 128181
+    - key: ':euro_banknote:'
+      value: 128182
+    - key: ':pound_banknote:'
+      value: 128183
+    - key: ':money_with_wings:'
+      value: 128184
+    - key: ':credit_card:'
+      value: 128179
+    - key: ':receipt:'
+      value: 129534
+    - key: ':chart_increasing_with_yen:'
+      value: 128185
+    - key: ':envelope:'
+      value: 9993
+    - key: ':e_mail:'
+      value: 128231
+    - key: ':incoming_envelope:'
+      value: 128232
+    - key: ':envelope_with_arrow:'
+      value: 128233
+    - key: ':outbox_tray:'
+      value: 128228
+    - key: ':inbox_tray:'
+      value: 128229
+    - key: ':package:'
+      value: 128230
+    - key: ':closed_mailbox_with_raised_flag:'
+      value: 128235
+    - key: ':closed_mailbox_with_lowered_flag:'
+      value: 128234
+    - key: ':open_mailbox_with_raised_flag:'
+      value: 128236
+    - key: ':open_mailbox_with_lowered_flag:'
+      value: 128237
+    - key: ':postbox:'
+      value: 128238
+    - key: ':ballot_box_with_ballot:'
+      value: 128499
+    - key: ':pencil:'
+      value: 9999
+    - key: ':black_nib:'
+      value: 10002
+    - key: ':fountain_pen:'
+      value: 128395
+    - key: ':pen:'
+      value: 128394
+    - key: ':paintbrush:'
+      value: 128396
+    - key: ':crayon:'
+      value: 128397
+    - key: ':memo:'
+      value: 128221
+    - key: ':briefcase:'
+      value: 128188
     - key: ':file_folder:'
       value: 128193
     - key: ':open_file_folder:'
       value: 128194
-    - key: ':page_with_curl:'
-      value: 128195
-    - key: ':page_facing_up:'
-      value: 128196
-    - key: ':date:'
-      value: 128197
+    - key: ':card_index_dividers:'
+      value: 128450
     - key: ':calendar:'
+      value: 128197
+    - key: ':tear_off_calendar:'
       value: 128198
+    - key: ':spiral_notepad:'
+      value: 128466
+    - key: ':spiral_calendar:'
+      value: 128467
     - key: ':card_index:'
       value: 128199
-    - key: ':chart_with_upwards_trend:'
+    - key: ':chart_increasing:'
       value: 128200
-    - key: ':chart_with_downwards_trend:'
+    - key: ':chart_decreasing:'
       value: 128201
     - key: ':bar_chart:'
       value: 128202
@@ -757,210 +2181,601 @@ MonoBehaviour:
       value: 128205
     - key: ':paperclip:'
       value: 128206
+    - key: ':linked_paperclips:'
+      value: 128391
     - key: ':straight_ruler:'
       value: 128207
     - key: ':triangular_ruler:'
       value: 128208
-    - key: ':bookmark_tabs:'
-      value: 128209
-    - key: ':ledger:'
-      value: 128210
-    - key: ':notebook:'
-      value: 128211
-    - key: ':notebook_with_decorative_cover:'
-      value: 128212
-    - key: ':closed_book:'
-      value: 128213
-    - key: ':book:'
-      value: 128214
-    - key: ':green_book:'
-      value: 128215
-    - key: ':blue_book:'
-      value: 128216
-    - key: ':orange_book:'
-      value: 128217
-    - key: ':books:'
-      value: 128218
-    - key: ':name_badge:'
-      value: 128219
-    - key: ':scroll:'
-      value: 128220
-    - key: ':memo:'
-      value: 128221
-    - key: ':telephone_receiver:'
-      value: 128222
-    - key: ':pager:'
-      value: 128223
-    - key: ':fax:'
-      value: 128224
-    - key: ':satellite_antenna:'
-      value: 128225
-    - key: ':loudspeaker:'
-      value: 128226
-    - key: ':mega:'
-      value: 128227
-    - key: ':outbox_tray:'
-      value: 128228
-    - key: ':inbox_tray:'
-      value: 128229
-    - key: ':package:'
-      value: 128230
-    - key: ':e-mail:'
-      value: 128231
-    - key: ':incoming_envelope:'
-      value: 128232
-    - key: ':envelope_with_arrow:'
-      value: 128233
-    - key: ':mailbox_closed:'
-      value: 128234
-    - key: ':mailbox:'
-      value: 128235
-    - key: ':mailbox_with_mail:'
-      value: 128236
-    - key: ':mailbox_with_no_mail:'
-      value: 128237
-    - key: ':postbox:'
-      value: 128238
-    - key: ':postal_horn:'
-      value: 128239
-    - key: ':newspaper:'
-      value: 128240
-    - key: ':iphone:'
-      value: 128241
-    - key: ':calling:'
-      value: 128242
-    - key: ':vibration_mode:'
-      value: 128243
-    - key: ':mobile_phone_off:'
-      value: 128244
-    - key: ':no_mobile_phones:'
-      value: 128245
-    - key: ':signal_strength:'
-      value: 128246
-    - key: ':camera:'
-      value: 128247
-    - key: ':camera_with_flash:'
-      value: 128248
-    - key: ':video_camera:'
-      value: 128249
-    - key: ':tv:'
-      value: 128250
-    - key: ':radio:'
-      value: 128251
-    - key: ':vhs:'
-      value: 128252
-    - key: ':film_projector:'
-      value: 128253
-    - key: ':prayer_beads:'
-      value: 128255
-    - key: ':twisted_rightwards_arrows:'
-      value: 128256
-    - key: ':repeat:'
-      value: 128257
-    - key: ':repeat_one:'
-      value: 128258
-    - key: ':arrows_clockwise:'
-      value: 128259
-    - key: ':arrows_counterclockwise:'
-      value: 128260
-    - key: ':low_brightness:'
-      value: 128261
-    - key: ':high_brightness:'
-      value: 128262
-    - key: ':mute:'
-      value: 128263
-    - key: ':speaker:'
-      value: 128264
-    - key: ':sound:'
-      value: 128265
-    - key: ':loud_sound:'
-      value: 128266
-    - key: ':battery:'
-      value: 128267
-    - key: ':electric_plug:'
-      value: 128268
-    - key: ':mag:'
-      value: 128269
-    - key: ':mag_right:'
-      value: 128270
-    - key: ':lock_with_ink_pen:'
+    - key: ':scissors:'
+      value: 9986
+    - key: ':card_file_box:'
+      value: 128451
+    - key: ':file_cabinet:'
+      value: 128452
+    - key: ':wastebasket:'
+      value: 128465
+    - key: ':locked:'
+      value: 128274
+    - key: ':unlocked:'
+      value: 128275
+    - key: ':locked_with_pen:'
       value: 128271
-    - key: ':closed_lock_with_key:'
+    - key: ':locked_with_key:'
       value: 128272
     - key: ':key:'
       value: 128273
-    - key: ':lock:'
-      value: 128274
-    - key: ':unlock:'
-      value: 128275
-    - key: ':bell:'
-      value: 128276
-    - key: ':no_bell:'
-      value: 128277
-    - key: ':bookmark:'
-      value: 128278
-    - key: ':link:'
-      value: 128279
-    - key: ':radio_button:'
-      value: 128280
-    - key: ':back:'
-      value: 128281
-    - key: ':end:'
-      value: 128282
-    - key: ':on:'
-      value: 128283
-    - key: ':soon:'
-      value: 128284
-    - key: ':top:'
-      value: 128285
-    - key: ':underage:'
-      value: 128286
-    - key: ':keycap_ten:'
-      value: 128287
-    - key: ':capital_abcd:'
-      value: 128288
-    - key: ':abcd:'
-      value: 128289
-    - key: ':1234:'
-      value: 128290
-    - key: ':symbols:'
-      value: 128291
-    - key: ':abc:'
-      value: 128292
-    - key: ':fire:'
-      value: 128293
-    - key: ':flashlight:'
-      value: 128294
-    - key: ':wrench:'
-      value: 128295
+    - key: ':old_key:'
+      value: 128477
     - key: ':hammer:'
       value: 128296
+    - key: ':axe:'
+      value: 129683
+    - key: ':pick:'
+      value: 9935
+    - key: ':hammer_and_pick:'
+      value: 9874
+    - key: ':hammer_and_wrench:'
+      value: 128736
+    - key: ':dagger:'
+      value: 128481
+    - key: ':crossed_swords:'
+      value: 9876
+    - key: ':bomb:'
+      value: 128163
+    - key: ':boomerang:'
+      value: 129667
+    - key: ':bow_and_arrow:'
+      value: 127993
+    - key: ':shield:'
+      value: 128737
+    - key: ':carpentry_saw:'
+      value: 129690
+    - key: ':wrench:'
+      value: 128295
+    - key: ':screwdriver:'
+      value: 129691
     - key: ':nut_and_bolt:'
       value: 128297
-    - key: ':hocho:'
-      value: 128298
-    - key: ':gun:'
-      value: 128299
+    - key: ':gear:'
+      value: 9881
+    - key: ':clamp:'
+      value: 128476
+    - key: ':balance_scale:'
+      value: 9878
+    - key: ':white_cane:'
+      value: 129455
+    - key: ':link:'
+      value: 128279
+    - key: ':chains:'
+      value: 9939
+    - key: ':hook:'
+      value: 129693
+    - key: ':toolbox:'
+      value: 129520
+    - key: ':magnet:'
+      value: 129522
+    - key: ':ladder:'
+      value: 129692
+    - key: ':alembic:'
+      value: 9879
+    - key: ':test_tube:'
+      value: 129514
+    - key: ':petri_dish:'
+      value: 129515
+    - key: ':dna:'
+      value: 129516
     - key: ':microscope:'
       value: 128300
     - key: ':telescope:'
       value: 128301
-    - key: ':crystal_ball:'
-      value: 128302
-    - key: ':six_pointed_star:'
+    - key: ':satellite_antenna:'
+      value: 128225
+    - key: ':syringe:'
+      value: 128137
+    - key: ':drop_of_blood:'
+      value: 129656
+    - key: ':pill:'
+      value: 128138
+    - key: ':adhesive_bandage:'
+      value: 129657
+    - key: ':crutch:'
+      value: 129660
+    - key: ':stethoscope:'
+      value: 129658
+    - key: ':x_ray:'
+      value: 129659
+    - key: ':door:'
+      value: 128682
+    - key: ':elevator:'
+      value: 128727
+    - key: ':mirror:'
+      value: 129694
+    - key: ':window:'
+      value: 129695
+    - key: ':bed:'
+      value: 128719
+    - key: ':couch_and_lamp:'
+      value: 128715
+    - key: ':chair:'
+      value: 129681
+    - key: ':toilet:'
+      value: 128701
+    - key: ':plunger:'
+      value: 129696
+    - key: ':shower:'
+      value: 128703
+    - key: ':bathtub:'
+      value: 128705
+    - key: ':mouse_trap:'
+      value: 129700
+    - key: ':razor:'
+      value: 129682
+    - key: ':lotion_bottle:'
+      value: 129524
+    - key: ':safety_pin:'
+      value: 129527
+    - key: ':broom:'
+      value: 129529
+    - key: ':basket:'
+      value: 129530
+    - key: ':roll_of_paper:'
+      value: 129531
+    - key: ':bucket:'
+      value: 129699
+    - key: ':soap:'
+      value: 129532
+    - key: ':bubbles:'
+      value: 129767
+    - key: ':toothbrush:'
+      value: 129701
+    - key: ':sponge:'
+      value: 129533
+    - key: ':fire_extinguisher:'
+      value: 129519
+    - key: ':shopping_cart:'
+      value: 128722
+    - key: ':cigarette:'
+      value: 128684
+    - key: ':coffin:'
+      value: 9904
+    - key: ':headstone:'
+      value: 129702
+    - key: ':funeral_urn:'
+      value: 9905
+    - key: ':nazar_amulet:'
+      value: 129535
+    - key: ':hamsa:'
+      value: 129708
+    - key: ':moai:'
+      value: 128511
+    - key: ':placard:'
+      value: 129703
+    - key: ':identification_card:'
+      value: 129706
+  - title: Symbols and Signs
+    sectionName: 6
+    emojis:
+    - key: ':light_skin_tone:'
+      value: 127995
+    - key: ':medium_light_skin_tone:'
+      value: 127996
+    - key: ':medium_skin_tone:'
+      value: 127997
+    - key: ':medium_dark_skin_tone:'
+      value: 127998
+    - key: ':dark_skin_tone:'
+      value: 127999
+    - key: ':red_hair:'
+      value: 129456
+    - key: ':curly_hair:'
+      value: 129457
+    - key: ':white_hair:'
+      value: 129459
+    - key: ':bald:'
+      value: 129458
+    - key: ':atm_sign:'
+      value: 127975
+    - key: ':litter_in_bin_sign:'
+      value: 128686
+    - key: ':potable_water:'
+      value: 128688
+    - key: ':wheelchair_symbol:'
+      value: 9855
+    - key: ':mens_room:'
+      value: 128697
+    - key: ':womens_room:'
+      value: 128698
+    - key: ':restroom:'
+      value: 128699
+    - key: ':baby_symbol:'
+      value: 128700
+    - key: ':water_closet:'
+      value: 128702
+    - key: ':passport_control:'
+      value: 128706
+    - key: ':customs:'
+      value: 128707
+    - key: ':baggage_claim:'
+      value: 128708
+    - key: ':left_luggage:'
+      value: 128709
+    - key: ':warning:'
+      value: 9888
+    - key: ':children_crossing:'
+      value: 128696
+    - key: ':no_entry:'
+      value: 9940
+    - key: ':prohibited:'
+      value: 128683
+    - key: ':no_bicycles:'
+      value: 128691
+    - key: ':no_smoking:'
+      value: 128685
+    - key: ':no_littering:'
+      value: 128687
+    - key: ':non_potable_water:'
+      value: 128689
+    - key: ':no_pedestrians:'
+      value: 128695
+    - key: ':no_mobile_phones:'
+      value: 128245
+    - key: ':no_one_under_eighteen:'
+      value: 128286
+    - key: ':radioactive:'
+      value: 9762
+    - key: ':biohazard:'
+      value: 9763
+    - key: ':up_arrow:'
+      value: 11014
+    - key: ':up_right_arrow:'
+      value: 8599
+    - key: ':right_arrow:'
+      value: 10145
+    - key: ':down_right_arrow:'
+      value: 8600
+    - key: ':down_arrow:'
+      value: 11015
+    - key: ':down_left_arrow:'
+      value: 8601
+    - key: ':left_arrow:'
+      value: 11013
+    - key: ':up_left_arrow:'
+      value: 8598
+    - key: ':up_down_arrow:'
+      value: 8597
+    - key: ':left_right_arrow:'
+      value: 8596
+    - key: ':right_arrow_curving_left:'
+      value: 8617
+    - key: ':left_arrow_curving_right:'
+      value: 8618
+    - key: ':right_arrow_curving_up:'
+      value: 10548
+    - key: ':right_arrow_curving_down:'
+      value: 10549
+    - key: ':clockwise_vertical_arrows:'
+      value: 128259
+    - key: ':counterclockwise_arrows_button:'
+      value: 128260
+    - key: ':back_arrow:'
+      value: 128281
+    - key: ':end_arrow:'
+      value: 128282
+    - key: ':on_arrow:'
+      value: 128283
+    - key: ':soon_arrow:'
+      value: 128284
+    - key: ':top_arrow:'
+      value: 128285
+    - key: ':place_of_worship:'
+      value: 128720
+    - key: ':atom_symbol:'
+      value: 9883
+    - key: ':om:'
+      value: 128329
+    - key: ':star_of_david:'
+      value: 10017
+    - key: ':wheel_of_dharma:'
+      value: 9784
+    - key: ':yin_yang:'
+      value: 9775
+    - key: ':latin_cross:'
+      value: 10013
+    - key: ':orthodox_cross:'
+      value: 9766
+    - key: ':star_and_crescent:'
+      value: 9770
+    - key: ':peace_symbol:'
+      value: 9774
+    - key: ':menorah:'
+      value: 128334
+    - key: ':dotted_six_pointed_star:'
       value: 128303
-    - key: ':beginner:'
-      value: 128304
-    - key: ':trident:'
+    - key: ':khanda:'
+      value: 129711
+    - key: ':aries:'
+      value: 9800
+    - key: ':taurus:'
+      value: 9801
+    - key: ':gemini:'
+      value: 9802
+    - key: ':cancer:'
+      value: 9803
+    - key: ':leo:'
+      value: 9804
+    - key: ':virgo:'
+      value: 9805
+    - key: ':libra:'
+      value: 9806
+    - key: ':scorpio:'
+      value: 9807
+    - key: ':sagittarius:'
+      value: 9808
+    - key: ':capricorn:'
+      value: 9809
+    - key: ':aquarius:'
+      value: 9810
+    - key: ':pisces:'
+      value: 9811
+    - key: ':ophiuchus:'
+      value: 9934
+    - key: ':shuffle_tracks_button:'
+      value: 128256
+    - key: ':repeat_button:'
+      value: 128257
+    - key: ':repeat_single_button:'
+      value: 128258
+    - key: ':play_button:'
+      value: 9654
+    - key: ':fast_forward_button:'
+      value: 9193
+    - key: ':next_track_button:'
+      value: 9197
+    - key: ':play_or_pause_button:'
+      value: 9199
+    - key: ':reverse_button:'
+      value: 9664
+    - key: ':fast_reverse_button:'
+      value: 9194
+    - key: ':last_track_button:'
+      value: 9198
+    - key: ':upwards_button:'
+      value: 128316
+    - key: ':fast_up_button:'
+      value: 9195
+    - key: ':downwards_button:'
+      value: 128317
+    - key: ':fast_down_button:'
+      value: 9196
+    - key: ':pause_button:'
+      value: 9208
+    - key: ':stop_button:'
+      value: 9209
+    - key: ':record_button:'
+      value: 9210
+    - key: ':eject_button:'
+      value: 9167
+    - key: ':cinema:'
+      value: 127910
+    - key: ':dim_button:'
+      value: 128261
+    - key: ':bright_button:'
+      value: 128262
+    - key: ':antenna_bars:'
+      value: 128246
+    - key: ':wireless:'
+      value: 128732
+    - key: ':vibration_mode:'
+      value: 128243
+    - key: ':mobile_phone_off:'
+      value: 128244
+    - key: ':female_sign:'
+      value: 9792
+    - key: ':male_sign:'
+      value: 9794
+    - key: ':transgender_symbol:'
+      value: 9895
+    - key: ':multiply:'
+      value: 10006
+    - key: ':plus:'
+      value: 10133
+    - key: ':minus:'
+      value: 10134
+    - key: ':divide:'
+      value: 10135
+    - key: ':heavy_equals_sign:'
+      value: 129008
+    - key: ':infinity:'
+      value: 9854
+    - key: ':double_exclamation_mark:'
+      value: 8252
+    - key: ':exclamation_question_mark:'
+      value: 8265
+    - key: ':red_question_mark:'
+      value: 10067
+    - key: ':white_question_mark:'
+      value: 10068
+    - key: ':white_exclamation_mark:'
+      value: 10069
+    - key: ':red_exclamation_mark:'
+      value: 10071
+    - key: ':wavy_dash:'
+      value: 12336
+    - key: ':currency_exchange:'
+      value: 128177
+    - key: ':heavy_dollar_sign:'
+      value: 128178
+    - key: ':medical_symbol:'
+      value: 9877
+    - key: ':recycling_symbol:'
+      value: 9851
+    - key: ':fleur_de_lis:'
+      value: 9884
+    - key: ':trident_emblem:'
       value: 128305
-    - key: ':black_square_button:'
-      value: 128306
-    - key: ':white_square_button:'
-      value: 128307
+    - key: ':name_badge:'
+      value: 128219
+    - key: ':japanese_symbol_for_beginner:'
+      value: 128304
+    - key: ':hollow_red_circle:'
+      value: 11093
+    - key: ':check_mark_button:'
+      value: 9989
+    - key: ':check_box_with_check:'
+      value: 9745
+    - key: ':check_mark:'
+      value: 10004
+    - key: ':cross_mark:'
+      value: 10060
+    - key: ':cross_mark_button:'
+      value: 10062
+    - key: ':curly_loop:'
+      value: 10160
+    - key: ':double_curly_loop:'
+      value: 10175
+    - key: ':part_alternation_mark:'
+      value: 12349
+    - key: ':eight_spoked_asterisk:'
+      value: 10035
+    - key: ':eight_pointed_star:'
+      value: 10036
+    - key: ':sparkle:'
+      value: 10055
+    - key: ':copyright:'
+      value: 169
+    - key: ':registered:'
+      value: 174
+    - key: ':trade_mark:'
+      value: 8482
+    - key: ':keycap_10:'
+      value: 128287
+    - key: ':input_latin_uppercase:'
+      value: 128288
+    - key: ':input_latin_lowercase:'
+      value: 128289
+    - key: ':input_numbers:'
+      value: 128290
+    - key: ':input_symbols:'
+      value: 128291
+    - key: ':input_latin_letters:'
+      value: 128292
+    - key: ':a_button_blood_type:'
+      value: 127344
+    - key: ':ab_button_blood_type:'
+      value: 127374
+    - key: ':b_button_blood_type:'
+      value: 127345
+    - key: ':cl_button:'
+      value: 127377
+    - key: ':cool_button:'
+      value: 127378
+    - key: ':free_button:'
+      value: 127379
+    - key: ':information:'
+      value: 8505
+    - key: ':id_button:'
+      value: 127380
+    - key: ':circled_m:'
+      value: 9410
+    - key: ':new_button:'
+      value: 127381
+    - key: ':ng_button:'
+      value: 127382
+    - key: ':o_button_blood_type:'
+      value: 127358
+    - key: ':ok_button:'
+      value: 127383
+    - key: ':p_button:'
+      value: 127359
+    - key: ':sos_button:'
+      value: 127384
+    - key: ':up_button:'
+      value: 127385
+    - key: ':vs_button:'
+      value: 127386
+    - key: ':japanese_here_button:'
+      value: 127489
+    - key: ':japanese_service_charge_button:'
+      value: 127490
+    - key: ':japanese_monthly_amount_button:'
+      value: 127543
+    - key: ':japanese_not_free_of_charge_button:'
+      value: 127542
+    - key: ':japanese_reserved_button:'
+      value: 127535
+    - key: ':japanese_bargain_button:'
+      value: 127568
+    - key: ':japanese_discount_button:'
+      value: 127545
+    - key: ':japanese_free_of_charge_button:'
+      value: 127514
+    - key: ':japanese_prohibited_button:'
+      value: 127538
+    - key: ':japanese_acceptable_button:'
+      value: 127569
+    - key: ':japanese_application_button:'
+      value: 127544
+    - key: ':japanese_passing_grade_button:'
+      value: 127540
+    - key: ':japanese_vacancy_button:'
+      value: 127539
+    - key: ':japanese_congratulations_button:'
+      value: 12951
+    - key: ':japanese_secret_button:'
+      value: 12953
+    - key: ':japanese_open_for_business_button:'
+      value: 127546
+    - key: ':japanese_no_vacancy_button:'
+      value: 127541
     - key: ':red_circle:'
       value: 128308
-    - key: ':large_blue_circle:'
+    - key: ':orange_circle:'
+      value: 128992
+    - key: ':yellow_circle:'
+      value: 128993
+    - key: ':green_circle:'
+      value: 128994
+    - key: ':blue_circle:'
       value: 128309
+    - key: ':purple_circle:'
+      value: 128995
+    - key: ':brown_circle:'
+      value: 128996
+    - key: ':black_circle:'
+      value: 9899
+    - key: ':white_circle:'
+      value: 9898
+    - key: ':red_square:'
+      value: 128997
+    - key: ':orange_square:'
+      value: 128999
+    - key: ':yellow_square:'
+      value: 129000
+    - key: ':green_square:'
+      value: 129001
+    - key: ':blue_square:'
+      value: 128998
+    - key: ':purple_square:'
+      value: 129002
+    - key: ':brown_square:'
+      value: 129003
+    - key: ':black_large_square:'
+      value: 11035
+    - key: ':white_large_square:'
+      value: 11036
+    - key: ':black_medium_square:'
+      value: 9724
+    - key: ':white_medium_square:'
+      value: 9723
+    - key: ':black_medium_small_square:'
+      value: 9726
+    - key: ':white_medium_small_square:'
+      value: 9725
+    - key: ':black_small_square:'
+      value: 9642
+    - key: ':white_small_square:'
+      value: 9643
     - key: ':large_orange_diamond:'
       value: 128310
     - key: ':large_blue_diamond:'
@@ -969,247 +2784,104 @@ MonoBehaviour:
       value: 128312
     - key: ':small_blue_diamond:'
       value: 128313
-    - key: ':small_red_triangle:'
+    - key: ':red_triangle_pointed_up:'
       value: 128314
-    - key: ':small_red_triangle_down:'
+    - key: ':red_triangle_pointed_down:'
       value: 128315
-    - key: ':arrow_up_small:'
-      value: 128316
-    - key: ':arrow_down_small:'
-      value: 128317
-    - key: ':om_symbol:'
-      value: 128329
-    - key: ':dove_of_peace:'
-      value: 128330
-    - key: ':kaaba:'
-      value: 128331
-    - key: ':mosque:'
-      value: 128332
-    - key: ':synagogue:'
-      value: 128333
-    - key: ':menorah_with_nine_branches:'
-      value: 128334
-    - key: ':clock1:'
-      value: 128336
-    - key: ':clock2:'
-      value: 128337
-    - key: ':clock3:'
-      value: 128338
-    - key: ':clock4:'
-      value: 128339
-    - key: ':clock5:'
-      value: 128340
-    - key: ':clock6:'
-      value: 128341
-    - key: ':clock7:'
-      value: 128342
-    - key: ':clock8:'
-      value: 128343
-    - key: ':clock9:'
-      value: 128344
-    - key: ':clock10:'
-      value: 128345
-    - key: ':clock11:'
-      value: 128346
-    - key: ':clock12:'
-      value: 128347
-    - key: ':clock130:'
-      value: 128348
-    - key: ':clock230:'
-      value: 128349
-    - key: ':clock330:'
-      value: 128350
-    - key: ':clock430:'
-      value: 128351
-    - key: ':clock530:'
-      value: 128352
-    - key: ':clock630:'
-      value: 128353
-    - key: ':clock730:'
-      value: 128354
-    - key: ':clock830:'
-      value: 128355
-    - key: ':clock930:'
-      value: 128356
-    - key: ':clock1030:'
-      value: 128357
-    - key: ':clock1130:'
-      value: 128358
-    - key: ':clock1230:'
-      value: 128359
-    - key: ':candle:'
-      value: 128367
-    - key: ':mantelpiece_clock:'
-      value: 128368
-    - key: ':hole:'
-      value: 128371
-    - key: ':man_in_business_suit_levitating:'
-      value: 128372
-    - key: ':sleuth_or_spy:'
-      value: 128373
-    - key: ':dark_sunglasses:'
-      value: 128374
-    - key: ':spider:'
-      value: 128375
-    - key: ':spider_web:'
-      value: 128376
-    - key: ':joystick:'
-      value: 128377
-    - key: ':linked_paperclips:'
-      value: 128391
-    - key: ':lower_left_ballpoint_pen:'
-      value: 128394
-    - key: ':lower_left_fountain_pen:'
-      value: 128395
-    - key: ':lower_left_paintbrush:'
-      value: 128396
-    - key: ':lower_left_crayon:'
-      value: 128397
-    - key: ':raised_hand_with_fingers_splayed:'
-      value: 128400
-    - key: ':middle_finger:'
-      value: 128405
-    - key: ':spock-hand:'
-      value: 128406
-    - key: ':desktop_computer:'
-      value: 128421
-    - key: ':printer:'
-      value: 128424
-    - key: ':three_button_mouse:'
-      value: 128433
-    - key: ':trackball:'
-      value: 128434
-    - key: ':frame_with_picture:'
-      value: 128444
-    - key: ':card_index_dividers:'
-      value: 128450
-    - key: ':card_file_box:'
-      value: 128451
-    - key: ':file_cabinet:'
-      value: 128452
-    - key: ':wastebasket:'
-      value: 128465
-    - key: ':spiral_note_pad:'
-      value: 128466
-    - key: ':spiral_calendar_pad:'
-      value: 128467
-    - key: ':compression:'
-      value: 128476
-    - key: ':old_key:'
-      value: 128477
-    - key: ':rolled_up_newspaper:'
-      value: 128478
-    - key: ':dagger_knife:'
-      value: 128481
-    - key: ':speaking_head_in_silhouette:'
-      value: 128483
-    - key: ':left_speech_bubble:'
-      value: 128488
-    - key: ':right_anger_bubble:'
-      value: 128495
-    - key: ':speedboat:'
-      value: 128676
-    - key: ':traffic_light:'
-      value: 128677
-    - key: ':vertical_traffic_light:'
-      value: 128678
-    - key: ':construction:'
-      value: 128679
-    - key: ':rotating_light:'
-      value: 128680
-    - key: ':triangular_flag_on_post:'
-      value: 128681
-  - title: Symbols and Signs
-    sectionName: 6
-    emojis:
-    - key: ':a:'
+    - key: ':diamond_with_a_dot:'
+      value: 128160
+    - key: ':radio_button:'
+      value: 128280
+    - key: ':white_square_button:'
+      value: 128307
+    - key: ':black_square_button:'
+      value: 128306
+    - key: ':hash:'
+      value: 35
+    - key: ':asterisk:'
+      value: 42
+    - key: ':zero:'
+      value: 48
+    - key: ':one:'
+      value: 49
+    - key: ':two:'
+      value: 50
+    - key: ':three:'
+      value: 51
+    - key: ':four:'
+      value: 52
+    - key: ':five:'
+      value: 53
+    - key: ':six:'
+      value: 54
+    - key: ':seven:'
+      value: 55
+    - key: ':eight:'
+      value: 56
+    - key: ':nine:'
+      value: 57
+    - key: ':regional_indicator_symbol_letter_a:'
       value: 127462
-    - key: ':b:'
+    - key: ':regional_indicator_symbol_letter_b:'
       value: 127463
-    - key: ':c:'
+    - key: ':regional_indicator_symbol_letter_c:'
       value: 127464
-    - key: ':d:'
+    - key: ':regional_indicator_symbol_letter_d:'
       value: 127465
-    - key: ':e:'
+    - key: ':regional_indicator_symbol_letter_e:'
       value: 127466
-    - key: ':f:'
+    - key: ':regional_indicator_symbol_letter_f:'
       value: 127467
-    - key: ':g:'
+    - key: ':regional_indicator_symbol_letter_g:'
       value: 127468
-    - key: ':h:'
+    - key: ':regional_indicator_symbol_letter_h:'
       value: 127469
-    - key: ':i:'
+    - key: ':regional_indicator_symbol_letter_i:'
       value: 127470
-    - key: ':j:'
+    - key: ':regional_indicator_symbol_letter_j:'
       value: 127471
-    - key: ':k:'
+    - key: ':regional_indicator_symbol_letter_k:'
       value: 127472
-    - key: ':l:'
+    - key: ':regional_indicator_symbol_letter_l:'
       value: 127473
-    - key: ':m:'
+    - key: ':regional_indicator_symbol_letter_m:'
       value: 127474
-    - key: ':n:'
+    - key: ':regional_indicator_symbol_letter_n:'
       value: 127475
-    - key: ':o:'
+    - key: ':regional_indicator_symbol_letter_o:'
       value: 127476
-    - key: ':p:'
+    - key: ':regional_indicator_symbol_letter_p:'
       value: 127477
-    - key: ':q:'
+    - key: ':regional_indicator_symbol_letter_q:'
       value: 127478
-    - key: ':r:'
+    - key: ':regional_indicator_symbol_letter_r:'
       value: 127479
-    - key: ':s:'
+    - key: ':regional_indicator_symbol_letter_s:'
       value: 127480
-    - key: ':t:'
+    - key: ':regional_indicator_symbol_letter_t:'
       value: 127481
-    - key: ':u:'
+    - key: ':regional_indicator_symbol_letter_u:'
       value: 127482
-    - key: ':v:'
+    - key: ':regional_indicator_symbol_letter_v:'
       value: 127483
-    - key: ':w:'
+    - key: ':regional_indicator_symbol_letter_w:'
       value: 127484
-    - key: ':x:'
+    - key: ':regional_indicator_symbol_letter_x:'
       value: 127485
-    - key: ':y:'
+    - key: ':regional_indicator_symbol_letter_y:'
       value: 127486
-    - key: ':no_entry_sign:'
-      value: 128683
-    - key: ':smoking:'
-      value: 128684
-    - key: ':no_smoking:'
-      value: 128685
-    - key: ':put_litter_in_its_place:'
-      value: 128686
-    - key: ':do_not_litter:'
-      value: 128687
-    - key: ':potable_water:'
-      value: 128688
-    - key: ':non-potable_water:'
-      value: 128689
-    - key: ':bike:'
-      value: 128690
-    - key: ':no_pedestrians:'
-      value: 128695
-    - key: ':children_crossing:'
-      value: 128696
-    - key: ':mens:'
-      value: 128697
-    - key: ':womens:'
-      value: 128698
-    - key: ':restroom:'
-      value: 128699
-    - key: ':baby_symbol:'
-      value: 128700
-    - key: ':toilet:'
-      value: 128701
-    - key: ':passport_control:'
-      value: 128706
-    - key: ':customs:'
-      value: 128707
-    - key: ':baggage_claim:'
-      value: 128708
+    - key: ':regional_indicator_symbol_letter_z:'
+      value: 127487
   - title: Flags
     sectionName: 7
     emojis:
-    - key: ':waving_white_flag:'
+    - key: ':chequered_flag:'
+      value: 127937
+    - key: ':triangular_flag:'
+      value: 128681
+    - key: ':crossed_flags:'
+      value: 127884
+    - key: ':black_flag:'
+      value: 127988
+    - key: ':white_flag:'
       value: 127987

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
@@ -39,7 +40,7 @@ namespace Utility
                     await UniTask.Yield(cancellationToken: ct);
                     iterationCount = 0;
                 }
-                if (key.Contains(matchingText))
+                if (key.Contains(matchingText, StringComparison.InvariantCultureIgnoreCase))
                     result.Add(dictionary[key]);
             }
             return result;
