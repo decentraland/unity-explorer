@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
+using DCL.Utility.Types;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {

@@ -14,8 +14,8 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Settings.Settings;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI;
+using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;
 using DCL.UI.ProfileElements;
 using UnityEngine;
@@ -43,7 +43,7 @@ namespace DCL.Chat
         private readonly CallButtonPresenter callButtonPresenter;
 
         private CancellationTokenSource profileLoadCts = new ();
-        private CancellationTokenSource thumbCts = new();
+        private CancellationTokenSource thumbCts = new ();
         private CancellationTokenSource callStatusCts = new();
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;

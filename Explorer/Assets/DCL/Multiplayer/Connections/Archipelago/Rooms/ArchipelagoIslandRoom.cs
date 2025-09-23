@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Typing;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -15,7 +16,6 @@ using System.Net.WebSockets;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {

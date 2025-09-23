@@ -1,17 +1,29 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Diagnostics;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using MVC;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class CommunityVoiceChatInCallView : MonoBehaviour
     {
         private const string TOOLTIP_CONTENT = "{0} requested to speak";
+        private const string END_COMMUNITY_STREAM_TEXT_FORMAT = "Are you sure you want to end {0}'s live voice stream?";
+        private const string END_COMMUNITY_STREAM_CONFIRM_TEXT = "YES";
+        private const string END_COMMUNITY_STREAM_CANCEL_TEXT = "NO";
+
+        public event Action EndStreamButtonCLicked;
 
         [field: SerializeField]
         public TMP_Text CommunityName { get; private set; }
@@ -82,6 +94,31 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField] public AudioClipConfig EndStreamAudio { get; private set; } = null!;
 
+        private CancellationTokenSource? endStreamButtonConfirmationDialogCts;
+
+        public void Start()
+        {
+            EndStreamButton.onClick.AddListener(() =>
+            {
+                endStreamButtonConfirmationDialogCts = endStreamButtonConfirmationDialogCts.SafeRestart();
+                ShowDeleteInvitationConfirmationDialogAsync(endStreamButtonConfirmationDialogCts.Token).Forget();
+                return;
+
+                async UniTask ShowDeleteInvitationConfirmationDialogAsync(CancellationToken ct)
+                {
+                    Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(END_COMMUNITY_STREAM_TEXT_FORMAT, CommunityName.text),
+                                                                                         END_COMMUNITY_STREAM_CANCEL_TEXT,
+                                                                                         END_COMMUNITY_STREAM_CONFIRM_TEXT,
+                                                                                         default,
+                                                                                         false, false), ct)
+                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                    if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
+
+                    EndStreamButtonCLicked?.Invoke();
+                }
+            });
+        }
 
         public void SetCommunityName(string communityName)
         {

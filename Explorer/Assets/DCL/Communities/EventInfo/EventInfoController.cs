@@ -5,7 +5,8 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.EventsApi;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
@@ -14,7 +15,6 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.EventInfo
 {
@@ -88,7 +88,7 @@ namespace DCL.Communities.EventInfo
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
 
-            Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private void OnEventShareButtonClicked(IEventDTO eventData) =>
@@ -121,7 +121,7 @@ namespace DCL.Communities.EventInfo
                 if (!result.Success)
                 {
                     viewInstance!.UpdateInterestedButtonState();
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
                     return;
                 }
 

@@ -1,6 +1,5 @@
-using DCL.UI.GenericContextMenu.Controls;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Collections.Generic;
@@ -8,7 +7,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
-namespace DCL.UI.GenericContextMenu
+namespace DCL.UI
 {
     public class ControlsPoolManager : IDisposable
     {

@@ -1,14 +1,10 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
-using DCL.CharacterMotion.Components;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Threading;
-using UnityEngine;
-using Utility;
 
 namespace DCL.Chat.Commands
 {
@@ -44,7 +40,7 @@ namespace DCL.Chat.Commands
             this.teleportController = teleportController;
             this.isLocalSceneDevelopmentMode = isLocalSceneDevelopmentMode;
 
-            this.sceneReadyCondition = () => scenesCache.CurrentScene.Value != null && scenesCache.CurrentScene.Value.IsSceneReady();
+            this.sceneReadyCondition = () => scenesCache.CurrentScene != null && scenesCache.CurrentScene.IsSceneReady();
         }
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
