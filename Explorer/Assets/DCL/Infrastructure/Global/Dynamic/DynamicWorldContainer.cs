@@ -907,7 +907,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new SmartWearablesGlobalPlugin(wearableCatalog, backpackEventBus, staticContainer.PortableExperiencesController)
+                new SmartWearablesGlobalPlugin(wearableCatalog, backpackEventBus, staticContainer.PortableExperiencesController, staticContainer.ScenesCache)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
