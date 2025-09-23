@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         public override void ComputeSkinning(NativeArray<float4x4> bonesResult, int indexInGlobalResultArray, ref AvatarCustomSkinningComponent skinning)
         {
             skinning.buffers.bones.SetData(bonesResult, indexInGlobalResultArray * ComputeShaderConstants.BONE_COUNT, 0 , ComputeShaderConstants.BONE_COUNT);
-            skinning.computeShaderInstance.Dispatch(skinning.buffers.kernel, (skinning.vertCount / 64) + 1, 1, 1);
+            skinning.computeShaderInstance.Dispatch(skinning.buffers.kernel, (skinning.VertCount / 64) + 1, 1, 1);
 
             //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
             //Ash machine (AMD) worked way worse than mine (NVidia). So, we are back to SetData with a ComputeBufferMode.Dynamic, which works well for both.

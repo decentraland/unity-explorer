@@ -122,11 +122,11 @@
       "url": "https://package.openupm.com"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
-      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
+      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages#chore/renum-auto-reference",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d254397fd38f65446129a44b4ad72de0c8213137"
+      "hash": "edbcee6d16ad36e648060f0bd2eea7ea4a8a473c"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",

@@ -8,10 +8,11 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Groups;
+
 using ECS.Unity.Materials;
 using ECS.Unity.PrimitiveRenderer.Components;
 using UnityEngine;
+
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {

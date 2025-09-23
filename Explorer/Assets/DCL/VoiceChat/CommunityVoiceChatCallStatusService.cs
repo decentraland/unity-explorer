@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
@@ -380,7 +380,7 @@ namespace DCL.VoiceChat
 
                 // We only show notification if we are part of the community, and we didn't start the stream ourselves
                 if (communityUpdate.IsMember && communityUpdate.CommunityId != locallyStartedCommunityId)
-                    Notifications.NotificationsBusController.Instance.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage, communityUpdate.CommunityId));
+                    NotificationsBusController.Instance.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage, communityUpdate.CommunityId));
             }
         }
 

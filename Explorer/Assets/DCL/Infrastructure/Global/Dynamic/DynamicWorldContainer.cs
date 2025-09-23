@@ -60,7 +60,6 @@ using DCL.Nametags;
 using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
@@ -76,8 +75,6 @@ using DCL.SkyBox;
 using DCL.SocialService;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
@@ -107,6 +104,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.NotificationsBus;
 using Global.Versioning;
 using DCL.UI.ProfileElements;
 using UnityEngine;
@@ -628,6 +626,8 @@ namespace Global.Dynamic
                 communitiesDataProvider,
                 identityCache);
 
+            var passportBridge = new MVCPassportBridge(mvcManager);
+
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
                 profileCache,
@@ -725,8 +725,7 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
-                    bootstrapContainer.DecentralandUrlsSource,
-                    eventBus),
+                    bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
@@ -816,6 +815,7 @@ namespace Global.Dynamic
                     voiceChatContainer.VoiceChatOrchestrator,
                     galleryEventBus,
                     thumbnailProvider,
+                    passportBridge,
                     chatEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -952,7 +952,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
                     selfProfile,
-                    new MVCPassportBridge(mvcManager),
+                    passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking,

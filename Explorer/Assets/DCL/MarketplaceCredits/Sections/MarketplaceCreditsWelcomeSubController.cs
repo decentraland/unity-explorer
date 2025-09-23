@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Profiles.Self;
 using System;
 using System.Text.RegularExpressions;
