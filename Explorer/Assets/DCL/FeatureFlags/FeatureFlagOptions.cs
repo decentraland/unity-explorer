@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
-using System;
 
 namespace DCL.FeatureFlags
 {

@@ -6,11 +6,13 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Animator.Components;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Groups;
+
 using Google.Protobuf.Collections;
 using System.Collections.Generic;
 using UnityEngine.Pool;
+
 
 namespace DCL.SDKComponents.Animator.Systems
 {

@@ -9,11 +9,11 @@ using DCL.Friends;
 using DCL.Prefs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Web3.Identities;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat.ChatCommands
 {

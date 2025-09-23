@@ -1,4 +1,4 @@
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
