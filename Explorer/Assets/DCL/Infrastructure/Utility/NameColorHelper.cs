@@ -17,7 +17,7 @@ namespace DCL.Utilities
             nameColors = colors;
         }
 
-        public static Color GetNameColor(string username)
+        public static Color GetNameColor(string? username)
         {
             if (nameColors.Count == 0 || string.IsNullOrEmpty(username)) return DEFAULT_COLOR;
 
