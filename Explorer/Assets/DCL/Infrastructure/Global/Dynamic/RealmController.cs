@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Landscape.Utils;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
@@ -135,8 +136,6 @@ namespace Global.Dynamic
 
                 string hostname = ResolveHostname(realm, result);
 
-                // TODO replace new parcel parameters with manifest data from LandscapeParcelService
-
                 realmData.Reconfigure(
                     new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
                     result.configurations.realmName.EnsureNotNull("Realm name not found"),
@@ -144,10 +143,7 @@ namespace Global.Dynamic
                     ResolveCommsAdapter(result),
                     result.comms?.protocol ?? "v3",
                     hostname,
-                    isLocalSceneDevelopment,
-                    new NativeParallelHashSet<int2>(),
-                    new NativeParallelHashSet<int2>(),
-                    new NativeParallelHashSet<int2>()
+                    isLocalSceneDevelopment
                 );
 
                 // Add the realm component
