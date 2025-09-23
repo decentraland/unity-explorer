@@ -2,11 +2,11 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.RealmNavigation;
+using DCL.Utility.Types;
 using Global.AppArgs;
 using Global.Dynamic.LaunchModes;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {

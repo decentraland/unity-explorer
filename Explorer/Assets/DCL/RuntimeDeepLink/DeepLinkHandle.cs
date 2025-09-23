@@ -1,5 +1,5 @@
+using DCL.Utility.Types;
 using Global.AppArgs;
-using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {

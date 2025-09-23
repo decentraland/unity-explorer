@@ -5,9 +5,9 @@ using UnityEngine;
 namespace DCL.Diagnostics
 {
     [Serializable]
-    internal class CategorySeverityMatrix : ICategorySeverityMatrix, ISerializationCallbackReceiver
+    public class CategorySeverityMatrix : ICategorySeverityMatrix, ISerializationCallbackReceiver
     {
-        [SerializeField] internal List<Entry>? entries;
+        [SerializeField] public List<Entry>? entries;
         private Dictionary<(string, LogType), bool>? lookupCache;
 
         private void InitializeLookupCache()

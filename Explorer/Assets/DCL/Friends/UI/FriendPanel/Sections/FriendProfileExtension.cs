@@ -1,7 +1,7 @@
 using CommunicationData.URLHelpers;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
 

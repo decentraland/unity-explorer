@@ -3,12 +3,10 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterMotion.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
     ///     It is crucial to schedule it as early as possible to give Unity some space to decide

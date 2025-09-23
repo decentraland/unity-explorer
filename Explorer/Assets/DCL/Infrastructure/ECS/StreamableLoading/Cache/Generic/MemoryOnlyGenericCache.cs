@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using ECS.StreamableLoading.Cache.InMemory;
 using System.Threading;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Cache.Generic
 {

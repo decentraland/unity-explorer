@@ -1,5 +1,4 @@
 using DCL.FeatureFlags;
-using DCL.MarketplaceCreditsAPIService;
 using System;
 using System.Globalization;
 using System.Threading;
@@ -90,9 +89,9 @@ namespace DCL.MarketplaceCredits
         public static string FormatSecondsToMonthDays(uint timeLeftInSeconds)
         {
             DateTime startDate = DateTime.Now;
-            
+
             DateTime targetDate = startDate.AddSeconds(timeLeftInSeconds);
-            
+
             return targetDate.ToString("MMMM d", CultureInfo.InvariantCulture);
         }
 

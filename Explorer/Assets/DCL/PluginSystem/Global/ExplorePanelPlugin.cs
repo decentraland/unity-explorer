@@ -50,7 +50,9 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Passport;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
@@ -142,6 +144,7 @@ namespace DCL.PluginSystem.Global
         private CommunitiesBrowserController? communitiesBrowserController;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
+        private readonly IPassportBridge passportBridge;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -196,7 +199,9 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator communityCallOrchestrator,
             GalleryEventBus galleryEventBus,
-            IThumbnailProvider thumbnailProvider, IChatEventBus chatEventBus)
+            IThumbnailProvider thumbnailProvider,
+            IPassportBridge passportBridge,
+            IChatEventBus chatEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -253,6 +258,7 @@ namespace DCL.PluginSystem.Global
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
             this.chatEventBus = chatEventBus;
+            this.passportBridge = passportBridge;
         }
 
         public void Dispose()
@@ -438,7 +444,7 @@ namespace DCL.PluginSystem.Global
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
                     communitiesBrowserController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);

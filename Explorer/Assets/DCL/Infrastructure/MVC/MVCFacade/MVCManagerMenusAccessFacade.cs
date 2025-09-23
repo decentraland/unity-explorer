@@ -5,6 +5,7 @@ using DCL.Chat.EventBus;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
 using DCL.Multiplayer.Connectivity;
@@ -12,9 +13,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controllers;
-using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
@@ -22,7 +20,6 @@ using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
-using DCL.Chat.Services;
 using UnityEngine;
 using DCL.Passport;
 
@@ -52,7 +49,7 @@ namespace MVC
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController genericUserProfileContextMenuController;
-        private CommunityPlayerEntryContextMenu communityPlayerEntryContextMenu;
+        private CommunityPlayerEntryContextMenu? communityPlayerEntryContextMenu;
         private ChatOptionsContextMenuController chatOptionsContextMenuController;
         private CommunityContextMenuController communityContextMenuController;
 
@@ -166,8 +163,8 @@ namespace MVC
 
         public async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
         {
-            try { await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct); }
-            catch (Exception ex) { UnityEngine.Debug.LogError($"Failed to open passport for user {userId}: {ex.Message}"); }
+            try { await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct); }
+            catch (Exception ex) { ReportHub.LogError(ReportCategory.UI, $"Failed to open passport for user {userId}: {ex.Message}"); }
         }
         public async UniTask ShowGenericContextMenuAsync(GenericContextMenuParameter parameter)
         {
