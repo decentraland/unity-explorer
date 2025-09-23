@@ -1,11 +1,11 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatServices.TranslationService.Utilities;
 using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.Translation.Models;
 using DCL.Translation.Service;
 using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
@@ -237,3 +237,4 @@ namespace DCL.Chat.ChatServices.ChatTranslationService.Tests
         }
     }
 }
+*/

@@ -3,11 +3,12 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatServices.TranslationService.Processors.DCL.Translation.Service.Processing;
+using DCL.Chat.ChatServices.TranslationService.Processors.RegEx;
 using DCL.Chat.ChatServices.TranslationService.Utilities;
 using DCL.Translation.Events;
 using DCL.Translation.Models;
 using DCL.Translation.Service.Cache;
-using DCL.Translation.Service.Debug;
 using DCL.Translation.Service.Memory;
 using DCL.Translation.Service.Policy;
 using DCL.Translation.Service.Provider;
@@ -19,55 +20,19 @@ namespace DCL.Translation.Service
 {
     public class TranslationService : ITranslationService
     {
-        private static readonly Regex TagRx =
-            new(@"<[^>]*>", RegexOptions.Compiled);
-
-        private static readonly Regex MentionRx =
-            new(@"(?<=^|\s)@[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?\b", RegexOptions.Compiled);
-
-        private static readonly Regex SlashCommandRx =
-            new(@"^\s*/[A-Za-z][\w-]*(?:\s+.*)?$", RegexOptions.Compiled);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsSlashCommandMessage(string text)
-        {
-            return !string.IsNullOrEmpty(text) && SlashCommandRx.IsMatch(text);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool RequiresProcessing(string text)
-        {
-            // Ignore translation for empty or null strings
-            if (string.IsNullOrEmpty(text)) return false;
-
-            // Ignore translation if it's pure command
-            if (IsSlashCommandMessage(text)) return false;
-            
-            // Any TMP-style tag? -> yes, batch
-            if (TagRx.IsMatch(text)) return true;
-
-            // Any emoji in the string? -> yes, batch
-            // (uses your EmojiDetector with ZWJ/VS-16 support)
-            if (EmojiDetector.FindEmoji(text).Count > 0) return true;
-
-            // Any dates or currencies? -> yes, batch
-            if (ChatSegmenter.HasProtectedNumericOrTemporal(text)) return true;
-
-            // Any commands with backslash? -> yes, batch
-            if (ChatSegmenter.HasInlineSlashCommand(text)) return true;
-            
-            return false;
-        }
-
-
         private readonly ITranslationProvider provider;
+        private readonly IMessageProcessor messageProcessor;
         private readonly ITranslationCache cache;
         private readonly IConversationTranslationPolicy policy;
         private readonly ITranslationSettings settings;
         private readonly IEventBus eventBus;
         private readonly ITranslationMemory translationMemory;
 
+        private static readonly Regex TagRx =
+            new(@"<[^>]*>", RegexOptions.Compiled);
+        
         public TranslationService(ITranslationProvider provider,
+            IMessageProcessor messageProcessor,
             ITranslationCache cache,
             IConversationTranslationPolicy policy,
             ITranslationSettings settings,
@@ -75,6 +40,7 @@ namespace DCL.Translation.Service
             ITranslationMemory translationMemory)
         {
             this.provider = provider;
+            this.messageProcessor = messageProcessor;
             this.cache = cache;
             this.policy = policy;
             this.settings = settings;
@@ -159,7 +125,8 @@ namespace DCL.Translation.Service
                 string original = translation.OriginalBody ?? string.Empty;
                 
                 var result = RequiresProcessing(original)
-                    ? await UseBatchTranslation(original, targetLang, ct)
+                    ? await messageProcessor.ProcessAndTranslateAsync(original, targetLang, ct)
+                    // ? await UseBatchTranslation(original, targetLang, ct)
                     : await UseRegularTranslation(original, targetLang, ct);
 
                 cache.Set(messageId, targetLang, result);
@@ -197,63 +164,95 @@ namespace DCL.Translation.Service
         }
 
 
-        /// <summary>
-        ///     NOTE: Segment → translate only TEXT → stitch
-        /// </summary>
-        /// <param name="text"></param>
-        /// <param name="target"></param>
-        /// <param name="ct"></param>
-        /// <returns></returns>
-        private async UniTask<TranslationResult> UseBatchTranslation(
-            string text, LanguageCode target, CancellationToken ct)
+        // /// <summary>
+        // ///     NOTE: Segment → translate only TEXT → stitch
+        // /// </summary>
+        // /// <param name="text"></param>
+        // /// <param name="target"></param>
+        // /// <param name="ct"></param>
+        // /// <returns></returns>
+        // private async UniTask<TranslationResult> UseBatchTranslation(
+        //     string text, LanguageCode target, CancellationToken ct)
+        // {
+        //     TranslationDebug.LogInfo($"[Seg] input: \"{text}\"");
+        //     
+        //     var toks = ChatSegmenter.SegmentByAngleBrackets(text);
+        //     TranslationDebug.LogTokens("angle-split", toks);
+        //     
+        //     toks = ChatSegmenter.ProtectLinkInners(toks);
+        //     TranslationDebug.LogTokens("after-protect-link-inners", toks);
+        //
+        //     toks = ChatSegmenter.SplitTextTokensOnEmoji(toks);
+        //     TranslationDebug.LogTokens("after-split-emoji", toks);
+        //
+        //     toks = ChatSegmenter.SplitTextTokensOnNumbersAndDates(toks);
+        //     TranslationDebug.LogTokens("after-numbers-and-dates", toks);
+        //
+        //     toks = ChatSegmenter.SplitTextTokensOnSlashCommands(toks);
+        //     TranslationDebug.LogTokens("after-backslash-commands", toks);
+        //
+        //     (string[] cores, int[] idxs, string[] leading, string[] trailing) =
+        //         ChatSegmenter.ExtractTranslatablesPreserveSpaces(toks);
+        //
+        //     string[] translated = Array.Empty<string>();
+        //     if (cores.Length > 0)
+        //     {
+        //         if (provider is IBatchTranslationProvider batchProv)
+        //         {
+        //             var resp = await batchProv.TranslateBatchAsync(cores, target, ct);
+        //             translated = resp.translatedText;
+        //         }
+        //         else
+        //         {
+        //             translated = new string[cores.Length];
+        //             for (int i = 0; i < cores.Length; i++)
+        //             {
+        //                 var r = await provider.TranslateAsync(cores[i], target, ct);
+        //                 translated[i] = r.TranslatedText;
+        //             }
+        //         }
+        //
+        //         toks = ChatSegmenter.ApplyTranslationsWithSpaces(toks, idxs, leading, trailing, translated);
+        //     }
+        //
+        //     TranslationDebug.LogTokens("after-apply", toks);
+        //     
+        //     string stitched = ChatSegmenter.Stitch(toks);
+        //     TranslationDebug.LogInfo($"[Seg] output: \"{stitched}\"");
+        //     
+        //     return new TranslationResult(stitched, LanguageCode.EN, false);
+        // }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsSlashCommandMessage(string text)
         {
-            TranslationDebug.LogInfo($"[Seg] input: \"{text}\"");
-            
-            var toks = ChatSegmenter.SegmentByAngleBrackets(text);
-            TranslationDebug.LogTokens("angle-split", toks);
-            
-            toks = ChatSegmenter.ProtectLinkInners(toks);
-            TranslationDebug.LogTokens("after-protect-link-inners", toks);
+            return !string.IsNullOrEmpty(text) &&
+                   ProtectedPatterns.FullLineSlashCommandRx.IsMatch(text);
+        }
 
-            toks = ChatSegmenter.SplitTextTokensOnEmoji(toks);
-            TranslationDebug.LogTokens("after-split-emoji", toks);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool RequiresProcessing(string text)
+        {
+            // Ignore translation for empty or null strings
+            if (string.IsNullOrEmpty(text)) return false;
 
-            toks = ChatSegmenter.SplitTextTokensOnNumbersAndDates(toks);
-            TranslationDebug.LogTokens("after-numbers-and-dates", toks);
+            // Ignore translation if it's pure command
+            if (IsSlashCommandMessage(text)) return false;
 
-            toks = ChatSegmenter.SplitTextTokensOnSlashCommands(toks);
-            TranslationDebug.LogTokens("after-backslash-commands", toks);
+            // Any TMP-style tag? -> yes, batch
+            if (TagRx.IsMatch(text)) return true;
 
-            (string[] cores, int[] idxs, string[] leading, string[] trailing) =
-                ChatSegmenter.ExtractTranslatablesPreserveSpaces(toks);
+            // Any emoji in the string? -> yes, batch
+            // (uses your EmojiDetector with ZWJ/VS-16 support)
+            if (EmojiDetector.FindEmoji(text).Count > 0) return true;
 
-            string[] translated = Array.Empty<string>();
-            if (cores.Length > 0)
-            {
-                if (provider is IBatchTranslationProvider batchProv)
-                {
-                    var resp = await batchProv.TranslateBatchAsync(cores, target, ct);
-                    translated = resp.translatedText;
-                }
-                else
-                {
-                    translated = new string[cores.Length];
-                    for (int i = 0; i < cores.Length; i++)
-                    {
-                        var r = await provider.TranslateAsync(cores[i], target, ct);
-                        translated[i] = r.TranslatedText;
-                    }
-                }
+            // Any dates or currencies? -> yes, batch
+            if (ProtectedPatterns.HasProtectedNumericOrTemporal(text)) return true;
 
-                toks = ChatSegmenter.ApplyTranslationsWithSpaces(toks, idxs, leading, trailing, translated);
-            }
+            // Any commands with backslash? -> yes, batch
+            if (ProtectedPatterns.InlineCommandRx.IsMatch(text)) return true;
 
-            TranslationDebug.LogTokens("after-apply", toks);
-            
-            string stitched = ChatSegmenter.Stitch(toks);
-            TranslationDebug.LogInfo($"[Seg] output: \"{stitched}\"");
-            
-            return new TranslationResult(stitched, LanguageCode.EN, false);
+            return false;
         }
     }
 }

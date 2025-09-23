@@ -36,9 +36,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Chat.ChatServices.ChatTranslationService.Tests;
 using DCL.Clipboard;
-using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Translation.Service;
@@ -48,9 +46,8 @@ using DCL.Translation.Service.Policy;
 using DCL.Translation.Service.Provider;
 using DCL.Translation.Settings;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
-using Global.AppArgs;
+using DCL.Chat.ChatServices.TranslationService.Processors;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -239,19 +236,15 @@ namespace DCL.PluginSystem.Global
             var translationCache = new InMemoryTranslationCache();
             translationMemory = new InMemoryTranslationMemory();
 
+            var messageProcessor = new ChatMessageProcessor(translationProvider);
+
             translationService = new TranslationService(translationProvider,
+                messageProcessor,
                 translationCache,
                 translationPolicy,
                 translationSettings,
                 eventBus,
                 translationMemory);
-            
-            var translationTester = new GameObject("_TranslationTester")
-                .AddComponent<TranslationTester>();
-
-            translationTester.Initialize(translationService,
-                translationProvider,
-                translationSettings);
 
             var viewInstance = mainUIView.ChatView2;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
