@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Profiles.Self;
 using System;
 using System.Threading;

@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
+using DCL.Utility.Types;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.RealmNavigation.TeleportOperations
 {

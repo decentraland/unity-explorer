@@ -1,9 +1,6 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
-using CRDT;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using ECS.Abstract;

@@ -2,12 +2,12 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.Chat.Commands
 {

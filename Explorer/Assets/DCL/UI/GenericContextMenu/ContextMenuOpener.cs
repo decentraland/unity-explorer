@@ -1,8 +1,7 @@
-using DCL.UI.GenericContextMenu.Opener;
 using MVC;
 using System.Threading;
 
-namespace DCL.UI.GenericContextMenu
+namespace DCL.UI
 {
     public class ContextMenuOpener : IContextMenuOpener
     {
@@ -13,7 +12,7 @@ namespace DCL.UI.GenericContextMenu
             this.mvcManager = mvcManager;
         }
 
-        public void OpenContextMenu(GenericContextMenuParameter.GenericContextMenuParameter contextMenuParameter, CancellationToken ct) =>
+        public void OpenContextMenu(GenericContextMenuParameter contextMenuParameter, CancellationToken ct) =>
             mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(contextMenuParameter), ct);
     }
 }

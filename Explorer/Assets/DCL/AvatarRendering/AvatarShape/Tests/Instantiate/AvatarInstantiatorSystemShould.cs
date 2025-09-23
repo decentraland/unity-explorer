@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Assets;

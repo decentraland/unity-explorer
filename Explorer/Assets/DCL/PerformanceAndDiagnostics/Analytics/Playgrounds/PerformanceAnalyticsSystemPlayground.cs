@@ -9,6 +9,7 @@ using ECS;
 using Global.AppArgs;
 using Global.Versioning;
 using UnityEngine;
+using Utility.Json;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
 {
@@ -34,7 +35,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                 new RealmData(),
                 new Profiler(),
                 new EntityParticipantTable(),
-                new Utility.Json.JsonObjectBuilder()
+                new JsonObjectBuilder()
             );
         }
 

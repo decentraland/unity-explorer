@@ -2,15 +2,17 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.Requests;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.Passport;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Friends.UI.FriendPanel
 {
@@ -42,8 +44,8 @@ namespace DCL.Friends.UI.FriendPanel
             this.sharedSpaceManager = sharedSpaceManager;
             this.friendsPanelController = friendsPanelController;
 
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED, FriendRequestAccepted);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED, FriendRequestAccepted);
         }
 
         public override void Dispose()

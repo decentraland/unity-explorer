@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Realm
 {
