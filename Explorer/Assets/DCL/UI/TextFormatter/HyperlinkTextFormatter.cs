@@ -86,11 +86,13 @@ namespace DCL.UI.InputFieldFormatting
             {
                 if (currentMatch.Groups[URL_GROUP_NAME].Success)
                     matches.Add((TextFormatMatchType.URL, currentMatch));
-                else if (currentMatch.Groups[SCENE_GROUP_NAME].Success)
+                else if (currentMatch.Groups[SCENE_GROUP_NAME].Success && AreCoordsValid(
+                             int.Parse(currentMatch.Groups[X_COORD_GROUP_NAME].Value),
+                             int.Parse(currentMatch.Groups[Y_COORD_GROUP_NAME].Value)))
                     matches.Add((TextFormatMatchType.SCENE, currentMatch));
                 else if (currentMatch.Groups[WORLD_GROUP_NAME].Success)
                     matches.Add((TextFormatMatchType.WORLD, currentMatch));
-                else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success)
+                else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success && IsUserNameValid(currentMatch.Groups[USERNAME_NAME_GROUP_NAME].Value))
                     matches.Add((TextFormatMatchType.NAME, currentMatch));
 
                 currentMatch = currentMatch.NextMatch();
