@@ -3,10 +3,10 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Ipfs;
+using DCL.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Emotes
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
 
-        private AssetBundleManifestVersion SceneAssetBundleManifestVersion;
+        public AssetBundleManifestVersion SceneAssetBundleManifestVersion;
 
         public LoadTimeout Timeout { get; private set; }
 

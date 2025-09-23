@@ -12,17 +12,19 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.AvatarShape.Components;
-using ECS.Unity.Groups;
+
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using Utility.Arch;
+
 using RealmSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,

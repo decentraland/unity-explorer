@@ -3,7 +3,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Common
 {

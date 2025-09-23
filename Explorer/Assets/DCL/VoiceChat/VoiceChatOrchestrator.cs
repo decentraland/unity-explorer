@@ -3,7 +3,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
@@ -11,7 +11,7 @@ using Decentraland.SocialService.V2;
 using System;
 using System.Threading;
 using Utility;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
 
 namespace DCL.VoiceChat
 {
@@ -66,7 +66,7 @@ namespace DCL.VoiceChat
 
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
 
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_VOICE_CHAT_STARTED, OnClickedNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_VOICE_CHAT_STARTED, OnClickedNotification);
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
