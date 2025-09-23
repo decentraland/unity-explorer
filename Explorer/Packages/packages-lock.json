@@ -78,7 +78,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "87d056c245b848ee6945c4758e6a538a6533fa4d"
+      "hash": "6b3433104849e77c622764d6e5d48b6140f7d61c"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
