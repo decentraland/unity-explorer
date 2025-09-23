@@ -1,7 +1,7 @@
 ﻿using DCL.Diagnostics;
 using DCL.RealmNavigation.LoadingOperation;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public abstract class StartUpOperationBase : LoadingOperationBase<IStartupOperation.Params>, IStartupOperation
     {

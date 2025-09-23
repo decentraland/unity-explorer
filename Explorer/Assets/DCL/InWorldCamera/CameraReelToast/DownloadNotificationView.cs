@@ -1,5 +1,6 @@
 ﻿using DCL.InWorldCamera.ReelActions;
 using DCL.UI;
+using DCL.Utility;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables;
@@ -9,12 +8,10 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
 using DCL.DebugUtilities;
-using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Input;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.InWorldCamera.PassportBridgeOpener;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.Systems;
@@ -170,7 +167,6 @@ namespace DCL.PluginSystem.Global
                     wearablesProvider,
                     decentralandUrlsSource,
                     this.thumbnailProvider,
-                    new PassportBridgeOpener(),
                     web3IdentityCache,
                     rarityBackgroundsMapping,
                     rarityColorMappings,

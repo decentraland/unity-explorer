@@ -1,15 +1,12 @@
 using DCL.UI;
 using DCL.Chat.History;
-using DCL.Prefs;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Communities;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.VoiceChat;
 using DCL.Web3;
-using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;

@@ -3,13 +3,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
 using DCL.Optimization.ThreadSafePool;
+using DCL.Utility.Types;
 using System;
 using System.Buffers;
 using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Utility.Ownership;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Cache.Disk
 {
