@@ -25,11 +25,24 @@ namespace DCL.Translation.Service
         private static readonly Regex MentionRx =
             new(@"(?<=^|\s)@[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?\b", RegexOptions.Compiled);
 
+        private static readonly Regex SlashCommandRx =
+            new(@"^\s*/[A-Za-z][\w-]*(?:\s+.*)?$", RegexOptions.Compiled);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsSlashCommandMessage(string text)
+        {
+            return !string.IsNullOrEmpty(text) && SlashCommandRx.IsMatch(text);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool RequiresProcessing(string text)
         {
+            // Ignore translation for empty or null strings
             if (string.IsNullOrEmpty(text)) return false;
 
+            // Ignore translation if it's pure command
+            if (IsSlashCommandMessage(text)) return false;
+            
             // Any TMP-style tag? -> yes, batch
             if (TagRx.IsMatch(text)) return true;
 
@@ -40,6 +53,9 @@ namespace DCL.Translation.Service
             // Any dates or currencies? -> yes, batch
             if (ChatSegmenter.HasProtectedNumericOrTemporal(text)) return true;
 
+            // Any commands with backslash? -> yes, batch
+            if (ChatSegmenter.HasInlineSlashCommand(text)) return true;
+            
             return false;
         }
 
@@ -204,6 +220,9 @@ namespace DCL.Translation.Service
 
             toks = ChatSegmenter.SplitTextTokensOnNumbersAndDates(toks);
             TranslationDebug.LogTokens("after-numbers-and-dates", toks);
+
+            toks = ChatSegmenter.SplitTextTokensOnSlashCommands(toks);
+            TranslationDebug.LogTokens("after-backslash-commands", toks);
 
             (string[] cores, int[] idxs, string[] leading, string[] trailing) =
                 ChatSegmenter.ExtractTranslatablesPreserveSpaces(toks);

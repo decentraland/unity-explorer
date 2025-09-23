@@ -67,25 +67,44 @@ namespace DCL.Settings.Configuration
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
-                                                   {
-                                                       DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset),
-                                                       DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
-                                                       DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                                                       DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController),
-                                                       DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
-                                                       DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
-                                                       DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap, sceneLoadingLimit),
-                                                       DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer,chatSettingsAsset),
-                                                       DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
-                                                       DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
-                                                       DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance, voiceChatSettings),
+            {
+                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance,
+                    realmPartitionSettingsAsset,
+                    landscapeData,
+                    qualitySettingsAsset,
+                    skyboxSettingsAsset),
+
+                DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
+                DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
+                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController),
+                DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
+                DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
+
+                DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance,
+                    systemMemoryCap,
+                    sceneLoadingLimit),
+
+                DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance,
+                    generalAudioMixer,
+                    chatSettingsAsset),
+
+                DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance,
+                    chatSettingsAsset),
+
+                DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance,
+                    chatSettingsAsset,
+                    settingsEventListener),
+
+                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance,
+                    voiceChatSettings),
+                
                 DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,
                     chatSettingsAsset,
                     isTranslationChatEnabled,
                     eventBus),
-                                                       // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
-                                                   };
+                // add other cases...
+                _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+            };
 
             controller.SetView(viewInstance);
             return controller;

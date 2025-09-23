@@ -10,11 +10,9 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
         Text,
         Tag,
         Handle,
-
         Emoji,
-
-        Number
-        /* add: Url, Command*/
+        Number,
+        Command
     }
 
     public readonly struct Tok
@@ -39,7 +37,8 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
         static readonly Regex LinkOpenRx = new(@"<link=[^>]*>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         static readonly Regex LinkCloseRx = new(@"</link>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         static readonly Regex HandleRx = new(@"@[\p{L}\p{N}_.-]+#[0-9a-fA-F]{2,}", RegexOptions.Compiled);
-
+        private static readonly Regex InlineSlashAndBackslashCommandRx = new(@"(?<=^|\s)[/\\][A-Za-z][\w-]*\b", RegexOptions.Compiled);
+        
         // Currency: symbol or code before/after amount, dots/commas/nbsp as thousand sep,
         // optional decimals with dot or comma. Boundaries are Unicode-aware.
         private static readonly Regex CurrencyAmountRx = new(
@@ -65,6 +64,11 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
         private static readonly Regex IsoDateRx   = new(@"\b\d{4}-\d{2}-\d{2}\b", RegexOptions.Compiled);
         private static readonly Regex SlashDateRx = new(@"\b[0-3]?\d/[01]?\d/\d{4}\b", RegexOptions.Compiled);
         private static readonly Regex DotDateRx   = new(@"\b[0-3]?\d\.[01]?\d\.\d{4}\b", RegexOptions.Compiled);
+
+        public static bool HasInlineSlashCommand(string s)
+        {
+            return InlineSlashAndBackslashCommandRx.IsMatch(s);
+        }
 
         struct Span
         {
@@ -376,7 +380,43 @@ namespace DCL.Chat.ChatServices.TranslationService.Utilities
             return outList;
         }
 
+        public static List<Tok> SplitTextTokensOnSlashCommands(List<Tok> toks)
+        {
+            var outList = new List<Tok>(toks.Count + 4);
+            int nextId = 0;
 
+            foreach (var t in toks)
+            {
+                if (t.Type != TokType.Text || string.IsNullOrEmpty(t.Value))
+                {
+                    outList.Add(new Tok(nextId++, t.Type, t.Value));
+                    continue;
+                }
+
+                string v = t.Value;
+                var ms = InlineSlashAndBackslashCommandRx.Matches(v);
+                if (ms.Count == 0)
+                {
+                    outList.Add(new Tok(nextId++, TokType.Text, v));
+                    continue;
+                }
+
+                int last = 0;
+                foreach (Match m in ms)
+                {
+                    if (m.Index > last)
+                        outList.Add(new Tok(nextId++, TokType.Text, v.Substring(last, m.Index - last)));
+
+                    outList.Add(new Tok(nextId++, TokType.Command, m.Value));
+                    last = m.Index + m.Length;
+                }
+
+                if (last < v.Length)
+                    outList.Add(new Tok(nextId++, TokType.Text, v.Substring(last)));
+            }
+
+            return outList;
+        }
 
 
         public static (string[] pieces, int[] tokenIndexes) ExtractTranslatables(List<Tok> toks)
