@@ -19,7 +19,7 @@ namespace DCL.Utilities
 
         public static Color GetNameColor(string username)
         {
-            if (nameColors.Count == 0) return DEFAULT_COLOR;
+            if (nameColors.Count == 0 || string.IsNullOrEmpty(username)) return DEFAULT_COLOR;
 
             seed = 0;
             asciiValues = Encoding.ASCII.GetBytes(username);
