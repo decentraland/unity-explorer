@@ -27,7 +27,7 @@ namespace DCL.AssetsProvision.Tests
 
              Assert.IsEmpty(unexpected,
                  $"Unexpected duplicated addressable assets detected:\n{string.Join("\n", unexpected)}");
-         }*/
+         }
 
         [Test]
         public void CheckResourcesDuplicateAddressables()
@@ -51,7 +51,7 @@ namespace DCL.AssetsProvision.Tests
 
             Assert.IsEmpty(unexpected,
                 $"Unexpected duplicated addressable assets detected:\n{string.Join("\n", unexpected)}");
-        }
+        }*/
 
         // issues reported related to transparencies:
         // https://github.com/decentraland/unity-explorer/issues/5286
