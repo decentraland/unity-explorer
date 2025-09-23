@@ -29,7 +29,7 @@ namespace DCL.Landscape.Systems
         private readonly LandscapeData landscapeData;
         private readonly Landscape landscape;
         private MaterialPropertyBlock? materialProperties;
-        private readonly GrassIndirectRenderer grassIndirectRenderer;
+        private readonly GrassIndirectRenderer? grassIndirectRenderer;
 
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
         private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
@@ -43,6 +43,9 @@ namespace DCL.Landscape.Systems
             this.landscapeData = landscapeData;
             this.landscape = landscape;
             grassIndirectRenderer = landscapeData.GrassIndirectRenderer;
+
+            if (grassIndirectRenderer != null)
+                landscape.TerrainLoaded += grassIndirectRenderer.OnTerrainLoaded;
         }
 
         protected override void Update(float t)
@@ -66,7 +69,8 @@ namespace DCL.Landscape.Systems
                 const bool RENDER_TO_ALL_CAMERAS = false;
 #endif
 
-                grassIndirectRenderer.Render(landscapeData, terrain, camera, RENDER_TO_ALL_CAMERAS);
+                if (grassIndirectRenderer != null)
+                    grassIndirectRenderer.Render(landscapeData, terrain, camera, RENDER_TO_ALL_CAMERAS);
             }
         }
 

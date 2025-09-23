@@ -24,7 +24,7 @@ namespace Global.Dynamic.Landscapes
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly bool landscapeEnabled;
         public readonly Transform? Root;
-        public Action? TerrainLoaded;
+        public Action<ITerrain>? TerrainLoaded;
 
         public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled)
         {
@@ -66,7 +66,7 @@ namespace Global.Dynamic.Landscapes
                     await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
             }
 
-            TerrainLoaded?.Invoke();
+            TerrainLoaded?.Invoke(CurrentTerrain);
             return EnumResult<LandscapeError>.SuccessResult();
         }
 

@@ -149,10 +149,6 @@ namespace Decentraland.Terrain
 
             initialized = true;
 
-            indirectRenderingBounds.SetMinMax(
-                new Vector3(terrainGenerator.TerrainModel.MinInUnits.x, 0f, terrainGenerator.TerrainModel.MinInUnits.y),
-                new Vector3(terrainGenerator.TerrainModel.MaxInUnits.x, TerrainGenerator.MAX_HEIGHT, terrainGenerator.TerrainModel.MaxInUnits.y));
-
             GenerateQuadTree();
             SetupComputeBuffers();
 
@@ -166,11 +162,21 @@ namespace Decentraland.Terrain
             flowersMaterialPropertyBlock = new MaterialPropertyBlock();
         }
 
+        public void OnTerrainLoaded(ITerrain terrain)
+        {
+            Initialize(terrain);
+
+            TerrainModel model = terrain.TerrainModel!;
+            int2 min = model.MinInUnits;
+            int2 max = model.MaxInUnits;
+
+            indirectRenderingBounds.SetMinMax(new Vector3(min.x, 0f, min.y),
+                new Vector3(max.x, TerrainGenerator.MAX_HEIGHT, max.y));
+        }
+
         public void Render(LandscapeData landscapeData, ITerrain terrainGenerator,
             Camera camera, bool renderToAllCameras)
         {
-            Initialize(terrainGenerator);
-
             RunFrustumCulling(landscapeData, terrainGenerator, camera);
             GenerateScatteredGrass(terrainGenerator);
             arrInstCount.SetData(arrLOD, 0, 0, 3);
