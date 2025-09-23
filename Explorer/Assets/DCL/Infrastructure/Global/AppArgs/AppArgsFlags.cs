@@ -41,6 +41,9 @@
 
         public const string SIMULATE_MEMORY = "simulateMemory";
 
+        public const string LAUNCH_CDP_MONITOR_ON_START = "launch-cdp-monitor-on-start";
+        public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

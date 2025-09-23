@@ -31,7 +31,6 @@ using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -123,7 +122,7 @@ namespace DCL.Minimap
             disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
-            scenesCache.OnCurrentSceneChanged -= OnSceneChanged;
+
             sceneRestrictionsController?.Dispose();
             viewInstance?.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
         }
@@ -138,11 +137,6 @@ namespace DCL.Minimap
         {
             SetGenesisMode(realmKind is RealmKind.GenesisCity);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
-        }
-
-        private void OnSceneChanged(ISceneFacade? scene)
-        {
-            SetGenesisMode(realmData.IsGenesis());
         }
 
         protected override void OnViewInstantiated()
@@ -162,7 +156,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
-            scenesCache.OnCurrentSceneChanged += OnSceneChanged;
+
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
 
@@ -292,7 +286,7 @@ namespace DCL.Minimap
             previousParcelPosition = playerParcelPosition;
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            RetrieveParcelInfoAsync(playerParcelPosition).Forget();
+            RetrieveParcelInfoAsync().Forget();
 
             // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
             // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
@@ -301,7 +295,7 @@ namespace DCL.Minimap
 
             return;
 
-            async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
+            async UniTaskVoid RetrieveParcelInfoAsync()
             {
                 await realmData.WaitConfiguredAsync();
 
@@ -337,7 +331,7 @@ namespace DCL.Minimap
 
         private void ToggleObjects(bool isGenesisModeActivated)
         {
-            foreach (GameObject go in viewInstance.objectsToActivateForGenesis)
+            foreach (GameObject go in viewInstance!.objectsToActivateForGenesis)
                 go.SetActive(isGenesisModeActivated);
 
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
@@ -347,7 +341,7 @@ namespace DCL.Minimap
         private void ConfigureContextualButton(bool isGenesisModeActivated)
         {
             // Interactivity
-            viewInstance.minimapContextualButtonView.SetInteractable(CanInteractWithContextualButton(isGenesisModeActivated));
+            viewInstance!.minimapContextualButtonView.SetInteractable(CanInteractWithContextualButton(isGenesisModeActivated));
 
             // Text
             string buttonText = GetContextualButtonText(isGenesisModeActivated);
@@ -395,7 +389,7 @@ namespace DCL.Minimap
 
         private void SetAnimatorController(bool isGenesisModeActivated)
         {
-            viewInstance.minimapAnimator.runtimeAnimatorController =
+            viewInstance!.minimapAnimator.runtimeAnimatorController =
                 isGenesisModeActivated
                     ? viewInstance.genesisCityAnimatorController
                     : viewInstance.worldsAnimatorController;

@@ -2,6 +2,7 @@ using DCL.Chat.ChatServices.ChatContextService;
 using System;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.ChatViews;
+using DCL.VoiceChat;
 using DCL.Web3;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,13 +23,14 @@ namespace DCL.Chat
         public Button OpenMemberListButton => defaultTitlebarView.ButtonOpenMembers;
         public Button CloseMemberListButton => membersTitlebarView.ButtonClose;
         public Button BackFromMemberList => membersTitlebarView.ButtonBack;
-        
-        
+        public CallButtonView CallButton => defaultTitlebarView.ButtonStartCall;
+
+
         [Header("UI Elements")]
         [SerializeField] private CanvasGroup titlebarCanvasGroup;
         [SerializeField] public ChatDefaultTitlebarView defaultTitlebarView;
         [SerializeField] public ChatMemberTitlebarView membersTitlebarView;
-        
+
         public void Initialize()
         {
             defaultTitlebarView.OnContextMenuRequested += OnContextMenuButtonClicked;
@@ -37,7 +39,7 @@ namespace DCL.Chat
             defaultTitlebarView.OnMembersRequested += () => OnMembersToggleRequested?.Invoke();
             membersTitlebarView.OnCloseRequested += () => OnCloseRequested?.Invoke();
             membersTitlebarView.OnBackRequested += () => OnMembersToggleRequested?.Invoke();
-            
+
         }
 
         private void OnContextMenuButtonClicked()

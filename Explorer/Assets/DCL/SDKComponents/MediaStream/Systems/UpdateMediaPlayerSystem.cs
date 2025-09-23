@@ -12,6 +12,7 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -25,7 +26,7 @@ namespace DCL.SDKComponents.MediaStream
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     [ThrottlingEnabled]
-    public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem
+    public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly IWebRequestController webRequestController;
         private readonly ISceneData sceneData;
@@ -296,6 +297,24 @@ namespace DCL.SDKComponents.MediaStream
             volumeBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
             volumeBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;
 #endif
+        }
+
+        public void OnSceneIsCurrentChanged(bool enteredScene)
+        {
+            ToggleCurrentStreamsStateQuery(World, enteredScene);
+        }
+
+        [Query]
+        private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
+        {
+            if (mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer) && !enteredScene)
+            {
+                //Streams rely on livekit room being active; which can only be in we are on the same scene. Next time we enter the scene, it will be recreate by
+                //the regular CreateMediaPlayerSystem
+                mediaPlayerComponent.Dispose();
+                World.Remove<MediaPlayerComponent>(entity);
+            }
+
         }
     }
 }

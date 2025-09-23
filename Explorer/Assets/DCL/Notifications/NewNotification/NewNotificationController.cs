@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.NotificationsBusController.NotificationsBus;
+using DCL.FeatureFlags;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
 using DCL.WebRequests;
@@ -17,12 +17,11 @@ namespace DCL.Notifications.NewNotification
 {
     public class NewNotificationController : ControllerBase<NewNotificationView>
     {
+        private const float ANIMATION_DURATION = 0.5f;
         private static readonly int SHOW_TRIGGER = Animator.StringToHash("Show");
         private static readonly int HIDE_TRIGGER = Animator.StringToHash("Hide");
         private static readonly TimeSpan TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN = TimeSpan.FromSeconds(5f);
-        private const float ANIMATION_DURATION = 0.5f;
 
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
@@ -33,23 +32,22 @@ namespace DCL.Notifications.NewNotification
         private ImageController badgeThumbnailImageController;
         private ImageController friendsThumbnailImageController;
         private ImageController marketplaceCreditsThumbnailImageController;
+        private ImageController communityThumbnailImageController;
         private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
             IWebRequestController webRequestController) : base(viewFactory)
         {
-            this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
-            notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
         }
@@ -66,6 +64,12 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
             marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+            {
+                communityThumbnailImageController = new ImageController(viewInstance.CommunityVoiceChatNotificationView.NotificationImage, webRequestController);
+                viewInstance.CommunityVoiceChatNotificationView.NotificationClicked += ClickedNotification;
+            }
         }
 
         private void StopAnimation()
@@ -78,7 +82,7 @@ namespace DCL.Notifications.NewNotification
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
             StopAnimation();
-            notificationsBusController.ClickNotification(notificationType, notification);
+            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
         private void QueueNewNotification(INotification newNotification)
@@ -104,6 +108,11 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.INTERNAL_SERVER_ERROR:
                         await ProcessArrivedNotificationAsync(notification);
                         break;
+                    case NotificationType.COMMUNITY_VOICE_CHAT_STARTED:
+                        if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
+                            await ProcessCommunityVoiceChatStartedNotificationAsync(notification);
+
+                        break;
                     case NotificationType.BADGE_GRANTED:
                         await ProcessBadgeNotificationAsync(notification);
                         break;
@@ -124,6 +133,20 @@ namespace DCL.Notifications.NewNotification
             }
 
             isDisplaying = false;
+        }
+
+        private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
+        {
+            viewInstance!.CommunityVoiceChatNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.CommunityVoiceChatNotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.CommunityVoiceChatNotificationView.NotificationType = notification.Type;
+            viewInstance.CommunityVoiceChatNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+            viewInstance.CommunityVoiceChatNotificationView.Notification = notification;
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                communityThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.CommunityNotificationCanvasGroup);
         }
 
         private async UniTask ProcessArrivedNotificationAsync(INotification notification, bool enableCloseButton = true)
@@ -177,6 +200,7 @@ namespace DCL.Notifications.NewNotification
                 viewInstance.FriendsNotificationView.PlayAcceptedNotificationAudio();
             else
                 viewInstance.FriendsNotificationView.PlayRequestNotificationAudio();
+
             await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
         }
 

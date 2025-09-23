@@ -264,7 +264,7 @@ namespace DCL.Chat
         /// </summary>
         public void OnClicked(IReadOnlyList<RaycastResult> raycastResults)
         {
-            //TODO FRAN Issue #3317 after release: This could work with callbacks from the panels, not by checking raycasts.
+            //TODO FRAN Issue #3317: This could work with callbacks from the panels, not by checking raycasts.
             if (!(emojiPanel.gameObject.activeInHierarchy ||
                   suggestionPanel.gameObject.activeInHierarchy)) return;
 

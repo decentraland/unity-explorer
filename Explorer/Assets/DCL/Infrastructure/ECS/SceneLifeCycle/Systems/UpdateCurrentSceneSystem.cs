@@ -6,6 +6,7 @@ using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
 using SceneRunner.Scene;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
@@ -18,6 +19,10 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class UpdateCurrentSceneSystem : BaseUnityLoopSystem
     {
+        private static readonly int SRC_BLEND = Shader.PropertyToID("_SrcBlend");
+        private static readonly int DST_BLEND = Shader.PropertyToID("_DstBlend");
+        private static readonly int CULL = Shader.PropertyToID("_Cull");
+        private static readonly int SURFACE = Shader.PropertyToID("_Surface");
         private readonly Entity playerEntity;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
@@ -30,11 +35,17 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sdk6Binding;
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
-        private GameObject sceneBoundsCube;
+        private GameObject? sceneBoundsCube;
         private ISceneFacade? currentActiveScene;
         private Vector2Int previousParcelPosition;
 
-        internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
+        private Vector2Int lastParcel;
+
+        internal UpdateCurrentSceneSystem(
+            World world,
+            IRealmData realmData,
+            IScenesCache scenesCache,
+            CurrentSceneInfo currentSceneInfo,
             Entity playerEntity, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.realmData = realmData;
@@ -61,10 +72,13 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void Update(float t)
         {
             if (!realmData.Configured)
+            {
+                lastParcel = new Vector2Int(int.MinValue, int.MinValue);
                 return;
+            }
+            Vector2Int parcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
-            Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
-            Vector2Int parcel = playerPos.ToParcel();
+            lastParcel = parcel;
             UpdateSceneReadiness(parcel);
 
             if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsConnectedAndExpanded)
@@ -85,13 +99,15 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else
             {
-                if(currentActiveScene != null)
+                if (currentActiveScene != null)
                 {
                     currentActiveScene.SetIsCurrent(false);
                     currentActiveScene = null;
                     UpdateCurrentScene();
                 }
             }
+
+            scenesCache.UpdateCurrentParcel(parcel);
         }
 
         private void UpdateCurrentScene()
@@ -102,7 +118,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void OnDispose()
         {
-            GameObject.Destroy(sceneBoundsCube);
+            Object.Destroy(sceneBoundsCube);
         }
 
         private void RefreshSceneDebugInfo()
@@ -122,7 +138,7 @@ namespace ECS.SceneLifeCycle.Systems
                         sceneParcelsBinding.Value = currentActiveScene.SceneData.Parcels.Count.ToString();
                     }
 
-                    sceneHeightBinding.Value = currentActiveScene.SceneData.Geometry.Height.ToString();
+                    sceneHeightBinding.Value = currentActiveScene.SceneData.Geometry.Height.ToString(CultureInfo.InvariantCulture);
 
                     if (sceneBoundsCube == null)
                     {
@@ -146,16 +162,19 @@ namespace ECS.SceneLifeCycle.Systems
             GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.name = "DebugSceneBoundsCube";
 
-            Material cubeMaterial = new Material(Shader.Find("DCL/Scene"));
-            cubeMaterial.color = new Color(1.0f, 0.0f, 0.0f, 0.8f);
-            cubeMaterial.SetFloat("_SrcBlend", (int)BlendMode.One);
-            cubeMaterial.SetFloat("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-            cubeMaterial.SetFloat("_Cull", (int)CullMode.Off);
-            cubeMaterial.SetFloat("_Surface", 1.0f); // 1 means transparent
+            Material cubeMaterial = new Material(Shader.Find("DCL/Scene"))
+                {
+                    color = new (1.0f, 0.0f, 0.0f, 0.8f),
+                };
+
+            cubeMaterial.SetFloat(SRC_BLEND, (int)BlendMode.One);
+            cubeMaterial.SetFloat(DST_BLEND, (int)BlendMode.OneMinusSrcAlpha);
+            cubeMaterial.SetFloat(CULL, (int)CullMode.Off);
+            cubeMaterial.SetFloat(SURFACE, 1.0f); // 1.0f means it's transparent
             cubeMaterial.renderQueue = (int)RenderQueue.Transparent;
             cube.GetComponent<MeshRenderer>().material = cubeMaterial;
 
-            GameObject.Destroy(cube.GetComponent<Collider>());
+            Object.Destroy(cube.GetComponent<Collider>());
 
             cube.SetActive(false);
             return cube;
@@ -167,9 +186,9 @@ namespace ECS.SceneLifeCycle.Systems
             Vector3 cubeSize = new Vector3(sceneGeometry.CircumscribedPlanes.MaxX - sceneGeometry.CircumscribedPlanes.MinX,
                                            sceneGeometry.Height,
                                            sceneGeometry.CircumscribedPlanes.MaxZ - sceneGeometry.CircumscribedPlanes.MinZ);
-            cube.transform.position = new Vector3(sceneGeometry.CircumscribedPlanes.MinX + cubeSize.x * 0.5f,
+            cube.transform.position = new Vector3(sceneGeometry.CircumscribedPlanes.MinX + (cubeSize.x * 0.5f),
                                                   cubeSize.y * 0.5f,
-                                                  sceneGeometry.CircumscribedPlanes.MinZ + cubeSize.z * 0.5f);
+                                                  sceneGeometry.CircumscribedPlanes.MinZ + (cubeSize.z * 0.5f));
             cube.transform.localScale = cubeSize;
         }
     }

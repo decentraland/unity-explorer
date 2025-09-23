@@ -394,7 +394,7 @@ MonoBehaviour:
     showSplash: 1
     showAuthentication: 1
     showLoading: 1
-    enableLandscape: 1
+    enableLandscape: 0
     enableLOD: 0
     enableVersionUpdateGuard: 0
     enableEmulateNoLivekitConnection: 0
@@ -435,6 +435,12 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <GenericUserProfileContextMenuSettings>k__BackingField:
       m_AssetGUID: 19167fed20773434b8bb06d4ca81f60c
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    <CommunityVoiceChatContextMenuSettings>k__BackingField:
+      m_AssetGUID: f3988fe058c9e463580d97c75e2b574d
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
