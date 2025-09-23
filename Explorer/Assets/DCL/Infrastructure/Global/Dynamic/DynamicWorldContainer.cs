@@ -28,6 +28,7 @@ using DCL.Friends;
 using DCL.Friends.Passport;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
@@ -74,12 +75,14 @@ using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SkyBox;
 using DCL.SocialService;
+using DCL.Translation.Settings;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
@@ -95,6 +98,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
 using Global.Dynamic.RealmUrl;
+using Global.Versioning;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -106,11 +110,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.InWorldCamera;
-using Global.Versioning;
-using DCL.Chat.Services;
-using DCL.Translation.Settings;
-using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -619,7 +618,7 @@ namespace Global.Dynamic
             var profileChangesBus = new ProfileChangesBus();
 
             var translationSettings = new PlayerPrefsTranslationSettings();
-            
+
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
 
@@ -663,7 +662,7 @@ namespace Global.Dynamic
             var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             IEventBus eventBus = new EventBus(true);
-            
+
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
@@ -849,7 +848,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     mvcManager,
                     dclCursor,
-                    realmUrl => chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API)),
+                    realmUrl => chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API, DateTime.UtcNow.ToOADate())),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),

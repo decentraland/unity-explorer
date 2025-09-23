@@ -136,12 +136,11 @@ namespace DCL.Chat.MessageBus
         private bool IsUserBlockedAndMessagesHidden(string walletAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.HideChatMessages && userBlockingCacheProxy.Object!.UserIsBlocked(walletAddress);
 
-        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, string topic)
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp, string topic)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("ChatMessagesBus is disposed");
 
-            double timestamp = DateTime.UtcNow.ToOADate();
             switch (channel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.NEARBY:

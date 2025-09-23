@@ -14,7 +14,7 @@ namespace DCL.Chat.MessageBus
     {
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
 
-        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, string topic = "");
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp, string topic = "");
     }
 
     public static class ChatMessageBusExtensions
@@ -26,7 +26,7 @@ namespace DCL.Chat.MessageBus
         {
             void CreateTestChatEntry()
             {
-                messagesBus.Send(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DEBUG_PANEL);
+                messagesBus.Send(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(Random.Range(1, 250)), ChatMessageOrigin.DEBUG_PANEL, DateTime.UtcNow.ToOADate());
             }
 
             debugContainerBuilder.TryAddWidget("Chat")?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);

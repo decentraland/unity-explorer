@@ -1,15 +1,15 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.PlacesAPIService;
+using DCL.UI;
 using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
-using DCL.Chat.MessageBus;
-using DCL.UI;
 using UnityEngine;
 using Utility;
 
@@ -57,7 +57,7 @@ namespace DCL.TeleportPrompt
                 if (result != TeleportPromptResultType.Approved)
                     return;
 
-                chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ChatMessageOrigin.TELEPORT_PROMPT);
+                chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ChatMessageOrigin.TELEPORT_PROMPT, DateTime.UtcNow.ToOADate());
             });
         }
 

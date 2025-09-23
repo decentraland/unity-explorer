@@ -2,6 +2,7 @@
 using DCL.Chat.ChatServices;
 using DCL.Chat.MessageBus;
 using DCL.Settings.Settings;
+using System;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -42,7 +43,8 @@ namespace DCL.Chat.ChatCommands
             chatMessageBus.Send(
                 currentChannelService.CurrentChannel,
                 commandPayload.Body,
-                ChatMessageOrigin.CHAT);
+                ChatMessageOrigin.CHAT,
+                DateTime.UtcNow.ToOADate());
         }
     }
 }
