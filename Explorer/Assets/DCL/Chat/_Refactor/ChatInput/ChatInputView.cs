@@ -99,7 +99,7 @@ namespace DCL.Chat.ChatInput
         {
             characterCounter.SetMaximumLength(inputField.characterLimit);
             this.chatConfig = chatConfig;
-            inputField.TextFormatter = textFormatter;
+            inputField.SetTextFormatter(textFormatter);
         }
 
         public void InsertTextAtCaretPosition(string text)

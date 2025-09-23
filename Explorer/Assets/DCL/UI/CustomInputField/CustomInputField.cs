@@ -21,12 +21,12 @@ namespace DCL.UI.CustomInputField
         private readonly StringBuilder stringBuilder = new ();
         private Color32 mentionColor { get; set; } = new (0, 179, 255, 255);
         private IReadOnlyList<(TextFormatMatchType _, Match match)>? inputMatchesInfo;
+        private ITextFormatter? textFormatter;
 
         public event Action<PointerEventData.InputButton>? Clicked;
         public event Action? PasteShortcutPerformed;
 
         public bool UpAndDownArrowsEnabled { get; set; }
-        public ITextFormatter TextFormatter { get; set; }
 
         public override void OnPointerClick(PointerEventData eventData)
         {
@@ -50,14 +50,21 @@ namespace DCL.UI.CustomInputField
                 ApplyVertexColors();
         }
 
+        public void SetTextFormatter(ITextFormatter formatter) =>
+            textFormatter = formatter;
+
         protected override void Awake()
         {
             base.Awake();
             onValueChanged.AddListener(_ => CacheMatchInfo());
         }
 
-        private void CacheMatchInfo() =>
-            inputMatchesInfo = TextFormatter.GetMatches(text);
+        private void CacheMatchInfo()
+        {
+            if (textFormatter == null) return;
+
+            inputMatchesInfo = textFormatter.GetMatches(text);
+        }
 
         private void ApplyVertexColors()
         {
