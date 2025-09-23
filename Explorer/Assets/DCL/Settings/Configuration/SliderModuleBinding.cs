@@ -13,6 +13,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using DCL.Audio;
+using DCL.SkyBox;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -46,6 +47,7 @@ namespace DCL.Settings.Configuration
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,

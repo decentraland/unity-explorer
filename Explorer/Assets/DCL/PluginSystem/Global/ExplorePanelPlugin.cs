@@ -54,6 +54,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.SkyBox;
 using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
@@ -376,6 +377,7 @@ namespace DCL.PluginSystem.Global
                 settings.VideoPrioritizationSettings,
                 landscapeData.Value,
                 settings.QualitySettingsAsset,
+                settings.SkyboxSettingsAsset,
                 settings.ControlsSettingsAsset,
                 systemMemoryCap,
                 settings.ChatSettingsAsset,
@@ -553,6 +555,8 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public QualitySettingsAsset QualitySettingsAsset { get; private set; }
+            [field: SerializeField]
+            public SkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
 
             [field: SerializeField]
             public ControlsSettingsAsset ControlsSettingsAsset { get; private set; }

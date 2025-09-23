@@ -16,6 +16,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
+using DCL.SkyBox;
 
 namespace DCL.Settings.Configuration
 {
@@ -48,6 +49,7 @@ namespace DCL.Settings.Configuration
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset, 
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
