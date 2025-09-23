@@ -78,43 +78,43 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
         [Query]
         [All(typeof(PBTriggerArea))]
-        private void UpdateTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void UpdateTriggerArea(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            ProcessOnEnterTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
-            ProcessOnStayInTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
-            ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+            ProcessOnEnterTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+            ProcessOnStayInTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+            ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
         }
 
-        private void ProcessOnEnterTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void ProcessOnEnterTriggerArea(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             foreach (Collider entityCollider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
             {
-                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+                PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform,
                     entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
 
-        private void ProcessOnStayInTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void ProcessOnStayInTriggerArea(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
             {
-                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+                PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform,
                     entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask);
             }
         }
 
-        private void ProcessOnExitTriggerArea(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void ProcessOnExitTriggerArea(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             foreach (Collider entityCollider in triggerAreaComponent.ExitedEntitiesToBeProcessed)
             {
-                PropagateResultComponent(triggerAreaCRDTEntity, transform.Transform,
+                PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform,
                     entityCollider, TriggerAreaEventType.TaetExit, triggerAreaComponent.LayerMask);
             }
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
         }
 
-        private void PropagateResultComponent(in CRDTEntity triggerAreaCRDTEntity, Transform triggerAreaTransform,
+        private void PropagateResultComponent(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, Transform triggerAreaTransform,
             Collider triggerEntityCollider, TriggerAreaEventType eventType, ColliderLayer areaLayerMask)
         {
             Entity avatarEntity = Entity.Null;
@@ -133,8 +133,9 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             if (avatarEntity == Entity.Null)
             {
                 if (!collidersSceneCache.TryGetEntity(triggerEntityCollider, out entityInfo)
-                 || !PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, entityInfo.SDKLayer)
-                 || !World.TryGet(entityInfo.EntityReference, out TransformComponent transformComponent))
+                || triggerAreaEntity == entityInfo.EntityReference // same TriggerArea entity holding a Collider comp
+                || !PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, entityInfo.SDKLayer)
+                || !World.TryGet(entityInfo.EntityReference, out TransformComponent transformComponent))
                     return;
                 triggerEntityPos = transformComponent.Transform.localPosition.ToProtoVector();
                 triggerEntityRot = transformComponent.Transform.localRotation.ToProtoQuaternion();
@@ -164,8 +165,6 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             resultComponent.Trigger.Rotation = triggerEntityRot;
             resultComponent.Trigger.Scale = triggerEntityScale;
 
-            // Debug.Log($"PRAVS - Propagate '{eventType}' event!");
-
             ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>
             (
                 prepareMessage: static (pbTriggerAreaResult, data) =>
@@ -186,23 +185,23 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(PBTriggerArea))]
-        private void HandleEntityDestruction(in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void HandleEntityDestruction(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+            ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBTriggerArea))]
         private void HandleComponentRemoval(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+            ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
             World.Remove<SDKTriggerAreaComponent>(entity);
         }
 
         [Query]
         private void FinalizeComponents(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            ProcessOnExitTriggerArea(triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+            ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
             World.Remove<SDKTriggerAreaComponent>(entity);
         }
 
