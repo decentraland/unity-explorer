@@ -461,6 +461,9 @@ namespace DCL.Landscape
             // Convert chamfer distance to approximate pixel distance
             int maxPixelDistance = maxD / ORTH;
 
+            if (maxPixelDistance == 1) // means on distance field applied
+                return 255;
+
             // Check for overflow and warn if needed
             bool hasOverflow = maxPixelDistance > 255;
 
