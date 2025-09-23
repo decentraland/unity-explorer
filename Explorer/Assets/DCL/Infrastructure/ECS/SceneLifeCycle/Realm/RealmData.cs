@@ -1,6 +1,8 @@
 ﻿using DCL.Ipfs;
 using DCL.Utilities;
 using System;
+using Unity.Collections;
+using Unity.Mathematics;
 
 namespace ECS
 {
@@ -44,6 +46,10 @@ namespace ECS
             }
         }
 
+        public NativeParallelHashSet<int2> RoadParcels { get; private set; }
+        public NativeParallelHashSet<int2> OccupiedParcels { get; private set; }
+        public NativeParallelHashSet<int2> EmptyParcels { get; private set; }
+
         /// <summary>
         /// Create an empty data to configure later
         /// </summary>
@@ -57,11 +63,12 @@ namespace ECS
 
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false, new NativeParallelHashSet<int2>(), new NativeParallelHashSet<int2>(), new NativeParallelHashSet<int2>());
         }
 
         public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol,
-            string hostname, bool isLocalSceneDevelopment)
+            string hostname, bool isLocalSceneDevelopment, NativeParallelHashSet<int2> roadParcels,
+            NativeParallelHashSet<int2> occupiedParcels, NativeParallelHashSet<int2> emptyParcels)
         {
             IsDirty = true;
             Configured = true;
@@ -80,6 +87,10 @@ namespace ECS
                 realmType.Value = RealmKind.GenesisCity;
             else
                 realmType.Value = RealmKind.World;
+
+            RoadParcels = roadParcels;
+            OccupiedParcels = occupiedParcels;
+            EmptyParcels = emptyParcels;
         }
 
         /// <summary>

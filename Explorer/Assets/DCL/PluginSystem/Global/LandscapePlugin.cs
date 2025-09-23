@@ -101,7 +101,7 @@ namespace DCL.PluginSystem.Global
             else
             {
                 emptyParcels = fetchParcelResult.Manifest.GetEmptyParcels();
-                ownedParcels = fetchParcelResult.Manifest.GetOwnedParcels();
+                ownedParcels = fetchParcelResult.Manifest.GetOccupiedParcels();
             }
 
             // gpuiWrapper.SetupLandscapeData(landscapeData.Value);

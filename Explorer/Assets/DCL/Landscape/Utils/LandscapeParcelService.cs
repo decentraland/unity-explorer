@@ -49,7 +49,17 @@ namespace DCL.Landscape.Utils
         public Vector2[] occupied;
         public Vector2[] empty;
 
-        public NativeParallelHashSet<int2> GetOwnedParcels()
+        public NativeParallelHashSet<int2> GetRoadParcels()
+        {
+            var hashSet = new NativeParallelHashSet<int2>(roads.Length, Allocator.Persistent);
+
+            foreach (Vector2 parcel in roads)
+                hashSet.Add(new int2(parcel));
+
+            return hashSet;
+        }
+
+        public NativeParallelHashSet<int2> GetOccupiedParcels()
         {
             var hashSet = new NativeParallelHashSet<int2>(occupied.Length, Allocator.Persistent);
 

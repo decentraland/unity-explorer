@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Threading;
  using DCL.RealmNavigation;
  using Global.AppArgs;
+ using Unity.Collections;
  using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -134,6 +135,8 @@ namespace Global.Dynamic
 
                 string hostname = ResolveHostname(realm, result);
 
+                // TODO replace new parcel parameters with manifest data from LandscapeParcelService
+
                 realmData.Reconfigure(
                     new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
                     result.configurations.realmName.EnsureNotNull("Realm name not found"),
@@ -141,7 +144,10 @@ namespace Global.Dynamic
                     ResolveCommsAdapter(result),
                     result.comms?.protocol ?? "v3",
                     hostname,
-                    isLocalSceneDevelopment
+                    isLocalSceneDevelopment,
+                    new NativeParallelHashSet<int2>(),
+                    new NativeParallelHashSet<int2>(),
+                    new NativeParallelHashSet<int2>()
                 );
 
                 // Add the realm component
