@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Cache.Generic;
@@ -8,7 +9,6 @@ using ECS.StreamableLoading.Cache.InMemory;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Threading;
-using Utility.Types;
 
 namespace SceneRuntime.Factory.JsSource
 {

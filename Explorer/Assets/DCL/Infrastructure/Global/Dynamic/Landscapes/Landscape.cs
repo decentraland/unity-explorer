@@ -3,6 +3,7 @@ using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -13,7 +14,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace Global.Dynamic.Landscapes
 {

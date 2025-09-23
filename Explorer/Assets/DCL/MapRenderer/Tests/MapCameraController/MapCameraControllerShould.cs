@@ -2,7 +2,6 @@
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
-using DCL.Navmap;
 using NSubstitute;
 using NUnit.Framework;
 using System;

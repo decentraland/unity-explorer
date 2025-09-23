@@ -3,7 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -80,7 +81,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
             this.view.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
 
             if (web3IdentityCache.Identity is { IsExpired: false })
@@ -263,7 +264,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
         {
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.ClickNotification(notificationType, notification);
+            NotificationsBusController.Instance.ClickNotification(notificationType, notification);
         }
 
         private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,

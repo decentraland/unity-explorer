@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using Microsoft.ClearScript;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.RealmNavigation.TeleportOperations
 {

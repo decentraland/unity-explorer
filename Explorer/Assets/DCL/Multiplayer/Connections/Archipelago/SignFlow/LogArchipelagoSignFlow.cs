@@ -1,10 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Typing;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 {

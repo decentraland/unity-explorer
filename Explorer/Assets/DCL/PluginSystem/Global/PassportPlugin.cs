@@ -32,6 +32,7 @@ using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
+using DCL.NotificationsBus;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 

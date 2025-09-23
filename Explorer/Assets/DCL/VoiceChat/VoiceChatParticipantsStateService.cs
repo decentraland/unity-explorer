@@ -30,6 +30,7 @@ namespace DCL.VoiceChat
 
         public delegate void ParticipantJoinedDelegate(string participantId, ParticipantState participantState);
         public delegate void ParticipantLeftDelegate(string participantId);
+        public delegate void SpeakersUpdatedDelegate(int speakers);
         public delegate void ParticipantsStateRefreshDelegate(List<(string participantId, ParticipantState state)> joinedParticipants, List<string> leftParticipantIds);
         private const string TAG = nameof(VoiceChatParticipantsStateService);
         private const int MAX_CONNECTION_UPDATES = 3;
@@ -68,6 +69,8 @@ namespace DCL.VoiceChat
         /// </summary>
         public event ParticipantsStateRefreshDelegate? ParticipantsStateRefreshed;
 
+        public event SpeakersUpdatedDelegate? SpeakersUpdated;
+
         public VoiceChatParticipantsStateService(
             IRoom voiceChatRoom,
             IWeb3IdentityCache identityCache)
@@ -92,7 +95,8 @@ namespace DCL.VoiceChat
                 new ReactiveProperty<string?>(null),
                 new ReactiveProperty<bool>(false),
                 new ReactiveProperty<bool>(false),
-                new ReactiveProperty<UserCommunityRoleMetadata>(UserCommunityRoleMetadata.none)
+                new ReactiveProperty<UserCommunityRoleMetadata>(UserCommunityRoleMetadata.none),
+                new ReactiveProperty<bool>(false)
             );
         }
 
@@ -206,6 +210,7 @@ namespace DCL.VoiceChat
                             SetOnlineStatus(participant.Identity, false);
                             ParticipantLeft?.Invoke(participant.Identity);
                             activeSpeakers.Remove(participant.Identity);
+                            SpeakersUpdated?.Invoke(activeSpeakers.Count);
                             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant left: {participant.Identity}");
                         }
 
@@ -248,6 +253,7 @@ namespace DCL.VoiceChat
                 }
 
                 activeSpeakers = newActiveSpeakers;
+                SpeakersUpdated?.Invoke(activeSpeakers.Count);
             }
         }
 
@@ -401,7 +407,8 @@ namespace DCL.VoiceChat
                 new ReactiveProperty<string?>(metadata?.profilePictureUrl),
                 new ReactiveProperty<bool>(metadata?.isRequestingToSpeak ?? false),
                 new ReactiveProperty<bool>(metadata?.isSpeaker ?? false),
-                new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.Role ?? UserCommunityRoleMetadata.none)
+                new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.Role ?? UserCommunityRoleMetadata.none),
+                new ReactiveProperty<bool>(false)
             );
 
             participantStates[participant.Identity] = state;
@@ -480,6 +487,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Refreshed local participant state during reconnection");
 
             ParticipantsStateRefreshed?.Invoke(joinedParticipants, participantsToRemove);
+            SpeakersUpdated?.Invoke(activeSpeakers.Count);
         }
 
         private void RefreshParticipantState(Participant participant, ParticipantState existingState)
@@ -534,10 +542,12 @@ namespace DCL.VoiceChat
             public ReactiveProperty<string?> ProfilePictureUrl { get; set; }
             public ReactiveProperty<bool> IsRequestingToSpeak { get; set; }
             public ReactiveProperty<bool> IsSpeaker { get; set; }
+
+            public ReactiveProperty<bool> IsMuted { get; set; }
             public ReactiveProperty<UserCommunityRoleMetadata> Role { get; set; }
 
             public ParticipantState(string walletId, ReactiveProperty<bool> isSpeaking, ReactiveProperty<string?> name, ReactiveProperty<bool?> hasClaimedName, ReactiveProperty<string?> profilePictureUrl,
-                ReactiveProperty<bool> isRequestingToSpeak, ReactiveProperty<bool> isSpeaker, ReactiveProperty<UserCommunityRoleMetadata> role)
+                ReactiveProperty<bool> isRequestingToSpeak, ReactiveProperty<bool> isSpeaker, ReactiveProperty<UserCommunityRoleMetadata> role, ReactiveProperty<bool> isMuted)
             {
                 WalletId = walletId;
                 IsSpeaking = isSpeaking;
@@ -547,6 +557,7 @@ namespace DCL.VoiceChat
                 IsRequestingToSpeak = isRequestingToSpeak;
                 IsSpeaker = isSpeaker;
                 Role = role;
+                IsMuted = isMuted;
             }
         }
 
