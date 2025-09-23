@@ -1,5 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI;
 using DCL.Web3;
 using MVC;
 using System;
@@ -46,7 +46,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
         public Vector3 Position;
         public MenuAnchorPoint AnchorPoint;
     }
-    
+
     /// <summary>
     /// Used to request showing the options for a specific chat message (e.g., copy text).
     /// Triggered by: Clicking the "three dots" button on a chat entry.
@@ -57,7 +57,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
         public readonly string MessageText;
         public readonly MenuAnchorPoint AnchorPoint;
     }
-    
+
     /// <summary>
     /// Used to request showing the options for the current channel (e.g., delete history).
     /// Triggered by: Clicking the "three dots" button in the chat's title bar.
@@ -67,7 +67,7 @@ namespace DCL.Chat.ChatServices.ChatContextService
         public readonly Vector2 Position;
         public readonly MenuAnchorPoint AnchorPoint;
     }
-    
+
     /// <summary>
     /// Used to request showing the "Paste" toast/popup.
     /// Triggered by: Right-clicking inside the chat input box.

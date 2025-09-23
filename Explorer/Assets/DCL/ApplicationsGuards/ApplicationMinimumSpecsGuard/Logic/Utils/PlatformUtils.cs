@@ -10,11 +10,11 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public static PlatformOS DetectPlatform()
         {
             return Application.platform switch
-            {
-                RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => PlatformOS.Windows,
-                RuntimePlatform.OSXPlayer or RuntimePlatform.OSXEditor => PlatformOS.Mac,
-                _ => PlatformOS.Unsupported
-            };
+                   {
+                       RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor => PlatformOS.Windows,
+                       RuntimePlatform.OSXPlayer or RuntimePlatform.OSXEditor => PlatformOS.Mac,
+                       _ => PlatformOS.Unsupported,
+                   };
         }
 
         public static long GetAvailableStorageBytes(string path)

@@ -3,6 +3,7 @@ using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utility.Types;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -13,7 +14,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Common.Systems
 {

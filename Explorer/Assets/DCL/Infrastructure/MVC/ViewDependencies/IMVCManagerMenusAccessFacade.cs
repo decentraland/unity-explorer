@@ -4,7 +4,6 @@ using DCL.UI;
 using DCL.Web3;
 using System;
 using System.Threading;
-using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 
 namespace MVC
@@ -25,6 +24,14 @@ namespace MVC
 
         UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null);
 
+        UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT);
+
+        /// <summary>
+        /// Directly opens the passport for the specified user ID without showing a context menu.
+        /// </summary>
+        /// <param name="userId">The user ID to open the passport for</param>
+        /// <param name="ct">Cancellation token</param>
+        UniTask OpenPassportAsync(string userId, CancellationToken ct = default);
         UniTaskVoid ShowChatContextMenuAsync(Vector3 transformPosition, ChatOptionsContextMenuData data, Action onDeleteChatHistoryClicked, Action onContextMenuHide, UniTask closeMenuTask);
 
         UniTask ShowGenericContextMenuAsync(GenericContextMenuParameter parameter);
@@ -54,5 +61,4 @@ namespace MVC
         CENTER_RIGHT,
         DEFAULT
     }
-
 }

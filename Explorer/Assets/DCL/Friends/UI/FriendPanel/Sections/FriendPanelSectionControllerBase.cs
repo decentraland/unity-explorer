@@ -2,12 +2,12 @@
 using DCL.Diagnostics;
 using DCL.UI.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using SuperScrollView;
 using System;
 using System.Threading;
 using UnityEngine.UI;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
 {

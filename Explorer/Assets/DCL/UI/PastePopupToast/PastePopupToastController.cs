@@ -3,7 +3,6 @@ using DCL.Clipboard;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.UI
 {
@@ -38,17 +37,5 @@ namespace DCL.UI
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(inputData.CloseTask ?? UniTask.Never(ct),
                 viewInstance!.PasteButton.OnClickAsync(ct));
-    }
-
-    public struct PastePopupToastData
-    {
-        public readonly UniTask? CloseTask;
-        public readonly Vector2 Position;
-
-        public PastePopupToastData(Vector2 position, UniTask? closeTask = null)
-        {
-            Position = position;
-            CloseTask = closeTask;
-        }
     }
 }

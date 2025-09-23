@@ -15,14 +15,14 @@ namespace DCL.Interaction.Utility
     public static class RaycastUtils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsSDKLayerInCollisionMask(ColliderLayer layer, ColliderLayer mask) =>
+        public static bool IsSDKLayerInCollisionMask(ColliderLayer layer, ColliderLayer mask) =>
             (mask & layer) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsPlayer(Collider collider) =>
+        public static bool IsPlayer(Collider collider) =>
             collider.gameObject.layer == PhysicsLayers.CHARACTER_LAYER;
 
-        internal static bool TryCreateRay(this PBRaycast sdkRaycast,
+        public static bool TryCreateRay(this PBRaycast sdkRaycast,
             World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             Vector3 sceneRootPos, in TransformComponent entityTransform, out Ray ray)
         {

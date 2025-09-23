@@ -1,9 +1,8 @@
 using DCL.Profiles;
-using DCL.UI.GenericContextMenuParameter;
 using System;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenu.Controls.Configs
+namespace DCL.UI.Controls.Configs
 {
     public class BlockUserButtonContextMenuControlSettings : IContextMenuControlSettings
     {

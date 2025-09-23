@@ -94,5 +94,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DecentralandLambdasOverride,
 
         LambdasProfiles,
+
+        ActiveCommunityVoiceChats,
     }
 }

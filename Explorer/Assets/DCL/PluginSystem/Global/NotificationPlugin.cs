@@ -4,7 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Notifications;
 using DCL.Notifications.NewNotification;
-using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -21,7 +21,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
-        private readonly NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
@@ -31,14 +30,12 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            NotificationsBusController.NotificationsBus.NotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
-            this.notificationsBusController = notificationsBusController;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
         }
@@ -58,7 +55,6 @@ namespace DCL.PluginSystem.Global
             NewNotificationController newNotificationController =
                 new NewNotificationController(
                     NewNotificationController.CreateLazily(newNotificationView, null),
-                    notificationsBusController,
                     notificationIconTypes,
                     notificationDefaultThumbnails,
                     rarityBackgroundMapping,
