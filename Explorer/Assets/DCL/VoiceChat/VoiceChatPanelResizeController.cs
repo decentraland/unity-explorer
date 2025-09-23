@@ -44,7 +44,7 @@ namespace DCL.VoiceChat
         {
             int newHeight = speakersAmount <= MAX_SPEAKERS_PER_LINE ? EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE;
 
-            view.VoiceChatPanelLayoutElement.preferredHeight = newHeight - (voiceChatState.CurrentVoiceChatPanelSize.Value == VoiceChatPanelSize.EXPANDED ? 0 : HIDDEN_BUTTONS_SIZE_DIFFERENCE);
+            view.Resize(newHeight - (voiceChatState.CurrentVoiceChatPanelSize.Value == VoiceChatPanelSize.EXPANDED ? 0 : HIDDEN_BUTTONS_SIZE_DIFFERENCE));
         }
 
         private void OnCurrentVoiceChatTypeChanged(VoiceChatType type)
@@ -52,14 +52,14 @@ namespace DCL.VoiceChat
             switch (type)
             {
                 case VoiceChatType.PRIVATE:
-                    view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_PRIVATE_VOICE_CHAT_SIZE;
+                    view.Resize(COLLAPSED_PRIVATE_VOICE_CHAT_SIZE);
                     break;
                 case VoiceChatType.COMMUNITY:
                     CalculateCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.ActiveSpeakers.Count);
                     break;
                 case VoiceChatType.NONE:
                 default:
-                    view.VoiceChatPanelLayoutElement.preferredHeight = DEFAULT_VOICE_CHAT_SIZE;
+                    view.Resize(DEFAULT_VOICE_CHAT_SIZE);
                     break;
             }
         }
@@ -69,14 +69,14 @@ namespace DCL.VoiceChat
             switch (voiceChatState.CurrentVoiceChatType.Value)
             {
                 case VoiceChatType.NONE:
-                    view.VoiceChatPanelLayoutElement.preferredHeight = DEFAULT_VOICE_CHAT_SIZE;
+                    view.Resize(DEFAULT_VOICE_CHAT_SIZE);
                     break;
                 case VoiceChatType.PRIVATE:
                     if (chatPanelSize == VoiceChatPanelSize.HIDDEN) { view.gameObject.SetActive(false); }
                     else
                     {
                         view.gameObject.SetActive(true);
-                        view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_PRIVATE_VOICE_CHAT_SIZE;
+                        view.Resize(COLLAPSED_PRIVATE_VOICE_CHAT_SIZE);
                     }
                     break;
                 case VoiceChatType.COMMUNITY:
@@ -92,7 +92,7 @@ namespace DCL.VoiceChat
                             break;
                         default:
                             view.gameObject.SetActive(true);
-                            view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE;
+                            view.Resize(COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE);
                             break;
                     }
                     break;
