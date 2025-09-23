@@ -73,6 +73,7 @@ namespace DCL.UI.InputFieldFormatting
             return mainStringBuilder.ToString();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetMatches(string text, List<(TextFormatMatchType, Match)> matchesResult)
         {
             matchesResult.Clear();
