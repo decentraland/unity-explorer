@@ -6,7 +6,6 @@ namespace DCL.VoiceChat
     public class VoiceChatPanelResizeController : IDisposable
     {
         private const float DEFAULT_VOICE_CHAT_SIZE = 50;
-        //private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 240; Legacy value, kept for now
         private const int EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE = 215;
         private const int EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE = 305;
         private const int COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
