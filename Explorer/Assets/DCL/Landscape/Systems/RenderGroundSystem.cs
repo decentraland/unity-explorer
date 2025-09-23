@@ -66,9 +66,7 @@ namespace DCL.Landscape.Systems
                 const bool RENDER_TO_ALL_CAMERAS = false;
 #endif
 
-                if (terrain is TerrainGenerator terrainGenerator)
-                    grassIndirectRenderer.Render(landscapeData, terrainGenerator, camera,
-                        RENDER_TO_ALL_CAMERAS);
+                grassIndirectRenderer.Render(landscapeData, terrain, camera, RENDER_TO_ALL_CAMERAS);
             }
         }
 
