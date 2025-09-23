@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using DCL.Utility;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.ApplicationGuards;
 using UnityEngine;
 using Utility;
 

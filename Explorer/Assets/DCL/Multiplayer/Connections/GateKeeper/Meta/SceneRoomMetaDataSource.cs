@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using DCL.Utility.Types;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -12,7 +13,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {

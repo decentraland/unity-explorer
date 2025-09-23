@@ -6,6 +6,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -14,7 +15,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat
 {

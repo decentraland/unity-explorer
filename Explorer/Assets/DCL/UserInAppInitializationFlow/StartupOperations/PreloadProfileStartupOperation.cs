@@ -2,9 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using System.Threading;
-using Utility.Types;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public class PreloadProfileStartupOperation : StartUpOperationBase
     {

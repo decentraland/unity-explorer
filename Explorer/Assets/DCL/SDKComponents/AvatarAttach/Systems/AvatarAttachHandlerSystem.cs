@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;

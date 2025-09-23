@@ -1,6 +1,5 @@
 using DCL.UI.ProfileElements;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.UI.SuggestionPanel
 {

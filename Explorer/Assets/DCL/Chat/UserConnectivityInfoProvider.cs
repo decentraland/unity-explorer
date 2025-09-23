@@ -5,6 +5,7 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using Decentraland.SocialService.V2;
 using ECS.SceneLifeCycle.Realm;
 using LiveKit.Proto;
@@ -15,7 +16,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat
 {

@@ -5,25 +5,46 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatPanelResizeController : IDisposable
     {
+        private const float DEFAULT_VOICE_CHAT_SIZE = 50;
+        private const int EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE = 215;
+        private const int EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE = 305;
+        private const int COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
+        //private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100; Not used yet value, kept for now
+        private const int COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 50;
+        private const int HIDDEN_BUTTONS_SIZE_DIFFERENCE = 40;
+        private const int MAX_SPEAKERS_PER_LINE = 4;
+
         private readonly VoiceChatPanelResizeView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
-        private readonly IDisposable voiceChatPanelSizeUpdateSubscription;
-        private readonly IDisposable voiceChatTypeChangedSubscription;
+        private readonly IDisposable panelSizeUpdateSubscription;
+        private readonly IDisposable typeChangedSubscription;
 
-        private const float DEFAULT_VOICE_CHAT_SIZE = 50;
-        private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 240;
-        private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 50;
-        private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100;
-        private const float COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 50;
-        private const float EXPANDED_COMMUNITY_VOICE_CHAT_WITH_HIDDEN_BUTTONS_SIZE = 200;
 
         public VoiceChatPanelResizeController(VoiceChatPanelResizeView view, IVoiceChatOrchestratorState voiceChatState)
         {
             this.view = view;
             this.voiceChatState = voiceChatState;
 
-            voiceChatPanelSizeUpdateSubscription = voiceChatState.CurrentVoiceChatPanelSize.Subscribe(OnUpdateVoiceChatPanelSize);
-            voiceChatTypeChangedSubscription = voiceChatState.CurrentVoiceChatType.Subscribe(OnCurrentVoiceChatTypeChanged);
+            panelSizeUpdateSubscription = voiceChatState.CurrentVoiceChatPanelSize.Subscribe(OnUpdateVoiceChatPanelSize);
+            typeChangedSubscription = voiceChatState.CurrentVoiceChatType.Subscribe(OnCurrentVoiceChatTypeChanged);
+
+            voiceChatState.ParticipantsStateService.SpeakersUpdated += OnSpeakersUpdated;
+        }
+
+        private void OnSpeakersUpdated(int speakersAmount)
+        {
+            if (voiceChatState.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+
+            if (voiceChatState.CurrentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED) return;
+
+            CalculateCommunitiesLayoutHeight(speakersAmount);
+        }
+
+        private void CalculateCommunitiesLayoutHeight(int speakersAmount)
+        {
+            int newHeight = speakersAmount <= MAX_SPEAKERS_PER_LINE ? EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE;
+
+            view.VoiceChatPanelLayoutElement.preferredHeight = newHeight - (voiceChatState.CurrentVoiceChatPanelSize.Value == VoiceChatPanelSize.EXPANDED ? 0 : HIDDEN_BUTTONS_SIZE_DIFFERENCE);
         }
 
         private void OnCurrentVoiceChatTypeChanged(VoiceChatType type)
@@ -34,7 +55,7 @@ namespace DCL.VoiceChat
                     view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_PRIVATE_VOICE_CHAT_SIZE;
                     break;
                 case VoiceChatType.COMMUNITY:
-                    view.VoiceChatPanelLayoutElement.preferredHeight = EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+                    CalculateCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.ActiveSpeakers.Count);
                     break;
                 case VoiceChatType.NONE:
                 default:
@@ -51,18 +72,28 @@ namespace DCL.VoiceChat
                     view.VoiceChatPanelLayoutElement.preferredHeight = DEFAULT_VOICE_CHAT_SIZE;
                     break;
                 case VoiceChatType.PRIVATE:
-                    view.VoiceChatPanelLayoutElement.preferredHeight =
-                        chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_PRIVATE_VOICE_CHAT_SIZE : EXPANDED_PRIVATE_VOICE_CHAT_SIZE;
-                    break;
-                case VoiceChatType.COMMUNITY:
-                    if (chatPanelSize == VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS)
-                    {
-                        view.VoiceChatPanelLayoutElement.preferredHeight = EXPANDED_COMMUNITY_VOICE_CHAT_WITH_HIDDEN_BUTTONS_SIZE;
-                    }
+                    if (chatPanelSize == VoiceChatPanelSize.HIDDEN) { view.gameObject.SetActive(false); }
                     else
                     {
-                        view.VoiceChatPanelLayoutElement.preferredHeight =
-                            chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+                        view.gameObject.SetActive(true);
+                        view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_PRIVATE_VOICE_CHAT_SIZE;
+                    }
+                    break;
+                case VoiceChatType.COMMUNITY:
+                    switch (chatPanelSize)
+                    {
+                        case VoiceChatPanelSize.EXPANDED:
+                        case VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS:
+                            view.gameObject.SetActive(true);
+                            CalculateCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.ActiveSpeakers.Count);
+                            break;
+                        case VoiceChatPanelSize.HIDDEN:
+                            view.gameObject.SetActive(false);
+                            break;
+                        default:
+                            view.gameObject.SetActive(true);
+                            view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE;
+                            break;
                     }
                     break;
             }
@@ -70,8 +101,8 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            voiceChatPanelSizeUpdateSubscription.Dispose();
-            voiceChatTypeChangedSubscription.Dispose();
+            panelSizeUpdateSubscription.Dispose();
+            typeChangedSubscription.Dispose();
         }
     }
 }

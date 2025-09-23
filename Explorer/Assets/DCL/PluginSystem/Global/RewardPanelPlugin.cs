@@ -2,7 +2,8 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.RewardPanel;
 using DCL.WebRequests;
 using MVC;
@@ -17,6 +18,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly NotificationsBusController notificationsBusController;
         private readonly IWebRequestController webRequestController;
 
         public RewardPanelPlugin(IMVCManager mvcManager, IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController)
@@ -25,7 +27,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
 
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_IN_PROGRESS, OnNewRewardReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_IN_PROGRESS, OnNewRewardReceived);
         }
 
         private void OnNewRewardReceived(INotification notification)

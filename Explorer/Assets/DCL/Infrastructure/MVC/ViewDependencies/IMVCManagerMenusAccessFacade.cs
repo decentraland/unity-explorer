@@ -4,7 +4,6 @@ using DCL.UI;
 using DCL.Web3;
 using System;
 using System.Threading;
-using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 
 namespace MVC

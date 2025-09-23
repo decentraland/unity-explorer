@@ -1,7 +1,6 @@
-using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenu.Controllers
+namespace DCL.UI
 {
     // We only need one of these, so its commented to reduce clutter
     //[CreateAssetMenu(fileName = "GenericUserProfileContextMenuSettings", menuName = "DCL/UI/Generic User Profile ContextMenu Settings")]
