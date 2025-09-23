@@ -73,32 +73,29 @@ namespace DCL.UI.InputFieldFormatting
             return mainStringBuilder.ToString();
         }
 
-        public IReadOnlyList<(TextFormatMatchType, Match)> GetMatches(string text)
+        public void GetMatches(string text, List<(TextFormatMatchType, Match)> matchesResult)
         {
-            List<(TextFormatMatchType, Match)> matches = new ();
+            matchesResult.Clear();
 
-            if (string.IsNullOrEmpty(text))
-                return matches;
+            if (string.IsNullOrEmpty(text)) return;
 
             var currentMatch = COMBINED_LINK_REGEX.Match(text);
 
             while (currentMatch.Success)
             {
                 if (currentMatch.Groups[URL_GROUP_NAME].Success)
-                    matches.Add((TextFormatMatchType.URL, currentMatch));
+                    matchesResult.Add((TextFormatMatchType.URL, currentMatch));
                 else if (currentMatch.Groups[SCENE_GROUP_NAME].Success && AreCoordsValid(
                              int.Parse(currentMatch.Groups[X_COORD_GROUP_NAME].Value),
                              int.Parse(currentMatch.Groups[Y_COORD_GROUP_NAME].Value)))
-                    matches.Add((TextFormatMatchType.SCENE, currentMatch));
+                    matchesResult.Add((TextFormatMatchType.SCENE, currentMatch));
                 else if (currentMatch.Groups[WORLD_GROUP_NAME].Success)
-                    matches.Add((TextFormatMatchType.WORLD, currentMatch));
+                    matchesResult.Add((TextFormatMatchType.WORLD, currentMatch));
                 else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success && IsUserNameValid(currentMatch.Groups[USERNAME_NAME_GROUP_NAME].Value))
-                    matches.Add((TextFormatMatchType.NAME, currentMatch));
+                    matchesResult.Add((TextFormatMatchType.NAME, currentMatch));
 
                 currentMatch = currentMatch.NextMatch();
             }
-
-            return matches;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

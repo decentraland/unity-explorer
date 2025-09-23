@@ -8,7 +8,7 @@ namespace DCL.UI.InputFieldFormatting
     {
         string FormatText(ReadOnlySpan<char> text);
 
-        IReadOnlyList<(TextFormatMatchType, Match)> GetMatches(string text);
+        void GetMatches(string text, List<(TextFormatMatchType, Match)> matchesResult);
     }
 
     public enum TextFormatMatchType

@@ -18,10 +18,10 @@ namespace DCL.UI.CustomInputField
     public class CustomInputField : TMP_InputField
     {
         private bool isControlPressed;
-        private readonly StringBuilder stringBuilder = new ();
-        private Color32 mentionColor { get; set; } = new (0, 179, 255, 255);
-        private IReadOnlyList<(TextFormatMatchType _, Match match)>? inputMatchesInfo;
         private ITextFormatter? textFormatter;
+        private readonly StringBuilder stringBuilder = new ();
+        private readonly List<(TextFormatMatchType _, Match match)> inputMatchesInfo = new ();
+        private readonly Color32 mentionColor = new (0, 179, 255, 255);
 
         public event Action<PointerEventData.InputButton>? Clicked;
         public event Action? PasteShortcutPerformed;
@@ -59,16 +59,12 @@ namespace DCL.UI.CustomInputField
             onValueChanged.AddListener(_ => CacheMatchInfo());
         }
 
-        private void CacheMatchInfo()
-        {
-            if (textFormatter == null) return;
-
-            inputMatchesInfo = textFormatter.GetMatches(text);
-        }
+        private void CacheMatchInfo() =>
+            textFormatter?.GetMatches(text, inputMatchesInfo);
 
         private void ApplyVertexColors()
         {
-            if (string.IsNullOrEmpty(text) || inputMatchesInfo == null) return;
+            if (string.IsNullOrEmpty(text)) return;
 
             foreach (var info in inputMatchesInfo)
                 for (int i = info.match.Index; i < info.match.Index + info.match.Length; i++)
