@@ -1,7 +1,7 @@
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public interface IStartupOperation : ILoadingOperation<IStartupOperation.Params>
     {

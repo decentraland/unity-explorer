@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;

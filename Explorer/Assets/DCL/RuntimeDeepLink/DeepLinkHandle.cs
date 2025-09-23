@@ -1,4 +1,4 @@
-using Utility.Types;
+using DCL.Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {

@@ -1,7 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using ECS.Groups;
-using ECS.Unity.Groups;
 
 namespace DCL.SDKComponents.LightSource.Systems
 {

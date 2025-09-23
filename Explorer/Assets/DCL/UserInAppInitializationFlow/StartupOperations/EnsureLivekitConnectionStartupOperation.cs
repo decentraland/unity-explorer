@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.HealthChecks;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
-using Utility.Types;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public class EnsureLivekitConnectionStartupOperation
     {

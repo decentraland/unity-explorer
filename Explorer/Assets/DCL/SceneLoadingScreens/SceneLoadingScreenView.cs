@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using DG.Tweening;
 using MVC;
 using System;
@@ -7,7 +8,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.UI;
-using Utility.Types;
 using Random = UnityEngine.Random;
 
 namespace DCL.SceneLoadingScreens

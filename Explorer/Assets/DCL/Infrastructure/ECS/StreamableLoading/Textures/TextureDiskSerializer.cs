@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Textures
 {
