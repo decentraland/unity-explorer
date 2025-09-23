@@ -53,8 +53,7 @@ namespace Global.Dynamic
         public VolumeBus VolumeBus { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings;
         public IAppArgs ApplicationParametersParser { get; private set; }
-        public ILaunchMode LaunchMode { get; private set; }
-        public IRealmLaunchSettings RealmLaunchSettings { get; private set; }
+        public RealmLaunchSettings RealmLaunchSettings { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
 
         public DecentralandEnvironment Environment { get; private set; }
@@ -98,7 +97,6 @@ namespace Global.Dynamic
                 AssetsProvisioner = assetsProvisioner,
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
-                LaunchMode = realmLaunchSettings,
                 RealmLaunchSettings = realmLaunchSettings,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,

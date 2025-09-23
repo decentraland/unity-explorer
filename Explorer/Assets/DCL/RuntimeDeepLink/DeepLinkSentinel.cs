@@ -55,7 +55,7 @@ namespace DCL.RuntimeDeepLink
                 if (deepLinkCreateResult.Success)
                 {
                     JsonDeepLink deeplink = deepLinkCreateResult.Value;
-                    Result handleResult = handle.HandleDeepLink(new ApplicationParametersParser(new[] { deeplink.deeplink! }));
+                    Result handleResult = handle.Handle(new ApplicationParametersParser(new[] { deeplink.deeplink! }));
 
                     if (handleResult.Success)
                         ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{handle.Name} successfully handled deeplink: {deeplink}");

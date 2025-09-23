@@ -15,7 +15,7 @@ using UnityEngine;
 namespace Global.Dynamic
 {
     [Serializable]
-    public class RealmLaunchSettings : ILaunchMode, IRealmLaunchSettings
+    public class RealmLaunchSettings : ILaunchMode, IAppArgsProcessor
     {
         [Serializable]
         public struct PredefinedScenes

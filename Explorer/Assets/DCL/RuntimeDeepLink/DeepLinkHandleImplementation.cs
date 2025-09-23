@@ -4,7 +4,6 @@ using DCL.Chat.Commands;
 using DCL.RealmNavigation;
 using DCL.Utility.Types;
 using Global.AppArgs;
-using Global.Dynamic.LaunchModes;
 using System.Threading;
 using UnityEngine;
 
@@ -15,12 +14,12 @@ namespace DCL.RuntimeDeepLink
         private readonly StartParcel startParcel;
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
-        private readonly IRealmLaunchSettings realmLaunchSettings;
+        private readonly IAppArgsProcessor realmLaunchSettings;
 
         public DeepLinkHandle(StartParcel startParcel,
             ChatTeleporter chatTeleporter,
             CancellationToken token,
-            IRealmLaunchSettings realmLaunchSettings)
+            IAppArgsProcessor realmLaunchSettings)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
@@ -30,10 +29,11 @@ namespace DCL.RuntimeDeepLink
 
         public string Name => "Real Implementation";
 
-        public Result HandleDeepLink(IAppArgs appArgs)
+        public Result Handle(IAppArgs appArgs)
         {
             // Fixes: https://github.com/decentraland/unity-explorer/issues/5226
             // We need to re-apply launch settings to redirect the correct realm after authentication
+            // TODO: Consider implementing a list of configurations to apply instead of focusing solely on the realm launch settings.
             realmLaunchSettings.ApplyConfig(appArgs);
 
             Vector2Int? position = PositionFrom(appArgs);

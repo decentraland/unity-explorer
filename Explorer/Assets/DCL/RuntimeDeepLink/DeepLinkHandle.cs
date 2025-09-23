@@ -10,7 +10,7 @@ namespace DCL.RuntimeDeepLink
         /// <summary>
         /// Implementations of the method must be exception free.
         /// </summary>
-        public Result HandleDeepLink(IAppArgs appArgs);
+        public Result Handle(IAppArgs appArgs);
 
         class Null : IDeepLinkHandle
         {
@@ -20,7 +20,7 @@ namespace DCL.RuntimeDeepLink
 
             public string Name => "Null Implementation";
 
-            public Result HandleDeepLink(IAppArgs appArgs) =>
+            public Result Handle(IAppArgs appArgs) =>
                 Result.SuccessResult();
         }
     }
