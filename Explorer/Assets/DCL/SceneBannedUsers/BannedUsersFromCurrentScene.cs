@@ -28,8 +28,6 @@ namespace DCL.SceneBannedUsers
             if (!includeBannedUsersFromScene)
                 return false;
 
-            return true;
-
             if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
                 return false;
 
