@@ -28,6 +28,7 @@ namespace DCL.InWorldCamera
         public float Panning;
         public float Tilting;
         public bool IsRunning;
+        public bool IsWalking;
 
         public Vector2 Aim;
         public bool MouseIsDragging;

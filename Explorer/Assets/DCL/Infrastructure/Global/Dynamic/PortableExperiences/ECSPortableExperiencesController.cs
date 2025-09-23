@@ -142,7 +142,7 @@ namespace PortableExperiences.Controller
         {
             if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
 
-            ISceneFacade currentSceneFacade = scenesCache.CurrentScene.Value;
+            ISceneFacade currentSceneFacade = scenesCache.CurrentScene;
             if (currentSceneFacade == null) return false;
 
             if (PortableExperienceEntities.TryGetValue(id, out Entity portableExperienceEntity))
