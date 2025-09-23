@@ -42,8 +42,8 @@ namespace DCL.Analytics.Systems
             {
                 { "old_parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
                 { "new_parcel", newParcel.ToString() },
-                { "scene_hash", scenesCache.CurrentScene?.Info.Name},
-                { "is_empty_scene", scenesCache.CurrentScene?.IsEmpty},
+                { "scene_hash", scenesCache.CurrentScene.Value?.Info.Name},
+                { "is_empty_scene", scenesCache.CurrentScene.Value?.IsEmpty},
             });
 
             oldParcel = newParcel;
