@@ -10,13 +10,10 @@ namespace DCL.Landscape.Settings
     {
         [Header("Terrain Settings")]
         public int parcelSize = 16;
-        public int terrainSize = 4800;
         public int chunkSize = 512;
         public float heightScaleNerf = 1;
         public int seed;
-        public float terrainHoleEdgeSize;
         public float minHeight = 1f;
-        public float pondDepth = 5;
 
         [Min(0)]
         public int borderPadding = 2;

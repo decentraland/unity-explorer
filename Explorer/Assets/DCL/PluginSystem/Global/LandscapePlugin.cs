@@ -71,8 +71,6 @@ namespace DCL.PluginSystem.Global
             this.landscape = landscape;
 
             parcelService = new LandscapeParcelService(webRequestController, isZone);
-
-            // gpuiWrapper = new GPUIWrapper();
         }
 
         public void Dispose()
@@ -118,7 +116,7 @@ namespace DCL.PluginSystem.Global
                     treesProfile, out treeRendererKeys[prototypeIndex]);
 
             terrainGenerator.Initialize(landscapeData.Value.terrainData, treeRendererKeys,
-                ref emptyParcels, ref ownedParcels);
+                ownedParcels);
 
             await worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, treeRendererKeys);
         }
@@ -130,13 +128,9 @@ namespace DCL.PluginSystem.Global
             if (!enableLandscape) return;
 
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings, landscapeData.Value);
-            //LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            //LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
             RenderGroundSystem.InjectToWorld(ref builder, landscape, landscapeData.Value);
             CollideTerrainSystem.InjectToWorld(ref builder, landscape, landscapeData.Value);
-
-            // gpuiWrapper.InjectDebugSystem(ref builder, debugContainerBuilder);
         }
     }
 }

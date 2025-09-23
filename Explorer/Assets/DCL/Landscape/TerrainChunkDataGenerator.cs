@@ -7,7 +7,6 @@ using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -21,26 +20,21 @@ namespace DCL.Landscape
     [Obsolete]
     public class TerrainChunkDataGenerator
     {
-        private const int UNITY_MAX_COVERAGE_VALUE = 255;
-        private const int UNITY_MAX_INSTANCE_COUNT = 16;
-
-        private readonly TerrainGeneratorLocalCache localCache;
         private readonly TimeProfiler timeProfiler;
         private readonly TerrainGenerationData terrainGenData;
         private NoiseGeneratorCache noiseGenCache;
 
         private readonly ReportData reportData;
 
-        private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
 
         private int worldSeed;
         private int parcelSize;
         private int resolution;
 
-        public TerrainChunkDataGenerator(TerrainGeneratorLocalCache localCache, TimeProfiler timeProfiler, TerrainGenerationData terrainGenData, ReportData reportData)
+        public TerrainChunkDataGenerator(object localCache, TimeProfiler timeProfiler,
+            TerrainGenerationData terrainGenData, ReportData reportData)
         {
-            this.localCache = localCache;
             this.timeProfiler = timeProfiler;
             this.terrainGenData = terrainGenData;
 
@@ -51,130 +45,17 @@ namespace DCL.Landscape
         {
             this.worldSeed = worldSeed;
             this.emptyParcelsNeighborData = emptyParcelsNeighborData;
-            this.emptyParcelsData = emptyParcelsData;
             this.parcelSize = parcelSize;
 
             this.noiseGenCache = noiseGeneratorCache;
         }
 
-        public async UniTask SetHeightsAsync(int2 chunkMinParcel, int maxHeightIndex, int parcelSize, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken, bool useCache = true)
-        {
-            int parcelMinX = chunkMinParcel.x * parcelSize;
-            int parcelMinZ = chunkMinParcel.y * parcelSize;
-
-            if (useCache && localCache.IsValid())
-            {
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetHeightsAsync from Cache {t}ms")))
-                {
-                    var heightArray = await localCache.GetHeightsAsync(parcelMinX, parcelMinZ);
-                    terrainData.SetHeights(0, 0, heightArray);
-                }
-            }
-            else
-            {
-                timeProfiler.StartMeasure();
-
-                int resolution = terrainData.heightmapResolution;
-                var heights = new NativeArray<float>(resolution * resolution, Allocator.TempJob);
-
-                INoiseGenerator terrainHeightNoise = noiseGenCache.GetGeneratorFor(terrainGenData.terrainHeightNoise, baseSeed);
-                var noiseDataPointer = new NoiseDataPointer(resolution, parcelMinX, parcelMinZ);
-                JobHandle handle = terrainHeightNoise.Schedule(noiseDataPointer, default(JobHandle));
-
-                NativeArray<float> terrainNoise = terrainHeightNoise.GetResult(noiseDataPointer);
-
-                var modifyJob = new ModifyTerrainHeightJob(
-                    ref heights,
-                    in emptyParcelsNeighborData, in emptyParcelsData,
-                    in terrainNoise,
-                    terrainGenData.terrainHoleEdgeSize,
-                    terrainGenData.minHeight,
-                    terrainGenData.pondDepth,
-                    resolution,
-                    chunkMinParcel,
-                    maxHeightIndex,
-                    parcelSize
-                );
-
-                JobHandle jobHandle = modifyJob.Schedule(heights.Length, 64, handle);
-
-                try
-                {
-                    await jobHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-                    timeProfiler.EndMeasure(t => ReportHub.Log(reportData, $"    - [SetHeightsAsync] Noise Job + ModifyTerrainHeightJob Job {t}ms"));
-
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"    - [SetHeightsAsync] SetHeights {t}ms")))
-                    {
-                        float[,] heightArray = heights.To2DArray(resolution, resolution);
-                        terrainData.SetHeights(0, 0, heightArray);
-
-                        if (useCache)
-                            localCache.SaveHeights(parcelMinX, parcelMinZ, heightArray);
-                    }
-                }
-                finally { heights.Dispose(); }
-            }
-        }
-
-        public async UniTask SetTexturesAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken,
-            bool useCache = true)
-        {
-            if (useCache && localCache.IsValid())
-            {
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTexturesAsync {t}ms")))
-                {
-                    var alpha = await localCache.GetAlphaMapsAsync(offsetX, offsetZ);
-                    terrainData.SetAlphamaps(0, 0, alpha);
-                }
-            }
-            else
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var noiseGenerators = new List<INoiseGenerator>();
-                var noiseTasks = new List<UniTask>();
-                var noiseDataPointer = new NoiseDataPointer(chunkSize, offsetX, offsetZ);
-
-                foreach (NoiseData noiseData in terrainGenData.layerNoise)
-                {
-                    if (noiseData == null) continue;
-
-                    INoiseGenerator noiseGenerator = noiseGenCache.GetGeneratorFor(noiseData, baseSeed);
-                    JobHandle handle = noiseGenerator.Schedule(noiseDataPointer, default(JobHandle));
-
-                    UniTask noiseTask = handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-                    noiseTasks.Add(noiseTask);
-                    noiseGenerators.Add(noiseGenerator);
-                }
-
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"    - [AlphaMaps] Parallel Jobs {t}ms")))
-                    await UniTask.WhenAll(noiseTasks).AttachExternalCancellation(cancellationToken);
-
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"    - [AlphaMaps] SetAlphamaps {t}ms")))
-                {
-                    float[,,] result3D = noiseGenerators.Select(ng => ng.GetResult(noiseDataPointer))
-                                                        .ToArray()
-                                                        .GenerateAlphaMaps(chunkSize, chunkSize, terrainGenData.terrainLayers.Length);
-
-                    terrainData.SetAlphamaps(0, 0, result3D);
-
-                    if (useCache)
-                        localCache.SaveAlphaMaps(offsetX, offsetZ, result3D);
-                }
-            }
-        }
-
         public async UniTask SetTreesAsync(int2 chunkMinParcel, int chunkSize, List<TreeInstance> terrainData, uint baseSeed, CancellationToken cancellationToken,
             bool useCache = true)
         {
-            if (useCache && localCache.IsValid())
+            if (useCache)
             {
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTreesAsync from Cache {t}ms")))
-                {
-                    var array = await localCache.GetTreesAsync(chunkMinParcel.x, chunkMinParcel.y);
-                    terrainData.AddRange(array);
-                }
+                // This code path has been deleted.
             }
             else
             {
@@ -257,9 +138,6 @@ namespace DCL.Landscape
                     {
                         TreeInstance[] instances = array.ToArray();
                         terrainData.AddRange(instances);
-
-                        if (useCache)
-                            localCache.SaveTreeInstances(chunkMinParcel.x, chunkMinParcel.y, instances);
                     }
                 }
                 catch (Exception e) { ReportHub.LogException(e, reportData); }
@@ -271,116 +149,6 @@ namespace DCL.Landscape
                     treeParallelRandoms.Dispose();
                 }
             }
-        }
-
-        public async UniTask SetDetailsAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken, bool nullifyDetailsOnOwned, int2 chunkMinParcel, ITerrainDetailSetter terrainDetailSetter, IReadOnlyList<int2> chunkOccupiedParcels = null,
-            bool useCache = true)
-        {
-            terrainData.SetDetailScatterMode(terrainGenData.detailScatterMode);
-
-            if (useCache && localCache.IsValid())
-            {
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetDetails from Cache {t}ms")))
-                    for (var i = 0; i < terrainGenData.detailAssets.Length; i++)
-                        await terrainDetailSetter.ReadApplyTerrainDetailAsync(terrainData, localCache, offsetX, offsetZ, i);
-            }
-            else
-            {
-                var noiseDataPointer = new NoiseDataPointer(chunkSize, offsetX, offsetZ);
-                var generators = new List<INoiseGenerator>();
-
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"    - [SetDetailsAsync] Wait for Parallel Jobs {t}ms")))
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    var tasks = new List<UniTask>();
-
-                    for (var i = 0; i < terrainGenData.detailAssets.Length; i++)
-                    {
-                        LandscapeAsset detailAsset = terrainGenData.detailAssets[i];
-
-                        try
-                        {
-                            INoiseGenerator noiseGenerator = noiseGenCache.GetGeneratorFor(detailAsset.noiseData, baseSeed);
-                            JobHandle handle = noiseGenerator.Schedule(noiseDataPointer, default(JobHandle));
-                            UniTask task = handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-                            generators.Add(noiseGenerator);
-                            tasks.Add(task);
-                        }
-                        catch (Exception e) when (e is not OperationCanceledException)
-                        {
-                            ReportHub.LogError(reportData, $"Failed to set detail layer for {detailAsset.name}");
-                            ReportHub.LogException(e, reportData);
-                        }
-                    }
-
-                    await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-                }
-
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"    - [SetDetailsAsync] SetDetailLayer in Parallel {t}ms")))
-                {
-                    for (var i = 0; i < terrainGenData.detailAssets.Length; i++)
-                    {
-                        NativeArray<float> result = generators[i].GetResult(noiseDataPointer);
-
-                        int[,] detailLayer = terrainData.GetDetailLayer(0, 0, terrainData.detailWidth, terrainData.detailHeight, i);
-
-                        for (var y = 0; y < chunkSize; y++)
-                        for (var x = 0; x < chunkSize; x++)
-                        {
-                            int f = terrainGenData.detailScatterMode == DetailScatterMode.CoverageMode ? UNITY_MAX_COVERAGE_VALUE : UNITY_MAX_INSTANCE_COUNT;
-                            float value = result[x + (y * chunkSize)];
-
-                            detailLayer[y, x] = Mathf.FloorToInt(value * f);
-                        }
-
-                        // no details for owned parcels (in case when we have a terrain on owned parcels instead of holes, like in Worlds)
-                        if (nullifyDetailsOnOwned && chunkOccupiedParcels != null)
-                            foreach (int2 parcel in chunkOccupiedParcels)
-                                for (int y = (-chunkMinParcel.y + parcel.y) * parcelSize; y < (-chunkMinParcel.y + parcel.y + 1) * parcelSize; y++)
-                                for (int x = (-chunkMinParcel.x + parcel.x) * parcelSize; x < (-chunkMinParcel.x + parcel.x + 1) * parcelSize; x++)
-                                    detailLayer[y, x] = 0;
-
-                        terrainDetailSetter.ApplyDetailLayer(terrainData, i, detailLayer);
-
-                        if (useCache)
-                            localCache.SaveDetailLayer(offsetX, offsetZ, i, detailLayer);
-                    }
-                }
-            }
-        }
-
-        public bool[,] DigHoles(TerrainModel terrainModel, ChunkModel chunkModel, int parcelSize, bool withOwned = true)
-        {
-            var holes = new bool[terrainModel.ChunkSizeInUnits, terrainModel.ChunkSizeInUnits];
-
-            for (var x = 0; x < terrainModel.ChunkSizeInUnits; x++)
-            for (var y = 0; y < terrainModel.ChunkSizeInUnits; y++)
-                holes[x, y] = true;
-
-            if (withOwned && chunkModel.OccupiedParcels.Count > 0)
-                foreach (int2 parcel in chunkModel.OccupiedParcels)
-                {
-                    int x = (parcel.x - chunkModel.MinParcel.x) * parcelSize;
-                    int y = (parcel.y - chunkModel.MinParcel.y) * parcelSize;
-
-                    for (int i = x; i < x + parcelSize; i++)
-                    for (int j = y; j < y + parcelSize; j++)
-                        holes[j, i] = false;
-                }
-
-            if (chunkModel.OutOfTerrainParcels.Count > 0)
-                foreach (int2 parcel in chunkModel.OutOfTerrainParcels)
-                {
-                    int x = (parcel.x - chunkModel.MinParcel.x) * parcelSize;
-                    int y = (parcel.y - chunkModel.MinParcel.y) * parcelSize;
-
-                    for (int i = x; i < x + parcelSize; i++)
-                    for (int j = y; j < y + parcelSize; j++)
-                        holes[j, i] = false;
-                }
-
-            return holes;
         }
     }
 }

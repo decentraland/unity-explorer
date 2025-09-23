@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
 using System;
@@ -15,7 +14,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 using static Unity.Mathematics.math;
-using JobHandle = Unity.Jobs.JobHandle;
 
 namespace DCL.Landscape
 {
@@ -41,9 +39,6 @@ namespace DCL.Landscape
         private TerrainFactory factory;
         public TreeData? Trees { get; private set; }
 
-        private NativeList<int2> emptyParcels;
-        private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
-        private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashSet<int2> ownedParcels;
 
         private int processedTerrainDataCount;
@@ -77,10 +72,9 @@ namespace DCL.Landscape
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys,
-            ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+            NativeParallelHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
-            this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
             Trees = new TreeData(treeRendererKeys, terrainGenData);
 
@@ -99,9 +93,6 @@ namespace DCL.Landscape
             if (TerrainRoot != null)
                 UnityObjectUtils.SafeDestroy(TerrainRoot);
         }
-
-        [Obsolete]
-        public void SetTerrainCollider(Vector2Int parcel, bool isEnabled) { }
 
         public bool Contains(Vector2Int parcel)
         {
@@ -159,14 +150,6 @@ namespace DCL.Landscape
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
                 {
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
-                    {
-                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel.MinParcel,
-                            TerrainModel.MaxParcel, ref emptyParcels, ref ownedParcels);
-
-                        await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
-                    }
-
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
 
                     // The MinParcel, MaxParcel already has padding, so padding zero works here,
@@ -217,11 +200,7 @@ namespace DCL.Landscape
             finally
             {
                 float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-                FreeMemory();
-
                 IsTerrainGenerated = true;
-
-                emptyParcels.Dispose();
                 ownedParcels.Dispose();
 
                 float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
@@ -232,24 +211,6 @@ namespace DCL.Landscape
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
-        }
-
-        private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
-        {
-            JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
-                ref emptyParcelsData, ref emptyParcelsNeighborData,
-                emptyParcels.AsArray(), ref ownedParcels,
-                terrainModel.MinParcel, terrainModel.MaxParcel,
-                terrainGenData.heightScaleNerf);
-
-            await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-        }
-
-        // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
-        private void FreeMemory()
-        {
-            emptyParcelsNeighborData.Dispose();
-            emptyParcelsData.Dispose();
         }
 
         internal static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
