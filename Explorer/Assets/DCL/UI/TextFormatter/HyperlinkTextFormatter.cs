@@ -73,6 +73,16 @@ namespace DCL.UI.InputFieldFormatting
             return mainStringBuilder.ToString();
         }
 
+        /// <summary>
+        /// Extracts matches from the given text based on the recognized elements (URLs, scene coordinates, world names, and usernames).
+        /// The results are stored in the provided list as tuples containing the type of match and the match object.
+        /// </summary>
+        /// <param name="text">The input text to search for matches.</param>
+        /// <param name="matchesResult">
+        /// A list to store the results of the matches. Each match is represented as a tuple containing:
+        /// - <see cref="TextFormatMatchType"/>: The type of the match (e.g., URL, SCENE, WORLD, NAME).
+        /// - <see cref="Match"/>: The actual match object.
+        /// </param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetMatches(string text, List<(TextFormatMatchType, Match)> matchesResult)
         {
