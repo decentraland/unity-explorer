@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
+using Global.AppArgs;
 using System;
 using System.IO;
 using System.Threading;
@@ -30,7 +31,6 @@ namespace DCL.RuntimeDeepLink
             );
 #endif
 
-
         /// <summary>
         /// Runs for the lifetime of the app.
         /// </summary>
@@ -50,12 +50,12 @@ namespace DCL.RuntimeDeepLink
                 // Notify emitter that file has been consumed
                 File.Delete(DEEP_LINK_BRIDGE_PATH);
 
-                Result<DeepLink> deepLinkCreateResult = DeepLink.FromJson(contentResult.Value);
+                Result<JsonDeepLink> deepLinkCreateResult = JsonDeepLink.FromJson(contentResult.Value);
 
                 if (deepLinkCreateResult.Success)
                 {
-                    DeepLink deeplink = deepLinkCreateResult.Value;
-                    Result handleResult = handle.HandleDeepLink(deeplink);
+                    JsonDeepLink deeplink = deepLinkCreateResult.Value;
+                    Result handleResult = handle.HandleDeepLink(new ApplicationParametersParser(new[] { deeplink.deeplink! }));
 
                     if (handleResult.Success)
                         ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{handle.Name} successfully handled deeplink: {deeplink}");

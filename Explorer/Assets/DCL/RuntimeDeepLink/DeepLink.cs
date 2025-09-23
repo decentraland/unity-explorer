@@ -1,53 +1,33 @@
-using Global.AppArgs;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {
-    public readonly struct DeepLink
+    [Serializable]
+    public struct JsonDeepLink
     {
-        private readonly Dictionary<string, string> map;
+        public string? deeplink;
 
-        private DeepLink(Dictionary<string, string> map)
+        public static Result<JsonDeepLink> FromJson(string json)
         {
-            this.map = map;
-        }
-
-        public static Result<DeepLink> FromRaw(string? raw)
-        {
-            if (string.IsNullOrWhiteSpace(raw!))
-                return Result<DeepLink>.ErrorResult("Empty Input");
-
-            if (raw.StartsWith("decentraland://", StringComparison.Ordinal) == false)
-                return Result<DeepLink>.ErrorResult("Wrong Format");
-
-            Dictionary<string, string> map = ApplicationParametersParser.ProcessDeepLinkParameters(raw);
-            return Result<DeepLink>.SuccessResult(new DeepLink(map));
-        }
-
-        public static Result<DeepLink> FromJson(string json)
-        {
-            DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(json);
+            JsonDeepLink dto = JsonUtility.FromJson<JsonDeepLink>(json);
             string? raw = dto.deeplink;
             return FromRaw(raw);
         }
 
-        public string? ValueOf(string key)
+        private static Result<JsonDeepLink> FromRaw(string? raw)
         {
-            map.TryGetValue(key, out string? value);
-            return value;
+            if (string.IsNullOrWhiteSpace(raw!))
+                return Result<JsonDeepLink>.ErrorResult("Empty Input");
+
+            if (raw.StartsWith("decentraland://", StringComparison.Ordinal) == false)
+                return Result<JsonDeepLink>.ErrorResult("Wrong Format");
+
+            return Result<JsonDeepLink>.SuccessResult(new JsonDeepLink { deeplink = raw });
         }
 
         public override string ToString() =>
-            JsonConvert.SerializeObject(map);
-
-        [Serializable]
-        private struct DeepLinkDTO
-        {
-            public string? deeplink;
-        }
+            deeplink ?? string.Empty;
     }
 }
