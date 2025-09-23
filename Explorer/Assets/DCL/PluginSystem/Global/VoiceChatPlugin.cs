@@ -3,14 +3,11 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Communities.CommunitiesDataProvider;
-using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
-using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
-using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
 using System;
 using System.Threading;
@@ -23,32 +20,29 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatPlugin : IDCLGlobalPlugin<VoiceChatPlugin.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IRoomHub roomHub;
-        private readonly MainUIView mainUIView;
+        private readonly VoiceChatPanelView voiceChatPanelView;
         private readonly ProfileRepositoryWrapper profileDataProvider;
+        private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly IWebRequestController webRequestController;
+
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly CommunitiesDataProvider communityDataProvider;
-        private readonly IWebRequestController webRequestController;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatTrackManager? trackManager;
         private VoiceChatRoomManager? roomManager;
-        private PrivateVoiceChatController? privateVoiceChatController;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
-        private CommunityVoiceChatController? communitiesVoiceChatController;
-        private VoiceChatPanelResizeController? voiceChatPanelResizeController;
         private MicrophoneAudioToggleController? microphoneAudioToggleController;
-        private SceneVoiceChatController? sceneVoiceChatController;
+        private VoiceChatPanelController? voiceChatPanelController;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
-            MainUIView mainUIView,
+            VoiceChatPanelView voiceChatPanelView,
             VoiceChatContainer voiceChatContainer,
             ProfileRepositoryWrapper profileDataProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable,
@@ -56,11 +50,10 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
-            IAssetsProvisioner assetsProvisioner,
-            IDebugContainerBuilder debugContainerBuilder)
+            IAssetsProvisioner assetsProvisioner)
         {
             this.roomHub = roomHub;
-            this.mainUIView = mainUIView;
+            this.voiceChatPanelView = voiceChatPanelView;
             this.profileDataProvider = profileDataProvider;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
@@ -68,7 +61,6 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
             this.assetsProvisioner = assetsProvisioner;
-            this.debugContainerBuilder = debugContainerBuilder;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -79,17 +71,13 @@ namespace DCL.PluginSystem.Global
                 // Attempted to dispose before initialization - this is expected in some scenarios
                 return;
             }
-
+            voiceChatPanelController?.Dispose();
             voiceChatPluginSettingsAsset.Dispose();
             microphoneStateManager?.Dispose();
             nametagsHandler?.Dispose();
             voiceChatHandler.Dispose();
             roomManager?.Dispose();
             microphoneAudioToggleController?.Dispose();
-            privateVoiceChatController?.Dispose();
-            communitiesVoiceChatController?.Dispose();
-            sceneVoiceChatController?.Dispose();
-            voiceChatPanelResizeController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -122,14 +110,9 @@ namespace DCL.PluginSystem.Global
             var playerEntry = pluginSettings.PlayerEntryView;
             var muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
             var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
-
-            voiceChatPanelResizeController = new VoiceChatPanelResizeController(mainUIView.VoiceChatPanelResizeView, voiceChatOrchestrator);
-
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
-            privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
-            sceneVoiceChatController = new SceneVoiceChatController(mainUIView.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
+            voiceChatPanelController = new VoiceChatPanelController(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry);
         }
 
         [Serializable]

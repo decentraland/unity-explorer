@@ -7,7 +7,6 @@ using DG.Tweening;
 using MVC;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 
 namespace DCL.Chat
 {

@@ -53,7 +53,7 @@ namespace DCL.Chat
             subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             subTitleButtonPresenter.Hide();
-            SetVoiceChatPanelSize(false);
+            SetVoiceChatPanelState(false);
 
             SetPanelsFocus(isFocused: false, animate);
         }
@@ -72,7 +72,7 @@ namespace DCL.Chat
             subTitleButtonPresenter.Show();
             subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
-            SetVoiceChatPanelSize(true);
+            SetVoiceChatPanelState(true);
 
             SetPanelsFocus(isFocused: true, animate: false);
         }
@@ -87,7 +87,7 @@ namespace DCL.Chat
             messageFeedPresenter.TryDeactivate();
             chatInputPresenter.Hide();
             memberListPresenter.Show();
-            SetVoiceChatPanelSize(true);
+            SetVoiceChatPanelState(true);
 
             SetPanelsFocus(isFocused: false, animate: false);
         }
@@ -104,7 +104,7 @@ namespace DCL.Chat
             messageFeedPresenter.TryDeactivate();
             memberListPresenter.Hide();
             chatInputPresenter.ShowUnfocused();
-            SetVoiceChatPanelSize(false);
+            SetVoiceChatPanelState(false);
 
             SetPanelsFocus(isFocused: false, animate: true);
         }
@@ -121,24 +121,22 @@ namespace DCL.Chat
             chatInputPresenter.Hide();
             memberListPresenter.Hide();
 
-            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.HIDDEN);
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN);
 
             SetPanelsFocus(isFocused: false, animate: false);
         }
 
-        private void SetVoiceChatPanelSize(bool shouldExpand)
+        private void SetVoiceChatPanelState(bool shouldFocus)
         {
-            if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
-
-            var currentSize = voiceChatOrchestrator.CurrentVoiceChatPanelSize.Value;
-            //When the chat changes focus and the Voice Chat panel is expanded we need to change the size of it
-            switch (shouldExpand)
+            //When the chat changes focus and the Voice Chat panel is expanded we need to change its focus state too
+            var currentState = voiceChatOrchestrator.CurrentVoiceChatPanelState.Value;
+            switch (shouldFocus)
             {
                 case false when
-                    currentSize is VoiceChatPanelSize.EXPANDED or VoiceChatPanelSize.HIDDEN:
-                    voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS); break;
-                case true when currentSize is VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS or VoiceChatPanelSize.HIDDEN:
-                    voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED); break;
+                    currentState is VoiceChatPanelState.FOCUSED or VoiceChatPanelState.HIDDEN:
+                    voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED); break;
+                case true when currentState is VoiceChatPanelState.UNFOCUSED or VoiceChatPanelState.HIDDEN:
+                    voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED); break;
             }
         }
 

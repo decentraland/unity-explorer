@@ -14,6 +14,7 @@ namespace DCL.VoiceChat
         [SerializeField] private LayoutElement voiceChatPanelLayoutElement = null!;
 
         private CancellationTokenSource cts = new();
+        private Vector2 cachedVector = Vector2.zero;
 
         public void Resize(float newHeight, bool instant = false)
         {
@@ -24,8 +25,15 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            var height = new Vector2(0, newHeight);
-            voiceChatPanelLayoutElement.DOPreferredSize(height, ANIMATION_TIME).WithCancellation(cts.Token);
+            cachedVector.y = newHeight;
+            voiceChatPanelLayoutElement.DOPreferredSize(cachedVector, ANIMATION_TIME).WithCancellation(cts.Token).Forget();
+        }
+
+        public async UniTask ResizeAsync(float newHeight)
+        {
+            cts = cts.SafeRestart();
+            cachedVector.y = newHeight;
+            await voiceChatPanelLayoutElement.DOPreferredSize(cachedVector, ANIMATION_TIME).WithCancellation(cts.Token);
         }
     }
 }

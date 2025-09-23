@@ -912,7 +912,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(
                     new VoiceChatPlugin(
                         roomHub,
-                        mainUIView,
+                        mainUIView.VoiceChatPanelView,
                         voiceChatContainer,
                         profileRepositoryWrapper,
                         entityParticipantTable,
@@ -920,9 +920,7 @@ namespace Global.Dynamic
                         playerEntity,
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
-                        assetsProvisioner,
-                        debugBuilder
-                    )
+                        assetsProvisioner)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

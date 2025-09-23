@@ -26,63 +26,63 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public event Action EndStreamButtonCLicked;
 
         [field: SerializeField]
-        public TMP_Text CommunityName { get; private set; }
+        public TMP_Text CommunityName { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CommunityButton { get; private set; }
+        public Button CommunityButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Sprite DefaultCommunitySprite { get; private set; }
+        public Sprite DefaultCommunitySprite { get; private set; } = null!;
 
         [field: SerializeField]
-        public ImageView CommunityThumbnail { get; private set; }
+        public ImageView CommunityThumbnail { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text ParticipantCount { get; private set; }
+        public TMP_Text ParticipantCount { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text SpeakersCount { get; private set; }
+        public TMP_Text SpeakersCount { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform SpeakersParent { get; private set; }
+        public RectTransform SpeakersParent { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject ConnectingPanel { get; private set; }
+        public GameObject ConnectingPanel { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject ContentPanel { get; private set; }
+        public GameObject ContentPanel { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject FooterPanel { get; private set; }
+        public GameObject FooterPanel { get; private set; } = null!;
 
         [field: FormerlySerializedAs("<InCallButtonsView>k__BackingField")]
         [field: FormerlySerializedAs("<InCallFooterView>k__BackingField")]
         [field: SerializeField]
-        public CommunityVoiceChatInCallButtonsView ExpandedPanelInCallButtonsView { get; private set; }
+        public CommunityVoiceChatInCallButtonsView ExpandedPanelInCallButtonsView { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject RaiseHandTooltip { get; private set; }
+        public GameObject RaiseHandTooltip { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text RaiseHandTooltipText { get; private set; }
+        public TMP_Text RaiseHandTooltipText { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button EndStreamButton { get; private set; }
+        public Button EndStreamButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button OpenListenersSectionButton  { get; private set; }
+        public Button OpenListenersSectionButton  { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject CollapseButtonImage  { get; private set; }
+        public GameObject CollapseButtonImage  { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject Separator  { get; private set; }
+        public GameObject Separator  { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject ExpandButtonImage  { get; private set; }
+        public GameObject ExpandButtonImage  { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CollapseButton  { get; private set; }
+        public Button CollapseButton  { get; private set; } = null!;
 
         [field: FormerlySerializedAs("<talkingStatusView>k__BackingField")]
         [field: SerializeField]
