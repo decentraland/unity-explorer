@@ -12,7 +12,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "de7bceffbc41b6d4bb8a43e1e0e786a6348402de"
+      "hash": "85c179e410bbc7741e10b9a2799fa0ac9d0e6c7e"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -31,7 +31,7 @@
       "url": "https://package.openupm.com"
     },
     "com.atteneder.gltfast": {
-      "version": "https://github.com/decentraland/unity-gltf.git",
+      "version": "git@github.com:decentraland/unity-gltf.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -40,7 +40,7 @@
         "com.unity.mathematics": "1.2.6",
         "com.unity.burst": "1.6.6"
       },
-      "hash": "e4587451389b6cf93b084ae434d0cc3d32a45076"
+      "hash": "c6a7da496f4b0d61ae70487c4ddf4c7e68c64d36"
     },
     "com.brunomikoski.animationsequencer": {
       "version": "0.5.4",
@@ -88,7 +88,7 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "https://github.com/decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
@@ -484,7 +484,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "38c92a2ff23a5e09ba58c84d068a892da7cdbedd"
+      "hash": "85c179e410bbc7741e10b9a2799fa0ac9d0e6c7e"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
@@ -507,7 +507,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "4d02af4b7063c3d20ccbda56e6ed7029cc3e1197"
+      "hash": "e81de1896f07f77ba5a363a3e76c19faf42d1e52"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
