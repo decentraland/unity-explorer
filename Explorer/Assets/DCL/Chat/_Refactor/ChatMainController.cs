@@ -15,6 +15,7 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.UI.InputFieldFormatting;
 using DCL.Translation.Service.Memory;
 using DCL.Translation.Settings;
 using DCL.UI.Profiles.Helpers;
@@ -43,6 +44,7 @@ namespace DCL.Chat
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatClickDetectionService chatClickDetectionService;
         private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly ITextFormatter textFormatter;
 
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
@@ -77,8 +79,10 @@ namespace DCL.Chat
             ChatClickDetectionService chatClickDetectionService,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             CommunitiesDataProvider communityDataProvider,
+            CommunitiesDataProvider communityDataProvider,
             ITranslationSettings translationSettings,
-            ITranslationMemory translationMemory) : base(viewFactory)
+            ITranslationMemory translationMemory,
+            ITextFormatter textFormatter) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
@@ -97,6 +101,7 @@ namespace DCL.Chat
             this.chatClickDetectionService = chatClickDetectionService;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communityDataProvider;
+            this.textFormatter = textFormatter;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -176,7 +181,8 @@ namespace DCL.Chat
                 commandRegistry.ResolveInputStateCommand,
                 commandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
-                commandRegistry.SendMessage);
+                commandRegistry.SendMessage,
+                textFormatter);
 
             var memberListPresenter = new ChatMemberListPresenter(
                 viewInstance.MemberListView,

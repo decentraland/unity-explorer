@@ -546,6 +546,12 @@ MonoBehaviour:
       Severity: 4
     - Category: CHROME_DEVTOOL_PROTOCOL
       Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 0
     - Category: CHAT_TRANSLATE
       Severity: 3
     - Category: CHAT_TRANSLATE

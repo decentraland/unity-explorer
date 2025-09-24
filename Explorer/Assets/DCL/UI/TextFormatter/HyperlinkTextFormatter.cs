@@ -2,6 +2,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Utilities;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -76,6 +77,42 @@ namespace DCL.UI.InputFieldFormatting
             ProcessMainStringBuilder();
 
             return mainStringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Extracts matches from the given text based on the recognized elements (URLs, scene coordinates, world names, and usernames).
+        /// The results are stored in the provided list as tuples containing the type of match and the match object.
+        /// </summary>
+        /// <param name="text">The input text to search for matches.</param>
+        /// <param name="matchesResult">
+        /// A list to store the results of the matches. Each match is represented as a tuple containing:
+        /// - <see cref="TextFormatMatchType"/>: The type of the match (e.g., URL, SCENE, WORLD, NAME).
+        /// - <see cref="Match"/>: The actual match object.
+        /// </param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void GetMatches(string text, List<(TextFormatMatchType, Match)> matchesResult)
+        {
+            matchesResult.Clear();
+
+            if (string.IsNullOrEmpty(text)) return;
+
+            var currentMatch = COMBINED_LINK_REGEX.Match(text);
+
+            while (currentMatch.Success)
+            {
+                if (currentMatch.Groups[URL_GROUP_NAME].Success)
+                    matchesResult.Add((TextFormatMatchType.URL, currentMatch));
+                else if (currentMatch.Groups[SCENE_GROUP_NAME].Success && AreCoordsValid(
+                             int.Parse(currentMatch.Groups[X_COORD_GROUP_NAME].Value),
+                             int.Parse(currentMatch.Groups[Y_COORD_GROUP_NAME].Value)))
+                    matchesResult.Add((TextFormatMatchType.SCENE, currentMatch));
+                else if (currentMatch.Groups[WORLD_GROUP_NAME].Success)
+                    matchesResult.Add((TextFormatMatchType.WORLD, currentMatch));
+                else if (currentMatch.Groups[USERNAME_FULL_GROUP_NAME].Success && IsUserNameValid(currentMatch.Groups[USERNAME_NAME_GROUP_NAME].Value))
+                    matchesResult.Add((TextFormatMatchType.NAME, currentMatch));
+
+                currentMatch = currentMatch.NextMatch();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

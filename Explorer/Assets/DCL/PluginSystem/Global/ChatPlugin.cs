@@ -349,7 +349,8 @@ namespace DCL.PluginSystem.Global
                 voiceChatOrchestrator,
                 communityDataProvider,
                 translationSettings,
-                translationMemory
+                translationMemory,
+                hyperlinkTextFormatter
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus,
