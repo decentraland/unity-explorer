@@ -142,16 +142,12 @@ namespace Decentraland.Terrain
         public static uint CreateDepth8CornerIndexStart(byte depth, uint cornerIndexStart) =>
             ((uint)depth << 24) | cornerIndexStart;
 
-        public void Initialize(TerrainGenerator terrainGenerator)
+        private void Initialize(ITerrain terrainGenerator)
         {
             if (initialized)
                 return;
 
             initialized = true;
-
-            indirectRenderingBounds.SetMinMax(
-                new Vector3(terrainGenerator.TerrainModel.MinInUnits.x, 0f, terrainGenerator.TerrainModel.MinInUnits.y),
-                new Vector3(terrainGenerator.TerrainModel.MaxInUnits.x, TerrainGenerator.MAX_HEIGHT, terrainGenerator.TerrainModel.MaxInUnits.y));
 
             GenerateQuadTree();
             SetupComputeBuffers();
@@ -166,11 +162,21 @@ namespace Decentraland.Terrain
             flowersMaterialPropertyBlock = new MaterialPropertyBlock();
         }
 
-        public void Render(LandscapeData landscapeData, TerrainGenerator terrainGenerator,
+        public void OnTerrainLoaded(ITerrain terrain)
+        {
+            Initialize(terrain);
+
+            TerrainModel model = terrain.TerrainModel!;
+            int2 min = model.MinInUnits;
+            int2 max = model.MaxInUnits;
+
+            indirectRenderingBounds.SetMinMax(new Vector3(min.x, 0f, min.y),
+                new Vector3(max.x, TerrainGenerator.MAX_HEIGHT, max.y));
+        }
+
+        public void Render(LandscapeData landscapeData, ITerrain terrainGenerator,
             Camera camera, bool renderToAllCameras)
         {
-            Initialize(terrainGenerator);
-
             RunFrustumCulling(landscapeData, terrainGenerator, camera);
             GenerateScatteredGrass(terrainGenerator);
             arrInstCount.SetData(arrLOD, 0, 0, 3);
@@ -322,7 +328,7 @@ namespace Decentraland.Terrain
             quadTreeNodesComputeBuffer.SetData(quadTreeNodes.ToArray());
         }
 
-        public void RunFrustumCulling(LandscapeData landscapeData, TerrainGenerator terrainGenerator,
+        private void RunFrustumCulling(LandscapeData landscapeData, ITerrain terrainGenerator,
             Camera camera)
         {
             if (QuadTreeCullingShader == null ||
@@ -362,7 +368,7 @@ namespace Decentraland.Terrain
             QuadTreeCullingShader.Dispatch(ShaderKernels.QuadTreeCullingKernel, threadGroups, 1, 1);
         }
 
-        public void GenerateScatteredGrass(TerrainGenerator terrainGenerator)
+        private void GenerateScatteredGrass(ITerrain terrainGenerator)
         {
             if (ScatterGrassShader == null ||
                 HeightMapTexture == null ||
@@ -405,7 +411,7 @@ namespace Decentraland.Terrain
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Z));
         }
 
-        public void GenerateScatteredFlowers(TerrainGenerator terrainGenerator)
+        private void GenerateScatteredFlowers(ITerrain terrainGenerator)
         {
             if (ScatterFlowersShader == null ||
                 HeightMapTexture == null ||
@@ -468,7 +474,7 @@ namespace Decentraland.Terrain
                 Mathf.CeilToInt(1.0f / threadGroupSizes_Z));
         }
 
-        public void GenerateScatteredCatTails(TerrainGenerator terrainGenerator)
+        private void GenerateScatteredCatTails(ITerrain terrainGenerator)
         {
             if (ScatterCatTailsShader == null ||
                 HeightMapTexture == null ||

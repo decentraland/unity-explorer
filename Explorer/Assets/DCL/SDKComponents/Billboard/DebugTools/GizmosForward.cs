@@ -6,8 +6,8 @@ namespace DCL.Billboard.DebugTools
     {
         private void OnDrawGizmos()
         {
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(transform.position, transform.position + transform.forward);
+            UnityEngine.Gizmos.color = Color.green;
+            UnityEngine.Gizmos.DrawLine(transform.position, transform.position + transform.forward);
         }
     }
 }

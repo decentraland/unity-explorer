@@ -3,8 +3,9 @@ using Arch.SystemGroups;
 using DCL.SDKComponents.NFTShape.Component;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Unity.Groups;
+
 using ECS.Unity.Visibility.Systems;
+
 
 namespace DCL.SDKComponents.NFTShape.System
 {

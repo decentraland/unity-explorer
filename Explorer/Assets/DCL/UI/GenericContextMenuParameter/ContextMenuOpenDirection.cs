@@ -1,4 +1,4 @@
-namespace DCL.UI.GenericContextMenuParameter
+namespace DCL.UI
 {
     public enum ContextMenuOpenDirection
     {

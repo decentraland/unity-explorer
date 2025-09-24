@@ -4,21 +4,19 @@ using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.UI.GenericContextMenu.Controllers.Communities;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using UnityEngine;
 using DCL.UI.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using Nethereum.Siwe.Core.Recap;
 using System;
 using System.Threading;
 using UnityEngine.UI;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {

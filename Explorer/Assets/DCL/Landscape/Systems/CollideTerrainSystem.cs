@@ -49,7 +49,7 @@ namespace DCL.Landscape.Systems
         {
             this.landscapeData = landscapeData;
             this.landscape = landscape;
-            landscape.TerrainLoaded = OnTerrainLoaded;
+            landscape.TerrainLoaded += OnTerrainLoaded;
             collisionRadius = landscapeData.terrainData.parcelSize * (1f / 3f);
             dirtyParcels = new List<ParcelData>();
             freeParcels = new List<ParcelData>();
@@ -333,7 +333,7 @@ namespace DCL.Landscape.Systems
             }
         }
 
-        private void OnTerrainLoaded()
+        private void OnTerrainLoaded(ITerrain terrain)
         {
             freeParcels.AddRange(usedParcels);
             usedParcels.Clear();

@@ -3,6 +3,7 @@ using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -13,7 +14,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 
 namespace Global.Dynamic.Landscapes
 {
@@ -24,7 +24,7 @@ namespace Global.Dynamic.Landscapes
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly bool landscapeEnabled;
         public readonly Transform? Root;
-        public Action? TerrainLoaded;
+        public Action<ITerrain>? TerrainLoaded;
 
         public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled)
         {
@@ -66,7 +66,7 @@ namespace Global.Dynamic.Landscapes
                     await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
             }
 
-            TerrainLoaded?.Invoke();
+            TerrainLoaded?.Invoke(CurrentTerrain);
             return EnumResult<LandscapeError>.SuccessResult();
         }
 

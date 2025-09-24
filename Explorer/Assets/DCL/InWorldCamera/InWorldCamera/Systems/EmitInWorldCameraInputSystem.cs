@@ -43,6 +43,7 @@ namespace DCL.InWorldCamera.Systems
                 input.Panning = inputSchema.Panning.ReadValue<float>();
                 input.Tilting = inputSchema.Tilting.ReadValue<float>();
                 input.IsRunning = inputSchema.Run.IsPressed();
+                input.IsWalking = inputSchema.Walk.IsPressed();
 
                 input.Aim = inputSchema.Rotation.ReadValue<Vector2>();
                 input.MouseIsDragging = inputSchema.MouseDrag.IsPressed();

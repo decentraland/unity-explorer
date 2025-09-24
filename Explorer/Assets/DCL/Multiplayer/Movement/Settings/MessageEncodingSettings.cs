@@ -1,5 +1,4 @@
-﻿using DCL.Landscape.Settings;
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
