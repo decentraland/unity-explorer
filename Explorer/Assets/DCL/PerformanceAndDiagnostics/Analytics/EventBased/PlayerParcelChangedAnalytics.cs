@@ -1,8 +1,8 @@
 ﻿using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Utilities;
-using ECS.SceneLifeCycle;
 using Segment.Serialization;
 using System;
+using DCL.Utilities;
+using ECS.SceneLifeCycle;
 using UnityEngine;
 
 namespace DCL.Analytics.Systems

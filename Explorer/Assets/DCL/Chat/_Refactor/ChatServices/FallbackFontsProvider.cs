@@ -1,8 +1,8 @@
-﻿using DCL.AssetsProvision;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using DCL.AssetsProvision;
 using TMPro;
 using UnityEngine.AddressableAssets;
 

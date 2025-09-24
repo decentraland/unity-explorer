@@ -380,7 +380,7 @@ namespace DCL.Minimap
 
             return () => chatMessagesBus.Send(
                 ChatChannel.NEARBY_CHANNEL,
-                $"/{reloadSceneCommand.Command}",
+                $"/{reloadSceneCommand.Command}", ChatMessageOrigin.MINIMAP, 0d,
                 RELOAD_SCENE_COMMAND_ORIGIN
             );
         }

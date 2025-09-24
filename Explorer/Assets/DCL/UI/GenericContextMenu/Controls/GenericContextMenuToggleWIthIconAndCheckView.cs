@@ -1,13 +1,16 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuToggleWithIconAndCheckView : GenericContextMenuToggleWithCheckView
     {
         [Header("Icon-Specific References")]
         [SerializeField] private Image iconImage;
+
+        [SerializeField] private RectTransform onBackground;
+        [SerializeField] private RectTransform offBackground;
 
         public void Configure(ToggleWithIconAndCheckContextMenuControlSettings settings, bool initialValue)
         {
@@ -29,6 +32,15 @@ namespace DCL.UI.GenericContextMenu.Controls
                 iconImage.sprite = settings.icon;
                 iconImage.color = settings.iconColor;
             }
+
+            OnToggleChanged(initialValue);
+            toggleComponent.onValueChanged.AddListener(OnToggleChanged);
+        }
+
+        private void OnToggleChanged(bool isOn)
+        {
+            onBackground.gameObject.SetActive(!isOn);
+            offBackground.gameObject.SetActive(isOn);
         }
     }
 }

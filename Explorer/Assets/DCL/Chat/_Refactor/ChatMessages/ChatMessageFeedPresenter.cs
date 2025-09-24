@@ -17,10 +17,10 @@ using DCL.Translation.Events;
 using DCL.Translation.Models;
 using DCL.Translation.Service.Memory;
 using DCL.Translation.Settings;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 using Utility;
+using DCL.UI;
+using DCL.UI.Controls.Configs;
 
 namespace DCL.Chat.ChatMessages
 {

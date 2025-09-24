@@ -16,8 +16,6 @@ using DCL.Communities;
 using DCL.Settings.Settings;
 using DCL.Translation.Events;
 using DCL.Translation.Settings;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;

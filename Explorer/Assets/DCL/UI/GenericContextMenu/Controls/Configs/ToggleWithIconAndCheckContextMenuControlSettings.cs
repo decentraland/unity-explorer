@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls.Configs
+namespace DCL.UI.Controls.Configs
 {
     public class ToggleWithIconAndCheckContextMenuControlSettings : ToggleContextMenuControlSettings
     {

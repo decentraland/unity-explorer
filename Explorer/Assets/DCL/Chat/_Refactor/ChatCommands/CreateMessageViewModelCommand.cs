@@ -10,7 +10,6 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System.Threading;
 using DCL.Translation.Service.Memory;
-using Utility.Types;
 
 namespace DCL.Chat.ChatCommands
 {

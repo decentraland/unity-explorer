@@ -14,7 +14,7 @@ namespace DCL.Chat.MessageBus
     {
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
 
-        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp, string topic = "");
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp = double.MinValue, string topic = "");
     }
 
     public static class ChatMessageBusExtensions
