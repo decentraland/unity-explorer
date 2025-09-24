@@ -4,11 +4,11 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.EventBus;
 using DCL.Emoji;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Threading;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat.ChatInput
 {

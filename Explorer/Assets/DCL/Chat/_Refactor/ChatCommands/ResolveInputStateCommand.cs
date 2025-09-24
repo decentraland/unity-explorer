@@ -1,8 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
+using DCL.Utility.Types;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.Chat.ChatCommands
 {

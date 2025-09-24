@@ -1,8 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.ApplicationGuards;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;

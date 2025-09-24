@@ -3,15 +3,15 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.FeatureFlags;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
-using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -22,19 +22,21 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Prefs;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.InputFieldFormatting;
-using DCL.UI.Profiles.Helpers;
+using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using Utility;
+using Utility.Arch;
 using DCL.VoiceChat;
 using DCL.Web3;
-using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Realm;
@@ -43,9 +45,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
-using Utility;
-using Utility.Arch;
-using Utility.Types;
 using ChatMessage = DCL.Chat.History.ChatMessage;
 // ReSharper disable InconsistentNaming
 
@@ -755,9 +754,9 @@ namespace DCL.Chat
             hasToResetUnreadMessagesWhenNewMessageArrive = true;
         }
 
-        private void OnViewInputSubmitted(ChatChannel channel, string message, string _)
+        private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
         {
-            chatMessagesBus.Send(channel, message, ChatMessageOrigin.CHAT, DateTime.UtcNow.ToOADate());
+            chatMessagesBus.Send(channel, message, origin);
         }
 
         private void OnViewEmojiSelectionVisibilityChanged(bool isVisible)

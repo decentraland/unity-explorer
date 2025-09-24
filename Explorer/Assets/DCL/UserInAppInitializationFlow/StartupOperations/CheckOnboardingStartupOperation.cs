@@ -7,13 +7,13 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System;
 using System.Threading;
-using Utility.Types;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public class CheckOnboardingStartupOperation : IStartupOperation
     {

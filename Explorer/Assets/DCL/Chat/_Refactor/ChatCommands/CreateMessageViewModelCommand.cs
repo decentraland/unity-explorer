@@ -7,6 +7,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System.Threading;
 using DCL.Translation.Service.Memory;
 using Utility.Types;

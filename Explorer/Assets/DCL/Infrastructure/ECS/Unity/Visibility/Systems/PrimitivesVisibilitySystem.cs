@@ -3,8 +3,9 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Unity.Groups;
+
 using ECS.Unity.PrimitiveRenderer.Components;
+
 
 namespace ECS.Unity.Visibility.Systems
 {

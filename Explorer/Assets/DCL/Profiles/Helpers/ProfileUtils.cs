@@ -11,7 +11,7 @@ namespace DCL.Profiles.Helpers
 {
     public static class ProfileUtils
     {
-        internal static readonly SpriteData DEFAULT_PROFILE_PIC = Texture2D.grayTexture.ToUnownedFulLRectSpriteData();
+        public static readonly SpriteData DEFAULT_PROFILE_PIC = Texture2D.grayTexture.ToUnownedFulLRectSpriteData();
 
         public static void CreateProfilePicturePromise(Profile profile, World world, IPartitionComponent partitionComponent)
         {

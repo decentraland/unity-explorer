@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
@@ -10,7 +11,6 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.Proto;
 using System;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.VoiceChat
 {
@@ -85,6 +85,7 @@ namespace DCL.VoiceChat
             reconnectionManager.ReconnectionSuccessful -= OnReconnectionSuccessful;
             reconnectionManager.ReconnectionFailed -= OnReconnectionFailed;
 
+            localParticipantIsSpeakerSubscription.Dispose();
             callStatusSubscription?.Dispose();
             reconnectionManager?.Dispose();
             trackManager?.Dispose();

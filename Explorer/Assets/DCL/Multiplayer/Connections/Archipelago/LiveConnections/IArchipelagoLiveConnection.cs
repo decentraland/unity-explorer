@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Messaging;
+using DCL.Utility.Types;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {

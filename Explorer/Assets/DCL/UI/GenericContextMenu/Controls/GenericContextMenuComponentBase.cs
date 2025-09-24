@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(HorizontalLayoutGroup))]

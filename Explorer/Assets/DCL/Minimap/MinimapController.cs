@@ -4,9 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
-using DCL.Chat.Commands;
-using DCL.Chat.History;
-using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -22,10 +19,11 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
+using DCL.UI.Controls.Configs;
 using DG.Tweening;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -50,6 +48,7 @@ namespace DCL.Minimap
             { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" }
         };
         private const float ANIMATION_TIME = 0.2f;
+        private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
@@ -382,8 +381,7 @@ namespace DCL.Minimap
             return () => chatMessagesBus.Send(
                 ChatChannel.NEARBY_CHANNEL,
                 $"/{reloadSceneCommand.Command}",
-                ChatMessageOrigin.MINIMAP,
-                DateTime.UtcNow.ToOADate()
+                RELOAD_SCENE_COMMAND_ORIGIN
             );
         }
 
