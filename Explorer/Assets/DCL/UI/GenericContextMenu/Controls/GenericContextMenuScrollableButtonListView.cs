@@ -1,4 +1,4 @@
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Utilities;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuScrollableButtonListView : GenericContextMenuComponentBase
     {

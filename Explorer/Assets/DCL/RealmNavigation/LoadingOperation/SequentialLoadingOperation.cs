@@ -1,11 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.RealmNavigation.LoadingOperation
 {

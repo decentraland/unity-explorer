@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.SDKComponents.AudioSources;
+using DCL.Utility;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;

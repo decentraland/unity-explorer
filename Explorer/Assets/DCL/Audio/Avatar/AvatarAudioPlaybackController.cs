@@ -2,7 +2,6 @@
 using DCL.Diagnostics;
 using UnityEngine;
 using System.Threading;
-using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.Audio.Avatar

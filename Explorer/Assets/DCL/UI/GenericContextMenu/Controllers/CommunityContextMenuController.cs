@@ -1,12 +1,10 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using MVC;
 using System;
 using UnityEngine;
 
-namespace DCL.Chat.Services
+namespace DCL.UI
 {
     public class CommunityContextMenuController
     {

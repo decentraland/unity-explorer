@@ -3,7 +3,8 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -67,7 +68,7 @@ namespace DCL.MapRenderer
                 if (CheckIfArrivedToDestination(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint))
                 {
                     mapPathEventBus.ArrivedToDestination();
-                    NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.AddNotification(destinationReachedNotification);
+                    NotificationsBusController.Instance.AddNotification(destinationReachedNotification);
                 }
                 else
                 {

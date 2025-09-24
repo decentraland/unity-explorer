@@ -67,7 +67,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             playerEntriesPool = new ObjectPool<PlayerEntryView>(
                 () => Object.Instantiate(playerEntry),
-                actionOnGet: entry => entry.gameObject.SetActive(true),
+                actionOnGet: OnGetPlayerEntry,
                 actionOnRelease: entry => entry.gameObject.SetActive(false));
 
             voiceChatTypeSubscription = voiceChatOrchestrator.CurrentVoiceChatType.Subscribe(OnVoiceChatTypeChanged);
@@ -76,6 +76,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+        }
+
+        private void OnGetPlayerEntry(PlayerEntryView entry)
+        {
+            entry.gameObject.SetActive(true);
+            entry.CleanupEntry();
         }
 
         private void UpdateCommunityHeader(string communityId)
@@ -265,7 +271,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries[participantState.WalletId] =  entryView;
-            entryView.CleanupEntry();
 
             var nameColor = NameColorHelper.GetNameColor(participantState.Name.Value);
 
@@ -332,8 +337,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 }
             }
             participantSubscriptions.Clear();
+
             foreach (KeyValuePair<string, PlayerEntryView> usedPlayerEntry in usedPlayerEntries)
+            {
+                usedPlayerEntry.Value.CleanupEntry();
                 playerEntriesPool.Release(usedPlayerEntry.Value);
+            }
 
             usedPlayerEntries.Clear();
         }

@@ -1,10 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System.Threading;
-using Utility.Types;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesBrowser.Commands
 {
@@ -32,7 +32,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
                     return;
 
                 if (!result.Success || !result.Value)
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(JOIN_COMMUNITY_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(JOIN_COMMUNITY_ERROR_MESSAGE));
             }
         }
     }

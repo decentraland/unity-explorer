@@ -6,9 +6,10 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Unity.Groups;
+
 using ECS.Unity.Visibility;
 using ECS.Unity.Visibility.Systems;
+
 
 namespace DCL.SDKComponents.TextShape.System
 {
