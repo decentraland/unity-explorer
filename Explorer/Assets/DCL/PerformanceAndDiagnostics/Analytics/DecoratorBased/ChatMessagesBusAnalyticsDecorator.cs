@@ -44,7 +44,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             JsonObject jsonObject = new JsonObject
                 {
                     { "is_command", message[0] == '/' },
-                    { "message_id", selfProfile is { OwnProfile: not null } ? ChatUtils.GetId(selfProfile.OwnProfile.WalletId, timestamp) : 0 },
+                    { "message_id", selfProfile is { OwnProfile: not null } ? ChatUtils.GetId(selfProfile.OwnProfile.UserId, timestamp) : "NULL" },
                     { "length", message.Length },
                     { "origin", origin.ToStringValue() },
                     { "is_mention", CheckIfIsMention(message)},
