@@ -1,6 +1,9 @@
 ﻿using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Cysharp.Threading.Tasks;
+using System.Threading;
+using Utility;
 
 public class SkyboxRenderController : MonoBehaviour
 {
@@ -16,8 +19,6 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SUN_RADIANCE = Shader.PropertyToID("_Sun_Radiance");
     private static readonly int SUN_RADIANCE_INTENSITY = Shader.PropertyToID("_Sun_Radiance_Intensity");
     private static readonly int MOON_MASK_SIZE = Shader.PropertyToID("_Moon_Mask_Size");
-
-    [SerializeField] private Material skyboxMaterial;
 
     [Header("Directional Light")]
     [SerializeField] private Light directionalLight;
@@ -56,7 +57,14 @@ public class SkyboxRenderController : MonoBehaviour
     [InspectorName("Enabled")] [SerializeField] private bool fog = true;
     [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
 
-    private float currentTimeOfDay = float.MinValue;
+    private Material skyboxMaterial;
+
+    private float directionalLightTimeOfDay = float.MinValue;
+    private float targetTimeOfDay = float.MinValue;
+    private CancellationTokenSource transitionCancellationTokenSource;
+
+    [Header("Transition Settings")]
+    [SerializeField] private float transitionDuration;
 
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay)
     {
@@ -112,20 +120,49 @@ public class SkyboxRenderController : MonoBehaviour
             RenderSettings.fog = true;
 
         UpdateSkybox(initialTimeOfDay);
+
+        directionalLightTimeOfDay = initialTimeOfDay;
+        UpdateDirectionalLight(initialTimeOfDay);
     }
 
-    /// <summary>
+    /// <summary>,
     ///     Calls all the necessary methods to update the skybox and environment
     /// </summary>
     public void UpdateSkybox(float timeOfDay)
     {
-        if (Mathf.Approximately(currentTimeOfDay, timeOfDay)) return;
-        currentTimeOfDay = timeOfDay;
-
         UpdateIndirectLight(timeOfDay);
-        UpdateDirectionalLight(timeOfDay);
         UpdateSkyboxColor(timeOfDay);
         UpdateFog(timeOfDay);
+
+        // we update light in intervals to hide visible artifacts for moving shadows (anti-aliasing related, espescially on the benches)
+        if (!Mathf.Approximately(targetTimeOfDay, timeOfDay))
+        {
+            targetTimeOfDay = timeOfDay;
+            StartDirectionalLightTransitionAsync(timeOfDay, transitionDuration).Forget();
+        }
+    }
+
+    private async UniTaskVoid StartDirectionalLightTransitionAsync(float newTimeOfDay, float duration)
+    {
+        transitionCancellationTokenSource = transitionCancellationTokenSource.SafeRestart();
+
+        CancellationToken token = transitionCancellationTokenSource.Token;
+        float startTime = directionalLightTimeOfDay;
+        float startTimeStamp = Time.time;
+
+        while (Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
+        {
+            float progress = (Time.time - startTimeStamp) / duration;
+            float lerpedTimeOfDay = Mathf.Lerp(startTime, newTimeOfDay, progress);
+
+            directionalLightTimeOfDay = lerpedTimeOfDay;
+            UpdateDirectionalLight(lerpedTimeOfDay);
+
+            await UniTask.Yield(token);
+        }
+
+        directionalLightTimeOfDay = newTimeOfDay;
+        UpdateDirectionalLight(newTimeOfDay);
     }
 
     /// <summary>
@@ -197,6 +234,16 @@ public class SkyboxRenderController : MonoBehaviour
             RenderSettings.fogColor = fogColorRamp.Evaluate(timeOfDay);
     }
 
+    private void OnDestroy()
+    {
+        transitionCancellationTokenSource.SafeCancelAndDispose();
+    }
+
+    private void OnDisable()
+    {
+        transitionCancellationTokenSource.SafeCancelAndDispose();
+    }
+
 #if UNITY_EDITOR
     public bool editMode;
 
@@ -205,7 +252,7 @@ public class SkyboxRenderController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(null, null, null, 0.5f);
+            Initialize(RenderSettings.skybox, null!, null!, 0.5f);
     }
 #endif
 }

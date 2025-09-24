@@ -1,0 +1,22 @@
+{
+    "name": "DCL.UI.DebugMenu",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:d5368878df29ff849933a7d3586d18c6",
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
+        "GUID:4725c02394ab4ce19f889e4e8001f989"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

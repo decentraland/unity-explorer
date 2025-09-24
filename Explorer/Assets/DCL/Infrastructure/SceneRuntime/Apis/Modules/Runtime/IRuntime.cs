@@ -105,7 +105,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
             /// </summary>
             public string baseUrl;
 
-            public CurrentSceneEntityResponse(string urn, List<ContentDefinition>? content, string metadataJson, string baseUrl)
+            public CurrentSceneEntityResponse(string urn, ContentDefinition[]? content, string metadataJson, string baseUrl)
             {
                 this.urn = urn;
                 contentJson = content is null ? "{}" : JsonConvert.SerializeObject(content);

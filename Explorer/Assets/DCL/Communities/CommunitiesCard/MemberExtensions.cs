@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Friends;
-using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Controls.Configs;
 using DCL.Web3;
 
 namespace DCL.Communities.CommunitiesCard
@@ -15,6 +16,16 @@ namespace DCL.Communities.CommunitiesCard
                 userColor = profile.GetUserNameColor(),
                 userName = profile.name,
                 userThumbnailAddress = profile.profilePictureUrl
+            };
+
+        public static UserProfileContextMenuControlSettings.UserData ToUserData(this ICommunityMemberData profile) =>
+            new ()
+            {
+                hasClaimedName = profile.HasClaimedName,
+                userAddress = profile.Address,
+                userColor = profile.GetUserNameColor(),
+                userName = profile.Name,
+                userThumbnailAddress = profile.ProfilePictureUrl
             };
 
         public static GetCommunityMembersResponse.MemberData ToMemberData(this UserProfileContextMenuControlSettings.UserData user) =>

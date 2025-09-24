@@ -85,9 +85,5 @@ Assets/AddressableAssetsData/link.xml.meta
 Assets/Resources/PerformanceTestRunInfo.*
 Assets/Resources/PerformanceTestRunSettings.*
 
-# Disk caching
+# Disk caching 
 DiskCache/
-
-#GPUI PRO
-Assets/GPUInstancerPro/
-Assets/GPUInstancerPro.meta

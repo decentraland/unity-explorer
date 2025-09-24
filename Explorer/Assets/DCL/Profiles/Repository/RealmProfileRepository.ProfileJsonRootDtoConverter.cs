@@ -2,11 +2,13 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Scripting;
 
 namespace DCL.Profiles
 {
     public partial class RealmProfileRepository
     {
+        [Preserve]
         private class ProfileJsonRootDtoConverter : JsonConverter<GetProfileJsonRootDto>
         {
             public override void WriteJson(JsonWriter writer, GetProfileJsonRootDto? value, JsonSerializer serializer)
@@ -65,7 +67,7 @@ namespace DCL.Profiles
                 profile.profession = jObject["profession"]?.Value<string>() ?? "";
                 profile.realName = jObject["realName"]?.Value<string>() ?? "";
                 profile.hobbies = jObject["hobbies"]?.Value<string>() ?? "";
-                profile.birthdate = jObject["birthdate"]?.Value<long>() ?? 0;
+                profile.birthdate = jObject["birthdate"]?.Value<long?>() ?? 0;
                 DeserializeLinks(jObject["links"]!, ref profile.links);
                 DeserializeArrayToList(jObject["blocked"], ref profile.blocked);
                 DeserializeArrayToList(jObject["interests"], ref profile.interests);

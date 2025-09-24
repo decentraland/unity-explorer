@@ -2,10 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using Nethereum.Siwe.Core.Recap;
 using SuperScrollView;
@@ -13,9 +13,8 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility.Types;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
-using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
+using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
 
 namespace DCL.Communities.CommunitiesCard.Places

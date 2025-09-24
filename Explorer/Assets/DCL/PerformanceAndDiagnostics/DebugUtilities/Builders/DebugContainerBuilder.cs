@@ -1,8 +1,8 @@
 ﻿using DCL.DebugUtilities.Views;
+using DCL.Utility.Types;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
-using Utility.Types;
 
 namespace DCL.DebugUtilities
 {
@@ -91,11 +91,9 @@ namespace DCL.DebugUtilities
             // Sort by name
             widgetBuilders.Sort(this);
 
-            container = debugRootCanvas.rootVisualElement!.Q<DebugContainer>();
+            container = debugRootCanvas.rootVisualElement.Q<DebugContainer>();
             container.style.display = DisplayStyle.Flex;
             Container.Initialize();
-
-            debugRootCanvas.rootVisualElement!.Add(Container);
 
             // Instantiate widgets
             foreach (DebugWidgetBuilder widgetBuilder in widgetBuilders)

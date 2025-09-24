@@ -1,14 +1,16 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.RealmNavigation
 {
     public interface ITeleportController
     {
+        void StartTeleportToSpawnPoint(SceneEntityDefinition sceneDataSceneEntityDefinition, CancellationToken ct);
         UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
 
         UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);

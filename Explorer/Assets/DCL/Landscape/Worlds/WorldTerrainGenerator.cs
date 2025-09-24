@@ -17,7 +17,10 @@ using Utility;
 
 namespace DCL.Landscape
 {
-    public class WorldTerrainGenerator : IDisposable, IContainParcel
+    /// <summary>
+    ///     Based on the old terrain
+    /// </summary>
+    public class WorldTerrainGenerator : IDisposable, ITerrain
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
@@ -64,6 +67,9 @@ namespace DCL.Landscape
             return false;
         }
 
+        public float GetHeight(float x, float z) =>
+            Physics.Raycast(new Vector3(x, 100, z), Vector3.down, out RaycastHit hit) ? hit.point.y : z;
+
         public void Initialize(TerrainGenerationData terrainGenData, ITerrainDetailSetter detailSetter)
         {
             this.terrainGenData = terrainGenData;
@@ -102,7 +108,9 @@ namespace DCL.Landscape
             boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
             boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
 
-            TerrainGenerationUtils.ExtractEmptyParcels(terrainModel, ref emptyParcels, ref ownedParcels);
+            TerrainGenerationUtils.ExtractEmptyParcels(terrainModel.MinParcel, terrainModel.MaxParcel,
+                ref emptyParcels, ref ownedParcels);
+
             await SetupEmptyParcelDataAsync(cancellationToken, terrainModel);
 
             // Generate TerrainData's
@@ -160,16 +168,18 @@ namespace DCL.Landscape
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)
         {
             chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, 0.1f);
+            var treeInstances = new List<TreeInstance>();
 
             var tasks = new List<UniTask>
             {
                 chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, GetMaxHeightIndex(emptyParcelsData), parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, useCache: false),
                 chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
                 chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, terrainDetailSetter, chunkModel.OccupiedParcels, false),
-                chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, useCache: false),
+                chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, treeInstances, worldSeed, cancellationToken, useCache: false),
             };
 
             await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
+            chunkModel.TerrainData.SetTreeInstances(treeInstances.ToArray(), true);
 
             chunkModel.TerrainData.SetHoles(0, 0, chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false));
         }

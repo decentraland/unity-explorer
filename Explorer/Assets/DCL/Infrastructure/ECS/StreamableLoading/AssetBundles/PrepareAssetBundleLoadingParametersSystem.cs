@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using ECS.Groups;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 
@@ -11,14 +12,13 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     Prepares Asset Bundle Parameters for loading Asset Bundle in the scene world
     /// </summary>
-    [UpdateInGroup(typeof(StreamableLoadingGroup))]
-    [UpdateBefore(typeof(LoadAssetBundleSystem))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
         private readonly ISceneData sceneData;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL) : base(world, streamingAssetURL)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
         {
             this.sceneData = sceneData;
         }
@@ -30,11 +30,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
         [Query]
         [None(typeof(StreamableLoadingResult<AssetBundleData>))]
-
         // If loading is not started yet and there is no result
         private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            assetBundleIntention.Manifest = sceneData.AssetBundleManifest;
+            assetBundleIntention.AssetBundleManifestVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
+            assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

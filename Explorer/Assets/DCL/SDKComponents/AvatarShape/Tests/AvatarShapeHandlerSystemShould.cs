@@ -18,6 +18,7 @@ using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using System;
 using DCL.Diagnostics;
+using ECS.StreamableLoading.Common;
 using UnityEngine.TestTools;
 
 namespace ECS.Unity.AvatarShape.Tests
@@ -244,7 +245,6 @@ namespace ECS.Unity.AvatarShape.Tests
 
             sceneData.SceneContent.Returns(sceneContent);
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "sceneId" });
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", Array.Empty<string>(), "hash", "date"));
 
             system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, false);
 
@@ -383,8 +383,9 @@ namespace ECS.Unity.AvatarShape.Tests
             var sdkAvatarShapeComponent = world.Get<SDKAvatarShapeComponent>(entity);
             Assert.IsTrue(sdkAvatarShapeComponent.LocalSceneEmotePromise.HasValue);
             var promise = sdkAvatarShapeComponent.LocalSceneEmotePromise.Value;
-            LogAssert.Expect(LogType.Exception, "Exception: Emote loading failed");
-            var result = new StreamableLoadingResult<EmotesResolution>(ReportData.UNSPECIFIED, new Exception("Emote loading failed"));
+            var exception = new StreamableLoadingException(LogType.Exception, "Emote loading failed");
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
+            var result = new StreamableLoadingResult<EmotesResolution>(ReportData.UNSPECIFIED, exception);
             globalWorld.Add(promise.Entity, result);
 
             system.Update(0);

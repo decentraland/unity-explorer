@@ -84,6 +84,7 @@ namespace DCL.CharacterPreview
             if (globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
                 avatarBase.HeadIKRig.weight = 0;
 
+            characterPreviewAvatarContainer.DeInitialize();
             characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
             cameraController.Dispose();
         }
@@ -174,5 +175,8 @@ namespace DCL.CharacterPreview
 
         public void SetCharacterPreviewAvatarContainerActive(bool isActive) =>
             characterPreviewAvatarContainer.gameObject.SetActive(isActive);
+
+        public void ResetAvatarMovement() =>
+            cameraController.ResetAvatarMovement();
     }
 }

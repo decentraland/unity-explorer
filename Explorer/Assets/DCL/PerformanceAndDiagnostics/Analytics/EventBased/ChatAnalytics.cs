@@ -7,11 +7,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     public class ChatEventsAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
-        private readonly ChatController chatController;
+        private readonly ChatController_OBSOLETE_OLD_CHAT chatController;
 
         private bool isInitChatBubble = true;
 
-        public ChatEventsAnalytics(IAnalyticsController analytics, ChatController chatController)
+        public ChatEventsAnalytics(IAnalyticsController analytics, ChatController_OBSOLETE_OLD_CHAT chatController)
         {
             this.analytics = analytics;
             this.chatController = chatController;

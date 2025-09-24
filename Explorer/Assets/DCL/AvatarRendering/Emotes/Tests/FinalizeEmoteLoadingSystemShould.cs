@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
@@ -28,7 +29,7 @@ using UnityEngine.TestTools;
 // Define Promise types as aliases for clarity, similar to the system file
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>; // Corrected alias
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using EmoteResolutionPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
@@ -136,47 +137,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         [Test]
-        public void FinalizeAssetBundleManifestLoadingCorrectly()
-        {
-            var emoteURN = new URN("urn:manifest:emote1");
-            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
-            Entity entity = world.Create(mockEmote); // Entity holding the IEmote component
-
-            var manifest = new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", Array.Empty<string>(), "hash", "date");
-            var intention = new GetWearableAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
-            world.Add(entity, promise); // Promise is on the same entity as IEmote
-            world.Add(promise.Entity, new StreamableLoadingResult<SceneAssetBundleManifest>(manifest)); // Result on promise's entity
-
-            system.Update(0);
-
-            Assert.IsFalse(world.IsAlive(entity)); // Check promise component removed
-            Assert.IsFalse(world.IsAlive(promise.Entity));
-            Assert.IsTrue(mockEmote.ManifestResult.HasValue && mockEmote.ManifestResult.Value.Succeeded);
-            Assert.AreSame(manifest, mockEmote.ManifestResult.Value.Asset);
-        }
-
-        [Test]
-        public void CancelAssetBundleManifestLoadingCorrectly()
-        {
-            var emoteURN = new URN("urn:manifest:cancel_emote");
-            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
-            Entity entity = world.Create(mockEmote); // Carrier entity
-
-            var intention = new GetWearableAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY); // promise.Entity is result-holder
-            world.Add(entity, promise); // Add promise component to carrier
-
-            Entity resultHolderEntity = promise.Entity; // Explicitly get for assertion
-            promise.ForgetLoading(world); // This cancels the intention AND destroys promise.Entity (result-holder)
-
-            system.Update(0);
-
-            Assert.IsFalse(world.IsAlive(entity)); // Asserts carrier's promise component is gone (carrier destroyed)
-            Assert.IsFalse(world.IsAlive(resultHolderEntity));
-        }
-
-        [Test]
         public void FinalizeGltfEmoteLoadingCorrectly()
         {
             var emoteURN = new URN("urn:gltf:emote_male");
@@ -253,11 +213,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             BodyShape bodyShape = BodyShape.MALE;
             var intention = new GetGLTFIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var exception = new Exception("Simulated GLTF load failure");
+            var exception = new StreamableLoadingException(LogType.Exception, "Simulated GLTF load failure");
 
             Entity emoteEntity = CreateEmoteEntityWithPromise<GLTFData, GetGLTFIntention>(mockEmote, intention, bodyShape, out GltfPromise promise);
             Entity resultHolderEntity = promise.Entity;
-            LogAssert.Expect(LogType.Exception, $"Exception: {exception.Message}");
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
             world.Add(resultHolderEntity, new StreamableLoadingResult<GLTFData>(ReportData.UNSPECIFIED, exception));
 
             system.Update(0);
@@ -372,12 +332,12 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             BodyShape bodyShape = BodyShape.FEMALE;
             var intention = new GetAssetBundleIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var exception = new Exception("Simulated AssetBundle load failure");
+            var exception = new StreamableLoadingException(LogType.Exception, "Simulated AssetBundle load failure");
 
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
             Entity resultHolderEntity = promise.Entity;
 
-            LogAssert.Expect(LogType.Exception, $"Exception: {exception.Message}");
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
             world.Add(resultHolderEntity, new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, exception));
 
             system.Update(0);
@@ -444,7 +404,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
             BodyShape bodyShape = BodyShape.MALE;
             var intention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var exception = new Exception("Simulated AudioClip load failure");
+            var exception = new StreamableLoadingException(LogType.Exception, "Simulated AudioClip load failure");
 
             // System query: FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise, in BodyShape bodyShape)
             Entity carrierEntity = world.Create(mockEmote, bodyShape); // Entity with IEmote and BodyShape
@@ -452,7 +412,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             world.Add(carrierEntity, promise); // Add promise component to carrier
             Entity resultHolderEntity = promise.Entity;
 
-            LogAssert.Expect(LogType.Exception, $"Exception: {exception.Message}");
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
             world.Add(resultHolderEntity, new StreamableLoadingResult<AudioClipData>(ReportData.UNSPECIFIED, exception));
 
             system.Update(0);
@@ -549,7 +509,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                             : new[] { AvatarAttachmentDTO.Representation.NewFakeRepresentation() },
                     },
                 },
-                content = Array.Empty<AvatarAttachmentDTO.Content>(),
+                content = Array.Empty<ContentDefinition>(),
             };
 
         public class MockStreamableDataWithURN : IStreamableRefCountData

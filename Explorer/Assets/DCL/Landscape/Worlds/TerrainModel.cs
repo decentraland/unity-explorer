@@ -1,10 +1,13 @@
-﻿using Unity.Mathematics;
+﻿using System;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.Landscape
 {
     public class TerrainModel
     {
+        public const string OBSOLESCENCE_MESSAGE = "Preserved for World Terrain Only";
+
         // Note: [units] = Unity units (1 unit = 1 meter)
 
         private const int MAX_CHUNK_SIZE = 1024; // Maximum size of a chunk in Unity [units]
@@ -12,11 +15,13 @@ namespace DCL.Landscape
 
         public readonly int2 MinParcel;
         public readonly int2 MaxParcel;
+        public readonly int PaddingInParcels;
 
         public readonly int2 SizeInUnits;
         public readonly int2 MinInUnits;
         public readonly int2 MaxInUnits;
 
+        [Obsolete(OBSOLESCENCE_MESSAGE)]
         public readonly ChunkModel[] ChunkModels;
 
         private readonly int parcelSize; // Size of a [parcel] in Unity [units]
@@ -33,6 +38,7 @@ namespace DCL.Landscape
             ChunkSizeInUnits = 0;
             ChunkSizeInParcels = 0;
 
+            PaddingInParcels = paddingInParcels;
             int2 sizeInParcels = world.SizeInParcels + (2 * paddingInParcels);
             int2 centerInParcels = world.CenterInParcels;
             MinParcel = centerInParcels - (sizeInParcels / 2);

@@ -2,8 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.Utilities;
 using MVC;
 using System;
@@ -23,8 +22,6 @@ namespace DCL.Communities.EventInfo
         [SerializeField] private Button closeButton = null!;
         [SerializeField] private EventInfoContextMenuConfiguration contextMenuSettings = null!;
         [SerializeField] private ScrollRect scrollRect = null!;
-        [field: SerializeField] public WarningNotificationView SuccessNotificationView { get; private set; } = null!;
-        [field: SerializeField] public WarningNotificationView ErrorNotificationView { get; private set; } = null!;
 
         [Header("Event Info")]
         [SerializeField] private ImageView eventImage = null!;

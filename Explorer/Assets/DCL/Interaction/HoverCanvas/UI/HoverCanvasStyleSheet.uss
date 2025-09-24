@@ -1,21 +1,52 @@
 .tooltipBackground {
-    height: 36px;
-    background-color: rgba(22, 21, 24, 0.96);
     border-radius: 12px;
-    padding-left: 7px;
-    padding-right: 10px;
     align-self: flex-start;
+    justify-content: flex-start;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 1;
+    flex-wrap: nowrap;
+    background-color: rgba(0, 0, 0, 0.95);
+    padding-left: 12px;
+    -unity-background-image-tint-color: rgb(252, 252, 252);
+    -unity-slice-scale: 1px;
+    padding-right: 12px;
+    height: 40px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-bottom-left-radius: 12px;
     max-width: 400px;
+    padding-bottom: 0;
+    padding-top: 0;
 }
 
 .tooltipInputKey {
-    height: 63%;
     border-radius: 5px;
     border-width: 1px;
     border-color: white;
     margin: 0;
-    padding-left: 3px;
-    padding-right: 3px;
+    flex-grow: 0;
+    background-color: rgba(0, 0, 0, 0);
+    flex-shrink: 0;
+    justify-content: center;
+    margin-left: 0;
+    margin-right: 12px;
+    padding-left: 6px;
+    padding-right: 6px;
+    height: 27px;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-left-color: rgba(255, 255, 255, 0.3);
+    border-right-color: rgba(255, 255, 255, 0.3);
+    border-top-color: rgba(255, 255, 255, 0.3);
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
 }
 
 .unity-label {
@@ -24,17 +55,59 @@
 }
 
 .tooltipIcon {
-    height: 65%;
-    width: 18px;
-    margin-left: 2px;
+    --unity-image: var(--sprite-interaction__icon-mouse-left);
+    align-self: auto;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-shrink: 0;
+    display: flex;
+    margin-left: 0;
+    margin-right: 12px;
+    font-size: 12px;
+    height: 22px;
+    width: 22px;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
 }
 
 .tooltipHintText {
-    max-height: 70%;
-    margin-left: 3px;
+    color: rgb(252, 252, 252);
+    -unity-font: initial;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    white-space: normal;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    align-self: center;
+    justify-content: flex-start;
+    display: flex;
+    visibility: visible;
+    overflow: hidden;
+    margin-left: 0;
+    font-size: 16px;
+    max-height: 100%;
+    height: auto;
+    width: auto;
+    margin-right: 0;
+    padding-right: 0;
+    -unity-text-outline-color: rgba(255, 255, 255, 0);
 }
 
 .alignedTooltipGap {
     margin-top: 10px;
     margin-bottom: 10px;
+}
+
+.tooltipKeyLabel {
+    color: rgb(255, 255, 255);
+    -unity-text-align: middle-center;
+    font-size: 13px;
+    -unity-font-style: bold;
+    white-space: nowrap;
+    padding-right: 0;
+    min-width: 3%;
+    min-height: 0;
+    margin-right: 2px;
+    margin-left: 2px;
 }

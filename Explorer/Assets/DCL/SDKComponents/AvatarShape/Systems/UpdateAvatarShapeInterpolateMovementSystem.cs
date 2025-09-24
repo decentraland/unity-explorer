@@ -9,24 +9,22 @@ using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.AvatarShape.Components;
+using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using UnityEngine;
-using Utility;
 
 namespace DCL.SDKComponents.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateBefore(typeof(UpdateTransformSystem))]
+    [UpdateAfter(typeof(UpdateTransformSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class UpdateAvatarShapeInterpolateMovementSystem : BaseUnityLoopSystem
     {
         private readonly World globalWorld;
-        private readonly Vector2Int sceneBaseParcel;
 
-        private UpdateAvatarShapeInterpolateMovementSystem(World world, World globalWorld, Vector2Int sceneBaseParcel) : base(world)
+        private UpdateAvatarShapeInterpolateMovementSystem(World world, World globalWorld) : base(world)
         {
             this.globalWorld = globalWorld;
-            this.sceneBaseParcel = sceneBaseParcel;
         }
 
         protected override void Update(float t)
@@ -37,18 +35,15 @@ namespace DCL.SDKComponents.AvatarShape.Systems
 
         [Query]
         [None(typeof(SDKTweenComponent))]
-        private void UpdateAvatarInterpolationMovement(in SDKAvatarShapeComponent sdkAvatarShapeComponent, in SDKTransform sdkTransform)
+        private void UpdateAvatarInterpolationMovement(in SDKAvatarShapeComponent sdkAvatarShapeComponent, in TransformComponent transform)
         {
-            if (!sdkTransform.IsDirty)
-                return;
-
-            UpdateInterpolationMovement(in sdkAvatarShapeComponent, in sdkTransform, false, false);
+            UpdateInterpolationMovement(in sdkAvatarShapeComponent, in transform, false, false);
         }
 
         [Query]
         private void UpdateAvatarWithTweenInterpolationMovement(
             in SDKAvatarShapeComponent sdkAvatarShapeComponent,
-            in SDKTransform sdkTransform,
+            in TransformComponent transform,
             in SDKTweenComponent sdkTweenComponent)
         {
             if ((sdkTweenComponent.TweenMode != PBTween.ModeOneofCase.Move && sdkTweenComponent.TweenMode != PBTween.ModeOneofCase.Rotate) ||
@@ -57,14 +52,14 @@ namespace DCL.SDKComponents.AvatarShape.Systems
 
             UpdateInterpolationMovement(
                 in sdkAvatarShapeComponent,
-                in sdkTransform,
+                in transform,
                 sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.Move,
                 sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.Rotate);
         }
 
         private void UpdateInterpolationMovement(
             in SDKAvatarShapeComponent sdkAvatarShapeComponent,
-            in SDKTransform sdkTransform,
+            in TransformComponent transform,
             bool isPositionManagedByTween,
             bool isRotationManagedByTween)
         {
@@ -75,8 +70,8 @@ namespace DCL.SDKComponents.AvatarShape.Systems
             if (!hasCharacterInterpolationMovement)
                 return;
 
-            characterInterpolationMovementComponent.TargetPosition = sdkTransform.Position.Value.FromSceneRelativeToGlobalPosition(sceneBaseParcel);
-            characterInterpolationMovementComponent.TargetRotation = sdkTransform.Rotation.Value;
+            characterInterpolationMovementComponent.TargetPosition = transform.Transform.position;
+            characterInterpolationMovementComponent.TargetRotation = transform.Transform.rotation;
             characterInterpolationMovementComponent.IsPositionManagedByTween = isPositionManagedByTween;
             characterInterpolationMovementComponent.IsRotationManagedByTween = isRotationManagedByTween;
         }

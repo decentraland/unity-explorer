@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -12,11 +14,11 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -25,9 +27,9 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
+using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
-namespace DCL.UI.GenericContextMenu.Controllers
+namespace DCL.UI
 {
     public class GenericUserProfileContextMenuController
     {
@@ -38,6 +40,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private const int CONTEXT_MENU_WIDTH = 250;
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
+        private static readonly Vector2 SUBMENU_CONTEXT_MENU_OFFSET = new (0, -30);
 
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
@@ -48,10 +51,11 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly bool includeVoiceChat;
+        private readonly bool includeCommunities;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
-        private readonly UI.GenericContextMenuParameter.GenericContextMenu contextMenu;
+        private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
@@ -68,6 +72,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private UniTaskCompletionSource closeContextMenuTask;
         private Profile targetProfile;
 
+        private readonly CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
             IChatEventBus chatEventBus,
@@ -79,7 +85,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
-            bool includeVoiceChat)
+            bool includeCommunities,
+            CommunitiesDataProvider communitiesDataProvider)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -90,10 +97,11 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.includeVoiceChat = includeVoiceChat;
+            this.includeVoiceChat = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.includeCommunities = includeCommunities;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -107,7 +115,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
 
-            contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(mentionUserButtonControlSettings)
@@ -116,6 +124,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(contextMenuCallButton)
                          .AddControl(contextMenuJumpInButton)
                          .AddControl(contextMenuBlockUserButton);
+
+            if (includeCommunities)
+            {
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
+            }
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
@@ -172,8 +186,11 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             contextMenu.ChangeOffsetFromTarget(offset);
 
+            if (includeCommunities)
+                invitationButtonHandler.SetUserToInvite(profile.UserId);
+
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter.GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
@@ -278,8 +295,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
         {
             closeContextMenuTask.TrySetResult();
 
-            //Per design request we need to add an extra character after adding the mention to the chat.
-            ShowChatAsync(() => chatEventBus.InsertText(userName + " ")).Forget();
+            ShowChatAsync(() =>
+            {
+                chatEventBus.InsertText(userName + " ");
+            }).Forget();
         }
 
         private void OnOpenConversationButtonClicked(string userId)
@@ -324,7 +343,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct);
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
             analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject

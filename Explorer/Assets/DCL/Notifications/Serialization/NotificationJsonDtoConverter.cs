@@ -1,11 +1,13 @@
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Scripting;
 
 namespace DCL.Notifications.Serialization
 {
+    [Preserve]
     public class NotificationJsonDtoConverter : JsonConverter<List<INotification>>
     {
         private const string EVENT_STARTED_TYPE = "events_started";
@@ -23,12 +25,15 @@ namespace DCL.Notifications.Serialization
         private const string STREAMING_PLACE_UPDATED = "streaming_place_updated";
         private const string REFERRAL_INVITED_USERS_ACCEPTED = "referral_invited_users_accepted";
         private const string REFERRAL_NEW_TIER_REACHED = "referral_new_tier_reached";
-        private const string COMMUNITY_EVENT_CREATED_TYPE = "community_event_created";
-        private const string COMMUNITY_EVENT_ABOUT_TO_START_TYPE = "community_event_about_to_start";
+        private const string EVENT_CREATED_TYPE = "event_created";
         private const string COMMUNITY_MEMBER_REMOVED_TYPE = "community_member_removed";
         private const string COMMUNITY_MEMBER_BANNED_TYPE = "community_member_banned";
         private const string COMMUNITY_RENAMED_TYPE = "community_renamed";
         private const string COMMUNITY_DELETED_TYPE = "community_deleted";
+        private const string COMMUNITY_REQUEST_TO_JOIN_RECEIVED_TYPE = "community_request_to_join_received";
+        private const string COMMUNITY_INVITE_RECEIVED_TYPE = "community_invite_received";
+        private const string COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE = "community_request_to_join_accepted";
+        private const string COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE = "community_deleted_content_violation";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -89,13 +94,15 @@ namespace DCL.Notifications.Serialization
                     STREAMING_PLACE_UPDATED => new StreamingFeatureNotification(),
                     REFERRAL_INVITED_USERS_ACCEPTED => new ReferralNotification(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED),
                     REFERRAL_NEW_TIER_REACHED => new ReferralNotification(NotificationType.REFERRAL_NEW_TIER_REACHED),
-                    // TODO: Uncomment when the community events are implemented
-                    // COMMUNITY_EVENT_CREATED_TYPE => new CommunityEventCreatedNotification(),
-                    // COMMUNITY_EVENT_ABOUT_TO_START_TYPE => new CommunityEventSoonNotification(),
+                    EVENT_CREATED_TYPE => new CommunityEventCreatedNotification(),
                     COMMUNITY_MEMBER_REMOVED_TYPE => new CommunityUserRemovedNotification(),
                     COMMUNITY_MEMBER_BANNED_TYPE => new CommunityUserBannedNotification(),
                     COMMUNITY_RENAMED_TYPE => new CommunityRenamedNotification(),
                     COMMUNITY_DELETED_TYPE => new CommunityDeletedNotification(),
+                    COMMUNITY_REQUEST_TO_JOIN_RECEIVED_TYPE => new CommunityUserRequestToJoinNotification(),
+                    COMMUNITY_INVITE_RECEIVED_TYPE => new CommunityUserInvitedNotification(),
+                    COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE => new CommunityUserRequestToJoinAcceptedNotification(),
+                    COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE => new CommunityDeletedContenViolationNotification(),
                     _ => null,
                 };
 

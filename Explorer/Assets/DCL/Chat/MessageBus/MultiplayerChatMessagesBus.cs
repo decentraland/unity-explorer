@@ -35,7 +35,7 @@ namespace DCL.Chat.MessageBus
             ChatMessageFactory messageFactory,
             IMessageDeduplication<double> messageDeduplication,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            DecentralandEnvironment decentralandEnvironment)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
@@ -43,9 +43,10 @@ namespace DCL.Chat.MessageBus
             this.messageFactory = messageFactory;
 
             // Depending on the selected environment, we send the community messages to one user or another
-            string serverEnv = decentralandUrlsSource.Environment switch
+            string serverEnv = decentralandEnvironment switch
                                {
                                    DecentralandEnvironment.Org => "prd",
+                                   DecentralandEnvironment.Today => "prd",
                                    DecentralandEnvironment.Zone => "dev",
                                    _ => "local"
                                };
@@ -139,7 +140,7 @@ namespace DCL.Chat.MessageBus
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("ChatMessagesBus is disposed");
 
-            double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
+            double timestamp = DateTime.UtcNow.ToOADate();
             switch (channel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.NEARBY:

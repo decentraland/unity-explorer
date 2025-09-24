@@ -11,13 +11,14 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS;
+using ECS.Groups;
 using ECS.StreamableLoading.Cache;
 using System;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadWearablesByParamSystem : LoadElementsByIntentionSystem<WearablesResponse, GetWearableByParamIntention, IWearable, WearableDTO>
     {
@@ -65,7 +66,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             new (intention.Results, intention.TotalAmount);
 
         protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
+            await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Newtonsoft);
 
         protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);

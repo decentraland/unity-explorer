@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-        internal readonly string logPrefix;
+        private readonly string logPrefix;
 
         private readonly InteriorRoom room = new ();
 
@@ -57,34 +57,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
 
-        private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
-            () =>
-            {
-                var hub = new ParticipantsHub();
-                var videoStreams = new VideoStreams(hub);
-
-                var audioRemixConveyor = new ThreadedAudioRemixConveyor();
-                var audioStreams = new AudioStreams(hub, audioRemixConveyor);
-                var tracksFactory = new TracksFactory();
-
-                // Pass null for AudioTracks - Room constructor will create it automatically
-                var room = new Room(
-                    new ArrayMemoryPool(),
-                    new DefaultActiveSpeakers(),
-                    hub,
-                    tracksFactory,
-                    new FfiHandleFactory(),
-                    new ParticipantFactory(),
-                    new TrackPublicationFactory(),
-                    new DataPipe(),
-                    new MemoryRoomInfo(),
-                    videoStreams,
-                    audioStreams,
-                    null
-                );
-
-                return new LogRoom(room);
-            });
+        private readonly IObjectPool<IRoom> roomPool;
 
         private CancellationTokenSource? cancellationTokenSource;
 
@@ -93,6 +66,29 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         protected ConnectiveRoom()
         {
             logPrefix = GetType().Name;
+
+            roomPool = new ObjectPool<IRoom>(() =>
+            {
+                ParticipantsHub hub = new ();
+
+                // Pass null for AudioTracks - Room constructor will create it automatically
+                Room origin = new Room(
+                    new ArrayMemoryPool(),
+                    new DefaultActiveSpeakers(),
+                    hub,
+                    new TracksFactory(),
+                    new FfiHandleFactory(),
+                    new ParticipantFactory(),
+                    new TrackPublicationFactory(),
+                    new DataPipe(),
+                    new MemoryRoomInfo(),
+                    new VideoStreams(hub),
+                    new AudioStreams(hub),
+                    null
+                );
+
+                return new LogRoom(origin, logPrefix);
+            });
         }
 
         public void Dispose()

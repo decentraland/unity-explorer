@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Profiles.Self;
 using System;
 using System.Text.RegularExpressions;
@@ -81,6 +80,9 @@ namespace DCL.MarketplaceCredits.Sections
         {
             subView.gameObject.SetActive(false);
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+            // We need to cancel the operation, otherwise after it finishes, it will disable the input, even if the ui is closed already,
+            // making it impossible to move the avatar again
+            fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
         }
 
         public void Dispose()
@@ -127,19 +129,32 @@ namespace DCL.MarketplaceCredits.Sections
 
         private async UniTaskVoid RegisterInTheProgramWithNewEmailAsync(string email, CancellationToken ct)
         {
+            const string ERROR_MESSAGE = "An error occurred. Please enter your email and try again.";
+            
             try
             {
                 subView.SetAsLoading(true);
-                await marketplaceCreditsAPIClient.SubscribeEmailAsync(email, ct);
-                currentCreditsProgramProgress.user.email = email;
-                currentCreditsProgramProgress.user.isEmailConfirmed = false;
-                RedirectToSection(ignoreHasUserStartedProgramFlag: true);
-                marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
+                var result = await marketplaceCreditsAPIClient.SubscribeEmailAsync(email, ct);
+                if (result.Success)
+                {
+                    currentCreditsProgramProgress.user.email = email;
+                    currentCreditsProgramProgress.user.isEmailConfirmed = false;
+                    RedirectToSection(ignoreHasUserStartedProgramFlag: true);
+                    marketplaceCreditsMenuController.SetSidebarButtonAnimationAsAlert(false);
+                }
+                else if (result.Error!.Value.State == EmailSubscriptionError.HandledError)
+                {
+                    marketplaceCreditsMenuController.ShowErrorNotification(result.Error!.Value.Message);
+                }
+                else
+                {
+                    marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
+                    ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {result.Error!.Value.Message}");
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error registering in the Credits Program. Please try again!";
                 marketplaceCreditsMenuController.ShowErrorNotification(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.MARKETPLACE_CREDITS, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
@@ -195,7 +210,7 @@ namespace DCL.MarketplaceCredits.Sections
                 marketplaceCreditsProgramEndedSubController.Setup(currentCreditsProgramProgress);
                 marketplaceCreditsMenuController.OpenSection(MarketplaceCreditsSection.PROGRAM_ENDED);
                 totalCreditsWidgetView.gameObject.SetActive(
-                    currentCreditsProgramProgress.season.seasonState != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
+                    currentCreditsProgramProgress.currentSeason.state != nameof(MarketplaceCreditsUtils.SeasonState.ERR_PROGRAM_PAUSED));
                 return;
             }
 

@@ -338,6 +338,52 @@ MonoBehaviour:
       Severity: 4
     - Category: CHAT_HISTORY
       Severity: 0
+    - Category: COMMUNITIES
+      Severity: 4
+    - Category: COMMUNITIES
+      Severity: 1
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 1
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 4
+    - Category: CHAT_MESSAGES
+      Severity: 4
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 4
+    - Category: CHAT_HISTORY
+      Severity: 1
+    - Category: CHAT_MESSAGES
+      Severity: 1
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 1
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 1
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 4
+    - Category: MARKETPLACE_CREDITS
+      Severity: 1
+    - Category: MARKETPLACE_CREDITS
+      Severity: 4
+    - Category: SKYBOX
+      Severity: 1
+    - Category: SKYBOX
+      Severity: 4
+    - Category: VOICE_CHAT
+      Severity: 4
+    - Category: VOICE_CHAT
+      Severity: 1
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 4
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 1
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 0
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -658,6 +704,44 @@ MonoBehaviour:
       Severity: 1
     - Category: ALWAYS
       Severity: 3
+    - Category: CHAT_HISTORY
+      Severity: 4
+    - Category: CHAT_MESSAGES
+      Severity: 4
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 4
+    - Category: CHAT_HISTORY
+      Severity: 1
+    - Category: CHAT_MESSAGES
+      Severity: 1
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 1
+    - Category: COMMUNITIES
+      Severity: 4
+    - Category: COMMUNITIES
+      Severity: 1
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 1
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 4
+    - Category: MARKETPLACE_CREDITS
+      Severity: 4
+    - Category: MARKETPLACE_CREDITS
+      Severity: 1
+    - Category: SKYBOX
+      Severity: 4
+    - Category: SKYBOX
+      Severity: 1
+    - Category: VOICE_CHAT
+      Severity: 4
+    - Category: VOICE_CHAT
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 0
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

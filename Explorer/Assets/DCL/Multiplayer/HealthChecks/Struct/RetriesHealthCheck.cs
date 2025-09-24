@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks.Struct
 {

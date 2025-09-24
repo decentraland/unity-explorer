@@ -6,6 +6,7 @@ using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
+using System;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -13,11 +14,11 @@ namespace ECS.StreamableLoading.AssetBundles
     ///     Prepares Asset Bundle Parameters for loading Asset Bundle in the global world
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareGlobalAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
-        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL) : base(world, streamingAssetURL) { }
+
+        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL) { }
 
         protected override void Update(float t)
         {
@@ -30,9 +31,6 @@ namespace ECS.StreamableLoading.AssetBundles
         // Provides a unique asset bundle manifest for each entity containing an asset bundle
         private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            // TODO hack, fix Asset Bundle Converter
-            assetBundleIntention.Hash = assetBundleIntention.Manifest.FixCapitalization(assetBundleIntention.Hash);
-
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

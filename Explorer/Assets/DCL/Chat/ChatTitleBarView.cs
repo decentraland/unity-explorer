@@ -1,15 +1,12 @@
 using DCL.UI;
 using DCL.Chat.History;
-using DCL.Prefs;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Communities;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.VoiceChat;
 using DCL.Web3;
-using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
@@ -39,8 +36,8 @@ namespace DCL.Chat
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
-        [field: SerializeField]
-        public CallButtonView CallButton { get; private set; }
+        [field: SerializeField] public CallButtonView CallButton { get; private set; }
+        [field: SerializeField] public CallButtonView CommunitiesCallButton { get; private set; }
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
@@ -197,9 +194,11 @@ namespace DCL.Chat
             for (int i = 0; i < notificationPingToggles.Length; ++i)
                 notificationPingToggles[i].SetInitialValue(i == (int)ChatUserSettings.GetNotificationPingValuePerChannel(currentChannelId));
 
-            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenuInstance,
-                                                                                             openContextMenuButton.transform.position,
-                                                                                               actionOnHide: OnContextMenuClosed), contextMenuCts.Token);
+            ViewDependencies
+                .ContextMenuOpener
+                .OpenContextMenu(new GenericContextMenuParameter(contextMenuInstance,
+                    openContextMenuButton.transform.position,
+                    actionOnHide: OnContextMenuClosed), contextMenuCts.Token);
         }
 
         private void OnNotificationPingOptionSelected(ChatAudioSettings selectedMode)
@@ -274,7 +273,7 @@ namespace DCL.Chat
                                         .AddControl(notificationPingToggles[(int)ChatAudioSettings.MENTIONS_ONLY] = new ToggleWithCheckContextMenuControlSettings("Mentions Only", x => OnNotificationPingOptionSelected(ChatAudioSettings.MENTIONS_ONLY), toggleGroup))
                                         .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] = new ToggleWithCheckContextMenuControlSettings("None", x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
 
-            contextMenuInstance = new UI.GenericContextMenuParameter.GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
+            contextMenuInstance = new GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
                .AddControl(subMenuSettings)
                .AddControl(deleteChatHistoryButton);
         }

@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components.Conversion;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Utils;
@@ -141,14 +140,28 @@ namespace DCL.SDKComponents.LightSource.Systems
             // Dispose of the existing cookie we might have, since it has changed
             cookie.CleanUp(World);
 
-            var intention = new GetTextureIntention(
-                textureComponentValue.Src,
-                textureComponentValue.FileHash,
-                textureComponentValue.WrapMode,
-                textureComponentValue.FilterMode,
-                textureComponentValue.TextureType,
-                nameof(LightSourceApplyPropertiesSystem),
-                attemptsCount: GET_TEXTURE_MAX_ATTEMPT_COUNT);
+            GetTextureIntention intention;
+
+            if (textureComponentValue.IsAvatarTexture)
+            {
+                intention = new GetTextureIntention(userId: textureComponentValue.Src,
+                    textureComponentValue.WrapMode,
+                    textureComponentValue.FilterMode,
+                    textureComponentValue.TextureType,
+                    nameof(LightSourceApplyPropertiesSystem),
+                    attemptsCount: GET_TEXTURE_MAX_ATTEMPT_COUNT);
+            }
+            else
+            {
+                intention = new GetTextureIntention(
+                    textureComponentValue.Src,
+                    textureComponentValue.FileHash,
+                    textureComponentValue.WrapMode,
+                    textureComponentValue.FilterMode,
+                    textureComponentValue.TextureType,
+                    nameof(LightSourceApplyPropertiesSystem),
+                    attemptsCount: GET_TEXTURE_MAX_ATTEMPT_COUNT);
+            }
 
             cookie.LoadingIntention = intention;
             cookie.LoadingPromise = TexturePromise.Create(World, intention, partitionComponent);

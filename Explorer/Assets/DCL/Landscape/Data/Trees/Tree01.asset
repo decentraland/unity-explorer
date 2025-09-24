@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Tree01
   m_EditorClassIdentifier: 
   asset: {fileID: 2214953459268991292, guid: 46ba147d6eb053147b59c469dd34425f, type: 3}
+  <Collider>k__BackingField: {fileID: 5394014524136309837, guid: ebf89d35de9c4264596abab1c2b1780d, type: 3}
   noiseData: {fileID: 11400000, guid: 0429db70c8952b8439d3fc344f503cc9, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}

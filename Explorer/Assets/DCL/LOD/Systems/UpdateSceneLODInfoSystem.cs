@@ -3,14 +3,15 @@ using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
@@ -69,14 +70,13 @@ namespace DCL.LOD.Systems
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
-            var manifest = LODUtils.LODManifests(decentralandUrlsSource)[level];
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                manifest: manifest,
-                lookForShaderAsset: true
+                lookForShaderAsset: true,
+                assetBundleManifestVersion: AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate")
                 );
 
             sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);

@@ -1,4 +1,7 @@
-﻿using DCL.Friends.UserBlocking;
+﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Audio;
+using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
@@ -6,13 +9,13 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using DCL.SkyBox;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Configuration
 {
@@ -27,13 +30,14 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(
+        public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
@@ -42,19 +46,19 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus = null,
-            bool isVoiceChatEnabled = false)
+            IAssetsProvisioner assetsProvisioner,
+            VolumeBus volumeBus)
         {
-            var viewInstance = Object.Instantiate(View, parent);
+            var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
-                                                   {
-                                                       ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
-                                                       ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
-                                                       // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
-                                                   };
+            {
+                ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
+                ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
+                // add other cases...
+                _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+            };
 
             controller.SetView(viewInstance);
             return controller;

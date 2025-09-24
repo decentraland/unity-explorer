@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Realm
 {
@@ -15,6 +15,8 @@ namespace ECS.SceneLifeCycle.Realm
     public interface ILandscape
     {
         UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
+
+        float GetHeight(float x, float z);
 
         Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal);
     }

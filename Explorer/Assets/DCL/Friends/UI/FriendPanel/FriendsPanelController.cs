@@ -5,6 +5,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -20,7 +21,7 @@ using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
 {
-    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IControllerInSharedSpace<FriendsPanelView, FriendsPanelParameter>
+    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IControllerInSharedSpace<FriendsPanelView, FriendsPanelParameter>, IBlocksChat
     {
         public enum FriendsPanelTab
         {
@@ -66,11 +67,10 @@ namespace DCL.Friends.UI.FriendPanel
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
             bool includeUserBlocking,
-            bool includeCall,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.chatEventBus = chatEventBus;
@@ -103,8 +103,7 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     chatEventBus,
                     sharedSpaceManager,
-                    includeCall,
-                    voiceChatCallStatusService);
+                    voiceChatOrchestrator);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,

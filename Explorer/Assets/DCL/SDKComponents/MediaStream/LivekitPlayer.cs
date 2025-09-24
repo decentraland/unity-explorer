@@ -97,7 +97,7 @@ namespace DCL.SDKComponents.MediaStream
             // See: https://github.com/decentraland/unity-explorer/issues/3796
             lock (room.Participants)
             {
-                foreach (string remoteParticipantIdentity in room.Participants.RemoteParticipantIdentities())
+                foreach ((string remoteParticipantIdentity, _) in room.Participants.RemoteParticipantIdentities())
                 {
                     var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
 

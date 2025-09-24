@@ -6,37 +6,33 @@ using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
 using Utility.Arch;
-using DCL.Diagnostics;
-using UnityEngine;
 
 namespace DCL.VoiceChat
 {
     public class VoiceChatNametagsHandler : IDisposable
     {
         private readonly IRoom voiceChatRoom;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World world;
         private readonly Entity playerEntity;
-        private HashSet<string> activeSpeakers = new ();
-        private IDisposable? statusSubscription;
+        private readonly IDisposable statusSubscription;
 
+        private HashSet<string> activeSpeakers = new ();
         private bool disposed;
 
         public VoiceChatNametagsHandler(
             IRoom voiceChatRoom,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IVoiceChatOrchestratorState voiceChatOrchestratorState,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             World world,
             Entity playerEntity)
         {
             this.voiceChatRoom = voiceChatRoom;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
 
-            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
+            statusSubscription = voiceChatOrchestratorState.CurrentCallStatus.Subscribe(OnCallStatusChanged);
             voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
         }
@@ -108,7 +104,7 @@ namespace DCL.VoiceChat
                     world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false) { IsRemoving = true });
                     activeSpeakers.Clear();
 
-                    foreach (string participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                    foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
                         if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
                             world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true });

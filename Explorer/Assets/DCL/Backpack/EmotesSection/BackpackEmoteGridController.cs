@@ -14,6 +14,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.Web3;
 using Global.AppArgs;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -165,11 +166,9 @@ namespace DCL.Backpack.EmotesSection
                     customOwnedEmotes
                 );
 
-                emotes = customOwnedEmotes;
-
                 // TODO: request base emotes collection instead of pointers:
                 // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
-                if (onChainEmotesOnly || builderEmotesPreview)
+                if (onChainEmotesOnly)
                     emotes = customOwnedEmotes;
                 else
                 {
@@ -380,7 +379,7 @@ namespace DCL.Backpack.EmotesSection
 
         private void OnWearableEquipped(IWearable wearable)
         {
-            if (wearable.GetCategory() != WearablesConstants.Categories.BODY_SHAPE) return;
+            if (wearable.GetCategory() != WearableCategories.Categories.BODY_SHAPE) return;
 
             foreach (BodyShape bodyShape in BodyShape.VALUES)
             {

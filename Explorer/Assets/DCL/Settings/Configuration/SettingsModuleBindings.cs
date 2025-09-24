@@ -1,4 +1,7 @@
-﻿using DCL.Friends.UserBlocking;
+﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Audio;
+using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
@@ -6,6 +9,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using DCL.SkyBox;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -21,13 +25,14 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public abstract class SettingsModuleBindingBase
     {
-        public abstract SettingsFeatureController CreateModule(
+        public abstract UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
@@ -36,8 +41,8 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus,
-            bool isVoiceChatEnabled);
+            IAssetsProvisioner assetsProvisioner,
+            VolumeBus volumeBus);
     }
 
     [Serializable]
@@ -47,12 +52,18 @@ namespace DCL.Settings.Configuration
         where TControllerType : Enum
     {
         [field: SerializeField]
-        public TView View { get; private set; }
+        public ViewRef View { get; private set; }
 
         [field: SerializeField]
         public TConfig Config { get; private set; }
 
         [field: SerializeField]
         public TControllerType Feature { get; private set; }
+
+        [Serializable]
+        public class ViewRef : ComponentReference<TView>
+        {
+            public ViewRef(string guid) : base(guid) { }
+        }
     }
 }

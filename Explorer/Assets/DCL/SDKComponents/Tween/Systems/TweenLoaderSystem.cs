@@ -8,7 +8,7 @@ using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Groups;
 
-namespace DCL.SDKComponents.Tween.Systems
+namespace DCL.SDKComponents.Tween
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.TWEEN)]

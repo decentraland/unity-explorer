@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.GlobalPartitioning;
@@ -37,9 +36,11 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
 using DCL.Roads.Systems;
+using DCL.SkyBox;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
+using OwnAvatarLoaderFromDebugMenuSystem = DCL.AvatarRendering.AvatarShape.OwnAvatarLoaderFromDebugMenuSystem;
 
 namespace Global.Dynamic
 {
@@ -193,7 +194,7 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
-            var pluginArgs = new GlobalPluginArguments(playerEntity);
+            var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);

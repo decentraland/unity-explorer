@@ -5,6 +5,8 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
@@ -18,8 +20,6 @@ namespace DCL.Communities.EventInfo
 {
     public class EventInfoController : ControllerBase<EventInfoView, EventInfoParameter>
     {
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
-
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
 
@@ -88,9 +88,7 @@ namespace DCL.Communities.EventInfo
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
 
-            viewInstance!.SuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, panelCts.Token)
-                         .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                         .Forget();
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private void OnEventShareButtonClicked(IEventDTO eventData) =>
@@ -123,8 +121,7 @@ namespace DCL.Communities.EventInfo
                 if (!result.Success)
                 {
                     viewInstance!.UpdateInterestedButtonState();
-                    await viewInstance.ErrorNotificationView.AnimatedShowAsync(INTERESTED_CHANGED_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
-                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
                     return;
                 }
 

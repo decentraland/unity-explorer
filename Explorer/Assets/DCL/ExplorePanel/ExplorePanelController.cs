@@ -6,8 +6,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
@@ -53,6 +53,8 @@ namespace DCL.ExplorePanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
+        public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
+
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
@@ -63,7 +65,6 @@ namespace DCL.ExplorePanel
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
-            INotificationsBusController notificationBusController,
             IInputBlock inputBlock,
             bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)
@@ -76,19 +77,12 @@ namespace DCL.ExplorePanel
             this.profileWidgetController = profileWidgetController;
             dclInput = DCLInput.Instance;
             this.profileMenuController = profileMenuController;
-            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
             CommunitiesBrowserController = communitiesBrowserController;
-        }
-
-        private async UniTaskVoid OnRewardAssignedAsync(object[] _)
-        {
-            if(State == ControllerState.ViewHidden)
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack)); // TODO: move to the shared space manager?
-            else
-                ShowSection(ExploreSections.Backpack);
         }
 
         public override void Dispose()
@@ -98,6 +92,14 @@ namespace DCL.ExplorePanel
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
+        }
+
+        private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
+        {
+            if(State == ControllerState.ViewHidden)
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(sectionToShow));
+            else
+                ShowSection(sectionToShow);
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)

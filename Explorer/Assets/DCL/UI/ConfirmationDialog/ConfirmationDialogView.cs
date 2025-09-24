@@ -19,7 +19,7 @@ namespace DCL.UI.ConfirmationDialog
         [field: SerializeField] private TMP_Text confirmButtonText { get; set; } = null!;
         [field: SerializeField] private TMP_Text mainText { get; set; } = null!;
         [field: SerializeField] private TMP_Text subText { get; set; } = null!;
-        [field: SerializeField] private Image mainImage { get; set; } = null!;
+        [field: SerializeField] private ImageView mainImage { get; set; } = null!;
         [field: SerializeField] private GameObject quitImage { get; set; } = null!;
         [field: SerializeField] private Image rimImage { get; set; } = null!;
         [field: SerializeField] private ProfilePictureView profilePictureView { get; set; } = null!;
@@ -47,13 +47,23 @@ namespace DCL.UI.ConfirmationDialog
             confirmButtonText.text = dialogData.ConfirmButtonText;
             rimImage.enabled = dialogData.ShowImageRim;
             quitImage.SetActive(dialogData.ShowQuitImage);
-            mainImage.sprite = dialogData.Image;
 
             bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.Address);
 
-            rimImage.gameObject.SetActive(!hasProfileImage);
             profilePictureView.gameObject.SetActive(hasProfileImage);
             profileActionIcon.sprite = dialogData.Image;
+
+            if (dialogData.Image == null)
+            {
+                mainImage.gameObject.SetActive(false);
+                rimImage.gameObject.SetActive(false);
+            }
+            else
+            {
+                mainImage.gameObject.SetActive(true);
+                rimImage.gameObject.SetActive(!hasProfileImage);
+                mainImage.SetImage(dialogData.Image, true);
+            }
 
             if (!hasProfileImage) return;
 

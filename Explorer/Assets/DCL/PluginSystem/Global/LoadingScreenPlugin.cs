@@ -2,16 +2,16 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
+using DCL.FeatureFlags;
 using DCL.Input;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
-using DCL.DebugUtilities;
-using DCL.DebugUtilities.UIBindings;
-using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
-using DCL.Utilities;
 using UnityEngine.Localization.Settings;
 
 namespace DCL.PluginSystem.Global
@@ -24,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ILoadingStatus loadingStatus;
+        private readonly FeatureFlagsConfiguration featureFlagsConfiguration;
 
         private readonly ElementBinding<string> currentStageBinding = new (string.Empty);
         private readonly ElementBinding<string> assetStateBinding = new (string.Empty);
@@ -35,7 +36,8 @@ namespace DCL.PluginSystem.Global
             AudioMixerVolumesController audioMixerVolumesController,
             IInputBlock inputBlock,
             IDebugContainerBuilder debugContainerBuilder,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            FeatureFlagsConfiguration featureFlagsConfiguration)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -43,6 +45,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.debugContainerBuilder = debugContainerBuilder;
             this.loadingStatus = loadingStatus;
+            this.featureFlagsConfiguration = featureFlagsConfiguration;
         }
 
         public void Dispose() { }
@@ -56,10 +59,12 @@ namespace DCL.PluginSystem.Global
             ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>.ViewFactoryMethod? authScreenFactory =
                 SceneLoadingScreenController.CreateLazily(prefab, null);
 
-            var tipsProvider = new UnityLocalizationSceneTipsProvider(LocalizationSettings.StringDatabase, LocalizationSettings.AssetDatabase,
+            var unityLocalizationSceneTipsProvider = new UnityLocalizationSceneTipsProvider(LocalizationSettings.StringDatabase, LocalizationSettings.AssetDatabase,
                 settings.FallbackTipsTable, settings.FallbackImagesTable, TimeSpan.FromSeconds(settings.TipDisplayDuration));
 
-            await tipsProvider.InitializeAsync(ct);
+            var tipsProvider = new TipsFromFeatureFlagDecorator(unityLocalizationSceneTipsProvider, featureFlagsConfiguration);
+
+            await unityLocalizationSceneTipsProvider.InitializeAsync(ct);
 
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
                 TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock));

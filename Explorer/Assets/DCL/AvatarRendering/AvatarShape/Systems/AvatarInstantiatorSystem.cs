@@ -24,7 +24,7 @@ using UnityEngine.Pool;
 using Utility;
 using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.AvatarShape
 {
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarLoaderSystem))]
@@ -118,8 +118,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             avatarTransform.ResetLocalTRS();
 
-            var avatarTransformMatrixComponent =
-                AvatarTransformMatrixComponent.Create(avatarBase.AvatarSkinnedMeshRenderer.bones);
+            var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
+            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
@@ -191,6 +191,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             // Restore the original facial feature textures
             facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape]
                .CopyInto(ref facialFeaturesTexturesByBodyShapeCopy[avatarShapeComponent.BodyShape]);
+
             // Use a copy of the textures so it can be modified during the skinned mesh setup
             FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShapeCopy[avatarShapeComponent.BodyShape];
 
@@ -214,10 +215,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (!avatarShapeComponent.IsVisible)
                 foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
-                    foreach (var renderer in cachedAttachment.Renderers)
-                        renderer.enabled = false;
+                foreach (var renderer in cachedAttachment.Renderers)
+                    renderer.enabled = false;
 
-            skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
+            skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.VertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
             avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds, wearableIntention); // Update cached head wearable offset for nametag positioning
 

@@ -1,5 +1,8 @@
 using DCL.AssetsProvision;
+using DCL.Audio;
+using DCL.Settings.Settings;
 using DCL.VoiceChat;
+using DCL.VoiceChat.CommunityVoiceChat;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -11,27 +14,14 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatPluginSettings : ScriptableObject
     {
         [Header("Asset References")]
-        [field: SerializeField] public StaticSettings.VoiceChatSettingsRef VoiceChatSettings { get; private set; }
-        [field: SerializeField] public MicrophoneAudioFilterReference MicrophoneAudioFilter { get; private set; }
-        [field: SerializeField] public CombinedAudioSourceReference CombinedAudioSource { get; private set; }
-        [field: SerializeField] public VoiceChatConfigurationReference VoiceChatConfiguration { get; private set; }
+        [field: SerializeField] public VoiceChatSettingsAsset VoiceChatSettings { get; private set; }
+        [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; }
+        [field: SerializeField] public PlayerEntryView PlayerEntryView { get; private set; }
 
-        [Serializable]
-        public class CombinedAudioSourceReference : ComponentReference<VoiceChatCombinedStreamsAudioSource>
-        {
-            public CombinedAudioSourceReference(string guid) : base(guid) { }
-        }
+        [Header("Audio References")]
+        [field: SerializeField] public AudioClipConfig MuteMicrophoneAudio { get; private set; }
+        [field: SerializeField] public AudioClipConfig UnmuteMicrophoneAudio { get; private set; }
 
-        [Serializable]
-        public class MicrophoneAudioFilterReference : ComponentReference<VoiceChatMicrophoneAudioFilter>
-        {
-            public MicrophoneAudioFilterReference(string guid) : base(guid) { }
-        }
 
-        [Serializable]
-        public class VoiceChatConfigurationReference : AssetReferenceT<VoiceChatConfiguration>
-        {
-            public VoiceChatConfigurationReference(string guid) : base(guid) { }
-        }
     }
 }

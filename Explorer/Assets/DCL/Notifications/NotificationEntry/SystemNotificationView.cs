@@ -1,4 +1,4 @@
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using System;
 using TMPro;
 using UnityEngine;
@@ -15,6 +15,9 @@ namespace DCL.Notifications.NotificationEntry
 
         [field: SerializeField]
         public Button CloseButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject CloseButtonContainer { get; private set; }
 
         [field: SerializeField]
         public TMP_Text HeaderText { get; private set; }

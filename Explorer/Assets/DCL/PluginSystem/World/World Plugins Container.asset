@@ -64,7 +64,12 @@ MonoBehaviour:
     - rid: 857448815798779906
       type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        <FontList>k__BackingField: {fileID: 11400000, guid: 353f2294734a94b57b061c9b83eb275d, type: 2}
+        <FontList>k__BackingField:
+          m_AssetGUID: 353f2294734a94b57b061c9b83eb275d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 892605770607624195
       type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -196,58 +201,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        SpotLightsLods:
-        - Distance: 0
-          IsCulled: 0
-          Shadows: 2
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 10
-          IsCulled: 0
-          Shadows: 2
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 20
-          IsCulled: 0
-          Shadows: 1
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 30
-          IsCulled: 0
-          Shadows: 0
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 40
-          IsCulled: 1
-          Shadows: 0
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        PointLightsLods:
-        - Distance: 0
-          IsCulled: 0
-          Shadows: 2
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 10
-          IsCulled: 0
-          Shadows: 1
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 20
-          IsCulled: 0
-          Shadows: 0
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 40
-          IsCulled: 1
-          Shadows: 0
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        <StyleSheet>k__BackingField:
-          m_AssetGUID: 295cf8ad8d171d849863eccaf581c9e7
+        <ScenesUIDocument>k__BackingField:
+          m_AssetGUID: e0f5a4ab5d8f74640ae94adb6824bd45
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -262,21 +220,11 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <FadeSpeed>k__BackingField: 1
-        VideoPrioritizationSettings:
-          m_AssetGUID: 12f48d0297bd3f746b92a97878478086
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        VideoPrioritizationSettings: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
     - rid: 6144113899072913497
       type: {class: SkyboxTimePlugin/SkyboxTimeSettings, ns: DCL.SDKComponents.SkyboxTime, asm: DCL.Plugins}
       data:
-        <Settings>k__BackingField:
-          m_AssetGUID: 9891b090dc6dc574d9415313003375f0
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <Settings>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
     - rid: 6784895267130048515
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

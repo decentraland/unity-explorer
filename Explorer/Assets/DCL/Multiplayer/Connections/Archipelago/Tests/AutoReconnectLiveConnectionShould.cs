@@ -2,6 +2,7 @@
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Pools;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using NSubstitute;
@@ -10,7 +11,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.TestTools;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Tests
 {

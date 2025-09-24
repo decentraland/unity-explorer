@@ -6,7 +6,6 @@ using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.MediaStream;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -229,7 +228,22 @@ namespace ECS.Unity.Materials.Systems
 
                 promise = Promise.CreateFinalized(intention, result);
             }
+            else if (textureComponentValue.IsAvatarTexture)
+            {
+                promise = Promise.Create(
+                    World!,
+                    new GetTextureIntention(
+                        userId: textureComponentValue.Src,
+                        wrapMode: textureComponentValue.WrapMode,
+                        filterMode: textureComponentValue.FilterMode,
+                        textureType: textureComponentValue.TextureType,
+                        reportSource: nameof(StartMaterialsLoadingSystem)
+                    ),
+                    partitionComponent
+                );
+            }
             else
+            {
                 promise = Promise.Create(
                     World!,
                     new GetTextureIntention(
@@ -239,11 +253,11 @@ namespace ECS.Unity.Materials.Systems
                         textureComponentValue.FilterMode,
                         textureComponentValue.TextureType,
                         attemptsCount: attemptsCount,
-                        isAvatarTexture: textureComponentValue.IsAvatarTexture,
                         reportSource: nameof(StartMaterialsLoadingSystem)
                     ),
                     partitionComponent
                 );
+            }
 
             return true;
         }

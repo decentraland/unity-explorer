@@ -6,6 +6,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -51,7 +52,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     static i => $"Scene emote request cancelled {i.EmoteHash}"))
                 return;
 
-            ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent);
+            ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent, intention.SceneAssetBundleManifestVersion);
         }
 
         [Query]
@@ -60,19 +61,20 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetSceneEmoteFromLocalSceneIntention intention,
             ref IPartitionComponent partitionComponent)
         {
-            ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent);
+            ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent, AssetBundleManifestVersion.CreateLSDAsset());
         }
 
         private void ProcessSceneEmoteIntention<TIntention>(
             float dt,
             Entity entity,
             ref TIntention intention,
-            ref IPartitionComponent partitionComponent
+            ref IPartitionComponent partitionComponent,
+            AssetBundleManifestVersion sceneAssetBundleManifest
         ) where TIntention : struct, IEmoteAssetIntention
         {
             URN urn = intention.NewSceneEmoteURN();
 
-            if (intention.Timeout.IsTimeout(dt))
+            if (intention.IsTimeout(dt))
             {
                 if (!World.Has<StreamableResult>(entity))
                 {
@@ -87,6 +89,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 var dto = new EmoteDTO
                 {
                     id = urn,
+                    assetBundleManifestVersion = sceneAssetBundleManifest,
                     metadata = new EmoteDTO.EmoteMetadataDto
                     {
                         id = urn,

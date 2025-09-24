@@ -8,13 +8,13 @@ using DCL.Input;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -22,6 +22,8 @@ using DCL.SocialService;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
+using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -57,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GalleryEventBus galleryEventBus;
 
         private CommunityCardController? communityCardController;
@@ -84,10 +87,10 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
-            INotificationsBusController notificationsBusController,
             LambdasProfilesProvider lambdasProfilesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -109,9 +112,10 @@ namespace DCL.PluginSystem.Global
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
-            notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
+            notificationHandler = new NotificationHandler(realmNavigator);
         }
 
         public void Dispose()
@@ -150,9 +154,13 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 web3IdentityCache,
                 lambdasProfilesProvider,
-                galleryEventBus);
+                galleryEventBus,
+                voiceChatOrchestrator);
 
             mvcManager.RegisterController(communityCardController);
+
+            VoiceChatCommunityCardBridge.SetOpenCommunityCardAction(communityId =>
+                mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId)), ct: ct));
 
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);

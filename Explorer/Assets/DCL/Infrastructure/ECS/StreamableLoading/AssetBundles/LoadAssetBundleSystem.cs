@@ -15,6 +15,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using AssetManagement;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
@@ -55,10 +56,9 @@ namespace ECS.StreamableLoading.AssetBundles
             // Switch to main thread to create dependency promises
             await UniTask.SwitchToMainThread();
 
-            SceneAssetBundleManifest? manifest = parentIntent.Manifest;
             URLSubdirectory customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
 
-            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
+            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(hash, parentIntent.AssetBundleManifestVersion!, parentIntent.ParentEntityID, customEmbeddedSubdirectory, partition, ct)));
         }
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -112,11 +112,12 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 ct.ThrowIfCancellationRequested();
 
-                string version = intention.Manifest != null ? intention.Manifest.GetVersion() : string.Empty;
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+                    intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
+                    source, intention.LookForShaderAssets, ct);
             }
             catch (Exception e)
             {
@@ -152,7 +153,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 //All gameobject asset bundles ahould at least have the dependency on the shader.
                 //This will cause a material leak, as the same material will be loaded again. This needs to be solved at asset bundle level
                 if (dependencies.Length == 0)
-                    throw new AssetBundleContainsShaderException(assetBundle.name);
+                    throw new StreamableLoadingException(LogType.Warning, nameof(LoadAssetBundleSystem), new AssetBundleContainsShaderException(assetBundle.name));
             }
 
             Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
@@ -178,7 +179,7 @@ namespace ECS.StreamableLoading.AssetBundles
             switch (assets.Length)
             {
                 case 0:
-                    throw new AssetBundleMissingMainAssetException(assetBundle.name, objectType);
+                    throw new StreamableLoadingException(LogType.Warning, nameof(LoadAssetBundleSystem), new AssetBundleMissingMainAssetException(assetBundle.name, objectType));
                 case > 1:
                     ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
                     break;
@@ -188,13 +189,15 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         private async UniTask<AssetBundleData> WaitForDependencyAsync(
-            SceneAssetBundleManifest? manifest,
-            string hash, URLSubdirectory customEmbeddedSubdirectory,
+            string hash,
+            AssetBundleManifestVersion assetBundleManifestVersion,
+            string parentEntityID,
+            URLSubdirectory customEmbeddedSubdirectory,
             IPartitionComponent partition, CancellationToken ct)
         {
             // Inherit partition from the parent promise
             // we don't know the type of the dependency
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(null, hash, manifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(null, hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
 
             try
             {

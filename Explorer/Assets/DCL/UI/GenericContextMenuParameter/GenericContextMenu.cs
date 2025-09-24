@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenuParameter
+namespace DCL.UI
 {
 
     [Serializable]
@@ -54,6 +54,11 @@ namespace DCL.UI.GenericContextMenuParameter
         {
             contextMenuSettings.Add(element);
             return this;
+        }
+
+        public void ClearControls()
+        {
+            contextMenuSettings.Clear();
         }
 
         public void ChangeAnchorPoint(ContextMenuOpenDirection newAnchorPoint)

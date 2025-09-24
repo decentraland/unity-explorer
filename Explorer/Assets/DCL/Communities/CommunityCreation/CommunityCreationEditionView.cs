@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.SelectorButton;
 using DCL.UI.Utilities;
@@ -19,14 +20,18 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_TITLE = "Create a Community";
         private const string EDIT_COMMUNITY_TITLE = "Edit Community";
         private const string PLACES_DROPDOWN_TITLE = "Select LAND or World";
+        private const string PUBLIC_MEMBERSHIP_OPTION = "<b>Public</b> <size=11>Anyone can become a member, view Community details, and join your Voice Streams</size>";
+        private const string PRIVATE_MEMBERSHIP_OPTION = "<b>Private</b> <size=11>Membership by request/invite; only Community description visible to non-members</size>";
 
         public Action? CancelButtonClicked;
         public Action? GetNameButtonClicked;
         public Action? SelectProfilePictureButtonClicked;
-        public Action<string, string, List<string>, List<string>>? CreateCommunityButtonClicked;
-        public Action<string, string, List<string>, List<string>>? SaveCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>, CommunityPrivacy>? CreateCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>, CommunityPrivacy>? SaveCommunityButtonClicked;
         public Action<int>? AddPlaceButtonClicked;
         public Action<int>? RemovePlaceButtonClicked;
+        public Action<string>? ContentPolicyAndCodeOfEthicsLinksClicked;
+        public Action? GoBackToCreationEditionButtonClicked;
 
         [SerializeField] public Button backgroundCloseButton = null!;
 
@@ -53,16 +58,25 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_InputField creationPanelCommunityDescriptionInputField = null!;
         [SerializeField] private GameObject creationPanelCommunityDescriptionInputFieldOutline = null!;
         [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter = null!;
+        [SerializeField] private SelectorButtonView creationPanelMembershipDropdown = null!;
         [SerializeField] private SelectorButtonView creationPanelPlacesDropdown = null!;
         [SerializeField] private Transform placeTagsContainer = null!;
         [SerializeField] private CommunityPlaceTag placeTagPrefab = null!;
         [SerializeField] private Button creationPanelCancelButton = null!;
         [SerializeField] private Button creationPanelCreateButton = null!;
         [SerializeField] private TMP_Text creationPanelCreateButtonText = null!;
-        [SerializeField] private GameObject creationPanelCreateButtonLoading = null!;
-
-        [field: Header("Common")]
-        [field: SerializeField] public WarningNotificationView WarningNotificationView { get; private set; } = null!;
+        [SerializeField] private GameObject creationPanelModerationLoading = null!;
+        [SerializeField] private TMP_Text creationPanelContentPolicyAndCodeOfEthicsText = null!;
+        [SerializeField] private GameObject creationPanelModerationErrorModalsContainer = null!;
+        [SerializeField] private GameObject creationPanelComplianceErrorModal = null!;
+        [SerializeField] private TMP_Text creationPanelComplianceErrorModalDclGuidelinesText = null!;
+        [SerializeField] private TMP_Text creationPanelComplianceErrorModalErrorText = null!;
+        [SerializeField] private Button creationPanelComplianceErrorModalCancelButton = null!;
+        [SerializeField] private Button creationPanelComplianceErrorModalEditCommunityButton = null!;
+        [SerializeField] private GameObject creationPanelModerationAPIUnavailableModal = null!;
+        [SerializeField] private Button creationPanelModerationAPIUnavailableModalCancelButton = null!;
+        [SerializeField] private Button creationPanelModerationAPIUnavailableModalRetryButton = null!;
+        [SerializeField] private GameObject creationPanelPointerClicksBlocker = null!;
 
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
 
@@ -78,38 +92,33 @@ namespace DCL.Communities.CommunityCreation
             getNamePanelGetNameButton.onClick.AddListener(() => GetNameButtonClicked?.Invoke());
             creationPanelCancelButton.onClick.AddListener(() => CancelButtonClicked?.Invoke());
             creationPanelEditProfilePictureButton.onClick.AddListener(() => SelectProfilePictureButtonClicked?.Invoke());
+            creationPanelComplianceErrorModalCancelButton.onClick.AddListener(() => CancelButtonClicked?.Invoke());
+            creationPanelComplianceErrorModalEditCommunityButton.onClick.AddListener(() => GoBackToCreationEditionButtonClicked?.Invoke());
+            creationPanelModerationAPIUnavailableModalCancelButton.onClick.AddListener(() => GoBackToCreationEditionButtonClicked?.Invoke());
+            creationPanelModerationAPIUnavailableModalRetryButton.onClick.AddListener(CreateButtonClicked);
             creationPanelCommunityNameInputField.onValueChanged.AddListener(CreationPanelCommunityNameInputChanged);
             creationPanelCommunityNameInputField.onSelect.AddListener(CreationPanelCommunityNameInputSelected);
             creationPanelCommunityNameInputField.onDeselect.AddListener(CreationPanelCommunityNameInputDeselected);
             creationPanelCommunityDescriptionInputField.onValueChanged.AddListener(CreationPanelCommunityDescriptionInputChanged);
             creationPanelCommunityDescriptionInputField.onSelect.AddListener(CreationPanelCommunityDescriptionInputSelected);
             creationPanelCommunityDescriptionInputField.onDeselect.AddListener(CreationPanelCommunityDescriptionInputDeselected);
-            creationPanelCreateButton.onClick.AddListener(() =>
-            {
-                var lands = new List<string>();
-                var worlds = new List<string>();
-                foreach (CommunityPlaceTag placeTag in currentPlaceTags)
-                {
-                    if (placeTag.IsWorld)
-                        worlds.Add(placeTag.Id);
-                    else
-                        lands.Add(placeTag.Id);
-                }
+            creationPanelCreateButton.onClick.AddListener(CreateButtonClicked);
 
-                if (!isEditionMode)
-                    CreateCommunityButtonClicked?.Invoke(
-                        creationPanelCommunityNameInputField.text,
-                        creationPanelCommunityDescriptionInputField.text,
-                        lands,
-                        worlds);
-                else
-                    SaveCommunityButtonClicked?.Invoke(
-                        creationPanelCommunityNameInputField.text,
-                        creationPanelCommunityDescriptionInputField.text,
-                        lands,
-                        worlds);
-            });
+            creationPanelMembershipDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
+            creationPanelMembershipDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
+
             creationPanelPlacesDropdown.OptionClicked += OnPlacesDropdownOptionSelected;
+            creationPanelPlacesDropdown.OptionsPanelOpened += OnPlacesPanelOpened;
+            creationPanelPlacesDropdown.OptionsPanelClosed += OnPlacesPanelClosed;
+
+            creationPanelContentPolicyAndCodeOfEthicsText.ConvertUrlsToClickeableLinks(OpenContentPolicyAndCodeOfEthicsLink);
+            creationPanelComplianceErrorModalDclGuidelinesText.ConvertUrlsToClickeableLinks(OpenContentPolicyAndCodeOfEthicsLink);
+        }
+
+        private void Start()
+        {
+            creationPanelMembershipDropdown.SetOptions(new List<string> { PUBLIC_MEMBERSHIP_OPTION, PRIVATE_MEMBERSHIP_OPTION });
+            SetCommunityPrivacy(CommunityPrivacy.@public, true);
         }
 
         private void OnDestroy()
@@ -118,13 +127,23 @@ namespace DCL.Communities.CommunityCreation
             getNamePanelGetNameButton.onClick.RemoveAllListeners();
             creationPanelCancelButton.onClick.RemoveAllListeners();
             creationPanelEditProfilePictureButton.onClick.RemoveAllListeners();
+            creationPanelComplianceErrorModalCancelButton.onClick.RemoveAllListeners();
+            creationPanelComplianceErrorModalEditCommunityButton.onClick.RemoveAllListeners();
+            creationPanelModerationAPIUnavailableModalCancelButton.onClick.RemoveAllListeners();
+            creationPanelModerationAPIUnavailableModalRetryButton.onClick.RemoveAllListeners();
             creationPanelCommunityNameInputField.onValueChanged.RemoveAllListeners();
             creationPanelCommunityNameInputField.onSelect.RemoveAllListeners();
             creationPanelCommunityNameInputField.onDeselect.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onValueChanged.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onSelect.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onDeselect.RemoveAllListeners();
+
+            creationPanelMembershipDropdown.OptionsPanelOpened -= OnPlacesPanelOpened;
+            creationPanelMembershipDropdown.OptionsPanelClosed -= OnPlacesPanelClosed;
+
             creationPanelPlacesDropdown.OptionClicked -= OnPlacesDropdownOptionSelected;
+            creationPanelPlacesDropdown.OptionsPanelOpened -= OnPlacesPanelOpened;
+            creationPanelPlacesDropdown.OptionsPanelClosed -= OnPlacesPanelClosed;
 
             updateScrollPositionCts.SafeCancelAndDispose();
             thumbnailLoadingCts.SafeCancelAndDispose();
@@ -145,7 +164,6 @@ namespace DCL.Communities.CommunityCreation
                 CleanCreationPanel();
 
             creationPanelScrollRect.verticalNormalizedPosition = 1f;
-            WarningNotificationView.Hide(true);
         }
 
         public void ConvertGetNameDescriptionUrlsToClickableLinks(Action<string> onLinkClicked) =>
@@ -163,12 +181,12 @@ namespace DCL.Communities.CommunityCreation
 
         public void SetCommunityCreationInProgress(bool isInProgress)
         {
-            creationPanelCreateButtonLoading.SetActive(isInProgress);
-            creationPanelCreateButtonText.gameObject.SetActive(!isInProgress);
+            creationPanelPointerClicksBlocker.SetActive(isInProgress);
+            creationPanelModerationLoading.SetActive(isInProgress);
+            creationPanelCreateButton.gameObject.SetActive(!isInProgress);
+            creationPanelCancelButton.gameObject.SetActive(!isInProgress);
 
-            if (isInProgress)
-                creationPanelCreateButton.interactable = false;
-            else
+            if (!isInProgress)
                 UpdateCreateButtonAvailability();
         }
 
@@ -208,14 +226,34 @@ namespace DCL.Communities.CommunityCreation
             UpdateCreateButtonAvailability();
         }
 
+        public void SetCommunityPrivacy(CommunityPrivacy privacy, bool isInteractable)
+        {
+            creationPanelMembershipDropdown.SelectedIndex = (int)privacy;
+            creationPanelMembershipDropdown.SetAsInteractable(isInteractable);
+        }
+
         public void SetPlacesSelector(List<string> options)
         {
             creationPanelPlacesDropdown.SetMainButtonText(PLACES_DROPDOWN_TITLE);
             creationPanelPlacesDropdown.SetOptions(options);
         }
 
+        public void ShowComplianceErrorModal(bool showErrorModal, string errorMessage = "", bool isApiAvailable = true)
+        {
+            creationPanelModerationErrorModalsContainer.SetActive(showErrorModal);
+            creationPanelComplianceErrorModal.SetActive(isApiAvailable);
+            creationPanelModerationAPIUnavailableModal.SetActive(!isApiAvailable);
+            creationPanelComplianceErrorModalErrorText.text = errorMessage;
+        }
+
         private void OnPlacesDropdownOptionSelected(int index) =>
             AddPlaceButtonClicked?.Invoke(index);
+
+        private void OnPlacesPanelOpened() =>
+            creationPanelScrollRect.vertical = false;
+
+        private void OnPlacesPanelClosed() =>
+            creationPanelScrollRect.vertical = true;
 
         public void AddPlaceTag(string id, bool isWorld, string placeName, string ownerName, bool isRemovalAllowed, bool updateScrollPosition = true)
         {
@@ -266,10 +304,12 @@ namespace DCL.Communities.CommunityCreation
 
         public void CleanCreationPanel()
         {
+            ShowComplianceErrorModal(false);
             SetCommunityCreationInProgress(false);
             SetProfileSelectedImage(sprite: null);
             SetCommunityName(string.Empty, true);
             SetCommunityDescription(string.Empty);
+            SetCommunityPrivacy(CommunityPrivacy.@public, true);
             SetPlacesSelector(new List<string>());
             CreationPanelCommunityNameInputDeselected(null);
             CreationPanelCommunityDescriptionInputDeselected(null);
@@ -277,6 +317,7 @@ namespace DCL.Communities.CommunityCreation
             foreach (CommunityPlaceTag placeTag in currentPlaceTags)
                 Destroy(placeTag.gameObject);
             currentPlaceTags.Clear();
+            creationPanelScrollRect.vertical = true;
         }
 
         private async UniTaskVoid SetScrollPositionToBottomAsync(CancellationToken ct)
@@ -321,11 +362,40 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityDescriptionCharCounter.gameObject.SetActive(false);
         }
 
-        private void UpdateCreateButtonAvailability()
-        {
+        private void UpdateCreateButtonAvailability() =>
             creationPanelCreateButton.interactable =
-                !string.IsNullOrEmpty(creationPanelCommunityNameInputField.text) &&
-                !string.IsNullOrEmpty(creationPanelCommunityDescriptionInputField.text);
+                !string.IsNullOrEmpty(creationPanelCommunityNameInputField.text) && !string.IsNullOrWhiteSpace(creationPanelCommunityNameInputField.text) &&
+                !string.IsNullOrEmpty(creationPanelCommunityDescriptionInputField.text) && !string.IsNullOrWhiteSpace(creationPanelCommunityDescriptionInputField.text);
+
+        private void OpenContentPolicyAndCodeOfEthicsLink(string id) =>
+            ContentPolicyAndCodeOfEthicsLinksClicked?.Invoke(id);
+
+        private void CreateButtonClicked()
+        {
+            var lands = new List<string>();
+            var worlds = new List<string>();
+            foreach (CommunityPlaceTag placeTag in currentPlaceTags)
+            {
+                if (placeTag.IsWorld)
+                    worlds.Add(placeTag.Id);
+                else
+                    lands.Add(placeTag.Id);
+            }
+
+            if (!isEditionMode)
+                CreateCommunityButtonClicked?.Invoke(
+                    creationPanelCommunityNameInputField.text,
+                    creationPanelCommunityDescriptionInputField.text,
+                    lands,
+                    worlds,
+                    creationPanelMembershipDropdown.SelectedIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
+            else
+                SaveCommunityButtonClicked?.Invoke(
+                    creationPanelCommunityNameInputField.text,
+                    creationPanelCommunityDescriptionInputField.text,
+                    lands,
+                    worlds,
+                    creationPanelMembershipDropdown.SelectedIndex == 0 ? CommunityPrivacy.@public : CommunityPrivacy.@private);
         }
     }
 }

@@ -2,9 +2,10 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
-using DCL.Utilities.Extensions;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.RemoveIntentions
@@ -27,14 +28,14 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         }
 
         // TODO how to remove boiler-plate methods and preserve RoomSource?
-        private void OnConnectionUpdateFromIsland(IRoom room, ConnectionUpdate connectionupdate)
+        private void OnConnectionUpdateFromIsland(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            OnConnectionUpdated(room, connectionupdate, RoomSource.ISLAND);
+            OnConnectionUpdated(room, connectionUpdate, RoomSource.ISLAND);
         }
 
-        private void OnConnectionUpdateFromScene(IRoom room, ConnectionUpdate connectionupdate)
+        private void OnConnectionUpdateFromScene(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            OnConnectionUpdated(room, connectionupdate, RoomSource.GATEKEEPER);
+            OnConnectionUpdated(room, connectionUpdate, RoomSource.GATEKEEPER);
         }
 
         private void OnParticipantUpdateFromIsland(Participant participant, UpdateFromParticipant update)
@@ -47,20 +48,17 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.GATEKEEPER);
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, RoomSource roomSource)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, RoomSource roomSource)
         {
-            if (connectionupdate is ConnectionUpdate.Disconnected)
+            if (connectionUpdate is ConnectionUpdate.Disconnected)
             {
                 using var _ = multithreadSync.GetScope();
 
                 // See: https://github.com/decentraland/unity-explorer/issues/3796
                 lock (room.Participants)
                 {
-                    foreach (string identity in room.Participants.RemoteParticipantIdentities())
-                    {
-                        Participant participant = room.Participants.RemoteParticipant(identity).EnsureNotNull();
-                        list.Add(new RemoveIntention(participant.Identity, roomSource));
-                    }
+                    foreach (KeyValuePair<string, Participant> participant in room.Participants.RemoteParticipantIdentities())
+                        list.Add(new RemoveIntention(participant.Value.Identity, roomSource));
                 }
             }
         }

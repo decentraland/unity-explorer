@@ -25,6 +25,15 @@ on:
           - none
           - profile
           - deep
+      compression:
+        description: 'Level of compression'
+        required: true
+        default: 'LZ4HC'
+        type: choice
+        options:
+          - None
+          - LZ4
+          - LZ4HC
       clean_build:
         description: 'Clean Build'
         required: false
@@ -45,12 +54,36 @@ on:
         required: false
         type: boolean
         default: false
+      delta_threshold_macos_mb:
+        description: 'Warn if macOS growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      delta_threshold_windows_mb:
+        description: 'Warn if Windows growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      enforce_delta:
+        description: 'Build fails when Δ MB exceeds threshold'
+        required: false
+        default: false
+        type: boolean
+      enforce_cap:
+        description: 'Build fails when size MB exceeds cap'
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       profile:
         required: true
         type: string
         default: 'none'
+      compression:
+        required: false
+        type: string
+        default: 'LZ4HC'
       clean_build:
         required: true
         default: true
@@ -77,6 +110,26 @@ on:
       tag_version:
         type: string
         required: false
+      delta_threshold_macos_mb:
+        description: 'Warn if macOS growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      delta_threshold_windows_mb:
+        description: 'Warn if Windows growth > this MB (0 = off)'
+        required: false
+        default: '0'
+        type: string
+      enforce_delta:
+        description: 'Build fails when Δ MB exceeds threshold'
+        required: false
+        default: false
+        type: boolean
+      enforce_cap:
+        description: 'Build fails when size MB exceeds cap'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.install_source }}
@@ -195,6 +248,14 @@ jobs:
           #options=("DetailedBuildReport")
           options=()
 
+          # compression - default is LZ4HC
+          compression="${{ github.event.inputs.compression || inputs.compression || 'LZ4HC' }}"
+          if [[ "$compression" == "LZ4" ]]; then
+            options+=("CompressWithLz4")
+          elif [[ "$compression" == "LZ4HC" ]]; then
+            options+=("CompressWithLz4HC")
+          fi
+
           # input.profile
           profile="${{ github.event.inputs.profile || inputs.profile }}"
 
@@ -210,7 +271,7 @@ jobs:
           # Write the array as a comma-separated string
           # Set the Internal Field Separator to comma
           IFS=,
-          echo "options=${options[*]}" >> "$GITHUB_OUTPUT"
+          echo "options=${options[*]}" | tee -a "$GITHUB_OUTPUT"
 
   build:
     name: Build
@@ -322,6 +383,127 @@ jobs:
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
+
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Enforce artifact size budget
+        id: size_check
+        env:
+          # Per-target absolute caps (MB)
+          MAX_MACOS_MB: 370
+          MAX_WINDOWS64_MB: 280
+
+          # Per-platform delta thresholds (MB); 0 = disabled
+          DELTA_MACOS_MB:   ${{ github.event.inputs.delta_threshold_macos_mb   || inputs.delta_threshold_macos_mb   || '0' }}
+          DELTA_WINDOWS_MB: ${{ github.event.inputs.delta_threshold_windows_mb || inputs.delta_threshold_windows_mb || '0' }}
+
+          # Enforcement toggles (when true => FAIL build)
+          ENFORCE_DELTA: ${{ github.event.inputs.enforce_delta || inputs.enforce_delta || false }}
+          ENFORCE_CAP:   ${{ github.event.inputs.enforce_cap   || inputs.enforce_cap   || false }}
+
+          REPO_FULL: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          FILE="upload_to_s3/${{ env.artifact_name }}.zip"
+          if [ ! -f "$FILE" ]; then
+            echo "::error::Artifact zip not found: $FILE"
+            exit 1
+          fi
+
+          # Current size in bytes
+          BYTES=$(stat -c%s "$FILE" 2>/dev/null || stat -f%z "$FILE")
+
+          # Convert to MB (decimal, 1 MB = 1,000,000) and MiB (binary, 1 MiB = 1,048,576)
+          MB_DEC=$(awk -v b="$BYTES" 'BEGIN { printf("%.1f", b/1000000) }')
+          MIB_BIN=$(awk -v b="$BYTES" 'BEGIN { printf("%.1f", b/1048576) }')
+
+          # Per-platform caps and delta thresholds
+          case "${{ matrix.target }}" in
+            macos)     MAX=$MAX_MACOS_MB    ; MAX_DELTA_MB=$DELTA_MACOS_MB   ;;
+            windows64) MAX=$MAX_WINDOWS64_MB; MAX_DELTA_MB=$DELTA_WINDOWS_MB ;;
+            *)         MAX=0; MAX_DELTA_MB=0 ;;
+          esac
+
+          echo "Checking ${{ matrix.target }} → ${MB_DEC} MB / ${MIB_BIN} MiB (cap ${MAX} MB, delta threshold ${MAX_DELTA_MB} MB)"
+
+          # Lookup latest release tag from GitHub API
+          API_LATEST="https://api.github.com/repos/${REPO_FULL}/releases/latest"
+          RELEASE_JSON=$(curl -sSL -H "Authorization: Bearer $GITHUB_TOKEN" "$API_LATEST")
+          RELEASE_TAG=$(echo "$RELEASE_JSON" | jq -r '.tag_name // empty')
+
+          LATEST_FOUND=false
+          if [ -n "$RELEASE_TAG" ]; then
+            REPO_NAME="${REPO_FULL#*/}"
+            LATEST_NAME="${{ env.artifact_name }}.zip"
+            S3_URL="https://explorer-artifacts.decentraland.org/@dcl/${REPO_NAME}/releases/${RELEASE_TAG}/${LATEST_NAME}"
+
+            CL=$(curl -sI "$S3_URL" | awk '/[Cc]ontent-[Ll]ength:/ {print $2}' | tr -d '\r')
+            if [ -n "$CL" ]; then
+              MB_LATEST=$(( (CL + 999999) / 1000000 ))
+              MIB_LATEST=$(awk -v b="$CL" 'BEGIN { printf("%.1f", b/1048576) }')
+              LATEST_FOUND=true
+              echo "Latest release: ${RELEASE_TAG} → ${MB_LATEST} MB / ${MIB_LATEST} MiB"
+            fi
+          fi
+
+          # Delta
+          DELTA_MB="N/A"; DELTA_PCT="N/A"
+          if $LATEST_FOUND; then
+            DELTA_MB=$(awk -v cur="$MB_DEC" -v base="$MB_LATEST" 'BEGIN { printf("%d", cur - base) }')
+            DELTA_PCT=$(awk -v cur="$MB_DEC" -v base="$MB_LATEST" 'BEGIN { if (base==0){print "N/A"} else {printf("%.2f%%",(cur-base)*100.0/base)} }')
+          fi
+
+          # Flags
+          CAP_EXCEEDED=false
+          DELTA_EXCEEDED=false
+
+          if [ "${MAX:-0}" -gt 0 ] && (( $(echo "$MB_DEC > $MAX" | bc -l) )); then
+            CAP_EXCEEDED=true
+            [ "${ENFORCE_CAP}" = "true" ] && echo "::error::Artifact exceeds cap" || echo "::warning::Artifact exceeds cap"
+          fi
+
+          if $LATEST_FOUND && [ "${MAX_DELTA_MB:-0}" -gt 0 ]; then
+            ABS_DELTA_MB=${DELTA_MB#-}
+            if [ "$ABS_DELTA_MB" -gt "$MAX_DELTA_MB" ]; then
+              DELTA_EXCEEDED=true
+              [ "${ENFORCE_DELTA}" = "true" ] && echo "::error::Δ ${DELTA_MB} MB vs latest release exceeds threshold" || echo "::warning::Δ ${DELTA_MB} MB vs latest release exceeds threshold"
+            fi
+          fi
+
+          # Summary
+          {
+            echo "### Artifact size check (vs latest release)"
+            echo "_All sizes shown in both decimal MB (1 MB = 1,000,000 bytes) and binary MiB (1 MiB = 1,048,576 bytes)._"
+            echo
+            echo "| Target | File | Size (MB / MiB) | Cap (MB) | Δ MB vs latest release | Δ % vs latest release | Δ threshold (MB) | Result |"
+            echo "|---|---|---:|---:|---:|---:|---:|---|"
+
+            RESULT="✅ OK"
+            if [ "$CAP_EXCEEDED" = true ] || [ "$DELTA_EXCEEDED" = true ]; then
+              if [ "$CAP_EXCEEDED" = true ] && [ "$DELTA_EXCEEDED" = true ]; then
+                RESULT="❌ CAP & DELTA EXCEEDED"
+              elif [ "$CAP_EXCEEDED" = true ]; then
+                RESULT="❌ CAP EXCEEDED"
+              else
+                RESULT="❌ DELTA EXCEEDED"
+              fi
+            fi
+
+            if $LATEST_FOUND; then
+              echo "| ${{ matrix.target }} | \`$FILE\` | ${MB_DEC} / ${MIB_BIN} | ${MAX:-0} | $DELTA_MB | $DELTA_PCT | ${MAX_DELTA_MB:-0} | ${RESULT} |"
+              echo
+              echo "- Latest release: **${RELEASE_TAG}** (${MB_LATEST} MB / ${MIB_LATEST} MiB)"
+            else
+              echo "| ${{ matrix.target }} | \`$FILE\` | ${MB_DEC} / ${MIB_BIN} | ${MAX:-0} | N/A | N/A | ${MAX_DELTA_MB:-0} | ${RESULT} |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Enforce (fail the job) only if toggles are true
+          if [ "$CAP_EXCEEDED" = true ] && [ "${ENFORCE_CAP}" = "true" ]; then exit 1; fi
+          if [ "$DELTA_EXCEEDED" = true ] && [ "${ENFORCE_DELTA}" = "true" ]; then exit 1; fi
 
       - name: Set SHA, branch, and build prefix
         run: |

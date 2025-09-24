@@ -6,14 +6,12 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
-using DCL.WebRequests;
+using DCL.Utility;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using SceneRunner.Scene;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -24,7 +22,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
 {
     public static class LoadThumbnailsUtils
     {
-        internal static readonly SpriteData DEFAULT_THUMBNAIL = new (new Texture2DData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
+        public static readonly SpriteData DEFAULT_THUMBNAIL = new (new Texture2DData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
         private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
 
         public static async UniTask<Sprite> WaitForThumbnailAsync(this IAvatarAttachment avatarAttachment, int checkInterval, CancellationToken ct)
@@ -33,37 +31,6 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             while (avatarAttachment.ThumbnailAssetResult is not { IsInitialized: true });
 
             return avatarAttachment.ThumbnailAssetResult.Value.Asset;
-        }
-
-        public static async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
-            string hash, ReportData reportCategory, CancellationToken ct)
-        {
-            using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
-            urlBuilder!.Clear();
-
-            urlBuilder.AppendDomain(assetBundleURL)
-                      .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
-                      .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
-
-            var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build()), ct, reportCategory)
-                                                       .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
-
-            AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
-
-            return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
-        }
-
-        private static async UniTask<bool> TryResolveAssetBundleManifestAsync(IWebRequestController requestController, URLDomain assetBundleURL, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
-        {
-            if (attachment.ManifestResult?.Asset == null)
-                try
-                {
-                    var asset = await LoadAssetBundleManifestAsync(requestController, assetBundleURL, attachment.DTO.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? CancellationToken.None);
-                    attachment.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(asset);
-                }
-                catch (Exception) { return false; }
-
-            return true;
         }
 
         private static void CreateWearableThumbnailTexturePromise(
@@ -94,8 +61,6 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
         }
 
         public static async UniTask CreateWearableThumbnailABPromiseAsync(
-            IWebRequestController requestController,
-            URLDomain assetBundleURL,
             IRealmData realmData,
             IAvatarAttachment attachment,
             World world,
@@ -118,7 +83,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
-            if (!await TryResolveAssetBundleManifestAsync(requestController, assetBundleURL, attachment, cancellationTokenSource))
+            if (attachment.DTO.assetBundleManifestVersion.IsLSDAsset || attachment.DTO.assetBundleManifestVersion.assetBundleManifestRequestFailed)
             {
                 ReportHub.Log(
                     ReportCategory.THUMBNAILS,
@@ -136,7 +101,8 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                     typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
-                    manifest: attachment.ManifestResult?.Asset,
+                    assetBundleManifestVersion: attachment.DTO.assetBundleManifestVersion,
+                    parentEntityID: attachment.DTO.id,
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),
                 partitionComponent);
@@ -144,4 +110,5 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             world.Create(attachment, promise, partitionComponent);
         }
     }
+
 }

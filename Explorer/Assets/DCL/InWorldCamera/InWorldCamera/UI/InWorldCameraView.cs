@@ -1,11 +1,15 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.Diagnostics;
 using DCL.UI;
 using DG.Tweening;
 using MVC;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
+using Utility.Ownership;
 
 namespace DCL.InWorldCamera.UI
 {
@@ -19,6 +23,8 @@ namespace DCL.InWorldCamera.UI
         [SerializeField] private Image whiteSplashImage;
         [SerializeField] private RectTransform cameraReelIcon;
         [SerializeField] private Image animatedImage;
+        [Space]
+        [SerializeField] private ContextualImage gridImage;
 
         private Sequence currentVfxSequence;
 
@@ -37,6 +43,12 @@ namespace DCL.InWorldCamera.UI
         [field: SerializeField] public Button ShortcutsInfoButton { get; private set; }
 
         public bool IsVfxInProgress => currentVfxSequence.IsActive() && !currentVfxSequence.IsComplete();
+
+        public override async UniTask ShowAsync(CancellationToken ct)
+        {
+            await gridImage.TriggerOrWaitReadyAsync(ct);
+            await base.ShowAsync(ct);
+        }
 
         public void ScreenshotCaptureAnimation(Texture2D screenshotImage, float splashDuration, float afterSplashPause, float transitionDuration)
         {

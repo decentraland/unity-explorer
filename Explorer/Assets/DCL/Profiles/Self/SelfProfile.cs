@@ -5,7 +5,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
@@ -136,14 +136,16 @@ namespace DCL.Profiles.Self
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.Version++;
-            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(newProfile.DisplayName);
+            newProfile.UserNameColor = NameColorHelper.GetNameColor(newProfile.DisplayName);
 
             OwnProfile = newProfile;
 
             if (!updateAvatarInWorld)
             {
                 await profileRepository.SetAsync(newProfile, ct);
-                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+                    // force to fetch the profile: there are some fields that might change, like the profile picture url
+                    getFromCacheIfPossible: false);
             }
 
             // Update profile immediately to prevent UI inconsistencies
@@ -155,7 +157,9 @@ namespace DCL.Profiles.Self
             try
             {
                 await profileRepository.SetAsync(newProfile, ct);
-                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+                    // force to fetch the profile: there are some fields that might change, like the profile picture url
+                    getFromCacheIfPossible: false);
 
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack

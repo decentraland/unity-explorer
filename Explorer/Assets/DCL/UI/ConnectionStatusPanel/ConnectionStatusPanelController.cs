@@ -1,192 +1,57 @@
-using Arch.Core;
-using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
-using DCL.DebugUtilities;
-using DCL.Multiplayer.Connections.Rooms.Status;
-using DCL.UI.ConnectionStatusPanel.StatusEntry;
-using DCL.UI.ErrorPopup;
-using DCL.UserInAppInitializationFlow;
-using DCL.Utilities;
-using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.CurrentScene;
-using LiveKit.Proto;
-using MVC;
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using DCL.Ipfs;
-using Utility;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DCL.UI.ConnectionStatusPanel
 {
-    public class ConnectionStatusPanelController : ControllerBase<ConnectionStatusPanelView>
+    [RequireComponent(typeof(UIDocument))]
+    public class ConnectionStatusPanelController : MonoBehaviour
     {
-        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
-        private readonly IMVCManager mvcManager;
-        private readonly ICurrentSceneInfo currentSceneInfo;
-        private readonly ECSReloadScene ecsReloadScene;
-        private readonly IRoomsStatus roomsStatus;
-        private readonly World world;
-        private readonly Entity playerEntity;
-        private readonly IDebugContainerBuilder debugBuilder;
-        private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private readonly List<IDisposable> subscriptions = new (2);
-        private bool isSceneReloading;
+        private const string USS_PANEL_HIDDEN = "connection-panel--hidden";
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        private VisualElement rootContainer;
+        private ConnectionPanelView panelView;
 
-        public ConnectionStatusPanelController(
-            ViewFactoryMethod viewFactory,
-            IUserInAppInitializationFlow userInAppInitializationFlow,
-            IMVCManager mvcManager,
-            ICurrentSceneInfo currentSceneInfo,
-            ECSReloadScene ecsReloadScene,
-            IRoomsStatus roomsStatus,
-            World world,
-            Entity playerEntity,
-            IDebugContainerBuilder debugBuilder) : base(viewFactory)
+        // Gate visibility behind '/debug' chat command
+        private bool isPanelEnabled;
+
+        private void OnEnable()
         {
-            this.userInAppInitializationFlow = userInAppInitializationFlow;
-            this.mvcManager = mvcManager;
-            this.currentSceneInfo = currentSceneInfo;
-            this.ecsReloadScene = ecsReloadScene;
-            this.roomsStatus = roomsStatus;
-            this.world = world;
-            this.playerEntity = playerEntity;
-            this.debugBuilder = debugBuilder;
+            rootContainer = GetComponent<UIDocument>().rootVisualElement;
+
+            panelView = new ConnectionPanelView(rootContainer.Q("ConnectionPanel"), OnToggleButtonClicked);
+            var toggleButton = rootContainer.Q<Button>("ConnectionButton");
+            toggleButton.clicked += OnToggleButtonClicked;
+
+            // We enable it only after the first Loading Screen is gone
+            rootContainer.EnableInClassList(USS_PANEL_HIDDEN, true);
         }
 
-        protected override void OnViewInstantiated()
+        public void SetPanelEnabled(bool paneEnabled)
         {
-            currentSceneInfo.SceneStatus.OnUpdate += SceneStatusOnUpdate;
-            currentSceneInfo.SceneAssetBundleStatus.OnUpdate += AssetBundleSceneStatusOnUpdate;
-            ChatCommandsBus.Instance.ConnectionStatusPanelVisibilityChanged += VisibilityChanged;
-
-            SceneStatusOnUpdate(currentSceneInfo.SceneStatus.Value);
-            AssetBundleSceneStatusOnUpdate(currentSceneInfo.SceneAssetBundleStatus.Value);
-            Bind(roomsStatus.ConnectionQualityScene, viewInstance!.SceneRoom);
-            Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
+            isPanelEnabled = paneEnabled;
+            UpdateRootVisibility();
         }
 
-        private void AssetBundleSceneStatusOnUpdate(AssetBundleRegistryEnum? obj)
+        private void UpdateRootVisibility()
         {
-            if (obj == null)
-            {
-                viewInstance!.AssetBundle.HideStatus();
-                return;
-            }
-
-            viewInstance!.AssetBundle.ShowStatus(obj.Value);
+            if (rootContainer == null) return;
+            rootContainer.EnableInClassList(USS_PANEL_HIDDEN, !isPanelEnabled);
         }
 
-        protected override void OnViewShow() =>
-            VisibilityChanged(debugBuilder.IsVisible);
+        public void SetSceneStatus(ConnectionStatus status) =>
+            panelView.SetSceneStatus(status);
 
-        public void VisibilityChanged(bool isVisible) =>
-            viewInstance?.gameObject.SetActive(isVisible);
+        public void SetSceneRoomStatus(ConnectionStatus status) =>
+            panelView.SetSceneRoomStatus(status);
 
-        private void SceneStatusOnUpdate(ICurrentSceneInfo.RunningStatus? obj)
-        {
-            const float DELAY = 5f;
+        public void SetGlobalRoomStatus(ConnectionStatus status) =>
+            panelView.SetGlobalRoomStatus(status);
 
-            async UniTaskVoid ShowButtonAsync(CancellationToken ct)
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(DELAY), cancellationToken: ct);
+        public void SetAssetBundleSceneStatus(AssetBundleRegistryEnum? status) =>
+            panelView.SetAssetBundleSceneStatus(status);
 
-                viewInstance.Scene.ShowReloadButton(TryReloadScene);
-            }
-
-            if (obj == null)
-            {
-                viewInstance!.Scene.HideStatus();
-                return;
-            }
-
-            var status = obj.Value;
-
-            viewInstance!.Scene.ShowStatus(status);
-
-            if (status is ICurrentSceneInfo.RunningStatus.Crashed)
-                ShowButtonAsync(cancellationTokenSource.Token).Forget();
-        }
-
-        private void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
-        {
-            var subscription = value.Subscribe(newValue => UpdateStatusEntry(statusEntry, value, newValue));
-            UpdateStatusEntry(statusEntry, value, value.Value);
-            subscriptions.Add(subscription);
-        }
-
-        private void UpdateStatusEntry(IStatusEntry statusEntry, IReadonlyReactiveProperty<ConnectionQuality> value, ConnectionQuality quality)
-        {
-            var status = StatusFrom(quality);
-            statusEntry.ShowStatus(status);
-
-            if (status is IStatusEntry.Status.Lost)
-                TryShowErrorAsync(value, cancellationTokenSource.Token).Forget();
-        }
-
-        private async UniTaskVoid TryShowErrorAsync(IReadonlyReactiveProperty<ConnectionQuality> value, CancellationToken ct)
-        {
-            const float DELAY_BEFORE_LOST_ACCEPT = 10;
-
-            await UniTask.Delay(TimeSpan.FromSeconds(DELAY_BEFORE_LOST_ACCEPT), cancellationToken: ct);
-
-            if (value.Value is not ConnectionQuality.QualityLost)
-                return;
-
-            await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Default), ct);
-            await userInAppInitializationFlow.ExecuteAsync(
-                new UserInAppInitializationFlowParameters(
-                    showAuthentication: true,
-                    showLoading: true,
-                    loadSource: IUserInAppInitializationFlow.LoadSource.Recover,
-                    world: world,
-                    playerEntity: playerEntity
-                ),
-                ct
-            );
-        }
-
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
-
-        public override void Dispose()
-        {
-            foreach (IDisposable subscription in subscriptions) subscription.Dispose();
-            subscriptions.Clear();
-
-            currentSceneInfo.SceneStatus.OnUpdate -= SceneStatusOnUpdate;
-            ChatCommandsBus.Instance.ConnectionStatusPanelVisibilityChanged -= VisibilityChanged;
-            base.Dispose();
-
-            cancellationTokenSource.SafeCancelAndDispose();
-        }
-
-        private void TryReloadScene()
-        {
-            async UniTask TryReloadSceneAsync()
-            {
-                if (isSceneReloading)
-                    return;
-
-                isSceneReloading = true;
-
-                await ecsReloadScene.TryReloadSceneAsync(cancellationTokenSource.Token);
-                isSceneReloading = false;
-            }
-
-            TryReloadSceneAsync().Forget();
-        }
-
-        private static IStatusEntry.Status StatusFrom(ConnectionQuality quality) =>
-            quality switch
-            {
-                ConnectionQuality.QualityPoor => IStatusEntry.Status.Poor,
-                ConnectionQuality.QualityGood => IStatusEntry.Status.Good,
-                ConnectionQuality.QualityExcellent => IStatusEntry.Status.Excellent,
-                ConnectionQuality.QualityLost => IStatusEntry.Status.Lost,
-                _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, null!)
-            };
+        private void OnToggleButtonClicked() =>
+            panelView.Toggle();
     }
 }

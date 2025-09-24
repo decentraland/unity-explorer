@@ -6,7 +6,6 @@
         "GUID:2665a8d13d1b3f18800f46e256720795",
         "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
         "GUID:275e22790c04e9b47a5085d7b0c4432a",
-        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
         "GUID:4725c02394ab4ce19f889e4e8001f989",
         "GUID:4794e238ed0f65142a4aea5848b513e5",
         "GUID:9e314663ce958b746873cb22d57ede55",
@@ -17,14 +16,11 @@
         "GUID:ea8005fdf30f9c24dab04181c20b1310",
         "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
         "GUID:8322ea9340a544c59ddc56d4793eac74",
-        "GUID:56e8195b069a4dca9c4c4f313c65f526",
         "GUID:e0eedfa2deb9406daf86fd8368728e39",
-        "GUID:166b65e6dfc848bb9fb075f53c293a38",
         "GUID:c80c82a8f4e04453b85fbab973d6774a",
         "GUID:3b7622431700fb240ae5afd170731645",
         "GUID:4f64864a268dcca4291e747f5a335914",
-        "GUID:9e24947de15b9834991c9d8411ea37cf",
-        "GUID:831ede57aceda6240926fbc7ae2565b7"
+        "GUID:9e24947de15b9834991c9d8411ea37cf"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -35,7 +31,7 @@
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.dcl.gpui-assets",
+            "name": "com.gurbu.gpui-pro",
             "expression": "",
             "define": "GPUI_PRO_PRESENT"
         }
