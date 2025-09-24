@@ -17,7 +17,6 @@ using DCL.MapRenderer.MapLayers.SatelliteAtlas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Navmap;
-using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;

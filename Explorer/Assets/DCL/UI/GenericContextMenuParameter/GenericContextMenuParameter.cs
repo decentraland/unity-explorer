@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenuParameter
+namespace DCL.UI
 {
     public struct GenericContextMenuParameter
     {

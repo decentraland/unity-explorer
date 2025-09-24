@@ -8,7 +8,7 @@ using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;

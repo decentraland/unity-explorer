@@ -1,12 +1,14 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationGuards;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
+
+//using DCL.Passport;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -28,7 +30,7 @@ namespace DCL.UI.SystemMenu
         private readonly IProfileCache profileCache;
         private readonly Entity playerEntity;
         private readonly World world;
-        private readonly IMVCManager mvcManager;
+        private readonly IPassportBridge passportBridge;
 
         private CancellationTokenSource? logoutCts;
 
@@ -43,17 +45,16 @@ namespace DCL.UI.SystemMenu
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
-            IMVCManager mvcManager
-        ) : base(viewFactory)
+            IPassportBridge passportBridge) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
+            this.passportBridge = passportBridge;
             this.playerEntity = playerEntity;
             this.world = world;
-            this.mvcManager = mvcManager;
         }
 
         public override void Dispose()
@@ -110,7 +111,7 @@ namespace DCL.UI.SystemMenu
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId, isOwnProfile: true))).Forget();
+            passportBridge.ShowAsync(new PassportParams(userId, isOwnProfile: true));
         }
 
         private void Logout()

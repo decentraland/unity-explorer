@@ -15,6 +15,7 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using System.Collections.Generic;
@@ -41,6 +42,7 @@ namespace DCL.Chat
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatClickDetectionService chatClickDetectionService;
         private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly ITextFormatter textFormatter;
 
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
@@ -72,7 +74,8 @@ namespace DCL.Chat
             CommunityDataService communityDataService,
             ChatClickDetectionService chatClickDetectionService,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            CommunitiesDataProvider communityDataProvider) : base(viewFactory)
+            CommunitiesDataProvider communityDataProvider,
+            ITextFormatter textFormatter) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
@@ -89,6 +92,7 @@ namespace DCL.Chat
             this.chatClickDetectionService = chatClickDetectionService;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communityDataProvider;
+            this.textFormatter = textFormatter;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -160,7 +164,8 @@ namespace DCL.Chat
                 commandRegistry.ResolveInputStateCommand,
                 commandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
-                commandRegistry.SendMessage);
+                commandRegistry.SendMessage,
+                textFormatter);
 
             var memberListPresenter = new ChatMemberListPresenter(
                 viewInstance.MemberListView,

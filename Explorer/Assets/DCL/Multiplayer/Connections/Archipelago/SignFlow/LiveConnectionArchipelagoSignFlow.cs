@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using Decentraland.Common;
 using Decentraland.Kernel.Comms.V3;
@@ -12,7 +13,6 @@ using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Threading;
 using Utility.Multithreading;
-using Utility.Types;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.Connections.Archipelago.SignFlow

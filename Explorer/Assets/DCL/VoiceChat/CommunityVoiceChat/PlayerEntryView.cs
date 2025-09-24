@@ -45,7 +45,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private VoiceChatParticipantsStateService.ParticipantState userProfile;
         private VoiceChatParticipantsStateService.ParticipantState localUserProfile;
-        private Sequence isSpeakingCurrentSequence;
+        private Sequence? isSpeakingCurrentSequence;
 
         public event Action<string> ApproveSpeaker;
         public event Action<string> DenySpeaker;
@@ -59,6 +59,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void CleanupEntry()
         {
+            isSpeakingCurrentSequence?.Kill();
+            isSpeakingCurrentSequence = null;
+            SetSpeakingIconIdleScale();
             approveDenySection.SetActive(false);
             isSpeakingIcon.gameObject.SetActive(false);
         }

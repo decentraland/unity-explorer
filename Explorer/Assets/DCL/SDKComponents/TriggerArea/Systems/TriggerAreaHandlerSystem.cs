@@ -12,7 +12,6 @@ using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.TriggerArea.Components;
-using DCL.SDKComponents.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -21,6 +20,7 @@ using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
+using DCL.AvatarRendering.AvatarShape;
 
 namespace DCL.SDKComponents.TriggerArea.Systems
 {

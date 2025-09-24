@@ -1,9 +1,8 @@
-using DCL.UI.GenericContextMenuParameter;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenu.Controls.Configs
+namespace DCL.UI.Controls.Configs
 {
     public class ScrollableButtonListControlSettings : IContextMenuControlSettings
     {
