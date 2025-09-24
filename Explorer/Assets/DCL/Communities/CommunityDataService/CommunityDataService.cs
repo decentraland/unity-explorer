@@ -8,11 +8,11 @@ using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
 using MVC;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Communities
 {

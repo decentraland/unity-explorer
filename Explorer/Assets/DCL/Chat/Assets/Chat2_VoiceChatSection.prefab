@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9a9ca43bc834ea18a6cc036a83d9b38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VoiceChatPanelLayoutElement: {fileID: 337026671723665648}
+  voiceChatPanelLayoutElement: {fileID: 337026671723665648}
 --- !u!1 &1190873555538097139
 GameObject:
   m_ObjectHideFlags: 0

@@ -31,7 +31,10 @@ namespace DCL.Chat.ChatCommands
                 return PrivateConversationUserStateService.ChatUserState.DISCONNECTED;
             }
 
-            bool isOnline = result.Value.Result == PrivateConversationUserStateService.ChatUserState.CONNECTED;
+            bool isOnline = result.Value.Result is
+                PrivateConversationUserStateService.ChatUserState.CONNECTED or
+                PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED or
+                PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
             eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, isOnline));
 
             return result.Value.Result;

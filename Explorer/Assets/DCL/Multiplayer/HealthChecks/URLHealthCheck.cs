@@ -2,11 +2,11 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks
 {

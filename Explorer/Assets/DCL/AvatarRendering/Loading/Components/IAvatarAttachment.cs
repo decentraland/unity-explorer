@@ -3,8 +3,6 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using SceneRunner.Scene;
-using System;
 
 namespace DCL.AvatarRendering.Loading.Components
 {

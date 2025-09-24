@@ -1,5 +1,5 @@
+using DCL.Utility.Types;
 using System;
-using Utility.Types;
 
 namespace Utility.Ownership
 {

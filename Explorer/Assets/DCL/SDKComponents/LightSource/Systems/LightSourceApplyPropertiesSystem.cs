@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components.Conversion;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Utils;

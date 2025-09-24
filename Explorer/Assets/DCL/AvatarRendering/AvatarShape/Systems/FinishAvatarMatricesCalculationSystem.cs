@@ -8,9 +8,8 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.AvatarShape
 {
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     public partial class FinishAvatarMatricesCalculationSystem : BaseUnityLoopSystem

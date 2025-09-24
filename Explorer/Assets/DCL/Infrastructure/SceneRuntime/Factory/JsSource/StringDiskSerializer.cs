@@ -5,7 +5,6 @@ using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Utility.Types;
 
 namespace SceneRuntime.Factory.JsSource
 {

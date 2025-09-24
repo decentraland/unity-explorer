@@ -146,7 +146,14 @@ namespace DCL.InWorldCamera.Systems
             Vector3 horizontal = target.right.normalized * input.Translation.x;
             Vector3 vertical = target.up.normalized * input.Panning;
 
-            float speed = input.IsRunning ? moveSpeed * settings.RunSpeedMultiplayer : moveSpeed;
+            float speed = moveSpeed;
+
+            if (input.IsRunning)
+                speed *= settings.RunSpeedMultiplayer;
+
+            if (input.IsWalking)
+                speed *= settings.WalkSpeedMultiplayer;
+
             return (forward + horizontal + vertical) * (speed * deltaTime);
         }
 

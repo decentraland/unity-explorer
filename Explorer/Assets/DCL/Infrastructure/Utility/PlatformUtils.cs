@@ -2,15 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-
-#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
 using System.Runtime.InteropServices;
-#endif
-
 using System.Text;
 using UnityEngine;
+#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
+#endif
 
-namespace Utility
+namespace DCL.Utility
 {
     public static class PlatformUtils
     {

@@ -14,8 +14,8 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Communities;
 using DCL.Settings.Settings;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
+using DCL.UI;
+using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;
 using DCL.UI.ProfileElements;
 using UnityEngine;
@@ -43,7 +43,7 @@ namespace DCL.Chat
         private readonly CallButtonPresenter callButtonPresenter;
 
         private CancellationTokenSource profileLoadCts = new ();
-        private CancellationTokenSource thumbCts = new();
+        private CancellationTokenSource thumbCts = new ();
         private CancellationTokenSource callStatusCts = new();
         private CancellationTokenSource? activeMenuCts;
         private UniTaskCompletionSource? activeMenuTcs;
@@ -179,10 +179,7 @@ namespace DCL.Chat
 
             currentViewModel.IsOnline = @event.OnlineUsers.Contains(currentViewModel.Id);
 
-            if (!currentViewModel.IsOnline)
-                callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.Id);
-            else
-                SetCallStatusForUserAsync().Forget();
+            SetCallStatusForUserAsync().Forget();
 
             view.defaultTitlebarView.Setup(currentViewModel);
         }
@@ -191,7 +188,7 @@ namespace DCL.Chat
         {
             callStatusCts = callStatusCts.SafeRestart();
             var result = await getUserCallStatusCommand.ExecuteAsync(currentViewModel!.Id, callStatusCts.Token);
-            callButtonPresenter.SetCallStatusForUser(result, currentViewModel.Id);
+            callButtonPresenter.SetCallStatusForUser(result, currentViewModel.Id, currentViewModel.Username);
         }
 
         private void OnLiveUserConnectionStateChange(ChatEvents.UserStatusUpdatedEvent userStatusUpdatedEvent)
@@ -207,10 +204,7 @@ namespace DCL.Chat
                 currentViewModel.IsOnline = userStatusUpdatedEvent.IsOnline;
                 view.defaultTitlebarView.Setup(currentViewModel);
 
-                if (!currentViewModel.IsOnline)
-                    callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.Id);
-                else
-                    SetCallStatusForUserAsync().Forget();
+                SetCallStatusForUserAsync().Forget();
             }
         }
 
@@ -328,10 +322,7 @@ namespace DCL.Chat
 
                 if (currentViewModel is not { ViewMode: TitlebarViewMode.DirectMessage }) return;
 
-                if (!currentViewModel.IsOnline)
-                    callButtonPresenter.SetCallStatusForUser(CallButtonPresenter.OtherUserCallStatus.USER_OFFLINE, currentViewModel.WalletId);
-                else
-                    SetCallStatusForUserAsync().Forget();
+                SetCallStatusForUserAsync().Forget();
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
