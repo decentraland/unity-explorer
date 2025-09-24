@@ -224,9 +224,11 @@ namespace DCL.VoiceChat
                     activeCallStatusService = null;
                     break;
                 case VoiceChatType.PRIVATE:
+                    ChangePanelState(VoiceChatPanelState.SELECTED);
                     activeCallStatusService = privateVoiceChatCallStatusService;
                     break;
                 case VoiceChatType.COMMUNITY:
+                    ChangePanelState(VoiceChatPanelState.SELECTED);
                     activeCallStatusService = communityVoiceChatCallStatusService;
                     break;
             }

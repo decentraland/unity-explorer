@@ -5,7 +5,6 @@ using DCL.MarketplaceCredits;
 using DCL.Minimap;
 using DCL.UI.Controls;
 using DCL.UI.Sidebar;
-using DCL.VoiceChat;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,8 +13,7 @@ namespace DCL.UI.MainUI
 {
     public class MainUIView : ViewBase, IView
     {
-        [field: SerializeField] public ChatMainView ChatView2 { get; private set; }
-        [field: SerializeField] public VoiceChatPanelView VoiceChatPanelView { get; private set; }
+        [field: SerializeField] public ChatMainView ChatMainView { get; private set; }
         [field: SerializeField] public FriendsPanelView FriendsPanelViewView { get; private set; }
         [field: SerializeField] public MinimapView MinimapView { get; private set; }
         [field: SerializeField] public FriendPushNotificationView FriendPushNotificationView { get; private set; }

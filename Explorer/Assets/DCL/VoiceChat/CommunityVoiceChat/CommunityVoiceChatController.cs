@@ -73,9 +73,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatTypeSubscription = voiceChatOrchestrator.CurrentVoiceChatType.Subscribe(OnVoiceChatTypeChanged);
 
             OnVoiceChatTypeChanged(voiceChatOrchestrator.CurrentVoiceChatType.Value);
-
-            //Temporary fix, this will be moved to the Show function to set expanded as default state
-            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
         }
 
         private void OnGetPlayerEntry(PlayerEntryView entry)
@@ -244,6 +241,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void Show()
         {
+            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
             view.gameObject.SetActive(true);
         }
 

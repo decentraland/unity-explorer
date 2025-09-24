@@ -8,7 +8,7 @@ namespace DCL.Chat
 {
     public class ChatUIMediator
     {
-        private readonly ChatMainView mainView;
+        private readonly ChatPanelView panelView;
         private readonly ChatConfig.ChatConfig config;
         private readonly CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
@@ -19,7 +19,7 @@ namespace DCL.Chat
         internal readonly ChatMemberListPresenter memberListPresenter;
 
         public ChatUIMediator(
-            ChatMainView mainView,
+            ChatPanelView panelView,
             ChatConfig.ChatConfig config,
             ChatTitlebarPresenter titleBarPresenter,
             ChatChannelsPresenter channelListPresenter,
@@ -30,7 +30,7 @@ namespace DCL.Chat
             IVoiceChatOrchestrator voiceChatOrchestrator
             )
         {
-            this.mainView = mainView;
+            this.panelView = panelView;
             this.config = config;
             this.titleBarPresenter = titleBarPresenter;
             this.channelListPresenter = channelListPresenter;
@@ -50,9 +50,10 @@ namespace DCL.Chat
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowUnfocused();
             memberListPresenter.Hide();
-            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
+            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
             subTitleButtonPresenter.Hide();
+
             SetVoiceChatPanelState(false);
 
             SetPanelsFocus(isFocused: false, animate);
@@ -145,7 +146,7 @@ namespace DCL.Chat
             float duration = animate ? config.PanelsFadeDuration : 0f;
             Ease ease = config.PanelsFadeEase;
 
-            mainView.SetSharedBackgroundFocusState(isFocused, animate, duration, ease);
+            panelView.SetSharedBackgroundFocusState(isFocused, animate, duration, ease);
             messageFeedPresenter.SetFocusState(isFocused, animate, duration, ease);
             channelListPresenter.SetFocusState(isFocused, animate, duration, ease);
             titleBarPresenter.SetFocusState(isFocused, animate, duration, ease);

@@ -35,10 +35,7 @@ namespace DCL.VoiceChat
             communitiesVoiceChatController = new CommunityVoiceChatController(view.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
 
-            view.PointerEnter += OnPointerEnter;
-            view.PointerExit += OnPointerExit;
             view.PointerClick += OnPointerClick;
-
         }
 
         private void OnPointerClick()
@@ -46,13 +43,13 @@ namespace DCL.VoiceChat
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
         }
 
-        private void OnPointerExit()
+        public void OnPointerExit()
         {
             if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value == VoiceChatPanelState.FOCUSED)
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
         }
 
-        private void OnPointerEnter()
+        public void OnPointerEnter()
         {
             if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED)
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
@@ -64,8 +61,6 @@ namespace DCL.VoiceChat
             communitiesVoiceChatController?.Dispose();
             sceneVoiceChatController?.Dispose();
             voiceChatPanelResizeController?.Dispose();
-            view.PointerEnter -= OnPointerEnter;
-            view.PointerExit -= OnPointerExit;
             view.PointerClick -= OnPointerClick;
         }
     }

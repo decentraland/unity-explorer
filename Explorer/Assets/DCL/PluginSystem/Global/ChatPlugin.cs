@@ -37,7 +37,6 @@ using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Diagnostics;
-using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -191,7 +190,7 @@ namespace DCL.PluginSystem.Global
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
-            var viewInstance = mainUIView.ChatView2;
+            var viewInstance = mainUIView.ChatMainView;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
                 playerEntity,
                 entityParticipantTable,
@@ -217,11 +216,11 @@ namespace DCL.PluginSystem.Global
 
             // Ignore buttons that would lead to the conflicting state
             var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
-                viewInstance.TitlebarView.CloseChatButton.transform,
-                viewInstance.TitlebarView.CloseMemberListButton.transform,
-                viewInstance.TitlebarView.OpenMemberListButton.transform,
-                viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.inputField.transform,
+                viewInstance.ChatPanelView.TitlebarView.CloseChatButton.transform,
+                viewInstance.ChatPanelView.TitlebarView.CloseMemberListButton.transform,
+                viewInstance.ChatPanelView.TitlebarView.OpenMemberListButton.transform,
+                viewInstance.ChatPanelView.TitlebarView.BackFromMemberList.transform,
+                viewInstance.ChatPanelView.InputView.inputField.transform,
                 chatViewRectTransform);
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
@@ -271,7 +270,7 @@ namespace DCL.PluginSystem.Global
             chatMainController = new ChatMainController(
                 () =>
                 {
-                    ChatMainView? view = mainUIView.ChatView2;
+                    ChatMainView? view = mainUIView.ChatMainView;
                     view.gameObject.SetActive(false);
                     return view;
                 },

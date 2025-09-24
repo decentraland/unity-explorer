@@ -850,7 +850,7 @@ GameObject:
   - component: {fileID: 4399116881984022075}
   - component: {fileID: 6751572622469365853}
   - component: {fileID: 138522660755288675}
-  - component: {fileID: 301019140540625324}
+  - component: {fileID: 8785894611439909503}
   m_Layer: 5
   m_Name: Chat2_ChatSection
   m_TagString: Untagged
@@ -964,7 +964,7 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &301019140540625324
+--- !u!114 &8785894611439909503
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -973,11 +973,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6054260855757390284}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7df05ef5019000345ba252954cb79551, type: 3}
+  m_Script: {fileID: 11500000, guid: e37690e9ff1e49d8a773d34ac926bf20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <canvas>k__BackingField: {fileID: 0}
-  <raycaster>k__BackingField: {fileID: 0}
   sharedBackgroundCanvasGroup: {fileID: 5232439293637192038}
   <ConversationToolbarView2>k__BackingField: {fileID: 1993981065950141816}
   <MessageFeedView>k__BackingField: {fileID: 762913667457292210}
