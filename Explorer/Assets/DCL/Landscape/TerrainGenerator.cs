@@ -354,10 +354,10 @@ namespace DCL.Landscape
 
             // Calculate working area bounds
             int textureHalfSize = textureWidth / 2;
-            int minX = minParcel.x - padding + textureHalfSize;
-            int minY = minParcel.y - padding + textureHalfSize;
-            int maxX = maxParcel.x + padding + textureHalfSize;
-            int maxY = maxParcel.y + padding + textureHalfSize;
+            int minX = max(minParcel.x - padding + textureHalfSize, 0);
+            int minY = max(minParcel.y - padding + textureHalfSize, 0);
+            int maxX = min(maxParcel.x + padding + textureHalfSize, textureWidth - 1);
+            int maxY = min(maxParcel.y + padding + textureHalfSize, textureWidth - 1);
 
             var workingArea = new RectInt(minX, minY, maxX - minX, maxY - minY);
 
