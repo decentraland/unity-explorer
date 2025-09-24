@@ -14,15 +14,29 @@ namespace DCL.AvatarRendering.Emotes
         public class EmoteOutcomeDTO
         {
             public string title;
-            public EmoteAnimationDTO[] clips;
+            public EmoteOutcomeClipsDTO? clips;
         }
 
         [Serializable]
         public class EmoteAnimationDTO
         {
-            public string armature;
             public string animation;
             public bool loop;
+        }
+
+        [Serializable]
+        public class EmoteOutcomeClipsDTO
+        {
+            public EmoteAnimationDTO? Armature;
+            public EmoteAnimationDTO? Armature_Other;
+            public EmoteAnimationDTO? Armature_Prop;
+        }
+
+        [Serializable]
+        public class EmoteStartClipsDTO
+        {
+            public EmoteAnimationDTO? Armature;
+            public EmoteAnimationDTO? Armature_Prop;
         }
 
         [Serializable]
@@ -50,8 +64,8 @@ namespace DCL.AvatarRendering.Emotes
             {
                 public bool loop;
                 public bool randomizeOutcomes;
-                public EmoteAnimationDTO[] startAnimation;
-                public EmoteOutcomeDTO[] outcomes;
+                public EmoteStartClipsDTO? startAnimation;
+                public EmoteOutcomeDTO[]? outcomes;
             }
         }
     }

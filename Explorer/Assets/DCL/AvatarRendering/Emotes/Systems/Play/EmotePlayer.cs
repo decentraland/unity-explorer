@@ -277,9 +277,15 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 foreach (AnimationClip animationClip in uniqueClips)
                 {
-                    if (emoteMetadata.emoteDataADR74.startAnimation.Length > 0 && animationClip.name == emoteMetadata.emoteDataADR74.startAnimation[0].animation)
+                    if (emoteMetadata.emoteDataADR74.startAnimation != null &&
+                        emoteMetadata.emoteDataADR74.startAnimation.Armature != null &&
+                        animationClip.name == emoteMetadata.emoteDataADR74.startAnimation.Armature.animation)
+                    {
                         avatarClip = animationClip;
-                    else if (emoteMetadata.emoteDataADR74.startAnimation.Length > 1 && animationClip.name == emoteMetadata.emoteDataADR74.startAnimation[1].animation)
+                    }
+                    else if (emoteMetadata.emoteDataADR74.startAnimation != null &&
+                             emoteMetadata.emoteDataADR74.startAnimation.Armature_Prop != null &&
+                             animationClip.name == emoteMetadata.emoteDataADR74.startAnimation.Armature_Prop.animation)
                     {
                         propClip = animationClip;
                         propClipHash = Animator.StringToHash(animationClip.name);
@@ -288,21 +294,22 @@ namespace DCL.AvatarRendering.Emotes.Play
                     {
                         for (int i = 0; i < emoteMetadata.data.outcomes.Length; ++i)
                         {
-                            for (int j = 0; j < emoteMetadata.data.outcomes[i].clips.Length; ++j)
+                            if (emoteMetadata.data.outcomes[i].clips.Armature_Other != null &&
+                                animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature_Other.animation)
                             {
-                                if (animationClip.name == emoteMetadata.data.outcomes[i].clips[j].animation)
-                                {
-                                    if (animationClip.name.Contains("_avatarother", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        outcomeClips[i].OtherAvatarAnimation = animationClip;
-                                        // In order to apply the animation to the "reacting" avatar, the name of the armature object in the clip must match the name in the avatar model
-                                       /* ReplaceBoundObjectNameInAnimationClip(animationClip, "Armature_Other", "Armature");*/
-                                    }
-                                    else if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
-                                        outcomeClips[i].LocalAvatarAnimation = animationClip;
-                                    else if (animationClip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
-                                        outcomeClips[i].PropAnimation = animationClip;
-                                }
+                                outcomeClips[i].OtherAvatarAnimation = animationClip;
+                                // In order to apply the animation to the "reacting" avatar, the name of the armature object in the clip must match the name in the avatar model
+                               /* ReplaceBoundObjectNameInAnimationClip(animationClip, "Armature_Other", "Armature");*/
+                            }
+                            else if (emoteMetadata.data.outcomes[i].clips.Armature != null &&
+                                     animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature.animation)
+                            {
+                                outcomeClips[i].LocalAvatarAnimation = animationClip;
+                            }
+                            else if (emoteMetadata.data.outcomes[i].clips.Armature_Prop != null &&
+                                     animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature_Prop.animation)
+                            {
+                                outcomeClips[i].PropAnimation = animationClip;
                             }
                         }
                     }
