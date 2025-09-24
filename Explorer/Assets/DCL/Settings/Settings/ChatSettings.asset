@@ -16,3 +16,5 @@ MonoBehaviour:
   chatPrivacySettings: 1
   chatBubblesVisibilitySettings: 2
   chatPreferredTranslationSettings: 0
+  CHAT_TRANSLATION_SETTINGS_HOVER_TOOLTIP: Chat messages will be translated into
+    the language you select in this setting.

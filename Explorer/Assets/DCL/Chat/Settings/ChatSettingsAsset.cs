@@ -12,6 +12,8 @@ namespace DCL.Settings.Settings
         public ChatBubbleVisibilitySettings chatBubblesVisibilitySettings = ChatBubbleVisibilitySettings.ALL;
         public ChatPreferredTranslationSettings chatPreferredTranslationSettings = ChatPreferredTranslationSettings.EN;
 
+        public string CHAT_TRANSLATION_SETTINGS_HOVER_TOOLTIP
+            = "Chat messages will be translated into the language you select in this setting.";
         public delegate void ChatPrivacyDelegate(ChatPrivacySettings privacySettings);
 
         public event ChatPrivacyDelegate? PrivacySettingsSet;

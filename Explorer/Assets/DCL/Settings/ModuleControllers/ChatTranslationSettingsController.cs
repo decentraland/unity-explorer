@@ -41,6 +41,9 @@ namespace DCL.Settings.ModuleControllers
             view.DropdownView.Dropdown.template.sizeDelta = new Vector2(view.DropdownView.Dropdown.template.sizeDelta.x, 300f);
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetPreferredLanguageSettings);
             view.gameObject.SetActive(this.isTranslationChatEnabled);
+
+            if (view.TooltipButtonView != null)
+                view.TooltipButtonView.Activate(chatSettingsAsset.CHAT_TRANSLATION_SETTINGS_HOVER_TOOLTIP);
         }
 
         private void SetPreferredLanguageSettings(int index)
