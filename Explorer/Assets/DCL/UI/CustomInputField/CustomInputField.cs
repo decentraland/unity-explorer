@@ -21,7 +21,7 @@ namespace DCL.UI.CustomInputField
         private ITextFormatter? textFormatter;
         private readonly StringBuilder stringBuilder = new ();
         private readonly List<(TextFormatMatchType _, Match match)> inputMatchesInfo = new ();
-        private readonly Color32 mentionColor = new (0, 179, 255, 255);
+        private readonly Color32 keywordColor = new (0, 179, 255, 255);
 
         public event Action<PointerEventData.InputButton>? Clicked;
         public event Action? PasteShortcutPerformed;
@@ -66,17 +66,18 @@ namespace DCL.UI.CustomInputField
         {
             if (string.IsNullOrEmpty(text)) return;
 
-            foreach (var info in inputMatchesInfo)
-                for (int i = info.match.Index; i < info.match.Index + info.match.Length; i++)
+            var textInfo = textComponent.textInfo;
+            foreach (var matchInfo in inputMatchesInfo)
+                for (int i = matchInfo.match.Index; i < matchInfo.match.Index + matchInfo.match.Length; i++)
                 {
-                    int meshIndex = textComponent.textInfo.characterInfo[i].materialReferenceIndex;
-                    int vertexIndex = textComponent.textInfo.characterInfo[i].vertexIndex;
+                    int meshIndex = textInfo.characterInfo[i].materialReferenceIndex;
+                    int vertexIndex = textInfo.characterInfo[i].vertexIndex;
 
-                    Color32[] vertexColors = textComponent.textInfo.meshInfo[meshIndex].colors32;
-                    vertexColors[vertexIndex + 0] = mentionColor;
-                    vertexColors[vertexIndex + 1] = mentionColor;
-                    vertexColors[vertexIndex + 2] = mentionColor;
-                    vertexColors[vertexIndex + 3] = mentionColor;
+                    Color32[] vertexColors = textInfo.meshInfo[meshIndex].colors32;
+                    vertexColors[vertexIndex + 0] = keywordColor;
+                    vertexColors[vertexIndex + 1] = keywordColor;
+                    vertexColors[vertexIndex + 2] = keywordColor;
+                    vertexColors[vertexIndex + 3] = keywordColor;
                 }
 
             if (inputMatchesInfo.Count > 0)
