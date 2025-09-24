@@ -31,7 +31,7 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<VoiceChatType> currentVoiceChatType = new (VoiceChatType.NONE);
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.COLLAPSED);
-        private readonly ReactiveProperty<VoiceChatPanelState> currentVoiceChatPanelState = new (VoiceChatPanelState.FOCUSED);
+        private readonly ReactiveProperty<VoiceChatPanelState> currentVoiceChatPanelState = new (VoiceChatPanelState.NONE);
         private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
 
         private IVoiceChatCallStatusServiceBase? activeCallStatusService;
@@ -222,6 +222,7 @@ namespace DCL.VoiceChat
             {
                 case VoiceChatType.NONE:
                     activeCallStatusService = null;
+                    ChangePanelState(VoiceChatPanelState.NONE);
                     break;
                 case VoiceChatType.PRIVATE:
                     ChangePanelState(VoiceChatPanelState.SELECTED);
@@ -239,9 +240,10 @@ namespace DCL.VoiceChat
             currentVoiceChatPanelSize.Value = panelSize;
         }
 
-        public void ChangePanelState(VoiceChatPanelState panelState)
+        public void ChangePanelState(VoiceChatPanelState panelState, bool force = false)
         {
-            currentVoiceChatPanelState.Value = panelState;
+            if (force || currentVoiceChatPanelState.Value != VoiceChatPanelState.HIDDEN)
+                currentVoiceChatPanelState.Value = panelState;
         }
 
         public void JoinCommunityVoiceChat(string communityId, bool force = false)

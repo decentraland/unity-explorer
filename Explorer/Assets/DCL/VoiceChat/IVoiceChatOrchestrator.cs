@@ -22,6 +22,7 @@ namespace DCL.VoiceChat
         FOCUSED, //When the user hovers over the panel/chat or clicks on the chat
         UNFOCUSED, //When the user deselects the panel AND unhovers from the panel/chat
         HIDDEN,
+        NONE,
     }
 
     /// <summary>
@@ -64,7 +65,7 @@ namespace DCL.VoiceChat
         void HandleConnectionError();
         void HandleConnectionEnded();
         void ChangePanelSize(VoiceChatPanelSize panelSize);
-        void ChangePanelState(VoiceChatPanelState panelState);
+        void ChangePanelState(VoiceChatPanelState panelState, bool force = false);
     }
 
     public interface IPrivateCallActions

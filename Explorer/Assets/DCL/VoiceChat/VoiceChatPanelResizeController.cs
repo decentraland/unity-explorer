@@ -39,6 +39,8 @@ namespace DCL.VoiceChat
                 return;
             }
 
+            view.gameObject.SetActive(true);
+
             if (voiceChatState.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
 
             if (voiceChatState.CurrentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED) return;
@@ -61,10 +63,8 @@ namespace DCL.VoiceChat
 
             view.Resize(newHeight - (voiceChatState.CurrentVoiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED? HIDDEN_BUTTONS_SIZE_DIFFERENCE : 0));
 
-            if (speakersAmount > MAX_SPEAKERS_PER_LINE * 2)
-            {
-                //Enable Scrollbar else disable it.
-            }
+            //Enable Scrollbar and Mask else disable it. (we dont need a mask if we cant scroll)
+            //view.HideScrollBar(speakersAmount > MAX_SPEAKERS_PER_LINE * 2); This needs to be done in the view that has the scroll bar!!!
         }
 
         private void OnCurrentVoiceChatTypeChanged(VoiceChatType type)

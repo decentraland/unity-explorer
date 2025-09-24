@@ -54,8 +54,6 @@ namespace DCL.Chat
             subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
             subTitleButtonPresenter.Hide();
 
-            SetVoiceChatPanelState(false);
-
             SetPanelsFocus(isFocused: false, animate);
         }
 
@@ -68,12 +66,9 @@ namespace DCL.Chat
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowFocusedAsync().Forget();
             memberListPresenter.Hide();
-            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             subTitleButtonPresenter.Show();
             subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
-
-            SetVoiceChatPanelState(true);
 
             SetPanelsFocus(isFocused: true, animate: false);
         }
@@ -89,7 +84,7 @@ namespace DCL.Chat
             chatInputPresenter.Hide();
             memberListPresenter.Show();
 
-            SetVoiceChatPanelState(true);
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED, true);
 
             SetPanelsFocus(isFocused: false, animate: false);
         }
@@ -101,7 +96,7 @@ namespace DCL.Chat
             subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
 
             subTitleButtonPresenter.Hide();
-            SetVoiceChatPanelState(false);
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED, true);
 
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();
@@ -123,22 +118,9 @@ namespace DCL.Chat
             chatInputPresenter.Hide();
             memberListPresenter.Hide();
 
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN);
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, true);
 
             SetPanelsFocus(isFocused: false, animate: false);
-        }
-
-        private void SetVoiceChatPanelState(bool shouldFocus)
-        {
-            //When the chat changes focus need to change its focus state too
-            var currentState = voiceChatOrchestrator.CurrentVoiceChatPanelState.Value;
-            switch (shouldFocus)
-            {
-                case false when currentState is VoiceChatPanelState.FOCUSED or VoiceChatPanelState.HIDDEN:
-                    voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED); break;
-                case true when currentState is VoiceChatPanelState.UNFOCUSED or VoiceChatPanelState.HIDDEN:
-                    voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED); break;
-            }
         }
 
         internal void SetPanelsFocus(bool isFocused, bool animate)

@@ -21,6 +21,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly ImageController thumbnailController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize;
         private readonly IDisposable panelSizeChangeSubscription;
+        private readonly IDisposable panelStateChangeSubscription;
 
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct = new();
@@ -43,6 +44,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CollapseButton.onClick.AddListener(OnToggleCollapseButtonClicked);
 
             panelSizeChangeSubscription = currentVoiceChatPanelSize.Subscribe(OnPanelSizeChanged);
+            panelStateChangeSubscription = voiceChatOrchestrator.CurrentVoiceChatPanelState.Subscribe(OnPanelStateChanged);
+        }
+
+        private void OnPanelStateChanged(VoiceChatPanelState state)
+        {
+            view.SetHiddenButtonsState(state is VoiceChatPanelState.UNFOCUSED, currentVoiceChatPanelSize.Value);
         }
 
         private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
@@ -75,6 +82,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             expandedPanelButtonsPresenter.Dispose();
             collapsedPanelButtonsPresenter.Dispose();
             panelSizeChangeSubscription.Dispose();
+            panelStateChangeSubscription.Dispose();
 
             view.CommunityButton.onClick.RemoveListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);

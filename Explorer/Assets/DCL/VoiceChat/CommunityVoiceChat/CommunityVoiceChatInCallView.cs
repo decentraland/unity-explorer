@@ -23,7 +23,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private const string END_COMMUNITY_STREAM_CONFIRM_TEXT = "YES";
         private const string END_COMMUNITY_STREAM_CANCEL_TEXT = "NO";
 
-        public event Action EndStreamButtonCLicked;
+        public event Action? EndStreamButtonCLicked;
 
         [field: SerializeField]
         public TMP_Text CommunityName { get; private set; } = null!;

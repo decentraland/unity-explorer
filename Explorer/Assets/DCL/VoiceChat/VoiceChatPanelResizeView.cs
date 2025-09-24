@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,13 +28,6 @@ namespace DCL.VoiceChat
 
             cachedVector.y = newHeight;
             voiceChatPanelLayoutElement.DOPreferredSize(cachedVector, ANIMATION_TIME).WithCancellation(cts.Token).Forget();
-        }
-
-        public async UniTask ResizeAsync(float newHeight)
-        {
-            cts = cts.SafeRestart();
-            cachedVector.y = newHeight;
-            await voiceChatPanelLayoutElement.DOPreferredSize(cachedVector, ANIMATION_TIME).WithCancellation(cts.Token);
         }
     }
 }
