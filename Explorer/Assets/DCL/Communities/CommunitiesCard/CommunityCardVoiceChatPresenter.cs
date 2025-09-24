@@ -92,7 +92,9 @@ namespace DCL.Communities.CommunitiesCard
                 return;
 
             stringBuilder.Clear();
+            stringBuilder.Append("<b>");
             stringBuilder.Append(listenersCount);
+            stringBuilder.Append("</b>");
             stringBuilder.Append(" Listening");
             view.ListenersCount.text = stringBuilder.ToString();
         }

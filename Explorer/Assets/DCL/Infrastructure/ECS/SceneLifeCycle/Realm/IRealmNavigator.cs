@@ -1,9 +1,9 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Realm
 {

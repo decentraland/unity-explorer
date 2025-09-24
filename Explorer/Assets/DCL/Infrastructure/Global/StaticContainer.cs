@@ -215,8 +215,8 @@ namespace Global
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {
-                if (container.ScenesCache.CurrentScene.Value != null)
-                    diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Value.Info);
+                if (container.ScenesCache.CurrentScene != null)
+                    diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>

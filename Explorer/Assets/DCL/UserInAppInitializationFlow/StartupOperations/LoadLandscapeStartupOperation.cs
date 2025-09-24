@@ -3,9 +3,8 @@ using DCL.RealmNavigation;
 using DCL.Utilities;
 using ECS.SceneLifeCycle.Realm;
 using System.Threading;
-using Utility.Types;
 
-namespace DCL.UserInAppInitializationFlow.StartupOperations
+namespace DCL.UserInAppInitializationFlow
 {
     public class LoadLandscapeStartupOperation : StartUpOperationBase
     {

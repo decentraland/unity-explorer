@@ -26,16 +26,12 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -50,15 +46,17 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
-using DCL.UI.GenericContextMenu.Controllers.Communities;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.UI.Controls.Configs;
+using DCL.Utility.Types;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Passport
 {
-    public partial class PassportController : ControllerBase<PassportView, PassportController.Params>, IBlocksChat
+    public class PassportController : ControllerBase<PassportView, PassportParams>, IBlocksChat
     {
         private enum OpenBadgeSectionOrigin
         {
@@ -251,9 +249,9 @@ namespace DCL.Passport
             this.communitiesDataProvider = communitiesDataProvider;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((_, _) => { });
             badge3DPreviewCamera.gameObject.SetActive(false);
@@ -708,7 +706,7 @@ namespace DCL.Passport
 
             async UniTaskVoid OpenPassportAsync(CancellationToken ct)
             {
-                try { await mvcManager.ShowAsync(IssueCommand(new Params(notification.Metadata.invitedUserAddress)), ct); }
+                try { await mvcManager.ShowAsync(IssueCommand(new PassportParams(notification.Metadata.invitedUserAddress)), ct); }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
             }
@@ -723,7 +721,7 @@ namespace DCL.Passport
                 if (ownProfile != null)
                 {
                     BadgesSectionOpened?.Invoke(ownProfile.UserId, true, OpenBadgeSectionOrigin.NOTIFICATION.ToString());
-                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
+                    mvcManager.ShowAsync(IssueCommand(new PassportParams(ownProfile.UserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
                 }
             }
             catch (OperationCanceledException) { }

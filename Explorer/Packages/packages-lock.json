@@ -78,7 +78,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "87d056c245b848ee6945c4758e6a538a6533fa4d"
+      "hash": "6b3433104849e77c622764d6e5d48b6140f7d61c"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -92,7 +92,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "da34743b0e4c01191c72f58af715bf2c0dfc2d67"
+      "hash": "c346fe721d9a61109aee1a50c5d4bf955fe04c05"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -122,11 +122,11 @@
       "url": "https://package.openupm.com"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
-      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
+      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages#chore/renum-auto-reference",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d254397fd38f65446129a44b4ad72de0c8213137"
+      "hash": "edbcee6d16ad36e648060f0bd2eea7ea4a8a473c"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
@@ -246,7 +246,7 @@
       "dependencies": {}
     },
     "com.unity.ide.rider": {
-      "version": "3.0.37",
+      "version": "3.0.38",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -477,7 +477,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "5d4875abf9de36312689a445460bc00105e8a5d0"
+      "hash": "ea6bb70b630aa55dc28a9d0c3fff64b3ea0ca8ba"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
