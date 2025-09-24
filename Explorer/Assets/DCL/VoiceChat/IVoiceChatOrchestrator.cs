@@ -14,7 +14,6 @@ namespace DCL.VoiceChat
     {
         COLLAPSED,
         EXPANDED,
-        EXPANDED_WITHOUT_BUTTONS,
     }
 
     public enum VoiceChatPanelState

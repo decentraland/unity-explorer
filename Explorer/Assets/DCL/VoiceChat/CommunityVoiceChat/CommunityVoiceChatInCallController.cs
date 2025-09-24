@@ -47,7 +47,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
         {
-            view.SetHiddenButtonsState(panelSize is VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS or VoiceChatPanelSize.COLLAPSED);
+            view.SetHiddenButtonsState(voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.UNFOCUSED, panelSize);
         }
 
         private void OnCommunityButtonClicked()

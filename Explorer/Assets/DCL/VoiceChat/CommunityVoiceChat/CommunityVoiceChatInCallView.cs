@@ -150,9 +150,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             Separator.SetActive(!isCollapsed);
         }
 
-        public void SetHiddenButtonsState(bool isHidden)
+        public void SetHiddenButtonsState(bool isHidden, VoiceChatPanelSize size)
         {
-            FooterPanel.SetActive(!isHidden);
+            bool showExpanded = !isHidden && size is VoiceChatPanelSize.EXPANDED;
+            bool showCollapsed = !isHidden && size is VoiceChatPanelSize.COLLAPSED;
+
+            FooterPanel.SetActive(showExpanded);
+            ExpandedPanelRightLayoutContainer.SetActive(showExpanded);
+            CollapsedPanelRightLayoutContainer.SetActive(showCollapsed);
         }
     }
 }

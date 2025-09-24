@@ -190,7 +190,7 @@ namespace DCL.PluginSystem.Global
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
-            var viewInstance = mainUIView.ChatMainView;
+            var viewInstance = mainUIView.ChatMainView.ChatPanelView;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
                 playerEntity,
                 entityParticipantTable,
@@ -216,11 +216,11 @@ namespace DCL.PluginSystem.Global
 
             // Ignore buttons that would lead to the conflicting state
             var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
-                viewInstance.ChatPanelView.TitlebarView.CloseChatButton.transform,
-                viewInstance.ChatPanelView.TitlebarView.CloseMemberListButton.transform,
-                viewInstance.ChatPanelView.TitlebarView.OpenMemberListButton.transform,
-                viewInstance.ChatPanelView.TitlebarView.BackFromMemberList.transform,
-                viewInstance.ChatPanelView.InputView.inputField.transform,
+                viewInstance.TitlebarView.CloseChatButton.transform,
+                viewInstance.TitlebarView.CloseMemberListButton.transform,
+                viewInstance.TitlebarView.OpenMemberListButton.transform,
+                viewInstance.TitlebarView.BackFromMemberList.transform,
+                viewInstance.InputView.inputField.transform,
                 chatViewRectTransform);
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
