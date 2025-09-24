@@ -375,7 +375,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.text = slot.ToString();
         }
 
-        private void OnWearableEquipped(IWearable wearable)
+        private void OnWearableEquipped(IWearable wearable, bool isManuallyEquipped)
         {
             if (wearable.GetCategory() != WearableCategories.Categories.BODY_SHAPE) return;
 

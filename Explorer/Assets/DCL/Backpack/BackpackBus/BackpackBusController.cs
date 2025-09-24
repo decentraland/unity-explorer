@@ -136,7 +136,7 @@ namespace DCL.Backpack.BackpackBus
             if (wearableToUnequip != null)
                 backpackEventBus.SendUnEquipWearable(wearableToUnequip);
 
-            backpackEventBus.SendEquipWearable(wearable);
+            backpackEventBus.SendEquipWearable(wearable, command.IsManuallyEquipped);
 
             if (wearable.Type == WearableType.BodyShape)
                 UnEquipIncompatibleWearables(wearable);

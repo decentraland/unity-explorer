@@ -48,7 +48,7 @@ namespace DCL.SmartWearables
         /// <summary>
         /// IDs of the currently loaded scenes.
         /// </summary>
-        private readonly HashSet<string> loadedScenes = new ();
+        private readonly HashSet<string> runningScenes = new ();
 
         public SmartWearableSystem(World world, WearableStorage wearableStorage, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache) : base(world)
         {
@@ -70,22 +70,24 @@ namespace DCL.SmartWearables
             RunScenesForEquippedWearablesAsync().Forget();
         }
 
-        private void OnEquipWearable(IWearable wearable)
+        private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped)
+        {
+            if (!isManuallyEquipped) return;
+
+            TryRunSmartWearableScene(wearable);
+        }
+
+        private void TryRunSmartWearableScene(IWearable wearable)
         {
             string id = wearable.DTO.Metadata.id;
 
-            if (!IsSmartWearable(wearable) || !SceneAllowsSmartWearables() || pendingScenes.ContainsKey(id) || loadedScenes.Contains(id)) return;
+            if (!IsSmartWearable(wearable) || !SceneAllowsSmartWearables() || pendingScenes.ContainsKey(id) || runningScenes.Contains(id)) return;
 
-            BeginLoadingSmartWearableScene(wearable);
-        }
-
-        private void BeginLoadingSmartWearableScene(IWearable smartWearable)
-        {
-            AvatarAttachmentDTO.MetadataBase metadata = smartWearable.DTO.Metadata;
+            AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
             ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{metadata.name}'. Loading scene...");
 
             var partition = PartitionComponent.TOP_PRIORITY;
-            var intention = GetSmartWearableSceneIntention.Create(smartWearable, partition);
+            var intention = GetSmartWearableSceneIntention.Create(wearable, partition);
             var promise = ScenePromise.Create(World, intention, partition);
 
             pendingScenes.Add(metadata.id, promise);
@@ -103,12 +105,12 @@ namespace DCL.SmartWearables
                 return;
             }
 
-            if (!loadedScenes.Remove(id)) return;
+            if (!runningScenes.Remove(id)) return;
 
-            UnloadSmartWearableScene(wearable);
+            StopSmartWearableScene(wearable);
         }
 
-        private void UnloadSmartWearableScene(IWearable smartWearable)
+        private void StopSmartWearableScene(IWearable smartWearable)
         {
             AvatarAttachmentDTO.MetadataBase metadata = smartWearable.DTO.Metadata;
             ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{metadata.name}'. Unloading scene...");
@@ -154,7 +156,7 @@ namespace DCL.SmartWearables
 
                 AddPortableExperience(promise.LoadingIntention.SmartWearable, scene);
 
-                loadedScenes.Add(id);
+                runningScenes.Add(id);
             }
 
             foreach (string id in resolved) pendingScenes.Remove(id);
@@ -179,12 +181,16 @@ namespace DCL.SmartWearables
 
         private void OnPortableExperienceUnloaded(string id)
         {
-            loadedScenes.Remove(id);
+            runningScenes.Remove(id);
         }
 
         private void OnCurrentSceneChanged(ISceneFacade scene)
         {
-            if (SceneAllowsSmartWearables())
+            bool allowsSmartWearables = SceneAllowsSmartWearables();
+
+            ReportHub.Log(GetReportCategory(), "Current Scene allows Smart Wearables: " + allowsSmartWearables);
+
+            if (allowsSmartWearables)
                 // Notice scenes that are already running won't run again, so we can call this safely.
                 RunScenesForEquippedWearablesAsync().Forget();
             else
@@ -192,11 +198,11 @@ namespace DCL.SmartWearables
                 foreach ((string _, ScenePromise promise) in pendingScenes) promise.ForgetLoading(World);
                 pendingScenes.Clear();
 
-                if (loadedScenes.Count > 0)
+                if (runningScenes.Count > 0)
                 {
                     // The reason for the copy is that unloading a PX will also trigger an event that alters the loaded scenes set
                     using var tempScope = ListPool<string>.Get(out var temp);
-                    temp.AddRange(loadedScenes);
+                    temp.AddRange(runningScenes);
                     foreach (string id in temp) portableExperiencesController.UnloadPortableExperienceById(id);
                 }
             }
@@ -244,7 +250,7 @@ namespace DCL.SmartWearables
                 URN shortUrn = urn.Shorten();
                 while (!wearableStorage.TryGetElement(shortUrn, out wearable) || wearable.IsLoading) await UniTask.Yield();
 
-                OnEquipWearable(wearable);
+                TryRunSmartWearableScene(wearable);
             }
         }
     }

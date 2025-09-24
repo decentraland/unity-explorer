@@ -17,7 +17,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsController analytics;
 
         public event Action<IWearable> SelectWearableEvent;
-        public event Action<IWearable> EquipWearableEvent;
+        public event Action<IWearable, bool> EquipWearableEvent;
         public event Action<IWearable> UnEquipWearableEvent;
         public event Action<int, IEmote, bool> EquipEmoteEvent;
         public event Action<int, IEmote> UnEquipEmoteEvent;
@@ -98,7 +98,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         }
 
         private void OnSelectWearable(IWearable wearable) => SelectWearableEvent?.Invoke(wearable);
-        private void OnEquipWearable(IWearable wearable) => EquipWearableEvent?.Invoke(wearable);
+        private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped) => EquipWearableEvent?.Invoke(wearable, isManuallyEquipped);
         private void OnUnEquipWearable(IWearable wearable) => UnEquipWearableEvent?.Invoke(wearable);
         private void OnUnEquipEmote(int slot, IEmote emote) => UnEquipEmoteEvent?.Invoke(slot, emote);
         private void OnEmoteSlotSelect(int slot) => EmoteSlotSelectEvent?.Invoke(slot);
@@ -152,8 +152,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SendUnEquipWearable(IWearable unEquipWearable) =>
             core.SendUnEquipWearable(unEquipWearable);
 
-        public void SendEquipWearable(IWearable equipWearable) =>
-            core.SendEquipWearable(equipWearable);
+        public void SendEquipWearable(IWearable equipWearable, bool isManuallyEquipped) =>
+            core.SendEquipWearable(equipWearable, isManuallyEquipped);
 
         public void SendWearableSelect(IWearable equipWearable) =>
             core.SendWearableSelect(equipWearable);

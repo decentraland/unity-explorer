@@ -195,7 +195,7 @@ namespace DCL.Backpack
         }
 
         private void EquipItem(string itemId) =>
-            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
+            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true));
 
         private void UnEquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));
@@ -326,7 +326,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void OnEquip(IWearable equippedWearable)
+        private void OnEquip(IWearable equippedWearable, bool isManuallyEquipped)
         {
             if (usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
