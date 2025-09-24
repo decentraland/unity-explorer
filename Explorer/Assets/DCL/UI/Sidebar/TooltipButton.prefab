@@ -183,8 +183,8 @@ GameObject:
   - component: {fileID: 2042614679920404985}
   - component: {fileID: 2749807465873248309}
   - component: {fileID: 1500693959885502415}
-  - component: {fileID: 3219149122954669430}
   - component: {fileID: 2756501127627907339}
+  - component: {fileID: 2865968294814427565}
   m_Layer: 5
   m_Name: TooltipButton
   m_TagString: Untagged
@@ -273,12 +273,12 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_HighlightedColor: {r: 0.72156864, g: 0.72156864, b: 0.7254902, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
+    m_FadeDuration: 0.2
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
     m_PressedSprite: {fileID: 0}
@@ -295,20 +295,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3219149122954669430
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5656729445006871095}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1904e717380b4c7fa10890b87cf36167, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <tooltip>k__BackingField: {fileID: 5790594399661718223}
-  <hoverableButton>k__BackingField: {fileID: 2042614679920404985}
 --- !u!114 &2756501127627907339
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -322,6 +308,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TooltipText: {fileID: 5984625867669522073}
+--- !u!114 &2865968294814427565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5656729445006871095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a362f4d989be584cb2500ae0bfd8c83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <tooltip>k__BackingField: {fileID: 5790594399661718223}
+  fadeDuration: 0.2
+  <hoverableButton>k__BackingField: {fileID: 2042614679920404985}
+  <tooltipCanvasGroup>k__BackingField: {fileID: 2561105589848092632}
 --- !u!1 &5790594399661718223
 GameObject:
   m_ObjectHideFlags: 0
@@ -336,6 +338,7 @@ GameObject:
   - component: {fileID: 4335693636751921730}
   - component: {fileID: 2320370666806325000}
   - component: {fileID: 4153892196115518597}
+  - component: {fileID: 2561105589848092632}
   m_Layer: 5
   m_Name: Tooltip
   m_TagString: Untagged
@@ -462,6 +465,18 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!225 &2561105589848092632
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5790594399661718223}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!1 &7714158660142843443
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,3 +1,5 @@
+using DCL.UI.Buttons;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -5,7 +7,7 @@ namespace DCL.Settings.ModuleViews
 {
     public class TooltipButtonView : MonoBehaviour
     {
-        [field: SerializeField] public TextMeshProUGUI TooltipText;
+        [SerializeField] public TextMeshProUGUI TooltipText;
 
         public void Activate(string tooltipText)
         {

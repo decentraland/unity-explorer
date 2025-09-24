@@ -79,7 +79,6 @@ namespace DCL.Chat
             ChatClickDetectionService chatClickDetectionService,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             CommunitiesDataProvider communityDataProvider,
-            CommunitiesDataProvider communityDataProvider,
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
             ITextFormatter textFormatter) : base(viewFactory)
