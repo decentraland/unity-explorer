@@ -1,10 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Utility.Types;
 using Segment.Serialization;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.RealmNavigation.LoadingOperation
 {

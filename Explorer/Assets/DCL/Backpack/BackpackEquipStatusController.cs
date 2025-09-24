@@ -12,6 +12,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Web3.Identities;
 using Global.AppArgs;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -140,13 +141,13 @@ namespace DCL.Backpack
         {
             switch (category)
             {
-                case WearablesConstants.Categories.EYES:
+                case WearableCategories.Categories.EYES:
                     equippedWearables.SetEyesColor(newColor);
                     break;
-                case WearablesConstants.Categories.HAIR:
+                case WearableCategories.Categories.HAIR:
                     equippedWearables.SetHairColor(newColor);
                     break;
-                case WearablesConstants.Categories.BODY_SHAPE:
+                case WearableCategories.Categories.BODY_SHAPE:
                     equippedWearables.SetBodyshapeColor(newColor);
                     break;
             }

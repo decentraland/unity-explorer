@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.UI.Buttons
+namespace DCL.UI
 {
     public class ButtonWithRightClickHandler : MonoBehaviour, IPointerUpHandler
     {

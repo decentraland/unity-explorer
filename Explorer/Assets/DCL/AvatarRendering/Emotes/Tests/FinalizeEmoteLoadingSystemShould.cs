@@ -213,11 +213,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             BodyShape bodyShape = BodyShape.MALE;
             var intention = new GetGLTFIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var exception = new Exception("Simulated GLTF load failure");
+            var exception = new StreamableLoadingException(LogType.Exception, "Simulated GLTF load failure");
 
             Entity emoteEntity = CreateEmoteEntityWithPromise<GLTFData, GetGLTFIntention>(mockEmote, intention, bodyShape, out GltfPromise promise);
             Entity resultHolderEntity = promise.Entity;
-            LogAssert.Expect(LogType.Exception, $"Exception: {exception.Message}");
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
             world.Add(resultHolderEntity, new StreamableLoadingResult<GLTFData>(ReportData.UNSPECIFIED, exception));
 
             system.Update(0);
@@ -332,12 +332,12 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             BodyShape bodyShape = BodyShape.FEMALE;
             var intention = new GetAssetBundleIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var exception = new Exception("Simulated AssetBundle load failure");
+            var exception = new StreamableLoadingException(LogType.Exception, "Simulated AssetBundle load failure");
 
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
             Entity resultHolderEntity = promise.Entity;
 
-            LogAssert.Expect(LogType.Exception, $"Exception: {exception.Message}");
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
             world.Add(resultHolderEntity, new StreamableLoadingResult<AssetBundleData>(ReportData.UNSPECIFIED, exception));
 
             system.Update(0);
@@ -404,7 +404,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
             BodyShape bodyShape = BodyShape.MALE;
             var intention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            var exception = new Exception("Simulated AudioClip load failure");
+            var exception = new StreamableLoadingException(LogType.Exception, "Simulated AudioClip load failure");
 
             // System query: FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise, in BodyShape bodyShape)
             Entity carrierEntity = world.Create(mockEmote, bodyShape); // Entity with IEmote and BodyShape
@@ -412,7 +412,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             world.Add(carrierEntity, promise); // Add promise component to carrier
             Entity resultHolderEntity = promise.Entity;
 
-            LogAssert.Expect(LogType.Exception, $"Exception: {exception.Message}");
+            LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
             world.Add(resultHolderEntity, new StreamableLoadingResult<AudioClipData>(ReportData.UNSPECIFIED, exception));
 
             system.Update(0);

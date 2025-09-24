@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using UnityEngine.Pool;
+using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 
 namespace DCL.Nametags
 {

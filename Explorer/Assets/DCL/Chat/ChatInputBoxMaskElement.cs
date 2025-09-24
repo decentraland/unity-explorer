@@ -12,21 +12,21 @@ namespace DCL.Chat
 
         [SerializeField] private TMP_Text maskText;
 
-        public void SetUpWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        public void SetUpWithUserState(ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState userState)
         {
             //depending on state we change the text.
             switch (userState)
             {
-                case ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER:
+                case ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.BLOCKED_BY_OWN_USER:
                     this.maskText.SetText(BLOCKED_BY_OWN_MASK);
                     break;
-                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
+                case ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
                     this.maskText.SetText(ONLY_FRIENDS_OWN_MASK);
                     break;
-                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
+                case ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
                     this.maskText.SetText(ONLY_FRIENDS_MASK);
                     break;
-                case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
+                case ChatUserStateUpdater_OBSOLETE_OLD_CHAT.ChatUserState.DISCONNECTED:
                     this.maskText.SetText(OFFLINE_MASK);
                     break;
             }

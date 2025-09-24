@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.RealmNavigation.TeleportOperations
 {

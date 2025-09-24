@@ -1,4 +1,4 @@
-namespace DCL.UI.GenericContextMenu.Controls
+namespace DCL.UI.Controls
 {
     public class GenericContextMenuButtonWithStringDelegateView : GenericContextMenuButtonWithDelegateView<string>
     { }

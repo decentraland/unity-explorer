@@ -9,7 +9,7 @@ using ECS;
 using ECS.Abstract;
 using System.Threading;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.AvatarShape
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]

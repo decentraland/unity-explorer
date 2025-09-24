@@ -1,6 +1,6 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility.Types;
 using UnityEngine.Networking;
-using Utility.Types;
 
 namespace DCL.Chat.Commands
 {

@@ -68,7 +68,6 @@ namespace DCL.EmotesWheel
             this.sharedSpaceManager = sharedSpaceManager;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
-            emoteWheelInput.Close.performed += Close;
         }
 
         public override void Dispose()
@@ -76,7 +75,6 @@ namespace DCL.EmotesWheel
             base.Dispose();
 
             emoteWheelInput.Customize.performed -= OpenBackpack;
-            emoteWheelInput.Close.performed -= Close;
             UnregisterSlotsInput(emoteWheelInput);
         }
 
@@ -284,12 +282,6 @@ namespace DCL.EmotesWheel
                 InputAction inputAction = inputActionMap.FindAction(actionName);
                 inputAction.started -= PlayEmote;
             }
-        }
-
-        private void Close(InputAction.CallbackContext context)
-        {
-            if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
-                Close();
         }
 
         private void Close() =>

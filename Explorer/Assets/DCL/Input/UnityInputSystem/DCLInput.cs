@@ -2278,19 +2278,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""OpenChat"",
-                    ""type"": ""Button"",
-                    ""id"": ""430e31be-9d28-4c75-a904-851e595a70c1"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""OpenChatCommandLine"",
                     ""type"": ""Button"",
                     ""id"": ""df66082b-5afe-4795-a9eb-e5d25d40111e"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2469,17 +2460,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""936aa25d-52b8-4067-ab14-76c9c847d3f5"",
-                    ""path"": ""<Keyboard>/t"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""OpenChat"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""978158e8-1961-43a6-98e4-754ab341d611"",
                     ""path"": ""<Keyboard>/slash"",
                     ""interactions"": """",
@@ -2532,7 +2512,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Slot 1"",
                     ""type"": ""Button"",
                     ""id"": ""3f73f314-6df3-499a-97a9-cc7a8f53da15"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2960,7 +2940,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Customize"",
                     ""type"": ""Button"",
                     ""id"": ""309cfaf7-2700-4db1-8e05-41175ff3ad09"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -3317,6 +3297,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""type"": ""Button"",
                     ""id"": ""35bcdb9a-cdac-4391-a47e-6f6a134f694d"",
                     ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Walk"",
+                    ""type"": ""Button"",
+                    ""id"": ""7e9e5ae9-8eb6-4cec-9b81-98717cdc5729"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -3784,6 +3773,39 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""ToggleNametags"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""38e2c487-bb88-42d9-93a0-5e899e648477"",
+                    ""path"": ""<Keyboard>/leftCtrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Walk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d0a8f602-c633-4015-867e-b32c53fbe6a5"",
+                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Walk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""943f8268-3c6e-4068-a150-73dee1f4fd24"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Walk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -3896,7 +3918,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsole = m_Shortcuts.FindAction("ToggleSceneDebugConsole", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsoleLarger = m_Shortcuts.FindAction("ToggleSceneDebugConsoleLarger", throwIfNotFound: true);
-        m_Shortcuts_OpenChat = m_Shortcuts.FindAction("OpenChat", throwIfNotFound: true);
         m_Shortcuts_OpenChatCommandLine = m_Shortcuts.FindAction("OpenChatCommandLine", throwIfNotFound: true);
         m_Shortcuts_Controls = m_Shortcuts.FindAction("Controls", throwIfNotFound: true);
         m_Shortcuts_FriendPanel = m_Shortcuts.FindAction("FriendPanel", throwIfNotFound: true);
@@ -3942,6 +3963,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
         m_InWorldCamera_Close = m_InWorldCamera.FindAction("Close", throwIfNotFound: true);
         m_InWorldCamera_ToggleNametags = m_InWorldCamera.FindAction("ToggleNametags", throwIfNotFound: true);
+        m_InWorldCamera_Walk = m_InWorldCamera.FindAction("Walk", throwIfNotFound: true);
         // VoiceChat
         m_VoiceChat = asset.FindActionMap("VoiceChat", throwIfNotFound: true);
         m_VoiceChat_Talk = m_VoiceChat.FindAction("Talk", throwIfNotFound: true);
@@ -4945,7 +4967,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleNametags;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsole;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsoleLarger;
-    private readonly InputAction m_Shortcuts_OpenChat;
     private readonly InputAction m_Shortcuts_OpenChatCommandLine;
     private readonly InputAction m_Shortcuts_Controls;
     private readonly InputAction m_Shortcuts_FriendPanel;
@@ -5005,10 +5026,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Shortcuts/ToggleSceneDebugConsoleLarger".
         /// </summary>
         public InputAction @ToggleSceneDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsoleLarger;
-        /// <summary>
-        /// Provides access to the underlying input action "Shortcuts/OpenChat".
-        /// </summary>
-        public InputAction @OpenChat => m_Wrapper.m_Shortcuts_OpenChat;
         /// <summary>
         /// Provides access to the underlying input action "Shortcuts/OpenChatCommandLine".
         /// </summary>
@@ -5084,9 +5101,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleSceneDebugConsoleLarger.started += instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.performed += instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.canceled += instance.OnToggleSceneDebugConsoleLarger;
-            @OpenChat.started += instance.OnOpenChat;
-            @OpenChat.performed += instance.OnOpenChat;
-            @OpenChat.canceled += instance.OnOpenChat;
             @OpenChatCommandLine.started += instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.performed += instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.canceled += instance.OnOpenChatCommandLine;
@@ -5143,9 +5157,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleSceneDebugConsoleLarger.started -= instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.performed -= instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.canceled -= instance.OnToggleSceneDebugConsoleLarger;
-            @OpenChat.started -= instance.OnOpenChat;
-            @OpenChat.performed -= instance.OnOpenChat;
-            @OpenChat.canceled -= instance.OnOpenChat;
             @OpenChatCommandLine.started -= instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.performed -= instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.canceled -= instance.OnOpenChatCommandLine;
@@ -5620,6 +5631,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_ShowHide;
     private readonly InputAction m_InWorldCamera_Close;
     private readonly InputAction m_InWorldCamera_ToggleNametags;
+    private readonly InputAction m_InWorldCamera_Walk;
     /// <summary>
     /// Provides access to input actions defined in input action map "InWorldCamera".
     /// </summary>
@@ -5683,6 +5695,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "InWorldCamera/ToggleNametags".
         /// </summary>
         public InputAction @ToggleNametags => m_Wrapper.m_InWorldCamera_ToggleNametags;
+        /// <summary>
+        /// Provides access to the underlying input action "InWorldCamera/Walk".
+        /// </summary>
+        public InputAction @Walk => m_Wrapper.m_InWorldCamera_Walk;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -5748,6 +5764,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started += instance.OnToggleNametags;
             @ToggleNametags.performed += instance.OnToggleNametags;
             @ToggleNametags.canceled += instance.OnToggleNametags;
+            @Walk.started += instance.OnWalk;
+            @Walk.performed += instance.OnWalk;
+            @Walk.canceled += instance.OnWalk;
         }
 
         /// <summary>
@@ -5798,6 +5817,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleNametags.started -= instance.OnToggleNametags;
             @ToggleNametags.performed -= instance.OnToggleNametags;
             @ToggleNametags.canceled -= instance.OnToggleNametags;
+            @Walk.started -= instance.OnWalk;
+            @Walk.performed -= instance.OnWalk;
+            @Walk.canceled -= instance.OnWalk;
         }
 
         /// <summary>
@@ -6414,13 +6436,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleSceneDebugConsoleLarger(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "OpenChat" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnOpenChat(InputAction.CallbackContext context);
-        /// <summary>
         /// Method invoked when associated input action "OpenChatCommandLine" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -6717,6 +6732,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleNametags(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Walk" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnWalk(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "VoiceChat" which allows adding and removing callbacks.

@@ -28,7 +28,6 @@ namespace DCL.Passport
         public void Hide(bool instant = false)
         {
             showErrorCts.SafeCancelAndDispose();
-            errorNotification.Hide(instant);
         }
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)

@@ -7,7 +7,7 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using System.Collections.Generic;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.AvatarShape
 {
     [UpdateInGroup(typeof(AvatarGroup))]
     [LogCategory(ReportCategory.AVATAR)]
