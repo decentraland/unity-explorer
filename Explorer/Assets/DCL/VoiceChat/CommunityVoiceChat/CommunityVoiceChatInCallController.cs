@@ -4,7 +4,6 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.WebRequests;
-using NSubstitute.Extensions;
 using System;
 using System.Threading;
 using UnityEngine;
