@@ -62,13 +62,12 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
 
         [Query]
-        [None(typeof(SDKEntityTriggerAreaComponent), typeof(SDKTriggerAreaComponent))]
+        [None(typeof(SDKEntityTriggerAreaComponent))]
         [All(typeof(TransformComponent))]
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
             World.Add(
                 entity,
-                new SDKTriggerAreaComponent(),
                 new SDKEntityTriggerAreaComponent(
                     areaSize: Vector3.zero,
                     targetOnlyMainPlayer: false,
@@ -127,9 +126,9 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     return;
             }
 
-            Decentraland.Common.Vector3 triggerEntityPos = default;
-            Decentraland.Common.Quaternion triggerEntityRot = default;
-            Decentraland.Common.Vector3 triggerEntityScale = default;
+            Decentraland.Common.Vector3 triggerEntityPos;
+            Decentraland.Common.Quaternion triggerEntityRot;
+            Decentraland.Common.Vector3 triggerEntityScale;
             if (avatarEntity == Entity.Null)
             {
                 if (!collidersSceneCache.TryGetEntity(triggerEntityCollider, out entityInfo)
@@ -195,14 +194,14 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private void HandleComponentRemoval(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
-            World.Remove<SDKTriggerAreaComponent>(entity);
+            World.Remove<SDKEntityTriggerAreaComponent>(entity);
         }
 
         [Query]
         private void FinalizeComponents(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
-            World.Remove<SDKTriggerAreaComponent>(entity);
+            World.Remove<SDKEntityTriggerAreaComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query)

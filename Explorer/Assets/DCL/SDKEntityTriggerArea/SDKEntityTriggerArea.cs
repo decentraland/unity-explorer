@@ -9,10 +9,10 @@ namespace DCL.SDKEntityTriggerArea
         [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
         [field: SerializeField] public SphereCollider SphereCollider { get; private set; }
 
-        internal readonly HashSet<Collider> currentEntitiesInside = new ();
-        internal readonly HashSet<Collider> enteredEntitiesToBeProcessed = new ();
-        internal readonly HashSet<Collider> exitedEntitiesToBeProcessed = new ();
-        [NonSerialized] public Transform TargetTransform;
+        private readonly HashSet<Collider> currentEntitiesInside = new ();
+        private readonly HashSet<Collider> enteredEntitiesToBeProcessed = new ();
+        private readonly HashSet<Collider> exitedEntitiesToBeProcessed = new ();
+        [NonSerialized] public Transform? TargetTransform;
 
         public IReadOnlyCollection<Collider> EnteredEntitiesToBeProcessed => enteredEntitiesToBeProcessed;
         public IReadOnlyCollection<Collider> ExitedEntitiesToBeProcessed => exitedEntitiesToBeProcessed;
