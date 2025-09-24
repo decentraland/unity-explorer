@@ -43,6 +43,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (mainLoadingTransaction == null && stage == LoadingStatus.LoadingStage.Init)
             {
                 mainLoadingTransaction = SentrySdk.StartTransaction("loading_process", "loading");
+                SentrySdk.ConfigureScope(scope => scope.Transaction = mainLoadingTransaction);
                 mainLoadingTransaction.SetTag("loading_type", "initial_loading");
             }
 
