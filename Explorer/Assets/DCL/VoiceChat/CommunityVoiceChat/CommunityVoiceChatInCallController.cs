@@ -1,5 +1,4 @@
 using DCL.Audio;
-using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.Utilities;
@@ -50,11 +49,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnPanelStateChanged(VoiceChatPanelState state)
         {
             view.SetHiddenButtonsState(state is VoiceChatPanelState.UNFOCUSED, currentVoiceChatPanelSize.Value);
+            view.SetScrollViewState(voiceChatOrchestrator.ParticipantsStateService.ActiveSpeakers.Count > 8);
         }
 
         private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
         {
             view.SetHiddenButtonsState(voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.UNFOCUSED, panelSize);
+            view.SetScrollViewState(voiceChatOrchestrator.ParticipantsStateService.ActiveSpeakers.Count > 8);
         }
 
         private void OnCommunityButtonClicked()

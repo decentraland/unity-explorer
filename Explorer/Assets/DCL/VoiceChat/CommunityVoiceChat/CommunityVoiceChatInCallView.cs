@@ -91,8 +91,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField] public CommunityVoiceChatInCallButtonsView CollapsedPanelInCallButtonsView { get; private set; } = null!;
         [field: SerializeField] public GameObject CollapsedPanelRightLayoutContainer { get; private set; } = null!;
         [field: SerializeField] public GameObject ExpandedPanelRightLayoutContainer { get; private set; } = null!;
-
+        [field: SerializeField] public RectMask2D RectMask2D { get; private set; } = null!;
+        [field: SerializeField] public GameObject ScrollBar { get; private set; } = null!;
         [field: SerializeField] public AudioClipConfig EndStreamAudio { get; private set; } = null!;
+
+
 
         private CancellationTokenSource? endStreamButtonConfirmationDialogCts;
 
@@ -158,6 +161,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             FooterPanel.SetActive(showExpanded);
             ExpandedPanelRightLayoutContainer.SetActive(showExpanded);
             CollapsedPanelRightLayoutContainer.SetActive(showCollapsed);
+        }
+
+        public void SetScrollViewState(bool isVisible)
+        {
+            ScrollBar.SetActive(isVisible);
+            RectMask2D.enabled = isVisible;
         }
     }
 }
