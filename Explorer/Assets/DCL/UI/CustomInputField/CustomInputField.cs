@@ -1,9 +1,13 @@
+using DCL.UI.InputFieldFormatting;
 using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace DCL.UI.CustomInputField
 {
@@ -14,7 +18,10 @@ namespace DCL.UI.CustomInputField
     public class CustomInputField : TMP_InputField
     {
         private bool isControlPressed;
+        private ITextFormatter? textFormatter;
         private readonly StringBuilder stringBuilder = new ();
+        private readonly List<(TextFormatMatchType _, Match match)> inputMatchesInfo = new ();
+        private readonly Color32 keywordColor = new (0, 179, 255, 255);
 
         public event Action<PointerEventData.InputButton>? Clicked;
         public event Action? PasteShortcutPerformed;
@@ -33,6 +40,48 @@ namespace DCL.UI.CustomInputField
                 base.OnPointerClick(eventData);
 
             Clicked?.Invoke(eventData.button);
+        }
+
+        public override void Rebuild(CanvasUpdate update)
+        {
+            base.Rebuild(update);
+
+            if (update == CanvasUpdate.LatePreRender)
+                ApplyVertexColors();
+        }
+
+        public void SetTextFormatter(ITextFormatter formatter) =>
+            textFormatter = formatter;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            onValueChanged.AddListener(_ => CacheMatchInfo());
+        }
+
+        private void CacheMatchInfo() =>
+            textFormatter?.GetMatches(text, inputMatchesInfo);
+
+        private void ApplyVertexColors()
+        {
+            if (string.IsNullOrEmpty(text)) return;
+
+            var textInfo = textComponent.textInfo;
+            foreach (var matchInfo in inputMatchesInfo)
+                for (int i = matchInfo.match.Index; i < matchInfo.match.Index + matchInfo.match.Length; i++)
+                {
+                    int meshIndex = textInfo.characterInfo[i].materialReferenceIndex;
+                    int vertexIndex = textInfo.characterInfo[i].vertexIndex;
+
+                    Color32[] vertexColors = textInfo.meshInfo[meshIndex].colors32;
+                    vertexColors[vertexIndex + 0] = keywordColor;
+                    vertexColors[vertexIndex + 1] = keywordColor;
+                    vertexColors[vertexIndex + 2] = keywordColor;
+                    vertexColors[vertexIndex + 3] = keywordColor;
+                }
+
+            if (inputMatchesInfo.Count > 0)
+                textComponent.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
         }
 
         public override void OnDeselect(BaseEventData eventData)
@@ -150,7 +199,10 @@ namespace DCL.UI.CustomInputField
             if (notify)
                 text = stringBuilder.ToString();
             else
+            {
                 SetTextWithoutNotify(stringBuilder.ToString());
+                CacheMatchInfo();
+            }
 
             stringPosition += replaceAt + newValue.Length + 1;
         }
