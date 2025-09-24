@@ -4,6 +4,7 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.WebRequests;
+using NSubstitute.Extensions;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -86,9 +87,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             entryView.transform.localScale = Vector3.one;
         }
 
-        public void RefreshCounter()
+        public void RefreshCounter(int count, int raisedHandsCount)
         {
-            view.SpeakersCount.text = $"({SpeakersParent.transform.childCount})";
+            view.SpeakersCount.text = $"({count})";
+            view.ConfigureRaisedHandTooltip(raisedHandsCount);
         }
 
         public void SetParticipantCount(int participantCount)
