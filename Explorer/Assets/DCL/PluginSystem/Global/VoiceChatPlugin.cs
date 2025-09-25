@@ -139,18 +139,26 @@ namespace DCL.PluginSystem.Global
 
             var availableMicrophones = new ElementBinding<ulong>(0);
             var currentMicrophone = new ElementBinding<string>(string.Empty);
+#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
             var permissionsStatus = new ElementBinding<string>(string.Empty);
+#endif
+#if UNITY_EDITOR
             var sourceIndex = new ElementBinding<ulong>(0);
             var sampleRate = new ElementBinding<ulong>(0);
             var channels = new ElementBinding<ulong>(0);
+#endif
 
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MICROPHONE)
                          ?.AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
+#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
                           .AddCustomMarker("Permission Status", permissionsStatus)
+#endif
                           .AddCustomMarker("Current Microphone", currentMicrophone)
+#if UNITY_EDITOR
                           .AddMarker("Source Index", sourceIndex, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Sample Rate", sampleRate, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
+#endif
                           .AddSingleButton("Update", UpdateWidget);
 
             void UpdateWidget()
@@ -158,6 +166,7 @@ namespace DCL.PluginSystem.Global
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
 
+#if UNITY_EDITOR
                 var activeSources = RustAudioSource.Info.ActiveSources();
 
                 if (activeSources.Count > 1)
@@ -167,11 +176,10 @@ namespace DCL.PluginSystem.Global
                 sourceIndex.Value = source?.Key ?? 0;
                 sampleRate.Value = source?.Value?.sampleRate ?? 0;
                 channels.Value = source?.Value?.channels ?? 0;
+#endif
 
 #if UNITY_STANDALONE_OSX && !UNITY_EDITOR
                 permissionsStatus.Value = VoiceChatPermissions.CurrentState().ToString()!;
-#else
-                permissionsStatus.Value = "Mac Build ONLY";
 #endif
             }
         }
