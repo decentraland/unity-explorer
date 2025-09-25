@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -28,6 +29,10 @@ namespace DCL.Translation.Service
         private readonly IEventBus eventBus;
         private readonly ITranslationMemory translationMemory;
 
+        // A thread-safe dictionary to
+        // hold a lock for each user's translation queue.
+        private readonly ConcurrentDictionary<string, SemaphoreSlim> userTranslationLocks = new ();
+        
         private static readonly Regex TagRx =
             new(@"<[^>]*>", RegexOptions.Compiled);
         
@@ -58,22 +63,54 @@ namespace DCL.Translation.Service
                 return;
             }
 
+            // NOTE: Start the translation process without blocking the caller.
+            ProcessQueuedTranslationRequestAsync(messageId, originalText).Forget();
+        }
+
+        private async UniTaskVoid ProcessQueuedTranslationRequestAsync(string messageId, string originalText)
+        {
             var newTranslation = new MessageTranslation(originalText, settings.PreferredLanguage)
             {
                 State = TranslationState.Pending
             };
 
             translationMemory.Set(messageId, newTranslation);
-
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
                 MessageId = messageId
             });
 
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.TranslationTimeoutSeconds));
-            TranslateInternalAsync(messageId, cts.Token).Forget();
-        }
+            async UniTask PerformTranslationAsync()
+            {
+                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.TranslationTimeoutSeconds));
+                await TranslateInternalAsync(messageId, cts.Token);
+            }
 
+            if (TryGetWalletId(messageId, out string walletId))
+            {
+                var userLock = userTranslationLocks.GetOrAdd(walletId, _ => new SemaphoreSlim(1, 1));
+
+                // Wait for our turn
+                await userLock.WaitAsync();
+                try
+                {
+                    // We now await the entire translation process
+                    // The lock will be held until this is complete.
+                    await PerformTranslationAsync();
+                }
+                finally
+                {
+                    // This now runs only AFTER the translation has finished.
+                    userLock.Release();
+                }
+            }
+            else
+            {
+                // No wallet ID, so we don't queue. Translate immediately.
+                await PerformTranslationAsync();
+            }
+        }
+        
         public UniTask TranslateManualAsync(string messageId, string originalText, CancellationToken ct)
         {
             if (!settings.IsTranslationFeatureActive()) return UniTask.CompletedTask;
@@ -95,6 +132,8 @@ namespace DCL.Translation.Service
             return TranslateInternalAsync(messageId, ct);
         }
 
+        
+        
         public void RevertToOriginal(string messageId)
         {
             translationMemory.UpdateState(messageId, TranslationState.Original);
@@ -163,66 +202,6 @@ namespace DCL.Translation.Service
             return single;
         }
 
-
-        // /// <summary>
-        // ///     NOTE: Segment → translate only TEXT → stitch
-        // /// </summary>
-        // /// <param name="text"></param>
-        // /// <param name="target"></param>
-        // /// <param name="ct"></param>
-        // /// <returns></returns>
-        // private async UniTask<TranslationResult> UseBatchTranslation(
-        //     string text, LanguageCode target, CancellationToken ct)
-        // {
-        //     TranslationDebug.LogInfo($"[Seg] input: \"{text}\"");
-        //     
-        //     var toks = ChatSegmenter.SegmentByAngleBrackets(text);
-        //     TranslationDebug.LogTokens("angle-split", toks);
-        //     
-        //     toks = ChatSegmenter.ProtectLinkInners(toks);
-        //     TranslationDebug.LogTokens("after-protect-link-inners", toks);
-        //
-        //     toks = ChatSegmenter.SplitTextTokensOnEmoji(toks);
-        //     TranslationDebug.LogTokens("after-split-emoji", toks);
-        //
-        //     toks = ChatSegmenter.SplitTextTokensOnNumbersAndDates(toks);
-        //     TranslationDebug.LogTokens("after-numbers-and-dates", toks);
-        //
-        //     toks = ChatSegmenter.SplitTextTokensOnSlashCommands(toks);
-        //     TranslationDebug.LogTokens("after-backslash-commands", toks);
-        //
-        //     (string[] cores, int[] idxs, string[] leading, string[] trailing) =
-        //         ChatSegmenter.ExtractTranslatablesPreserveSpaces(toks);
-        //
-        //     string[] translated = Array.Empty<string>();
-        //     if (cores.Length > 0)
-        //     {
-        //         if (provider is IBatchTranslationProvider batchProv)
-        //         {
-        //             var resp = await batchProv.TranslateBatchAsync(cores, target, ct);
-        //             translated = resp.translatedText;
-        //         }
-        //         else
-        //         {
-        //             translated = new string[cores.Length];
-        //             for (int i = 0; i < cores.Length; i++)
-        //             {
-        //                 var r = await provider.TranslateAsync(cores[i], target, ct);
-        //                 translated[i] = r.TranslatedText;
-        //             }
-        //         }
-        //
-        //         toks = ChatSegmenter.ApplyTranslationsWithSpaces(toks, idxs, leading, trailing, translated);
-        //     }
-        //
-        //     TranslationDebug.LogTokens("after-apply", toks);
-        //     
-        //     string stitched = ChatSegmenter.Stitch(toks);
-        //     TranslationDebug.LogInfo($"[Seg] output: \"{stitched}\"");
-        //     
-        //     return new TranslationResult(stitched, LanguageCode.EN, false);
-        // }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsSlashCommandMessage(string text)
         {
@@ -251,6 +230,27 @@ namespace DCL.Translation.Service
 
             // Any commands with backslash? -> yes, batch
             if (ProtectedPatterns.InlineCommandRx.IsMatch(text)) return true;
+
+            return false;
+        }
+
+        /// <summary>
+        ///     Parses the wallet ID from the messageId string.
+        /// </summary>
+        /// <param name="messageId">The message identifier, e.g., "0xc81f875d23e9de99018fd109178a4856b1dd5e42:0"</param>
+        /// <param name="walletId">The extracted wallet ID.</param>
+        /// <returns>True if parsing was successful, otherwise false.</returns>
+        private bool TryGetWalletId(string messageId, out string walletId)
+        {
+            walletId = null;
+            if (string.IsNullOrEmpty(messageId)) return false;
+
+            string[]? parts = messageId.Split(':');
+            if (parts.Length > 0 && !string.IsNullOrEmpty(parts[0]))
+            {
+                walletId = parts[0];
+                return true;
+            }
 
             return false;
         }
