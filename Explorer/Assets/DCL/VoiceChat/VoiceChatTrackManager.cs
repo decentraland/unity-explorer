@@ -80,7 +80,7 @@ namespace DCL.VoiceChat
             if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
                 configuration.AudioMixerGroup.audioMixer.SetFloat(nameof(AudioMixerExposedParam.Microphone_Volume), 13);
 
-#if UNITY_STANDALONE_OSX
+#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
             bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
 
             if (hasPermissions == false)
