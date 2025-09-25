@@ -62,9 +62,6 @@ namespace DCL.VoiceChat
             int newHeight = speakersAmount <= MAX_SPEAKERS_PER_LINE ? EXPANDED_COMMUNITY_VOICE_CHAT_1_LINE_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_2_LINES_SIZE;
 
             view.Resize(newHeight - (voiceChatState.CurrentVoiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED? HIDDEN_BUTTONS_SIZE_DIFFERENCE : 0));
-
-            //Enable Scrollbar and Mask else disable it. (we dont need a mask if we cant scroll)
-            //view.HideScrollBar(speakersAmount > MAX_SPEAKERS_PER_LINE * 2); This needs to be done in the view that has the scroll bar!!!
         }
 
         private void OnCurrentVoiceChatTypeChanged(VoiceChatType type)

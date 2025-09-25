@@ -163,7 +163,6 @@ namespace DCL.Chat
         private void HandlePointerEnter()
         {
             chatPanelPresenter?.HandlePointerEnter();
-
         }
 
         private void HandlePointerExit()

@@ -83,6 +83,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField]
         public Button CollapseButton  { get; private set; } = null!;
+        [field: SerializeField]
         public GameObject RaisedHandTooltip  { get; private set; } = null!;
 
         [field: SerializeField]

@@ -103,7 +103,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid WaitAndChange()
             {
                 //We wait in case we clicked on the chat, so it has time to update the state before trying to unfocus
-                await UniTask.Delay(5);
+                //await UniTask.Delay(5); COMMENTED FOR NOW AS IT DOESNT WORK xD
                 if (voiceChatPanelState.Value == VoiceChatPanelState.FOCUSED) return;
 
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
@@ -128,6 +128,8 @@ namespace DCL.VoiceChat
             DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
             view.PointerEnterChatArea -= OnPointerEnterChatArea;
             view.PointerExitChatArea -= OnPointerExitChatArea;
+            view.PointerClick -= OnPointerClick;
+            view.PointerClickChatArea -= OnPointerClickChatArea;
         }
     }
 }
