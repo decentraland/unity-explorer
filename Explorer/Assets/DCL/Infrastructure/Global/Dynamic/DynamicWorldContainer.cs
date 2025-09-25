@@ -912,7 +912,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(
                     new VoiceChatPlugin(
                         roomHub,
-                        mainUIView,
+                        mainUIView.ChatMainView.VoiceChatPanelView,
                         voiceChatContainer,
                         profileRepositoryWrapper,
                         entityParticipantTable,
