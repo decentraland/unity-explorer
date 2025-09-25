@@ -30,7 +30,6 @@ namespace Utility
 
         public static async UniTask<IEnumerable<TValue>> GetKeysContainingTextAsync<TValue>(IReadOnlyDictionary<string, TValue> dictionary, string matchingText, List<TValue> result, CancellationToken ct)
         {
-            string sanitizedMatchingText = matchingText.Replace(":", "");
             result.Clear();
             int iterationCount = 0;
             foreach (var key in dictionary.Keys)
@@ -41,7 +40,7 @@ namespace Utility
                     await UniTask.Yield(cancellationToken: ct);
                     iterationCount = 0;
                 }
-                if (key.Contains(sanitizedMatchingText, StringComparison.InvariantCultureIgnoreCase))
+                if (key.Contains(matchingText, StringComparison.InvariantCultureIgnoreCase))
                     result.Add(dictionary[key]);
             }
             return result;

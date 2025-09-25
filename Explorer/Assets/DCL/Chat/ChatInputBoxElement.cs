@@ -226,7 +226,7 @@ namespace DCL.Chat
             if (wordMatch.Success)
             {
                 wordMatchIndex = wordMatch.Index;
-                lastMatch = suggestionPanelController!.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
+                lastMatch = suggestionPanelController!.HandleSuggestionsSearch(wordMatch.Value.Replace(":", ""), EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
 
                 //If we don't find any emoji pattern only then we look for username patterns
                 if (!lastMatch.Success)
