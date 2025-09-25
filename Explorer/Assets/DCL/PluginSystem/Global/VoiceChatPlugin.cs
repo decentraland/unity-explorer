@@ -141,6 +141,7 @@ namespace DCL.PluginSystem.Global
 #if UNITY_STANDALONE_OSX
             var permissionsStatus = new ElementBinding<string>(string.Empty);
 #endif
+            var isRecording = new ElementBinding<string>(string.Empty);
             var sampleRate = new ElementBinding<ulong>(0);
             var channels = new ElementBinding<ulong>(0);
 
@@ -150,6 +151,7 @@ namespace DCL.PluginSystem.Global
                           .AddCustomMarker("Permission Status", permissionsStatus)
 #endif
                           .AddCustomMarker("Current Microphone", currentMicrophone)
+                          .AddCustomMarker("Is Recording", isRecording)
                           .AddMarker("Sample Rate", sampleRate, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
                           .AddSingleButton("Update", UpdateWidget);
@@ -165,6 +167,7 @@ namespace DCL.PluginSystem.Global
                     ? currentMicrophoneOption.Value.MicrophoneInfo
                     : default(MicrophoneInfo);
 
+                isRecording.Value = (currentMicrophoneOption.Has && currentMicrophoneOption.Value.IsRecording).ToString();
                 sampleRate.Value = info.sampleRate;
                 channels.Value = info.channels;
 
