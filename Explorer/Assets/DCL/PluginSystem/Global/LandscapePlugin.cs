@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.Landscape.Config;
+using DCL.Landscape.Parcel;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.Landscape.Utils;
@@ -32,12 +33,12 @@ namespace DCL.PluginSystem.Global
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
         private readonly bool isZone;
-        private readonly LandscapeParcelService parcelService;
+        private readonly LandscapeParcelData landscapeParcelData;
+        private readonly LandscapeParcelController landscapeParcelController;
 
         private RealmPartitionSettingsAsset realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
-        private ProvidedAsset<ParcelData> parcelData;
-        private NativeList<int2> emptyParcels;
+        private NativeParallelHashSet<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
 
@@ -52,6 +53,7 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             MapRendererTextureContainer textureContainer,
             IWebRequestController webRequestController,
+            LandscapeParcelData landscapeParcelData,
             bool enableLandscape,
             bool isZone)
         {
@@ -64,8 +66,13 @@ namespace DCL.PluginSystem.Global
             this.isZone = isZone;
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
+            this.landscapeParcelData = landscapeParcelData;
 
-            parcelService = new LandscapeParcelService(webRequestController, isZone);
+            landscapeParcelController = new LandscapeParcelController(
+                assetsProvisioner,
+                new LandscapeParcelService(webRequestController, isZone),
+                landscapeParcelData
+            );
 
             // gpuiWrapper = new GPUIWrapper();
         }
@@ -87,27 +94,17 @@ namespace DCL.PluginSystem.Global
 
             if (!enableLandscape) return;
 
-            parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels, ct);
-
             realmPartitionSettings = settings.realmPartitionSettings;
 
-            FetchParcelResult fetchParcelResult = await parcelService.LoadManifestAsync(ct);
+            await landscapeParcelController.InitializeAsync(settings.parsedParcels, ct);
 
-            if (!fetchParcelResult.Succeeded)
-            {
-                emptyParcels = parcelData.Value.GetEmptyParcels();
-                ownedParcels = parcelData.Value.GetOwnedParcels();
-            }
-            else
-            {
-                emptyParcels = fetchParcelResult.Manifest.GetEmptyParcels();
-                ownedParcels = fetchParcelResult.Manifest.GetOccupiedParcels();
-            }
+            var emptyParcelsRef = landscapeParcelData.EmptyParcels;
+            var ownedParcelsRef = landscapeParcelData.OccupiedParcels;
 
             // gpuiWrapper.SetupLandscapeData(landscapeData.Value);
 
             terrainGenerator.Initialize(landscapeData.Value.terrainData, landscapeData.Value.TreesProfile,
-                ref emptyParcels, ref ownedParcels);
+                ref emptyParcelsRef, ref ownedParcelsRef);
 
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, new CPUTerrainDetailSetter());
         }
@@ -119,8 +116,10 @@ namespace DCL.PluginSystem.Global
             if (!enableLandscape) return;
 
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings, landscapeData.Value);
+
             //LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+
             //LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
             RenderGroundSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             CollideTerrainSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);

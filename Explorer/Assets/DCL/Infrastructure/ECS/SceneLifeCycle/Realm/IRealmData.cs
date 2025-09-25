@@ -1,9 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Utilities;
-using System;
-using Unity.Collections;
-using Unity.Mathematics;
 
 namespace ECS
 {

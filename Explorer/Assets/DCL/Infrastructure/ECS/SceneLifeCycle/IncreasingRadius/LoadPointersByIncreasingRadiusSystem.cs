@@ -4,6 +4,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.Landscape.Parcel;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
@@ -28,6 +29,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly IPartitionSettings partitionSettings;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly LandscapeParcelData landscapeParcelData;
 
         private float[]? sqrDistances;
 
@@ -37,13 +39,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
             IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
             ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache,
-            HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world, roadCoordinates, realmData)
+            HashSet<Vector2Int> roadCoordinates, IRealmData realmData, LandscapeParcelData landscapeParcelData) : base(world, roadCoordinates, realmData)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
             this.partitionSettings = partitionSettings;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.scenesCache = scenesCache;
+            this.landscapeParcelData = landscapeParcelData;
         }
 
         protected override void Update(float t)

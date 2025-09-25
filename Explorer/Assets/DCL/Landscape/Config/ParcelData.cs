@@ -9,8 +9,19 @@ namespace DCL.Landscape.Config
     [Serializable]
     public class ParcelData : ScriptableObject
     {
+        public int2[] roadParcels;
         public int2[] ownedParcels;
         public int2[] emptyParcels;
+
+        public NativeParallelHashSet<int2> GetRoadParcels()
+        {
+            var hashSet = new NativeParallelHashSet<int2>(roadParcels.Length, Allocator.Persistent);
+
+            foreach (int2 parcel in roadParcels)
+                hashSet.Add(new int2(parcel));
+
+            return hashSet;
+        }
 
         public NativeParallelHashSet<int2> GetOwnedParcels()
         {
