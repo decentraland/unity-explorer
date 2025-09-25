@@ -91,8 +91,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField] public CommunityVoiceChatInCallButtonsView CollapsedPanelInCallButtonsView { get; private set; } = null!;
         [field: SerializeField] public GameObject CollapsedPanelRightLayoutContainer { get; private set; } = null!;
         [field: SerializeField] public GameObject ExpandedPanelRightLayoutContainer { get; private set; } = null!;
+        [field: SerializeField] public Image MaskImage { get; private set; } = null!;
+        [field: SerializeField] public ScrollRect ScrollRect { get; private set; } = null!;
         [field: SerializeField] public RectMask2D RectMask2D { get; private set; } = null!;
-        [field: SerializeField] public GameObject ScrollBar { get; private set; } = null!;
+
         [field: SerializeField] public AudioClipConfig EndStreamAudio { get; private set; } = null!;
 
 
@@ -153,19 +155,20 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             Separator.SetActive(!isCollapsed);
         }
 
-        public void SetHiddenButtonsState(bool isHidden, VoiceChatPanelSize size)
+        public void SetButtonsVisibility(bool isVisible, VoiceChatPanelSize size)
         {
-            bool showExpanded = !isHidden && size is VoiceChatPanelSize.EXPANDED;
-            bool showCollapsed = !isHidden && size is VoiceChatPanelSize.COLLAPSED;
+            bool showExpanded = isVisible && size is VoiceChatPanelSize.EXPANDED;
+            bool showCollapsed = isVisible && size is VoiceChatPanelSize.COLLAPSED;
 
             FooterPanel.SetActive(showExpanded);
             ExpandedPanelRightLayoutContainer.SetActive(showExpanded);
             CollapsedPanelRightLayoutContainer.SetActive(showCollapsed);
         }
 
-        public void SetScrollViewState(bool isVisible)
+        public void SetScrollAndMasksVisibility(bool isVisible)
         {
-            ScrollBar.SetActive(isVisible);
+            ScrollRect.vertical = isVisible;
+            MaskImage.enabled = isVisible;
             RectMask2D.enabled = isVisible;
         }
     }

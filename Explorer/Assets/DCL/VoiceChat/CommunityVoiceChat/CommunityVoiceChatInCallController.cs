@@ -12,6 +12,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class CommunityVoiceChatInCallController : IDisposable
     {
+        private const int MAX_VISIBLE_SPEAKERS = 8;
+
         private readonly CommunityVoiceChatInCallView view;
 
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
@@ -48,14 +50,21 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnPanelStateChanged(VoiceChatPanelState state)
         {
-            view.SetHiddenButtonsState(state is VoiceChatPanelState.UNFOCUSED, currentVoiceChatPanelSize.Value);
-            view.SetScrollViewState(voiceChatOrchestrator.ParticipantsStateService.ActiveSpeakers.Count > 8);
+            SetInCallElementsVisibility(voiceChatOrchestrator.CurrentVoiceChatPanelState.Value, currentVoiceChatPanelSize.Value);
         }
 
         private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
         {
-            view.SetHiddenButtonsState(voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.UNFOCUSED, panelSize);
-            view.SetScrollViewState(voiceChatOrchestrator.ParticipantsStateService.ActiveSpeakers.Count > 8);
+            bool isPanelCollapsed = panelSize == VoiceChatPanelSize.COLLAPSED;
+            view.SetCollapsedState(isPanelCollapsed);
+
+            SetInCallElementsVisibility(voiceChatOrchestrator.CurrentVoiceChatPanelState.Value, panelSize);
+        }
+
+        private void SetInCallElementsVisibility(VoiceChatPanelState panelState, VoiceChatPanelSize panelSize)
+        {
+            view.SetButtonsVisibility(panelState is not VoiceChatPanelState.UNFOCUSED, panelSize);
+            view.SetScrollAndMasksVisibility(voiceChatOrchestrator.ParticipantsStateService.ActiveSpeakers.Count > MAX_VISIBLE_SPEAKERS);
         }
 
         private void OnCommunityButtonClicked()
@@ -129,7 +138,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED;
             voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.COLLAPSED);
-            view.SetCollapsedState(!isPanelCollapsed);
         }
     }
 }
