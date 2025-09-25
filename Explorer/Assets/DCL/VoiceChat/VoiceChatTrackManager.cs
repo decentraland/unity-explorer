@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Permissions;
@@ -83,7 +84,7 @@ namespace DCL.VoiceChat
             if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
                 configuration.AudioMixerGroup.audioMixer.SetFloat(nameof(AudioMixerExposedParam.Microphone_Volume), 13);
 
-#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#if UNITY_STANDALONE_OSX
             bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
 
             if (hasPermissions == false)
@@ -96,7 +97,12 @@ namespace DCL.VoiceChat
             try
             {
                 Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
-                if (reachable.Success == false) throw new Exception(reachable.ErrorMessage!);
+
+                if (reachable.Success == false)
+                {
+                    NotificationsBus.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
+                    throw new Exception(reachable.ErrorMessage!);
+                }
 
                 Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
                     reachable.Value,
