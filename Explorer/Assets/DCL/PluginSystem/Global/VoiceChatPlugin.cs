@@ -168,10 +168,10 @@ namespace DCL.PluginSystem.Global
                 sampleRate.Value = source?.Value?.sampleRate ?? 0;
                 channels.Value = source?.Value?.channels ?? 0;
 
-#if UNITY_STANDALONE_OSX
+#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
                 permissionsStatus.Value = VoiceChatPermissions.CurrentState().ToString()!;
 #else
-                permissionsStatus.Value = "Mac ONLY";
+                permissionsStatus.Value = "Mac Build ONLY";
 #endif
             }
         }

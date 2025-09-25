@@ -6,7 +6,7 @@ namespace DCL.VoiceChat.Permissions
 {
     public class VoiceChatPermissions
     {
-#if UNITY_STANDALONE_OSX
+#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
         public enum MicPermission
         {
             NOT_REQUESTED_YET = 0,
