@@ -457,6 +457,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        parcelLoadingFilteringSettings: {fileID: 11400000, guid: 7cec157bf2b31044dad3ac2a7da787b9, type: 2}
     - rid: 3511243270148325472
       type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

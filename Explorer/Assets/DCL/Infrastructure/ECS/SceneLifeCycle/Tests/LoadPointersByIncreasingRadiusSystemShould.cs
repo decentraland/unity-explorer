@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
 using DCL.Landscape.Parcel;
+using DCL.Landscape.Settings;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -23,7 +24,7 @@ namespace ECS.SceneLifeCycle.Tests
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
         private IPartitionSettings partitionSettings;
-
+        private ParcelLoadingFilteringSettings parcelLoadingFilteringSettings;
 
         [SetUp]
         public void SetUp()
@@ -37,7 +38,8 @@ namespace ECS.SceneLifeCycle.Tests
                 partitionSettings = Substitute.For<IPartitionSettings>(),
                 Substitute.For<ISceneReadinessReportQueue>(),
                 Substitute.For<IScenesCache>(),
-                new HashSet<Vector2Int>(), realmData, landscapeParcelData);
+                new HashSet<Vector2Int>(), realmData, landscapeParcelData,
+                parcelLoadingFilteringSettings = Substitute.For<ParcelLoadingFilteringSettings>());
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
