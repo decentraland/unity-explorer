@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
@@ -13,15 +14,18 @@ namespace DCL.Settings.ModuleControllers
 {
     public class InputDeviceController : SettingsFeatureController
     {
+        private readonly ExtendedObjectPool<TMP_Dropdown.OptionData> optionsPool = new (static () => new TMP_Dropdown.OptionData());
         private readonly SettingsDropdownModuleView view;
+
         private CancellationTokenSource? requestDeviceStatusCancellationToken;
 
         public InputDeviceController(SettingsDropdownModuleView view)
         {
             this.view = view;
 
-            LoadInputDeviceOptions(MicrophoneSelection.Devices());
-            SetSelection();
+            string[] devices = MicrophoneSelection.Devices();
+            LoadInputDeviceOptions(devices);
+            SetSelection(devices);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(ApplySettings);
             view.showStatusUpdated.AddListener(OnShowStatusUpdated);
@@ -54,10 +58,10 @@ namespace DCL.Settings.ModuleControllers
 
             TimeSpan updatePoll = TimeSpan.FromMilliseconds(500);
             requestDeviceStatusCancellationToken = new CancellationTokenSource();
-            BackgroundTask(requestDeviceStatusCancellationToken.Token).Forget();
+            BackgroundTaskAsync(requestDeviceStatusCancellationToken.Token).Forget();
             return;
 
-            async UniTaskVoid BackgroundTask(CancellationToken token)
+            async UniTaskVoid BackgroundTaskAsync(CancellationToken token)
             {
                 string[] lastDevices = Array.Empty<string>();
 
@@ -72,7 +76,7 @@ namespace DCL.Settings.ModuleControllers
                     lastDevices = devices;
 
                     LoadInputDeviceOptions(devices);
-                    SetSelection();
+                    SetSelection(devices);
                 }
 
                 static bool AreEquals(string[] a, string[] b)
@@ -89,12 +93,11 @@ namespace DCL.Settings.ModuleControllers
             }
         }
 
-        private void SetSelection()
+        private void SetSelection(string[] devices)
         {
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME))
             {
                 string microphoneName = DCLPlayerPrefs.GetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME);
-                string[] devices = MicrophoneSelection.Devices();
 
                 for (var i = 0; i < devices.Length; i++)
                 {
@@ -110,33 +113,49 @@ namespace DCL.Settings.ModuleControllers
 
         private void UpdateDropdownSelection(int index)
         {
-            Result<MicrophoneSelection> result = MicrophoneSelection.FromIndex(index);
+            BackgroundTaskAsync().Forget();
+            return;
 
-            if (result.Success == false)
+            async UniTaskVoid BackgroundTaskAsync()
             {
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Picked invalid selection from ui: {result.ErrorMessage}");
-                return;
+                await UniTask.SwitchToThreadPool();
+
+                Result<MicrophoneSelection> result = MicrophoneSelection.FromIndex(index);
+
+                if (result.Success == false)
+                {
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Picked invalid selection from ui: {result.ErrorMessage}");
+                    return;
+                }
+
+                MicrophoneSelection microphoneSelection = result.Value;
+
+                await UniTask.SwitchToMainThread();
+
+                view.DropdownView.Dropdown.value = index;
+                view.DropdownView.Dropdown.RefreshShownValue();
+                VoiceChatSettings.OnMicrophoneChanged(microphoneSelection);
             }
-
-            MicrophoneSelection microphoneSelection = result.Value;
-
-            view.DropdownView.Dropdown.value = index;
-            VoiceChatSettings.OnMicrophoneChanged(microphoneSelection);
-            view.DropdownView.Dropdown.RefreshShownValue();
         }
 
         private void LoadInputDeviceOptions(string[] devices)
         {
+            foreach (TMP_Dropdown.OptionData dropdownOption in view.DropdownView.Dropdown.options) optionsPool.Release(dropdownOption);
             view.DropdownView.Dropdown.options.Clear();
 
             foreach (string option in devices)
-                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
+            {
+                var data = optionsPool.Get();
+                data!.text = option;
+                view.DropdownView.Dropdown.options.Add(data);
+            }
         }
 
         public override void Dispose()
         {
             view.DropdownView.Dropdown.onValueChanged.RemoveAllListeners();
             view.showStatusUpdated.RemoveListener(OnShowStatusUpdated);
+            optionsPool.Dispose();
         }
     }
 }
