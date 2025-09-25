@@ -9,7 +9,7 @@ namespace DCL.Settings.Settings
     {
         public delegate void MicrophoneChangedDelegate(MicrophoneSelection newMicrophoneSelection);
 
-        public static event MicrophoneChangedDelegate MicrophoneChanged;
+        public static event MicrophoneChangedDelegate? MicrophoneChanged;
 
         public static MicrophoneSelection? SelectedMicrophone { get; private set; }
 
