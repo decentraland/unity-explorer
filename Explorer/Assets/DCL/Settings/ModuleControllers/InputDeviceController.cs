@@ -1,27 +1,30 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
+using System;
+using System.Threading;
 using TMPro;
-using UnityEngine;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class InputDeviceController : SettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
+        private CancellationTokenSource? requestDeviceStatusCancellationToken;
 
         public InputDeviceController(SettingsDropdownModuleView view)
         {
             this.view = view;
 
-            LoadInputDeviceOptions();
+            LoadInputDeviceOptions(MicrophoneSelection.Devices());
             SetSelection();
 
-            AudioSettings.OnAudioConfigurationChanged += AudioConfigChanged;
             view.DropdownView.Dropdown.onValueChanged.AddListener(ApplySettings);
+            view.showStatusUpdated.AddListener(OnShowStatusUpdated);
         }
 
         private void ApplySettings(int pickedMicrophoneIndex)
@@ -40,12 +43,50 @@ namespace DCL.Settings.ModuleControllers
             VoiceChatSettings.OnMicrophoneChanged(microphoneSelection);
         }
 
-        private void AudioConfigChanged(bool deviceWasChanged)
+        private void OnShowStatusUpdated(bool isShown)
         {
-            if (!deviceWasChanged) return;
+            if (isShown == false)
+            {
+                requestDeviceStatusCancellationToken?.Cancel();
+                requestDeviceStatusCancellationToken = null;
+                return;
+            }
 
-            LoadInputDeviceOptions();
-            SetSelection();
+            TimeSpan updatePoll = TimeSpan.FromMilliseconds(500);
+            requestDeviceStatusCancellationToken = new CancellationTokenSource();
+            BackgroundTask(requestDeviceStatusCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid BackgroundTask(CancellationToken token)
+            {
+                string[] lastDevices = Array.Empty<string>();
+
+                while (token.IsCancellationRequested == false)
+                {
+                    await UniTask.Delay(updatePoll, cancellationToken: token).SuppressCancellationThrow();
+                    string[] devices = MicrophoneSelection.Devices();
+
+                    bool same = AreEquals(devices, lastDevices);
+                    if (same) continue;
+
+                    lastDevices = devices;
+
+                    LoadInputDeviceOptions(devices);
+                    SetSelection();
+                }
+
+                static bool AreEquals(string[] a, string[] b)
+                {
+                    if (a.Length != b.Length)
+                        return false;
+
+                    for (int i = 0; i < a.Length; i++)
+                        if (!string.Equals(a[i], b[i]))
+                            return false;
+
+                    return true;
+                }
+            }
         }
 
         private void SetSelection()
@@ -84,18 +125,18 @@ namespace DCL.Settings.ModuleControllers
             view.DropdownView.Dropdown.RefreshShownValue();
         }
 
-        private void LoadInputDeviceOptions()
+        private void LoadInputDeviceOptions(string[] devices)
         {
             view.DropdownView.Dropdown.options.Clear();
 
-            foreach (string option in MicrophoneSelection.Devices())
+            foreach (string option in devices)
                 view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
         }
 
         public override void Dispose()
         {
-            AudioSettings.OnAudioConfigurationChanged -= AudioConfigChanged;
             view.DropdownView.Dropdown.onValueChanged.RemoveAllListeners();
+            view.showStatusUpdated.RemoveListener(OnShowStatusUpdated);
         }
     }
 }
