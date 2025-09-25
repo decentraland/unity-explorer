@@ -261,13 +261,11 @@ namespace DCL.Landscape
         internal static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
-            int2 terrainSize = maxParcel - minParcel + 1;
-            int2 citySize = terrainSize - (padding * 2);
-            int textureSize = ceilpow2(cmax(terrainSize) + 2);
+            int absMax = max(max(abs(minParcel.x), abs(minParcel.y)), max(abs(maxParcel.x), abs(maxParcel.y)));
+            int textureSize = ceilpow2((absMax * 2) + 2);
             int textureHalfSize = textureSize / 2;
 
-            var occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false,
-                true);
+            var occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false, true);
 
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
 
