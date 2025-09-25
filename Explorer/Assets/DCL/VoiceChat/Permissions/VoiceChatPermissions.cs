@@ -7,7 +7,7 @@ namespace DCL.VoiceChat.Permissions
     public class VoiceChatPermissions
     {
 #if UNITY_STANDALONE_OSX
-        private enum MicPermission
+        public enum MicPermission
         {
             NOT_REQUESTED_YET = 0,
             GRANTED = 1,
@@ -25,7 +25,7 @@ namespace DCL.VoiceChat.Permissions
             RequestMicrophonePermission();
         }
 
-        private static MicPermission CurrentState()
+        public static MicPermission CurrentState()
         {
             return (MicPermission)CurrentMicrophonePermission();
         }

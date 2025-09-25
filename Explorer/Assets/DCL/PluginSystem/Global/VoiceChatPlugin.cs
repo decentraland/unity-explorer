@@ -4,14 +4,22 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
+using DCL.VoiceChat.Permissions;
 using DCL.WebRequests;
+using LiveKit.Runtime.Scripts.Audio;
+using RustAudio;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -22,6 +30,7 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatPlugin : IDCLGlobalPlugin<VoiceChatPlugin.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IDebugContainerBuilder debugContainer;
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
         private readonly ProfileRepositoryWrapper profileDataProvider;
@@ -54,7 +63,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            IDebugContainerBuilder debugContainer)
         {
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
@@ -65,6 +75,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
             this.assetsProvisioner = assetsProvisioner;
+            this.debugContainer = debugContainer;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -125,6 +136,44 @@ namespace DCL.PluginSystem.Global
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
             sceneVoiceChatController = new SceneVoiceChatController(mainUIView.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
+
+            var availableMicrophones = new ElementBinding<ulong>(0);
+            var currentMicrophone = new ElementBinding<string>(string.Empty);
+            var permissionsStatus = new ElementBinding<string>(string.Empty);
+            var sourceIndex = new ElementBinding<ulong>(0);
+            var sampleRate = new ElementBinding<ulong>(0);
+            var channels = new ElementBinding<ulong>(0);
+
+            debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MICROPHONE)
+                         ?.AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddCustomMarker("Permission Status", permissionsStatus)
+                          .AddCustomMarker("Current Microphone", currentMicrophone)
+                          .AddMarker("Source Index", sourceIndex, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddMarker("Sample Rate", sampleRate, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddSingleButton("Update", UpdateWidget);
+
+            void UpdateWidget()
+            {
+                availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
+                currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
+
+                var activeSources = RustAudioSource.Info.ActiveSources();
+
+                if (activeSources.Count > 1)
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, "Active sources are not expected to be more than 1 per time, Explorer must use single microphone");
+
+                KeyValuePair<ulong, RustAudioSource>? source = activeSources.Count > 0 ? activeSources.First() : null;
+                sourceIndex.Value = source?.Key ?? 0;
+                sampleRate.Value = source?.Value?.sampleRate ?? 0;
+                channels.Value = source?.Value?.channels ?? 0;
+
+#if UNITY_STANDALONE_OSX
+                permissionsStatus.Value = VoiceChatPermissions.CurrentState().ToString()!;
+#else
+                permissionsStatus.Value = "Mac ONLY";
+#endif
+            }
         }
 
         [Serializable]
