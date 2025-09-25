@@ -16,10 +16,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.RequestToSpeakSection.gameObject.SetActive(false);
         }
 
-        public void RefreshCounters()
+        public void RefreshCounters(int listenersCount, int requestToSpeakCount)
         {
-            view.ListenersCounter.text = $"({view.ListenersParent.transform.childCount})";
-            view.RequestToSpeakCounter.text = $"({view.RequestToSpeakParent.transform.childCount})";
+            view.ListenersCounter.text = $"({listenersCount})";
+            view.RequestToSpeakCounter.text = $"({requestToSpeakCount})";
             view.RequestToSpeakSection.gameObject.SetActive(view.RequestToSpeakParent.transform.childCount >= 1);
         }
 
