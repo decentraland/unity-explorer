@@ -386,11 +386,26 @@ namespace Decentraland.Terrain
             var terrainBounds = new Vector4(terrainGenerator.TerrainModel.MinParcel.x, terrainGenerator.TerrainModel.MaxParcel.x + 1,
                 terrainGenerator.TerrainModel.MinParcel.y, terrainGenerator.TerrainModel.MaxParcel.y + 1);
 
+            var HeightTextureSize = new int2(8192, 8192);
+            //var OccupancyTextureSize = new int2(512, 512);
+            var TerrainBlendTextureSize = new int2(1024, 1024);
+            var GroundDetailTextureSize = new int2(2048, 2048);
+            var SandDetailTextureSize = new int2(1024, 1024);
+
+            ScatterGrassShader.SetInt2(ShaderProperties.HeightTextureSize, HeightTextureSize.x, HeightTextureSize.y);
+            int OccupancyHeightWidth = terrainGenerator.OccupancyMap != null ? terrainGenerator.OccupancyMapSize : Texture2D.blackTexture.height;
+            ScatterGrassShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyHeightWidth, OccupancyHeightWidth);
+            ScatterGrassShader.SetInt2(ShaderProperties.TerrainBlendTextureSize, TerrainBlendTextureSize.x, TerrainBlendTextureSize.y);
+            ScatterGrassShader.SetInt2(ShaderProperties.GroundDetailTextureSize, GroundDetailTextureSize.x, GroundDetailTextureSize.y);
+            ScatterGrassShader.SetInt2(ShaderProperties.SandDetailTextureSize, SandDetailTextureSize.x, SandDetailTextureSize.y);
+
             ScatterGrassShader.SetVector(ShaderProperties.TerrainBounds, terrainBounds);
             ScatterGrassShader.SetFloat(ShaderProperties.TerrainHeight, terrainGenerator.MaxHeight);
+            ScatterGrassShader.SetInt(ShaderProperties.ParcelSize, parcelSize);
             ScatterGrassShader.SetFloat(ShaderProperties.FDistanceFieldScale, fDistanceFieldScale);
-            ScatterGrassShader.SetFloat(ShaderProperties.MinDistOccupancy, terrainGenerator.OccupancyFloor / 255f);
-
+            ScatterGrassShader.SetFloat(ShaderProperties.NHeightMapSize, nHeightMapSize);
+            ScatterGrassShader.SetFloat(ShaderProperties.FSplatMapTiling, fSplatMapTiling);
+            ScatterGrassShader.SetFloat(ShaderProperties.MinDistOccupancy, terrainGenerator.OccupancyFloor / 255.0f);
             ScatterGrassShader.SetTexture(ShaderKernels.ScatterGrassKernel, ShaderProperties.HeightMapTexture, HeightMapTexture);
             ScatterGrassShader.SetTexture(ShaderKernels.ScatterGrassKernel, ShaderProperties.TerrainBlendTexture, TerrainBlendTexture);
             ScatterGrassShader.SetTexture(ShaderKernels.ScatterGrassKernel, ShaderProperties.GroundDetailTexture, GroundDetailTexture);
@@ -433,7 +448,7 @@ namespace Decentraland.Terrain
                 terrainGenerator.TerrainModel.MinParcel.y, terrainGenerator.TerrainModel.MaxParcel.y + 1);
 
             var HeightTextureSize = new int2(8192, 8192);
-            var OccupancyTextureSize = new int2(512, 512);
+            //var OccupancyTextureSize = new int2(512, 512);
             var TerrainBlendTextureSize = new int2(1024, 1024);
             var GroundDetailTextureSize = new int2(2048, 2048);
             var SandDetailTextureSize = new int2(1024, 1024);
@@ -444,10 +459,11 @@ namespace Decentraland.Terrain
             ScatterFlowersShader.SetFloat(ShaderProperties.TerrainHeight, terrainGenerator.MaxHeight);
 
             ScatterFlowersShader.SetInt2(ShaderProperties.HeightTextureSize, HeightTextureSize.x, HeightTextureSize.y);
-            ScatterFlowersShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyTextureSize.x, OccupancyTextureSize.y);
+            int OccupancyHeightWidth = terrainGenerator.OccupancyMap != null ? terrainGenerator.OccupancyMapSize : Texture2D.blackTexture.height;
+            ScatterFlowersShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyHeightWidth, OccupancyHeightWidth);
             ScatterFlowersShader.SetInt2(ShaderProperties.TerrainBlendTextureSize, TerrainBlendTextureSize.x, TerrainBlendTextureSize.y);
             ScatterFlowersShader.SetInt2(ShaderProperties.GroundDetailTextureSize, GroundDetailTextureSize.x, GroundDetailTextureSize.y);
-            ScatterFlowersShader.SetInt2(ShaderProperties.SandDetailTextureSize, SandDetailTextureSize.x, SandDetailTextureSize.y);;
+            ScatterFlowersShader.SetInt2(ShaderProperties.SandDetailTextureSize, SandDetailTextureSize.x, SandDetailTextureSize.y);
 
             ScatterFlowersShader.SetInt(ShaderProperties.ParcelSize, parcelSize);
             ScatterFlowersShader.SetFloat(ShaderProperties.FDistanceFieldScale, fDistanceFieldScale);
@@ -497,7 +513,7 @@ namespace Decentraland.Terrain
                 terrainGenerator.TerrainModel.MinParcel.y, terrainGenerator.TerrainModel.MaxParcel.y + 1);
 
             var HeightTextureSize = new int2(8192, 8192);
-            var OccupancyTextureSize = new int2(512, 512);
+            //var OccupancyTextureSize = new int2(512, 512);
             var TerrainBlendTextureSize = new int2(1024, 1024);
             var GroundDetailTextureSize = new int2(2048, 2048);
             var SandDetailTextureSize = new int2(1024, 1024);
@@ -506,8 +522,9 @@ namespace Decentraland.Terrain
             ScatterCatTailsShader.SetInt(ShaderProperties.NThreads, flowerInstancesPerParcel);
             ScatterCatTailsShader.SetVector(ShaderProperties.TerrainBounds, terrainBounds);
             ScatterCatTailsShader.SetFloat(ShaderProperties.TerrainHeight, terrainGenerator.MaxHeight);
-            ScatterCatTailsShader.SetInt2(ShaderProperties.HeightTextureSize, HeightTextureSize.x, HeightTextureSize.y);;
-            ScatterCatTailsShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyTextureSize.x, OccupancyTextureSize.y);
+            ScatterCatTailsShader.SetInt2(ShaderProperties.HeightTextureSize, HeightTextureSize.x, HeightTextureSize.y);
+            int OccupancyHeightWidth = terrainGenerator.OccupancyMap != null ? terrainGenerator.OccupancyMapSize : Texture2D.blackTexture.height;
+            ScatterCatTailsShader.SetInt2(ShaderProperties.OccupancyTextureSize, OccupancyHeightWidth, OccupancyHeightWidth);
             ScatterCatTailsShader.SetInt2(ShaderProperties.TerrainBlendTextureSize, TerrainBlendTextureSize.x, TerrainBlendTextureSize.y);
             ScatterCatTailsShader.SetInt2(ShaderProperties.GroundDetailTextureSize, GroundDetailTextureSize.x, GroundDetailTextureSize.y);
             ScatterCatTailsShader.SetInt2(ShaderProperties.SandDetailTextureSize, SandDetailTextureSize.x, SandDetailTextureSize.y);
