@@ -86,9 +86,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             entryView.transform.localScale = Vector3.one;
         }
 
-        public void RefreshCounter()
+        public void RefreshCounter(int count, int raisedHandsCount)
         {
-            view.SpeakersCount.text = $"({SpeakersParent.transform.childCount})";
+            view.SpeakersCount.text = $"({count})";
+            view.ConfigureRaisedHandTooltip(raisedHandsCount);
         }
 
         public void SetParticipantCount(int participantCount)
