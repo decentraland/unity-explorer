@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Materials;
@@ -15,8 +16,11 @@ namespace DCL.SDKComponents.MediaStream
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     public partial class UpdateVideoMaterialTextureScaleSystem : BaseUnityLoopSystem
     {
-        public UpdateVideoMaterialTextureScaleSystem(World world) : base(world)
+        private readonly IPerformanceBudget capFrameBudget;
+
+        public UpdateVideoMaterialTextureScaleSystem(World world, IPerformanceBudget capFrameBudget) : base(world)
         {
+            this.capFrameBudget = capFrameBudget;
         }
 
         protected override void Update(float t)
@@ -27,6 +31,9 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         public void UpdateMaterial(in MediaPlayerComponent mediaPlayerComponent, ref VideoTextureConsumer videoTextureConsumer)
         {
+            if (!capFrameBudget.TrySpendBudget())
+                return;
+
             if (!videoTextureConsumer.IsDirty)
                 return;
 
