@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace DCL.NotificationsBusController.NotificationTypes
+namespace DCL.NotificationsBus.NotificationTypes
 {
     public class UserBannedFromSceneNotification : NotificationBase
     {

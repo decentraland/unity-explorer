@@ -104,8 +104,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
-using DCL.Chat.Services;
-using DCL.SceneBannedUsers;
 using DCL.NotificationsBus;
 using Global.Versioning;
 using DCL.UI.ProfileElements;
