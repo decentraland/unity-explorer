@@ -2164,7 +2164,7 @@ MonoBehaviour:
   m_Spacing: 20
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 1
+  m_ChildControlWidth: 0
   m_ChildControlHeight: 1
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
@@ -2644,7 +2644,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  m_PixelsPerUnitMultiplier: 2
 --- !u!114 &2211521694010102538
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2919,7 +2919,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 740, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &5524457223147355152
 CanvasRenderer:
@@ -2949,10 +2949,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Wednesday, Aug 30 from 04:00pm to 05:00pm (UTC-3)
+  m_text: 'Wednesday, Aug 30 from 04:00pm to 05:00pm UTC-3)
 
-    Wednesday, Sep
-    06 from 04:00pm to 05:00pm (UTC-3)
+    Wednesday, Sep 06
+    from 04:00pm to 05:00pm (UTC-3)
 
     Wednesday, Sep 13 from 04:00pm to 05:00pm
     (UTC-3)'
@@ -3178,7 +3178,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 24, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &2170808393521143006
 CanvasRenderer:
@@ -3882,7 +3882,7 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 0
+  m_ChildAlignment: 3
   m_Spacing: 20
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
@@ -4582,8 +4582,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6952247620005373462}
   m_HandleRect: {fileID: 175607292521401437}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 0.86813825
+  m_Value: 0.9999995
+  m_Size: 0.8681382
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

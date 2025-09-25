@@ -83,6 +83,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField]
         public Button CollapseButton  { get; private set; } = null!;
+        public GameObject RaisedHandTooltip  { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text RaisedHandTooltipText  { get; private set; } = null!;
 
         [field: FormerlySerializedAs("<talkingStatusView>k__BackingField")]
         [field: SerializeField]
@@ -123,6 +127,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     EndStreamButtonCLicked?.Invoke();
                 }
             });
+        }
+
+        public void ConfigureRaisedHandTooltip(int raisedHandCount)
+        {
+            RaisedHandTooltipText.text = $"{raisedHandCount}";
+            RaisedHandTooltip.SetActive(raisedHandCount >= 1);
         }
 
         public void SetCommunityName(string communityName)

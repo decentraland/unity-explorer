@@ -72,6 +72,11 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             voiceChatTypeSubscription = voiceChatOrchestrator.CurrentVoiceChatType.Subscribe(OnVoiceChatTypeChanged);
 
+
+            // Subscribe to local participant state changes
+            voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Subscribe(_ => UpdateCounters());
+            voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsRequestingToSpeak.Subscribe(_ => UpdateCounters());
+
             OnVoiceChatTypeChanged(voiceChatOrchestrator.CurrentVoiceChatType.Value);
         }
 
@@ -116,6 +121,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatTypeSubscription?.Dispose();
             communityVoiceChatSearchController.Dispose();
 
+            voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.ClearSubscriptionsList();
+            voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsRequestingToSpeak.ClearSubscriptionsList();
+
             ClearPool();
         }
 
@@ -136,7 +144,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 view.SetConnectedPanel(true);
                 communityVoiceChatSearchController.SetGirdCellSizes(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
                 inCallController.SetEndStreamButtonStatus(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
-                RefreshCounters();
+                UpdateCounters();
             }
         }
 
@@ -169,7 +177,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             else
                 AddListener(participantState);
 
-            RefreshCounters();
+            UpdateCounters();
         }
 
         private void OnParticipantStateRefreshed(List<(string participantId, VoiceChatParticipantsStateService.ParticipantState state)> joinedParticipants, List<string> leftParticipantIds)
@@ -212,7 +220,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 usedPlayerEntries.Remove(leftParticipantId);
             }
 
-            RefreshCounters();
+            UpdateCounters();
         }
 
         private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
@@ -282,7 +290,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 participantState.IsSpeaking.Subscribe(isSpeaking => PlayerEntryIsSpeaking(isSpeaking, participantState.Name, participantState.WalletId)),
                 participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView)),
                 participantState.IsSpeaker.Subscribe(isSpeaker => SetUserEntryParent(isSpeaker, entryView)),
-                participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name))
+                participantState.IsRequestingToSpeak.Subscribe(isRequestingToSpeak => SetUserRequestingToSpeak(isRequestingToSpeak, entryView, participantState.Name)),
+                // Subscribe to state changes to update counters
+                participantState.IsSpeaker.Subscribe(_ => UpdateCounters()),
+                participantState.IsRequestingToSpeak.Subscribe(_ => UpdateCounters())
             };
 
             participantSubscriptions[participantState.WalletId] = subscriptions;
@@ -307,8 +318,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 entryView.transform.localScale = Vector3.one;
                 inCallController.ShowRaiseHandTooltip(playerName);
             }
-
-            RefreshCounters();
         }
 
         private void SetUserEntryParent(bool isSpeaker, PlayerEntryView entryView)
@@ -316,7 +325,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             entryView.isSpeakingIcon.gameObject.SetActive(isSpeaker);
             entryView.transform.parent = isSpeaker ? inCallController.SpeakersParent : view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
-            RefreshCounters();
         }
 
         private void PlayerEntryIsRequestingToSpeak(bool? isRequestingToSpeak, PlayerEntryView entryView)
@@ -345,11 +353,41 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             usedPlayerEntries.Clear();
         }
 
-        private void RefreshCounters()
+        private void UpdateCounters()
         {
+            int speakers = 0;
+            int listeners = 0;
+            int raisedHands = 0;
+
+            var localParticipant = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState;
+
+            if (localParticipant.IsSpeaker.Value)
+                speakers++;
+            else if (localParticipant.IsRequestingToSpeak.Value)
+                raisedHands++;
+            else
+                listeners++;
+
+
+            foreach (var participantEntry in usedPlayerEntries)
+            {
+                string? participantId = participantEntry.Key;
+                if (participantId == localParticipant?.WalletId) continue;
+
+                var participantState = voiceChatOrchestrator.ParticipantsStateService.GetParticipantState(participantId);
+                if (participantState == null) continue;
+
+                if (participantState.IsSpeaker.Value)
+                    speakers++;
+                else if (participantState.IsRequestingToSpeak.Value)
+                    raisedHands++;
+                else
+                    listeners++;
+            }
+
             inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1);
-            inCallController.RefreshCounter();
-            communityVoiceChatSearchController.RefreshCounters();
+            inCallController.RefreshCounter(speakers, raisedHands);
+            communityVoiceChatSearchController.RefreshCounters(listeners, raisedHands);
         }
     }
 }
