@@ -13,7 +13,8 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
     
     private SkyboxToCubemapRenderPass skyboxToCubemapRenderPass;
     
-    private Material skyBoxMaterial;
+    public Material currentSkyboxMaterial;
+    private Material instancedSkyboxMaterial;
     private Material cubeCopyMaterial;
     private Material cubeBlurMaterial;
     
@@ -27,13 +28,13 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
             return;
         
         // Create is called on enable and on validate (from Editor)
-        if (settings.skyBoxShader == null || settings.originalMaterial == null)
+        if (settings.skyBoxShader == null)
             return;
         
         if (!Mathf.IsPowerOfTwo(settings.dimensions)) return;
         
-        CoreUtils.Destroy(skyBoxMaterial); // destroy previously created material
-        skyBoxMaterial = new Material(settings.skyBoxShader);
+        CoreUtils.Destroy(instancedSkyboxMaterial); // destroy previously created material
+        instancedSkyboxMaterial = new Material(settings.skyBoxShader);
 
         CoreUtils.Destroy(cubeCopyMaterial); // destroy previously created material
         cubeCopyMaterial = new Material(Shader.Find("DCL/CubeCopy"));
@@ -89,7 +90,7 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
         RenderingUtils.ReAllocateHandleIfNeeded (ref skyBoxCubeMapRTHandle, desc, FilterMode.Trilinear, TextureWrapMode.Clamp, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
         RenderingUtils.ReAllocateHandleIfNeeded (ref skyBoxCubeMapRTHandle_Scratch, descScratch, FilterMode.Trilinear, TextureWrapMode.Clamp, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex_scratch");
         
-        skyboxToCubemapRenderPass = new SkyboxToCubemapRenderPass(skyBoxMaterial, settings.originalMaterial, cubeCopyMaterial, cubeBlurMaterial)
+        skyboxToCubemapRenderPass = new SkyboxToCubemapRenderPass(instancedSkyboxMaterial, cubeCopyMaterial, cubeBlurMaterial)
         {
             skyBoxCubeMapRTHandle = skyBoxCubeMapRTHandle,
             skyBoxCubeMapRTHandle_Scratch = skyBoxCubeMapRTHandle_Scratch,
@@ -105,8 +106,17 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
         if (renderingData.cameraData.cameraType is CameraType.Preview or CameraType.SceneView
             || !renderingData.cameraData.camera.CompareTag("MainCamera"))
             return;
+
+        if (!RenderSettings.skybox)
+            return;
+
+        if (RenderSettings.skybox != currentSkyboxMaterial)
+        {
+            currentSkyboxMaterial = RenderSettings.skybox;
+            skyboxToCubemapRenderPass.SetSkyboxMaterial(currentSkyboxMaterial);
+        }
         
-        if (!skyBoxMaterial)
+        if (!instancedSkyboxMaterial)
             return;
 
         if (!cubeCopyMaterial)
@@ -114,9 +124,11 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
 
         if (!cubeBlurMaterial)
             return;
-        
+
         if (skyboxToCubemapRenderPass != null)
+        {
             renderer.EnqueuePass(skyboxToCubemapRenderPass);
+        }
         
         if (skyBoxCubeMapRTHandle != null)
         {
@@ -136,14 +148,19 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
         skyBoxCubeMapRTHandle_Scratch?.Release();
         skyBoxCubeMapRTHandle_Scratch = null;
 
-        CoreUtils.Destroy(skyBoxMaterial);
-        skyBoxMaterial = null;
+        CoreUtils.Destroy(instancedSkyboxMaterial);
+        instancedSkyboxMaterial = null;
+        
+        CoreUtils.Destroy(currentSkyboxMaterial);
+        currentSkyboxMaterial = null;
         
         CoreUtils.Destroy(cubeCopyMaterial);
         cubeCopyMaterial = null;
 
         CoreUtils.Destroy(cubeBlurMaterial);
         cubeBlurMaterial = null;
+        
+        skyboxToCubemapRenderPass = null;
     }
 
     private bool SkipInEditorMode() =>
@@ -153,7 +170,6 @@ public class SkyboxToCubemapRendererFeature : ScriptableRendererFeature
     public class SkyBoxToCubemapSettings
     {
         public Shader skyBoxShader;
-        public Material originalMaterial;
         public int dimensions = 256;
         public bool executeInEditMode;
         public bool assignAsReflectionProbe;

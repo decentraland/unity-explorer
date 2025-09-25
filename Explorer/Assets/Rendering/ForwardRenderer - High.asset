@@ -272,10 +272,10 @@ MonoBehaviour:
   m_Active: 1
   settings:
     skyBoxShader: {fileID: -6465566751694194690, guid: de77f9af132836c4785b35f15d16e564, type: 3}
-    originalMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
     dimensions: 256
     executeInEditMode: 1
     assignAsReflectionProbe: 1
+  currentSkyboxMaterial: {fileID: 0}
 --- !u!114 &3187128916680698165
 MonoBehaviour:
   m_ObjectHideFlags: 0

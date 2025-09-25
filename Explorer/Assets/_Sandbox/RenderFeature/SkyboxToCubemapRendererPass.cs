@@ -20,7 +20,6 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
         private readonly MaterialPropertyBlock materialPropertyBlock = new ();
 
         private readonly Material material;
-        private readonly Material originalMaterial;
         private readonly Material cubeCopyMaterial;
         private readonly Material cubeBlurMaterial;
         private readonly ProfilingSampler profilingSampler;
@@ -29,6 +28,7 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
 
         public RTHandle skyBoxCubeMapRTHandle;
         public RTHandle skyBoxCubeMapRTHandle_Scratch;
+        private Material skyboxMaterial;
         private int skyBoxCubeMapWidth = 256;
         private int skyBoxCubeMapHeight = 256;
         private int mipCount = 9;
@@ -45,10 +45,9 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
         private readonly int kSLPropCurrentCubeFace_blur;
         
 
-        public SkyboxToCubemapRenderPass(Material material, Material originalMaterial, Material cubeCopyMaterial, Material cubeBlurMaterial)
+        public SkyboxToCubemapRenderPass(Material material, Material cubeCopyMaterial, Material cubeBlurMaterial)
         {
             this.material = material;
-            this.originalMaterial = originalMaterial;
             this.cubeCopyMaterial = cubeCopyMaterial;
             this.cubeBlurMaterial = cubeBlurMaterial;
             
@@ -79,11 +78,10 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
             // It looks like upon Rendering Unity compensates UV Flip automatically
             materialPropertyBlock.SetFloat(flipCompensatedPropId, 1);
         }
-
-        internal void Setup(RTHandle skyBoxCubeMapRTHandle, RTHandle skyBoxCubeMapRTHandle_scratch)
+        
+        internal void SetSkyboxMaterial(Material skyboxMaterial)
         {
-            this.skyBoxCubeMapRTHandle = skyBoxCubeMapRTHandle;
-            this.skyBoxCubeMapRTHandle_Scratch = skyBoxCubeMapRTHandle_scratch;
+            this.skyboxMaterial = skyboxMaterial;
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -92,26 +90,18 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
             const string convolutionPassName = "SkyboxToCubemap_Convolution";
             const string remappingPassName = "SkyboxToCubemap_Remapping";
 
-            if (!material || !originalMaterial || !cubeCopyMaterial || !cubeBlurMaterial)
+            if (!material || !skyboxMaterial || !cubeCopyMaterial || !cubeBlurMaterial)
                 return;
 
-            material.CopyPropertiesFromMaterial(originalMaterial);
+            // Copy properties from the original material as it is being constantly modified
+            material.CopyPropertiesFromMaterial(skyboxMaterial);
             
             // PASS 1: Initial Skybox Rendering to Cubemap faces
             using (var builder = renderGraph.AddUnsafePass<CubeMapGenerationPassData>(initialPassName, out var passData))
             {
-                // Configure pass data
                 passData.materialPropertyBlock = materialPropertyBlock;
                 passData.newMaterial = material;
                 passData.skyBoxCubeMapRTHandle = skyBoxCubeMapRTHandle;
-                
-                // UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-                //
-                // var camera = cameraData.camera;
-                // var skyboxComponent = camera.GetComponent<Skybox>();
-                // var skyboxMaterial = skyboxComponent?.material ?? RenderSettings.skybox;
-                //
-                // passData.newMaterial = skyboxMaterial;
                 
                 builder.AllowPassCulling(false);
 
@@ -137,6 +127,7 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
             // PASS 2: Convolution pass
             using (var builder = renderGraph.AddUnsafePass<ConvolutionPassData>(convolutionPassName, out var passData))
             {
+                passData.materialBlock = materialPropertyBlock;
                 passData.sourceRTHandle = skyBoxCubeMapRTHandle;
                 passData.scratchRTHandle = skyBoxCubeMapRTHandle_Scratch;
                 passData.blurMaterial = cubeBlurMaterial;
@@ -152,7 +143,6 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
                 builder.SetRenderFunc((ConvolutionPassData data, UnsafeGraphContext context) =>
                 {
                     CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
-                    MaterialPropertyBlock tempMatPropBlock = new MaterialPropertyBlock();
 
                     for (var index = 0; index < FACES.Count; index++)
                     {
@@ -161,7 +151,7 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
                             data.scratchRTHandle, index, 0);
                     }
 
-                    tempMatPropBlock.SetFloat(data.scalePropId, 1.0f);
+                    data.materialBlock.SetFloat(data.scalePropId, 1.0f);
 
                     int size = data.cubeMapWidth >> 1;
                     float texelSize = 1.0f / size; // should be 2.f/size, but size is already divided by two
@@ -194,12 +184,12 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
                             cmd.SetGlobalTexture(kSLPropMainTex_blur, sourceRT);
 
                             // Blur parameters
-                            tempMatPropBlock.SetFloat(data.texelPropId, texelSize);
+                            data.materialBlock.SetFloat(data.texelPropId, texelSize);
                             float level = mipIndex - 1.0f;
-                            tempMatPropBlock.SetFloat(data.levelPropId, level);
-                            tempMatPropBlock.SetFloat(data.facePropId, nFaceIndex);
+                            data.materialBlock.SetFloat(data.levelPropId, level);
+                            data.materialBlock.SetFloat(data.facePropId, nFaceIndex);
 
-                            CoreUtils.DrawFullScreen(cmd, data.blurMaterial, tempMatPropBlock);
+                            CoreUtils.DrawFullScreen(cmd, data.blurMaterial, data.materialBlock);
                         }
 
                         size >>= 1;
@@ -227,6 +217,7 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
             // PASS 3: Remapping pass (roughness-based sampling)
             using (var builder = renderGraph.AddUnsafePass<RemappingPassData>(remappingPassName, out var passData))
             {
+                passData.materialBlock = materialPropertyBlock;
                 passData.sourceRTHandle = skyBoxCubeMapRTHandle;
                 passData.scratchRTHandle = skyBoxCubeMapRTHandle_Scratch;
                 passData.copyMaterial = cubeCopyMaterial;
@@ -238,7 +229,7 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
                 builder.SetRenderFunc((RemappingPassData data, UnsafeGraphContext context) =>
                 {
                     CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
-                    MaterialPropertyBlock tempMatPropBlock = new MaterialPropertyBlock();
+                    //MaterialPropertyBlock tempMatPropBlock = new MaterialPropertyBlock();
                     
                     // Coping all the blurred mips to scratch
                     for (int mipIndex = 0; mipIndex < data.mipCount; mipIndex++)
@@ -283,10 +274,10 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
 
                             context.cmd.SetRenderTarget(data.sourceRTHandle, mipIndex, face);
 
-                            tempMatPropBlock.SetFloat(kSLPropLevel_copy, level + lerpFactor);
-                            tempMatPropBlock.SetFloat(kSLPropCurrentCubeFace_copy, faceIndex);
+                            data.materialBlock.SetFloat(kSLPropLevel_copy, level + lerpFactor);
+                            data.materialBlock.SetFloat(kSLPropCurrentCubeFace_copy, faceIndex);
 
-                            CoreUtils.DrawFullScreen(cmd, data.copyMaterial, tempMatPropBlock);
+                            CoreUtils.DrawFullScreen(cmd, data.copyMaterial, data.materialBlock);
                         }
 
                         roughness += step;
@@ -311,6 +302,7 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
 
         private class ConvolutionPassData
         {
+            public MaterialPropertyBlock materialBlock;
             public RTHandle sourceRTHandle;
             public RTHandle scratchRTHandle;
             public Material blurMaterial;
@@ -324,6 +316,7 @@ public class SkyboxToCubemapRenderPass : ScriptableRenderPass
 
         private class RemappingPassData
         {
+            public MaterialPropertyBlock materialBlock;
             public RTHandle sourceRTHandle;
             public RTHandle scratchRTHandle;
             public Material copyMaterial;
