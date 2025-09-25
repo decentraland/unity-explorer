@@ -38,6 +38,8 @@ namespace DCL.VoiceChat
 
         private MicrophoneTrack? microphoneTrack;
 
+        public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
+
         public VoiceChatTrackManager(
             IRoom voiceChatRoom,
             VoiceChatConfiguration configuration,

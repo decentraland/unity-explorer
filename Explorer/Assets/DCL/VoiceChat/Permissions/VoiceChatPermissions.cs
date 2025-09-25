@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -6,7 +7,7 @@ namespace DCL.VoiceChat.Permissions
 {
     public class VoiceChatPermissions
     {
-#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#if UNITY_STANDALONE_OSX
         public enum MicPermission
         {
             NOT_REQUESTED_YET = 0,
@@ -14,11 +15,19 @@ namespace DCL.VoiceChat.Permissions
             REJECTED = 2,
         }
 
-        [DllImport("__Internal")]
+        [DllImport("MicrophonePermissions")]
         private static extern void RequestMicrophonePermission();
 
-        [DllImport("__Internal")]
+        [DllImport("MicrophonePermissions")]
         private static extern int CurrentMicrophonePermission();
+
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Tools/MicrophonePermissions/PrintStatus")]
+        private static void PrintPermissionStatus(UnityEditor.MenuCommand command)
+        {
+            ReportHub.LogProductionInfo($"Permission status: {CurrentState()}");
+        }
+#endif
 
         private static void Request()
         {

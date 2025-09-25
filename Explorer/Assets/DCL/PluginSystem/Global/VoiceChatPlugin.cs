@@ -5,21 +5,20 @@ using DCL.AssetsProvision;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Permissions;
 using DCL.WebRequests;
+using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
 using RustAudio;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -139,26 +138,20 @@ namespace DCL.PluginSystem.Global
 
             var availableMicrophones = new ElementBinding<ulong>(0);
             var currentMicrophone = new ElementBinding<string>(string.Empty);
-#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#if UNITY_STANDALONE_OSX
             var permissionsStatus = new ElementBinding<string>(string.Empty);
 #endif
-#if UNITY_EDITOR
-            var sourceIndex = new ElementBinding<ulong>(0);
             var sampleRate = new ElementBinding<ulong>(0);
             var channels = new ElementBinding<ulong>(0);
-#endif
 
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MICROPHONE)
                          ?.AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
-#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#if UNITY_STANDALONE_OSX
                           .AddCustomMarker("Permission Status", permissionsStatus)
 #endif
                           .AddCustomMarker("Current Microphone", currentMicrophone)
-#if UNITY_EDITOR
-                          .AddMarker("Source Index", sourceIndex, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Sample Rate", sampleRate, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
-#endif
                           .AddSingleButton("Update", UpdateWidget);
 
             void UpdateWidget()
@@ -166,19 +159,16 @@ namespace DCL.PluginSystem.Global
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
 
-#if UNITY_EDITOR
-                var activeSources = RustAudioSource.Info.ActiveSources();
+                Option<MicrophoneRtcAudioSource> currentMicrophoneOption = trackManager.CurrentMicrophone.Resource;
 
-                if (activeSources.Count > 1)
-                    ReportHub.LogError(ReportCategory.VOICE_CHAT, "Active sources are not expected to be more than 1 per time, Explorer must use single microphone");
+                MicrophoneInfo info = currentMicrophoneOption.Has
+                    ? currentMicrophoneOption.Value.MicrophoneInfo
+                    : default(MicrophoneInfo);
 
-                KeyValuePair<ulong, RustAudioSource>? source = activeSources.Count > 0 ? activeSources.First() : null;
-                sourceIndex.Value = source?.Key ?? 0;
-                sampleRate.Value = source?.Value?.sampleRate ?? 0;
-                channels.Value = source?.Value?.channels ?? 0;
-#endif
+                sampleRate.Value = info.sampleRate;
+                channels.Value = info.channels;
 
-#if UNITY_STANDALONE_OSX && !UNITY_EDITOR
+#if UNITY_STANDALONE_OSX
                 permissionsStatus.Value = VoiceChatPermissions.CurrentState().ToString()!;
 #endif
             }
