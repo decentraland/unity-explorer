@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat.Permissions;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -67,7 +68,7 @@ namespace DCL.VoiceChat
         ///     Publishes the local microphone track to the room.
         ///     Creates and starts the OptimizedMonoRtcAudioSource if needed.
         /// </summary>
-        public void PublishLocalTrack(CancellationToken ct)
+        public async UniTaskVoid PublishLocalTrack(CancellationToken ct)
         {
             if (microphoneTrack.HasValue)
             {
@@ -78,6 +79,16 @@ namespace DCL.VoiceChat
             //Raise volume if its Windows because for some reason Mac Volume is way higher than Windows.
             if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
                 configuration.AudioMixerGroup.audioMixer.SetFloat(nameof(AudioMixerExposedParam.Microphone_Volume), 13);
+
+#if UNITY_STANDALONE_OSX
+            bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
+
+            if (hasPermissions == false)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, "Microphone permissions were not granted by user, cannot publish local track");
+                return;
+            }
+#endif
 
             try
             {
