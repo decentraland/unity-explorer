@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         protected override void Update(float t)
         {
-            AnimateLightSourceIntensityQuery(World,  settings.FadeDuration > 0 ? Time.unscaledDeltaTime / settings.FadeDuration : 1);
+            AnimateLightSourceIntensityQuery(World, settings.FadeDuration > 0 ? UnityEngine.Time.unscaledDeltaTime / settings.FadeDuration : 1);
         }
 
         [Query]

@@ -2,25 +2,24 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
+using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Helpers;
 using DG.Tweening;
 using ECS.Abstract;
-using ECS.Unity.Transforms.Components;
-using System.Collections.Generic;
-using CrdtEcsBridge.Components.Transform;
 using ECS.Groups;
 using ECS.Unity.Materials.Components;
+using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
-namespace DCL.SDKComponents.Tween.Systems
+namespace DCL.SDKComponents.Tween
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(UpdateTransformSystem))]

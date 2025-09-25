@@ -7,6 +7,8 @@ using DCL.Optimization.Pools;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
+using DCL.Utility.Types;
 using DCL.Web3;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -17,7 +19,6 @@ using System.Threading;
 using LiveKit.Proto;
 using System.Linq;
 using Utility;
-using Utility.Types;
 
 namespace DCL.Chat.ChatServices
 {

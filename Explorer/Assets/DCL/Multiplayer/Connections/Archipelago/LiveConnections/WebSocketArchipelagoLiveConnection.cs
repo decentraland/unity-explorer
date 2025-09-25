@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Typing;
+using DCL.Utility.Types;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
@@ -8,7 +9,6 @@ using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 using Utility.Ownership;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {

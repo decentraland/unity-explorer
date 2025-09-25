@@ -2,7 +2,6 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
-using DCL.InWorldCamera.PassportBridge;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
@@ -33,7 +32,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearablesProvider wearablesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IThumbnailProvider thumbnailProvider,
-            IPassportBridge passportBridge,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -45,7 +43,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             ProfileRepositoryWrapper profileDataProvider)
         {
             visiblePersonPool = new ObjectPool<VisiblePersonController>(
-                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, profileDataProvider),
+                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, profileRepository, mvcManager, wearableStorage, wearablesProvider, profileDataProvider),
                 actionOnGet: visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson),
                 actionOnDestroy: visiblePerson => GameObject.Destroy(visiblePerson.view.gameObject),
@@ -111,11 +109,10 @@ namespace DCL.InWorldCamera.PhotoDetail
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
-            IPassportBridge passportBridge,
             ProfileRepositoryWrapper profileDataProvider)
         {
             VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab, visiblePersonParent);
-            return new VisiblePersonController(view, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, profileDataProvider);
+            return new VisiblePersonController(view, profileRepository, mvcManager, wearableStorage, wearablesProvider, this, profileDataProvider);
         }
 
         public VisiblePersonController GetVisiblePerson() =>

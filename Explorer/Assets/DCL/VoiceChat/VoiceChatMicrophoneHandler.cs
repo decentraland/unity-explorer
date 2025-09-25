@@ -153,7 +153,7 @@ namespace DCL.VoiceChat
 
             if (weakMicrophoneSource.Has == false)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName}");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName.name}");
                 return;
             }
 
