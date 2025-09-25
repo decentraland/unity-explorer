@@ -4,12 +4,14 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Unity.Materials;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
+    [UpdateAfter(typeof(MaterialLoadingGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     public partial class UpdateVideoMaterialTextureScaleSystem : BaseUnityLoopSystem
     {
