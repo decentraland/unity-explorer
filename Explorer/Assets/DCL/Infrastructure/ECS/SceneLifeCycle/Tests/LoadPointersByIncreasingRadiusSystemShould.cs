@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
+using DCL.Landscape.Parcel;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -29,13 +30,14 @@ namespace ECS.SceneLifeCycle.Tests
         {
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
+            LandscapeParcelData landscapeParcelData = new ();
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
                 partitionSettings = Substitute.For<IPartitionSettings>(),
                 Substitute.For<ISceneReadinessReportQueue>(),
                 Substitute.For<IScenesCache>(),
-                new HashSet<Vector2Int>(), realmData);
+                new HashSet<Vector2Int>(), realmData, landscapeParcelData);
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
