@@ -31,8 +31,8 @@ namespace DCL.AvatarRendering.Emotes
         private int triggeredEmote = -1;
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
-        
-        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus) 
+
+        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus)
             : base(world)
         {
             emotesActions = DCLInput.Instance.Emotes;
@@ -93,8 +93,8 @@ namespace DCL.AvatarRendering.Emotes
             var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId, Spatial = true, TriggerSource = TriggerSource.SELF};
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
-
-            messageBus.Send(emoteId, false);
+// TODO SOCIALEMOTE
+            messageBus.Send(emoteId, false, false, -1, false);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.Emotes
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
 
-        public void Send(URN emote, bool loopCyclePassed)
+        public void Send(URN emote, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Emotes
             SendTo(emote, timestamp, messagePipesHub.ScenePipe());
 
             if (settings.SelfSending)
-                SelfSendWithDelayAsync(emote, timestamp).Forget();
+                SelfSendWithDelayAsync(emote, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote).Forget();
         }
 
         public void OnPlayerRemoved(string walletId) =>
@@ -84,10 +84,10 @@ namespace DCL.Multiplayer.Emotes
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
-        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp)
+        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
-            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp);
+            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote);
         }
 
         private void OnMessageReceived(ReceivedMessage<PlayerEmote> receivedMessage)
@@ -105,20 +105,20 @@ namespace DCL.Multiplayer.Emotes
                     ? receivedMessage.Payload.Timestamp
                     : Time.unscaledTime;
 
-                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp);
+                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp, receivedMessage.Payload.SocialEmoteOutcome > -1, receivedMessage.Payload.SocialEmoteOutcome, receivedMessage.Payload.IsReacting);
             }
         }
 
         private bool IsUserBlocked(string userAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
 
-        private void Inbox(string walletId, URN emoteURN, float timestamp)
+        private void Inbox(string walletId, URN emoteURN, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote)
         {
             if (messageScheduler.TryPass(walletId, timestamp) == false)
                 return;
 
             using (sync.GetScope())
-                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp));
+                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote));
         }
 
         public void SaveForRetry(RemoteEmoteIntention intention)

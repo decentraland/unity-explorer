@@ -2,7 +2,6 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.Animations;
@@ -197,6 +196,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayLegacyEmote(GameObject avatarAnimatorGameObject, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
         {
+// TODO: Adapt this to social emtes like PlayMecanimEmote
             Animation animationComp;
             if (!(animationComp = avatarAnimatorGameObject.GetComponent<Animation>()))
                 animationComp = avatarAnimatorGameObject.AddComponent<Animation>();
@@ -223,9 +223,33 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
-            if (emoteReferences.avatarClip != null)
+            AnimationClip? avatarClip = null;
+
+            if (emoteComponent.Metadata.IsSocialEmote)
             {
-                view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
+                if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                {
+                    if (emoteComponent.IsReactingToSocialEmote)
+                    {
+                        avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].OtherAvatarAnimation;
+                        isLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature_Other!.loop;
+                    }
+                    else
+                    {
+                        avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].LocalAvatarAnimation;
+                        isLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature!.loop;
+                    }
+                }
+                else
+                {
+                    avatarClip = emoteReferences.avatarClip;
+                    isLooping = emoteComponent.Metadata.emoteDataADR74.startAnimation!.Armature!.loop;
+                }
+            }
+
+            if (avatarClip != null)
+            {
+                view.ReplaceEmoteAnimation(avatarClip);
                 emoteComponent.EmoteLoop = isLooping;
             }
 
@@ -237,10 +261,44 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
-            if (emoteReferences.propClip != null && emoteReferences.animatorComp != null)
+            AnimationClip? propClip = null;
+            bool isPropLooping = false;
+            int propClipHash = 0;
+
+            if (emoteComponent.Metadata.IsSocialEmote)
             {
-                emoteReferences.animatorComp.SetTrigger(emoteReferences.propClipHash);
-                emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+                if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                {
+                    propClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].PropAnimation;
+
+                    if (propClip != null)
+                    {
+                        isPropLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature_Prop!.loop;
+                        propClipHash = emoteReferences.socialEmoteOutcomes[emoteComponent.CurrentSocialEmoteOutcome].PropAnimationHash;
+                    }
+                }
+                else
+                {
+                    propClip = emoteReferences.propClip;
+
+                    if (propClip != null)
+                    {
+                        isPropLooping = emoteComponent.Metadata.emoteDataADR74.startAnimation!.Armature_Prop!.loop;
+                        propClipHash = emoteReferences.propClipHash;
+                    }
+                }
+            }
+            else
+            {
+                propClip = emoteReferences.propClip;
+                isPropLooping = emoteComponent.EmoteLoop;
+                propClipHash = emoteReferences.propClipHash;
+            }
+
+            if (propClip != null && emoteReferences.animatorComp != null)
+            {
+                emoteReferences.animatorComp.SetTrigger(propClipHash);
+                emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, isPropLooping);
             }
         }
 
@@ -310,6 +368,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                                      animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature_Prop.animation)
                             {
                                 outcomeClips[i].PropAnimation = animationClip;
+                                outcomeClips[i].PropAnimationHash = Animator.StringToHash(animationClip.name);
                             }
                         }
                     }

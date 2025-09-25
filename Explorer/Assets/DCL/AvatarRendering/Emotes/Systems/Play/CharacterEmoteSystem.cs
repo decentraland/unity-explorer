@@ -232,6 +232,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
+                    emoteComponent.IsPlayingSocialEmoteOutcome = emoteIntent.UseSocialEmoteOutcomeAnimation;
+                    emoteComponent.CurrentSocialEmoteOutcome = emoteIntent.SocialEmoteOutcomeIndex;
+                    emoteComponent.IsReactingToSocialEmote = emoteIntent.UseOutcomeReactionAnimation;
+
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
 
@@ -259,8 +263,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
-
-            messageBus.Send(animationComponent.EmoteUrn, true);
+//TODO SOCIALEMOTE
+            messageBus.Send(animationComponent.EmoteUrn, true, false, -1, false);
         }
 
         [Query]

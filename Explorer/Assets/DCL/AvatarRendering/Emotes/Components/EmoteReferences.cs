@@ -9,6 +9,7 @@ namespace DCL.AvatarRendering.Emotes
             public AnimationClip? LocalAvatarAnimation;
             public AnimationClip? OtherAvatarAnimation;
             public AnimationClip? PropAnimation;
+            public int PropAnimationHash;
         }
 
         public int propClipHash { get; private set; }
