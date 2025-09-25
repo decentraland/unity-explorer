@@ -53,6 +53,8 @@ namespace DCL.Settings
         private readonly UpscalingController upscalingController;
         private readonly IAssetsProvisioner assetsProvisioner;
 
+        private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background)> sections;
+
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
         public SettingsController(
@@ -97,6 +99,15 @@ namespace DCL.Settings
             view.SoundSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.SOUND, settingsMenuConfiguration.SoundSectionConfig.SettingsGroups.Count));
             view.ControlsSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.CONTROLS, settingsMenuConfiguration.ControlsSectionConfig.SettingsGroups.Count));
             view.ChatSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.CHAT, settingsMenuConfiguration.ChatSectionConfig.SettingsGroups.Count));
+
+            sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background)>
+            {
+                [SettingsSection.GENERAL] = (view.GeneralSectionContainer, view.GeneralSectionButton, view.GeneralSectionBackground),
+                [SettingsSection.GRAPHICS] = (view.GraphicsSectionContainer, view.GraphicsSectionButton, view.GraphicsSectionBackground),
+                [SettingsSection.SOUND] = (view.SoundSectionContainer, view.SoundSectionButton, view.SoundSectionBackground),
+                [SettingsSection.CONTROLS] = (view.ControlsSectionContainer, view.ControlsSectionButton, view.ControlsSectionBackground),
+                [SettingsSection.CHAT] = (view.ChatSectionContainer, view.ChatSectionButton, view.ChatSectionBackground),
+            };
         }
 
         public UniTask InitializeAsync() =>
@@ -213,33 +224,14 @@ namespace DCL.Settings
 
         private void OpenSection(SettingsSection section, int settingsGroupCount)
         {
-            bool isGeneralSection = section == SettingsSection.GENERAL;
-            bool isGraphicsSection = section == SettingsSection.GRAPHICS;
-            bool isSoundSection = section == SettingsSection.SOUND;
-            bool isControlsSection = section == SettingsSection.CONTROLS;
-            bool isChatSection = section == SettingsSection.CHAT;
+            foreach ((SettingsSection current, (Transform container, ButtonWithSelectableStateView button, Sprite _)) in sections)
+            {
+                bool opened = section == current;
+                container.gameObject.SetActive(opened && settingsGroupCount > 0);
+                button.SetSelected(opened);
+            }
 
-            view.GeneralSectionContainer.gameObject.SetActive(isGeneralSection && settingsGroupCount > 0);
-            view.GraphicsSectionContainer.gameObject.SetActive(isGraphicsSection && settingsGroupCount > 0);
-            view.SoundSectionContainer.gameObject.SetActive(isSoundSection && settingsGroupCount > 0);
-            view.ControlsSectionContainer.gameObject.SetActive(isControlsSection && settingsGroupCount > 0);
-            view.ChatSectionContainer.gameObject.SetActive(isChatSection && settingsGroupCount > 0);
-
-            view.GeneralSectionButton.SetSelected(isGeneralSection);
-            view.GraphicsSectionButton.SetSelected(isGraphicsSection);
-            view.SoundSectionButton.SetSelected(isSoundSection);
-            view.ControlsSectionButton.SetSelected(isControlsSection);
-            view.ChatSectionButton.SetSelected(isChatSection);
-
-            view.BackgroundImage.sprite = section switch
-              {
-                    SettingsSection.GENERAL => view.GeneralSectionBackground,
-                    SettingsSection.GRAPHICS => view.GraphicsSectionBackground,
-                    SettingsSection.SOUND => view.SoundSectionBackground,
-                    SettingsSection.CONTROLS => view.ControlsSectionBackground,
-                    SettingsSection.CHAT => view.ChatSectionBackground,
-                    _ => throw new ArgumentOutOfRangeException(nameof(section), section, null),
-              };
+            view.BackgroundImage.sprite = sections[section].background!;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
@@ -248,11 +240,8 @@ namespace DCL.Settings
             foreach (SettingsFeatureController controller in controllers)
                 controller.Dispose();
 
-            view.GeneralSectionButton.Button.onClick.RemoveAllListeners();
-            view.GraphicsSectionButton.Button.onClick.RemoveAllListeners();
-            view.SoundSectionButton.Button.onClick.RemoveAllListeners();
-            view.ControlsSectionButton.Button.onClick.RemoveAllListeners();
-            view.ChatSectionButton.Button.onClick.RemoveAllListeners();
+            foreach (var pair in sections)
+                pair.Value.button!.Button.onClick!.RemoveAllListeners();
         }
     }
 }
