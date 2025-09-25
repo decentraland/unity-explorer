@@ -6,7 +6,6 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
@@ -23,7 +22,6 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatPlugin : IDCLGlobalPlugin<VoiceChatPlugin.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
         private readonly ProfileRepositoryWrapper profileDataProvider;
@@ -56,8 +54,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
-            IAssetsProvisioner assetsProvisioner,
-            IDebugContainerBuilder debugContainerBuilder)
+            IAssetsProvisioner assetsProvisioner)
         {
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
@@ -68,7 +65,6 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
             this.assetsProvisioner = assetsProvisioner;
-            this.debugContainerBuilder = debugContainerBuilder;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -104,8 +100,6 @@ namespace DCL.PluginSystem.Global
             var pluginSettings = this.voiceChatPluginSettingsAsset.Value;
 
             VoiceChatConfiguration voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
-
-            var combinedAudioSource = Object.Instantiate(pluginSettings.CombinedAudioSource);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);

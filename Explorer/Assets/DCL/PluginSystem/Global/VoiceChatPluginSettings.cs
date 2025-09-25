@@ -14,7 +14,6 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatPluginSettings : ScriptableObject
     {
         [Header("Asset References")]
-        [field: SerializeField] public VoiceChatCombinedStreamsAudioSource CombinedAudioSource { get; private set; }
         [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; }
         [field: SerializeField] public PlayerEntryView PlayerEntryView { get; private set; }
 
