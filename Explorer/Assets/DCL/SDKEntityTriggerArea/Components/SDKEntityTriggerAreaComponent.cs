@@ -60,27 +60,6 @@ namespace DCL.SDKEntityTriggerArea.Components
 
         public void TryAssignArea(IComponentPool<SDKEntityTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)
         {
-            if (hasMonoBehaviour)
-            {
-                switch (MeshType)
-                {
-                    case SDKEntityTriggerAreaMeshType.BOX:
-                        monoBehaviour!.SphereCollider.enabled = false;
-                        monoBehaviour!.BoxCollider.enabled = true;
-                        break;
-                    case SDKEntityTriggerAreaMeshType.SPHERE:
-                        monoBehaviour!.BoxCollider.enabled = false;
-                        monoBehaviour!.SphereCollider.enabled = true;
-                        break;
-                }
-
-                // Optimization to use an avatars specific physics layer if the trigger only cares about avatars
-                monoBehaviour!.gameObject.layer = LayerMask == ColliderLayer.ClPlayer ? PhysicsLayers.ALL_AVATARS : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
-            }
-
-            if (IsDirty == false) return;
-            IsDirty = false;
-
             bool useTransformScaleAsAreaSize = AreaSize == Vector3.zero;
 
             if (!hasMonoBehaviour)
@@ -100,15 +79,18 @@ namespace DCL.SDKEntityTriggerArea.Components
             {
                 case SDKEntityTriggerAreaMeshType.BOX:
                     monoBehaviour!.SphereCollider.enabled = false;
-                    monoBehaviour!.BoxCollider.enabled = true;
-                    monoBehaviour!.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
+                    monoBehaviour.BoxCollider.enabled = true;
+                    monoBehaviour.BoxCollider.size = useTransformScaleAsAreaSize ? Vector3.one : AreaSize;
                     break;
                 case SDKEntityTriggerAreaMeshType.SPHERE:
                     monoBehaviour!.BoxCollider.enabled = false;
-                    monoBehaviour!.SphereCollider.enabled = true;
-                    monoBehaviour!.SphereCollider.radius = useTransformScaleAsAreaSize ? 0.5f : AreaSize.magnitude / 2;
+                    monoBehaviour.SphereCollider.enabled = true;
+                    monoBehaviour.SphereCollider.radius = useTransformScaleAsAreaSize ? 0.5f : AreaSize.magnitude / 2;
                     break;
             }
+
+            // Optimization to use an avatars specific physics layer if the trigger only cares about avatars
+            monoBehaviour!.gameObject.layer = LayerMask == ColliderLayer.ClPlayer ? PhysicsLayers.ALL_AVATARS : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
         }
 
         public void UpdateAreaSize(Vector3 size)
@@ -134,9 +116,9 @@ namespace DCL.SDKEntityTriggerArea.Components
         public void TryClearExitedAvatarsToBeProcessed() =>
             monoBehaviour?.ClearExitedEntitiesToBeProcessed();
 
-        public bool TryDispose(ISceneStateProvider sceneStateProvider)
+        public bool TryDispose()
         {
-            if (!sceneStateProvider.IsCurrent && hasMonoBehaviour)
+            if (hasMonoBehaviour)
             {
                 monoBehaviour!.Dispose();
                 return true;

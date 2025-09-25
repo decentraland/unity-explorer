@@ -9,6 +9,7 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace DCL.SDKEntityTriggerArea.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
-    public partial class SDKEntityTriggerAreaHandlerSystem : BaseUnityLoopSystem
+    public partial class SDKEntityTriggerAreaHandlerSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly IComponentPool<SDKEntityTriggerArea> poolRegistry;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -34,18 +35,37 @@ namespace DCL.SDKEntityTriggerArea.Systems
 
         protected override void Update(float t)
         {
-            if (!mainPlayerAvatarBaseProxy.Configured) return;
+            if (!sceneStateProvider.IsCurrent || !mainPlayerAvatarBaseProxy.Configured) return;
 
-            UpdateSDKEntityTriggerAreaQuery(World);
+            UpdateSDKEntityTriggerAreaOnDirtyQuery(World);
         }
 
         [Query]
-        private void UpdateSDKEntityTriggerArea(ref TransformComponent transformComponent, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void UpdateSDKEntityTriggerAreaOnDirty(ref TransformComponent transformComponent, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            if (triggerAreaComponent.TryDispose(sceneStateProvider))
-                return;
+            if (!triggerAreaComponent.IsDirty) return;
+            triggerAreaComponent.IsDirty = false;
 
             triggerAreaComponent.TryAssignArea(poolRegistry, mainPlayerTransform, transformComponent);
+        }
+
+        [Query]
+        private void UpdateSDKEntityTriggerAreaOnSceneChange([Data] bool isCurrentScene, ref TransformComponent transformComponent, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        {
+            if (!isCurrentScene)
+            {
+                triggerAreaComponent.TryDispose();
+                return;
+            }
+
+            triggerAreaComponent.TryAssignArea(poolRegistry, mainPlayerTransform, transformComponent);
+        }
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            if(sceneStateProvider.State.Value() == SceneState.Disposed) return;
+
+            UpdateSDKEntityTriggerAreaOnSceneChangeQuery(World, value);
         }
     }
 }
