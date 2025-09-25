@@ -1,5 +1,5 @@
+using DCL.Translation;
 using System;
-using DCL.Translation.Models;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;

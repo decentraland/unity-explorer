@@ -1,5 +1,4 @@
 using DCL.Audio;
-using DCL.Translation.Models;
 using DCL.UI.Communities;
 using DCL.Utilities;
 using DG.Tweening;

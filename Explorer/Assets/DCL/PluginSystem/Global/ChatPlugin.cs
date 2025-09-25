@@ -39,15 +39,11 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Translation;
+using DCL.Translation.Processors;
 using DCL.Translation.Service;
-using DCL.Translation.Service.Cache;
-using DCL.Translation.Service.Memory;
-using DCL.Translation.Service.Policy;
-using DCL.Translation.Service.Provider;
-using DCL.Translation.Settings;
 using DCL.WebRequests;
 using System.Collections.Generic;
-using DCL.Chat.ChatServices.TranslationService.Processors;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -192,7 +188,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.decentralandEnvironment = decentralandEnvironment;
-            
+
             pluginCts = new CancellationTokenSource();
         }
 
@@ -232,7 +228,7 @@ namespace DCL.PluginSystem.Global
 
             var translationProvider = new DclTranslationProvider(webRequestController, decentralandUrlsSource, translationSettings);
             //var translationProvider = new MockTranslationProvider();
-            
+
             var translationCache = new InMemoryTranslationCache();
             translationMemory = new InMemoryTranslationMemory();
 
