@@ -11,6 +11,7 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
+using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
 using System.Collections.Concurrent;
@@ -94,13 +95,16 @@ namespace DCL.VoiceChat
 
             try
             {
+                Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
+                if (reachable.Success == false) throw new Exception(reachable.ErrorMessage!);
+
                 Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
-                    VoiceChatSettings.SelectedMicrophone,
+                    reachable.Value,
                     (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
                     configuration.microphonePlaybackToSpeakers
                 );
 
-                if (!result.Success) throw new Exception("Couldn't create RTCAudioSource");
+                if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
 
                 var rtcAudioSource = result.Value;
                 rtcAudioSource.Start();
