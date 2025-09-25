@@ -14,8 +14,7 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.EventBus;
 using DCL.Communities;
 using DCL.Settings.Settings;
-using DCL.Translation.Events;
-using DCL.Translation.Settings;
+using DCL.Translation;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;
@@ -211,7 +210,7 @@ namespace DCL.Chat
             communityDataService
                 .OpenCommunityCard(currentChannelService.CurrentChannel);
         }
-        
+
         public void Dispose()
         {
             view.OnCloseRequested -= OnCloseRequested;

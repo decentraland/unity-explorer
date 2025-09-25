@@ -1,9 +1,9 @@
 ﻿using DCL.Chat.History;
+using DCL.Translation;
 using DCL.UI.ProfileElements;
 using DCL.Utilities;
 using System;
 using System.Threading;
-using DCL.Translation.Models;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;

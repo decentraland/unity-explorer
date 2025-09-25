@@ -1,7 +1,7 @@
 using DCL.Chat.History;
+using DCL.Translation;
 using System;
 using System.Globalization;
-using DCL.Translation.Models;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -32,7 +32,7 @@ namespace DCL.Chat
         public event Action OnRevertRequest;
         public event Action OnPointerEnterEvent;
         public event Action OnPointerExitEvent;
-        
+
         private Vector2 backgroundSize;
         private bool popupOpen;
 
@@ -41,7 +41,7 @@ namespace DCL.Chat
             translationView.OnTranslateClicked += () => OnTranslateRequest?.Invoke();
             translationView.OnSeeOriginalClicked += () => OnRevertRequest?.Invoke();
         }
-        
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             messageOptionsButton?.gameObject.SetActive(true);
@@ -68,7 +68,7 @@ namespace DCL.Chat
         {
             messageOptionsButton?.gameObject.SetActive(false);
         }
-        
+
         public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
         {
             usernameElement.SetUsername(originalData.SenderValidatedName, originalData.SenderWalletId);
@@ -83,7 +83,7 @@ namespace DCL.Chat
                 timestamp.gameObject.SetActive(false);
 
             translationView.SetState(translationState);
-            
+
             backgroundSize = backgroundRectTransform.sizeDelta;
             backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
             backgroundSize.y += timestamp.gameObject.activeSelf ? timestamp.rectTransform.sizeDelta.y : 0.0f;
@@ -93,7 +93,7 @@ namespace DCL.Chat
 
             backgroundImage.color = originalData.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
         }
-        
+
         /// <summary>
         ///  Sets the chat message data into the chat bubble, adapting the background size accordingly and changing the color & outline if it's a mention
         /// </summary>
@@ -107,7 +107,7 @@ namespace DCL.Chat
         {
             translationView.gameObject.SetActive(isVisible);
         }
-        
+
         private void OnMessageOptionsClicked()
         {
             popupOpen = true;

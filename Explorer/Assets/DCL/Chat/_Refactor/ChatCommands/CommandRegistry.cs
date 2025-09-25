@@ -13,10 +13,8 @@ using System;
 using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Clipboard;
-using DCL.Translation.Commands;
+using DCL.Translation;
 using DCL.Translation.Service;
-using DCL.Translation.Service.Memory;
-using DCL.Translation.Settings;
 using DCL.Web3.Identities;
 using Utility;
 

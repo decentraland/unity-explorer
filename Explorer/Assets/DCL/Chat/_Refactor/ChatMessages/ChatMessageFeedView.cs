@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using DCL.Translation.Settings;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;

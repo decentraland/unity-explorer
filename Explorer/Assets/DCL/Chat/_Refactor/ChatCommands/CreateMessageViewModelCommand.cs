@@ -3,13 +3,13 @@ using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.Translation.Service;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System.Threading;
-using DCL.Translation.Service.Memory;
 
 namespace DCL.Chat.ChatCommands
 {

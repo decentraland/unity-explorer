@@ -1,8 +1,7 @@
 using System;
 using DCL.Chat;
 using DCL.Chat.History;
-using DCL.Translation.Events;
-using DCL.Translation.Settings;
+using DCL.Translation;
 using Segment.Serialization;
 using Utility;
 

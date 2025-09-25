@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Prefs;
 using DCL.Utility;
+using Sentry;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -154,7 +155,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
             viewInstance.MuteButton.Button.onClick.AddListener(OnMuteButtonClicked);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-            
+
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildData.InstallSource}"
                 : $"{Application.version} - {buildData.InstallSource}";
@@ -588,7 +589,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             if (audioClipConfig.GetInstanceID() != backgroundMusic.GetInstanceID())
                 return;
-            
+
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
             InitMusicMute();
         }
@@ -599,21 +600,21 @@ namespace DCL.AuthenticationScreenFlow
 
             if (isMuted)
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
-            
+
             viewInstance?.MuteButton.SetIcon(isMuted);
         }
 
         private void OnMuteButtonClicked()
         {
             bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
-            
+
             if (isMuted)
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, false);
             else
                 UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
-            
+
             viewInstance?.MuteButton.SetIcon(!isMuted);
-            
+
             DCLPlayerPrefs.SetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, !isMuted, save: true);
         }
 

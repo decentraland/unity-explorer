@@ -4,7 +4,7 @@ using DG.Tweening;
 using System;
 using System.Globalization;
 using DCL.Chat.ChatViewModels;
-using DCL.Translation.Models;
+using DCL.Translation;
 using DCL.Utilities;
 using TMPro;
 using UnityEngine;
