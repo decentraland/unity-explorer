@@ -99,8 +99,6 @@ MonoBehaviour:
       value: 128528
     - key: ':mouth-none:'
       value: 128566
-    - key: ':face-in-clouds:'
-      value: 128566
     - key: ':dotted-line-face:'
       value: 129765
     - key: ':zipper-face:'
@@ -131,8 +129,6 @@ MonoBehaviour:
       value: 128530
     - key: ':rolling-eyes:'
       value: 128580
-    - key: ':exhale:'
-      value: 128558
     - key: ':triumph:'
       value: 128548
     - key: ':angry:'
@@ -186,8 +182,6 @@ MonoBehaviour:
     - key: ':distraught:'
       value: 128555
     - key: ':x-eyes:'
-      value: 128565
-    - key: ':dizzy-face:'
       value: 128565
     - key: ':shaking-face:'
       value: 129768
@@ -349,12 +343,8 @@ MonoBehaviour:
       value: 9829
     - key: ':heart-exclamation-point:'
       value: 10083
-    - key: ':bandaged-heart:'
-      value: 10084
     - key: ':broken-heart:'
       value: 128148
-    - key: ':fire-heart:'
-      value: 10084
     - key: ':kiss:'
       value: 128139
     - key: ':hugging:'
@@ -529,12 +519,6 @@ MonoBehaviour:
       value: 128716
     - key: ':yoga:'
       value: 129496
-    - key: ':walking-with-cane:'
-      value: 129489
-    - key: ':person-in-motorized-wheelchair:'
-      value: 129489
-    - key: ':person-in-manual-wheelchair:'
-      value: 129489
     - key: ':kneeling:'
       value: 129486
     - key: ':standing:'
@@ -603,8 +587,6 @@ MonoBehaviour:
       value: 129465
     - key: ':ninja:'
       value: 129399
-    - key: ':mx-claus:'
-      value: 129489
     - key: ':angel:'
       value: 128124
     - key: ':guard:'
@@ -615,44 +597,12 @@ MonoBehaviour:
       value: 129333
     - key: ':veil:'
       value: 128112
-    - key: ':astronaut:'
-      value: 129489
     - key: ':construction-worker:'
       value: 128119
     - key: ':police:'
       value: 128110
     - key: ':detective:'
       value: 128373
-    - key: ':pilot:'
-      value: 129489
-    - key: ':scientist:'
-      value: 129489
-    - key: ':health-worker:'
-      value: 129489
-    - key: ':mechanic:'
-      value: 129489
-    - key: ':factory-worker:'
-      value: 129489
-    - key: ':firefighter:'
-      value: 129489
-    - key: ':farmer:'
-      value: 129489
-    - key: ':teacher:'
-      value: 129489
-    - key: ':student:'
-      value: 129489
-    - key: ':office-worker:'
-      value: 129489
-    - key: ':judge:'
-      value: 129489
-    - key: ':technologist:'
-      value: 129489
-    - key: ':singer:'
-      value: 129489
-    - key: ':artist:'
-      value: 129489
-    - key: ':cook:'
-      value: 129489
     - key: ':turban:'
       value: 128115
     - key: ':headscarf:'
@@ -667,16 +617,8 @@ MonoBehaviour:
       value: 129489
     - key: ':elder:'
       value: 129491
-    - key: ':white-hair:'
-      value: 129489
-    - key: ':red-hair:'
-      value: 129489
     - key: ':blond-hair:'
       value: 128113
-    - key: ':curly-hair:'
-      value: 129489
-    - key: ':bald:'
-      value: 129489
     - key: ':beard:'
       value: 129492
     - key: ':levitating-suit:'
@@ -687,8 +629,6 @@ MonoBehaviour:
       value: 128378
     - key: ':bunny-ears:'
       value: 128111
-    - key: ':holding-hands:'
-      value: 129489
     - key: ':holding-hands-women:'
       value: 128109
     - key: ':holding-hands-men:'
@@ -697,26 +637,16 @@ MonoBehaviour:
       value: 128107
     - key: ':kiss-people:'
       value: 128143
-    - key: ':kiss-woman-and-man:'
-      value: 128105
     - key: ':kiss-man-and-man:'
       value: 128104
     - key: ':kiss-woman-and-woman:'
       value: 128105
     - key: ':people-with-heart:'
       value: 128145
-    - key: ':heart-with-woman-and-man:'
-      value: 128105
-    - key: ':heart-with-man-and-man:'
-      value: 128104
-    - key: ':heart-with-woman-and-woman:'
-      value: 128105
     - key: ':pregnant:'
       value: 129732
     - key: ':breast-feeding:'
       value: 129329
-    - key: ':person-feeding-baby:'
-      value: 129489
     - key: ':family:'
       value: 128106
   - title: Animals and nature
@@ -795,8 +725,6 @@ MonoBehaviour:
       value: 127787
     - key: ':thermometer:'
       value: 127777
-    - key: ':fire:'
-      value: 128293
     - key: ':volcano:'
       value: 127755
     - key: ':desert:'
@@ -849,30 +777,10 @@ MonoBehaviour:
       value: 127780
     - key: ':sunny:'
       value: 9728
-    - key: ':sun-with-face:'
-      value: 127774
-    - key: ':moon-face-full:'
-      value: 127773
-    - key: ':moon-face-new:'
-      value: 127770
-    - key: ':moon-face-last-quarter:'
-      value: 127772
-    - key: ':moon-face-first-quarter:'
-      value: 127771
-    - key: ':star:'
-      value: 11088
-    - key: ':glowing-star:'
-      value: 127775
-    - key: ':sparkles:'
-      value: 10024
-    - key: ':dizzy:'
-      value: 128171
     - key: ':crescent-moon:'
       value: 127769
     - key: ':comet:'
       value: 9732
-    - key: ':hole:'
-      value: 128371
     - key: ':shooting-star:'
       value: 127776
     - key: ':milky-way:'
@@ -901,12 +809,6 @@ MonoBehaviour:
       value: 127767
     - key: ':waning-crescent-moon:'
       value: 127768
-    - key: ':see-no-evil-monkey:'
-      value: 128584
-    - key: ':hear-no-evil-monkey:'
-      value: 128585
-    - key: ':speak-no-evil-monkey:'
-      value: 128586
     - key: ':monkey-face:'
       value: 128053
     - key: ':lion-face:'
@@ -920,8 +822,6 @@ MonoBehaviour:
     - key: ':wolf:'
       value: 128058
     - key: ':bear-face:'
-      value: 128059
-    - key: ':polar-bear:'
       value: 128059
     - key: ':koala:'
       value: 128040
@@ -979,16 +879,12 @@ MonoBehaviour:
       value: 128000
     - key: ':cat:'
       value: 128008
-    - key: ':black-cat:'
-      value: 128008
     - key: ':poodle:'
       value: 128041
     - key: ':dog:'
       value: 128021
     - key: ':guide-dog:'
       value: 129454
-    - key: ':service-dog:'
-      value: 128021
     - key: ':pig:'
       value: 128022
     - key: ':racehorse:'
@@ -1060,8 +956,6 @@ MonoBehaviour:
     - key: ':feather:'
       value: 129718
     - key: ':bird:'
-      value: 128038
-    - key: ':black-bird:'
       value: 128038
     - key: ':rooster:'
       value: 128019
@@ -1161,8 +1055,6 @@ MonoBehaviour:
       value: 128027
     - key: ':worm:'
       value: 129713
-    - key: ':microbe:'
-      value: 129440
     - key: ':paw prints:'
       value: 128062
   - title: Food and drink
@@ -1309,10 +1201,6 @@ MonoBehaviour:
       value: 127835
     - key: ':steaming-bowl:'
       value: 127836
-    - key: ':oyster:'
-      value: 129450
-    - key: ':lobster:'
-      value: 129438
     - key: ':sushi:'
       value: 127843
     - key: ':fried-shrimp:'
@@ -1673,14 +1561,10 @@ MonoBehaviour:
       value: 129523
   - title: Activities and events
     emojis:
-    - key: ':party-popper:'
-      value: 127881
     - key: ':confetti-ball:'
       value: 127882
     - key: ':balloon:'
       value: 127880
-    - key: ':birthday-cake:'
-      value: 127874
     - key: ':ribbon:'
       value: 127872
     - key: ':wrapped-gift:'
@@ -1713,8 +1597,6 @@ MonoBehaviour:
       value: 127883
     - key: ':Christmas-tree:'
       value: 127876
-    - key: ':jack-o-lantern:'
-      value: 127875
     - key: ':reminder-ribbon:'
       value: 127895
     - key: ':gold-medal:'
@@ -1813,8 +1695,6 @@ MonoBehaviour:
       value: 127918
     - key: ':joystick:'
       value: 128377
-    - key: ':alien-monster:'
-      value: 128126
     - key: ':pistol:'
       value: 128299
     - key: ':die:'
@@ -2033,8 +1913,6 @@ MonoBehaviour:
       value: 128086
     - key: ':t-shirt:'
       value: 128085
-    - key: ':running-shirt:'
-      value: 127933
     - key: ":woman\u2019s-clothes:"
       value: 128090
     - key: ':necktie:'
@@ -2045,8 +1923,6 @@ MonoBehaviour:
       value: 128088
     - key: ':sari:'
       value: 129403
-    - key: ':one-piece-swimsuit:'
-      value: 129649
     - key: ':bikini:'
       value: 128089
     - key: ':shorts:'
@@ -2065,8 +1941,6 @@ MonoBehaviour:
       value: 129686
     - key: ':graduation-cap:'
       value: 127891
-    - key: ':top-hat:'
-      value: 127913
     - key: ":woman\u2019s-hat:"
       value: 128082
     - key: ':billed-cap:'
@@ -2085,8 +1959,6 @@ MonoBehaviour:
       value: 128092
     - key: ':briefcase:'
       value: 128188
-    - key: ':luggage:'
-      value: 129523
     - key: ':umbrella:'
       value: 9730
     - key: ':closed-umbrella:'
@@ -2127,8 +1999,6 @@ MonoBehaviour:
       value: 129515
     - key: ':test-tube:'
       value: 129514
-    - key: ':thermometer:'
-      value: 127777
     - key: ':syringe:'
       value: 128137
     - key: ':pill:'
@@ -2195,10 +2065,6 @@ MonoBehaviour:
       value: 128207
     - key: ':triangular-ruler:'
       value: 128208
-    - key: ':paintbrush:'
-      value: 128396
-    - key: ':crayon:'
-      value: 128397
     - key: ':pen:'
       value: 128394
     - key: ':fountain-pen:'
@@ -2293,8 +2159,6 @@ MonoBehaviour:
       value: 128233
     - key: ':incoming-envelope:'
       value: 128232
-    - key: ':love-letter:'
-      value: 128140
     - key: ':outbox-tray:'
       value: 128228
     - key: ':inbox-tray:'
@@ -2377,8 +2241,6 @@ MonoBehaviour:
       value: 128276
     - key: ':postal-horn:'
       value: 128239
-    - key: ':loudspeaker:'
-      value: 128226
     - key: ':megaphone:'
       value: 128227
     - key: ':magnifying-glass-tilted-left:'
@@ -2465,32 +2327,6 @@ MonoBehaviour:
       value: 11035
     - key: ':white-square:'
       value: 11036
-    - key: ':red-heart:'
-      value: 10084
-    - key: ':orange-heart:'
-      value: 129505
-    - key: ':yellow-heart:'
-      value: 128155
-    - key: ':green-heart:'
-      value: 128154
-    - key: ':blue-heart:'
-      value: 128153
-    - key: ':purple-heart:'
-      value: 128156
-    - key: ':brown-heart:'
-      value: 129294
-    - key: ':black-heart:'
-      value: 128420
-    - key: ':white-heart:'
-      value: 129293
-    - key: ':pink-heart:'
-      value: 129655
-    - key: ':light-blue-heart:'
-      value: 129653
-    - key: ':gray-heart:'
-      value: 129654
-    - key: ':heart:'
-      value: 9829
     - key: ':diamond:'
       value: 9830
     - key: ':club:'
@@ -2585,8 +2421,6 @@ MonoBehaviour:
       value: 127377
     - key: ':sos:'
       value: 127384
-    - key: ':stop:'
-      value: 128721
     - key: ':no-entry:'
       value: 9940
     - key: ':name-badge:'
@@ -2817,8 +2651,6 @@ MonoBehaviour:
       value: 128311
     - key: ':blue-diamond-small:'
       value: 128313
-    - key: ':globe:'
-      value: 127760
     - key: ':ATM:'
       value: 127975
     - key: ':metro-sign:'
@@ -2849,8 +2681,6 @@ MonoBehaviour:
       value: 128708
     - key: ':left-luggage:'
       value: 128709
-    - key: ':heart-box:'
-      value: 128159
     - key: ':atom-symbol:'
       value: 9883
     - key: ':place-of-worship:'
@@ -2919,8 +2749,6 @@ MonoBehaviour:
       value: 9725
     - key: ':white-square-small:'
       value: 9643
-    - key: ':eye-bubble:'
-      value: 128065
   - title: Flags
     emojis:
     - key: ':chequered-flag:'
@@ -2933,533 +2761,19 @@ MonoBehaviour:
       value: 127988
     - key: ':white-flag:'
       value: 127987
-    - key: ':rainbow-flag:'
-      value: 127987
-    - key: ':trans-flag:'
-      value: 127987
-    - key: ':pirate-flag:'
-      value: 127988
-    - key: ':Ascension-Island-flag:'
-      value: 127462
-    - key: ':Andorra-flag:'
-      value: 127462
-    - key: ':United-Arab-Emirates-flag:'
-      value: 127462
-    - key: ':Afghanistan-flag:'
-      value: 127462
-    - key: ':Antigua-Barbuda-flag:'
-      value: 127462
-    - key: ':Anguilla-flag:'
-      value: 127462
-    - key: ':Albania-flag:'
-      value: 127462
-    - key: ':Armenia-flag:'
-      value: 127462
-    - key: ':Angola-flag:'
-      value: 127462
-    - key: ':Antarctica-flag:'
-      value: 127462
-    - key: ':Argentina-flag:'
-      value: 127462
-    - key: ':American-Samoa-flag:'
-      value: 127462
-    - key: ':Austria-flag:'
-      value: 127462
-    - key: ':Australia-flag:'
-      value: 127462
-    - key: ':Aruba-flag:'
-      value: 127462
-    - key: ":\xC5land-Islands-flag:"
-      value: 127462
-    - key: ':Azerbaijan-flag:'
-      value: 127462
-    - key: ':Bosnia-Herzegovina-flag:'
-      value: 127463
     - key: ':Barbados-flag:'
       value: 127463
-    - key: ':Bangladesh-flag:'
-      value: 127463
-    - key: ':Belgium-flag:'
-      value: 127463
-    - key: ':Burkina-Faso-flag:'
-      value: 127463
-    - key: ':Bulgaria-flag:'
-      value: 127463
-    - key: ':Bahrain-flag:'
-      value: 127463
-    - key: ':Burundi-flag:'
-      value: 127463
-    - key: ':Benin-flag:'
-      value: 127463
-    - key: ":St-Barth\xE9lemy-flag:"
-      value: 127463
-    - key: ':Bermuda-flag:'
-      value: 127463
-    - key: ':Brunei-flag:'
-      value: 127463
-    - key: ':Bolivia-flag:'
-      value: 127463
-    - key: ':Caribbean-Netherlands-flag:'
-      value: 127463
-    - key: ':Brazil-flag:'
-      value: 127463
-    - key: ':Bahamas-flag:'
-      value: 127463
-    - key: ':Bhutan-flag:'
-      value: 127463
-    - key: ':Bouvet-Island-flag:'
-      value: 127463
-    - key: ':Botswana-flag:'
-      value: 127463
-    - key: ':Belarus-flag:'
-      value: 127463
-    - key: ':Belize-flag:'
-      value: 127463
-    - key: ':Canada-flag:'
-      value: 127464
     - key: ':Cocos-Islands-flag:'
       value: 127464
-    - key: ':Congo-Kinshasa-flag:'
-      value: 127464
-    - key: ':Central-African-Republic-flag:'
-      value: 127464
-    - key: ':Congo-Brazzaville-flag:'
-      value: 127464
-    - key: ':Switzerland-flag:'
-      value: 127464
-    - key: ":C\xF4te-d\u2019Ivoire-flag:"
-      value: 127464
-    - key: ':Cook-Islands-flag:'
-      value: 127464
-    - key: ':Chile-flag:'
-      value: 127464
-    - key: ':Cameroon-flag:'
-      value: 127464
-    - key: ':China-flag:'
-      value: 127464
-    - key: ':Colombia-flag:'
-      value: 127464
-    - key: ':Clipperton-Island-flag:'
-      value: 127464
-    - key: ':Costa-Rica-flag:'
-      value: 127464
-    - key: ':Cuba-flag:'
-      value: 127464
-    - key: ':Cape-Verde-flag:'
-      value: 127464
-    - key: ":Cura\xE7ao-flag:"
-      value: 127464
-    - key: ':Christmas-Island-flag:'
-      value: 127464
-    - key: ':Cyprus-flag:'
-      value: 127464
-    - key: ':Czechia-flag:'
-      value: 127464
-    - key: ':Germany-flag:'
-      value: 127465
-    - key: ':Diego-Garcia-flag:'
-      value: 127465
-    - key: ':Djibouti-flag:'
-      value: 127465
-    - key: ':Denmark-flag:'
-      value: 127465
-    - key: ':Dominica-flag:'
-      value: 127465
-    - key: ':Dominican Republic-flag:'
-      value: 127465
-    - key: ':Algeria-flag:'
-      value: 127465
-    - key: ':Ceuta-Melilla-flag:'
-      value: 127466
-    - key: ':Ecuador-flag:'
-      value: 127466
     - key: ':Estonia-flag:'
       value: 127466
-    - key: ':Egypt-flag:'
-      value: 127466
-    - key: ':Western-Sahara-flag:'
-      value: 127466
-    - key: ':Eritrea-flag:'
-      value: 127466
-    - key: ':Spain-flag:'
-      value: 127466
-    - key: ':Ethiopia-flag:'
-      value: 127466
-    - key: ':European-Union-flag:'
-      value: 127466
-    - key: ':Finland-flag:'
-      value: 127467
-    - key: ':Fiji-flag:'
-      value: 127467
-    - key: ':Falkland-Islands-flag:'
-      value: 127467
-    - key: ':Micronesia-flag:'
-      value: 127467
-    - key: ':Faroe-Islands-flag:'
-      value: 127467
-    - key: ':France-flag:'
-      value: 127467
-    - key: ':Gabon-flag:'
-      value: 127468
-    - key: ':United-Kingdom-flag:'
-      value: 127468
-    - key: ':Grenada-flag:'
-      value: 127468
-    - key: ':Georgia-flag:'
-      value: 127468
-    - key: ':French Guiana-flag:'
-      value: 127468
     - key: ':Guernsey-flag:'
       value: 127468
-    - key: ':Ghana-flag:'
-      value: 127468
-    - key: ':Gibraltar-flag:'
-      value: 127468
-    - key: ':Greenland-flag:'
-      value: 127468
-    - key: ':Gambia-flag:'
-      value: 127468
-    - key: ':Guinea-flag:'
-      value: 127468
-    - key: ':Guadeloupe-flag:'
-      value: 127468
-    - key: ':Equatorial-Guinea-flag:'
-      value: 127468
-    - key: ':Greece-flag:'
-      value: 127468
-    - key: ':South-Georgia-South-flag:'
-      value: 127468
-    - key: ':Guatemala-flag:'
-      value: 127468
-    - key: ':Guam-flag:'
-      value: 127468
-    - key: ':Guinea-Bissau-flag:'
-      value: 127468
-    - key: ':Guyana-flag:'
-      value: 127468
-    - key: ':Hong-Kong-SAR-China-flag:'
-      value: 127469
-    - key: ':Heard-McDonald Islands-flag:'
-      value: 127469
-    - key: ':Honduras-flag:'
-      value: 127469
-    - key: ':Croatia-flag:'
-      value: 127469
-    - key: ':Haiti-flag:'
-      value: 127469
-    - key: ':Hungary-flag:'
-      value: 127469
-    - key: ':Canary-Islands-flag:'
-      value: 127470
-    - key: ':Indonesia-flag:'
-      value: 127470
-    - key: ':Ireland-flag:'
-      value: 127470
-    - key: ':Israel-flag:'
-      value: 127470
-    - key: ':Isle-of-Man-flag:'
-      value: 127470
-    - key: ':India-flag:'
-      value: 127470
-    - key: ':British-Indian-Ocean-Territory-flag:'
-      value: 127470
-    - key: ':Iraq-flag:'
-      value: 127470
-    - key: ':Iran-flag:'
-      value: 127470
-    - key: ':Iceland-flag:'
-      value: 127470
-    - key: ':Italy-flag:'
-      value: 127470
-    - key: ':Jersey-flag:'
-      value: 127471
-    - key: ':Jamaica-flag:'
-      value: 127471
-    - key: ':Jordan-flag:'
-      value: 127471
-    - key: ':Japan-flag:'
-      value: 127471
-    - key: ':Kenya-flag:'
-      value: 127472
-    - key: ':Kyrgyzstan-flag:'
-      value: 127472
-    - key: ':Cambodia-flag:'
-      value: 127472
-    - key: ':Kiribati-flag:'
-      value: 127472
-    - key: ':Comoros-flag:'
-      value: 127472
-    - key: ':St. Kitts & Nevis-flag:'
-      value: 127472
-    - key: ':North Korea-flag:'
-      value: 127472
-    - key: ':South Korea-flag:'
-      value: 127472
-    - key: ':Kuwait-flag:'
-      value: 127472
-    - key: ':Cayman Islands-flag:'
-      value: 127472
-    - key: ':Kazakhstan-flag:'
-      value: 127472
-    - key: ':Laos-flag:'
-      value: 127473
-    - key: ':Lebanon-flag:'
-      value: 127473
-    - key: ':St. Lucia-flag:'
-      value: 127473
-    - key: ':Liechtenstein-flag:'
-      value: 127473
-    - key: ':Sri Lanka-flag:'
-      value: 127473
-    - key: ':Liberia-flag:'
-      value: 127473
-    - key: ':Lesotho-flag:'
-      value: 127473
-    - key: ':Lithuania-flag:'
-      value: 127473
-    - key: ':Luxembourg-flag:'
-      value: 127473
-    - key: ':Latvia-flag:'
-      value: 127473
-    - key: ':Libya-flag:'
-      value: 127473
-    - key: ':Morocco-flag:'
-      value: 127474
-    - key: ':Monaco-flag:'
-      value: 127474
-    - key: ':Moldova-flag:'
-      value: 127474
-    - key: ':Montenegro-flag:'
-      value: 127474
-    - key: ':St-Martin-flag:'
-      value: 127474
-    - key: ':Madagascar-flag:'
-      value: 127474
-    - key: ':Marshall-Islands-flag:'
-      value: 127474
-    - key: ':Macedonia-flag:'
-      value: 127474
-    - key: ':Mali-flag:'
-      value: 127474
     - key: ':Myanmar-flag:'
       value: 127474
-    - key: ':Mongolia-flag:'
-      value: 127474
-    - key: ':Macau-SAR-China-flag:'
-      value: 127474
-    - key: ':Northern-Mariana-Islands-flag:'
-      value: 127474
-    - key: ':Martinique-flag:'
-      value: 127474
-    - key: ':Mauritania-flag:'
-      value: 127474
-    - key: ':Montserrat-flag:'
-      value: 127474
-    - key: ':Malta-flag:'
-      value: 127474
-    - key: ':Mauritius-flag:'
-      value: 127474
-    - key: ':Maldives-flag:'
-      value: 127474
-    - key: ':Malawi-flag:'
-      value: 127474
-    - key: ':Mexico-flag:'
-      value: 127474
-    - key: ':Malaysia-flag:'
-      value: 127474
-    - key: ':Mozambique-flag:'
-      value: 127474
-    - key: ':Namibia-flag:'
-      value: 127475
-    - key: ':New-Caledonia-flag:'
-      value: 127475
-    - key: ':Niger-flag:'
-      value: 127475
-    - key: ':Norfolk-Island-flag:'
-      value: 127475
-    - key: ':Nigeria-flag:'
-      value: 127475
-    - key: ':Nicaragua-flag:'
-      value: 127475
-    - key: ':Netherlands-flag:'
-      value: 127475
-    - key: ':Norway-flag:'
-      value: 127475
-    - key: ':Nepal-flag:'
-      value: 127475
-    - key: ':Nauru-flag:'
-      value: 127475
-    - key: ':Niue-flag:'
-      value: 127475
-    - key: ':New-Zealand-flag:'
-      value: 127475
-    - key: ':Oman-flag:'
-      value: 127476
-    - key: ':Panama-flag:'
-      value: 127477
-    - key: ':Peru-flag:'
-      value: 127477
-    - key: ':French-Polynesia-flag:'
-      value: 127477
-    - key: ':Papua-New-Guinea-flag:'
-      value: 127477
-    - key: ':Philippines-flag:'
-      value: 127477
-    - key: ':Pakistan-flag:'
-      value: 127477
-    - key: ':Poland-flag:'
-      value: 127477
-    - key: ':St-Pierre-Miquelon-flag:'
-      value: 127477
-    - key: ':Pitcairn-Islands-flag:'
-      value: 127477
-    - key: ':Puerto-Rico-flag:'
-      value: 127477
-    - key: ':Palestinian-Territories-flag:'
-      value: 127477
-    - key: ':Portugal-flag:'
-      value: 127477
-    - key: ':Palau-flag:'
-      value: 127477
-    - key: ':Paraguay-flag:'
-      value: 127477
-    - key: ':Qatar-flag:'
-      value: 127478
-    - key: ":R\xE9union-flag:"
-      value: 127479
-    - key: ':Romania-flag:'
-      value: 127479
-    - key: ':Serbia-flag:'
-      value: 127479
-    - key: ':Russia-flag:'
-      value: 127479
-    - key: ':Rwanda-flag:'
-      value: 127479
-    - key: ':Saudi-Arabia-flag:'
-      value: 127480
-    - key: ':Solomon-Islands-flag:'
-      value: 127480
-    - key: ':Seychelles-flag:'
-      value: 127480
-    - key: ':Sudan-flag:'
-      value: 127480
-    - key: ':Sweden-flag:'
-      value: 127480
-    - key: ':Singapore-flag:'
-      value: 127480
-    - key: ':St-Helena-flag:'
-      value: 127480
-    - key: ':Slovenia-flag:'
-      value: 127480
-    - key: ':Svalbard-Jan Mayen-flag:'
-      value: 127480
-    - key: ':Slovakia-flag:'
-      value: 127480
-    - key: ':Sierra-Leone-flag:'
-      value: 127480
-    - key: ':San-Marino-flag:'
-      value: 127480
-    - key: ':Senegal-flag:'
-      value: 127480
-    - key: ':Somalia-flag:'
-      value: 127480
-    - key: ':Suriname-flag:'
-      value: 127480
     - key: ':South-Sudan-flag:'
       value: 127480
-    - key: ":S\xE3o-Tom\xE9-Pr\xEDncipe-flag:"
-      value: 127480
-    - key: ':El-Salvador-flag:'
-      value: 127480
-    - key: ':Sint-Maarten-flag:'
-      value: 127480
-    - key: ':Syria-flag:'
-      value: 127480
-    - key: ':Swaziland-flag:'
-      value: 127480
-    - key: ':Tristan-da-Cunha-flag:'
-      value: 127481
-    - key: ':Turks-Caicos Islands-flag:'
-      value: 127481
-    - key: ':Chad-flag:'
-      value: 127481
-    - key: ':French-Southern-Territories-flag:'
-      value: 127481
-    - key: ':Togo-flag:'
-      value: 127481
-    - key: ':Thailand-flag:'
-      value: 127481
-    - key: ':Tajikistan-flag:'
-      value: 127481
-    - key: ':Tokelau-flag:'
-      value: 127481
-    - key: ':Timor-Leste-flag:'
-      value: 127481
-    - key: ':Turkmenistan-flag:'
-      value: 127481
-    - key: ':Tunisia-flag:'
-      value: 127481
-    - key: ':Tonga-flag:'
-      value: 127481
-    - key: ':Turkey-flag:'
-      value: 127481
     - key: ':Trinidad-Tobago-flag:'
       value: 127481
-    - key: ':Tuvalu-flag:'
-      value: 127481
-    - key: ':Taiwan-flag:'
-      value: 127481
-    - key: ':Tanzania-flag:'
-      value: 127481
-    - key: ':Ukraine-flag:'
-      value: 127482
-    - key: ':Uganda-flag:'
-      value: 127482
-    - key: ':US-Outlying Islands-flag:'
-      value: 127482
-    - key: ':United-Nations-flag:'
-      value: 127482
-    - key: ':United-States-flag:'
-      value: 127482
-    - key: ':Uruguay-flag:'
-      value: 127482
-    - key: ':Uzbekistan-flag:'
-      value: 127482
-    - key: ':Vatican City-flag:'
-      value: 127483
-    - key: ':St-Vincent-Grenadines-flag:'
-      value: 127483
-    - key: ':Venezuela-flag:'
-      value: 127483
-    - key: ':British-Virgin Islands-flag:'
-      value: 127483
-    - key: ':US-Virgin-Islands-flag:'
-      value: 127483
-    - key: ':Vietnam-flag:'
-      value: 127483
-    - key: ':Vanuatu-flag:'
-      value: 127483
-    - key: ':Wallis-Futuna-flag:'
-      value: 127484
-    - key: ':Samoa-flag:'
-      value: 127484
-    - key: ':Kosovo-flag:'
-      value: 127485
-    - key: ':Yemen-flag:'
-      value: 127486
-    - key: ':Mayotte-flag:'
-      value: 127486
-    - key: ':South-Africa-flag:'
-      value: 127487
-    - key: ':Zambia-flag:'
-      value: 127487
-    - key: ':Zimbabwe-flag:'
-      value: 127487
-    - key: ':England-flag:'
-      value: 127988
-    - key: ':Scotland-flag:'
-      value: 127988
-    - key: ':Wales-flag:'
-      value: 127988
   emojiSpriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}
   emojiJsonMetadata: {fileID: 4900000, guid: 3297bff7ce0b74196b2c71c85c8ee381, type: 3}

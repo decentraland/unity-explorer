@@ -48,6 +48,7 @@ namespace DCL.Emoji
             List<TMP_SpriteCharacter> usableEmojis = spriteAsset.spriteCharacterTable
                                                                 .Where(x => x.unicode is <= 0x10ffff and (< 0x00D800 or > 0x00DFFF))
                                                                 .ToList();
+            HashSet<int> savedEmojis = new ();
 
             foreach (var group in emojiGroups)
             {
@@ -61,19 +62,15 @@ namespace DCL.Emoji
                 {
                     log.ProcessedEmojis++;
 
-                    string firstHexCode = emoji.@base[0].ToString("X");
+                    string[] baseCodesHex = emoji.@base.Select(x => x.ToString("X")).ToArray();
                     List<(TMP_SpriteCharacter, int)> matches = usableEmojis.Select(x => (x, 0))
-                                                                           .Where(x => x.x.name.Contains(firstHexCode, StringComparison.InvariantCultureIgnoreCase))
+                                                                           .Where(x => baseCodesHex.Any(hexCode => x.x.name.Contains(hexCode, StringComparison.InvariantCultureIgnoreCase)))
                                                                            .ToList();
 
-                    foreach (int baseCode in emoji.@base)
-                    {
-                        string hexCode = baseCode.ToString("X");
-
+                    foreach (string baseCodeHex in baseCodesHex)
                         for (int i = 0; i < matches.Count; i++)
-                            if (matches[i].Item1.name.Contains(hexCode, StringComparison.InvariantCultureIgnoreCase))
+                            if (matches[i].Item1.name.Contains(baseCodeHex, StringComparison.InvariantCultureIgnoreCase))
                                 matches[i] = (matches[i].Item1, matches[i].Item2 + 1);
-                    }
 
                     TMP_SpriteCharacter bestMatch = SearchHighestMatch(matches);
 
@@ -88,7 +85,15 @@ namespace DCL.Emoji
                     if (emoji.shortcodes.Length > 1)
                         log.MultipleShortcodes++;
 
-                    section.emojis.Add(new SerializableKeyValuePair<string, int>(emoji.shortcodes[0], (int)bestMatch.unicode));
+                    int unicode = (int)bestMatch.unicode;
+
+                    if (!savedEmojis.Add(unicode))
+                    {
+                        log.DiscardedEmojis++;
+                        continue;
+                    }
+
+                    section.emojis.Add(new SerializableKeyValuePair<string, int>(emoji.shortcodes[0], unicode));
                 }
 
                 EmojiSections.Add(section);
