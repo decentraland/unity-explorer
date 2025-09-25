@@ -45,7 +45,7 @@ namespace DCL.VoiceChat
 
             if (voiceChatState.CurrentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED) return;
 
-            CalculateExpandedCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.ActiveSpeakers.Count);
+            CalculateExpandedCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.Speakers.Count);
         }
 
         private void OnSpeakersUpdated(int speakersAmount)
@@ -72,7 +72,7 @@ namespace DCL.VoiceChat
                     view.Resize(COLLAPSED_PRIVATE_VOICE_CHAT_SIZE);
                     break;
                 case VoiceChatType.COMMUNITY:
-                    CalculateExpandedCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.ActiveSpeakers.Count);
+                    CalculateExpandedCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.Speakers.Count);
                     break;
                 case VoiceChatType.NONE:
                 default:
@@ -97,7 +97,7 @@ namespace DCL.VoiceChat
                     {
                         case VoiceChatPanelSize.EXPANDED:
                             view.gameObject.SetActive(true);
-                            CalculateExpandedCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.ActiveSpeakers.Count);
+                            CalculateExpandedCommunitiesLayoutHeight(voiceChatState.ParticipantsStateService.Speakers.Count);
                             break;
                         default:
                             view.gameObject.SetActive(true);

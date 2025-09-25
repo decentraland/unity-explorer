@@ -24,6 +24,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly IDisposable panelSizeChangeSubscription;
         private readonly IDisposable panelStateChangeSubscription;
 
+        private int speakersCount;
+
         public Transform SpeakersParent => view.SpeakersParent;
         private CancellationTokenSource ct = new();
 
@@ -64,7 +66,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void SetInCallElementsVisibility(VoiceChatPanelState panelState, VoiceChatPanelSize panelSize)
         {
             view.SetButtonsVisibility(panelState is not VoiceChatPanelState.UNFOCUSED, panelSize);
-            view.SetScrollAndMasksVisibility(voiceChatOrchestrator.ParticipantsStateService.ActiveSpeakers.Count > MAX_VISIBLE_SPEAKERS);
+            view.SetScrollAndMasksVisibility(speakersCount > MAX_VISIBLE_SPEAKERS);
         }
 
         private void OnCommunityButtonClicked()
@@ -104,15 +106,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             entryView.transform.localScale = Vector3.one;
         }
 
-        public void RefreshCounter(int count, int raisedHandsCount)
+        public void RefreshCounters(int updatedSpeakersCount, int raisedHandsCount, int totalParticipantCount)
         {
-            view.SpeakersCount.text = $"({count})";
+            speakersCount = updatedSpeakersCount;
+            view.SpeakersCount.text = $"({updatedSpeakersCount})";
             view.ConfigureRaisedHandTooltip(raisedHandsCount);
-        }
-
-        public void SetParticipantCount(int participantCount)
-        {
-            view.SetParticipantCount(participantCount);
+            view.SetParticipantCount(totalParticipantCount);
+            view.SetScrollAndMasksVisibility(updatedSpeakersCount > MAX_VISIBLE_SPEAKERS);
         }
 
         public void ShowRaiseHandTooltip(string playerName)
