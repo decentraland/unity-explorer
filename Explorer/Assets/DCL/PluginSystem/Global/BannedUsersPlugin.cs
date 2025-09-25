@@ -1,7 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.SceneBannedUsers;
 using DCL.SceneBannedUsers.Systems;
@@ -13,7 +12,6 @@ namespace DCL.PluginSystem.Global
     public class BannedUsersPlugin : IDCLGlobalPlugin
     {
         private readonly IRoomHub roomHub;
-        private readonly ISelfProfile selfProfile;
         private readonly ECSBannedScene bannedSceneController;
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
@@ -22,13 +20,11 @@ namespace DCL.PluginSystem.Global
 
         public BannedUsersPlugin(
             IRoomHub roomHub,
-            ISelfProfile selfProfile,
             ECSBannedScene bannedSceneController,
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene)
         {
             this.roomHub = roomHub;
-            this.selfProfile = selfProfile;
             this.bannedSceneController = bannedSceneController;
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
@@ -39,7 +35,7 @@ namespace DCL.PluginSystem.Global
             BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, includeBannedUsersFromScene));
 
             if (includeBannedUsersFromScene)
-                playerBannedScenesController = new PlayerBannedScenesController(roomHub, selfProfile, bannedSceneController, loadingStatus);
+                playerBannedScenesController = new PlayerBannedScenesController(roomHub, bannedSceneController, loadingStatus);
 
             return UniTask.CompletedTask;
         }

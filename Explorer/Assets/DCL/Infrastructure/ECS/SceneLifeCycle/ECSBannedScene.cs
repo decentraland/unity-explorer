@@ -25,18 +25,17 @@ namespace ECS.SceneLifeCycle
             this.playerEntity = playerEntity;
         }
 
-        public async UniTask TrySetCurrentSceneAsBannedAsync(CancellationToken ct)
+        public async UniTask<bool> TrySetCurrentSceneAsBannedAsync(CancellationToken ct)
         {
-            RemoveAllBannedSceneComponents();
-
             await UniTask.SwitchToMainThread(ct);
+
             var parcel = world.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
             if (!scenesCache.TryGetByParcel(parcel, out var sceneInCache))
-                return;
+                return false;
 
             var foundEntity = FindSceneEntity(sceneInCache);
             if (foundEntity == Entity.Null)
-                return;
+                return false;
 
             world.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(foundEntity);
             world.Add<DeleteEntityIntention>(foundEntity);
@@ -50,6 +49,8 @@ namespace ECS.SceneLifeCycle
                 sceneLoadingState.VisualSceneState = VisualSceneState.UNINITIALIZED;
                 sceneLoadingState.PromiseCreated = false;
             }
+
+            return true;
         }
 
         public void RemoveAllBannedSceneComponents() =>

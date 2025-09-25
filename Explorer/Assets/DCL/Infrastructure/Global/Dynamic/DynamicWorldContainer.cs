@@ -910,7 +910,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new BannedUsersPlugin(roomHub, selfProfile, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
+                new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
