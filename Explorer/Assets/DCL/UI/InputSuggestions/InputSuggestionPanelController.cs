@@ -67,7 +67,8 @@ namespace DCL.UI.SuggestionPanel
         private async UniTaskVoid SearchAndSetSuggestionsAsync<T>(string value, InputSuggestionType suggestionType, Dictionary<string, T> suggestionDataMap, CancellationToken ct) where T : IInputSuggestionElementData
         {
             var resultList = new List<T>();
-            await DictionaryUtils.GetKeysContainingTextAsync(suggestionDataMap, value, resultList, ct);
+            string searchValue = suggestionType == InputSuggestionType.EMOJIS ? value.Replace(":", "") : value;
+            await DictionaryUtils.GetKeysContainingTextAsync(suggestionDataMap, searchValue, resultList, ct);
 
 
             suggestionPanel.SetSuggestionValues(suggestionType, resultList);

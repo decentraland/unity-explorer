@@ -59,7 +59,7 @@ namespace DCL.Chat.ChatInput
             if (wordMatch.Success)
             {
                 wordMatchIndex = wordMatch.Index;
-                lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value.Replace(":", ""), EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
+                lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
 
                 if (lastMatch.Success) return true;
 
