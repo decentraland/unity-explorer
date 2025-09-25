@@ -15,7 +15,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Arch;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.AvatarShape
 {
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem

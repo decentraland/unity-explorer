@@ -1,6 +1,4 @@
-using DCL.UI.GenericContextMenuParameter;
-
-namespace DCL.UI.GenericContextMenu.Controls.Configs
+namespace DCL.UI.Controls.Configs
 {
     public class TextContextMenuControlSettings : IContextMenuControlSettings
     {

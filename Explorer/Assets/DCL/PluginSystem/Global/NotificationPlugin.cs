@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Notifications;
 using DCL.Notifications.NewNotification;
+using DCL.NotificationsBus;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;

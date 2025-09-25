@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.HealthChecks;
+using DCL.Utility.Types;
 using Segment.Serialization;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {

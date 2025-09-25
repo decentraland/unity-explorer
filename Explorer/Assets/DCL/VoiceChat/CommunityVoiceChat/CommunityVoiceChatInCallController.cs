@@ -47,7 +47,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnPanelSizeChanged(VoiceChatPanelSize panelSize)
         {
-            view.SetHiddenButtonsState(panelSize is VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS or VoiceChatPanelSize.DEFAULT);
+            view.SetHiddenButtonsState(panelSize is VoiceChatPanelSize.EXPANDED_WITHOUT_BUTTONS or VoiceChatPanelSize.COLLAPSED);
         }
 
         private void OnCommunityButtonClicked()
@@ -75,6 +75,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             expandedPanelButtonsPresenter.Dispose();
             collapsedPanelButtonsPresenter.Dispose();
             panelSizeChangeSubscription.Dispose();
+
             view.CommunityButton.onClick.RemoveListener(OnCommunityButtonClicked);
             view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);
         }
@@ -85,9 +86,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             entryView.transform.localScale = Vector3.one;
         }
 
-        public void RefreshCounter()
+        public void RefreshCounter(int count, int raisedHandsCount)
         {
-            view.SpeakersCount.text = $"({SpeakersParent.transform.childCount})";
+            view.SpeakersCount.text = $"({count})";
+            view.ConfigureRaisedHandTooltip(raisedHandsCount);
         }
 
         public void SetParticipantCount(int participantCount)
@@ -117,8 +119,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnToggleCollapseButtonClicked()
         {
-            bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.DEFAULT;
-            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.DEFAULT);
+            bool isPanelCollapsed = currentVoiceChatPanelSize.Value == VoiceChatPanelSize.COLLAPSED;
+            voiceChatOrchestrator.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.EXPANDED : VoiceChatPanelSize.COLLAPSED);
             view.SetCollapsedState(!isPanelCollapsed);
         }
     }

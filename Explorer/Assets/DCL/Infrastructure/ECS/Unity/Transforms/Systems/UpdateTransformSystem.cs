@@ -7,13 +7,16 @@ using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.UpdateGate;
 using ECS.Abstract;
 using ECS.Groups;
+
 using ECS.Unity.Transforms.Components;
 using System;
+
 
 namespace ECS.Unity.Transforms.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(ParentingTransformSystem))]
+    [UpdateBefore(typeof(ComponentInstantiationGroup))]
     public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {
         internal static readonly Type THROTTLING_GROUP_TYPE = typeof(SimulationSystemGroup);

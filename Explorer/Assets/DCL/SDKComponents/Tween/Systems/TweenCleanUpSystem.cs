@@ -11,7 +11,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 
-namespace DCL.SDKComponents.Tween.Systems
+namespace DCL.SDKComponents.Tween
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.TWEEN)]

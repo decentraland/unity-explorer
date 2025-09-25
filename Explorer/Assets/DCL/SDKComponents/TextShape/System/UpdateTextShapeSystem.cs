@@ -6,10 +6,11 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
+
 
 namespace DCL.SDKComponents.TextShape.System
 {

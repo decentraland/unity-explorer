@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Threading;
@@ -12,7 +13,6 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
-using Utility.Types;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
@@ -82,6 +82,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public GameObject ExpandButtonImage  { get; private set; }
 
         [field: SerializeField]
+        public GameObject RaisedHandTooltip  { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text RaisedHandTooltipText  { get; private set; }
+
+        [field: SerializeField]
         public Button CollapseButton  { get; private set; }
 
         [field: FormerlySerializedAs("<talkingStatusView>k__BackingField")]
@@ -118,6 +124,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     EndStreamButtonCLicked?.Invoke();
                 }
             });
+        }
+
+        public void ConfigureRaisedHandTooltip(int raisedHandCount)
+        {
+            RaisedHandTooltipText.text = $"{raisedHandCount}";
+            RaisedHandTooltip.SetActive(raisedHandCount >= 1);
         }
 
         public void SetCommunityName(string communityName)
