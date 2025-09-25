@@ -19,6 +19,7 @@ namespace DCL.Landscape
     {
         private readonly int[] instanceCounts;
         private int occupancyFloor;
+        private float maxHeight;
         private NativeArray<byte> occupancyMapData;
         private int occupancyMapSize;
         private readonly int[] rendererKeys;
@@ -77,7 +78,7 @@ namespace DCL.Landscape
                 return false;
             }
 
-            position.y = TerrainGenerator.GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, terrainData.parcelSize, occupancyFloor);
+            position.y = TerrainGenerator.GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, terrainData.parcelSize, occupancyFloor, maxHeight);
 
             rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
 
@@ -277,13 +278,14 @@ namespace DCL.Landscape
         }
 
         public void SetTerrainData(int2 minParcel, int2 maxParcel,
-            NativeArray<byte> occupancyMapDataArg, int occupancyMapSizeArg, int occupancyFloorArg)
+            NativeArray<byte> occupancyMapDataArg, int occupancyMapSizeArg, int occupancyFloorArg, float maxHeightArg)
         {
             terrainMinParcel = minParcel;
             terrainMaxParcel = maxParcel;
             occupancyMapData = occupancyMapDataArg;
             occupancyMapSize = occupancyMapSizeArg;
             occupancyFloor = occupancyFloorArg;
+            maxHeight = maxHeightArg;
         }
 
         [Conditional("GPUI_PRO_PRESENT")]

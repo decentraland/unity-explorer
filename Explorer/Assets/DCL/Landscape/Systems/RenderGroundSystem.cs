@@ -30,12 +30,14 @@ namespace DCL.Landscape.Systems
         private readonly Landscape landscape;
         private MaterialPropertyBlock? materialProperties;
         private readonly GrassIndirectRenderer? grassIndirectRenderer;
+        private ITerrain terrain;
 
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
         private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
         private static readonly int TERRAIN_HEIGHT_ID = Shader.PropertyToID("_terrainHeight");
         private static readonly int OCCUPANCY_MAP_ID = Shader.PropertyToID("_OccupancyMap");
         private static readonly int TERRAIN_BOUNDS_ID = Shader.PropertyToID("_TerrainBounds");
+        private static readonly int DISTANCE_FIELD_SCALE_ID = Shader.PropertyToID("_DistanceFieldScale");
 
         private RenderGroundSystem(World world, Landscape landscape, LandscapeData landscapeData)
             : base(world)
@@ -90,7 +92,7 @@ namespace DCL.Landscape.Systems
             terrainBounds.Min.y = -landscapeData.terrainData.minHeight;
             terrainBounds.Min.z = terrain.TerrainModel.MinInUnits.y;
             terrainBounds.Max.x = terrain.TerrainModel.MaxInUnits.x;
-            terrainBounds.Max.y = TerrainGenerator.MAX_HEIGHT - landscapeData.terrainData.minHeight;
+            terrainBounds.Max.y = terrain.MaxHeight - landscapeData.terrainData.minHeight;
             terrainBounds.Max.z = terrain.TerrainModel.MaxInUnits.y;
 
             if (!cameraFrustum.Overlaps(terrainBounds))
@@ -119,20 +121,23 @@ namespace DCL.Landscape.Systems
 
             JobHandle generateGround = generateGroundJob.Schedule();
 
-            if (materialProperties == null)
+            materialProperties ??= new MaterialPropertyBlock();
+
+            if (this.terrain != terrain)
             {
-                materialProperties = new MaterialPropertyBlock();
+                this.terrain = terrain;
+
                 materialProperties.SetFloat(PARCEL_SIZE_ID, parcelSize);
-                materialProperties.SetFloat(MIN_DIST_OCCUPANCY_ID, terrain.OccupancyFloor / 255f);
                 materialProperties.SetFloat(TERRAIN_HEIGHT_ID, landscapeData.TerrainHeight);
-
-                if (terrain.OccupancyMap != null)
-                    materialProperties.SetTexture(OCCUPANCY_MAP_ID, terrain.OccupancyMap);
-
+                materialProperties.SetTexture(OCCUPANCY_MAP_ID, terrain.OccupancyMap != null ? terrain.OccupancyMap : Texture2D.blackTexture);
                 materialProperties.SetVector(TERRAIN_BOUNDS_ID, new Vector4(
                     terrainBounds.Min.x, terrainBounds.Min.z, terrainBounds.Max.x,
                     terrainBounds.Max.z));
+
+                materialProperties.SetFloat(MIN_DIST_OCCUPANCY_ID, terrain.OccupancyFloor / 255f);
+                materialProperties.SetFloat(DISTANCE_FIELD_SCALE_ID, terrain.MaxHeight);
             }
+
 
             var renderParams = new RenderParams()
             {

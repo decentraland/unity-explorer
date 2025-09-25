@@ -120,6 +120,7 @@ namespace DCL.Landscape.Systems
                 OccupancyMapSize = terrain.OccupancyMapSize,
                 Parcels = parcels,
                 ParcelSize = landscapeData.terrainData.parcelSize,
+                MaxHeight = terrain.MaxHeight,
                 Vertices = vertices
             };
 
@@ -298,8 +299,9 @@ namespace DCL.Landscape.Systems
             mesh.SetIndexBufferData(indexBuffer, 0, 0, indexBuffer.Length, FLAGS);
             mesh.SetSubMesh(0, new SubMeshDescriptor(0, indexBuffer.Length), FLAGS);
 
+            ITerrain terrain = landscape.CurrentTerrain;
             Vector3 parcelMax = new Vector3(landscapeData.terrainData.parcelSize,
-                TerrainGenerator.MAX_HEIGHT, landscapeData.terrainData.parcelSize);
+                terrain.MaxHeight, landscapeData.terrainData.parcelSize);
 
             mesh.bounds = new Bounds(parcelMax * 0.5f, parcelMax);
 

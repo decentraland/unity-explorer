@@ -11,6 +11,7 @@ namespace DCL.Landscape
 
         public bool IsTerrainShown { get; }
         public TerrainModel? TerrainModel { get; }
+        public float MaxHeight { get; }
         public int OccupancyFloor { get; }
         public Texture2D? OccupancyMap { get; }
         public NativeArray<byte> OccupancyMapData { get; }

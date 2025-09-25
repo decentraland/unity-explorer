@@ -32,6 +32,7 @@ namespace DCL.Landscape
         public NativeArray<byte> OccupancyMapData { get; private set; }
         public int OccupancyMapSize { get; private set; }
         public int OccupancyFloor { get; private set; }
+        public float MaxHeight { get; private set; }
 
         public void Dispose()
         {
@@ -48,7 +49,7 @@ namespace DCL.Landscape
 
         public float GetHeight(float x, float z) =>
             TerrainGenerator.GetParcelNoiseHeight(x, z, OccupancyMapData, OccupancyMapSize,
-                terrainGenData.parcelSize, OccupancyFloor);
+                terrainGenData.parcelSize, OccupancyFloor, MaxHeight);
 
         public async UniTask Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys)
         {
@@ -93,15 +94,16 @@ namespace DCL.Landscape
             OccupancyMap = TerrainGenerator.CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel,
                 TerrainModel.MaxParcel, 0);
 
-            OccupancyFloor = TerrainGenerator.WriteInteriorChamferOnWhite(OccupancyMap,
-                TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+            (int floor, int maxSteps) distanceFieldData = TerrainGenerator.WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+            OccupancyFloor = distanceFieldData.floor;
+            MaxHeight = distanceFieldData.maxSteps * terrainGenData.stepHeight;
 
             OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
             OccupancyMapData = OccupancyMap.GetRawTextureData<byte>();
             OccupancyMapSize = OccupancyMap.width; // width == height
 
             Trees!.SetTerrainData(TerrainModel.MinParcel, TerrainModel.MaxParcel, OccupancyMapData,
-                OccupancyMapSize, OccupancyFloor);
+                OccupancyMapSize, OccupancyFloor, MaxHeight);
 
             Trees.Instantiate();
 

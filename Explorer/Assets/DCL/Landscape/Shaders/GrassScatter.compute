@@ -17,6 +17,7 @@ cbuffer ConstBuffer : register(b0)
     float TerrainHeight;
     uint parcelSize;
     float _MinDistOccupancy;
+    float fDistanceFieldScale;
 }
 
 Texture2D<float4> HeightMapTexture : register(t0);
@@ -46,7 +47,6 @@ void ScatterGrass(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, ui
     float2 worldSpaceCoord = corner0 + float2(random_X, random_Z);
     float2 UV_coords = (worldSpaceCoord + 4096.0f) / 8192.0f;
 
-    float fDistanceFieldScale = 16;
     float height = CalculateHeightFromHeightmap(UV_coords, fDistanceFieldScale, HeightMapTexture, OccupancyTexture, _MinDistOccupancy);
     float fScale = 1.0f + hash_int_to_float(corner0 + gridPosition);
     perInst.position = float4(random_X, height, random_Z, fScale);

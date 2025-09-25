@@ -21,7 +21,6 @@ namespace DCL.Landscape
 {
     public class TerrainGenerator : IDisposable, ITerrain
     {
-        public const int MAX_HEIGHT = 16;
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
@@ -71,6 +70,7 @@ namespace DCL.Landscape
         public TerrainModel TerrainModel { get; private set; }
         public Texture2D OccupancyMap { get; private set; }
         public int OccupancyFloor { get; private set; }
+        public float MaxHeight { get; private set; }
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false)
         {
@@ -176,7 +176,9 @@ namespace DCL.Landscape
                     // The MinParcel, MaxParcel already has padding, so padding zero works here,
                     // but in reality we should remove integrated padding and utilise padding parameter as it would make things more scalable and less confusing
                     OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
-                    OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+                    (int floor, int maxSteps) distanceFieldData = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+                    OccupancyFloor = distanceFieldData.floor;
+                    MaxHeight = distanceFieldData.maxSteps * terrainGenData.stepHeight;
 
                     // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
                     OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
@@ -203,7 +205,7 @@ namespace DCL.Landscape
                     await Trees!.LoadAsync($"{Application.streamingAssetsPath}/GenesisTrees.bin");
 
                     Trees!.SetTerrainData(TerrainModel.MinParcel, TerrainModel.MaxParcel,
-                        OccupancyMapData, OccupancyMapSize, OccupancyFloor);
+                        OccupancyMapData, OccupancyMapSize, OccupancyFloor, MaxHeight);
 
                     Trees.Instantiate();
 
@@ -342,10 +344,10 @@ namespace DCL.Landscape
             return occupancyMap;
         }
 
-        internal static int WriteInteriorChamferOnWhite(Texture2D texture, int2 minParcel, int2 maxParcel, int padding)
+        internal static (int floor, int maxSteps) WriteInteriorChamferOnWhite(Texture2D texture, int2 minParcel, int2 maxParcel, int padding)
         {
             NativeArray<byte> src = texture.GetRawTextureData<byte>();
-            if (!src.IsCreated) return 0;
+            if (!src.IsCreated) return (0, 0);
 
             int textureWidth = texture.width;
 
@@ -366,8 +368,8 @@ namespace DCL.Landscape
             int maxChamferDistance = ComputeChamferDistanceField(src, dist, textureWidth, workingArea);
 
             // Convert to byte values and write back
-            int floor = ApplyDistanceFieldMapping(src, dist, textureWidth, workingArea, maxChamferDistance);
-            return floor;
+            (int floor, int maxSteps) = ApplyDistanceFieldMapping(src, dist, textureWidth, workingArea, maxChamferDistance);
+            return (floor, maxSteps);
         }
 
         // Core distance field algorithm - returns max chamfer distance
@@ -442,13 +444,13 @@ namespace DCL.Landscape
         }
 
         // Convert chamfer distances to byte values and write to texture
-        private static int ApplyDistanceFieldMapping(NativeArray<byte> src, int[] dist, int width, RectInt area, int maxChamferDistance)
+        private static (int, int) ApplyDistanceFieldMapping(NativeArray<byte> src, int[] dist, int width, RectInt area, int maxChamferDistance)
         {
             // Convert chamfer distance to approximate pixel distance
             int maxPixelDistance = (maxChamferDistance / ORTH) - 1;
 
             if (maxChamferDistance == 0 || maxPixelDistance <= 0) // means no distance field applied
-                return 255;
+                return (255, 0);
 
             if (maxPixelDistance > 255)
             {
@@ -487,11 +489,11 @@ namespace DCL.Landscape
                 src[i] = (byte)Mathf.Clamp(value, minValue, 255);
             }
 
-            return minValue;
+            return (minValue, maxPixelDistance);
         }
 
         internal static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
-            int occupancyMapSize, int parcelSize, int occupancyFloor)
+            int occupancyMapSize, int parcelSize, int occupancyFloor, float maxHeight)
         {
             float occupancy;
 
@@ -522,7 +524,7 @@ namespace DCL.Landscape
                 float noiseH = MountainsNoise.GetHeight(x, z);
 
                 const float SATURATION_FACTOR = 20;
-                float y = (normalizedHeight * MAX_HEIGHT) + (noiseH * saturate(normalizedHeight * SATURATION_FACTOR));
+                float y = (normalizedHeight * maxHeight) + (noiseH * saturate(normalizedHeight * SATURATION_FACTOR));
 
                 // Ensure no negative heights
                 return max(0f, y);
@@ -530,14 +532,13 @@ namespace DCL.Landscape
         }
 
         public float GetHeight(float x, float z) =>
-            GetParcelNoiseHeight(x, z, OccupancyMapData, OccupancyMapSize, ParcelSize, OccupancyFloor);
+            GetParcelNoiseHeight(x, z, OccupancyMapData, OccupancyMapSize, ParcelSize, OccupancyFloor, MaxHeight);
 
         public static float GetHeight(float x, float z, int parcelSize,
-            NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor)
-        {
+            NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor, float maxHeight) =>
+
             // var parcel = (int2)floor(float2(x, z) / parcelSize);
-            return GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor);
-        }
+            GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor, maxHeight);
 
         private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
         {
