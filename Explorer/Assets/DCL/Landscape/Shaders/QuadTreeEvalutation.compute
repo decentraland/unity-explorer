@@ -10,7 +10,8 @@ cbuffer ConstBuffer : register(b0)
 {
     float4x4 viewProjMatrix;
     float4 TerrainBounds;
-    int parcelSize;
+    float floorValue;
+    float parcelSize;
 }
 
 // Quadtree node structure - matches your Unity.Mathematics version
@@ -54,8 +55,7 @@ void HierarchicalQuadTreeCulling(uint3 id : SV_DispatchThreadID, uint3 groupId :
             float2 UV_Coords = (float2(plot.x * parcelSize, plot.y * parcelSize) + 4096) / 8192;
             float fOccupancy = GetOccupancy(UV_Coords, TerrainBounds, parcelSize);
 
-            float floorValue = 175/255;
-            if (fOccupancy > floorValue)
+            if (fOccupancy >= floorValue)
             {
                 uint outputIndex;
                 InterlockedAdd(visibleParcelCount[0], 1, outputIndex);
