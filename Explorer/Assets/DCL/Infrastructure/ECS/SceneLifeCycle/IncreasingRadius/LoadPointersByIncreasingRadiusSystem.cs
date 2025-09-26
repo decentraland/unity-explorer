@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.Landscape.Parcel;
+using DCL.Landscape.Settings;
+using DCL.Landscape.Utils;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
@@ -28,22 +32,30 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly IPartitionSettings partitionSettings;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly ParcelFilteringService parcelFilteringService;
 
         private float[]? sqrDistances;
 
         private bool splitIsPending;
 
+        // TODO REMOVE AFTER TESTS
+        // private int totalParcelsPreFilter = 0;
+        // private int totalParcelsFiltered = 0;
+
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
             IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
             ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache,
-            HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world, roadCoordinates, realmData)
+            HashSet<Vector2Int> roadCoordinates, IRealmData realmData, LandscapeParcelData landscapeParcelData,
+            ParcelLoadingFilteringSettings parcelLoadingFilteringSettings) : base(world, roadCoordinates, realmData)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
             this.partitionSettings = partitionSettings;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.scenesCache = scenesCache;
+
+            this.parcelFilteringService = new ParcelFilteringService(landscapeParcelData, parcelLoadingFilteringSettings);
         }
 
         protected override void Update(float t)
@@ -98,12 +110,19 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 if (processedScenePointers.Value.Contains(parcelInfo.Parcel))
                     continue;
 
-                if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
+                // TODO REMOVE AFTER TESTS
+                // totalParcelsPreFilter++;
+
+                if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize
+                    && parcelFilteringService.ShouldIncludeParcel(parcelInfo.Parcel))
                 {
                     sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
                     input.Add(parcelInfo.Parcel);
                     parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
                     flatArray[i] = parcelInfo;
+
+                    // TODO REMOVE AFTER TESTS
+                    // totalParcelsFiltered++;
                 }
                 else
                 {
@@ -111,6 +130,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     break;
                 }
             }
+
+            // TODO REMOVE AFTER TESTS
+            // UnityEngine.Debug.Log($"[StartLoadingFromVolatilePointers] Pre-filter parcels: {totalParcelsPreFilter}, filtered parcels: {totalParcelsFiltered}");
 
             if (input.Count == 0) return;
 

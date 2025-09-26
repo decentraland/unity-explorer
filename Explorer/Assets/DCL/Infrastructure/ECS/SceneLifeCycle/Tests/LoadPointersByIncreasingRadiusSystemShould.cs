@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
+using DCL.Landscape.Parcel;
+using DCL.Landscape.Settings;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -22,20 +24,28 @@ namespace ECS.SceneLifeCycle.Tests
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
         private IPartitionSettings partitionSettings;
-
+        private ParcelLoadingFilteringSettings parcelLoadingFilteringSettings;
 
         [SetUp]
         public void SetUp()
         {
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
+
+            LandscapeParcelData landscapeParcelData = new();
+            var emptyParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
+            var roadParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
+            var occupiedParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
+            landscapeParcelData.Reconfigure(roadParcels, occupiedParcels, emptyParcels);
+
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
                 partitionSettings = Substitute.For<IPartitionSettings>(),
                 Substitute.For<ISceneReadinessReportQueue>(),
                 Substitute.For<IScenesCache>(),
-                new HashSet<Vector2Int>(), realmData);
+                new HashSet<Vector2Int>(), realmData, landscapeParcelData,
+                parcelLoadingFilteringSettings = ScriptableObject.CreateInstance<ParcelLoadingFilteringSettings>());
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
+using DCL.Landscape.Settings;
 using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -21,6 +22,9 @@ namespace DCL.PluginSystem.Global
 
         [field: SerializeField]
         public RealmPartitionSettingsAsset RealmPartitionSettings { get; private set; }
+
+        [field: SerializeField]
+        public ParcelLoadingFilteringSettings ParcelLoadingFilteringSettings { get; private set; }
 
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]

@@ -13,6 +13,7 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
+using DCL.Landscape.Parcel;
 using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -72,6 +73,7 @@ namespace Global
         public readonly RealmData RealmData = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
+        public readonly LandscapeParcelData LandscapeParcelData = new ();
 
         private ProvidedInstance<CharacterObject> characterObject;
 
