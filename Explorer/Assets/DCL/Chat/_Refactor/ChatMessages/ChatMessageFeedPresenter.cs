@@ -228,6 +228,13 @@ namespace DCL.Chat.ChatMessages
                 ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but no current channel is set. Aborting.");
                 return;
             }
+            else if (currentChannelService.UserStateService == null)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,
+                    $"{nameof(UpdateChannelMessages)} called, but {nameof(currentChannelService.UserStateService)} is null. Aborting.");
+
+                return;
+            }
 
             loadChannelCts = loadChannelCts.SafeRestart();
 
@@ -247,7 +254,7 @@ namespace DCL.Chat.ChatMessages
 
                     Subscribe();
 
-                    view.SetUserConnectivityProvider(currentChannelService.UserStateService!.OnlineParticipants);
+                    view.SetUserConnectivityProvider(currentChannelService.UserStateService.OnlineParticipants);
 
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
