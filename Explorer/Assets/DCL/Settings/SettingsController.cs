@@ -11,6 +11,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
+using DCL.SkyBox;
 using DCL.UI;
 using DCL.Utilities;
 using ECS.Prioritization;
@@ -19,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
@@ -41,6 +41,7 @@ namespace DCL.Settings
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly SkyboxSettingsAsset skyboxSettingsAsset;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
@@ -51,7 +52,6 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
-        private readonly bool isVoiceChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
@@ -64,6 +64,7 @@ namespace DCL.Settings
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
             ChatSettingsAsset chatSettingsAsset,
@@ -72,7 +73,6 @@ namespace DCL.Settings
             VoiceChatSettingsAsset voiceChatSettings,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
-            bool isVoiceChatEnabled,
             IAssetsProvisioner assetsProvisioner)
         {
             this.view = view;
@@ -81,6 +81,7 @@ namespace DCL.Settings
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
+            this.skyboxSettingsAsset = skyboxSettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
             this.volumeBus = volumeBus;
@@ -90,7 +91,6 @@ namespace DCL.Settings
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
-            this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -181,6 +181,7 @@ namespace DCL.Settings
                             landscapeData,
                             generalAudioMixer,
                             qualitySettingsAsset,
+                            skyboxSettingsAsset,
                             controlsSettingsAsset,
                             chatSettingsAsset,
                             memoryCap,
@@ -190,8 +191,7 @@ namespace DCL.Settings
                             voiceChatSettings,
                             upscalingController,
                             assetsProvisioner,
-                            volumeBus,
-                            isVoiceChatEnabled));
+                            volumeBus));
             }
         }
 

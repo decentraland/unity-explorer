@@ -9,19 +9,18 @@ using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
-using DCL.UI;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
-using Utility.Types;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
 
 namespace DCL.Communities.CommunitiesCard.Events
 {
@@ -106,7 +105,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event));
 
-            Notifications.NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
+            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
@@ -132,7 +131,7 @@ namespace DCL.Communities.CommunitiesCard.Events
                 if (!result.Success)
                 {
                     eventItemView.UpdateInterestedButtonState();
-                    Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
                     return;
                 }
 
@@ -186,7 +185,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.PageNumber--;
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAILED_EVENTS_FETCHING_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAILED_EVENTS_FETCHING_ERROR_MESSAGE));
                 return eventsFetchData.TotalToFetch;
             }
 
@@ -208,7 +207,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.PageNumber--;
-                Notifications.NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE));
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE));
                 return eventsFetchData.TotalToFetch;
             }
 

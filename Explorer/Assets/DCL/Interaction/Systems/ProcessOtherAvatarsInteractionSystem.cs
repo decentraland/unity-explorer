@@ -104,7 +104,7 @@ namespace DCL.Interaction.Systems
             //contextMenuTask.TrySetResult();
             //contextMenuTask = new UniTaskCompletionSource();
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId))).Forget();
 
             //menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
         }

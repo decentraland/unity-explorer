@@ -41,6 +41,7 @@ namespace DCL.PluginSystem.Global
     public class InputPlugin : IDCLGlobalPlugin<InputSettings>
     {
         private readonly MultiplayerEmotesMessageBus messageBus;
+        private readonly EmotesBus emotesBus;
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -53,12 +54,14 @@ namespace DCL.PluginSystem.Global
             IEventSystem eventSystem,
             IAssetsProvisioner assetsProvisioner,
             MultiplayerEmotesMessageBus messageBus,
+            EmotesBus emotesBus,
             IMVCManager mvcManager)
         {
             this.cursor = cursor;
             this.eventSystem = eventSystem;
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
+            this.emotesBus = emotesBus;
             this.mvcManager = mvcManager;
 
             DCLInput.Instance.Enable();
@@ -87,7 +90,7 @@ namespace DCL.PluginSystem.Global
             UpdateInputMovementSystem.InjectToWorld(ref builder);
             UpdateCameraInputSystem.InjectToWorld(ref builder);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, DCLInput.Instance.FreeCamera.DropPlayer);
-            UpdateEmoteInputSystem.InjectToWorld(ref builder, messageBus, mvcManager);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, messageBus, emotesBus);
             UpdateCursorInputSystem.InjectToWorld(ref builder, eventSystem, cursor, crosshairCanvas);
             UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, showUIToast);
         }

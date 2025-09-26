@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -27,13 +26,20 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
+using Runtime.Wearables;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
+using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
+using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
+using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
+using AvatarShapeVisibilitySystem = DCL.AvatarRendering.AvatarShape.AvatarShapeVisibilitySystem;
+using FinishAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.FinishAvatarMatricesCalculationSystem;
+using MakeVertsOutBufferDefragmentationSystem = DCL.AvatarRendering.AvatarShape.MakeVertsOutBufferDefragmentationSystem;
 using Object = UnityEngine.Object;
-using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
+using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.StartAvatarMatricesCalculationSystem;
 #if UNITY_EDITOR
 using DCL.AvatarAnimation;
 #endif
@@ -264,15 +270,15 @@ namespace DCL.PluginSystem.Global
             {
                 new (new Dictionary<string, Dictionary<int, Texture>>
                 {
-                    [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyesTexture },
-                    [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleMouthTexture },
-                    [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyebrowsTexture },
+                    [WearableCategories.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyesTexture },
+                    [WearableCategories.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleMouthTexture },
+                    [WearableCategories.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = maleEyebrowsTexture },
                 }),
                 new (new Dictionary<string, Dictionary<int, Texture>>
                 {
-                    [WearablesConstants.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyesTexture },
-                    [WearablesConstants.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleMouthTexture },
-                    [WearablesConstants.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyebrowsTexture },
+                    [WearableCategories.Categories.EYES] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyesTexture },
+                    [WearableCategories.Categories.MOUTH] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleMouthTexture },
+                    [WearableCategories.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = femaleEyebrowsTexture },
                 }),
             };
         }

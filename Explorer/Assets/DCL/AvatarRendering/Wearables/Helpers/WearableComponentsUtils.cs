@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,46 +14,46 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearableComponentsUtils
     {
-        internal static readonly ListObjectPool<URN> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
+        public static readonly ListObjectPool<URN> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
         internal static readonly HashSetObjectPool<URN> POINTERS_HASHSET_POOL = new (hashsetInstanceDefaultCapacity: 10, defaultCapacity: 20);
 
-        internal static readonly ListObjectPool<IWearable> WEARABLES_POOL =
+        public static readonly ListObjectPool<IWearable> WEARABLES_POOL =
             new (listInstanceDefaultCapacity: PoolConstants.WEARABLES_PER_AVATAR_COUNT, defaultCapacity: PoolConstants.AVATARS_COUNT);
 
-        internal static readonly HashSetObjectPool<string> CATEGORIES_POOL = new (hashsetInstanceDefaultCapacity: WearablesConstants.CATEGORIES_PRIORITY.Count, defaultCapacity: PoolConstants.AVATARS_COUNT);
+        internal static readonly HashSetObjectPool<string> CATEGORIES_POOL = new (hashsetInstanceDefaultCapacity: WearableCategories.CATEGORIES_PRIORITY.Count, defaultCapacity: PoolConstants.AVATARS_COUNT);
 
         public static readonly Dictionary<string, string> CATEGORIES_TO_READABLE = new ()
         {
-            { WearablesConstants.Categories.HEAD, "Head" },
-            { WearablesConstants.Categories.UPPER_BODY, "Upper body" },
-            { WearablesConstants.Categories.LOWER_BODY, "Lower body" },
-            { WearablesConstants.Categories.HANDS, "Hands" },
-            { WearablesConstants.Categories.FEET, "Feet" },
-            { WearablesConstants.Categories.EYES, "Eyes" },
-            { WearablesConstants.Categories.EYEBROWS, "Eyebrows" },
-            { WearablesConstants.Categories.MOUTH, "Mouth" },
-            { WearablesConstants.Categories.HAT, "Hat" },
-            { WearablesConstants.Categories.MASK, "Mask" },
-            { WearablesConstants.Categories.HAIR, "Hair" },
-            { WearablesConstants.Categories.FACIAL_HAIR, "Facial hair" },
-            { WearablesConstants.Categories.SKIN, "Skin" },
-            { WearablesConstants.Categories.HANDS_WEAR, "Handwear" },
-            { WearablesConstants.Categories.TIARA, "Tiara" },
-            { WearablesConstants.Categories.HELMET, "Helmet" },
-            { WearablesConstants.Categories.EARRING, "Earring" },
-            { WearablesConstants.Categories.EYEWEAR, "Eyewear" },
-            { WearablesConstants.Categories.TOP_HEAD, "Top head" },
-            { WearablesConstants.Categories.BODY_SHAPE, "Body shape" },
+            { WearableCategories.Categories.HEAD, "Head" },
+            { WearableCategories.Categories.UPPER_BODY, "Upper body" },
+            { WearableCategories.Categories.LOWER_BODY, "Lower body" },
+            { WearableCategories.Categories.HANDS, "Hands" },
+            { WearableCategories.Categories.FEET, "Feet" },
+            { WearableCategories.Categories.EYES, "Eyes" },
+            { WearableCategories.Categories.EYEBROWS, "Eyebrows" },
+            { WearableCategories.Categories.MOUTH, "Mouth" },
+            { WearableCategories.Categories.HAT, "Hat" },
+            { WearableCategories.Categories.MASK, "Mask" },
+            { WearableCategories.Categories.HAIR, "Hair" },
+            { WearableCategories.Categories.FACIAL_HAIR, "Facial hair" },
+            { WearableCategories.Categories.SKIN, "Skin" },
+            { WearableCategories.Categories.HANDS_WEAR, "Handwear" },
+            { WearableCategories.Categories.TIARA, "Tiara" },
+            { WearableCategories.Categories.HELMET, "Helmet" },
+            { WearableCategories.Categories.EARRING, "Earring" },
+            { WearableCategories.Categories.EYEWEAR, "Eyewear" },
+            { WearableCategories.Categories.TOP_HEAD, "Top head" },
+            { WearableCategories.Categories.BODY_SHAPE, "Body shape" },
         };
 
         private static readonly (string, string)[] BODY_PARTS_MAPPING =
         {
-            ("head", WearablesConstants.Categories.HEAD),
-            ("ubody", WearablesConstants.Categories.UPPER_BODY),
-            ("lbody", WearablesConstants.Categories.LOWER_BODY),
-            ("hands", WearablesConstants.Categories.HANDS),
-            ("feet", WearablesConstants.Categories.FEET), ("eyes", WearablesConstants.Categories.HEAD), ("eyebrows", WearablesConstants.Categories.HEAD), ("mouth", WearablesConstants.Categories.HEAD)
+            ("head", WearableCategories.Categories.HEAD),
+            ("ubody", WearableCategories.Categories.UPPER_BODY),
+            ("lbody", WearableCategories.Categories.LOWER_BODY),
+            ("hands", WearableCategories.Categories.HANDS),
+            ("feet", WearableCategories.Categories.FEET), ("eyes", WearableCategories.Categories.HEAD), ("eyebrows", WearableCategories.Categories.HEAD), ("mouth", WearableCategories.Categories.HEAD)
         };
 
         private static readonly HashSet<string> HIDE_CATEGORIES = new (StringComparer.OrdinalIgnoreCase);
@@ -94,51 +95,29 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             hideWearablesResolution.HiddenCategories = combinedHidingList;
         }
 
-        public static void ComposeHiddenCategoriesOrdered(string bodyShapeId,
+        public static void ComposeHiddenCategoriesOrdered(
+            string bodyShapeId,
             IReadOnlyCollection<string>? forceRender,
             IReadOnlyList<IWearable> wearables,
             HashSet<string> combinedHidingList)
         {
             combinedHidingList.Clear();
 
-            Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
-            HashSet<string> firstWaveHidden = HashSetPool<string>.Get();
-            HashSet<string> hidingList = HashSetPool<string>.Get();
+            Dictionary<string, HashSet<string>> hiddenCategoriesByCategory = DictionaryPool<string, HashSet<string>>.Get();
 
             for (var i = 0; i < wearables.Count; i++)
-                wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
-
-            foreach (IWearable wearable in wearables)
             {
-                hidingList.Clear();
-
-                wearable.GetHidingList(bodyShapeId, hidingList);
-
-                foreach (string categoryToHide in hidingList)
-                    firstWaveHidden.Add(categoryToHide);
+                HashSet<string> hidingList = HashSetPool<string>.Get();
+                wearables[i].GetHidingList(bodyShapeId, hidingList);
+                hiddenCategoriesByCategory[wearables[i].GetCategory()] = hidingList;
             }
 
-            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
-            {
-                hidingList.Clear();
+            WearableUtils.ResolveHidingConflicts(hiddenCategoriesByCategory, forceRender, combinedHidingList);
 
-                if (firstWaveHidden.Contains(priorityCategory) ||
-                    !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
-                    continue;
+            foreach (var hidingList in hiddenCategoriesByCategory.Values)
+                HashSetPool<string>.Release(hidingList);
 
-                wearable.GetHidingList(bodyShapeId, hidingList);
-
-                foreach (string categoryToHide in hidingList)
-                    combinedHidingList.Add(categoryToHide);
-            }
-
-            if (forceRender != null)
-                foreach (string category in forceRender)
-                    combinedHidingList.Remove(category);
-
-            DictionaryPool<string, IWearable>.Release(wearablesByCategory);
-            HashSetPool<string>.Release(hidingList);
-            HashSetPool<string>.Release(firstWaveHidden);
+            DictionaryPool<string, HashSet<string>>.Release(hiddenCategoriesByCategory);
         }
 
         public static string GetCategoryHider(string bodyShapeId, string hiddenCategory, List<IWearable> equippedWearables)
@@ -148,17 +127,59 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             for (var i = 0; i < equippedWearables.Count; i++)
                 wearablesByCategory[equippedWearables[i].GetCategory()] = equippedWearables[i];
 
-            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
-                if (wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
-                {
-                    HIDE_CATEGORIES.Clear();
-                    wearable.GetHidingList(bodyShapeId, HIDE_CATEGORIES);
+            var hiddenSoFar = HashSetPool<string>.Get();
 
-                    if (HIDE_CATEGORIES.Contains(hiddenCategory))
-                        return wearable.GetCategory();
+            foreach (string priorityCategory in WearableCategories.CATEGORIES_PRIORITY)
+            {
+                if (ShouldSkipCategory(priorityCategory, hiddenSoFar, wearablesByCategory, out var wearable))
+                    continue;
+
+                HIDE_CATEGORIES.Clear();
+                wearable.GetHidingList(bodyShapeId, HIDE_CATEGORIES);
+
+                foreach (var category in HIDE_CATEGORIES)
+                    hiddenSoFar.Add(category);
+
+                if (HIDE_CATEGORIES.Contains(hiddenCategory))
+                {
+                    ReleaseHiddenSoFar();
+                    return wearable.GetCategory();
                 }
+            }
+
+            ReleaseHiddenSoFar();
 
             return string.Empty;
+
+            void ReleaseHiddenSoFar() =>
+                HashSetPool<string>.Release(hiddenSoFar);
+        }
+
+        /// <summary>
+        /// Determines whether a category should be skipped during wearable processing.
+        /// Skips if the category is already hidden, or if no wearable exists for it.
+        /// </summary>
+        /// <param name="category">The category being checked.</param>
+        /// <param name="hiddenCategories">Set of categories already marked as hidden.</param>
+        /// <param name="wearablesByCategory">Lookup of equipped wearables by category.</param>
+        /// <param name="wearable">The wearable found for the category, if any.</param>
+        /// <returns>True if the category should be skipped, otherwise false.</returns>
+        private static bool ShouldSkipCategory(
+            string category,
+            HashSet<string> hiddenCategories,
+            Dictionary<string, IWearable> wearablesByCategory,
+            out IWearable wearable)
+        {
+            if (hiddenCategories.Contains(category))
+            {
+                wearable = default!;
+                return true;
+            }
+
+            if (!wearablesByCategory.TryGetValue(category, out wearable))
+                return true;
+
+            return false;
         }
 
         public static void HideBodyShape(GameObject? bodyShape, HashSet<string> hidingList, HashSet<string> usedCategories)
@@ -199,9 +220,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public static void ConfirmWearableVisibility(BodyShape bodyShape, ref HideWearablesResolution hideWearablesResolution)
         {
             List<IWearable> helperWearableList = WEARABLES_POOL.Get()!;
+
             foreach (IWearable visibleWearable in hideWearablesResolution.VisibleWearables)
             {
-                if(visibleWearable.WearableAssetResults[bodyShape].Results[0].Value.Succeeded)
+                if (visibleWearable.WearableAssetResults[bodyShape].Results[0].Value.Succeeded)
                     helperWearableList.Add(visibleWearable);
             }
 

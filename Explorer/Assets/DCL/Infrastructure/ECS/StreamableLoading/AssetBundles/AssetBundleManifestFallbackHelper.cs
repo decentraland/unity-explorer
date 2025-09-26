@@ -14,7 +14,7 @@ namespace ECS.StreamableLoading.AssetBundles
 {
     public class AssetBundleManifestFallbackHelper
     {
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase  entityDefinition, IPartitionComponent partition, CancellationToken ct)
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct)
         {
             //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
             if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty())
@@ -33,6 +33,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 else
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
             }
+
+            entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
         }
     }
 }

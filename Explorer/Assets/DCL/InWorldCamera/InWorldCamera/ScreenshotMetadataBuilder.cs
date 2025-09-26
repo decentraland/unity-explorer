@@ -53,11 +53,12 @@ namespace DCL.InWorldCamera
 
             this.frustumPlanes = frustumPlanes;
             this.sceneParcel = sceneParcel;
-
-            AddProfile(selfProfile.OwnProfile, characterObjectController);
         }
 
-        public void AddProfile(Profile? profile, Collider avatarCollider)
+        public void AddSelfProfile(bool isEmoting) =>
+            AddProfile(selfProfile.OwnProfile, characterObjectController, isEmoting);
+
+        public void AddProfile(Profile? profile, Collider avatarCollider, bool isEmoting)
         {
             if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarCollider.bounds))
             {
@@ -66,6 +67,7 @@ namespace DCL.InWorldCamera
                     userName = profile?.Name ?? UNKNOWN_USER,
                     userAddress = profile?.UserId ?? UNKNOWN_USER,
                     isGuest = false,
+                    isEmoting = isEmoting,
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
                 });
             }
