@@ -23,7 +23,7 @@ namespace DCL.Emoji
         private readonly EmojiSearchController emojiSearchController;
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
-        private readonly Dictionary<EmojiSectionName, RectTransform> sectionTransforms = new ();
+        private readonly Dictionary<string, RectTransform> sectionTransforms = new ();
         private readonly List<EmojiData> foundEmojis = new ();
 
         private CancellationTokenSource cts = new ();
@@ -101,7 +101,6 @@ namespace DCL.Emoji
                 sectionView.SectionTitle.text = emojiSection.title;
                 GenerateEmojis(emojiSection.emojis, sectionView);
 
-                sectionView.SectionName = emojiSection.sectionName;
                 emojiSectionViews.Add(sectionView);
             }
         }
@@ -112,7 +111,7 @@ namespace DCL.Emoji
             sectionView.EmojiContainer.sizeDelta = new Vector2(sectionView.EmojiContainer.sizeDelta.x, LayoutUtility.GetPreferredHeight(sectionView.EmojiContainer));
             LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.SectionRectTransform);
             sectionView.SectionRectTransform.sizeDelta = new Vector2(sectionView.SectionRectTransform.sizeDelta.x, LayoutUtility.GetPreferredHeight(sectionView.SectionRectTransform));
-            sectionTransforms.Add(sectionView.SectionName, sectionView.SectionRectTransform);
+            sectionTransforms.Add(sectionView.SectionTitle.text, sectionView.SectionRectTransform);
         }
 
         private void GenerateEmojis(List<SerializableKeyValuePair<string, int>> emojis, EmojiSectionView sectionView)

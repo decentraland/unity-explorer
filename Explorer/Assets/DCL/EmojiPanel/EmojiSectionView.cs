@@ -1,7 +1,5 @@
-using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.Emoji
 {
@@ -15,8 +13,5 @@ namespace DCL.Emoji
 
         [field: SerializeField]
         public RectTransform EmojiContainer { get; private set; }
-
-        public EmojiSectionName SectionName;
-
     }
 }
