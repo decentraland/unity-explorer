@@ -18,22 +18,30 @@ namespace DCL.Landscape.Parcel
         /// <summary>
         ///     Empty parcels from WorldManifest.json
         /// </summary>
-        public NativeList<int2> EmptyParcels { get; private set; }
+        public NativeParallelHashSet<int2> EmptyParcels { get; private set; }
 
         public LandscapeParcelData()
         {
             RoadParcels = new NativeParallelHashSet<int2>();
             OccupiedParcels = new NativeParallelHashSet<int2>();
-            EmptyParcels = new NativeList<int2>();
+            EmptyParcels = new NativeParallelHashSet<int2>();
         }
 
         public void Reconfigure(NativeParallelHashSet<int2> roadParcels,
             NativeParallelHashSet<int2> occupiedParcels,
-            NativeList<int2> emptyParcels)
+            NativeParallelHashSet<int2> emptyParcels)
         {
             this.RoadParcels = roadParcels;
             this.OccupiedParcels = occupiedParcels;
             this.EmptyParcels = emptyParcels;
+        }
+
+        public NativeList<int2> GetEmptyParcelsList()
+        {
+            var list = new NativeList<int2>(Allocator.Persistent);
+            foreach (var item in EmptyParcels)
+                list.Add(item);
+            return list;
         }
     }
 }

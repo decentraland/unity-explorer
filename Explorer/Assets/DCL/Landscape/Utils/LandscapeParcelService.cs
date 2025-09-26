@@ -69,14 +69,14 @@ namespace DCL.Landscape.Utils
             return hashSet;
         }
 
-        public NativeList<int2> GetEmptyParcels()
+        public NativeParallelHashSet<int2> GetEmptyParcels()
         {
-            var list = new NativeList<int2>(empty.Length, Allocator.Persistent);
+            var hashSet = new NativeParallelHashSet<int2>(empty.Length, Allocator.Persistent);
 
             foreach (Vector2 emptyParcel in empty)
-                list.Add(new int2(emptyParcel));
+                hashSet.Add(new int2(emptyParcel));
 
-            return list;
+            return hashSet;
         }
     }
 

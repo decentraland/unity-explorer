@@ -457,7 +457,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        parcelLoadingFilteringSettings: {fileID: 11400000, guid: 7cec157bf2b31044dad3ac2a7da787b9, type: 2}
     - rid: 3511243270148325472
       type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -829,6 +828,7 @@ MonoBehaviour:
       data:
         <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <ParcelLoadingFilteringSettings>k__BackingField: {fileID: 11400000, guid: 7cec157bf2b31044dad3ac2a7da787b9, type: 2}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100

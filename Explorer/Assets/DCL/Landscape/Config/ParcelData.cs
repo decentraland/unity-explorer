@@ -33,14 +33,22 @@ namespace DCL.Landscape.Config
             return hashSet;
         }
 
-        public NativeList<int2> GetEmptyParcels()
+        public NativeParallelHashSet<int2> GetEmptyParcels()
         {
-            var nativeList = new NativeList<int2>(emptyParcels.Length, Allocator.Persistent);
+            var hashSet = new NativeParallelHashSet<int2>(emptyParcels.Length, Allocator.Persistent);
 
             foreach (int2 emptyParcel in emptyParcels)
-                nativeList.Add(emptyParcel);
+                hashSet.Add(emptyParcel);
 
-            return nativeList;
+            return hashSet;
+        }
+
+        public NativeList<int2> GetEmptyParcelsList()
+        {
+            var list = new NativeList<int2>(Allocator.Persistent);
+            foreach (var item in emptyParcels)
+                list.Add(item);
+            return list;
         }
     }
 }

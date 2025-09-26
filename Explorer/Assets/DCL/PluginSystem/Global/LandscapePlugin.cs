@@ -92,13 +92,13 @@ namespace DCL.PluginSystem.Global
 
             floor = new SatelliteFloor(realmData, landscapeData.Value);
 
+            await landscapeParcelController.InitializeAsync(settings.parsedParcels, ct);
+
             if (!enableLandscape) return;
 
             realmPartitionSettings = settings.realmPartitionSettings;
 
-            await landscapeParcelController.InitializeAsync(settings.parsedParcels, ct);
-
-            var emptyParcelsRef = landscapeParcelData.EmptyParcels;
+            var emptyParcelsRef = landscapeParcelData.GetEmptyParcelsList();
             var ownedParcelsRef = landscapeParcelData.OccupiedParcels;
 
             // gpuiWrapper.SetupLandscapeData(landscapeData.Value);

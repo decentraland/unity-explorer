@@ -62,7 +62,7 @@ namespace DCL.Landscape
 
             Log("Generate started");
             ownedParcels = parcelData.GetOwnedParcels();
-            emptyParcels = parcelData.GetEmptyParcels();
+            emptyParcels = parcelData.GetEmptyParcelsList();
 
             if (genData.terrainSize == 1)
             {

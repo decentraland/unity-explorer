@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -36,6 +37,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private float[]? sqrDistances;
 
         private bool splitIsPending;
+
+        // TODO REMOVE AFTER TESTS
+        // private int totalParcelsPreFilter = 0;
+        // private int totalParcelsFiltered = 0;
 
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
@@ -105,6 +110,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 if (processedScenePointers.Value.Contains(parcelInfo.Parcel))
                     continue;
 
+                // TODO REMOVE AFTER TESTS
+                // totalParcelsPreFilter++;
+
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize
                     && parcelFilteringService.ShouldIncludeParcel(parcelInfo.Parcel))
                 {
@@ -112,6 +120,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     input.Add(parcelInfo.Parcel);
                     parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
                     flatArray[i] = parcelInfo;
+
+                    // TODO REMOVE AFTER TESTS
+                    // totalParcelsFiltered++;
                 }
                 else
                 {
@@ -119,6 +130,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     break;
                 }
             }
+
+            // TODO REMOVE AFTER TESTS
+            // UnityEngine.Debug.Log($"[StartLoadingFromVolatilePointers] Pre-filter parcels: {totalParcelsPreFilter}, filtered parcels: {totalParcelsFiltered}");
 
             if (input.Count == 0) return;
 

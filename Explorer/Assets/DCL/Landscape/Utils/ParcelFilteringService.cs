@@ -1,6 +1,5 @@
 using DCL.Landscape.Parcel;
 using DCL.Landscape.Settings;
-using Unity.Collections;
 using Unity.Mathematics;
 
 namespace DCL.Landscape.Utils
@@ -21,9 +20,11 @@ namespace DCL.Landscape.Utils
         {
             if (!settings.Enabled) return true;
 
-            return !(settings.ExcludeEmptyParcels && IsEmptyParcel(parcel))
-                   && !(settings.ExcludeRoadParcels && IsRoadParcel(parcel))
-                   && !(settings.ExcludeOccupiedParcels && IsOccupiedParcel(parcel));
+            if (settings.ExcludeEmptyParcels && IsEmptyParcel(parcel)) return false;
+            if (settings.ExcludeRoadParcels && IsRoadParcel(parcel)) return false;
+            if (settings.ExcludeOccupiedParcels && IsOccupiedParcel(parcel)) return false;
+
+            return true;
         }
 
         private bool IsEmptyParcel(int2 parcel) => landscapeParcelData.EmptyParcels.Contains(parcel);
