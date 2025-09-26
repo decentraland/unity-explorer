@@ -64,6 +64,7 @@ namespace ECS.Unity.Textures.Components
             Texture = new Texture2DData(texture);
             renderers = new List<Renderer>();
             IsDirty = false;
+            isDisposed = false;
         }
 
         public VideoTextureConsumer(Texture2DData t2dd)
@@ -71,10 +72,14 @@ namespace ECS.Unity.Textures.Components
             Texture = t2dd;
             renderers = new List<Renderer>();
             IsDirty = false;
+            isDisposed = false;
         }
+
+        public bool isDisposed;
 
         public void Dispose()
         {
+            isDisposed = true;
             // On Dispose video textures are dereferenced by material that acquired it
             Texture = null!;
             renderers.Clear();

@@ -6,6 +6,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using UnityEngine;
 
 namespace ECS.ComponentsPooling.Systems
 {
@@ -57,6 +58,7 @@ namespace ECS.ComponentsPooling.Systems
                 if (deleteEntityIntention.DeferDeletion) return;
 
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
+
                 provider.Dispose();
             }
         }
@@ -72,6 +74,7 @@ namespace ECS.ComponentsPooling.Systems
 
             public void Update(ref TProvider provider)
             {
+                Debug.Log(provider.PoolableComponentType + " " + provider.PoolableComponent);
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
                 provider.Dispose();
             }
