@@ -9,6 +9,7 @@ using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
@@ -16,10 +17,12 @@ using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Ownership;
+using AudioStreamInfo = LiveKit.Rooms.Streaming.Audio.AudioStreamInfo;
 
 namespace DCL.VoiceChat
 {
@@ -66,6 +69,11 @@ namespace DCL.VoiceChat
             StopListeningToRemoteTracks();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
+        }
+
+        public void ActiveStreamsInfo(List<StreamInfo<AudioStreamInfo>> output)
+        {
+            voiceChatRoom.AudioStreams.ListInfo(output);
         }
 
         /// <summary>
@@ -168,7 +176,7 @@ namespace DCL.VoiceChat
                     {
                         if (value.Kind == TrackKind.KindAudio)
                         {
-                            WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity.Key!, sid);
+                            WeakReference<AudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity.Key!, sid);
 
                             if (stream != null)
                             {
@@ -216,7 +224,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio)
                 {
-                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    WeakReference<AudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
                     if (stream != null)
                     {
@@ -247,7 +255,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    WeakReference<AudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
                     if (stream != null)
                     {

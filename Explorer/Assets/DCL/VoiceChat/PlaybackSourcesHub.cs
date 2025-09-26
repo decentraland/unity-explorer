@@ -28,7 +28,7 @@ namespace DCL.VoiceChat
             parent = new GameObject(nameof(PlaybackSourcesHub)).transform;
         }
 
-        internal void AddOrReplaceStream(StreamKey key, WeakReference<IAudioStream> stream)
+        internal void AddOrReplaceStream(StreamKey key, WeakReference<AudioStream> stream)
         {
             if (streams.TryRemove(key, out var oldStream))
                 DisposeSource(oldStream!);

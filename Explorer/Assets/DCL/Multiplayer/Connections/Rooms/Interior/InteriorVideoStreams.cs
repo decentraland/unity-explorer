@@ -1,7 +1,9 @@
 using DCL.Multiplayer.Connections.Rooms.Nulls;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.VideoStreaming;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Rooms.Interior
 {
@@ -20,6 +22,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
             assigned.Free();
         }
 
+        public void ListInfo(List<StreamInfo<VideoStreamInfo>> output)
+        {
+            assigned.ListInfo(output);
+        }
+
         public void Assign(IVideoStreams value, out IVideoStreams? previous)
         {
             previous = assigned;
@@ -33,15 +40,20 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
     {
         private IAudioStreams assigned = NullAudioStreams.INSTANCE;
 
-        public WeakReference<IAudioStream>? ActiveStream(string identity, string sid) =>
+        public WeakReference<AudioStream>? ActiveStream(string identity, string sid) =>
             assigned.EnsureAssigned().ActiveStream(identity, sid);
 
-        public bool Release(IAudioStream stream) =>
+        public bool Release(AudioStream stream) =>
             assigned.Release(stream);
 
         public void Free()
         {
             assigned.Free();
+        }
+
+        public void ListInfo(List<StreamInfo<AudioStreamInfo>> output)
+        {
+            assigned.ListInfo(output);
         }
 
         public void Assign(IAudioStreams value, out IAudioStreams? previous)

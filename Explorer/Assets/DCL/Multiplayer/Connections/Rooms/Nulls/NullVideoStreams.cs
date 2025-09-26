@@ -2,10 +2,11 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.VideoStreaming;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Rooms.Nulls
 {
-    public class NullStreams<T> : IStreams<T> where T: class
+    public class NullStreams<T, TInfo> : IStreams<T, TInfo> where T: class
     {
         protected NullStreams() { }
 
@@ -22,14 +23,19 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         {
             // Do nothing
         }
+
+        public void ListInfo(List<StreamInfo<TInfo>> output)
+        {
+            output.Clear();
+        }
     }
 
-    public class NullVideoStreams : NullStreams<IVideoStream>, IVideoStreams
+    public class NullVideoStreams : NullStreams<IVideoStream, VideoStreamInfo>, IVideoStreams
     {
         public static readonly NullVideoStreams INSTANCE = new ();
     }
 
-    public class NullAudioStreams : NullStreams<IAudioStream>, IAudioStreams
+    public class NullAudioStreams : NullStreams<AudioStream, AudioStreamInfo>, IAudioStreams
     {
         public static readonly NullAudioStreams INSTANCE = new ();
     }

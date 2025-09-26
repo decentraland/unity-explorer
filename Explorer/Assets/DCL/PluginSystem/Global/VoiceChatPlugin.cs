@@ -16,9 +16,12 @@ using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Permissions;
 using DCL.WebRequests;
 using LiveKit.Audio;
+using LiveKit.Rooms.Streaming;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Runtime.Scripts.Audio;
 using RustAudio;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -145,6 +148,12 @@ namespace DCL.PluginSystem.Global
             var sampleRate = new ElementBinding<ulong>(0);
             var channels = new ElementBinding<ulong>(0);
 
+            var remoteSpeakers = new ElementBinding<ulong>(0);
+            var speakersInfo = new ElementBinding<IReadOnlyList<(string name, string value)>>(Array.Empty<(string name, string value)>());
+
+            List<StreamInfo<AudioStreamInfo>> infoBuffer = new ();
+            List<(string name, string value)> speakersBuffer = new ();
+
             CancellationTokenSource? autoUpdateCts = null;
 
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MICROPHONE)
@@ -156,6 +165,8 @@ namespace DCL.PluginSystem.Global
                           .AddCustomMarker("Is Recording", isRecording)
                           .AddMarker("Sample Rate", sampleRate, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddMarker("Remote Speakers", remoteSpeakers, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddList("Speakers Info", speakersInfo)
                           .AddToggleField("Auto Update", v => AutoUpdateTrigger(v.newValue).Forget(), false)
                           .AddSingleButton("Update", UpdateWidget);
 
@@ -169,12 +180,12 @@ namespace DCL.PluginSystem.Global
                     CancellationToken current = autoUpdateCts.Token;
                     TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
 
-                    while (current.IsCancellationRequested ==false)
+                    while (current.IsCancellationRequested == false)
                     {
-                       bool cancelled = await UniTask.Delay(pollDelay, cancellationToken: current).SuppressCancellationThrow();
-                       if (cancelled) return;
+                        bool cancelled = await UniTask.Delay(pollDelay, cancellationToken: current).SuppressCancellationThrow();
+                        if (cancelled) return;
 
-                       UpdateWidget();
+                        UpdateWidget();
                     }
                 }
                 else
@@ -183,7 +194,6 @@ namespace DCL.PluginSystem.Global
                     autoUpdateCts?.Dispose();
                     autoUpdateCts = null;
                 }
-
             }
 
             void UpdateWidget()
@@ -204,6 +214,18 @@ namespace DCL.PluginSystem.Global
 #if UNITY_STANDALONE_OSX
                 permissionsStatus.Value = VoiceChatPermissions.CurrentState().ToString()!;
 #endif
+
+                trackManager.ActiveStreamsInfo(infoBuffer);
+                remoteSpeakers.Value = (ulong)infoBuffer.Count;
+
+                speakersBuffer.Clear();
+                foreach (StreamInfo<AudioStreamInfo> streamInfo in infoBuffer)
+                {
+                    speakersBuffer.Add((streamInfo.key.identity, $"SampleRate - {streamInfo.info.sampleRate}"));
+                    speakersBuffer.Add((streamInfo.key.identity, $"Channels - {streamInfo.info.numChannels}"));
+                }
+
+                speakersInfo.SetAndUpdate(speakersBuffer);
             }
         }
 

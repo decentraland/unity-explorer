@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly IRoom room;
         private readonly LivekitAudioSource audioSource;
-        private (WeakReference<IVideoStream>? video, WeakReference<IAudioStream>? audio)? currentStream;
+        private (WeakReference<IVideoStream>? video, WeakReference<AudioStream>? audio)? currentStream;
         private PlayerState playerState;
         private LivekitAddress? playingAddress;
 
@@ -84,7 +84,7 @@ namespace DCL.SDKComponents.MediaStream
             return room.VideoStreams.ActiveStream(value.identity, value.sid);
         }
 
-        private WeakReference<IAudioStream>? FirstAudio()
+        private WeakReference<AudioStream>? FirstAudio()
         {
             var result = FirstAvailableTrackSid(TrackKind.KindAudio);
             if (result.HasValue == false) return null;
