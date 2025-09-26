@@ -17,12 +17,14 @@ using DCL.CharacterPreview;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.SmartWearables;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using Global.AppArgs;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -44,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IBackpackSharedAPI backpackSharedAPI;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
@@ -60,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileChangesBus profileChangesBus;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
+        private SmartWearableCache smartWearableCache;
 
         internal BackpackController? backpackController { get; private set; }
 
@@ -77,6 +81,7 @@ namespace DCL.PluginSystem.Global
             List<string> forceRender,
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
+            IBackpackSharedAPI backpackSharedAPI,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
             IInputBlock inputBlock,
@@ -88,7 +93,8 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             WarningNotificationView inWorldWarningNotificationView,
             IThumbnailProvider thumbnailProvider,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            SmartWearableCache smartWearableCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -103,6 +109,7 @@ namespace DCL.PluginSystem.Global
             this.forceRender = forceRender;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.backpackEventBus = backpackEventBus;
+            this.backpackSharedAPI = backpackSharedAPI;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
             this.cursor = cursor;
@@ -115,6 +122,7 @@ namespace DCL.PluginSystem.Global
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.thumbnailProvider = thumbnailProvider;
             this.profileChangesBus = profileChangesBus;
+            this.smartWearableCache = smartWearableCache;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -179,11 +187,11 @@ namespace DCL.PluginSystem.Global
             ObjectPool<BackpackItemView>? gridPool = await BackpackGridController.InitialiseAssetsAsync(assetsProvisioner, avatarView.backpackGridView, ct);
 
             var gridController = new BackpackGridController(
-                avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
+                avatarView.backpackGridView, backpackCommandBus, backpackEventBus, backpackSharedAPI,
                 rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                equippedWearables, sortController, pageButtonView, gridPool,
-                this.thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
-                wearablesProvider, webBrowser
+                equippedWearables, sortController, pageButtonView, gridPool, thumbnailProvider,
+                colorToggle, hairColors, eyesColors, bodyshapeColors, wearablesProvider, webBrowser,
+                smartWearableCache
             );
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,

@@ -6,13 +6,14 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.PluginSystem;
+using DCL.SmartWearables;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using Runtime.Wearables;
 using SceneRunner;
 using SceneRunner.Scene;
 using System;
@@ -28,30 +29,30 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class LoadSmartWearableSceneSystem : LoadSystemBase<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>
     {
         private readonly ISceneFactory sceneFactory;
-
         private readonly IWebRequestController webRequestController;
+        private readonly SmartWearableCache smartWearableCache;
 
         public LoadSmartWearableSceneSystem(
             Arch.Core.World world,
             IStreamableCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention> cache,
             IWebRequestController webRequestController,
-            ISceneFactory sceneFactory) : base(world, cache)
+            ISceneFactory sceneFactory,
+            SmartWearableCache smartWearableCache) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.sceneFactory = sceneFactory;
+            this.smartWearableCache = smartWearableCache;
         }
 
         protected override async UniTask<StreamableLoadingResult<GetSmartWearableSceneIntention.Result>> FlowInternalAsync(GetSmartWearableSceneIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            var player = World.CachePlayer();
-            var avatarShape = World.Get<AvatarShapeComponent>(player);
-            var bodyShape = avatarShape.BodyShape;
+            IWearable wearable = intention.SmartWearable;
 
-            string contentUrl = GetContentUrl(intention.SmartWearable);
-            var sceneContent = SmartWearableSceneContent.Create(URLDomain.FromString(contentUrl), intention.SmartWearable, bodyShape);
+            (ISceneContent? sceneContent, SceneMetadata? sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, ct);
+            if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
-            SceneEntityDefinition? sceneDefinition = await GetSceneDefinitionAsync(intention.SmartWearable, sceneContent, ct);
-            if (sceneDefinition == null || ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
+            AssetBundleManifestVersion manifestVersion = wearable.DTO.assetBundleManifestVersion!;
+            SceneEntityDefinition sceneDefinition = new SceneEntityDefinition(wearable.DTO.id!, sceneMetadata) { assetBundleManifestVersion = manifestVersion };
 
             ReadOnlyMemory<byte> crdt = await GetCrdtAsync(sceneContent, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
@@ -72,7 +73,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
             sceneFacade?.Initialize();
 
-            ReportHub.Log(GetReportCategory(), $"Smart Wearable scene {intention.SmartWearable.DTO.id} loaded");
+            ReportHub.Log(GetReportCategory(), $"Smart Wearable scene {wearable.DTO.id} loaded");
 
             var result = new GetSmartWearableSceneIntention.Result
             {
@@ -80,30 +81,6 @@ namespace ECS.SceneLifeCycle.Systems
                 SceneFacade = sceneFacade
             };
             return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>(result);
-        }
-
-        private string GetContentUrl(IWearable smartWearable)
-        {
-            const string DEFAULT_CONTENT_URL = "https://peer.decentraland.org/content/contents/";
-            string? dtoContentUrl = smartWearable.DTO.ContentDownloadUrl;
-            return string.IsNullOrEmpty(dtoContentUrl) ? DEFAULT_CONTENT_URL : dtoContentUrl;
-        }
-
-        private async Task<SceneEntityDefinition?> GetSceneDefinitionAsync(IWearable smartWearable, ISceneContent sceneContent, CancellationToken ct)
-        {
-            if (!sceneContent.TryGetContentUrl("scene.json", out URLAddress url))
-            {
-                ReportHub.LogError(GetReportCategory(), "Could not find 'scene.json'");
-                return null;
-            }
-
-            var args = new CommonLoadingArguments(URLAddress.FromString(url));
-            var sceneMetadata = await webRequestController.GetAsync(args, ct, GetReportData())
-                                                          .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-
-            string id = smartWearable.DTO.id!;
-            AssetBundleManifestVersion manifestVersion = smartWearable.DTO.assetBundleManifestVersion!;
-            return new SceneEntityDefinition(id, sceneMetadata) { assetBundleManifestVersion = manifestVersion };
         }
 
         private async UniTask<ReadOnlyMemory<byte>> GetCrdtAsync(ISceneContent sceneContent, CancellationToken ct)

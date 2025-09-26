@@ -568,6 +568,8 @@ namespace Global.Dynamic
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
 
+            IBackpackSharedAPI backpackSharedAPI = new BackpackSharedAPI();
+
             var profileBroadcast = new DebounceProfileBroadcast(
                 new ProfileBroadcast(messagePipesHub, selfProfile)
             );
@@ -789,6 +791,7 @@ namespace Global.Dynamic
                     characterPreviewEventBus,
                     mapPathEventBus,
                     backpackEventBus,
+                    backpackSharedAPI,
                     thirdPartyNftProviderSource,
                     wearablesProvider,
                     dclCursor,
@@ -818,7 +821,8 @@ namespace Global.Dynamic
                     galleryEventBus,
                     thumbnailProvider,
                     passportBridge,
-                    chatEventBus
+                    chatEventBus,
+                    staticContainer.SmartWearableCache
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
@@ -907,7 +911,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new SmartWearablesGlobalPlugin(wearableCatalog, backpackEventBus, staticContainer.PortableExperiencesController, staticContainer.ScenesCache)
+                new SmartWearablesGlobalPlugin(wearableCatalog, backpackSharedAPI, staticContainer.PortableExperiencesController, staticContainer.ScenesCache, staticContainer.SmartWearableCache)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

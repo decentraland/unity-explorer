@@ -19,15 +19,16 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using PortableExperiences.Controller;
+using Runtime.Wearables;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine.Pool;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention.Result, ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention>;
 
 namespace DCL.SmartWearables
 {
-
     /// <summary>
     /// Handles initiating loading / unloading scenes tied to smart wearables.
     /// </summary>
@@ -36,7 +37,8 @@ namespace DCL.SmartWearables
     public partial class SmartWearableSystem : BaseUnityLoopSystem
     {
         private readonly WearableStorage wearableStorage;
-        private readonly IBackpackEventBus backpackEventBus;
+        private readonly SmartWearableCache smartWearableCache;
+        private readonly IBackpackSharedAPI backpackSharedAPI;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly IScenesCache scenesCache;
 
@@ -50,10 +52,11 @@ namespace DCL.SmartWearables
         /// </summary>
         private readonly HashSet<string> runningScenes = new ();
 
-        public SmartWearableSystem(World world, WearableStorage wearableStorage, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache) : base(world)
+        public SmartWearableSystem(World world, WearableStorage wearableStorage, SmartWearableCache smartWearableCache, IBackpackSharedAPI backpackSharedAPI, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache) : base(world)
         {
             this.wearableStorage = wearableStorage;
-            this.backpackEventBus = backpackEventBus;
+            this.smartWearableCache = smartWearableCache;
+            this.backpackSharedAPI = backpackSharedAPI;
             this.portableExperiencesController = portableExperiencesController;
             this.scenesCache = scenesCache;
         }
@@ -62,26 +65,29 @@ namespace DCL.SmartWearables
         {
             base.Initialize();
 
-            backpackEventBus.EquipWearableEvent += OnEquipWearable;
-            backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
+            backpackSharedAPI.WearableEquipped += OnWearableEquipped;
+            backpackSharedAPI.WearableUnEquipped += OnWearableUnEquipped;
             portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
 
             RunScenesForEquippedWearablesAsync().Forget();
         }
 
-        private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped)
+        private void OnWearableEquipped(string urn, bool isManuallyEquipped)
         {
             if (!isManuallyEquipped) return;
 
-            TryRunSmartWearableScene(wearable);
+            wearableStorage.TryGetElement(urn, out IWearable wearable);
+            TryRunSmartWearableSceneAsync(wearable).Forget();
         }
 
-        private void TryRunSmartWearableScene(IWearable wearable)
+        private async UniTask TryRunSmartWearableSceneAsync(IWearable wearable)
         {
-            string id = wearable.DTO.Metadata.id;
+            bool isSmart = await smartWearableCache.IsSmartAsync(wearable, CancellationToken.None);
+            if (!isSmart || !SceneAllowsSmartWearables()) return;
 
-            if (!IsSmartWearable(wearable) || !SceneAllowsSmartWearables() || pendingScenes.ContainsKey(id) || runningScenes.Contains(id)) return;
+            string id = wearable.DTO.Metadata.id;
+            if (pendingScenes.ContainsKey(id) || runningScenes.Contains(id)) return;
 
             AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
             ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{metadata.name}'. Loading scene...");
@@ -93,9 +99,17 @@ namespace DCL.SmartWearables
             pendingScenes.Add(metadata.id, promise);
         }
 
-        private void OnUnEquipWearable(IWearable wearable)
+        private void OnWearableUnEquipped(string urn)
         {
-            if (!IsSmartWearable(wearable)) return;
+            wearableStorage.TryGetElement(urn, out IWearable wearable);
+
+            StopSmartWearableSceneAsync(wearable).Forget();
+        }
+
+        private async UniTask StopSmartWearableSceneAsync(IWearable wearable)
+        {
+            bool isSmart = await smartWearableCache.IsSmartAsync(wearable, CancellationToken.None);
+            if (!isSmart) return;
 
             string id = wearable.DTO.Metadata.id;
 
@@ -107,15 +121,10 @@ namespace DCL.SmartWearables
 
             if (!runningScenes.Remove(id)) return;
 
-            StopSmartWearableScene(wearable);
-        }
-
-        private void StopSmartWearableScene(IWearable smartWearable)
-        {
-            AvatarAttachmentDTO.MetadataBase metadata = smartWearable.DTO.Metadata;
+            AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
             ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{metadata.name}'. Unloading scene...");
 
-            string ens = smartWearable.DTO.Metadata.id;
+            string ens = wearable.DTO.Metadata.id;
             portableExperiencesController.UnloadPortableExperienceById(ens);
         }
 
@@ -208,17 +217,6 @@ namespace DCL.SmartWearables
             }
         }
 
-        private bool IsSmartWearable(IWearable wearable)
-        {
-            // We assume that if the wearable contains a scene.json file, then it must be a smart wearable
-
-            foreach (var content in wearable.DTO.content)
-                if (content.file.EndsWith("scene.json", StringComparison.OrdinalIgnoreCase))
-                    return true;
-
-            return false;
-        }
-
         private bool SceneAllowsSmartWearables()
         {
             var scene = scenesCache.CurrentScene.Value;
@@ -250,7 +248,7 @@ namespace DCL.SmartWearables
                 URN shortUrn = urn.Shorten();
                 while (!wearableStorage.TryGetElement(shortUrn, out wearable) || wearable.IsLoading) await UniTask.Yield();
 
-                TryRunSmartWearableScene(wearable);
+                await TryRunSmartWearableSceneAsync(wearable);
             }
         }
     }

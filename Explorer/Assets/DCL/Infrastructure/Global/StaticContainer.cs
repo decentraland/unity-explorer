@@ -46,6 +46,7 @@ using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.SkyboxTime;
+using DCL.SmartWearables;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
@@ -53,6 +54,7 @@ using ECS.StreamableLoading.Textures;
 using Global.AppArgs;
 using Global.Dynamic.LaunchModes;
 using PortableExperiences.Controller;
+using Runtime.Wearables;
 using System.Buffers;
 using UnityEngine;
 using Utility;
@@ -107,6 +109,7 @@ namespace Global
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
+        public SmartWearableCache SmartWearableCache { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
         public GPUInstancingService GPUInstancingService { get; private set; }
@@ -204,6 +207,7 @@ namespace Global
             container.WebRequestsContainer = webRequestsContainer;
 
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
+            container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
 

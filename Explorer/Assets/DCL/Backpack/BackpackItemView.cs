@@ -62,6 +62,9 @@ namespace DCL.Backpack
         [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
         [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
 
+        [field: SerializeField]
+        public GameObject SmartWearableBadgeContainer { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig EquipWearableAudio { get; private set; }

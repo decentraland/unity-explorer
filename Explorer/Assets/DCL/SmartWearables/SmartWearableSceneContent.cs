@@ -5,7 +5,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 
-namespace DCL.PluginSystem
+namespace DCL.SmartWearables
 {
     public class SmartWearableSceneContent : ISceneContent
     {

@@ -57,6 +57,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.SkyBox;
+using DCL.SmartWearables;
 using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
@@ -64,6 +65,7 @@ using DCL.Utilities;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
+using Runtime.Wearables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -97,6 +99,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IBackpackSharedAPI backpackSharedAPI;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
@@ -145,6 +148,7 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
+        private readonly SmartWearableCache smartWearableCache;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -172,6 +176,7 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             IBackpackEventBus backpackEventBus,
+            IBackpackSharedAPI backpackSharedAPI,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
             ICursor cursor,
@@ -201,7 +206,8 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            SmartWearableCache smartWearableCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -229,6 +235,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
             this.backpackEventBus = backpackEventBus;
+            this.backpackSharedAPI = backpackSharedAPI;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
             this.inputBlock = inputBlock;
@@ -259,6 +266,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.chatEventBus = chatEventBus;
             this.passportBridge = passportBridge;
+            this.smartWearableCache = smartWearableCache;
         }
 
         public void Dispose()
@@ -294,6 +302,7 @@ namespace DCL.PluginSystem.Global
                 forceRender,
                 characterPreviewEventBus,
                 backpackEventBus,
+                backpackSharedAPI,
                 thirdPartyNftProviderSource,
                 wearablesProvider,
                 inputBlock,
@@ -305,7 +314,8 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 inWorldWarningNotificationView,
                 thumbnailProvider,
-                profileChangesBus
+                profileChangesBus,
+                smartWearableCache
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
