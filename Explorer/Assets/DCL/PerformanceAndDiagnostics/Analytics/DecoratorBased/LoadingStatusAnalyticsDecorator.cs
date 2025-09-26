@@ -13,19 +13,20 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private int loadingScreenStageId;
 
         private readonly IAnalyticsController analytics;
+        private readonly SentryTransactionManager sentryTransactionManager;
 
-        private ITransactionTracer mainLoadingTransaction;
-        private ISpan currentStageSpan;
+        private const string LOADING_TRANSACTION_NAME = "loading_process";
 
         public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
         public ReactiveProperty<string> AssetState => core.AssetState;
         private bool isFirstLoading;
 
-        public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics)
+        public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics, SentryTransactionManager sentryTransactionManager)
         {
             core = loadingStatus;
             isFirstLoading = true;
             this.analytics = analytics;
+            this.sentryTransactionManager = sentryTransactionManager;
         }
 
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
@@ -40,30 +41,33 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void TrackLoadingStageWithSentry(LoadingStatus.LoadingStage stage)
         {
-            if (mainLoadingTransaction == null && stage == LoadingStatus.LoadingStage.Init)
+            if (stage == LoadingStatus.LoadingStage.Init)
             {
-                mainLoadingTransaction = SentrySdk.StartTransaction("loading_process", "loading");
-                mainLoadingTransaction.SetTag("loading_type", "initial_loading");
+                var transactionData = new TransactionData
+                {
+                    TransactionName = LOADING_TRANSACTION_NAME,
+                    TransactionOperation = "loading",
+                    TransactionTag = "loading_type",
+                    TransactionTagValue = "initial_loading"
+                };
+                sentryTransactionManager.StartSentryTransaction(transactionData);
             }
 
-            if (currentStageSpan != null)
+            if (stage != LoadingStatus.LoadingStage.Completed)
             {
-                currentStageSpan.Finish();
-                currentStageSpan = null;
+                var spanData = new SpanData
+                {
+                    TransactionName = LOADING_TRANSACTION_NAME,
+                    SpanName = stage.ToString(),
+                    SpanOperation = $"loading_stage_{stage.ToString().ToLower()}",
+                    Depth = 0
+                };
+                sentryTransactionManager.StartSpan(spanData);
             }
 
-            if (mainLoadingTransaction != null && stage != LoadingStatus.LoadingStage.Completed)
+            if (stage == LoadingStatus.LoadingStage.Completed)
             {
-                currentStageSpan = mainLoadingTransaction.StartChild($"loading_stage_{stage.ToString().ToLower()}", stage.ToString());
-                currentStageSpan.SetTag(STAGE_NAME, stage.ToString());
-            }
-
-            if (stage == LoadingStatus.LoadingStage.Completed && mainLoadingTransaction != null)
-            {
-                mainLoadingTransaction.SetTag("completed", "true");
-                mainLoadingTransaction.Finish();
-                mainLoadingTransaction = null;
-                currentStageSpan = null;
+                sentryTransactionManager.EndTransaction(LOADING_TRANSACTION_NAME);
             }
         }
 
