@@ -598,7 +598,8 @@ namespace Global.Dynamic
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
             {
-                DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatTeleporter, ct);
+                DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatTeleporter, ct,
+                    bootstrapContainer.RealmLaunchSettings);
                 deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
             }
 

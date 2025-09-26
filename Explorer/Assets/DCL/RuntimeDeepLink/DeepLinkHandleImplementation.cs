@@ -14,20 +14,30 @@ namespace DCL.RuntimeDeepLink
         private readonly StartParcel startParcel;
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
+        private readonly IAppArgsProcessor realmLaunchSettings;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token)
+        public DeepLinkHandle(StartParcel startParcel,
+            ChatTeleporter chatTeleporter,
+            CancellationToken token,
+            IAppArgsProcessor realmLaunchSettings)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
+            this.realmLaunchSettings = realmLaunchSettings;
         }
 
         public string Name => "Real Implementation";
 
-        public Result HandleDeepLink(DeepLink deeplink)
+        public Result Handle(IAppArgs appArgs)
         {
-            Vector2Int? position = PositionFrom(deeplink);
-            URLDomain? realm = RealmFrom(deeplink);
+            // Fixes: https://github.com/decentraland/unity-explorer/issues/5226
+            // We need to re-apply launch settings to redirect the correct realm after authentication
+            // TODO: Consider implementing a list of configurations to apply instead of focusing solely on the realm launch settings.
+            realmLaunchSettings.ApplyConfig(appArgs);
+
+            Vector2Int? position = PositionFrom(appArgs);
+            URLDomain? realm = RealmFrom(appArgs);
 
             if (realm.HasValue)
             {
@@ -50,19 +60,22 @@ namespace DCL.RuntimeDeepLink
             return Result.ErrorResult("no matches");
         }
 
-        private static URLDomain? RealmFrom(DeepLink deepLink)
+        private static URLDomain? RealmFrom(IAppArgs appArgs)
         {
-            string? rawRealm = deepLink.ValueOf(AppArgsFlags.REALM);
+            if (!appArgs.TryGetValue(AppArgsFlags.REALM, out string? rawRealm))
+                return null;
 
-            if (rawRealm == null)
+            if (string.IsNullOrEmpty(rawRealm))
                 return null;
 
             return URLDomain.FromString(rawRealm);
         }
 
-        private static Vector2Int? PositionFrom(DeepLink deeplink)
+        private static Vector2Int? PositionFrom(IAppArgs appArgs)
         {
-            string? rawPosition = deeplink.ValueOf(AppArgsFlags.POSITION);
+            if (!appArgs.TryGetValue(AppArgsFlags.POSITION, out string? rawPosition))
+                return null;
+
             string[]? parts = rawPosition?.Split(',');
 
             if (parts == null || parts.Length < 2)

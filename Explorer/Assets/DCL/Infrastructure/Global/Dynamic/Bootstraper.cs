@@ -113,7 +113,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
                 bootstrapContainer.VerifiedEthereumApi,
-                bootstrapContainer.LaunchMode,
+                bootstrapContainer.RealmLaunchSettings,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
                 playerEntity,
