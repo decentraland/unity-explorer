@@ -11,8 +11,10 @@ namespace DCL.VoiceChat.Permissions
         public enum MicPermission
         {
             NOT_REQUESTED_YET = 0,
-            GRANTED = 1,
-            REJECTED = 2,
+            AUTHORIZED = 1,
+            DENIED = 2,
+            RESTRICTED = 3,
+            UNKNOWN = 4,
         }
 
         [DllImport("MicrophonePermissions")]
@@ -43,7 +45,7 @@ namespace DCL.VoiceChat.Permissions
         {
             MicPermission state = CurrentState();
 
-            if (state is MicPermission.REJECTED)
+            if (state is MicPermission.DENIED)
 
                 // cannot give permissions if already rejected
                 return false;
@@ -55,7 +57,7 @@ namespace DCL.VoiceChat.Permissions
                 cancellationToken: token
             );
 
-            return CurrentState() is MicPermission.GRANTED;
+            return CurrentState() is MicPermission.AUTHORIZED;
         }
 #endif
     }

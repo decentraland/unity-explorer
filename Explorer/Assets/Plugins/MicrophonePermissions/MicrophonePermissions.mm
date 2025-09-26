@@ -16,7 +16,7 @@ extern "C" int CurrentMicrophonePermission()
         case AVAuthorizationStatusNotDetermined: return 0; // NotRequestedYet
         case AVAuthorizationStatusAuthorized:    return 1; // Granted
         case AVAuthorizationStatusDenied:        return 2; // Rejected
-        case AVAuthorizationStatusRestricted:    return 2; // treat restricted as Rejected
+        case AVAuthorizationStatusRestricted:    return 3; // treat restricted as Rejected
     }
-    return 2;
+    return 4;
 }
