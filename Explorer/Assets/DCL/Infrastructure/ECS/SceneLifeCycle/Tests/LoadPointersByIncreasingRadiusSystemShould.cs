@@ -31,7 +31,13 @@ namespace ECS.SceneLifeCycle.Tests
         {
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
-            LandscapeParcelData landscapeParcelData = new ();
+
+            LandscapeParcelData landscapeParcelData = new();
+            var emptyParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
+            var roadParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
+            var occupiedParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
+            landscapeParcelData.Reconfigure(roadParcels, occupiedParcels, emptyParcels);
+
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
@@ -39,7 +45,7 @@ namespace ECS.SceneLifeCycle.Tests
                 Substitute.For<ISceneReadinessReportQueue>(),
                 Substitute.For<IScenesCache>(),
                 new HashSet<Vector2Int>(), realmData, landscapeParcelData,
-                parcelLoadingFilteringSettings = Substitute.For<ParcelLoadingFilteringSettings>());
+                parcelLoadingFilteringSettings = ScriptableObject.CreateInstance<ParcelLoadingFilteringSettings>());
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
