@@ -10,6 +10,7 @@ cbuffer ConstBuffer : register(b0)
 {
     float4x4 viewProjMatrix;
     float4 TerrainBounds;
+    int parcelSize;
 }
 
 // Quadtree node structure - matches your Unity.Mathematics version
@@ -41,16 +42,18 @@ void HierarchicalQuadTreeCulling(uint3 id : SV_DispatchThreadID, uint3 groupId :
     int2 plot = CalculateWorldPlotFromQuadtreeNode(cornerIndexStart);
     if (IsWithinTerrainBounds(plot, TerrainBounds))
     {
-        const float3 boundingBoxExtents = uint3(8.0f, 8.0f, 8.0f);
-        const float3 boundingBoxCentre = uint3(8, 8, 8);
+        const float halfParcel = parcelSize / 2;
+        float3 boundingBoxExtents = uint3(halfParcel, halfParcel, halfParcel);
+        float3 boundingBoxCentre = uint3(halfParcel, halfParcel, halfParcel);
         float4 BoundingBox[8];
-        float4x4 objectTranslation = CreateTranslationMatrix(float3(plot.x * 16, 0, plot.y * 16));
+        float4x4 objectTranslation = CreateTranslationMatrix(float3(plot.x * parcelSize, 0, plot.y * parcelSize));
         CalculateBoundingBox(objectTranslation, viewProjMatrix, boundingBoxCentre, boundingBoxExtents, BoundingBox );
 
         if (IsFrustumCulled(BoundingBox) == false)
         {
-            float2 UV_Coords = (float2(plot.x * 16, plot.y * 16) + 4096) / 8192;
-            float fOccupancy = GetOccupancy(UV_Coords, TerrainBounds, 16);
+            float2 UV_Coords = (float2(plot.x * parcelSize, plot.y * parcelSize) + 4096) / 8192;
+            float fOccupancy = GetOccupancy(UV_Coords, TerrainBounds, parcelSize);
+
             float floorValue = 175/255;
             if (fOccupancy > floorValue)
             {

@@ -358,6 +358,7 @@ namespace Decentraland.Terrain
 
             QuadTreeCullingShader.SetMatrix(ShaderProperties.ViewProjMatrix, viewProjMatrix);
             QuadTreeCullingShader.SetVector(ShaderProperties.TerrainBounds, terrainBounds);
+            QuadTreeCullingShader.SetInt(ShaderProperties.ParcelSize, parcelSize);
 
             QuadTreeCullingShader.SetTexture(ShaderKernels.QuadTreeCullingKernel, ShaderProperties.OccupancyTexture,
                 terrainGenerator.OccupancyMap != null ? terrainGenerator.OccupancyMap : Texture2D.blackTexture);
