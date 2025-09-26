@@ -29,15 +29,15 @@ namespace DCL.SceneBannedUsers
             this.loadingStatus = loadingStatus;
 
             roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += SetCurrentSceneAsBanned;
-            roomHub.SceneRoom().CurrentSceneRoomConnected += RestoreCurrentBannedScene_Connected;
-            roomHub.SceneRoom().CurrentSceneRoomDisconnected += RestoreCurrentBannedScene_Disconnected;
+            roomHub.SceneRoom().CurrentSceneRoomConnected += RestoreCurrentBannedScene;
+            roomHub.SceneRoom().CurrentSceneRoomDisconnected += RestoreCurrentBannedScene;
         }
 
         public void Dispose()
         {
             roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= SetCurrentSceneAsBanned;
-            roomHub.SceneRoom().CurrentSceneRoomConnected -= RestoreCurrentBannedScene_Connected;
-            roomHub.SceneRoom().CurrentSceneRoomDisconnected -= RestoreCurrentBannedScene_Disconnected;
+            roomHub.SceneRoom().CurrentSceneRoomConnected -= RestoreCurrentBannedScene;
+            roomHub.SceneRoom().CurrentSceneRoomDisconnected -= RestoreCurrentBannedScene;
 
             setCurrentSceneAsBannedCts.SafeCancelAndDispose();
             checkIfPlayerIsBannedCts.SafeCancelAndDispose();
@@ -60,16 +60,9 @@ namespace DCL.SceneBannedUsers
             }
         }
 
-        private void RestoreCurrentBannedScene_Connected()
+        private void RestoreCurrentBannedScene()
         {
-            Debug.Log("SANTI LOG -> RESTORE ALL BANNED SCENES (CONNECTED)!!");
-            bannedSceneController.RemoveAllBannedSceneComponents();
-            playerIsCurrentlyBanned = false;
-        }
-
-        private void RestoreCurrentBannedScene_Disconnected()
-        {
-            Debug.Log("SANTI LOG -> RESTORE ALL BANNED SCENES (DISCONNECTED)!!");
+            Debug.Log("SANTI LOG -> RESTORE ALL BANNED SCENES!!");
             bannedSceneController.RemoveAllBannedSceneComponents();
             playerIsCurrentlyBanned = false;
         }

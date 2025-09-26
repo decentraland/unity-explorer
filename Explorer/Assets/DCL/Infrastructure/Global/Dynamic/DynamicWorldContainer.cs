@@ -540,7 +540,9 @@ namespace Global.Dynamic
                 clipboard,
                 bootstrapContainer.DecentralandUrlsSource,
                 chatMessagesBus,
-                reloadSceneChatCommand
+                reloadSceneChatCommand,
+                roomHub,
+                includeBannedUsersFromScene
             );
 
             var coreBackpackEventBus = new BackpackEventBus();

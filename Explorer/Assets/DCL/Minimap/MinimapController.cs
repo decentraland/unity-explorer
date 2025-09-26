@@ -23,6 +23,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.Controls.Configs;
 using DG.Tweening;
 using ECS;
@@ -49,6 +50,7 @@ namespace DCL.Minimap
         };
         private const float ANIMATION_TIME = 0.2f;
         private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
+        private const int HIDE_TIME_MS = 5000;
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
@@ -65,6 +67,8 @@ namespace DCL.Minimap
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ReloadSceneChatCommand reloadSceneCommand;
+        private readonly IRoomHub roomHub;
+        private readonly bool includeBannedUsersFromScene;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -72,6 +76,7 @@ namespace DCL.Minimap
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
+        private bool bannedMarkIsVisible;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -93,7 +98,9 @@ namespace DCL.Minimap
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrls,
             IChatMessagesBus chatMessagesBus,
-            ReloadSceneChatCommand reloadSceneCommand
+            ReloadSceneChatCommand reloadSceneCommand,
+            IRoomHub roomHub,
+            bool includeBannedUsersFromScene
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -110,8 +117,17 @@ namespace DCL.Minimap
             this.decentralandUrls = decentralandUrls;
             this.chatMessagesBus = chatMessagesBus;
             this.reloadSceneCommand = reloadSceneCommand;
+            this.roomHub = roomHub;
+            this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
+
+            if (includeBannedUsersFromScene)
+            {
+                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomConnected += HideBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideBannedMark;
+            }
         }
 
         public override void Dispose()
@@ -120,6 +136,13 @@ namespace DCL.Minimap
             disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+
+            if (includeBannedUsersFromScene)
+            {
+                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomConnected -= HideBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideBannedMark;
+            }
 
             sceneRestrictionsController?.Dispose();
             viewInstance?.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
@@ -391,6 +414,24 @@ namespace DCL.Minimap
                 isGenesisModeActivated
                     ? viewInstance.genesisCityAnimatorController
                     : viewInstance.worldsAnimatorController;
+        }
+
+        private void ShowBannedMark()
+        {
+            if (bannedMarkIsVisible)
+                return;
+
+            bannedMarkIsVisible = true;
+
+            viewInstance!.nonBannedContainer.SetActive(false);
+            viewInstance!.bannedContainer.SetActive(true);
+        }
+
+        private void HideBannedMark()
+        {
+            viewInstance!.nonBannedContainer.SetActive(true);
+            viewInstance!.bannedContainer.SetActive(false);
+            bannedMarkIsVisible = false;
         }
     }
 
