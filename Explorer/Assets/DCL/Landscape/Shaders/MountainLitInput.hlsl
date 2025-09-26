@@ -26,6 +26,7 @@ CBUFFER_START(UnityPerMaterial)
     float _BlendSmoothness;
     half _DistanceFieldScale;
     half _MinDistOccupancy;
+    half _ParcelSize;
     UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 

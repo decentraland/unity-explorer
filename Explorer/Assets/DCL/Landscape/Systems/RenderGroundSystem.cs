@@ -123,10 +123,13 @@ namespace DCL.Landscape.Systems
 
             materialProperties ??= new MaterialPropertyBlock();
 
-            if (this.terrain != terrain)
+            if (this.terrain != terrain
+                || this.terrain.OccupancyMap != terrain.OccupancyMap
+                || this.terrain.OccupancyFloor != terrain.OccupancyFloor
+                || this.terrain.MaxHeight != terrain.MaxHeight
+                )
             {
                 this.terrain = terrain;
-
                 materialProperties.SetFloat(PARCEL_SIZE_ID, parcelSize);
                 materialProperties.SetFloat(TERRAIN_HEIGHT_ID, landscapeData.TerrainHeight);
                 materialProperties.SetTexture(OCCUPANCY_MAP_ID, terrain.OccupancyMap != null ? terrain.OccupancyMap : Texture2D.blackTexture);

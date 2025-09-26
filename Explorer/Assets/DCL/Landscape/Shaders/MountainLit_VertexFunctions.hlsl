@@ -15,9 +15,14 @@ VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 
     input.positionWS = TransformObjectToWorld(positionOS);
     input.positionWS = ClampPosition(input.positionWS, terrainBounds);
 
-    float2 terrainSize = terrainBounds.zw - terrainBounds.xy;
-    float nextPow2 = exp2(ceil(log2(max(terrainSize.x, terrainSize.y) + 32.0)));
-    float2 occupancyUV = (input.positionWS.xz + nextPow2 * 0.5f) / nextPow2;
+    // Should be aligned with CPU TerrainGenerator.CreateOccupancyMap()/GetParcelNoiseHeight()  
+    float maxX = max(abs(terrainBounds.x), abs(terrainBounds.z));
+    float maxZ = max(abs(terrainBounds.y), abs(terrainBounds.w));
+    float maxExtent = max(maxX, maxZ);
+    // Convert extent to parcels and compute pow2 size in pixels (parcels), with 1px border on each side
+    float extentParcels = maxExtent / _ParcelSize;
+    float nextPow2Px = exp2(ceil(log2(2.0 * extentParcels + 2.0)));
+    float2 occupancyUV = ((input.positionWS.xz / _ParcelSize) + nextPow2Px * 0.5f) / nextPow2Px;
     fOccupancy = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occupancyUV, 0).r;
 
     float minValue = _MinDistOccupancy;
