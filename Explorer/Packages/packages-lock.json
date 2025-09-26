@@ -31,7 +31,7 @@
       "url": "https://package.openupm.com"
     },
     "com.atteneder.gltfast": {
-      "version": "git@github.com:decentraland/unity-gltf.git",
+      "version": "https://github.com/decentraland/unity-gltf.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -480,11 +480,11 @@
       "hash": "ea6bb70b630aa55dc28a9d0c3fff64b3ea0ca8ba"
     },
     "decentraland.renderfeatures": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures#feat/skybox-to-cubemap-probe",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "85c179e410bbc7741e10b9a2799fa0ac9d0e6c7e"
+      "hash": "08eb1ed85d838237925f8650da4df5c74bbb9cbf"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
