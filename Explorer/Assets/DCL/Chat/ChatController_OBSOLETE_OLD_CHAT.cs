@@ -756,7 +756,7 @@ namespace DCL.Chat
 
         private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
         {
-            chatMessagesBus.Send(channel, message, origin);
+            //chatMessagesBus.Send(channel, message, origin);
         }
 
         private void OnViewEmojiSelectionVisibilityChanged(bool isVisible)

@@ -39,6 +39,10 @@ namespace DCL.Chat.ChatMessages
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
         public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
 
+        public event Action<string> OnTranslateMessageRequested;
+        public event Action<string> OnRevertMessageRequested;
+        private Func<bool> IsTranslationActivated;
+        
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
@@ -59,10 +63,12 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrollToBottomButtonClicked;
 
         private Sequence? _fadeSequenceTween;
-        
-        public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels)
+
+        public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels,
+            Func<bool> IsTranslationActivated)
         {
             this.viewModels = viewModels;
+            this.IsTranslationActivated = IsTranslationActivated;
 
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked += ChatScrollToBottomToBottomClicked;
@@ -100,6 +106,29 @@ namespace DCL.Chat.ChatMessages
         public void RefreshVisibleElements()
         {
             loopList.RefreshAllShownItem();
+        }
+
+        public void RefreshItem(int viewModelIndex)
+        {
+            RefreshVisibleElements();
+
+            // // SuperScrollView uses a different index (it includes padding)
+            // int viewIndex = ModelToViewIndex(viewModelIndex);
+            //
+            // // Get the visible item if it exists
+            // LoopListViewItem2 item = loopList.GetShownItemByItemIndex(viewIndex);
+            //
+            // if (item != null)
+            // {
+            //     // If the item is currently visible, just re-run the setup logic on it.
+            //     var itemScript = item.GetComponent<ChatEntryView>();
+            //     var viewModel = viewModels[viewModelIndex];
+            //     itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, /*...*/);
+            // }
+            //
+            // // CRUCIAL: Tell SuperScrollView that the size of this item may have changed.
+            // // It will automatically recalculate the layout and adjust the scroll position.
+            // loopList.SetItemSize(viewIndex, -1); // -1 means "use default prefab size" which forces recalculation.
         }
 
         /// <summary>
@@ -223,8 +252,15 @@ namespace DCL.Chat.ChatMessages
 
                 item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
-                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, !chatMessage.IsSentByOwnUser ? OnProfileClicked : null);
-
+                itemScript.Reset();
+                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
+                    !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, IsTranslationActivated);
+                
+                itemScript.OnTranslateRequested -= HandleTranslateRequest;
+                itemScript.OnRevertRequested -= HandleRevertRequest;
+                itemScript.OnTranslateRequested += HandleTranslateRequest;
+                itemScript.OnRevertRequested += HandleRevertRequest;
+                
                 float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
 
@@ -248,6 +284,16 @@ namespace DCL.Chat.ChatMessages
             return item;
         }
 
+        private void HandleTranslateRequest(string messageId)
+        {
+            OnTranslateMessageRequested?.Invoke(messageId);
+        }
+
+        private void HandleRevertRequest(string messageId)
+        {
+            OnRevertMessageRequested?.Invoke(messageId);
+        }
+        
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
         {
             OnChatContextMenuRequested?.Invoke(itemDataMessage, itemScript);

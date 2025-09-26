@@ -119,5 +119,13 @@
         {
             public const string ENABLED_FEATURES = "feature_flags";
         }
+
+        public static class AutoTranslate
+        {
+            public const string CHOOSE_PREFERRED_LANGUAGE = "choose_preferred_language";
+            public const string TRANSLATE_MESSAGE_MANUALLY = "translate_message_manually";
+            public const string SEE_ORIGINAL_MESSAGE = "see_original_message";
+            public const string SWITCH_AUTOTRANSLATE = "switch_autotranslate";
+        }
     }
 }

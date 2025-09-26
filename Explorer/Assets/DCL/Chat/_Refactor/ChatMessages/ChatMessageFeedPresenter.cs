@@ -5,15 +5,19 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.UI;
+using DCL.Translation;
+using DCL.Translation.Service;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using DCL.UI;
+using DCL.UI.Controls.Configs;
 
 namespace DCL.Chat.ChatMessages
 {
@@ -27,8 +31,14 @@ namespace DCL.Chat.ChatMessages
         private readonly GetMessageHistoryCommand getMessageHistoryCommand;
         private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
         private readonly MarkMessagesAsReadCommand markMessagesAsReadCommand;
+        private readonly ITranslationMemory translationMemory;
+        private readonly ITranslationSettings translationSettings;
+        private readonly TranslateMessageCommand translateMessageCommand;
+        private readonly RevertToOriginalCommand revertToOriginalCommand;
+        private readonly CopyMessageCommand copyMessageCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
         private readonly EventSubscriptionScope scope = new ();
+        private readonly ChatConfig.ChatConfig chatConfig;
 
         private readonly List<ChatMessageViewModel> viewModels = new (500);
 
@@ -53,27 +63,40 @@ namespace DCL.Chat.ChatMessages
         public ChatMessageFeedPresenter(ChatMessageFeedView view,
             IEventBus eventBus,
             IChatHistory chatHistory,
+            ChatConfig.ChatConfig chatConfig,
             CurrentChannelService currentChannelService,
             ChatContextMenuService contextMenuService,
+            ITranslationMemory translationMemory,
+            ITranslationSettings translationSettings,
             GetMessageHistoryCommand getMessageHistoryCommand,
             CreateMessageViewModelCommand createMessageViewModelCommand,
-            MarkMessagesAsReadCommand markMessagesAsReadCommand)
+            MarkMessagesAsReadCommand markMessagesAsReadCommand,
+            TranslateMessageCommand translateMessageCommand,
+            RevertToOriginalCommand revertToOriginalCommand,
+            CopyMessageCommand copyMessageCommand)
         {
             this.view = view;
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
+            this.chatConfig = chatConfig;
             this.currentChannelService = currentChannelService;
             this.contextMenuService = contextMenuService;
+            this.translationMemory = translationMemory;
+            this.translationSettings = translationSettings;
             this.getMessageHistoryCommand = getMessageHistoryCommand;
             this.createMessageViewModelCommand = createMessageViewModelCommand;
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
+            this.translateMessageCommand = translateMessageCommand;
+            this.revertToOriginalCommand = revertToOriginalCommand;
+            this.copyMessageCommand = copyMessageCommand;
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
-            scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
-            view.Initialize(viewModels);
+            view.Initialize(viewModels, translationSettings.IsTranslationFeatureActive);
+            view.OnTranslateMessageRequested += OnTranslateMessage;
+            view.OnRevertMessageRequested += OnRevertMessage;
         }
 
         private void OnChatReset(ChatEvents.ChatResetEvent obj)
@@ -92,12 +115,72 @@ namespace DCL.Chat.ChatMessages
             isFocused = false;
         }
 
+        private void OnTranslationSettingsChanged(string eventId)
+        {
+            
+        }
+
+        private void RevertAllTranslatedMessagesInView()
+        {
+            foreach (var viewModel in viewModels)
+            {
+                if (viewModel.IsTranslated)
+                {
+                    revertToOriginalCommand.Execute(viewModel.Message.MessageId);
+                }
+            }
+        }
+
+        private void RestoreAllAvailableTranslationsInView()
+        {
+            // Iterate through all the view models currently loaded in the feed
+            foreach (var viewModel in viewModels)
+            {
+                // Check the persistent memory for a successful translation
+                if (translationMemory.TryGet(viewModel.Message.MessageId, out var translation) && !string.IsNullOrEmpty(translation.TranslatedBody))
+                {
+                    // Update the persistent state in memory back to Success.
+                    // This is crucial for consistency if the user toggles again.
+                    translationMemory.UpdateState(viewModel.Message.MessageId, TranslationState.Success);
+
+                    // Now, trigger the UI update by publishing the standard "reverted" event's opposite.
+                    // We can reuse the MessageTranslated event to trigger the refresh.
+                    eventBus.Publish(new TranslationEvents.MessageTranslated
+                    {
+                        MessageId = viewModel.Message.MessageId
+                    });
+                }
+            }
+        }
+
         public void Dispose()
         {
             scrollToBottomPresenter.Dispose();
             loadChannelCts.SafeCancelAndDispose();
+
+            view.OnTranslateMessageRequested -= OnTranslateMessage;
+            view.OnRevertMessageRequested -= OnRevertMessage;
         }
 
+        private void OnTranslateMessage(string messageId)
+        {
+            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            if (viewModel == null || viewModel.TranslationState == TranslationState.Pending) return;
+
+            // No need to check state here, the view already determined this is the correct action
+            translateMessageCommand.Execute(viewModel.Message.MessageId, viewModel.Message.Message);
+        }
+
+        // NEW: Handler for the revert request
+        private void OnRevertMessage(string messageId)
+        {
+            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            if (viewModel == null) return;
+
+            // No need to check state here
+            revertToOriginalCommand.Execute(viewModel.Message.MessageId);
+        }
+        
         private void OnScrollPositionChanged(Vector2 _)
         {
             if (!separatorIsVisible)
@@ -152,6 +235,12 @@ namespace DCL.Chat.ChatMessages
             RemoveNewMessagesSeparator();
 
             newMessageViewModel.PendingToAnimate = true;
+            if (translationMemory.TryGet(addedMessage.MessageId, out var translation))
+            {
+                newMessageViewModel.TranslationState = translation.State;
+                newMessageViewModel.TranslatedText = translation.TranslatedBody;
+            }
+            
             viewModels.Insert(index, newMessageViewModel);
 
             // Handle separator logic (this is unrelated to the button)
@@ -207,12 +296,58 @@ namespace DCL.Chat.ChatMessages
             contextMenuService.ShowUserProfileMenuAsync(request).Forget();
         }
 
-        private void OnChatContextMenuRequested(string message, ChatEntryView? chatEntry)
+        private void OnChatContextMenuRequested(string messageId, ChatEntryView? chatEntry)
         {
-            var request = new ChatEntryMenuPopupData(chatEntry.messageBubbleElement.PopupPosition,
-                message, chatEntry.messageBubbleElement.HideOptionsButton);
+            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            if (viewModel == null) return;
 
-            contextMenuService.ShowChatOptionsAsync(request).Forget();
+            var contextMenu = new GenericContextMenu(
+                chatConfig.ContextMenuWidth,
+                chatConfig.ContextMenuOffset,
+                chatConfig.VerticalPadding,
+                chatConfig.ElementsSpacing,
+                anchorPoint: ContextMenuOpenDirection.TOP_LEFT);
+
+            string textToCopy = viewModel.IsTranslated ? viewModel.TranslatedText : viewModel.Message.Message;
+            contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                chatConfig.ChatContextMenuCopyText,
+                chatConfig.CopyChatMessageContextMenuIcon,
+                () => copyMessageCommand.Execute(this, textToCopy)
+            ));
+
+            if (translationSettings.IsTranslationFeatureActive())
+            {
+                if (viewModel.IsTranslated)
+                {
+                    contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                        chatConfig.ChatContextMenuSeeOriginalText,
+                        chatConfig.SeeOriginalChatMessageContextMenuIcon,
+                        () => revertToOriginalCommand.Execute(viewModel.Message.MessageId)
+                    ));
+                }
+                else
+                {
+                    contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                        chatConfig.ChatContextMenuTranslateText,
+                        chatConfig.TranslateChatMessageContextMenuIcon,
+                        () => translateMessageCommand.Execute(viewModel.Message.MessageId,
+                            viewModel.Message.Message)
+                    ));
+                }
+            }
+            else
+            {
+                //contextMenu.verticalLayoutPadding
+            }
+
+            var request = new ShowContextMenuRequest
+            {
+                MenuConfiguration = contextMenu, Position = chatEntry.messageBubbleElement.PopupPosition
+            };
+
+            contextMenuService
+                .ShowCommunityContextMenuAsync(request)
+                .Forget();
         }
 
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
@@ -221,9 +356,52 @@ namespace DCL.Chat.ChatMessages
             UpdateChannelMessages();
         }
 
+        private void UpdateViewModelAndRefreshView(string messageId)
+        {
+            // Find the ViewModel in our current list
+            var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
+            if (viewModel == null) return;
+
+            // Get the latest state from the memory service
+            if (translationMemory.TryGet(messageId, out var translation))
+            {
+                viewModel.TranslationState = translation.State;
+                viewModel.TranslatedText = translation.TranslatedBody;
+                // You could also add `viewModel.TranslationError = translation.Error;`
+            }
+
+            // Find the index of the ViewModel in the list
+            int itemIndex = viewModels.IndexOf(viewModel);
+            if (itemIndex == -1) return;
+
+            // Tell the view to refresh this specific item
+            view.RefreshItem(itemIndex);
+        }
+
+        private void OnMessageTranslationRequested(TranslationEvents.MessageTranslationRequested evt)
+        {
+            UpdateViewModelAndRefreshView(evt.MessageId);
+        }
+
+        private void OnMessageTranslated(TranslationEvents.MessageTranslated evt)
+        {
+            UpdateViewModelAndRefreshView(evt.MessageId);
+        }
+
+        private void OnMessageTranslationFailed(TranslationEvents.MessageTranslationFailed evt)
+        {
+            UpdateViewModelAndRefreshView(evt.MessageId);
+        }
+
+        private void OnMessageTranslationReverted(TranslationEvents.MessageTranslationReverted evt)
+        {
+            UpdateViewModelAndRefreshView(evt.MessageId);
+        }
+        
         private void UpdateChannelMessages()
         {
-            if (currentChannelService.CurrentChannel == null)
+            if (currentChannelService.CurrentChannel == null ||
+                currentChannelService.UserStateService == null)
             {
                 ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but no current channel is set. Aborting.");
                 return;
@@ -295,7 +473,13 @@ namespace DCL.Chat.ChatMessages
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
             scope.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnUserStatusUpdated));
-
+            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationRequested>(OnMessageTranslationRequested));
+            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslated>(OnMessageTranslated));
+            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationFailed>(OnMessageTranslationFailed));
+            scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationReverted>(OnMessageTranslationReverted));
+            scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
+            scope.Add(eventBus.Subscribe<string>(OnTranslationSettingsChanged));
+            
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
             chatHistory.MessageAdded += OnMessageAddedToChatHistory;
         }

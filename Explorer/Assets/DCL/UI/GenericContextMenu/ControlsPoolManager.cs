@@ -31,6 +31,7 @@ namespace DCL.UI
             GenericContextMenuButtonWithStringDelegateView buttonWithDelegatePrefab,
             GenericContextMenuTextView textPrefab,
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab,
+            GenericContextMenuToggleWithIconAndCheckView toggleWithTitleIconAndCheckPrefab,
             GenericContextMenuSubMenuButtonView subMenuButtonPrefab,
             GenericContextMenuSimpleButtonView simpleButtonPrefab,
             GenericContextMenuScrollableButtonListView buttonListPrefab)
@@ -46,6 +47,7 @@ namespace DCL.UI
             CreateObjectPool(buttonPrefab);
             CreateObjectPool(togglePrefab);
             CreateObjectPool(toggleWithIconPrefab);
+            CreateObjectPool(toggleWithTitleIconAndCheckPrefab);
             CreateObjectPool(() =>
             {
                 GenericContextMenuUserProfileView profileView = Object.Instantiate(userProfilePrefab, controlsParent);
@@ -111,6 +113,7 @@ namespace DCL.UI
                                                             ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
                                                             SimpleButtonContextMenuControlSettings simpleButtonSettings => GetSimpleButton(simpleButtonSettings),
                                                             ToggleWithIconContextMenuControlSettings toggleWithIconSettings => GetToggleWithIcon(toggleWithIconSettings),
+                ToggleWithIconAndCheckContextMenuControlSettings toggleWithTitleAndIconSettings => GetToggleWithTitleIcon(toggleWithTitleAndIconSettings),
                                                             ToggleWithCheckContextMenuControlSettings toggleWithCheckSettings => GetToggleWithCheck(toggleWithCheckSettings),
                                                             ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
                                                             UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
@@ -211,6 +214,14 @@ namespace DCL.UI
         private GenericContextMenuComponentBase GetToggleWithIcon(ToggleWithIconContextMenuControlSettings settings)
         {
             GenericContextMenuToggleWithIconView view = GetPoolFromRegistry<GenericContextMenuToggleWithIconView>().Get();
+            view.Configure(settings, settings.initialValue);
+
+            return view;
+        }
+
+        private GenericContextMenuComponentBase GetToggleWithTitleIcon(ToggleWithIconAndCheckContextMenuControlSettings settings)
+        {
+            var view = GetPoolFromRegistry<GenericContextMenuToggleWithIconAndCheckView>().Get();
             view.Configure(settings, settings.initialValue);
 
             return view;

@@ -4,6 +4,7 @@ using DG.Tweening;
 using System;
 using System.Globalization;
 using DCL.Chat.ChatViewModels;
+using DCL.Translation;
 using DCL.Utilities;
 using TMPro;
 using UnityEngine;
@@ -22,6 +23,10 @@ namespace DCL.Chat
 
         public ChatEntryClickedDelegate? ChatEntryClicked;
         private Action<string, ChatEntryView>? onMessageContextMenuClicked;
+        private Func<bool> IsTranslationActivated;
+        public event Action<string> OnTranslateRequested;
+        public event Action<string> OnRevertRequested;
+        private bool isPointerInside;
 
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
@@ -41,13 +46,36 @@ namespace DCL.Chat
         private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel.WithColor>? profileSubscription;
 
         private ChatMessage chatMessage;
+        private ChatMessageViewModel currentViewModel;
         private readonly Vector3[] cornersCache = new Vector3[4];
 
         private void Awake()
         {
             profileButton.onClick.AddListener(OnProfileButtonClicked);
             usernameElement.UserNameClicked += OnUsernameClicked;
-            messageBubbleElement.messageOptionsButton.onClick.AddListener(() => onMessageContextMenuClicked?.Invoke(chatMessage.Message, this));
+
+            messageBubbleElement.OnPointerEnterEvent += HandlePointerEnter;
+            messageBubbleElement.OnPointerExitEvent += HandlePointerExit;
+            
+            messageBubbleElement.messageOptionsButton.onClick.AddListener(() =>
+            {
+                if (currentViewModel != null)
+                {
+                    onMessageContextMenuClicked?.Invoke(currentViewModel.Message.MessageId, this);
+                }
+            });
+
+            messageBubbleElement.OnTranslateRequest += () =>
+            {
+                if (currentViewModel != null)
+                    OnTranslateRequested?.Invoke(currentViewModel.Message.MessageId);
+            };
+
+            messageBubbleElement.OnRevertRequest += () =>
+            {
+                if (currentViewModel != null)
+                    OnRevertRequested?.Invoke(currentViewModel.Message.MessageId);
+            };
         }
 
         public void AnimateChatEntry()
@@ -81,10 +109,25 @@ namespace DCL.Chat
             else
                 return date.ToString("ddd, d MMM, yyyy", CultureInfo.InvariantCulture);
         }
-
-        public void SetItemData(ChatMessageViewModel viewModel, Action<string, ChatEntryView> onMessageContextMenuClicked, ChatEntryClickedDelegate? onProfileContextMenuClicked)
+        
+        public void SetItemData(ChatMessageViewModel viewModel,
+            Action<string, ChatEntryView> onMessageContextMenuClicked,
+            ChatEntryClickedDelegate? onProfileContextMenuClicked,
+            Func<bool> IsTranslationActivated)
         {
-            SetItemData(viewModel.Message, viewModel.ShowDateDivider);
+            currentViewModel = viewModel;
+            this.IsTranslationActivated = IsTranslationActivated;
+            chatMessage = viewModel.Message;
+            usernameElement.SetUsername(chatMessage.SenderValidatedName, chatMessage.SenderWalletId);
+            messageBubbleElement.SetMessageData(viewModel.DisplayText, chatMessage, viewModel.TranslationState);
+
+            UpdateTranslationViewVisibility();
+
+            dateDividerElement.gameObject.SetActive(viewModel.ShowDateDivider);
+            if (viewModel.ShowDateDivider)
+                dateDividerText.text = GetDateRepresentation(chatMessage.SentTimestamp!.Value.Date);
+
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
 
             this.onMessageContextMenuClicked = onMessageContextMenuClicked;
             ChatEntryClicked = onProfileContextMenuClicked;
@@ -136,6 +179,90 @@ namespace DCL.Chat
         public void SetUsernameColor(Color newUserNameColor)
         {
             usernameElement.userName.color = newUserNameColor;
+        }
+
+        private void HandlePointerEnter()
+        {
+            isPointerInside = true;
+            UpdateTranslationViewVisibility();
+        }
+
+        private void HandlePointerExit()
+        {
+            isPointerInside = false;
+            UpdateTranslationViewVisibility();
+        }
+
+
+        public void Reset()
+        {
+            if (!isPointerInside)
+                messageBubbleElement.Reset();
+        }
+
+        // private void UpdateTranslationViewVisibility()
+        // {
+        //     if (currentViewModel == null ||
+        //         currentViewModel.Message.IsSystemMessage ||
+        //         currentViewModel.Message.IsSentByOwnUser ||
+        //         !IsTranslationActivated())
+        //     {
+        //         messageBubbleElement.SetTranslationViewVisibility(false);
+        //         return;
+        //     }
+        //
+        //     bool isVisible =
+        //         currentViewModel.TranslationState == TranslationState.Success ||
+        //         currentViewModel.TranslationState == TranslationState.Pending ||
+        //         currentViewModel.TranslationState == TranslationState.Failed ||
+        //         (isPointerInside && (currentViewModel.TranslationState == TranslationState.Original || 
+        //                              currentViewModel.TranslationState == TranslationState.Failed));
+        //
+        //     messageBubbleElement.SetTranslationViewVisibility(isVisible);
+        // }
+        
+        private void UpdateTranslationViewVisibility()
+        {
+            // Handle universal conditions where the view should always be hidden ---
+            if (currentViewModel == null ||
+                currentViewModel.Message.IsSystemMessage ||
+                !IsTranslationActivated())
+            {
+                messageBubbleElement.SetTranslationViewVisibility(false);
+                return;
+            }
+
+            // Handle the special case for the user's own messages ---
+            if (currentViewModel.Message.IsSentByOwnUser)
+            {
+                // For our own messages, we ONLY want to show the translation view
+                // if the translation process has already been started (via the context menu).
+                bool isTranslationInProgressOrFinished =
+                    currentViewModel.TranslationState == TranslationState.Pending ||
+                    currentViewModel.TranslationState == TranslationState.Success ||
+                    currentViewModel.TranslationState == TranslationState.Failed;
+
+                messageBubbleElement.SetTranslationViewVisibility(isTranslationInProgressOrFinished);
+                return; // Logic for own messages is complete.
+            }
+
+            // If not an own message, use the original logic for other users' messages
+            bool isVisibleForOthers =
+                currentViewModel.TranslationState == TranslationState.Success ||
+                currentViewModel.TranslationState == TranslationState.Pending ||
+                currentViewModel.TranslationState == TranslationState.Failed ||
+                (isPointerInside && currentViewModel.TranslationState == TranslationState.Original);
+
+            messageBubbleElement.SetTranslationViewVisibility(isVisibleForOthers);
+        }
+
+        private void OnDestroy()
+        {
+            if (messageBubbleElement != null)
+            {
+                messageBubbleElement.OnPointerEnterEvent -= HandlePointerEnter;
+                messageBubbleElement.OnPointerExitEvent -= HandlePointerExit;
+            }
         }
     }
 }

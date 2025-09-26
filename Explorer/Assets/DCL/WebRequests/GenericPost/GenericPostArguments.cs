@@ -12,6 +12,9 @@ namespace DCL.WebRequests
         public readonly string PostData;
         public readonly string ContentType;
 
+        private const string JSON = "application/json";
+        private const string JSON_UTF8 = "application/json; charset=utf-8";
+        
         private GenericPostArguments(List<IMultipartFormSection> multipartFormSections)
         {
             MultipartFormSections = multipartFormSections;
@@ -52,6 +55,16 @@ namespace DCL.WebRequests
 
         public static GenericPostArguments CreateJsonOrDefault(string? postData) =>
             postData == null ? Empty : CreateJson(postData);
+
+        public static GenericPostArguments CreateJsonUtf8(string json)
+        {
+            return new GenericPostArguments (json, JSON_UTF8);
+        }
+
+        public static GenericPostArguments CreateJsonUtf8(object payload)
+        {
+            return new GenericPostArguments (JsonUtility.ToJson(payload), JSON_UTF8);
+        }
 
         public override string ToString() =>
             "GenericPostArguments:"

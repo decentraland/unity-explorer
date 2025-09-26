@@ -1,3 +1,4 @@
+using System;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System.Text.RegularExpressions;
@@ -44,7 +45,10 @@ namespace DCL.Chat.History
                 if (string.IsNullOrEmpty(usernameOverride))
                     usernameOverride = ownProfile?.ValidatedName ?? string.Empty;
 
+                // NOTE: we are adding a new GUID here because currently we don't get
+                // NOTE: unique message IDs from the backend for our own messages.
                 return new ChatMessage(
+                    Guid.NewGuid().ToString(),
                     message,
                     usernameOverride,
                     senderWalletAddress,
@@ -68,6 +72,7 @@ namespace DCL.Chat.History
                 isMention = IsMention(message, ownProfile.MentionName);
 
             return new ChatMessage(
+                Guid.NewGuid().ToString(),
                 message,
                 usernameOverride,
                 senderWalletAddress,

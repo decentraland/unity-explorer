@@ -12,4 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adcc1a6f666d445f9cfe043e29b859dc, type: 3}
   m_Name: ChatSettings
   m_EditorClassIdentifier: 
-  chatSettings: 0
+  chatAudioSettings: 0
+  chatPrivacySettings: 1
+  chatBubblesVisibilitySettings: 2
+  chatPreferredTranslationSettings: 0
+  CHAT_TRANSLATION_SETTINGS_HOVER_TOOLTIP: Chat messages will be translated into
+    the language you select in this setting.

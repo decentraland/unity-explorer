@@ -454,6 +454,7 @@ namespace DCL.Chat
             // when calculating the space a message occupies in the feed, so an extra space has to be added between this message and the previous one, when the divider is present.
             itemView.GetComponent<LoopListViewItem2>().Padding = wasSentInDifferentDate ? itemView.dateDividerElement.sizeDelta.y
                                                                                         : defaultItemPadding;
+
             itemView.SetItemData(itemData, wasSentInDifferentDate);
 
             bool isGreyedOut = !itemData.IsSystemMessage && !itemData.IsSentByOwnUser && onlineUserAddresses != null && !onlineUserAddresses!.Contains(itemData.SenderWalletAddress);

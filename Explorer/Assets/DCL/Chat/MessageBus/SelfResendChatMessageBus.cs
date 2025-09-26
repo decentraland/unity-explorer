@@ -36,9 +36,9 @@ namespace DCL.Chat.MessageBus
             MessageAdded?.Invoke(channelId, channelType, message);
         }
 
-        public void Send(ChatChannel channel, string message, string origin, string topic)
+        public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp, string topic = "")
         {
-            this.origin.Send(channel, message, origin, topic);
+            this.origin.Send(channel, message, origin, timestamp, topic);
             SendSelf(channel, message, topic);
         }
 

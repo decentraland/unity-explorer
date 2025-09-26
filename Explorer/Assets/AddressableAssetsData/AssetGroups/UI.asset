@@ -70,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1801d33e8e688a74ea5dd704a91cfac1
+    m_Address: NotoSansSC-SemiBold SDF
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19167fed20773434b8bb06d4ca81f60c
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/GenericUserProfileContextMenuSettings.asset
     m_ReadOnly: 0
@@ -220,6 +225,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 404f87890895f5f4bb7f733c75373620
+    m_Address: Inter-SemiBold SDF (Cyr)
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4359e32789e7f914c8e7e12d16286b76
     m_Address: ChatConfig.asset
     m_ReadOnly: 0
@@ -262,6 +272,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4b896bc1397444f00a2b45725af2b263
     m_Address: NotificationIconTypesSO
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4cc5b9c92b8be214dbbd4f1f502110de
+    m_Address: NotoSansKR-SemiBold SDF
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -352,6 +367,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 65104014709704f75838386ed5173c45
     m_Address: Assets/DCL/MapRenderer/Addressables/SearchResultMarkerObject.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65718726e8675f3438790051aed58b6a
+    m_Address: Inter-SemiBold SDF (Gr)
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -467,6 +487,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 809b68e5ce75da1429e55ffcc44fa23b
     m_Address: ExternalUrlPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82f86e6c95d775f4e8488447b6885323
+    m_Address: NotoSansJP-SemiBold SDF
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -647,6 +672,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: dcc6085d51c3e443f82d4d58e0087519
     m_Address: Assets/DCL/Friends/Prefabs/FriendRequest.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: de88bd0dde8feda4393664330ac8afb4
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithTitleIconAndCheck.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

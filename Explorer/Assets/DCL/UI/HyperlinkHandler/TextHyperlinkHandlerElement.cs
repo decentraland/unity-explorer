@@ -164,28 +164,62 @@ namespace DCL.UI.HyperlinkHandler
             await ViewDependencies.GlobalUIViews.ShowChangeRealmPromptAsync(message, realm, ct);
         }
 
+        // private void HighlightCurrentLink(int linkIndex)
+        // {
+        //     lastHighlightedIndex = linkIndex;
+        //     isHighlighting = true;
+        //     ViewDependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
+        //
+        //     TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
+        //
+        //     int startIndex = linkInfo.linkIdFirstCharacterIndex + linkInfo.linkIdLength + 1;
+        //     int endIndex = startIndex + linkInfo.linkTextLength;
+        //
+        //     originalText = textComponent.text;
+        //     stringBuilder.Clear();
+        //
+        //     stringBuilder.Append(originalText.AsSpan(0, startIndex))
+        //                  .Append(LINK_SELECTED_OPENING_STYLE)
+        //                  .Append(originalText.AsSpan(startIndex, linkInfo.linkTextLength))
+        //                  .Append(LINK_SELECTED_CLOSING_STYLE)
+        //                  .Append(originalText.AsSpan(endIndex));
+        //
+        //     textComponent.text = stringBuilder.ToString();
+        // }
+        
         private void HighlightCurrentLink(int linkIndex)
         {
             lastHighlightedIndex = linkIndex;
             isHighlighting = true;
             ViewDependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
 
-            TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
+            // Ensure textInfo is up-to-date
+            textComponent.ForceMeshUpdate();
 
-            int startIndex = linkInfo.linkIdFirstCharacterIndex + linkInfo.linkIdLength + 1;
-            int endIndex = startIndex + linkInfo.linkTextLength;
+            TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
+            var chars = textComponent.textInfo.characterInfo;
+
+            // Start/end in CHARACTER space
+            int startChar = linkInfo.linkTextfirstCharacterIndex;
+            int endCharExclusive = startChar + linkInfo.linkTextLength;
+
+            // Map to STRING (UTF-16) indices — safe with emoji, RTL, whatever
+            int start = chars[startChar].index;
+            int end = chars[endCharExclusive - 1].index + chars[endCharExclusive - 1].stringLength;
 
             originalText = textComponent.text;
             stringBuilder.Clear();
 
-            stringBuilder.Append(originalText.AsSpan(0, startIndex))
-                         .Append(LINK_SELECTED_OPENING_STYLE)
-                         .Append(originalText.AsSpan(startIndex, linkInfo.linkTextLength))
-                         .Append(LINK_SELECTED_CLOSING_STYLE)
-                         .Append(originalText.AsSpan(endIndex));
+            // original[0..start] + <u> + original[start..end] + </u> + original[end..]
+            stringBuilder.Append(originalText, 0, start)
+                .Append(LINK_SELECTED_OPENING_STYLE)
+                .Append(originalText, start, end - start)
+                .Append(LINK_SELECTED_CLOSING_STYLE)
+                .Append(originalText, end, originalText.Length - end);
 
             textComponent.text = stringBuilder.ToString();
         }
+
 
         private void ResetPreviousHighlight()
         {

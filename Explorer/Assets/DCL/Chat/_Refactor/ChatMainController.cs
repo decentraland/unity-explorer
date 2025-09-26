@@ -15,6 +15,8 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Translation;
+using DCL.Translation.Service;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
@@ -48,6 +50,8 @@ namespace DCL.Chat
         private EventSubscriptionScope uiScope;
         private CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
 
+        private readonly ITranslationSettings translationSettings;
+        private readonly ITranslationMemory translationMemory;
         private readonly HashSet<IBlocksChat> chatBlockers = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
@@ -75,6 +79,8 @@ namespace DCL.Chat
             ChatClickDetectionService chatClickDetectionService,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             CommunitiesDataProvider communityDataProvider,
+            ITranslationSettings translationSettings,
+            ITranslationMemory translationMemory,
             ITextFormatter textFormatter) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
@@ -88,7 +94,9 @@ namespace DCL.Chat
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
             this.chatContextMenuService = chatContextMenuService;
+            this.translationSettings = translationSettings;
             this.communityDataService = communityDataService;
+            this.translationMemory = translationMemory;
             this.chatClickDetectionService = chatClickDetectionService;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communityDataProvider;
@@ -126,12 +134,14 @@ namespace DCL.Chat
                 currentChannelService,
                 chatMemberListService,
                 chatContextMenuService,
+                translationSettings,
                 commandRegistry.GetTitlebarViewModel,
                 commandRegistry.GetCommunityThumbnail,
                 commandRegistry.DeleteChatHistory,
                 voiceChatOrchestrator,
                 chatEventBus,
-                commandRegistry.GetUserCallStatusCommand);
+                commandRegistry.GetUserCallStatusCommand,
+                commandRegistry.ToggleAutoTranslateCommand);
 
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
@@ -149,11 +159,17 @@ namespace DCL.Chat
             var messageFeedPresenter = new ChatMessageFeedPresenter(viewInstance.MessageFeedView,
                 eventBus,
                 chatHistory,
+                chatConfig,
                 currentChannelService,
                 chatContextMenuService,
+                translationMemory,
+                translationSettings,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,
-                commandRegistry.MarkMessagesAsRead);
+                commandRegistry.MarkMessagesAsRead,
+                commandRegistry.TranslateMessageCommand,
+                commandRegistry.RevertToOriginalCommand,
+                commandRegistry.CopyMessageCommand);
 
             var inputPresenter = new ChatInputPresenter(
                 viewInstance.InputView,
