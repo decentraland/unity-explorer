@@ -433,6 +433,7 @@ namespace Global.Dynamic
 
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
+            bool includeBannedUsersFromScene = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor;
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
@@ -539,7 +540,9 @@ namespace Global.Dynamic
                 clipboard,
                 bootstrapContainer.DecentralandUrlsSource,
                 chatMessagesBus,
-                reloadSceneChatCommand
+                reloadSceneChatCommand,
+                roomHub,
+                includeBannedUsersFromScene
             );
 
             var coreBackpackEventBus = new BackpackEventBus();
@@ -661,6 +664,8 @@ namespace Global.Dynamic
             var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
+
+            var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -905,6 +910,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
+                new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

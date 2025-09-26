@@ -58,5 +58,8 @@ namespace DCL.NotificationsBus.NotificationTypes
         COMMUNITY_DELETED_CONTENT_VIOLATION,
 
         COMMUNITY_VOICE_CHAT_STARTED,
+
+        USER_BANNED_FROM_SCENE,
+        USER_UNBANNED_FROM_SCENE,
     }
 }

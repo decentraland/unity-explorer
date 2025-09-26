@@ -77,6 +77,15 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal MinimapPinMarkerObject destinationPinMarker { get; private set; }
 
+        [field: SerializeField]
+        internal GameObject nonBannedContainer { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject bannedContainer { get; private set; }
+
+        [field: SerializeField]
+        internal ShowTooltipOnHoverElement bannedTooltipWarning { get; private set; }
+
         [SerializeField] internal ContextMenuConfig contextMenuConfig;
 
         private void Start()

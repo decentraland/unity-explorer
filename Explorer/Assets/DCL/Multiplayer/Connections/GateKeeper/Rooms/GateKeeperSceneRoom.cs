@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
+using LiveKit.Proto;
 using System;
 using System.Threading;
 
@@ -18,17 +19,26 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public Activatable(GateKeeperSceneRoom origin, bool initialState = true) : base(origin, initialState)
             {
                 this.origin = origin;
+                origin.CurrentSceneRoomConnected += () => CurrentSceneRoomConnected?.Invoke();
+                origin.CurrentSceneRoomDisconnected += () => CurrentSceneRoomDisconnected?.Invoke();
+                origin.CurrentSceneRoomForbiddenAccess += () => CurrentSceneRoomForbiddenAccess?.Invoke();
             }
 
             public bool IsSceneConnected(string? sceneId) =>
                 origin.IsSceneConnected(sceneId);
 
+            public event Action? CurrentSceneRoomConnected;
+            public event Action? CurrentSceneRoomDisconnected;
+            public event Action? CurrentSceneRoomForbiddenAccess;
             public MetaData? ConnectedScene => origin.ConnectedScene;
         }
 
         private readonly IWebRequestController webRequests;
         private readonly GateKeeperSceneRoomOptions options;
 
+        private event Action? CurrentSceneRoomConnected;
+        private event Action? CurrentSceneRoomDisconnected;
+        private event Action? CurrentSceneRoomForbiddenAccess;
         private MetaData? currentMetaData;
 
         public MetaData? ConnectedScene => currentMetaData;
@@ -55,6 +65,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             // We need to reset the metadata, so we can later re-connect to the scene on RunConnectCycleStepAsync.ProcessMetaDataAsync
             // Otherwise flows like the logout->login will not work due to metadata not changing
             currentMetaData = null;
+
+            CurrentSceneRoomDisconnected?.Invoke();
         }
 
         protected override RoomSelection SelectValidRoom() =>
@@ -82,6 +94,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 if (meta.sceneId == null)
                 {
                     await DisconnectCurrentRoomAsync(true, token);
+                    CurrentSceneRoomDisconnected?.Invoke();
 
                     // After disconnection we need to wait for metadata to change
                     waitForReconnectionRequiredTask = WaitForMetadataIsDirtyAsync(token);
@@ -96,15 +109,20 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 }
                 else
                 {
-                    if (!meta.Equals(currentMetaData.GetValueOrDefault()))
+                    if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState == ConnectionState.ConnDisconnected)
                     {
                         string connectionString = await ConnectionStringAsync(meta, token);
+
+                        if (Room().Info.ConnectionState == ConnectionState.ConnDisconnected)
+                            currentMetaData = null;
 
                         // if the player returns to the previous scene but the new room has been connected, the previous connection should be preserved
                         // and the new connection should be discarded
                         RoomSelection roomSelection = await TryConnectToRoomAsync(
                             connectionString,
                             token);
+
+                        CurrentSceneRoomConnected?.Invoke();
 
                         if (roomSelection == RoomSelection.NEW)
                         {
@@ -118,6 +136,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                     async UniTask WaitForReconnectionRequiredAsync(CancellationToken token)
                     {
                         while (CurrentState() is IConnectiveRoom.State.Running
+                               && Room().Info.ConnectionState == ConnectionState.ConnConnected
                                && !options.SceneRoomMetaDataSource.MetadataIsDirty)
                             await UniTask.Yield(token);
                     }
@@ -127,6 +146,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+                if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
+                    CurrentSceneRoomForbiddenAccess?.Invoke();
+
                 // if we don't catch an exception, any failure leads to the loop being stopped
                 ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Exception occured in {nameof(CycleStepAsync)} when {meta} was being processed: {e}");
 

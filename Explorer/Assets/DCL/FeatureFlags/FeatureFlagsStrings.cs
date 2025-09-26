@@ -43,6 +43,7 @@ namespace DCL.FeatureFlags
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
+        public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
     }
 
     public enum FeatureFlag
