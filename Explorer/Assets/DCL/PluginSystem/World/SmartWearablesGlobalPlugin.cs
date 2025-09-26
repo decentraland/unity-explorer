@@ -12,15 +12,15 @@ namespace DCL.PluginSystem.SmartWearables
     public class SmartWearablesGlobalPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly WearableStorage wearableStorage;
-        private readonly IBackpackSharedAPI backpackSharedAPI;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly IScenesCache scenesCache;
         private readonly SmartWearableCache smartWearableCache;
 
-        public SmartWearablesGlobalPlugin(WearableStorage wearableStorage, IBackpackSharedAPI backpackSharedAPI, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache, SmartWearableCache smartWearableCache)
+        public SmartWearablesGlobalPlugin(WearableStorage wearableStorage, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache, SmartWearableCache smartWearableCache)
         {
             this.wearableStorage = wearableStorage;
-            this.backpackSharedAPI = backpackSharedAPI;
+            this.backpackEventBus = backpackEventBus;
             this.portableExperiencesController = portableExperiencesController;
             this.scenesCache = scenesCache;
             this.smartWearableCache = smartWearableCache;
@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.SmartWearables
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            SmartWearableSystem.InjectToWorld(ref builder, wearableStorage, smartWearableCache, backpackSharedAPI, portableExperiencesController, scenesCache);
+            SmartWearableSystem.InjectToWorld(ref builder, wearableStorage, smartWearableCache, backpackEventBus, portableExperiencesController, scenesCache);
         }
     }
 }

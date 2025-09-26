@@ -46,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
-        private readonly IBackpackSharedAPI backpackSharedAPI;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
@@ -81,7 +80,6 @@ namespace DCL.PluginSystem.Global
             List<string> forceRender,
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
-            IBackpackSharedAPI backpackSharedAPI,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
             IInputBlock inputBlock,
@@ -109,7 +107,6 @@ namespace DCL.PluginSystem.Global
             this.forceRender = forceRender;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.backpackEventBus = backpackEventBus;
-            this.backpackSharedAPI = backpackSharedAPI;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
             this.cursor = cursor;
@@ -187,10 +184,23 @@ namespace DCL.PluginSystem.Global
             ObjectPool<BackpackItemView>? gridPool = await BackpackGridController.InitialiseAssetsAsync(assetsProvisioner, avatarView.backpackGridView, ct);
 
             var gridController = new BackpackGridController(
-                avatarView.backpackGridView, backpackCommandBus, backpackEventBus, backpackSharedAPI,
-                rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                equippedWearables, sortController, pageButtonView, gridPool, thumbnailProvider,
-                colorToggle, hairColors, eyesColors, bodyshapeColors, wearablesProvider, webBrowser,
+                avatarView.backpackGridView,
+                backpackCommandBus,
+                backpackEventBus,
+                rarityBackgroundsMapping,
+                rarityColorMappings,
+                categoryIconsMapping,
+                equippedWearables,
+                sortController,
+                pageButtonView,
+                gridPool,
+                thumbnailProvider,
+                colorToggle,
+                hairColors,
+                eyesColors,
+                bodyshapeColors,
+                wearablesProvider,
+                webBrowser,
                 smartWearableCache
             );
 

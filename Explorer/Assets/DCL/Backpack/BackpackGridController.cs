@@ -29,7 +29,6 @@ namespace DCL.Backpack
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
         private readonly IBackpackEventBus eventBus;
-        private readonly IBackpackSharedAPI backpackSharedAPI;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
@@ -59,7 +58,6 @@ namespace DCL.Backpack
             BackpackGridView view,
             BackpackCommandBus commandBus,
             IBackpackEventBus eventBus,
-            IBackpackSharedAPI backpackSharedAPI,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -79,7 +77,6 @@ namespace DCL.Backpack
             this.view = view;
             this.commandBus = commandBus;
             this.eventBus = eventBus;
-            this.backpackSharedAPI = backpackSharedAPI;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
@@ -204,17 +201,11 @@ namespace DCL.Backpack
             }
         }
 
-        private void EquipItem(string itemId)
-        {
+        private void EquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true));
-            backpackSharedAPI.SendWearableEquipped(itemId, true);
-        }
 
-        private void UnEquipItem(string itemId)
-        {
+        private void UnEquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));
-            backpackSharedAPI.SendWearableUnEquipped(itemId);
-        }
 
         private void OnFilterCategory(string category)
         {

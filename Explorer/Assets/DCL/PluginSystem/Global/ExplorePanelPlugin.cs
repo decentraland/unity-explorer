@@ -99,7 +99,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
-        private readonly IBackpackSharedAPI backpackSharedAPI;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly IWearablesProvider wearablesProvider;
         private readonly ICursor cursor;
@@ -176,7 +175,6 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
             IBackpackEventBus backpackEventBus,
-            IBackpackSharedAPI backpackSharedAPI,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider,
             ICursor cursor,
@@ -235,7 +233,6 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
             this.backpackEventBus = backpackEventBus;
-            this.backpackSharedAPI = backpackSharedAPI;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
             this.inputBlock = inputBlock;
@@ -302,7 +299,6 @@ namespace DCL.PluginSystem.Global
                 forceRender,
                 characterPreviewEventBus,
                 backpackEventBus,
-                backpackSharedAPI,
                 thirdPartyNftProviderSource,
                 wearablesProvider,
                 inputBlock,

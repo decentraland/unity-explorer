@@ -568,8 +568,6 @@ namespace Global.Dynamic
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
 
-            IBackpackSharedAPI backpackSharedAPI = new BackpackSharedAPI();
-
             var profileBroadcast = new DebounceProfileBroadcast(
                 new ProfileBroadcast(messagePipesHub, selfProfile)
             );
@@ -791,7 +789,6 @@ namespace Global.Dynamic
                     characterPreviewEventBus,
                     mapPathEventBus,
                     backpackEventBus,
-                    backpackSharedAPI,
                     thirdPartyNftProviderSource,
                     wearablesProvider,
                     dclCursor,
@@ -911,7 +908,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new SmartWearablesGlobalPlugin(wearableCatalog, backpackSharedAPI, staticContainer.PortableExperiencesController, staticContainer.ScenesCache, staticContainer.SmartWearableCache)
+                new SmartWearablesGlobalPlugin(wearableCatalog, backpackEventBus, staticContainer.PortableExperiencesController, staticContainer.ScenesCache, staticContainer.SmartWearableCache)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

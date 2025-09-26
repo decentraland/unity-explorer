@@ -38,7 +38,7 @@ namespace DCL.SmartWearables
     {
         private readonly WearableStorage wearableStorage;
         private readonly SmartWearableCache smartWearableCache;
-        private readonly IBackpackSharedAPI backpackSharedAPI;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly IScenesCache scenesCache;
 
@@ -52,11 +52,11 @@ namespace DCL.SmartWearables
         /// </summary>
         private readonly HashSet<string> runningScenes = new ();
 
-        public SmartWearableSystem(World world, WearableStorage wearableStorage, SmartWearableCache smartWearableCache, IBackpackSharedAPI backpackSharedAPI, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache) : base(world)
+        public SmartWearableSystem(World world, WearableStorage wearableStorage, SmartWearableCache smartWearableCache, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.smartWearableCache = smartWearableCache;
-            this.backpackSharedAPI = backpackSharedAPI;
+            this.backpackEventBus = backpackEventBus;
             this.portableExperiencesController = portableExperiencesController;
             this.scenesCache = scenesCache;
         }
@@ -65,19 +65,18 @@ namespace DCL.SmartWearables
         {
             base.Initialize();
 
-            backpackSharedAPI.WearableEquipped += OnWearableEquipped;
-            backpackSharedAPI.WearableUnEquipped += OnWearableUnEquipped;
+            backpackEventBus.EquipWearableEvent += OnEquipWearable;
+            backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
             portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
 
             RunScenesForEquippedWearablesAsync().Forget();
         }
 
-        private void OnWearableEquipped(string urn, bool isManuallyEquipped)
+        private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped)
         {
             if (!isManuallyEquipped) return;
 
-            wearableStorage.TryGetElement(urn, out IWearable wearable);
             TryRunSmartWearableSceneAsync(wearable).Forget();
         }
 
@@ -99,10 +98,8 @@ namespace DCL.SmartWearables
             pendingScenes.Add(metadata.id, promise);
         }
 
-        private void OnWearableUnEquipped(string urn)
+        private void OnUnEquipWearable(IWearable wearable)
         {
-            wearableStorage.TryGetElement(urn, out IWearable wearable);
-
             StopSmartWearableSceneAsync(wearable).Forget();
         }
 
