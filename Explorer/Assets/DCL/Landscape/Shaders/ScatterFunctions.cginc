@@ -85,44 +85,45 @@ float4 QuaternionMultiply(float4 q1, float4 q2)
 }
 
 float CalculateHeightFromHeightmap(float2 uv, float _fDistanceFieldScale,
+    float nHeightMapSize, int parcelSize, int occupancyTextureSize,
     in Texture2D _heightMapTexture, in Texture2D _occupancyTexture, float MinDistOccupancy)
 {
-    const float fHeightmap_TexelSize = 1.0f / 8192.0f;
+    const float fHeightmap_TexelSize = 1.0f / nHeightMapSize;
+    
+    // convert heightmap UV -> world -> occupancy UV
+    float2 worldSpace = uv * nHeightMapSize - (nHeightMapSize * 0.5f);
+    float2 occupancyUV = (worldSpace / parcelSize  + (float)occupancyTextureSize * 0.5f) / (float)occupancyTextureSize;
+
+    const float fOccupancy00 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, occupancyUV + float2(0, 0), 0).r;
+    const float fOccupancy10 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, occupancyUV + float2(fHeightmap_TexelSize, 0), 0).r;
+    const float fOccupancy01 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, occupancyUV + float2(0, fHeightmap_TexelSize), 0).r;
+    const float fOccupancy11 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, occupancyUV + float2(fHeightmap_TexelSize, fHeightmap_TexelSize), 0).r;
+    
+    const float fOccupancy = (fOccupancy00 + fOccupancy10 + fOccupancy01 + fOccupancy11) * 0.25f;
+    const float minValue = MinDistOccupancy;
+
+    if (fOccupancy <= minValue)
+    {
+        // Flat surface (occupied parcels and above minValue threshold)
+        return 0.0f;
+    }
+
+    // Noise calcualteion
+    const float min = -4.135159f; // min value of the GeoffNoise.GetHeight
+    const float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
+    const float fSaturationFactor = 20.0f;
 
     // Sample the height at neighboring pixels
     const float fHeight00 = _heightMapTexture.SampleLevel(HeightMapTexturePointClampSampler, uv + float2(0, 0), 0).r;
     const float fHeight10 = _heightMapTexture.SampleLevel(HeightMapTexturePointClampSampler, uv + float2(fHeightmap_TexelSize, 0), 0).r;
     const float fHeight01 = _heightMapTexture.SampleLevel(HeightMapTexturePointClampSampler, uv + float2(0, fHeightmap_TexelSize), 0).r;
     const float fHeight11 = _heightMapTexture.SampleLevel(HeightMapTexturePointClampSampler, uv + float2(fHeightmap_TexelSize, fHeightmap_TexelSize), 0).r;
-
     const float fHeight = (fHeight00 + fHeight10 + fHeight01 + fHeight11) * 0.25f;
     
-    const float fOccupancy00 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(0, 0), 0).r;
-    const float fOccupancy10 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(fHeightmap_TexelSize, 0), 0).r;
-    const float fOccupancy01 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(0, fHeightmap_TexelSize), 0).r;
-    const float fOccupancy11 = _occupancyTexture.SampleLevel(samplerOccupancyTexture, uv + float2(fHeightmap_TexelSize, fHeightmap_TexelSize), 0).r;
-    
-    const float fOccupancy = (fOccupancy00 + fOccupancy10 + fOccupancy01 + fOccupancy11) * 0.25f;
-    const float minValue = MinDistOccupancy;
-
-    float result = 0.0f;
-    
-    if (fOccupancy <= minValue)
-    {
-        // Flat surface (occupied parcels and above minValue threshold)
-        result = 0.0f;
-    }
-    
-    const float fNormalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
-
-    const float min = -4.135159f; // min value of the GeoffNoise.GetHeight
-    const float range = 8.236154f; // (max - min) of the GeoffNoise.GetHeight
-            
     const float fHeightNoise = fHeight * range + min;
 
-    const float fSaturationFactor = 20.0f;
-    result = max(0.0f, fNormalizedHeight * _fDistanceFieldScale + fHeightNoise * saturate( fNormalizedHeight * fSaturationFactor));
-    return result;
+    const float fNormalizedHeight = (fOccupancy - minValue) / (1.0f - minValue);
+    return max(0.0f, fNormalizedHeight * _fDistanceFieldScale + fHeightNoise * saturate(fNormalizedHeight * fSaturationFactor));
 }
 
 // float3 CalculateNormalFromHeightmap(float2 uv, float terrainHeight, float fOccupancy, in Texture2D _heightMapTexture, in SamplerState _heightMapSampler)
