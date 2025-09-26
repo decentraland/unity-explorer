@@ -145,6 +145,8 @@ namespace DCL.PluginSystem.Global
             var sampleRate = new ElementBinding<ulong>(0);
             var channels = new ElementBinding<ulong>(0);
 
+            CancellationTokenSource? autoUpdateCts = null;
+
             debugContainer.TryAddWidget(IDebugContainerBuilder.Categories.MICROPHONE)
                          ?.AddMarker("Available Microphones", availableMicrophones, DebugLongMarkerDef.Unit.NoFormat)
 #if UNITY_STANDALONE_OSX
@@ -154,7 +156,35 @@ namespace DCL.PluginSystem.Global
                           .AddCustomMarker("Is Recording", isRecording)
                           .AddMarker("Sample Rate", sampleRate, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
+                          .AddToggleField("Auto Update", v => AutoUpdateTrigger(v.newValue).Forget(), false)
                           .AddSingleButton("Update", UpdateWidget);
+
+            return;
+
+            async UniTaskVoid AutoUpdateTrigger(bool enable)
+            {
+                if (enable)
+                {
+                    autoUpdateCts = new CancellationTokenSource();
+                    CancellationToken current = autoUpdateCts.Token;
+                    TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
+
+                    while (current.IsCancellationRequested ==false)
+                    {
+                       bool cancelled = await UniTask.Delay(pollDelay, cancellationToken: current).SuppressCancellationThrow();
+                       if (cancelled) return;
+
+                       UpdateWidget();
+                    }
+                }
+                else
+                {
+                    autoUpdateCts?.Cancel();
+                    autoUpdateCts?.Dispose();
+                    autoUpdateCts = null;
+                }
+
+            }
 
             void UpdateWidget()
             {
