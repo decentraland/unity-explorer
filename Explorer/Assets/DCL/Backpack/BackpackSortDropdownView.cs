@@ -1,4 +1,3 @@
-using DCL.Audio;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -35,6 +34,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         internal Toggle collectiblesOnly { get; private set; }
+
+        [field: SerializeField]
+        internal Toggle smartWearablesOnly { get; private set; }
 
         [field: SerializeField]
         internal Button sortDropdownButton { get; private set; }

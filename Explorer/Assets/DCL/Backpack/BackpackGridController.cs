@@ -46,6 +46,7 @@ namespace DCL.Backpack
 
         private CancellationTokenSource? pageFetchCancellationToken;
         private bool currentCollectiblesOnly;
+        private bool currentSmartWearablesOnly;
         private string currentCategory = "";
         private string currentSearch = "";
         private BackpackGridSort currentSort = new (NftOrderByOperation.Date, false);
@@ -114,6 +115,7 @@ namespace DCL.Backpack
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
+            backpackSortController.OnSmartWearablesOnlyChanged += OnSmartWearablesOnlyChanged;
         }
 
         public void Deactivate()
@@ -122,6 +124,7 @@ namespace DCL.Backpack
             eventBus.SearchEvent -= OnSearch;
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
+            backpackSortController.OnSmartWearablesOnlyChanged -= OnSmartWearablesOnlyChanged;
         }
 
         public static async UniTask<ObjectPool<BackpackItemView>> InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, BackpackGridView view, CancellationToken ct)
@@ -237,6 +240,12 @@ namespace DCL.Backpack
             RequestPage(1, true);
         }
 
+        private void OnSmartWearablesOnlyChanged(bool smartWearablesOnly)
+        {
+            currentSmartWearablesOnly = smartWearablesOnly;
+            RequestPage(1, true);
+        }
+
         public void RequestPage(int pageNumber, bool refreshPageSelector)
         {
             pageFetchCancellationToken = pageFetchCancellationToken.SafeRestart();
@@ -258,10 +267,16 @@ namespace DCL.Backpack
 
             try
             {
-                (IReadOnlyList<IWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE, pageNumber, ct,
+                (IReadOnlyList<IWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE,
+                    pageNumber,
+                    ct,
                     currentSort.OrderByOperation.ToSortingField(),
                     currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
-                    currentCategory, collectionType, currentSearch, results);
+                    currentCategory,
+                    collectionType,
+                    currentSmartWearablesOnly,
+                    currentSearch,
+                    results);
 
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
