@@ -313,6 +313,7 @@ namespace DCL.SDKComponents.MediaStream
                 //the regular CreateMediaPlayerSystem
                 mediaPlayerComponent.Dispose();
                 World.Remove<MediaPlayerComponent>(entity);
+                World.Remove<VideoStateByPriorityComponent>(entity);
             }
 
         }
