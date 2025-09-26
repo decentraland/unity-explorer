@@ -180,7 +180,7 @@ namespace DCL.VoiceChat
 
                             if (stream != null)
                             {
-                                playbackSourcesHub.AddOrReplaceStream(new StreamKey(remoteParticipantIdentity.Key!), stream);
+                                playbackSourcesHub.AddOrReplaceStream(new StreamKey(remoteParticipantIdentity.Key!, sid), stream);
                                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity}");
                             }
                         }
@@ -228,7 +228,7 @@ namespace DCL.VoiceChat
 
                     if (stream != null)
                     {
-                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity), stream);
+                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New remote track subscribed from {participant.Identity}");
                     }
                 }
@@ -242,7 +242,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio)
                 {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity));
+                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscribed from {participant.Identity}");
                 }
             }
@@ -259,7 +259,7 @@ namespace DCL.VoiceChat
 
                     if (stream != null)
                     {
-                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity), stream);
+                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
                     }
                 }
@@ -273,7 +273,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity));
+                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, participant.Sid));
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
                 }
             }
