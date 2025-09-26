@@ -26,10 +26,12 @@ namespace DCL.SDKComponents.NFTShape.System
     public partial class LoadCycleNftShapeSystem : BaseUnityLoopSystem
     {
         private readonly IURNSource urnSource;
+        private readonly string sceneID;
 
-        public LoadCycleNftShapeSystem(World world, IURNSource urnSource) : base(world)
+        public LoadCycleNftShapeSystem(World world, IURNSource urnSource, string sceneID) : base(world)
         {
             this.urnSource = urnSource;
+            this.sceneID = sceneID;
         }
 
         protected override void Update(float t)
@@ -66,6 +68,8 @@ namespace DCL.SDKComponents.NFTShape.System
         private void InitializeNftVideo(Entity entity, Texture2DData textureData, INftShapeRenderer nftRenderer)
         {
             var vtc = new VideoTextureConsumer(textureData);
+            Debug.Log($"JUANI CREATING AN NFT {textureData.Asset.GetInstanceID()}");
+
             var texture2D = vtc.Texture.Asset;
             texture2D.Reinitialize(1, 1);
             texture2D.SetPixel(0, 0, Color.clear);

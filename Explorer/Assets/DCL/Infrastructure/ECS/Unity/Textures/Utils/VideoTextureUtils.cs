@@ -18,6 +18,7 @@ namespace ECS.Unity.Textures.Utils
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IObjectPool<Texture2D> videoTexturesPool,
             World world,
+            string sceneId,
             out Texture2DData? texture)
         {
             texture = null;
@@ -25,49 +26,47 @@ namespace ECS.Unity.Textures.Utils
             if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out var videoPlayerEntity) || !world.IsAlive(videoPlayerEntity))
                 return false;
 
-            ref var consumer = ref world.TryGetRef<VideoTextureConsumer>(videoPlayerEntity, out bool hasConsumer);
-
-            if (!hasConsumer)
-                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), videoPlayerEntity);
-
-
-            if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
+            if (world.Has<VideoTextureConsumer>(videoPlayerEntity))
             {
-                consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
+                ref VideoTextureConsumer consumer = ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
+                Debug.Log($"JUANI REUSING VIDEO TEXTURE CONSUMER {videoPlayerEntity} {consumer.Texture.Asset.GetInstanceID()} {sceneId}");
+
+                if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent)) { consumer.AddConsumer(primitiveMeshComponent.MeshRenderer); }
+                else if (world.TryGet(entity, out GltfNode gltfNode))
+                {
+                    foreach (Renderer? renderer in gltfNode.Renderers)
+                        consumer.AddConsumer(renderer);
+                }
+
+                consumer.Texture.AddReference();
+                consumer.IsDirty = true;
+
+                texture = consumer.Texture;
             }
-            else if (world.TryGet(entity, out GltfNode gltfNode))
+            else
             {
-                foreach (var renderer in gltfNode.Renderers)
-                    consumer.AddConsumer(renderer);
+                Texture2D texturedGotten = videoTexturesPool.Get();
+
+                var consumer = new VideoTextureConsumer(texturedGotten);
+                Debug.Log($"JUANI GETTING NEW VIDEO TEXTURE CONSUMER {videoPlayerEntity} {texturedGotten.GetInstanceID()} {sceneId}");
+
+                if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent)) { consumer.AddConsumer(primitiveMeshComponent.MeshRenderer); }
+                else if (world.TryGet(entity, out GltfNode gltfNode))
+                {
+                    foreach (Renderer? renderer in gltfNode.Renderers)
+                        consumer.AddConsumer(renderer);
+                }
+
+                consumer.Texture.AddReference();
+                consumer.IsDirty = true;
+
+                texture = consumer.Texture;
+
+                world.Add(entity, consumer);
             }
 
-            consumer.Texture.AddReference();
-            consumer.IsDirty = true;
-
-            texture = consumer.Texture;
             return true;
         }
-
-        private static ref VideoTextureConsumer CreateTextureConsumer(World world, Texture2D texture, Entity videoPlayerEntity)
-        {
-            // This allows to clear the existing data on the texture,
-            // to avoid "ghost" images in the textures before they are loaded with new data,
-            // particularly when dealing with streaming textures from videos
-            texture.Reinitialize(1, 1);
-            texture.SetPixel(0, 0, Color.clear);
-            texture.Apply();
-
-            world.Add(videoPlayerEntity, new VideoTextureConsumer(texture));
-            return ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
-        }
-
-        public struct VideoRenderingInfo
-        {
-            public Entity VideoPlayer;
-
-            public Texture2DData? VideoTexture;
-
-            public Renderer? VideoRenderer;
-        }
     }
+
 }

@@ -58,7 +58,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                 w => new CreatePBRMaterialSystem(w, materialsPool, capFrameBudget, memoryBudget),
                 w => new ApplyMaterialSystem(w, sceneData),
                 w => new ResetMaterialSystem(w, destroyMaterial, sceneData),
-                w => new CleanUpMaterialsSystem(w, destroyMaterial, VideoTextureFactory.CreateVideoTexturesPool())
+                w => new CleanUpMaterialsSystem(w, destroyMaterial, VideoTextureFactory.CreateVideoTexturesPool(), "")
             );
         }
 

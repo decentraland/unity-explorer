@@ -23,15 +23,19 @@ namespace ECS.Unity.Materials.Systems
     {
         private readonly DestroyMaterial destroyMaterial;
         private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
+        private readonly string sceneName;
 
-        public CleanUpMaterialsSystem(World world, DestroyMaterial destroyMaterial, IExtendedObjectPool<Texture2D> videoTexturesPool) : base(world)
+        public CleanUpMaterialsSystem(World world, DestroyMaterial destroyMaterial, IExtendedObjectPool<Texture2D> videoTexturesPool, string sceneName) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.videoTexturesPool = videoTexturesPool;
+            this.sceneName = sceneName;
         }
 
         protected override void Update(float t)
         {
+            Debug.Log($"JUANI THE POOL SIZE IS {videoTexturesPool.CountInactive}");
+
             TryReleaseQuery(World);
             TryReleaseConsumerQuery(World);
             HandleTextureWithoutConsumersQuery(World);
@@ -52,7 +56,8 @@ namespace ECS.Unity.Materials.Systems
         [All(typeof(DeleteEntityIntention))]
         private void TryReleaseConsumer(Entity entity, ref VideoTextureConsumer textureConsumer)
         {
-            CleanUpVideoTexture(ref textureConsumer);
+            Debug.Log($"JUANI RELEASING VIDEO TEXTURE CONSUMER {entity} {textureConsumer.Texture.Asset.GetInstanceID()} {textureConsumer.isDisposed} {sceneName}");
+            CleanUpVideoTexture(entity, ref textureConsumer);
             World.Remove<VideoTextureConsumer>(entity);
         }
 
@@ -65,14 +70,18 @@ namespace ECS.Unity.Materials.Systems
         {
             if (textureConsumer.ConsumersCount == 0)
             {
-                CleanUpVideoTexture(ref textureConsumer);
+                Debug.Log($"JUANI TESTURES WITHOUT CONSUMERS {entity} {textureConsumer.Texture.Asset.GetInstanceID()} {textureConsumer.isDisposed} {sceneName} {textureConsumer.Texture == null}");
+                CleanUpVideoTexture(entity, ref textureConsumer);
                 World.Remove<VideoTextureConsumer>(entity);
             }
         }
 
-        private void CleanUpVideoTexture(ref VideoTextureConsumer videoTextureConsumer)
+        private void CleanUpVideoTexture(in Entity entity, ref VideoTextureConsumer videoTextureConsumer)
         {
-            videoTexturesPool.Release(videoTextureConsumer.Texture);
+            return;
+
+            try { videoTexturesPool.Release(videoTextureConsumer.Texture.Asset); }
+            catch (Exception e) { Debug.Log($"JUANI THE PROBLEM WAS {e.Message} {videoTextureConsumer.Texture.Asset.GetInstanceID()} {entity.Id} {sceneName}"); }
             videoTextureConsumer.Dispose();
         }
 
@@ -83,8 +92,11 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        private void FinalizeVideoTextureConsumerComponent(ref VideoTextureConsumer component) =>
-            CleanUpVideoTexture(ref component);
+        private void FinalizeVideoTextureConsumerComponent(in Entity entity, ref VideoTextureConsumer component)
+        {
+            Debug.Log($"JUANI FINALIZING VIDEO TEXTURE CONSUMER {entity} {component.Texture?.Asset.GetInstanceID()} {component.isDisposed} {sceneName} {component.Texture == null}");
+            CleanUpVideoTexture(entity, ref component);
+        }
 
         public void FinalizeComponents(in Query query)
         {

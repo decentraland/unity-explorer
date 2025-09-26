@@ -221,7 +221,7 @@ namespace ECS.Unity.Materials.Systems
             {
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
-                bool foundConsumeEntity = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out var texture);
+                bool foundConsumeEntity = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, sceneData.SceneEntityDefinition.id, out Texture2DData? texture);
                 if (!foundConsumeEntity) return false;
 
                 var result = new StreamableLoadingResult<Texture2DData>(texture);
