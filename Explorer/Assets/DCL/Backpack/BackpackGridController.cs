@@ -9,11 +9,13 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.UI;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -108,16 +110,14 @@ namespace DCL.Backpack
 
         public void Activate()
         {
-            eventBus.FilterCategoryEvent += OnFilterCategory;
-            eventBus.SearchEvent += OnSearch;
+            eventBus.FilterEvent += OnFilterChanged;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
         }
 
         public void Deactivate()
         {
-            eventBus.FilterCategoryEvent -= OnFilterCategory;
-            eventBus.SearchEvent -= OnSearch;
+            eventBus.FilterEvent -= OnFilterChanged;
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
         }
@@ -200,21 +200,18 @@ namespace DCL.Backpack
         private void UnEquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipWearableCommand(itemId));
 
-        private void OnFilterCategory(string category)
+        private void OnFilterChanged(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            if (currentCategory == category)
+            if ((category == null || currentCategory == category) &&
+                (searchText == null || currentSearch == searchText))
                 return;
 
-            currentCategory = category;
-            RequestPage(1, true);
-        }
+            if (category != null)
+                currentCategory = category;
 
-        private void OnSearch(string searchText)
-        {
-            if (currentSearch == searchText)
-                return;
+            if (searchText != null)
+                currentSearch = searchText;
 
-            currentSearch = searchText;
             RequestPage(1, true);
         }
 
@@ -277,10 +274,7 @@ namespace DCL.Backpack
                 SetGridElements(currentPageWearables);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK));
-            }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)

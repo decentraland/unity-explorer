@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
+using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -103,16 +104,14 @@ namespace DCL.Backpack.EmotesSection
 
         public void Activate()
         {
-            eventBus.FilterCategoryEvent += OnFilterCategory;
-            eventBus.SearchEvent += OnSearch;
+            eventBus.FilterEvent += OnFilterEvent;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
         }
 
         public void Deactivate()
         {
-            eventBus.FilterCategoryEvent -= OnFilterCategory;
-            eventBus.SearchEvent -= OnSearch;
+            eventBus.FilterEvent -= OnFilterEvent;
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
         }
@@ -298,14 +297,9 @@ namespace DCL.Backpack.EmotesSection
         private void EquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
 
-        private void OnFilterCategory(string category)
+        private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
             currentCategory = string.IsNullOrEmpty(category) ? null : category;
-            RequestAndFillEmotes(1, true);
-        }
-
-        private void OnSearch(string searchText)
-        {
             currentSearch = string.IsNullOrEmpty(searchText) ? null : searchText;
             RequestAndFillEmotes(1, true);
         }

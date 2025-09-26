@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.UI;
@@ -26,7 +27,7 @@ namespace DCL.Backpack
             this.commandBus = commandBus;
             this.inputBlock = inputBlock;
 
-            backpackEventBus.SearchEvent += OnSearchEvent;
+            backpackEventBus.FilterEvent += OnFilterEvent;
 
             view.inputField.onSelect.AddListener(DisableShortcutsInput);
             view.inputField.onDeselect.AddListener(RestoreInput);
@@ -45,9 +46,9 @@ namespace DCL.Backpack
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
         }
 
-        private void OnSearchEvent(string searchString)
+        private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            if(string.IsNullOrEmpty(searchString))
+            if(string.IsNullOrEmpty(searchText))
                 ClearSearch();
         }
 
@@ -68,7 +69,12 @@ namespace DCL.Backpack
         private async UniTaskVoid AwaitAndSendSearchAsync(string searchText, CancellationToken ct)
         {
             await UniTask.Delay(SEARCH_AWAIT_TIME, cancellationToken: ct);
-            commandBus.SendCommand(new BackpackSearchCommand(searchText));
+            var command = new BackpackFilterCommand(
+                string.IsNullOrEmpty(searchText) ? null : string.Empty,
+                string.IsNullOrEmpty(searchText) ? null : AvatarWearableCategoryEnum.Body,
+                searchText
+            );
+            commandBus.SendCommand(command);
         }
     }
 }

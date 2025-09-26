@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -42,7 +43,7 @@ namespace DCL.Backpack
 
             this.backpackEventBus.EquipWearableEvent += EquipInSlot;
             this.backpackEventBus.UnEquipWearableEvent += UnEquipInSlot;
-            this.backpackEventBus.FilterCategoryEvent += DeselectCategory;
+            this.backpackEventBus.FilterEvent += OnFilterEvent;
             this.backpackEventBus.ForceRenderEvent += SetForceRender;
             this.backpackEventBus.UnEquipAllEvent += UnEquipAll;
 
@@ -66,9 +67,9 @@ namespace DCL.Backpack
             CalculateHideStatus();
         }
 
-        private void DeselectCategory(string filterContent)
+        private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
-            if (previousSlot != null && string.IsNullOrEmpty(filterContent))
+            if (previousSlot != null && string.IsNullOrEmpty(category))
             {
                 previousSlot.SelectedBackground.SetActive(false);
                 previousSlot = null;
@@ -186,13 +187,13 @@ namespace DCL.Backpack
             if (avatarSlot == previousSlot)
             {
                 previousSlot.SelectedBackground.SetActive(false);
-                backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(""));
+                backpackCommandBus.SendCommand(new BackpackFilterCommand(string.Empty, AvatarWearableCategoryEnum.Body, string.Empty));
                 previousSlot = null;
                 return;
             }
 
             previousSlot = avatarSlot;
-            backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(avatarSlot.Category, avatarSlot.CategoryEnum));
+            backpackCommandBus.SendCommand(new BackpackFilterCommand(avatarSlot.Category, avatarSlot.CategoryEnum, string.Empty));
             avatarSlot.SelectedBackground.SetActive(true);
         }
 
