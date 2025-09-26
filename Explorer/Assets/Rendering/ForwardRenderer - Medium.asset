@@ -157,7 +157,7 @@ MonoBehaviour:
   settings:
     skyBoxShader: {fileID: -6465566751694194690, guid: de77f9af132836c4785b35f15d16e564, type: 3}
     dimensions: 256
-    executeInEditMode: 1
+    executeInEditMode: 0
     assignAsReflectionProbe: 1
 --- !u!114 &11400000
 MonoBehaviour:
