@@ -12,6 +12,7 @@ cbuffer ConstBuffer : register(b0)
     float4 TerrainBounds;
     float floorValue;
     float parcelSize;
+    int occupancyMapSize;
 }
 
 // Quadtree node structure - matches your Unity.Mathematics version
@@ -29,9 +30,10 @@ SamplerState OccupancyPointClampSampler : register(s0);
 RWStructuredBuffer<int2> visibleParcels : register(u0);
 RWStructuredBuffer<uint> visibleParcelCount : register(u1);
 
-inline float GetOccupancy(float2 UV_Coord, float4 TerrainBounds, int ParcelSize)
+inline float GetOccupancy(int2 plotParcel)
 {
-    return OccupancyTexture.SampleLevel(OccupancyPointClampSampler, UV_Coord, 0.0).r;
+    float2 occupancyUV = (float2(plotParcel) + occupancyMapSize * 0.5f) / occupancyMapSize;
+    return OccupancyTexture.SampleLevel(OccupancyPointClampSampler, occupancyUV, 0.0).r;
 }
 
 [numthreads(256, 1, 1)]
@@ -52,8 +54,7 @@ void HierarchicalQuadTreeCulling(uint3 id : SV_DispatchThreadID, uint3 groupId :
 
         if (IsFrustumCulled(BoundingBox) == false)
         {
-            float2 UV_Coords = (float2(plot.x * parcelSize, plot.y * parcelSize) + 4096) / 8192;
-            float fOccupancy = GetOccupancy(UV_Coords, TerrainBounds, parcelSize);
+            float fOccupancy = GetOccupancy(plot);
 
             if (fOccupancy >= floorValue)
             {

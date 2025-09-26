@@ -261,7 +261,7 @@ namespace DCL.Landscape
         internal static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
-            int absMax = max(max(abs(minParcel.x), abs(minParcel.y)), max(abs(maxParcel.x), abs(maxParcel.y)));
+            int absMax = cmax(abs(int4(minParcel, maxParcel)));
             int textureSize = ceilpow2((absMax * 2) + 2);
             int textureHalfSize = textureSize / 2;
 

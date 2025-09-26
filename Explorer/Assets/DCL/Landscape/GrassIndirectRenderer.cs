@@ -31,6 +31,7 @@ namespace Decentraland.Terrain
             public static readonly int TerrainBounds = Shader.PropertyToID("TerrainBounds");
             public static readonly int FloorValue = Shader.PropertyToID("floorValue");
             public static readonly int OccupancyTexture = Shader.PropertyToID("OccupancyTexture");
+            public static readonly int OccupancyMapSize = Shader.PropertyToID("occupancyMapSize");
             public static readonly int QuadTreeNodes = Shader.PropertyToID("quadTreeNodes");
             public static readonly int VisibleParcels = Shader.PropertyToID("visibleParcels");
             public static readonly int VisibleParcelCount = Shader.PropertyToID("visibleParcelCount");
@@ -360,6 +361,7 @@ namespace Decentraland.Terrain
             QuadTreeCullingShader.SetMatrix(ShaderProperties.ViewProjMatrix, viewProjMatrix);
             QuadTreeCullingShader.SetVector(ShaderProperties.TerrainBounds, terrainBounds);
             QuadTreeCullingShader.SetFloat(ShaderProperties.FloorValue, terrainGenerator.OccupancyFloor / 255f);
+            QuadTreeCullingShader.SetInt(ShaderProperties.OccupancyMapSize, terrainGenerator.OccupancyMapSize);
             QuadTreeCullingShader.SetInt(ShaderProperties.ParcelSize, parcelSize);
 
             QuadTreeCullingShader.SetTexture(ShaderKernels.QuadTreeCullingKernel, ShaderProperties.OccupancyTexture,
