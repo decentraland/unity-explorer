@@ -119,7 +119,7 @@ namespace DCL.Backpack
             equippedEmotes.UnEquipEmote(slot, emote);
         }
 
-        private void EquipWearable(IWearable wearable)
+        private void EquipWearable(IWearable wearable, bool isManuallyEquipped)
         {
             equippedWearables.Equip(wearable);
         }

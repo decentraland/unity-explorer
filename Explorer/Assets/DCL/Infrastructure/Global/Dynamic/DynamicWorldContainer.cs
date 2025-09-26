@@ -104,6 +104,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
+using DCL.PluginSystem.SmartWearables;
 using DCL.NotificationsBus;
 using Global.Versioning;
 using DCL.UI.ProfileElements;
@@ -114,6 +115,7 @@ using UnityEngine.Pool;
 using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
+using MultiplayerPlugin = DCL.PluginSystem.Global.MultiplayerPlugin;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -816,7 +818,8 @@ namespace Global.Dynamic
                     galleryEventBus,
                     thumbnailProvider,
                     passportBridge,
-                    chatEventBus
+                    chatEventBus,
+                    staticContainer.SmartWearableCache
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
@@ -905,6 +908,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
+                new SmartWearablesGlobalPlugin(wearableCatalog, backpackEventBus, staticContainer.PortableExperiencesController, staticContainer.ScenesCache, staticContainer.SmartWearableCache)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation

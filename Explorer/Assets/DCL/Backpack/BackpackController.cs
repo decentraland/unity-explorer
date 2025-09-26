@@ -181,10 +181,10 @@ namespace DCL.Backpack
             backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.EyesColor, WearableCategories.Categories.EYES));
             backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.SkinColor, WearableCategories.Categories.BODY_SHAPE));
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
-            backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value));
+            backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value, false));
 
             foreach (URN w in avatar.Wearables)
-                backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(w.Shorten()));
+                backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(w.Shorten(), false));
 
             for (var i = 0; i < avatar.Emotes.Count; i++)
             {

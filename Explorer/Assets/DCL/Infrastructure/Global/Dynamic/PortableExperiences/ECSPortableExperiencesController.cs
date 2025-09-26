@@ -33,7 +33,7 @@ namespace PortableExperiences.Controller
         private readonly IDecentralandUrlsSource urlsSources;
         private GlobalWorld globalWorld;
 
-        public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
+        public Dictionary<string, Entity> PortableExperienceEntities { get; } = new ();
 
         public GlobalWorld GlobalWorld
         {
@@ -43,6 +43,9 @@ namespace PortableExperiences.Controller
         }
 
         private World world => globalWorld.EcsWorld;
+
+        public event Action<string> PortableExperienceLoaded;
+        public event Action<string> PortableExperienceUnloaded;
 
         public ECSPortableExperiencesController(
             IWeb3IdentityCache web3IdentityCache,
@@ -72,7 +75,9 @@ namespace PortableExperiences.Controller
                         throw new Exception("Global Portable Experiences are disabled");
                 }
 
-            if (PortableExperienceEntities.ContainsKey(ens)) throw new Exception($"ENS {ens} is already loaded");
+            var portableExperienceId = ens.ToString();
+
+            if (PortableExperienceEntities.ContainsKey(portableExperienceId)) throw new Exception($"ENS {ens} is already loaded");
 
             string worldUrl = string.Empty;
 
@@ -115,22 +120,32 @@ namespace PortableExperiences.Controller
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
-            Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+            Entity portableExperienceEntity = world.Create();
+            world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+            world.Add(portableExperienceEntity, new PortableExperienceMetadata
+            {
+                Ens = portableExperienceId,
+                Id = portableExperienceEntity.Id.ToString(),
+                Name = realmData.RealmName,
+                ParentSceneId = parentSceneName
+            });
 
-            PortableExperienceEntities.Add(ens, portableExperienceEntity);
+            PortableExperienceEntities.Add(portableExperienceId, portableExperienceEntity);
+
+            PortableExperienceLoaded?.Invoke(portableExperienceId);
 
             return new IPortableExperiencesController.SpawnResponse
-                { name = realmData.RealmName, ens = ens.ToString(), parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
+                { name = realmData.RealmName, ens = portableExperienceId, parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
         }
 
-        public bool CanKillPortableExperience(ENS ens)
+        public bool CanKillPortableExperience(string id)
         {
             if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
 
-            ISceneFacade currentSceneFacade = scenesCache.CurrentScene;
+            ISceneFacade currentSceneFacade = scenesCache.CurrentScene.Value;
             if (currentSceneFacade == null) return false;
 
-            if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
+            if (PortableExperienceEntities.TryGetValue(id, out Entity portableExperienceEntity))
             {
                 PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
 
@@ -146,16 +161,16 @@ namespace PortableExperiences.Controller
         {
             spawnResponsesList.Clear();
 
-            foreach (KeyValuePair<ENS, Entity> portableExperience in PortableExperienceEntities)
+            foreach ((string _, Entity px) in PortableExperienceEntities)
             {
-                PortableExperienceRealmComponent pxRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperience.Value);
+                PortableExperienceMetadata metadata = world.Get<PortableExperienceMetadata>(px);
 
                 spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse
                 {
-                    name = pxRealmComponent.RealmData.RealmName,
-                    ens = portableExperience.Key.ToString(),
-                    parent_cid = pxRealmComponent.ParentSceneId,
-                    pid = portableExperience.Value.Id.ToString(),
+                    ens = metadata.Ens,
+                    pid = metadata.Id,
+                    name = metadata.Name,
+                    parent_cid = metadata.ParentSceneId
                 });
             }
 
@@ -165,18 +180,23 @@ namespace PortableExperiences.Controller
         public void UnloadAllPortableExperiences()
         {
             foreach (IPortableExperiencesController.SpawnResponse spawnResponse in GetAllPortableExperiences())
-                UnloadPortableExperienceByEns(new ENS(spawnResponse.ens));
+                UnloadPortableExperienceById(spawnResponse.ens);
         }
 
-        public IPortableExperiencesController.ExitResponse UnloadPortableExperienceByEns(ENS ens)
+        public void AddPortableExperience(string id, Entity portableExperience)
         {
-            if (!ens.IsValid) throw new ArgumentException($"The provided ens {ens.ToString()} is invalid");
+            PortableExperienceEntities.TryAdd(id, portableExperience);
+        }
 
-            if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
+        public IPortableExperiencesController.ExitResponse UnloadPortableExperienceById(string id)
+        {
+            if (PortableExperienceEntities.TryGetValue(id, out Entity portableExperienceEntity))
             {
                 world.Add<DeleteEntityIntention>(portableExperienceEntity);
 
-                PortableExperienceEntities.Remove(ens);
+                PortableExperienceEntities.Remove(id);
+
+                PortableExperienceUnloaded?.Invoke(id);
 
                 return new IPortableExperiencesController.ExitResponse { status = true };
             }

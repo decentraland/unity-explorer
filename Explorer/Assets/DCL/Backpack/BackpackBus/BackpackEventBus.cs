@@ -13,7 +13,7 @@ namespace DCL.Backpack.BackpackBus
     public class BackpackEventBus : IBackpackEventBus
     {
         public event Action<IWearable>? SelectWearableEvent;
-        public event Action<IWearable>? EquipWearableEvent;
+        public event Action<IWearable, bool>? EquipWearableEvent;
         public event Action<IWearable>? UnEquipWearableEvent;
         public event Action<int, IEmote, bool>? EquipEmoteEvent;
         public event Action<int, IEmote?>? UnEquipEmoteEvent;
@@ -32,8 +32,8 @@ namespace DCL.Backpack.BackpackBus
         public void SendWearableSelect(IWearable equipWearable) =>
             SelectWearableEvent?.Invoke(equipWearable);
 
-        public void SendEquipWearable(IWearable equipWearable) =>
-            EquipWearableEvent?.Invoke(equipWearable);
+        public void SendEquipWearable(IWearable equipWearable, bool isManuallyEquipped) =>
+            EquipWearableEvent?.Invoke(equipWearable, isManuallyEquipped);
 
         public void SendUnEquipWearable(IWearable unEquipWearable) =>
             UnEquipWearableEvent?.Invoke(unEquipWearable);

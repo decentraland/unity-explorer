@@ -1,5 +1,4 @@
-﻿using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using PortableExperiences.Controller;
 using System;
@@ -36,21 +35,23 @@ namespace DCL.Chat.Commands
             if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS))
                 return "🔴 Error. Portable Experiences Chat Commands are disabled";
 
-            string pxName = parameters[0];
-
-            if (pxName.EndsWith(ENS_SUFFIX, StringComparison.OrdinalIgnoreCase) == false)
-                pxName += ENS_SUFFIX;
-
             await UniTask.SwitchToMainThread(ct);
-
-            var response = portableExperiencesController.UnloadPortableExperienceByEns(new ENS(pxName));
-
-            bool isSuccess = response.status;
-
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
 
-            return isSuccess ? $"🟢 The Portable Experience {pxName} has been Killed" : $"🔴 Error. Could not Kill the Portable Experience {pxName}";
+            string portableExperienceId = parameters[0];
+
+            // Try killing a px with the given ID as it is
+            var response = portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
+
+            // In case of failure, try appending the ENS suffix and retrying
+            if (!response.status && !portableExperienceId.EndsWith(ENS_SUFFIX, StringComparison.OrdinalIgnoreCase))
+            {
+                portableExperienceId += ENS_SUFFIX;
+                response = portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
+            }
+
+            return response.status ? $"🟢 The Portable Experience {portableExperienceId} has been Killed" : $"🔴 Error. Could not Kill the Portable Experience {portableExperienceId}";
         }
     }
 }
