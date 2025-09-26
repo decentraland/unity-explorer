@@ -16,5 +16,13 @@ namespace CrdtEcsBridge.Components.ResetExtensions
             protoVector.Y = unityVector.y;
             protoVector.Z = unityVector.z;
         }
+
+        public static void Set(this Quaternion protoQuaternion, UnityEngine.Quaternion unityQuaternion)
+        {
+            protoQuaternion.X = unityQuaternion.x;
+            protoQuaternion.Y = unityQuaternion.y;
+            protoQuaternion.Z = unityQuaternion.z;
+            protoQuaternion.W = unityQuaternion.w;
+        }
     }
 }

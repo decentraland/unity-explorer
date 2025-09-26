@@ -53,9 +53,9 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         FadeSpeed: 1
     - rid: 847852733734322176
-      type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      type: {class: SDKEntityTriggerAreaSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        CharacterTriggerAreaPrefab:
+        TriggerAreaPrefab:
           m_AssetGUID: 8c2fa120406894778bdb7d4e45135d3b
           m_SubObjectName: 
           m_SubObjectType: 

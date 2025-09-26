@@ -3,7 +3,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.CharacterTriggerArea.Components;
+using DCL.SDKEntityTriggerArea.Components;
 using DCL.ECSComponents;
 using DCL.Profiles;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         private GameObject fakeAvatarGO;
         private GameObject fakeAvatarBaseGO;
         private GameObject fakeTriggerAreaGO;
-        private CharacterTriggerArea.CharacterTriggerArea characterTriggerArea;
+        private SDKEntityTriggerArea.SDKEntityTriggerArea sdkEntityTriggerArea;
 
         [SetUp]
         public void Setup()
@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             system = new AvatarModifierAreaHandlerSystem(world, globalWorld, Substitute.For<ISceneRestrictionBusController>(), Substitute.For<IWeb3IdentityCache>());
 
             fakeTriggerAreaGO = new GameObject("fake character area trigger");
-            characterTriggerArea = fakeTriggerAreaGO.AddComponent<CharacterTriggerArea.CharacterTriggerArea>();
+            sdkEntityTriggerArea = fakeTriggerAreaGO.AddComponent<SDKEntityTriggerArea.SDKEntityTriggerArea>();
 
             fakeAvatarGO = new GameObject("fake avatar");
             fakeAvatarShapeTransform = fakeAvatarGO.transform;
@@ -65,7 +65,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         }
 
         [Test]
-        public void SetupCharacterTriggerAreaCorrectly()
+        public void SetupSDKEntityTriggerAreaCorrectly()
         {
             var areaSize = new Vector3
             {
@@ -84,12 +84,12 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(triggerAreaEntity, out CharacterTriggerAreaComponent triggerAreaComponent));
+            Assert.IsTrue(world.TryGet(triggerAreaEntity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
         }
 
         [Test]
-        public void UpdateCharacterTriggerAreaCorrectly()
+        public void UpdateSDKEntityTriggerAreaCorrectly()
         {
             var areaSize = new Vector3
             {
@@ -112,7 +112,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(triggerAreaEntity, out CharacterTriggerAreaComponent triggerAreaComponent));
+            Assert.IsTrue(world.TryGet(triggerAreaEntity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
 
             // update component
@@ -239,16 +239,16 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             system.Update(0);
 
             // "Enter" trigger area
-            characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
-            CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.SetMonoBehaviour(characterTriggerArea);
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0f);
 
             Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
 
-            characterTriggerArea.OnTriggerExit(fakeAvatarShapeCollider);
+            sdkEntityTriggerArea.OnTriggerExit(fakeAvatarShapeCollider);
 
             system.Update(0f);
 
@@ -330,13 +330,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.IsTrue(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
 
             // "Enter" Avatar-1 in trigger area
-            characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
 
             // "Enter" Avatar-2 in trigger area
-            characterTriggerArea.OnTriggerEnter(fakeAvatar2ShapeCollider);
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatar2ShapeCollider);
 
-            CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.SetMonoBehaviour(characterTriggerArea);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -407,9 +407,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.IsTrue(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
 
             // "Enter" trigger area
-            characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
-            CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.SetMonoBehaviour(characterTriggerArea);
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -459,9 +459,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Assert.IsTrue(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
 
             // "Enter" trigger area
-            characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
-            CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.SetMonoBehaviour(characterTriggerArea);
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
