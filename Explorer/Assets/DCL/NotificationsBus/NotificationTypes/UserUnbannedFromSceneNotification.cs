@@ -10,6 +10,9 @@ namespace DCL.NotificationsBus.NotificationTypes
         [JsonProperty("metadata")]
         public UserUnbannedFromSceneNotificationMetadata Metadata { get; set; }
 
+        public override string GetHeader() =>
+            Metadata.PlaceTitle;
+
         public override string GetTitle() =>
             NOTIFICATION_TITLE;
     }
