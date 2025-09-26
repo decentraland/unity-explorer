@@ -78,8 +78,6 @@ namespace ECS.Unity.Materials.Systems
 
         private void CleanUpVideoTexture(in Entity entity, ref VideoTextureConsumer videoTextureConsumer)
         {
-            return;
-
             try { videoTexturesPool.Release(videoTextureConsumer.Texture.Asset); }
             catch (Exception e) { Debug.Log($"JUANI THE PROBLEM WAS {e.Message} {videoTextureConsumer.Texture.Asset.GetInstanceID()} {entity.Id} {sceneName}"); }
             videoTextureConsumer.Dispose();
