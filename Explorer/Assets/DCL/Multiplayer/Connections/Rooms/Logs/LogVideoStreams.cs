@@ -1,7 +1,9 @@
 using DCL.Diagnostics;
+using LiveKit.Rooms;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
 using System;
 using System.Collections.Generic;
 
@@ -18,18 +20,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             this.prefix = prefix;
         }
 
-        public WeakReference<T>? ActiveStream(string identity, string sid)
+        public Weak<T> ActiveStream(StreamKey key)
         {
-            ReportHub.Log(ReportCategory.LIVEKIT, $"{prefix}: {nameof(ActiveStream)}: called with {identity}, {sid}");
-            var videoStream = origin.ActiveStream(identity, sid);
-            ReportHub.Log(ReportCategory.LIVEKIT, $"{prefix}: {nameof(ActiveStream)}: result {identity}, {sid} -> {videoStream?.TryGetTarget(out _)};");
+            ReportHub.Log(ReportCategory.LIVEKIT, $"{prefix}: {nameof(ActiveStream)}: called with {key.identity}, {key.sid}");
+            var videoStream = origin.ActiveStream(key);
+            ReportHub.Log(ReportCategory.LIVEKIT, $"{prefix}: {nameof(ActiveStream)}: result {key.identity}, {key.sid} -> {videoStream.Resource.Has};");
             return videoStream;
         }
 
-        public bool Release(T stream)
+        public bool Release(StreamKey key)
         {
             ReportHub.Log(ReportCategory.LIVEKIT, $"{prefix}: {nameof(Release)}: called");
-            bool result = origin.Release(stream);
+            bool result = origin.Release(key);
             ReportHub.Log(ReportCategory.LIVEKIT, $"{prefix}: {nameof(Release)}: done");
             return result;
         }
@@ -44,6 +46,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         public void ListInfo(List<StreamInfo<TInfo>> output)
         {
             origin.ListInfo(output);
+        }
+
+        public void AssignRoom(Room room)
+        {
+            origin.AssignRoom(room);
+        }
+
+        public void Dispose()
+        {
+            origin.Dispose();
         }
     }
 

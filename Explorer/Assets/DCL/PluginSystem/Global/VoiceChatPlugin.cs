@@ -201,7 +201,7 @@ namespace DCL.PluginSystem.Global
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
 
-                Option<MicrophoneRtcAudioSource> currentMicrophoneOption = trackManager.CurrentMicrophone.Resource;
+                var currentMicrophoneOption = trackManager.CurrentMicrophone.Resource;
 
                 MicrophoneInfo info = currentMicrophoneOption.Has
                     ? currentMicrophoneOption.Value.MicrophoneInfo

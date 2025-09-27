@@ -176,9 +176,9 @@ namespace DCL.VoiceChat
                     {
                         if (value.Kind == TrackKind.KindAudio)
                         {
-                            WeakReference<AudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity.Key!, sid);
+                            Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(remoteParticipantIdentity.Key!, sid));
 
-                            if (stream != null)
+                            if (stream.Resource.Has)
                             {
                                 playbackSourcesHub.AddOrReplaceStream(new StreamKey(remoteParticipantIdentity.Key!, sid), stream);
                                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity}");
@@ -224,9 +224,9 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio)
                 {
-                    WeakReference<AudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
 
-                    if (stream != null)
+                    if (stream.Resource.Has)
                     {
                         playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New remote track subscribed from {participant.Identity}");
@@ -255,9 +255,9 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    WeakReference<AudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
 
-                    if (stream != null)
+                    if (stream.Resource.Has)
                     {
                         playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");

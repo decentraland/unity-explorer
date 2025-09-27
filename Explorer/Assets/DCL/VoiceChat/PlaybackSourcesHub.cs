@@ -4,6 +4,7 @@ using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
+using RichTypes;
 using System;
 using System.Collections.Concurrent;
 using UnityEngine;
@@ -29,7 +30,7 @@ namespace DCL.VoiceChat
             parent = new GameObject(nameof(PlaybackSourcesHub)).transform;
         }
 
-        internal void AddOrReplaceStream(StreamKey key, WeakReference<AudioStream> stream)
+        internal void AddOrReplaceStream(StreamKey key, Weak<AudioStream> stream)
         {
             if (streams.TryRemove(key, out var oldStream))
                 DisposeSource(oldStream!);

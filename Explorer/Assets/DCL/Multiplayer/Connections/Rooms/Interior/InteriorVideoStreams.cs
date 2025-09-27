@@ -1,7 +1,9 @@
 using DCL.Multiplayer.Connections.Rooms.Nulls;
+using LiveKit.Rooms;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.VideoStreaming;
+using RichTypes;
 using System;
 using System.Collections.Generic;
 
@@ -11,10 +13,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
     {
         private IVideoStreams assigned = NullVideoStreams.INSTANCE;
 
-        public WeakReference<IVideoStream>? ActiveStream(string identity, string sid) =>
-            assigned.EnsureAssigned().ActiveStream(identity, sid);
+        public Weak<IVideoStream> ActiveStream(StreamKey key) =>
+            assigned.EnsureAssigned().ActiveStream(key);
 
-        public bool Release(IVideoStream videoStream) =>
+        public bool Release(StreamKey videoStream) =>
             assigned.Release(videoStream);
 
         public void Free()
@@ -27,6 +29,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
             assigned.ListInfo(output);
         }
 
+        public void AssignRoom(Room room)
+        {
+            assigned.AssignRoom(room);
+        }
+
         public void Assign(IVideoStreams value, out IVideoStreams? previous)
         {
             previous = assigned;
@@ -34,16 +41,21 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
 
             previous = previous is NullVideoStreams ? null : previous;
         }
+
+        public void Dispose()
+        {
+            assigned.Dispose();
+        }
     }
 
     public class InteriorAudioStreams : IAudioStreams, IInterior<IAudioStreams>
     {
         private IAudioStreams assigned = NullAudioStreams.INSTANCE;
 
-        public WeakReference<AudioStream>? ActiveStream(string identity, string sid) =>
-            assigned.EnsureAssigned().ActiveStream(identity, sid);
+        public Weak<AudioStream> ActiveStream(StreamKey key) =>
+            assigned.EnsureAssigned().ActiveStream(key);
 
-        public bool Release(AudioStream stream) =>
+        public bool Release(StreamKey stream) =>
             assigned.Release(stream);
 
         public void Free()
@@ -56,12 +68,22 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
             assigned.ListInfo(output);
         }
 
+        public void AssignRoom(Room room)
+        {
+            assigned.AssignRoom(room);
+        }
+
         public void Assign(IAudioStreams value, out IAudioStreams? previous)
         {
             previous = assigned;
             assigned = value;
 
             previous = previous is NullAudioStreams ? null : previous;
+        }
+
+        public void Dispose()
+        {
+            assigned.Dispose();
         }
     }
 }
