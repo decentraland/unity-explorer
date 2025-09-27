@@ -37,7 +37,6 @@ using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Diagnostics;
-using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -191,7 +190,7 @@ namespace DCL.PluginSystem.Global
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
-            var viewInstance = mainUIView.ChatView2;
+            var viewInstance = mainUIView.ChatMainView.ChatPanelView;
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
                 playerEntity,
                 entityParticipantTable,
@@ -271,7 +270,7 @@ namespace DCL.PluginSystem.Global
             chatMainController = new ChatMainController(
                 () =>
                 {
-                    ChatMainView? view = mainUIView.ChatView2;
+                    ChatMainView? view = mainUIView.ChatMainView;
                     view.gameObject.SetActive(false);
                     return view;
                 },

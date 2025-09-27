@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +15,7 @@ namespace DCL.VoiceChat
         [SerializeField] private LayoutElement voiceChatPanelLayoutElement = null!;
 
         private CancellationTokenSource cts = new();
+        private Vector2 cachedVector = Vector2.zero;
 
         public void Resize(float newHeight, bool instant = false)
         {
@@ -24,8 +26,8 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            var height = new Vector2(0, newHeight);
-            voiceChatPanelLayoutElement.DOPreferredSize(height, ANIMATION_TIME).WithCancellation(cts.Token);
+            cachedVector.y = newHeight;
+            voiceChatPanelLayoutElement.DOPreferredSize(cachedVector, ANIMATION_TIME).WithCancellation(cts.Token).Forget();
         }
     }
 }

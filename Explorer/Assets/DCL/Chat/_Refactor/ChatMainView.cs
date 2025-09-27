@@ -1,84 +1,39 @@
-using DCL.Chat.ChatInput;
-using DCL.Chat.ChatMessages;
-using DCL.Chat.ChatViews;
 using DCL.VoiceChat;
 using System;
-using DG.Tweening;
 using MVC;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 
 namespace DCL.Chat
 {
-    public class ChatMainView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class ChatMainView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IDisposable
     {
-        public event Action OnPointerEnterEvent;
-        public event Action OnPointerExitEvent;
-        public event Action OnClickedOutsideEvent;
+        public event Action? OnPointerEnterEvent;
+        public event Action? OnPointerExitEvent;
 
-        // [field: SerializeField]
-        // public ChatConfig Config { get; private set; }
+        [field: SerializeField] public ChatPanelView ChatPanelView { get; private set; } = null!;
+        [field: SerializeField] public VoiceChatPanelView VoiceChatPanelView { get; private set; } = null!;
 
-        [SerializeField]
-        private CanvasGroup sharedBackgroundCanvasGroup;
-
-        [field: SerializeField]
-        public ChatChannelsView ConversationToolbarView2 { get; private set; }
-
-        [field: SerializeField]
-        public ChatMessageFeedView MessageFeedView { get; private set; }
-
-        [field: SerializeField]
-        public ChatInputView InputView { get; private set; }
-
-        [field: SerializeField]
-        public ChatTitlebarView2 TitlebarView { get; private set; }
-
-        [field: SerializeField]
-        public ChannelMemberFeedView MemberListView { get; private set; }
-
-        [field: Header("Voice Chat")]
-        [field: SerializeField]
-        public JoinCommunityLiveStreamChatSubTitleButtonView JoinCommunityLiveStreamSubTitleButton { get; private set; }
-
-        public void Dispose()
-        {
-        }
-
-        public bool IsPointerInside { get; private set; }
         public void OnPointerEnter(PointerEventData eventData)
         {
-            IsPointerInside = true;
+            VoiceChatPanelView.ChatAreaOnPointerEnter();
             OnPointerEnterEvent?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            IsPointerInside = false;
+            VoiceChatPanelView.ChatAreaOnPointerExit();
             OnPointerExitEvent?.Invoke();
         }
 
-        public void SetSharedBackgroundFocusState(bool isFocused, bool animate, float duration, Ease easing)
+        public void OnPointerClick(PointerEventData eventData)
         {
-            // This is the logic that was previously in ChatMessageFeedView, now in its correct home.
-            sharedBackgroundCanvasGroup.DOKill();
-
-            float targetAlpha = isFocused ? 1.0f : 0.0f;
-            float fadeDuration = animate ? duration : 0f;
-
-            if (isFocused && !sharedBackgroundCanvasGroup.gameObject.activeSelf)
-                sharedBackgroundCanvasGroup.gameObject.SetActive(true);
-
-            sharedBackgroundCanvasGroup.DOFade(targetAlpha, fadeDuration)
-                .SetEase(easing)
-                .OnComplete(() =>
-                {
-                    if (!isFocused)
-                    {
-                        sharedBackgroundCanvasGroup.gameObject.SetActive(false);
-                    }
-                });
+            VoiceChatPanelView.ChatAreaOnPointerClick();
         }
+
+        public void Dispose()
+        {
+        }
+
     }
 }

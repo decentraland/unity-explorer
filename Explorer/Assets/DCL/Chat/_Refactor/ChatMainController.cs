@@ -1,16 +1,11 @@
-using System;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using DCL.Chat.ChatCommands;
-using DCL.Chat.ChatFriends;
-using DCL.Chat.ChatInput;
-using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Communities;
@@ -44,20 +39,13 @@ namespace DCL.Chat
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly ITextFormatter textFormatter;
 
-        private ChatStateMachine? chatStateMachine;
-        private EventSubscriptionScope uiScope;
-        private CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
+        private ChatPanelPresenter? chatPanelPresenter;
 
         private readonly HashSet<IBlocksChat> chatBlockers = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public event Action? PointerEntered;
-        public event Action? PointerExited;
-
-        public bool IsVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
-
-        public bool IsFocused => chatStateMachine is { IsFocused: true };
+        public bool IsVisibleInSharedSpace => chatPanelPresenter?.IsVisibleInSharedSpace ?? false;
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig.ChatConfig chatConfig,
@@ -97,151 +85,44 @@ namespace DCL.Chat
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        private CancellationTokenSource initCts;
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-
-            uiScope = new EventSubscriptionScope();
 
             mvcManager.OnViewShowed += OnMvcViewShowed;
             mvcManager.OnViewClosed += OnMvcViewClosed;
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
-            DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
-            DCLInput.Instance.UI.Close.performed += OnUIClose;
 
-            communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
-                viewInstance.JoinCommunityLiveStreamSubTitleButton,
-                voiceChatOrchestrator,
-                currentChannelService.CurrentChannelProperty,
-                communityDataProvider);
-
-
-            var titleBarPresenter = new ChatTitlebarPresenter(
-                viewInstance.TitlebarView,
-                chatConfig,
-                eventBus,
-                communityDataService,
-                currentChannelService,
-                chatMemberListService,
-                chatContextMenuService,
-                commandRegistry.GetTitlebarViewModel,
-                commandRegistry.GetCommunityThumbnail,
-                commandRegistry.DeleteChatHistory,
-                voiceChatOrchestrator,
-                chatEventBus,
-                commandRegistry.GetUserCallStatusCommand);
-
-
-            var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
-                eventBus,
-                chatEventBus,
-                chatHistory,
-                currentChannelService,
-                communityDataService,
-                profileRepositoryWrapper,
-                commandRegistry.SelectChannel,
-                commandRegistry.CloseChannel,
-                commandRegistry.OpenConversation,
-                commandRegistry.CreateChannelViewModel);
-
-            var messageFeedPresenter = new ChatMessageFeedPresenter(viewInstance.MessageFeedView,
-                eventBus,
-                chatHistory,
-                currentChannelService,
-                chatContextMenuService,
-                commandRegistry.GetMessageHistory,
-                commandRegistry.CreateMessageViewModel,
-                commandRegistry.MarkMessagesAsRead);
-
-            var inputPresenter = new ChatInputPresenter(
-                viewInstance.InputView,
-                chatConfig,
-                eventBus,
-                chatEventBus,
-                currentChannelService,
-                commandRegistry.ResolveInputStateCommand,
-                commandRegistry.GetParticipantProfilesCommand,
-                profileRepositoryWrapper,
-                commandRegistry.SendMessage,
-                textFormatter);
-
-            var memberListPresenter = new ChatMemberListPresenter(
-                viewInstance.MemberListView,
-                eventBus,
-                chatEventBus,
-                chatMemberListService,
-                chatContextMenuService,
-                commandRegistry.GetChannelMembersCommand);
-
-            uiScope.Add(titleBarPresenter);
-            uiScope.Add(channelListPresenter);
-            uiScope.Add(messageFeedPresenter);
-            uiScope.Add(inputPresenter);
-            uiScope.Add(memberListPresenter);
-            uiScope.Add(chatClickDetectionService);
-
-            var mediator = new ChatUIMediator(
-                viewInstance,
-                chatConfig,
-                titleBarPresenter,
-                channelListPresenter,
-                messageFeedPresenter,
-                inputPresenter,
-                memberListPresenter,
-                communityVoiceChatSubTitleButtonPresenter,
-                voiceChatOrchestrator);
-
-            chatStateMachine = new ChatStateMachine(eventBus,
-                mediator,
-                chatInputBlockingService,
-                chatClickDetectionService,
-                this);
-
-            uiScope.Add(chatStateMachine);
-        }
-
-        private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
-        {
-            if (chatStateMachine == null) return;
-
-            if (!chatStateMachine.IsFocused && (IsVisibleInSharedSpace || chatStateMachine.IsMinimized))
-            {
-                chatStateMachine.SetFocusState();
-                commandRegistry.SelectChannel.SelectNearbyChannelAndInsertAsync("/", CancellationToken.None);
-            }
+            chatPanelPresenter = new ChatPanelPresenter(viewInstance!.ChatPanelView, textFormatter, voiceChatOrchestrator, currentChannelService, communityDataProvider, chatConfig, chatEventBus, chatHistory, communityDataService,
+                chatMemberListService, profileRepositoryWrapper, commandRegistry, chatInputBlockingService, eventBus, chatContextMenuService, chatClickDetectionService);
         }
 
         private void OnUIClose(InputAction.CallbackContext obj)
         {
-            if (chatStateMachine == null) return;
-            if (chatStateMachine.IsMinimized) return;
             if (chatBlockers.Count > 0) return;
 
-            chatStateMachine?.SetVisibility(true);
+            chatPanelPresenter?.OnUIClose();
         }
 
         protected override void OnViewShow()
         {
-            initCts = new CancellationTokenSource();
-            commandRegistry.InitializeChat.ExecuteAsync(initCts.Token).Forget();
-            chatStateMachine?.OnViewShow();
+            chatPanelPresenter?.OnViewShow();
         }
 
         public void SetVisibility(bool isVisible)
         {
-            chatStateMachine?.SetVisibility(isVisible);
+            chatPanelPresenter?.SetVisibility(isVisible);
         }
 
         public void SetFocusState()
         {
-            chatStateMachine?.SetFocusState();
+            chatPanelPresenter?.SetFocusState();
         }
 
         public void ToggleState()
         {
-            chatStateMachine?.SetToggleState();
+            chatPanelPresenter?.ToggleState();
         }
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
@@ -260,7 +141,8 @@ namespace DCL.Chat
             // If the chat was fully hidden (e.g., by the Friends panel), transition to Default.
             // If it was minimized, transition to Default or Focused based on the input.
             // The `showParams.Focus` will be true when toggling with Enter/shortcut, and false when returning from another panel.
-            chatStateMachine?.SetInitialState(showParams.Focus);
+            chatPanelPresenter?.OnShownInSharedSpaceAsync(showParams.Focus);
+
 
             ViewShowingComplete?.Invoke(this);
             await UniTask.CompletedTask;
@@ -268,7 +150,7 @@ namespace DCL.Chat
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            chatStateMachine?.Minimize();
+            chatPanelPresenter?.OnHiddenInSharedSpace();
             await UniTask.CompletedTask;
         }
 
@@ -278,8 +160,15 @@ namespace DCL.Chat
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
-        private void HandlePointerEnter() => PointerEntered?.Invoke();
-        private void HandlePointerExit() => PointerExited?.Invoke();
+        private void HandlePointerEnter()
+        {
+            chatPanelPresenter?.HandlePointerEnter();
+        }
+
+        private void HandlePointerExit()
+        {
+            chatPanelPresenter?.HandlePointerExit();
+        }
 
         public override void Dispose()
         {
@@ -289,23 +178,12 @@ namespace DCL.Chat
                 mvcManager.OnViewClosed -= OnMvcViewClosed;
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
-                DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
                 DCLInput.Instance.UI.Close.performed -= OnUIClose;
             }
 
             base.Dispose();
 
-            if (initCts != null)
-            {
-                initCts.Cancel();
-                initCts.Dispose();
-                initCts = null;
-            }
-
-            uiScope?.Dispose();
-
             chatMemberListService.Dispose();
-            communityVoiceChatSubTitleButtonPresenter?.Dispose();
             chatBlockers.Clear();
         }
 
@@ -313,7 +191,8 @@ namespace DCL.Chat
         {
             if (controller is not IBlocksChat blocker) return;
 
-            chatStateMachine?.Minimize();
+            chatPanelPresenter?.OnMvcViewShowed();
+
             chatBlockers.Add(blocker);
         }
 
@@ -324,7 +203,8 @@ namespace DCL.Chat
             chatBlockers.Remove(blocker);
 
             if (chatBlockers.Count == 0)
-                chatStateMachine?.PopState();
+                chatPanelPresenter?.OnMvcViewClosed();
+
         }
     }
 }

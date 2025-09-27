@@ -14,8 +14,15 @@ namespace DCL.VoiceChat
     {
         COLLAPSED,
         EXPANDED,
-        EXPANDED_WITHOUT_BUTTONS,
+    }
+
+    public enum VoiceChatPanelState
+    {
+        SELECTED, //When the user clicked on the panel
+        FOCUSED, //When the user hovers over the panel/chat or clicks on the chat
+        UNFOCUSED, //When the user deselects the panel AND unhovers from the panel/chat
         HIDDEN,
+        NONE,
     }
 
     /// <summary>
@@ -31,6 +38,7 @@ namespace DCL.VoiceChat
         IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType { get; }
         IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize { get; }
         IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus { get; }
+        IReadonlyReactiveProperty<VoiceChatPanelState> CurrentVoiceChatPanelState { get; }
         VoiceChatParticipantsStateService ParticipantsStateService { get; }
     }
 
@@ -56,8 +64,8 @@ namespace DCL.VoiceChat
         void HangUp();
         void HandleConnectionError();
         void HandleConnectionEnded();
-
         void ChangePanelSize(VoiceChatPanelSize panelSize);
+        void ChangePanelState(VoiceChatPanelState panelState, bool force = false);
     }
 
     public interface IPrivateCallActions

@@ -78,9 +78,6 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsRequestingToSpeak.Subscribe(_ => UpdateCounters());
 
             OnVoiceChatTypeChanged(voiceChatOrchestrator.CurrentVoiceChatType.Value);
-
-            //Temporary fix, this will be moved to the Show function to set expanded as default state
-            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
         }
 
         private void OnGetPlayerEntry(PlayerEntryView entry)
@@ -168,7 +165,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             if (voiceChatOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
 
             RemoveParticipant(participantId);
-            inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count);
+
+            UpdateCounters();
         }
 
         private void OnParticipantJoined(string participantId, VoiceChatParticipantsStateService.ParticipantState participantState)
@@ -252,6 +250,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void Show()
         {
+            voiceChatOrchestrator.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
             view.gameObject.SetActive(true);
         }
 
@@ -387,8 +386,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     listeners++;
             }
 
-            inCallController.SetParticipantCount(voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1);
-            inCallController.RefreshCounter(speakers, raisedHands);
+            inCallController.RefreshCounters(speakers, raisedHands, voiceChatOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1);
             communityVoiceChatSearchController.RefreshCounters(listeners, raisedHands);
         }
     }
