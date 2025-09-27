@@ -7,7 +7,7 @@ namespace DCL.Multiplayer.Emotes
     {
         OwnedBunch<RemoteEmoteIntention> EmoteIntentions();
 
-        void Send(URN urn, bool loopCyclePassed);
+        void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote);
 
         void OnPlayerRemoved(string walletId);
 

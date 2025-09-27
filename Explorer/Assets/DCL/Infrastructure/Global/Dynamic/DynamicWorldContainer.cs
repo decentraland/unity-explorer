@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -661,6 +662,15 @@ namespace Global.Dynamic
             var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
+            SocialEmoteInteractionsManager.Initialize(new SocialEmoteInteractionsManager());
+            DebugSocialEmoteInteractionsView? debugSocialEmotesView = GameObject.FindWithTag("DebugSocialEmoteInteractionsView")?.GetComponent<DebugSocialEmoteInteractionsView>();
+
+            if (debugSocialEmotesView != null)
+            {
+                SocialEmoteInteractionsManager.Instance.InteractionStarted += debugSocialEmotesView.OnInteractionStarted;
+                SocialEmoteInteractionsManager.Instance.InteractionStopped += debugSocialEmotesView.OnInteractionStopped;
+                SocialEmoteInteractionsManager.Instance.ParticipantAdded += debugSocialEmotesView.OnParticipantAdded;
+            }
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

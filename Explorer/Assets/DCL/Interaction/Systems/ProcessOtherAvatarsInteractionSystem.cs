@@ -4,6 +4,8 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
@@ -28,11 +30,12 @@ namespace DCL.Interaction.Systems
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
-        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip;
+        private HoverFeedbackComponent.Tooltip viewProfileTooltip;
         private Profile? currentProfileHovered;
         private readonly IMVCManager mvcManager;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
+        private EmotesBus emotesBus;
 
         private ProcessOtherAvatarsInteractionSystem(
             World world,
@@ -44,7 +47,7 @@ namespace DCL.Interaction.Systems
             dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
             this.mvcManager = mvcManager;
-            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
+//            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
 
             dclInput.Player.Pointer!.performed += OpenContextMenu;
         }
@@ -85,6 +88,14 @@ namespace DCL.Interaction.Systems
             currentPositionHovered = Mouse.current.position.ReadValue();
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
+
+            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.WalletId);
+
+            if (socialEmoteInteraction.HasValue && !socialEmoteInteraction.Value.AreInteracting)
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip("INTERACT!", dclInput.Player.Pointer);
+            else
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
+
             hoverFeedbackComponent.Add(viewProfileTooltip);
         }
 
@@ -98,9 +109,22 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            contextMenuTask.TrySetResult();
-            contextMenuTask = new UniTaskCompletionSource();
-            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true);
+            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(userId);
+
+            if (socialEmoteInteraction.HasValue && !socialEmoteInteraction.Value.AreInteracting)
+            {
+                // The hovered avatar is playing a social emote, in the starting step
+                emotesBus.PlaySocialEmoteReaction(userId, socialEmoteInteraction.Value.Emote, 0);
+            }
+            else
+            {
+                // A context menu will be available if no social emote interaction is in process
+                contextMenuTask.TrySetResult();
+                contextMenuTask = new UniTaskCompletionSource();
+                menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT, enableSocialEmotes: true);
+            }
+
+
         }
     }
 }

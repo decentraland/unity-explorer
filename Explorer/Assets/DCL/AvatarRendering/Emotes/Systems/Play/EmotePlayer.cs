@@ -11,8 +11,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 {
     public class EmotePlayer
     {
-        // Emotes can have up to 2 clips (avatar + prop)
-        private static readonly AnimationClip[] LEGACY_ANIMATION_CLIPS = new AnimationClip[2];
+        private static readonly List<AnimationClip> ANIMATION_CLIPS = new List<AnimationClip>(4);
 
         private readonly GameObjectPool<AudioSource> audioSourcePool;
         private readonly Action<EmoteReferences> releaseEmoteReferences;
@@ -56,8 +55,10 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!pools.ContainsKey(mainAsset))
             {
+                EmoteDTO.EmoteMetadataDto emoteMetadata = emoteComponent.Metadata;
+
                 if (IsValid(mainAsset))
-                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
+                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, emoteMetadata), onRelease: releaseEmoteReferences));
                 else
                     return false;
             }
@@ -121,42 +122,37 @@ namespace DCL.AvatarRendering.Emotes.Play
         private bool IsValid(GameObject mainAsset) => mainAsset.GetComponent<Animator>()
             || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
 
-        private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
+        private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset, EmoteDTO.EmoteMetadataDto emoteMetadata)
         {
             GameObject mainGameObject = Object.Instantiate(mainAsset);
 
-            AnimationClip[] animationClips;
             Animator? animatorComp = null;
             Animation? animationComp = null;
+
+            ANIMATION_CLIPS.Clear();
 
             // Check for Animator first (Mecanim emotes)
             animatorComp = mainGameObject.GetComponent<Animator>();
             if (animatorComp)
             {
-                animationClips = animatorComp.runtimeAnimatorController.animationClips;
+                ANIMATION_CLIPS.AddRange(animatorComp.runtimeAnimatorController.animationClips);
             }
             else
             {
                 // Legacy emotes - there's always only one Animation component
                 animationComp = mainGameObject.GetComponentInChildren<Animation>(true);
 
-                // Clear the pre-allocated array
-                Array.Clear(LEGACY_ANIMATION_CLIPS, 0, LEGACY_ANIMATION_CLIPS.Length);
-
                 int clipCount = 0;
                 foreach (AnimationState state in animationComp)
-                {
-                    if (state.clip != null && clipCount < LEGACY_ANIMATION_CLIPS.Length)
-                        LEGACY_ANIMATION_CLIPS[clipCount++] = state.clip;
-                }
-                animationClips = LEGACY_ANIMATION_CLIPS;
+                    ANIMATION_CLIPS.Add(state.clip);
             }
 
             EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>();
             IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>();
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
+            EmoteReferences.EmoteOutcome[]? outcomes;
 
-            ExtractClips(animationClips, uniqueClips, out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
+            ExtractClips(ANIMATION_CLIPS, uniqueClips, emoteMetadata, out AnimationClip? avatarClip, out AnimationClip? propClip, out outcomes, out int propClipHash);
 
             if (uniqueClips.Count == 1)
             {
@@ -187,7 +183,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
 
-            references.Initialize(avatarClip, propClip, animatorComp, animationComp, propClipHash);
+            references.Initialize(avatarClip, propClip, outcomes, animatorComp, animationComp, propClipHash);
 
             ListPool<AnimationClip>.Release(uniqueClips);
 
@@ -200,6 +196,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayLegacyEmote(GameObject avatarAnimatorGameObject, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
         {
+// TODO: Adapt this to social emtes like PlayMecanimEmote
             Animation animationComp;
             if (!(animationComp = avatarAnimatorGameObject.GetComponent<Animation>()))
                 animationComp = avatarAnimatorGameObject.AddComponent<Animation>();
@@ -226,9 +223,37 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
-            if (emoteReferences.avatarClip != null)
+            AnimationClip? avatarClip;
+
+            if (emoteComponent.Metadata.IsSocialEmote)
             {
-                view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
+                if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                {
+                    if (emoteComponent.IsReactingToSocialEmote)
+                    {
+                        avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].OtherAvatarAnimation;
+                        isLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature_Other!.loop;
+                    }
+                    else
+                    {
+                        avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].LocalAvatarAnimation;
+                        isLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature!.loop;
+                    }
+                }
+                else
+                {
+                    avatarClip = emoteReferences.avatarClip;
+                    isLooping = emoteComponent.Metadata.emoteDataADR74.startAnimation!.Armature!.loop;
+                }
+            }
+            else
+            {
+                avatarClip = emoteReferences.avatarClip;
+            }
+
+            if (avatarClip != null)
+            {
+                view.ReplaceEmoteAnimation(avatarClip);
                 emoteComponent.EmoteLoop = isLooping;
             }
 
@@ -240,10 +265,44 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
-            if (emoteReferences.propClip != null && emoteReferences.animatorComp != null)
+            AnimationClip? propClip = null;
+            bool isPropLooping = false;
+            int propClipHash = 0;
+
+            if (emoteComponent.Metadata.IsSocialEmote)
             {
-                emoteReferences.animatorComp.SetTrigger(emoteReferences.propClipHash);
-                emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+                if (emoteComponent.IsPlayingSocialEmoteOutcome)
+                {
+                    propClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].PropAnimation;
+
+                    if (propClip != null)
+                    {
+                        isPropLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature_Prop!.loop;
+                        propClipHash = emoteReferences.socialEmoteOutcomes[emoteComponent.CurrentSocialEmoteOutcome].PropAnimationHash;
+                    }
+                }
+                else
+                {
+                    propClip = emoteReferences.propClip;
+
+                    if (propClip != null)
+                    {
+                        isPropLooping = emoteComponent.Metadata.emoteDataADR74.startAnimation!.Armature_Prop!.loop;
+                        propClipHash = emoteReferences.propClipHash;
+                    }
+                }
+            }
+            else
+            {
+                propClip = emoteReferences.propClip;
+                isPropLooping = emoteComponent.EmoteLoop;
+                propClipHash = emoteReferences.propClipHash;
+            }
+
+            if (propClip != null && emoteReferences.animatorComp != null)
+            {
+                emoteReferences.animatorComp.SetTrigger(propClipHash);
+                emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, isPropLooping);
             }
         }
 
@@ -258,8 +317,10 @@ namespace DCL.AvatarRendering.Emotes.Play
         private static void ExtractClips(
             IReadOnlyList<AnimationClip> animationClips,
             List<AnimationClip> uniqueClips,
+            EmoteDTO.EmoteMetadataDto emoteMetadata,
             out AnimationClip? avatarClip,
             out AnimationClip? propClip,
+            out EmoteReferences.EmoteOutcome[]? outcomeClips,
             out int propClipHash)
         {
             avatarClip = null;
@@ -270,29 +331,88 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (clip != null && !uniqueClips.Contains(clip))
                     uniqueClips.Add(clip);
 
-            if (uniqueClips.Count == 1)
-                avatarClip = uniqueClips[0];
-            else if (uniqueClips.Count > 1)
+            outcomeClips = null;
+
+            if (emoteMetadata.IsSocialEmote)
             {
+                outcomeClips = new EmoteReferences.EmoteOutcome[emoteMetadata.data.outcomes.Length]; // TODO: Make static List
+
                 foreach (AnimationClip animationClip in uniqueClips)
                 {
-                    // Many 2.0 emotes are not following naming conventions: https://docs.decentraland.org/creator/emotes/props-and-sounds/#naming-conventions
-                    // Some examples:
-                    // urn:decentraland:matic:collections-v2:0xca53b9436be1d663e050eb9ce523decbc656365c:1
-                    // urn:decentraland:matic:collections-v2:0xfcc2c46c83a9faa5c639e81d0ad19e27b5517e57:0
-                    // So they won't work because of the naming checks
-                    // Creators need to either fix the emotes, or we need to apply a fallback based on sorting rule
-
-                    if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
+                    if (emoteMetadata.emoteDataADR74.startAnimation != null &&
+                        emoteMetadata.emoteDataADR74.startAnimation.Armature != null &&
+                        animationClip.name == emoteMetadata.emoteDataADR74.startAnimation.Armature.animation)
+                    {
                         avatarClip = animationClip;
-
-                    if (animationClip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
+                    }
+                    else if (emoteMetadata.emoteDataADR74.startAnimation != null &&
+                             emoteMetadata.emoteDataADR74.startAnimation.Armature_Prop != null &&
+                             animationClip.name == emoteMetadata.emoteDataADR74.startAnimation.Armature_Prop.animation)
                     {
                         propClip = animationClip;
                         propClipHash = Animator.StringToHash(animationClip.name);
                     }
+                    else // outcomes
+                    {
+                        for (int i = 0; i < emoteMetadata.data.outcomes.Length; ++i)
+                        {
+                            if (emoteMetadata.data.outcomes[i].clips.Armature_Other != null &&
+                                animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature_Other.animation)
+                            {
+                                outcomeClips[i].OtherAvatarAnimation = animationClip;
+                                // In order to apply the animation to the "reacting" avatar, the name of the armature object in the clip must match the name in the avatar model
+                               /* ReplaceBoundObjectNameInAnimationClip(animationClip, "Armature_Other", "Armature");*/
+                            }
+                            else if (emoteMetadata.data.outcomes[i].clips.Armature != null &&
+                                     animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature.animation)
+                            {
+                                outcomeClips[i].LocalAvatarAnimation = animationClip;
+                            }
+                            else if (emoteMetadata.data.outcomes[i].clips.Armature_Prop != null &&
+                                     animationClip.name == emoteMetadata.data.outcomes[i].clips.Armature_Prop.animation)
+                            {
+                                outcomeClips[i].PropAnimation = animationClip;
+                                outcomeClips[i].PropAnimationHash = Animator.StringToHash(animationClip.name);
+                            }
+                        }
+                    }
+                }
+            }
+            else // Non-social emotes
+            {
+                if (uniqueClips.Count == 1)
+                    avatarClip = uniqueClips[0];
+                else if (uniqueClips.Count > 1)
+                {
+                    foreach (AnimationClip animationClip in uniqueClips)
+                    {
+                        // Many 2.0 emotes are not following naming conventions: https://docs.decentraland.org/creator/emotes/props-and-sounds/#naming-conventions
+                        // Some examples:
+                        // urn:decentraland:matic:collections-v2:0xca53b9436be1d663e050eb9ce523decbc656365c:1
+                        // urn:decentraland:matic:collections-v2:0xfcc2c46c83a9faa5c639e81d0ad19e27b5517e57:0
+                        // So they won't work because of the naming checks
+                        // Creators need to either fix the emotes, or we need to apply a fallback based on sorting rule
+
+                        if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
+                            avatarClip = animationClip;
+
+                        if (animationClip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
+                        {
+                            propClip = animationClip;
+                            propClipHash = Animator.StringToHash(animationClip.name);
+                        }
+                    }
                 }
             }
         }
+
+        /*private static void ReplaceBoundObjectNameInAnimationClip(AnimationClip animationClip, string patternToSearch, string replacement)
+        {
+            EditorCurveBinding[] bindings = AnimationUtility.GetObjectReferenceCurveBindings(animationClip);
+
+            for (int i = 0; i < bindings.Length; ++i)
+                if (bindings[i].propertyName.Contains(patternToSearch, StringComparison.InvariantCultureIgnoreCase))
+                    bindings[i].propertyName = replacement;
+        }*/
     }
 }
