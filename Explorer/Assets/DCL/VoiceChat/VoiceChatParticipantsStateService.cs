@@ -195,6 +195,7 @@ namespace DCL.VoiceChat
                             speakers.Remove(participant.Identity);
                             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant left: {participant.Identity}");
                         }
+
                         break;
                 }
 
@@ -264,11 +265,13 @@ namespace DCL.VoiceChat
                     case ConnectionUpdate.Connected:
                         // We have this because the Connected event is sent several times as part of our reliability logic (to ensure updates reach all users despite Livekit)
                         connectionUpdateCounter++;
+
                         if (connectionUpdateCounter <= MAX_CONNECTION_UPDATES)
                         {
                             RefreshAllParticipantStates();
                             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection {connectionUpdate} refreshed participant states");
                         }
+
                         break;
                     case ConnectionUpdate.Reconnected:
                         connectionUpdateCounter = 0;
@@ -332,22 +335,22 @@ namespace DCL.VoiceChat
             if (!callMetadata.HasValue) return;
 
             var parsedMetadata = callMetadata.Value;
-                    ParticipantState? participantState = GetParticipantState(participantId);
+            ParticipantState? participantState = GetParticipantState(participantId);
 
-                    if (participantState == null) return;
+            if (participantState == null) return;
 
-                    participantState.WalletId = participantId;
-                    participantState.Name.Value = parsedMetadata.name;
-                    participantState.HasClaimedName.Value = parsedMetadata.hasClaimedName;
-                    participantState.ProfilePictureUrl.Value = parsedMetadata.profilePictureUrl;
-                    participantState.IsRequestingToSpeak.Value = parsedMetadata.isRequestingToSpeak;
-                    participantState.IsSpeaker.Value = parsedMetadata.isSpeaker;
-                    participantState.Role.Value = parsedMetadata.Role;
+            participantState.WalletId = participantId;
+            participantState.Name.Value = parsedMetadata.name;
+            participantState.HasClaimedName.Value = parsedMetadata.hasClaimedName;
+            participantState.ProfilePictureUrl.Value = parsedMetadata.profilePictureUrl;
+            participantState.IsRequestingToSpeak.Value = parsedMetadata.isRequestingToSpeak;
+            participantState.IsSpeaker.Value = parsedMetadata.isSpeaker;
+            participantState.Role.Value = parsedMetadata.Role;
 
-                    if (parsedMetadata.isSpeaker)
-                        speakers.Add(participantId);
-                    else
-                        speakers.Remove(participantId);
+            if (parsedMetadata.isSpeaker)
+                speakers.Add(participantId);
+            else
+                speakers.Remove(participantId);
         }
 
         private void OnIdentityChanged()
@@ -381,6 +384,11 @@ namespace DCL.VoiceChat
                 new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.Role ?? UserCommunityRoleMetadata.none),
                 new ReactiveProperty<bool>(false)
             );
+
+            if (state.IsSpeaker.Value)
+                speakers.Add(participant.Identity);
+            else
+                speakers.Remove(participant.Identity);
 
             participantStates[participant.Identity] = state;
             return state;
@@ -418,10 +426,7 @@ namespace DCL.VoiceChat
         {
             var currentParticipants = new List<Participant>();
 
-            foreach (var participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
-            {
-                currentParticipants.Add(participantId.Value);
-            }
+            foreach (var participantId in voiceChatRoom.Participants.RemoteParticipantIdentities()) { currentParticipants.Add(participantId.Value); }
 
             var participantsToRemove = new List<string>();
 
@@ -435,6 +440,7 @@ namespace DCL.VoiceChat
                 RemoveParticipantState(participantId);
                 connectedParticipants.Remove(participantId);
                 activeSpeakers.Remove(participantId);
+                speakers.Remove(participantId);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Removed disconnected participant during refresh: {participantId}");
             }
 
