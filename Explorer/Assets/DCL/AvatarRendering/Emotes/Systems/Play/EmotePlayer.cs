@@ -223,7 +223,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
-            AnimationClip? avatarClip = null;
+            AnimationClip? avatarClip;
 
             if (emoteComponent.Metadata.IsSocialEmote)
             {
@@ -245,6 +245,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                     avatarClip = emoteReferences.avatarClip;
                     isLooping = emoteComponent.Metadata.emoteDataADR74.startAnimation!.Armature!.loop;
                 }
+            }
+            else
+            {
+                avatarClip = emoteReferences.avatarClip;
             }
 
             if (avatarClip != null)
