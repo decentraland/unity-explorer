@@ -12,7 +12,7 @@ namespace DCL.DebugUtilities
 
         public DebugContainer Container => throw new InvalidOperationException("Container is null implementation");
 
-        public Result<DebugWidgetBuilder> AddWidget(string name) =>
+        public Result<DebugWidgetBuilder> AddWidget(WidgetName name) =>
             //ignore
             Result<DebugWidgetBuilder>.ErrorResult("Null implementation");
 

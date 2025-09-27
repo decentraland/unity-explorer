@@ -922,7 +922,7 @@ namespace Global.Dynamic
                         staticContainer.WebRequestsContainer.WebRequestController,
                         assetsProvisioner,
                         debugBuilder
-                    )
+                        )
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

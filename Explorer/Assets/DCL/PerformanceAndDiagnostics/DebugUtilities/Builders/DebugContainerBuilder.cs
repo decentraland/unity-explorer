@@ -62,8 +62,10 @@ namespace DCL.DebugUtilities
             this.allowOnlyNames = allowOnlyNames;
         }
 
-        public Result<DebugWidgetBuilder> AddWidget(string name)
+        public Result<DebugWidgetBuilder> AddWidget(WidgetName widgetName)
         {
+            string name = widgetName.Name;
+
             if (allowOnlyNames != null && allowOnlyNames.Contains(name) == false)
                 return Result<DebugWidgetBuilder>.ErrorResult($"Name {name} not allowed");
 

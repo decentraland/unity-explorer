@@ -2,7 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
+using RichTypes;
 using System;
 using System.Collections.Concurrent;
 using UnityEngine;
@@ -28,7 +30,7 @@ namespace DCL.VoiceChat
             parent = new GameObject(nameof(PlaybackSourcesHub)).transform;
         }
 
-        internal void AddOrReplaceStream(StreamKey key, WeakReference<IAudioStream> stream)
+        internal void AddOrReplaceStream(StreamKey key, Weak<AudioStream> stream)
         {
             if (streams.TryRemove(key, out var oldStream))
                 DisposeSource(oldStream!);
@@ -37,7 +39,7 @@ namespace DCL.VoiceChat
             source.Construct(stream);
             AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
             audioSource.outputAudioMixerGroup = audioMixerGroup;
-            source.name = $"LivekitSource_{key.Identity}";
+            source.name = $"LivekitSource_{key.identity}";
             source.transform.SetParent(parent);
 
             if (streams.TryAdd(key, source) == false)

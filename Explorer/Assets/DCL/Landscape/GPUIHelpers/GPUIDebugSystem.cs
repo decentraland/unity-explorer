@@ -20,7 +20,7 @@ namespace DCL.Landscape.GPUI_Pro
         {
             this.debuggerCanvas = debuggerCanvas;
 
-            debugBuilder.TryAddWidget("Landscape - GPUI")
+            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.LANDSCAPE_GPUI)
                        ?.AddSingleButton("Debug", InstantiateDebugWindow);
         }
 

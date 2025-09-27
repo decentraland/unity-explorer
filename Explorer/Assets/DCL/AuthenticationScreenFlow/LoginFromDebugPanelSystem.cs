@@ -35,7 +35,7 @@ namespace DCL.AuthenticationScreenFlow
             this.mvcManager = mvcManager;
             this.realmData = realmData;
 
-            debugContainerBuilder.TryAddWidget("Web3 Authentication")
+            debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB3_AUTHENTICATION)
                                 ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
                                  .AddSingleButton("Login", Login)
                                  .AddSingleButton("Open Auth UI", OpenAuthenticationFlow)

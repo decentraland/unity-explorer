@@ -27,7 +27,7 @@ namespace DCL.Chat.MessageBus
                 messagesBus.Send(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(UnityEngine.Random.Range(1, 250)), "debug panel");
             }
 
-            debugContainerBuilder.TryAddWidget("Chat")?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);
+            debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CHAT)?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);
 
             return messagesBus;
         }

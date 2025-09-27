@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using RichTypes;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Ownership;
 
 namespace DCL.SceneLoadingScreens
 {
