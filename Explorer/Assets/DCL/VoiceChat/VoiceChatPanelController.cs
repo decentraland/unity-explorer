@@ -33,14 +33,14 @@ namespace DCL.VoiceChat
             VoiceChatMicrophoneHandler voiceChatHandler,
             VoiceChatRoomManager roomManager,
             IRoomHub roomHub,
-            PlayerEntryView playerEntry)
+            VoiceChatParticipantEntryView participantEntry)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(view.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatController(view.CommunityVoiceChatView, playerEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
+            communitiesVoiceChatController = new CommunityVoiceChatController(view.CommunityVoiceChatView, participantEntry, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, webRequestController);
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 

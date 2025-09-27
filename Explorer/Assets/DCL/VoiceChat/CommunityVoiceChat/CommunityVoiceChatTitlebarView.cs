@@ -35,7 +35,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public event Action<string> ApproveSpeaker;
         public event Action<string> DenySpeaker;
 
-        private void OnContextMenuButtonClicked(VoiceChatParticipantsStateService.ParticipantState participant, Vector2 buttonPosition, PlayerEntryView elementView)
+        private void OnContextMenuButtonClicked(VoiceChatParticipantState participant, Vector2 buttonPosition, VoiceChatParticipantEntryView elementView)
         {
             popupCts = popupCts.SafeRestart();
             contextMenuTask?.TrySetResult();
@@ -51,7 +51,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 anchorPoint: MenuAnchorPoint.BOTTOM_RIGHT).Forget();
         }
 
-        public void ConfigureEntry(PlayerEntryView entryView, VoiceChatParticipantsStateService.ParticipantState participantState, VoiceChatParticipantsStateService.ParticipantState localParticipantState)
+        public void ConfigureEntry(VoiceChatParticipantEntryView entryView, VoiceChatParticipantState participantState, VoiceChatParticipantState localParticipantState)
         {
             entryView.SubscribeToInteractions(OnContextMenuButtonClicked, ApproveSpeaker, DenySpeaker);
             entryView.SetUserProfile(participantState, localParticipantState);

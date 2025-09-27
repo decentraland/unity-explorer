@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using LiveKit.Audio;
 using LiveKit.Proto;
@@ -30,11 +31,13 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly IDisposable microphoneChangeSubscription;
 
         private CancellationTokenSource? trackPublishingCts;
         private bool isDisposed;
 
         private MicrophoneTrack? microphoneTrack;
+        private TrackPublication? currentTrackPublication;
 
         public VoiceChatTrackManager(
             IRoom voiceChatRoom,
@@ -45,10 +48,17 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.microphoneHandler = microphoneHandler;
 
+            microphoneChangeSubscription = microphoneHandler.IsMicrophoneEnabled.Subscribe(OnMicrophoneEnabledChanged);
+
             playbackSourcesHub = new PlaybackSourcesHub(
                 new ConcurrentDictionary<StreamKey, LivekitAudioSource>(),
                 configuration.ChatAudioMixerGroup.EnsureNotNull()
             );
+        }
+
+        private void OnMicrophoneEnabledChanged(bool isEnabled)
+        {
+            MuteLocalTrack(!isEnabled);
         }
 
         public void Dispose()
@@ -58,6 +68,7 @@ namespace DCL.VoiceChat
 
             UnpublishLocalTrack();
             StopListeningToRemoteTracks();
+            microphoneChangeSubscription.Dispose();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
@@ -118,6 +129,17 @@ namespace DCL.VoiceChat
                 CleanupLocalTrack();
                 throw;
             }
+        }
+
+        private void MuteLocalTrack(bool mute)
+        {
+            if (microphoneTrack.HasValue && currentTrackPublication != null)
+                try
+                {
+                    voiceChatRoom.Participants.LocalParticipant().TrackPublication(currentTrackPublication.Sid).Track?.UpdateMuted(mute);
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track muted: {mute}");
+                }
+                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to mute local track: {ex.Message}"); }
         }
 
         public void UnpublishLocalTrack()
@@ -221,15 +243,18 @@ namespace DCL.VoiceChat
         {
             try
             {
-                if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
-                {
-                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                if (publication.Kind != TrackKind.KindAudio) return;
 
-                    if (stream != null)
-                    {
-                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity), stream);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
-                    }
+                currentTrackPublication = publication;
+
+                if (!configuration.EnableLocalTrackPlayback) return;
+
+                WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+
+                if (stream != null)
+                {
+                    playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity), stream);
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track published: {ex.Message}"); }
@@ -239,11 +264,15 @@ namespace DCL.VoiceChat
         {
             try
             {
-                if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
-                {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity));
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
-                }
+                if (publication.Kind != TrackKind.KindAudio) return;
+
+                currentTrackPublication = null;
+
+                if (!configuration.EnableLocalTrackPlayback) return;
+
+                playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity));
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
+
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track unpublished: {ex.Message}"); }
         }

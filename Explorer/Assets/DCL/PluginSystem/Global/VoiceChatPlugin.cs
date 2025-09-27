@@ -107,7 +107,7 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
 
-            var playerEntry = pluginSettings.PlayerEntryView;
+            var playerEntry = pluginSettings.ParticipantEntryView;
             var muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
             var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);

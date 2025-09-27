@@ -1,6 +1,10 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
+using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,47 +12,36 @@ using UnityEngine.UI;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
-    public class PlayerEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class VoiceChatParticipantEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const float ANIMATION_DURATION = 0.5f;
         private static readonly Vector3 IDLE_SCALE = new (1, 0.2f, 1);
+        private const string IS_MUTED_TEXT = "Muted";
+        private const string IS_SPEAKING_TEXT = "Speaking";
 
-        public event Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
+        public event Action<VoiceChatParticipantState, Vector2, VoiceChatParticipantEntryView>? ContextMenuButtonClicked;
+        public event Action<string>? ApproveSpeaker;
+        public event Action<string>? DenySpeaker;
 
-        [SerializeField] private RectTransform hoverElement;
+        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text NameElement { get; private set; } = null!;
+        [field: SerializeField] public RectTransform IsSpeakingIcon { get; private set; } = null!;
 
-        [SerializeField] private Button contextMenuButton;
+        [SerializeField] private RectTransform isSpeakingIconRect = null!;
+        [SerializeField] private RectTransform isSpeakingIconOuterRect = null!;
+        [SerializeField] private GameObject approveDenySection  = null!;
+        [SerializeField] private Button approveButton = null!;
+        [SerializeField] private Button denyButton = null!;
+        [SerializeField] private Button openPassportButton  = null!;
+        [SerializeField] private RectTransform hoverElement = null!;
+        [SerializeField] private Button contextMenuButton = null!;
+        [SerializeField] private GameObject isMutedIcon = null!;
+        [SerializeField] private TMP_Text statusText = null!;
+        [SerializeField] private GameObject promotingSpinner = null!;
 
-        [SerializeField] public ProfilePictureView ProfilePictureView;
-        [SerializeField] public TMP_Text nameElement;
-
-        [field: SerializeField]
-        internal RectTransform isSpeakingIcon { get; private set; }
-
-        [field: SerializeField]
-        internal RectTransform isSpeakingIconRect { get; private set; }
-
-        [field: SerializeField]
-        internal RectTransform isSpeakingIconOuterRect { get; private set; }
-
-        [field: SerializeField]
-        internal GameObject approveDenySection { get; private set; }
-
-        [field: SerializeField]
-        internal Button approveButton { get; private set; }
-
-        [field: SerializeField]
-        internal Button denyButton { get; private set; }
-
-        [field: SerializeField]
-        internal Button openPassportButton { get; private set; }
-
-        private VoiceChatParticipantsStateService.ParticipantState userProfile;
-        private VoiceChatParticipantsStateService.ParticipantState localUserProfile;
+        private VoiceChatParticipantState? userProfile;
+        private VoiceChatParticipantState? localUserProfile;
         private Sequence? isSpeakingCurrentSequence;
-
-        public event Action<string> ApproveSpeaker;
-        public event Action<string> DenySpeaker;
 
         private void Start()
         {
@@ -63,20 +56,32 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             isSpeakingCurrentSequence = null;
             SetSpeakingIconIdleScale();
             approveDenySection.SetActive(false);
-            isSpeakingIcon.gameObject.SetActive(false);
+            IsSpeakingIcon.gameObject.SetActive(false);
+            isMutedIcon.SetActive(false);
         }
 
         private void OnOpenPassportClicked()
         {
-            if (string.IsNullOrEmpty(userProfile.WalletId)) return;
+            if (string.IsNullOrEmpty(userProfile?.WalletId)) return;
 
-            OpenPassportDirectly(userProfile.WalletId);
+            OpenPassportAsync(userProfile.WalletId, CancellationToken.None).Forget();
+            return;
+
+            async UniTask OpenPassportAsync(string userId, CancellationToken ct = default)
+            {
+                try
+                {
+                    await ViewDependencies.GlobalUIViews.OpenPassportAsync(userId, ct);
+                }
+                catch (Exception ex)
+                {
+                    ReportHub.LogError(ReportCategory.COMMUNITY_VOICE_CHAT, $"Failed to open passport for user {userId}: {ex.Message}");
+                }
+            }
         }
 
-        private void OpenPassportDirectly(string walletId) =>
-            VoiceChatPassportBridge.OpenPassport(walletId);
 
-        public void SetUserProfile(VoiceChatParticipantsStateService.ParticipantState participantState, VoiceChatParticipantsStateService.ParticipantState localParticipantState)
+        public void SetUserProfile(VoiceChatParticipantState participantState, VoiceChatParticipantState localParticipantState)
         {
             // We only show context menu button on top of local participant if local participant is a mod.
             var showContextMenuButton = true;
@@ -95,6 +100,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             userProfile.IsRequestingToSpeak.OnUpdate -= SetRequestingToSpeakSection;
             userProfile.IsRequestingToSpeak.OnUpdate += SetRequestingToSpeakSection;
 
+            userProfile.IsMuted.OnUpdate -= OnIsMutedChanged;
+            userProfile.IsMuted.OnUpdate += OnIsMutedChanged;
+
             approveButton.onClick.RemoveAllListeners();
             approveButton.onClick.AddListener(() => ApproveSpeaker?.Invoke(userProfile.WalletId));
             denyButton.onClick.RemoveAllListeners();
@@ -103,13 +111,38 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             SetSpeakingIconIdleScale();
         }
 
+        private void OnIsMutedChanged(bool isMuted)
+        {
+            if (!userProfile!.IsSpeaker.Value) return;
+
+            if (isMuted)
+            {
+                statusText.text = IS_MUTED_TEXT;
+                isSpeakingCurrentSequence?.Kill();
+                isSpeakingCurrentSequence = null;
+                isMutedIcon.SetActive(true);
+            }
+            else if (userProfile.IsSpeaker.Value)
+            {
+                statusText.text = IS_SPEAKING_TEXT;
+                isMutedIcon.SetActive(false);
+                SetSpeakingIconIdleScale();
+            }
+        }
+
         private void SetRequestingToSpeakSection(bool isRequestingToSpeak) =>
-            approveDenySection.SetActive(isRequestingToSpeak && localUserProfile.Role.Value is
+            approveDenySection.SetActive(isRequestingToSpeak && localUserProfile?.Role.Value is
                 VoiceChatParticipantsStateService.UserCommunityRoleMetadata.moderator or
                 VoiceChatParticipantsStateService.UserCommunityRoleMetadata.owner);
 
         private void OnChangeIsSpeaking(bool isSpeaking)
         {
+            if (userProfile!.IsMuted.Value) return;
+
+            isMutedIcon.SetActive(false);
+
+            statusText.text = IS_SPEAKING_TEXT;
+
             if (isSpeaking)
             {
                 isSpeakingCurrentSequence = DOTween.Sequence();
@@ -134,7 +167,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             isSpeakingIconOuterRect.localScale = IDLE_SCALE;
         }
 
-        public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu, Action<string> approveSpeaker, Action<string> denySpeaker)
+        public void SubscribeToInteractions(Action<VoiceChatParticipantState, Vector2, VoiceChatParticipantEntryView> contextMenu, Action<string> approveSpeaker, Action<string> denySpeaker)
         {
             RemoveAllListeners();
 
@@ -158,6 +191,21 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void OnPointerExit(PointerEventData eventData)
         {
             hoverElement.gameObject.SetActive(false);
+        }
+
+        public void ConfigureAsSpeaker()
+        {
+            IsSpeakingIcon.gameObject.SetActive(true);
+            statusText.text = IS_SPEAKING_TEXT;
+            isMutedIcon.SetActive(false);
+        }
+
+        public void ConfigureAsListener()
+        {
+            statusText.text = string.Empty;
+            IsSpeakingIcon.gameObject.SetActive(false);
+            isMutedIcon.SetActive(false);
+            transform.localScale = Vector3.one;
         }
     }
 }

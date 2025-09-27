@@ -100,7 +100,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CollapseButton.onClick.RemoveListener(OnToggleCollapseButtonClicked);
         }
 
-        public void AddSpeaker(PlayerEntryView entryView)
+        public void AddSpeaker(VoiceChatParticipantEntryView entryView)
         {
             entryView.transform.parent = view.SpeakersParent;
             entryView.transform.localScale = Vector3.one;

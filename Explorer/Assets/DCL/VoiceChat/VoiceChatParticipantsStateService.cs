@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Proto;
+using LiveKit.Rooms.TrackPublications;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -29,10 +30,10 @@ namespace DCL.VoiceChat
             owner,
         }
 
-        public delegate void ParticipantJoinedDelegate(string participantId, ParticipantState participantState);
+        public delegate void ParticipantJoinedDelegate(string participantId, VoiceChatParticipantState participantState);
         public delegate void ParticipantLeftDelegate(string participantId);
         public delegate void SpeakersUpdatedDelegate(int speakers);
-        public delegate void ParticipantsStateRefreshDelegate(List<(string participantId, ParticipantState state)> joinedParticipants, List<string> leftParticipantIds);
+        public delegate void ParticipantsStateRefreshDelegate(List<(string participantId, VoiceChatParticipantState state)> joinedParticipants, List<string> leftParticipantIds);
         private const string TAG = nameof(VoiceChatParticipantsStateService);
         private const int MAX_CONNECTION_UPDATES = 3;
 
@@ -40,7 +41,7 @@ namespace DCL.VoiceChat
         private readonly IWeb3IdentityCache identityCache;
 
         private readonly HashSet<string> connectedParticipants = new ();
-        private readonly Dictionary<string, ParticipantState> participantStates = new ();
+        private readonly Dictionary<string, VoiceChatParticipantState> participantStates = new ();
         private readonly Dictionary<string, ReactiveProperty<bool>> onlineStatus = new ();
         private readonly HashSet<string> speakers = new ();
 
@@ -50,32 +51,21 @@ namespace DCL.VoiceChat
 
         public IReadOnlyCollection<string> ConnectedParticipants => connectedParticipants;
         public IReadOnlyCollection<string> Speakers => speakers;
-
         public string LocalParticipantId { get; private set; }
-
-        public ParticipantState LocalParticipantState { get; private set; }
-
-        /// <summary>
-        ///     Raised when a new participant joins the voice chat room.
-        /// </summary>
+        public VoiceChatParticipantState LocalParticipantState { get; private set; }
         public event ParticipantJoinedDelegate? ParticipantJoined;
-
-        /// <summary>
-        ///     Raised when a participant leaves the voice chat room.
-        /// </summary>
         public event ParticipantLeftDelegate? ParticipantLeft;
-
+        public event SpeakersUpdatedDelegate? SpeakersUpdated;
         /// <summary>
         ///     Raised when participant states are refreshed after connection or reconnection.
         ///     Provides lists of newly joined participants and participants that have left.
         /// </summary>
         public event ParticipantsStateRefreshDelegate? ParticipantsStateRefreshed;
 
-        public event SpeakersUpdatedDelegate? SpeakersUpdated;
-
         public VoiceChatParticipantsStateService(
             IRoom voiceChatRoom,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache
+            )
         {
             this.voiceChatRoom = voiceChatRoom;
             this.identityCache = identityCache;
@@ -87,9 +77,12 @@ namespace DCL.VoiceChat
             identityCache.OnIdentityChanged += OnIdentityChanged;
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
+            voiceChatRoom.TrackMuted += OnTrackMuted;
+            voiceChatRoom.TrackUnmuted += OnTrackUnMuted;
+
             LocalParticipantId = identityCache.Identity?.Address ?? string.Empty;
 
-            LocalParticipantState = new ParticipantState(
+            LocalParticipantState = new VoiceChatParticipantState(
                 LocalParticipantId,
                 new ReactiveProperty<bool>(false),
                 new ReactiveProperty<string?>(null),
@@ -102,9 +95,22 @@ namespace DCL.VoiceChat
             );
         }
 
+        private void OnTrackUnMuted(TrackPublication publication, Participant participant)
+        {
+            if (TryGetParticipantState(participant.Identity, out var state))
+                state.IsMuted.Value = false;
+        }
+
+        private void OnTrackMuted(TrackPublication publication, Participant participant)
+        {
+            if (TryGetParticipantState(participant.Identity, out var state))
+                state.IsMuted.Value = true;
+        }
+
         public void Dispose()
         {
             if (isDisposed) return;
+
             isDisposed = true;
 
             voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
@@ -114,7 +120,7 @@ namespace DCL.VoiceChat
             identityCache.OnIdentityChanged -= OnIdentityChanged;
             identityCache.OnIdentityCleared -= OnIdentityCleared;
 
-            foreach (ParticipantState state in participantStates.Values) { DisposeParticipantState(state); }
+            foreach (VoiceChatParticipantState state in participantStates.Values) { DisposeParticipantState(state); }
 
             participantStates.Clear();
 
@@ -137,7 +143,18 @@ namespace DCL.VoiceChat
             else { status.Value = isOnline; }
         }
 
-        public ParticipantState? GetParticipantState(string participantId) =>
+        public bool TryGetParticipantState(string participantId, out VoiceChatParticipantState participantState)
+        {
+            if (participantId == LocalParticipantId)
+            {
+                participantState = LocalParticipantState;
+                return true;
+            }
+
+            return participantStates.TryGetValue(participantId, out participantState);
+        }
+
+        public VoiceChatParticipantState? GetParticipantState(string participantId) =>
             participantId == LocalParticipantId ? LocalParticipantState : participantStates.GetValueOrDefault(participantId);
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
@@ -164,7 +181,7 @@ namespace DCL.VoiceChat
                     case UpdateFromParticipant.Connected:
                         if (connectedParticipants.Add(participant.Identity))
                         {
-                            ParticipantState state;
+                            VoiceChatParticipantState state;
 
                             if (participant.Identity == LocalParticipantId)
                             {
@@ -335,7 +352,7 @@ namespace DCL.VoiceChat
             if (!callMetadata.HasValue) return;
 
             var parsedMetadata = callMetadata.Value;
-            ParticipantState? participantState = GetParticipantState(participantId);
+            VoiceChatParticipantState? participantState = GetParticipantState(participantId);
 
             if (participantState == null) return;
 
@@ -369,11 +386,11 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Identity cleared, reset LocalParticipantId and state");
         }
 
-        private ParticipantState CreateParticipantState(Participant participant)
+        private VoiceChatParticipantState CreateParticipantState(Participant participant)
         {
             ParticipantCallMetadata? metadata = ParseParticipantMetadata(participant.Identity, participant.Metadata);
 
-            var state = new ParticipantState(
+            var state = new VoiceChatParticipantState(
                 participant.Identity,
                 new ReactiveProperty<bool>(false),
                 new ReactiveProperty<string?>(metadata?.name),
@@ -396,14 +413,14 @@ namespace DCL.VoiceChat
 
         private void RemoveParticipantState(string participantId)
         {
-            if (participantStates.TryGetValue(participantId, out ParticipantState state))
+            if (participantStates.TryGetValue(participantId, out VoiceChatParticipantState state))
             {
                 DisposeParticipantState(state);
                 participantStates.Remove(participantId);
             }
         }
 
-        private void DisposeParticipantState(ParticipantState state)
+        private void DisposeParticipantState(VoiceChatParticipantState state)
         {
             state.IsSpeaking.ClearSubscriptionsList();
             state.Name.ClearSubscriptionsList();
@@ -416,7 +433,7 @@ namespace DCL.VoiceChat
 
         private void ClearAllParticipantStates()
         {
-            foreach (ParticipantState state in participantStates.Values) { DisposeParticipantState(state); }
+            foreach (VoiceChatParticipantState state in participantStates.Values) { DisposeParticipantState(state); }
 
             participantStates.Clear();
             ResetLocalParticipantState();
@@ -444,14 +461,14 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Removed disconnected participant during refresh: {participantId}");
             }
 
-            var joinedParticipants = new List<(string participantId, ParticipantState state)>();
+            var joinedParticipants = new List<(string participantId, VoiceChatParticipantState state)>();
 
             foreach (Participant participant in currentParticipants)
             {
-                if (participantStates.TryGetValue(participant.Identity, out ParticipantState existingState)) { RefreshParticipantState(participant, existingState); }
+                if (participantStates.TryGetValue(participant.Identity, out VoiceChatParticipantState existingState)) { RefreshParticipantState(participant, existingState); }
                 else
                 {
-                    ParticipantState state = CreateParticipantState(participant);
+                    VoiceChatParticipantState state = CreateParticipantState(participant);
                     connectedParticipants.Add(participant.Identity);
                     joinedParticipants.Add((participant.Identity, state));
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant joined during refresh: {participant.Identity}");
@@ -467,12 +484,12 @@ namespace DCL.VoiceChat
             SpeakersUpdated?.Invoke(speakers.Count);
         }
 
-        private void RefreshParticipantState(Participant participant, ParticipantState existingState)
+        private void RefreshParticipantState(Participant participant, VoiceChatParticipantState existingState)
         {
             RefreshParticipantStateFromMetadata(participant, existingState);
         }
 
-        private void RefreshParticipantStateFromMetadata(Participant participant, ParticipantState existingState)
+        private void RefreshParticipantStateFromMetadata(Participant participant, VoiceChatParticipantState existingState)
         {
             ParticipantCallMetadata? metadata = ParseParticipantMetadata(participant.Identity, participant.Metadata);
 
@@ -491,7 +508,7 @@ namespace DCL.VoiceChat
 
         private void UpdateParticipantSpeaking(string participantId, bool isSpeaking)
         {
-            ParticipantState? participantState = GetParticipantState(participantId);
+            VoiceChatParticipantState? participantState = GetParticipantState(participantId);
 
             if (participantState != null) { participantState.IsSpeaking.Value = isSpeaking; }
         }
@@ -506,33 +523,6 @@ namespace DCL.VoiceChat
             LocalParticipantState.IsSpeaker.Value = false;
             LocalParticipantState.Role.Value = UserCommunityRoleMetadata.none;
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reset local participant state to defaults");
-        }
-
-        public class ParticipantState
-        {
-            public string WalletId { get; set; }
-            public ReactiveProperty<bool> IsSpeaking { get; set; }
-            public ReactiveProperty<string?> Name { get; set; }
-            public ReactiveProperty<bool?> HasClaimedName { get; set; }
-            public ReactiveProperty<string?> ProfilePictureUrl { get; set; }
-            public ReactiveProperty<bool> IsRequestingToSpeak { get; set; }
-            public ReactiveProperty<bool> IsSpeaker { get; set; }
-            public ReactiveProperty<bool> IsMuted { get; set; }
-            public ReactiveProperty<UserCommunityRoleMetadata> Role { get; set; }
-
-            public ParticipantState(string walletId, ReactiveProperty<bool> isSpeaking, ReactiveProperty<string?> name, ReactiveProperty<bool?> hasClaimedName, ReactiveProperty<string?> profilePictureUrl,
-                ReactiveProperty<bool> isRequestingToSpeak, ReactiveProperty<bool> isSpeaker, ReactiveProperty<UserCommunityRoleMetadata> role, ReactiveProperty<bool> isMuted)
-            {
-                WalletId = walletId;
-                IsSpeaking = isSpeaking;
-                Name = name;
-                HasClaimedName = hasClaimedName;
-                ProfilePictureUrl = profilePictureUrl;
-                IsRequestingToSpeak = isRequestingToSpeak;
-                IsSpeaker = isSpeaker;
-                Role = role;
-                IsMuted = isMuted;
-            }
         }
 
         [Serializable]

@@ -6,6 +6,7 @@ using DCL.VoiceChat.CommunityVoiceChat;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Serialization;
 
 namespace DCL.PluginSystem.Global
 {
@@ -16,7 +17,7 @@ namespace DCL.PluginSystem.Global
         [Header("Asset References")]
         [field: SerializeField] public VoiceChatSettingsAsset VoiceChatSettings { get; private set; }
         [field: SerializeField] public VoiceChatConfiguration VoiceChatConfiguration { get; private set; }
-        [field: SerializeField] public PlayerEntryView PlayerEntryView { get; private set; }
+        [field: FormerlySerializedAs("<PlayerEntryView>k__BackingField")] [field: SerializeField] public VoiceChatParticipantEntryView ParticipantEntryView { get; private set; }
 
         [Header("Audio References")]
         [field: SerializeField] public AudioClipConfig MuteMicrophoneAudio { get; private set; }
