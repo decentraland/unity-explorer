@@ -21,6 +21,7 @@ using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.Multiplayer.SDK.Components;
 
 namespace DCL.SDKComponents.TriggerArea.Systems
 {
@@ -163,11 +164,15 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
             // 'Trigger' Entity (the entity that provokes the trigger event)
             resultComponent.Trigger = triggerAreaResultTriggerPool.Get();
-            resultComponent.Trigger.Entity = avatarEntity == Entity.Null ? (uint)entityInfo.SDKEntity.Id : 99999999; // TODO: get scene CRDT Entity for player
             resultComponent.Trigger.Layer = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
             resultComponent.Trigger.Position = triggerEntityPos;
             resultComponent.Trigger.Rotation = triggerEntityRot;
             resultComponent.Trigger.Scale = triggerEntityScale;
+
+            if (avatarEntity != Entity.Null)
+                resultComponent.Trigger.Entity = globalWorld.TryGet(avatarEntity, out PlayerCRDTEntity playerCrdtEntityComp) ? (uint)playerCrdtEntityComp.CRDTEntity.Id : 999999;
+            else
+                resultComponent.Trigger.Entity = (uint)entityInfo.SDKEntity.Id;
 
             ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>
             (
