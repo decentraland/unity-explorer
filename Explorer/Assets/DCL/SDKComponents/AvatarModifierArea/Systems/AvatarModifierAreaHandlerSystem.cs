@@ -11,7 +11,6 @@ using DCL.Profiles;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Components;
-using DCL.SDKComponents.Utils;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -58,7 +57,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         }
 
         [Query]
-        private void ResetAffectedEntities(in Entity entity, ref SDKEntityTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        [All(typeof(AvatarModifierAreaComponent))]
+        private void ResetAffectedEntities(in Entity entity, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             foreach (Collider avatarCollider in triggerAreaComponent.CurrentEntitiesInside)
             {

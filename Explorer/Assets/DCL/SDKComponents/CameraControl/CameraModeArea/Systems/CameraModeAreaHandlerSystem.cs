@@ -61,11 +61,14 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupCameraModeArea(in Entity entity, ref PBCameraModeArea pbCameraModeArea)
         {
-            World.Add(entity, new CameraModeAreaComponent(), new SDKEntityTriggerAreaComponent(areaSize: pbCameraModeArea.Area, targetOnlyMainPlayer: true));
+            World.Add(entity,
+                new SDKEntityTriggerAreaComponent(areaSize: pbCameraModeArea.Area, targetOnlyMainPlayer: true),
+                new CameraModeAreaComponent()
+            );
         }
 
         [Query]
-        [All(typeof(TransformComponent))]
+        [All(typeof(TransformComponent), typeof(CameraModeAreaComponent))]
         private void UpdateCameraModeArea(Entity entity, ref PBCameraModeArea pbCameraModeArea, ref SDKEntityTriggerAreaComponent sdkEntityTriggerAreaComponent)
         {
             if (pbCameraModeArea.IsDirty)
@@ -94,7 +97,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(CameraModeAreaComponent))]
+        [All(typeof(DeleteEntityIntention), typeof(PBCameraModeArea))]
         private void HandleEntityDestruction(Entity entity)
         {
             OnExitedCameraModeArea();
@@ -144,8 +147,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         {
             if (activeAreas.Remove(entity))
                 OnExitedCameraModeArea();
-
-            World.Remove<CameraModeAreaComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query)

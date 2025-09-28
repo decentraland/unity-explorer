@@ -7,6 +7,7 @@ using DCL.SDKComponents.TriggerArea.Systems;
 using DCL.SDKEntityTriggerArea.Components;
 using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.TriggerArea.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -77,6 +78,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             system.Update(0);
 
+            Assert.IsTrue(world.Has<TriggerAreaComponent>(entity));
             Assert.IsTrue(world.TryGet(entity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(SDKEntityTriggerAreaMeshType.SPHERE, triggerAreaComponent.MeshType);
             Assert.AreEqual(ColliderLayer.ClCustom3, triggerAreaComponent.LayerMask);
@@ -94,13 +96,13 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             world.Add(entity, pbTriggerArea);
 
             system.Update(0);
-            Assert.IsTrue(world.Has<SDKEntityTriggerAreaComponent>(entity));
+            Assert.IsTrue(world.Has<TriggerAreaComponent>(entity));
 
             // Remove PBTriggerArea and expect SDKEntityTriggerAreaComponent removed
             world.Remove<PBTriggerArea>(entity);
             system.Update(0);
 
-            Assert.IsFalse(world.Has<SDKEntityTriggerAreaComponent>(entity));
+            Assert.IsFalse(world.Has<TriggerAreaComponent>(entity));
         }
 
         [Test]

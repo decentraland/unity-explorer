@@ -62,6 +62,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
 
             system.Update(1);
 
+            Assert.IsTrue(world.Has<CameraModeAreaComponent>(entity));
             Assert.IsTrue(world.TryGet(entity, out SDKEntityTriggerAreaComponent triggerAreaComponent));
             Assert.AreEqual(new UnityEngine.Vector3(areaSize.X, areaSize.Y, areaSize.Z), triggerAreaComponent.AreaSize);
         }
