@@ -57,6 +57,9 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
         protected override void Update(float t)
         {
+            HandleEntityDestructionQuery(World);
+            HandleComponentRemovalQuery(World);
+
             SetupTriggerAreaQuery(World);
             UpdateTriggerAreaQuery(World);
         }
