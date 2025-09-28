@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
@@ -138,6 +139,8 @@ namespace DCL.PluginSystem.Global
             RemoteEmotesSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
+
+            SocialEmoteInteractionSystem.InjectToWorld(ref builder);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

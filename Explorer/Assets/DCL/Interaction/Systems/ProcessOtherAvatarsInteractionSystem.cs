@@ -41,12 +41,14 @@ namespace DCL.Interaction.Systems
             World world,
             IEventSystem eventSystem,
             IMVCManagerMenusAccessFacade menusAccessFacade,
-            IMVCManager mvcManager) : base(world)
+            IMVCManager mvcManager,
+            EmotesBus emotesBus) : base(world)
         {
             this.eventSystem = eventSystem;
             dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
             this.mvcManager = mvcManager;
+            this.emotesBus = emotesBus;
 //            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
 
             dclInput.Player.Pointer!.performed += OpenContextMenu;
@@ -89,7 +91,7 @@ namespace DCL.Interaction.Systems
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
 
-            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.WalletId);
+            SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile.UserId);
 
             if (socialEmoteInteraction.HasValue && !socialEmoteInteraction.Value.AreInteracting)
                 viewProfileTooltip = new HoverFeedbackComponent.Tooltip("INTERACT!", dclInput.Player.Pointer);

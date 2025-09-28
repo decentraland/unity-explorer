@@ -47,7 +47,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                 pools.ContainsKey(mainAsset) &&
                 emotesInUse[emoteInUse] == pools[mainAsset] &&
                 emoteComponent.EmoteLoop &&
-                isLooping)
+                isLooping &&
+                !emoteComponent.IsPlayingSocialEmoteOutcome)
+                return true;
+
+            if(emoteComponent.HasOutcomeAnimationStarted)
                 return true;
 
             if (emoteInUse != null)
@@ -116,6 +120,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
+            emoteComponent.HasOutcomeAnimationStarted = emoteComponent.IsPlayingSocialEmoteOutcome;
+
             return true;
         }
 
@@ -223,7 +229,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
+            // Avatar
             AnimationClip? avatarClip;
+            string? armatureNameOverride = null;
 
             if (emoteComponent.Metadata.IsSocialEmote)
             {
@@ -233,6 +241,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     {
                         avatarClip = emoteReferences.socialEmoteOutcomes![emoteComponent.CurrentSocialEmoteOutcome].OtherAvatarAnimation;
                         isLooping = emoteComponent.Metadata.emoteDataADR74.outcomes![emoteComponent.CurrentSocialEmoteOutcome].clips!.Armature_Other!.loop;
+                        armatureNameOverride = "Armature_Other";
                     }
                     else
                     {
@@ -253,7 +262,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (avatarClip != null)
             {
-                view.ReplaceEmoteAnimation(avatarClip);
+                view.ReplaceEmoteAnimation(avatarClip, armatureNameOverride);
                 emoteComponent.EmoteLoop = isLooping;
             }
 
@@ -265,6 +274,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
+            // Prop
             AnimationClip? propClip = null;
             bool isPropLooping = false;
             int propClipHash = 0;

@@ -28,10 +28,10 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.EmotesActions emotesActions;
 
-        private int triggeredEmote = -1;
+        private int triggeredEmoteSlotIndex = -1;
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
-        private URN socialEmoteUrnForTrigger;
+        private string triggeredEmoteUrn;
         private int socialEmoteOutcomeIndexForTrigger;
         private bool useOutcomeReactionAnimationForTrigger;
         private bool useSocialEmoteOutcomeAnimationForTrigger;
@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Emotes
 
         private void OnEmoteBusSocialEmoteReactionPlayingRequested(string initiatorWalletAddress, IEmote emote, int outcomeIndex)
         {
-            socialEmoteUrnForTrigger = emote.Model!.Asset!.id!;
+            triggeredEmoteUrn = emote.DTO.Metadata.id;
             socialEmoteOutcomeIndexForTrigger = outcomeIndex;
             useOutcomeReactionAnimationForTrigger = true;
             useSocialEmoteOutcomeAnimationForTrigger = true;
@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Emotes
         private void OnSlotPerformed(InputAction.CallbackContext obj)
         {
             int emoteIndex = actionNameById[obj.action.name];
-            triggeredEmote = emoteIndex; // Assigning this variable triggers the emote
+            triggeredEmoteSlotIndex = emoteIndex; // Assigning this variable triggers the emote
             isWheelBlocked = true;
             emotesBus.OnQuickActionEmotePlayed();
         }
@@ -76,10 +76,11 @@ namespace DCL.AvatarRendering.Emotes
         {
             TriggerEmoteBySlotIntentQuery(World);
 
-            if (triggeredEmote >= 0)
+            if (triggeredEmoteSlotIndex >= 0 || !string.IsNullOrEmpty(triggeredEmoteUrn))
             {
-                TriggerEmoteQuery(World, triggeredEmote);
-                triggeredEmote = -1;
+                TriggerEmoteQuery(World, triggeredEmoteSlotIndex, triggeredEmoteUrn);
+                triggeredEmoteSlotIndex = -1;
+                triggeredEmoteUrn = new URN();
             }
         }
 
@@ -87,20 +88,19 @@ namespace DCL.AvatarRendering.Emotes
         [All(typeof(PlayerComponent))]
         private void TriggerEmoteBySlotIntent(in Entity entity, ref TriggerEmoteBySlotIntent intent)
         {
-            triggeredEmote = intent.Slot;
+            triggeredEmoteSlotIndex = intent.Slot;
             World.Remove<TriggerEmoteBySlotIntent>(entity);
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier, in AvatarShapeComponent avatarShapeComponent)
+        private void TriggerEmote([Data] int emoteIndex, [Data] string emoteUrn, in Entity entity, in Profile profile, in InputModifierComponent inputModifier, in AvatarShapeComponent avatarShapeComponent)
         {
-            if (!socialEmoteUrnForTrigger.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(emoteUrn))
             {
                 // It's a social emote
-                SendEmoteMessage(socialEmoteUrnForTrigger, profile.UserId, entity,  socialEmoteOutcomeIndexForTrigger, useOutcomeReactionAnimationForTrigger, useSocialEmoteOutcomeAnimationForTrigger, socialEmoteInitiatorWalletAddressForTrigger);
-                socialEmoteUrnForTrigger = new URN();
+                SendEmoteMessage(emoteUrn, profile.UserId, entity,  socialEmoteOutcomeIndexForTrigger, useOutcomeReactionAnimationForTrigger, useSocialEmoteOutcomeAnimationForTrigger, socialEmoteInitiatorWalletAddressForTrigger);
             }
             else
             {
@@ -140,7 +140,7 @@ namespace DCL.AvatarRendering.Emotes
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 
-            messageBus.Send(emoteId, false, emoteIntent.UseSocialEmoteOutcomeAnimation, emoteIntent.SocialEmoteOutcomeIndex, emoteIntent.UseOutcomeReactionAnimation);
+            messageBus.Send(emoteId, false, emoteIntent.UseSocialEmoteOutcomeAnimation, emoteIntent.SocialEmoteOutcomeIndex, emoteIntent.UseOutcomeReactionAnimation, emoteIntent.SocialEmoteInitiatorWalletAddress);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)

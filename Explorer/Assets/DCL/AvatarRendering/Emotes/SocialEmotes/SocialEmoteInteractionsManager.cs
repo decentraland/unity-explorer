@@ -1,6 +1,7 @@
 ﻿
 using CodeLess.Attributes;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes.SocialEmotes
 {
@@ -25,6 +26,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             public IEmote Emote => original.Emote;
             public bool AreInteracting => original.AreInteracting;
             public int OutcomeIndex => original.OutcomeIndex;
+            public Vector3 InitiatorPosition => original.InitiatorPosition;
+            public Quaternion InitiatorRotation => original.InitiatorRotation;
         }
 
         public class SocialEmoteInteraction
@@ -34,6 +37,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             public IEmote Emote;
             public bool AreInteracting;
             public int OutcomeIndex;
+            public Vector3 InitiatorPosition;
+            public Quaternion InitiatorRotation;
         }
 
         public event InteractionDelegate InteractionStarted;
@@ -42,12 +47,17 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
         private readonly Dictionary<string, SocialEmoteInteraction> participantInteractions = new Dictionary<string, SocialEmoteInteraction>();
 
-        public void StartInteraction(string initiatorWalletAddress, IEmote emote)
+        public void StartInteraction(string initiatorWalletAddress, IEmote emote, Transform initiatorTransform)
         {
+            if (participantInteractions.ContainsKey(initiatorWalletAddress))
+                return;
+
             SocialEmoteInteraction newInteraction = new SocialEmoteInteraction()
             {
                 InitiatorWalletAddress = initiatorWalletAddress,
-                Emote = emote
+                Emote = emote,
+                InitiatorPosition = initiatorTransform.position,
+                InitiatorRotation = initiatorTransform.rotation
             };
 
             participantInteractions.Add(initiatorWalletAddress, newInteraction);
@@ -56,6 +66,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
         public void AddParticipantToInteraction(string participantWalletAddress, int outcomeIndex, string initiatorWalletAddress)
         {
+            if (participantInteractions.ContainsKey(participantWalletAddress))
+                return;
+
             SocialEmoteInteraction interaction = participantInteractions[initiatorWalletAddress];
             interaction.AreInteracting = true;
             interaction.ReceiverWalletAddress = participantWalletAddress;
@@ -66,6 +79,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
 
         public void StopInteraction(string participantWalletAddress)
         {
+            if (!participantInteractions.ContainsKey(participantWalletAddress))
+                return;
+
             SocialEmoteInteraction interaction = participantInteractions[participantWalletAddress];
             participantInteractions.Remove(interaction.InitiatorWalletAddress);
 
@@ -78,14 +94,9 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         public SocialEmoteInteractionReadOnly? GetInteractionState(string participantWalletAddress)
         {
             if (participantInteractions.TryGetValue(participantWalletAddress, out SocialEmoteInteraction interaction))
-            {
                 return new SocialEmoteInteractionReadOnly(interaction);
-            }
             else
-            {
                 return null;
-            }
         }
-
     }
 }

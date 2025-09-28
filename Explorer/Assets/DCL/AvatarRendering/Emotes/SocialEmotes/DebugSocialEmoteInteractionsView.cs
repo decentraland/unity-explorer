@@ -59,14 +59,15 @@ public class DebugSocialEmoteInteractionsView : MonoBehaviour
     {
         SetInitiatorWalletAddress("STOPPED " + interaction.InitiatorWalletAddress);
         SetInitiatorWalletAddress("STOPPED " + interaction.ReceiverWalletAddress);
+        SetAreInteracting(interaction.AreInteracting);
     }
 
     public void OnParticipantAdded(string participantWalletAddress, SocialEmoteInteractionsManager.SocialEmoteInteractionReadOnly interaction)
     {
         SetInitiatorWalletAddress(interaction.InitiatorWalletAddress);
         SetEmoteUrn(interaction.Emote.Model!.Asset!.id!);
-        SetReceiverWalletAddress("-1");
-        SetOutcomeIndex(-1);
-        SetAreInteracting(false);
+        SetReceiverWalletAddress(participantWalletAddress);
+        SetOutcomeIndex(interaction.OutcomeIndex);
+        SetAreInteracting(interaction.AreInteracting);
     }
 }

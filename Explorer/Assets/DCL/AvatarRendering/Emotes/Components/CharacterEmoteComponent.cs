@@ -14,6 +14,8 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsPlayingSocialEmoteOutcome;
         public int CurrentSocialEmoteOutcome;
         public bool IsReactingToSocialEmote;
+        public string SocialEmoteInitiatorWalletAddress;
+        public bool HasOutcomeAnimationStarted;
 
         public bool IsPlayingEmote => CurrentAnimationTag == AnimationHashes.EMOTE || CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
 
@@ -29,6 +31,8 @@ namespace DCL.AvatarRendering.Emotes
             IsPlayingSocialEmoteOutcome = false;
             CurrentSocialEmoteOutcome = -1;
             IsReactingToSocialEmote = false;
+            SocialEmoteInitiatorWalletAddress = string.Empty;
+            HasOutcomeAnimationStarted = false;
         }
     }
 }

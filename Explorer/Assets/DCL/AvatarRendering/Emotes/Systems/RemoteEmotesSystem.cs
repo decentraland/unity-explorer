@@ -53,8 +53,12 @@ namespace DCL.AvatarRendering.Emotes
                     if (interpolationExists && EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
                     {
                         ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
-                        intention.WalletAddress = remoteEmoteIntention.WalletId;
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
+                        intention.WalletAddress = remoteEmoteIntention.WalletId;
+                        intention.SocialEmoteOutcomeIndex = remoteEmoteIntention.SocialEmoteOutcomeIndex;
+                        intention.UseOutcomeReactionAnimation = remoteEmoteIntention.IsReactingToSocialEmote;
+                        intention.UseSocialEmoteOutcomeAnimation = remoteEmoteIntention.IsUsingSocialOutcomeAnimation;
+                        intention.SocialEmoteInitiatorWalletAddress = remoteEmoteIntention.SocialEmoteInitiatorWalletAddress;
                     }
                     else
                         savedIntentions.Add(remoteEmoteIntention);

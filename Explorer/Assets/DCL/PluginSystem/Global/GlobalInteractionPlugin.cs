@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Interaction.HoverCanvas;
@@ -31,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventSystem eventSystem;
         private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
+        private readonly EmotesBus emotesBus;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -43,7 +45,8 @@ namespace DCL.PluginSystem.Global
             GlobalInputEvents globalInputEvents,
             IEventSystem eventSystem,
             IMVCManager mvcManager,
-            IMVCManagerMenusAccessFacade menusAccessFacade)
+            IMVCManagerMenusAccessFacade menusAccessFacade,
+            EmotesBus emotesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
@@ -51,6 +54,7 @@ namespace DCL.PluginSystem.Global
             this.eventSystem = eventSystem;
             this.mvcManager = mvcManager;
             this.menusAccessFacade = menusAccessFacade;
+            this.emotesBus = emotesBus;
         }
 
         public void Dispose() { }
@@ -93,7 +97,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, emotesBus);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
