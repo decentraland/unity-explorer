@@ -6,8 +6,8 @@ namespace DCL.SDKEntityTriggerArea
 {
     public class SDKEntityTriggerArea : MonoBehaviour, IDisposable
     {
-        [field: SerializeField] public BoxCollider BoxCollider { get; private set; }
-        [field: SerializeField] public SphereCollider SphereCollider { get; private set; }
+        [field: SerializeField] public BoxCollider BoxCollider { get; internal set; }
+        [field: SerializeField] public SphereCollider SphereCollider { get; internal set; }
 
         private readonly HashSet<Collider> currentEntitiesInside = new ();
         private readonly HashSet<Collider> enteredEntitiesToBeProcessed = new ();
