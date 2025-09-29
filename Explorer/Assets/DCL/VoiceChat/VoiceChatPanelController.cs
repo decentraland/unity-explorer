@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.Profiles.Helpers;
@@ -97,17 +96,8 @@ namespace DCL.VoiceChat
                 }
             }
 
-            WaitAndChange().Forget();
-            return;
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
 
-            async UniTaskVoid WaitAndChange()
-            {
-                //We wait in case we clicked on the chat, so it has time to update the state before trying to unfocus
-                //await UniTask.Delay(5); COMMENTED FOR NOW AS IT DOESNT WORK xD
-                if (voiceChatPanelState.Value == VoiceChatPanelState.FOCUSED) return;
-
-                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
-            }
         }
 
         private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
