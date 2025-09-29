@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.ChatArea
 {
@@ -17,10 +18,11 @@ namespace DCL.ChatArea
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
 
         private readonly HashSet<IBlocksChat> chatBlockers = new ();
+        private readonly EventSubscriptionScope eventScope = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public bool IsVisibleInSharedSpace => false;
+        public bool IsVisibleInSharedSpace { get; private set; }
 
         public ChatSharedAreaController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
@@ -42,6 +44,9 @@ namespace DCL.ChatArea
             viewInstance.OnPointerExitEvent += HandlePointerExit;
 
             DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
+
+            // Subscribe to visibility state changes
+            eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
         }
 
         protected override void OnViewShow()
@@ -161,6 +166,8 @@ namespace DCL.ChatArea
 
             DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
 
+            eventScope.Dispose();
+
             base.Dispose();
 
             chatBlockers.Clear();
@@ -181,6 +188,11 @@ namespace DCL.ChatArea
             chatBlockers.Remove(blocker);
              if (chatBlockers.Count == 0)
                 chatSharedAreaEventBus.RaiseMvcViewClosedEvent();
+        }
+
+        private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)
+        {
+            IsVisibleInSharedSpace = evt.IsVisibleInSharedSpace;
         }
     }
 }

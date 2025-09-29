@@ -45,5 +45,8 @@ namespace DCL.ChatArea
 
         public void RaiseClickOutsideEvent(System.Collections.Generic.IReadOnlyList<UnityEngine.EventSystems.RaycastResult> raycastResults) =>
             Publish(new ChatSharedAreaEvents.ChatPanelClickOutsideEvent(raycastResults));
+
+        public void RaiseVisibilityStateChangedEvent(bool isVisibleInSharedSpace) =>
+            Publish(new ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent(isVisibleInSharedSpace));
     }
 }

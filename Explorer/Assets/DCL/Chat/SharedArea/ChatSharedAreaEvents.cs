@@ -53,5 +53,15 @@ namespace DCL.ChatArea
                 RaycastResults = raycastResults;
             }
         }
+
+        public struct ChatPanelVisibilityStateChangedEvent
+        {
+            public bool IsVisibleInSharedSpace { get; }
+
+            public ChatPanelVisibilityStateChangedEvent(bool isVisibleInSharedSpace)
+            {
+                IsVisibleInSharedSpace = isVisibleInSharedSpace;
+            }
+        }
     }
 }
