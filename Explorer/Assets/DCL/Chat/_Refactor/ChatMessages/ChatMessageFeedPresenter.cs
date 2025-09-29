@@ -94,9 +94,18 @@ namespace DCL.Chat.ChatMessages
                 currentChannelService);
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
-            view.Initialize(viewModels, translationSettings.IsTranslationFeatureActive);
+            view.Initialize(viewModels,
+                translationSettings,
+                translationSettings.IsTranslationFeatureActive,
+                IsAutoTranslationEnabled);
             view.OnTranslateMessageRequested += OnTranslateMessage;
             view.OnRevertMessageRequested += OnRevertMessage;
+        }
+
+        private bool IsAutoTranslationEnabled()
+        {
+            return translationSettings
+                .GetAutoTranslateForConversation(currentChannelService.CurrentChannelId.Id);
         }
 
         private void OnChatReset(ChatEvents.ChatResetEvent obj)

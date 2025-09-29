@@ -1,4 +1,5 @@
-﻿using DCL.Utilities;
+﻿using System;
+using DCL.Utilities;
 
 namespace DCL.Translation
 {
@@ -13,6 +14,7 @@ namespace DCL.Translation
         LanguageCode PreferredLanguage { get; }
         float TranslationTimeoutSeconds { get; }
         int MaxRetries { get; }
+        event Action<string> OnAutoTranslationSettingsChanged;
         bool GetAutoTranslateForConversation(string conversationId);
         void SetAutoTranslateForConversation(string conversationId, bool isEnabled);
         bool IsTranslationFeatureActive();

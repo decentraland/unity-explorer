@@ -1,4 +1,5 @@
-﻿using DCL.FeatureFlags;
+﻿using System;
+using DCL.FeatureFlags;
 using DCL.Prefs;
 using DCL.Utilities;
 
@@ -10,6 +11,7 @@ namespace DCL.Translation
         private const string AUTO_TRANSLATE_PREFIX = "chat.translation.auto.";
 
         public int MaxRetries => 1;
+        public event Action<string> OnAutoTranslationSettingsChanged;
         public float TranslationTimeoutSeconds => 10;
 
         /// <summary>
@@ -47,6 +49,8 @@ namespace DCL.Translation
         {
             DCLPlayerPrefs.SetBool($"{AUTO_TRANSLATE_PREFIX}{conversationId}", isEnabled);
             DCLPlayerPrefs.Save();
+
+            OnAutoTranslationSettingsChanged?.Invoke(conversationId);
         }
     }
 }

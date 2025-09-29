@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using DCL.Translation;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -38,10 +39,12 @@ namespace DCL.Chat.ChatMessages
         // by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
         public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
+        private ITranslationSettings translationSettings;
 
         public event Action<string> OnTranslateMessageRequested;
         public event Action<string> OnRevertMessageRequested;
         private Func<bool> IsTranslationActivated;
+        private Func<bool> IsAutoTranslationEnabled;
         
         public void Dispose()
         {
@@ -49,6 +52,9 @@ namespace DCL.Chat.ChatMessages
 
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked -= ChatScrollToBottomToBottomClicked;
+
+            if (translationSettings != null)
+                translationSettings.OnAutoTranslationSettingsChanged -= HandleAutoTranslationSettingsChanged;
         }
 
         public event Action? OnFakeMessageRequested;
@@ -65,17 +71,29 @@ namespace DCL.Chat.ChatMessages
         private Sequence? _fadeSequenceTween;
 
         public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels,
-            Func<bool> IsTranslationActivated)
+            ITranslationSettings translationSettings,
+            Func<bool> IsTranslationActivated,
+            Func<bool> IsAutoTranslationEnabled = null)
         {
             this.viewModels = viewModels;
+            this.translationSettings = translationSettings;
             this.IsTranslationActivated = IsTranslationActivated;
+            this.IsAutoTranslationEnabled = IsAutoTranslationEnabled;
 
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked += ChatScrollToBottomToBottomClicked;
 
+            if (this.translationSettings != null)
+                this.translationSettings.OnAutoTranslationSettingsChanged += HandleAutoTranslationSettingsChanged;
+            
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
+        }
+
+        private void HandleAutoTranslationSettingsChanged(string channelId)
+        {
+            loopList.RefreshAllShownItem();
         }
 
         public void SetUserConnectivityProvider(IReadOnlyCollection<string> onlineParticipants)
@@ -111,24 +129,6 @@ namespace DCL.Chat.ChatMessages
         public void RefreshItem(int viewModelIndex)
         {
             RefreshVisibleElements();
-
-            // // SuperScrollView uses a different index (it includes padding)
-            // int viewIndex = ModelToViewIndex(viewModelIndex);
-            //
-            // // Get the visible item if it exists
-            // LoopListViewItem2 item = loopList.GetShownItemByItemIndex(viewIndex);
-            //
-            // if (item != null)
-            // {
-            //     // If the item is currently visible, just re-run the setup logic on it.
-            //     var itemScript = item.GetComponent<ChatEntryView>();
-            //     var viewModel = viewModels[viewModelIndex];
-            //     itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked, /*...*/);
-            // }
-            //
-            // // CRUCIAL: Tell SuperScrollView that the size of this item may have changed.
-            // // It will automatically recalculate the layout and adjust the scroll position.
-            // loopList.SetItemSize(viewIndex, -1); // -1 means "use default prefab size" which forces recalculation.
         }
 
         /// <summary>
@@ -254,7 +254,7 @@ namespace DCL.Chat.ChatMessages
                 ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
                 itemScript.Reset();
                 itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
-                    !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, IsTranslationActivated);
+                    !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, IsTranslationActivated, IsAutoTranslationEnabled);
                 
                 itemScript.OnTranslateRequested -= HandleTranslateRequest;
                 itemScript.OnRevertRequested -= HandleRevertRequest;
