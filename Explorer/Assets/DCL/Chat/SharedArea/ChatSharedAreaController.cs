@@ -11,11 +11,10 @@ using UnityEngine.Pool;
 
 namespace DCL.ChatArea
 {
-    public class ChatMainController : ControllerBase<ChatMainView, ChatControllerShowParams>,
-                                  IControllerInSharedSpace<ChatMainView, ChatControllerShowParams>
+    public class ChatSharedAreaController : ControllerBase<ChatSharedAreaView, ChatControllerShowParams>, IControllerInSharedSpace<ChatSharedAreaView, ChatControllerShowParams>
     {
         private readonly IMVCManager mvcManager;
-        private readonly ChatAreaEventBus chatAreaEventBus;
+        private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
 
         private readonly HashSet<IBlocksChat> chatBlockers = new ();
 
@@ -23,12 +22,12 @@ namespace DCL.ChatArea
 
         public bool IsVisibleInSharedSpace => false;
 
-        public ChatMainController(ViewFactoryMethod viewFactory,
+        public ChatSharedAreaController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            ChatAreaEventBus chatAreaEventBus) : base(viewFactory)
+            ChatSharedAreaEventBus chatSharedAreaEventBus) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
-            this.chatAreaEventBus = chatAreaEventBus;
+            this.chatSharedAreaEventBus = chatSharedAreaEventBus;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -47,22 +46,22 @@ namespace DCL.ChatArea
 
         protected override void OnViewShow()
         {
-            chatAreaEventBus.RaiseViewShowEvent();
+            chatSharedAreaEventBus.RaiseViewShowEvent();
         }
 
         public void SetVisibility(bool isVisible)
         {
-            chatAreaEventBus.RaiseVisibilityEvent(isVisible);
+            chatSharedAreaEventBus.RaiseVisibilityEvent(isVisible);
         }
 
         public void SetFocusState()
         {
-            chatAreaEventBus.RaiseFocusEvent();
+            chatSharedAreaEventBus.RaiseFocusEvent();
         }
 
         public void ToggleState()
         {
-            chatAreaEventBus.RaiseToggleEvent();
+            chatSharedAreaEventBus.RaiseToggleEvent();
         }
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
@@ -81,7 +80,7 @@ namespace DCL.ChatArea
             // If the chat was fully hidden (e.g., by the Friends panel), transition to Default.
             // If it was minimized, transition to Default or Focused based on the input.
             // The `showParams.Focus` will be true when toggling with Enter/shortcut, and false when returning from another panel.
-            chatAreaEventBus.RaiseShownInSharedSpaceEvent(showParams.Focus);
+            chatSharedAreaEventBus.RaiseShownInSharedSpaceEvent(showParams.Focus);
 
 
             ViewShowingComplete?.Invoke(this);
@@ -90,7 +89,7 @@ namespace DCL.ChatArea
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            chatAreaEventBus.RaiseHiddenInSharedSpaceEvent();
+            chatSharedAreaEventBus.RaiseHiddenInSharedSpaceEvent();
             await UniTask.CompletedTask;
         }
 
@@ -102,12 +101,12 @@ namespace DCL.ChatArea
 
         private void HandlePointerEnter()
         {
-            chatAreaEventBus.RaisePointerEnter();
+            chatSharedAreaEventBus.RaisePointerEnter();
         }
 
         private void HandlePointerExit()
         {
-            chatAreaEventBus.RaisePointerExit();
+            chatSharedAreaEventBus.RaisePointerExit();
         }
 
         private void HandleGlobalClick(InputAction.CallbackContext context)
@@ -135,9 +134,9 @@ namespace DCL.ChatArea
             }
 
             if (clickedInsideChat)
-                chatAreaEventBus.RaiseClickInsideEvent(results);
+                chatSharedAreaEventBus.RaiseClickInsideEvent(results);
             else
-                chatAreaEventBus.RaiseClickOutsideEvent(results);
+                chatSharedAreaEventBus.RaiseClickOutsideEvent(results);
         }
 
         private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
@@ -172,7 +171,7 @@ namespace DCL.ChatArea
             if (controller is not IBlocksChat blocker) return;
 
             chatBlockers.Add(blocker);
-            chatAreaEventBus.RaiseMvcViewShowedEvent();
+            chatSharedAreaEventBus.RaiseMvcViewShowedEvent();
         }
 
         private void OnMvcViewClosed(IController controller)
@@ -181,7 +180,7 @@ namespace DCL.ChatArea
 
             chatBlockers.Remove(blocker);
              if (chatBlockers.Count == 0)
-                chatAreaEventBus.RaiseMvcViewClosedEvent();
+                chatSharedAreaEventBus.RaiseMvcViewClosedEvent();
         }
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 
 namespace DCL.ChatArea
 {
-    public static class ChatAreaEvents
+    public static class ChatSharedAreaEvents
     {
         public struct ChatPanelPointerEnterEvent { }
         public struct ChatPanelPointerExitEvent { }

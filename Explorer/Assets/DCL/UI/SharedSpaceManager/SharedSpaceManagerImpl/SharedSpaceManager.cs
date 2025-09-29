@@ -180,8 +180,8 @@ namespace DCL.UI.SharedSpaceManager
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace && isFriendsFeatureEnabled)
                         {
-                            ChatMainController chatController = registrations[PanelsSharingSpace.Chat].GetPanel<ChatMainController>();
-                            chatController.SetVisibility(false);
+                            ChatSharedAreaController chatSharedAreaController = registrations[PanelsSharingSpace.Chat].GetPanel<ChatSharedAreaController>();
+                            chatSharedAreaController.SetVisibility(false);
 
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
 
@@ -195,7 +195,7 @@ namespace DCL.UI.SharedSpaceManager
 
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
                             if (panelBeingShown != PanelsSharingSpace.Chat)
-                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatMainController>()
+                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatSharedAreaController>()
                                     .OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false));
                         }
                         else
@@ -291,7 +291,7 @@ namespace DCL.UI.SharedSpaceManager
                 if (panel == PanelsSharingSpace.Chat)
                 {
                     var controllerInSharedSpace = registrations[panel].panel;
-                    var ctr = (ChatMainController)controllerInSharedSpace;
+                    var ctr = (ChatSharedAreaController)controllerInSharedSpace;
 
                     if (ctr != null)
                     {

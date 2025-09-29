@@ -3,7 +3,7 @@ using Utility;
 
 namespace DCL.ChatArea
 {
-    public class ChatAreaEventBus : IEventBus
+    public class ChatSharedAreaEventBus : IEventBus
     {
         private readonly IEventBus eventBus = new EventBus(invokeSubscribersOnMainThread: true);
 
@@ -11,39 +11,39 @@ namespace DCL.ChatArea
         public IDisposable Subscribe<T>(Action<T> handler) => eventBus.Subscribe(handler);
 
         public void RaisePointerEnter() =>
-            Publish(new ChatAreaEvents.ChatPanelPointerEnterEvent());
+            Publish(new ChatSharedAreaEvents.ChatPanelPointerEnterEvent());
 
         public void RaisePointerExit() =>
-            Publish(new ChatAreaEvents.ChatPanelPointerExitEvent());
+            Publish(new ChatSharedAreaEvents.ChatPanelPointerExitEvent());
 
         public void RaiseFocusEvent() =>
-            Publish(new ChatAreaEvents.ChatPanelFocusEvent());
+            Publish(new ChatSharedAreaEvents.ChatPanelFocusEvent());
 
         public void RaiseVisibilityEvent(bool isVisible) =>
-            Publish(new ChatAreaEvents.ChatPanelVisibilityEvent(isVisible));
+            Publish(new ChatSharedAreaEvents.ChatPanelVisibilityEvent(isVisible));
 
         public void RaiseToggleEvent() =>
-            Publish(new ChatAreaEvents.ChatPanelToggleEvent());
+            Publish(new ChatSharedAreaEvents.ChatPanelToggleEvent());
 
         public void RaiseViewShowEvent() =>
-            Publish(new ChatAreaEvents.ChatPanelViewShowEvent());
+            Publish(new ChatSharedAreaEvents.ChatPanelViewShowEvent());
 
         public void RaiseShownInSharedSpaceEvent(bool focus) =>
-            Publish(new ChatAreaEvents.ChatPanelShownInSharedSpaceEvent(focus));
+            Publish(new ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent(focus));
 
         public void RaiseHiddenInSharedSpaceEvent() =>
-            Publish(new ChatAreaEvents.ChatPanelHiddenInSharedSpaceEvent());
+            Publish(new ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent());
 
         public void RaiseMvcViewShowedEvent() =>
-            Publish(new ChatAreaEvents.ChatPanelMvcViewShowedEvent());
+            Publish(new ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent());
 
         public void RaiseMvcViewClosedEvent() =>
-            Publish(new ChatAreaEvents.ChatPanelMvcViewClosedEvent());
+            Publish(new ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent());
 
         public void RaiseClickInsideEvent(System.Collections.Generic.IReadOnlyList<UnityEngine.EventSystems.RaycastResult> raycastResults) =>
-            Publish(new ChatAreaEvents.ChatPanelClickInsideEvent(raycastResults));
+            Publish(new ChatSharedAreaEvents.ChatPanelClickInsideEvent(raycastResults));
 
         public void RaiseClickOutsideEvent(System.Collections.Generic.IReadOnlyList<UnityEngine.EventSystems.RaycastResult> raycastResults) =>
-            Publish(new ChatAreaEvents.ChatPanelClickOutsideEvent(raycastResults));
+            Publish(new ChatSharedAreaEvents.ChatPanelClickOutsideEvent(raycastResults));
     }
 }

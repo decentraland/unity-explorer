@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly ChatAreaEventBus chatAreaEventBus;
+        private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
             IAssetsProvisioner assetsProvisioner,
-            ChatAreaEventBus chatAreaEventBus)
+            ChatSharedAreaEventBus chatSharedAreaEventBus)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -64,7 +64,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
             this.assetsProvisioner = assetsProvisioner;
-            this.chatAreaEventBus = chatAreaEventBus;
+            this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -116,7 +116,7 @@ namespace DCL.PluginSystem.Global
             var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
-            voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatAreaEventBus);
+            voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
         }
 
         [Serializable]
