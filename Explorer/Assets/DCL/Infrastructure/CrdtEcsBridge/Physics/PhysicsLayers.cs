@@ -12,13 +12,12 @@ namespace CrdtEcsBridge.Physics
         private const ColliderLayer NON_CUSTOM_LAYERS = ColliderLayer.ClPhysics
                                                         | ColliderLayer.ClPointer
                                                         | ColliderLayer.ClNone
-                                                        | ColliderLayer.ClReserved1
+                                                        | ColliderLayer.ClPlayer
                                                         | ColliderLayer.ClReserved2
                                                         | ColliderLayer.ClReserved3
                                                         | ColliderLayer.ClReserved4
                                                         | ColliderLayer.ClReserved5
-                                                        | ColliderLayer.ClReserved6
-                                                        | ColliderLayer.ClPlayer;
+                                                        | ColliderLayer.ClReserved6;
 
         public static readonly int DEFAULT_LAYER = LayerMask.NameToLayer("Default");
         public static readonly int ON_POINTER_EVENT_LAYER = LayerMask.NameToLayer("OnPointerEvent");

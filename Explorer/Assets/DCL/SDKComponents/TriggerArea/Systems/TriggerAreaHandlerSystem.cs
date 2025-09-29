@@ -164,7 +164,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
             // 'Trigger' Entity (the entity that provokes the trigger event)
             resultComponent.Trigger = triggerAreaResultTriggerPool.Get();
-            resultComponent.Trigger.Layer = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
+            resultComponent.Trigger.Layers = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
             resultComponent.Trigger.Position = triggerEntityPos;
             resultComponent.Trigger.Rotation = triggerEntityRot;
             resultComponent.Trigger.Scale = triggerEntityScale;

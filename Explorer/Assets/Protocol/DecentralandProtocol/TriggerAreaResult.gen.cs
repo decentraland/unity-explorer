@@ -26,7 +26,7 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjVkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdHJpZ2dlcl9hcmVhX3Jl",
             "c3VsdC5wcm90bxIbZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzGiFkZWNl",
-            "bnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8ilAQKE1BCVHJpZ2dlckFy",
+            "bnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8ilQQKE1BCVHJpZ2dlckFy",
             "ZWFSZXN1bHQSGAoQdHJpZ2dlcmVkX2VudGl0eRgBIAEoDRI/Chl0cmlnZ2Vy",
             "ZWRfZW50aXR5X3Bvc2l0aW9uGAIgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1v",
             "bi5WZWN0b3IzEkIKGXRyaWdnZXJlZF9lbnRpdHlfcm90YXRpb24YAyABKAsy",
@@ -34,17 +34,17 @@ namespace DCL.ECSComponents {
             "ZRgEIAEoDjIxLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5UcmlnZ2Vy",
             "QXJlYUV2ZW50VHlwZRIRCgl0aW1lc3RhbXAYBSABKA0SSQoHdHJpZ2dlchgG",
             "IAEoCzI4LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlRyaWdnZXJB",
-            "cmVhUmVzdWx0LlRyaWdnZXIauAEKB1RyaWdnZXISDgoGZW50aXR5GAEgASgN",
-            "Eg0KBWxheWVyGAIgASgNEi4KCHBvc2l0aW9uGAMgASgLMhwuZGVjZW50cmFs",
-            "YW5kLmNvbW1vbi5WZWN0b3IzEjEKCHJvdGF0aW9uGAQgASgLMh8uZGVjZW50",
-            "cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9uEisKBXNjYWxlGAUgASgLMhwuZGVj",
-            "ZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzKkQKFFRyaWdnZXJBcmVhRXZlbnRU",
-            "eXBlEg4KClRBRVRfRU5URVIQABINCglUQUVUX1NUQVkQARINCglUQUVUX0VY",
-            "SVQQAkIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "cmVhUmVzdWx0LlRyaWdnZXIauQEKB1RyaWdnZXISDgoGZW50aXR5GAEgASgN",
+            "Eg4KBmxheWVycxgCIAEoDRIuCghwb3NpdGlvbhgDIAEoCzIcLmRlY2VudHJh",
+            "bGFuZC5jb21tb24uVmVjdG9yMxIxCghyb3RhdGlvbhgEIAEoCzIfLmRlY2Vu",
+            "dHJhbGFuZC5jb21tb24uUXVhdGVybmlvbhIrCgVzY2FsZRgFIAEoCzIcLmRl",
+            "Y2VudHJhbGFuZC5jb21tb24uVmVjdG9yMypEChRUcmlnZ2VyQXJlYUV2ZW50",
+            "VHlwZRIOCgpUQUVUX0VOVEVSEAASDQoJVEFFVF9TVEFZEAESDQoJVEFFVF9F",
+            "WElUEAJCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TriggerAreaEventType), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerAreaResult), global::DCL.ECSComponents.PBTriggerAreaResult.Parser, new[]{ "TriggeredEntity", "TriggeredEntityPosition", "TriggeredEntityRotation", "EventType", "Timestamp", "Trigger" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger), global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger.Parser, new[]{ "Entity", "Layer", "Position", "Rotation", "Scale" }, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerAreaResult), global::DCL.ECSComponents.PBTriggerAreaResult.Parser, new[]{ "TriggeredEntity", "TriggeredEntityPosition", "TriggeredEntityRotation", "EventType", "Timestamp", "Trigger" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger), global::DCL.ECSComponents.PBTriggerAreaResult.Types.Trigger.Parser, new[]{ "Entity", "Layers", "Position", "Rotation", "Scale" }, null, null, null, null)})
           }));
     }
     #endregion
@@ -521,7 +521,7 @@ namespace DCL.ECSComponents {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public Trigger(Trigger other) : this() {
           entity_ = other.entity_;
-          layer_ = other.layer_;
+          layers_ = other.layers_;
           position_ = other.position_ != null ? other.position_.Clone() : null;
           rotation_ = other.rotation_ != null ? other.rotation_.Clone() : null;
           scale_ = other.scale_ != null ? other.scale_.Clone() : null;
@@ -549,18 +549,18 @@ namespace DCL.ECSComponents {
           }
         }
 
-        /// <summary>Field number for the "layer" field.</summary>
-        public const int LayerFieldNumber = 2;
-        private uint layer_;
+        /// <summary>Field number for the "layers" field.</summary>
+        public const int LayersFieldNumber = 2;
+        private uint layers_;
         /// <summary>
-        /// The collision layer of the entity that triggered the Trigger Area
+        /// The collision layermask of the entity that triggered the Trigger Area
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public uint Layer {
-          get { return layer_; }
+        public uint Layers {
+          get { return layers_; }
           set {
-            layer_ = value;
+            layers_ = value;
           }
         }
 
@@ -625,7 +625,7 @@ namespace DCL.ECSComponents {
             return true;
           }
           if (Entity != other.Entity) return false;
-          if (Layer != other.Layer) return false;
+          if (Layers != other.Layers) return false;
           if (!object.Equals(Position, other.Position)) return false;
           if (!object.Equals(Rotation, other.Rotation)) return false;
           if (!object.Equals(Scale, other.Scale)) return false;
@@ -637,7 +637,7 @@ namespace DCL.ECSComponents {
         public override int GetHashCode() {
           int hash = 1;
           if (Entity != 0) hash ^= Entity.GetHashCode();
-          if (Layer != 0) hash ^= Layer.GetHashCode();
+          if (Layers != 0) hash ^= Layers.GetHashCode();
           if (position_ != null) hash ^= Position.GetHashCode();
           if (rotation_ != null) hash ^= Rotation.GetHashCode();
           if (scale_ != null) hash ^= Scale.GetHashCode();
@@ -663,9 +663,9 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(8);
             output.WriteUInt32(Entity);
           }
-          if (Layer != 0) {
+          if (Layers != 0) {
             output.WriteRawTag(16);
-            output.WriteUInt32(Layer);
+            output.WriteUInt32(Layers);
           }
           if (position_ != null) {
             output.WriteRawTag(26);
@@ -693,9 +693,9 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(8);
             output.WriteUInt32(Entity);
           }
-          if (Layer != 0) {
+          if (Layers != 0) {
             output.WriteRawTag(16);
-            output.WriteUInt32(Layer);
+            output.WriteUInt32(Layers);
           }
           if (position_ != null) {
             output.WriteRawTag(26);
@@ -722,8 +722,8 @@ namespace DCL.ECSComponents {
           if (Entity != 0) {
             size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Entity);
           }
-          if (Layer != 0) {
-            size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Layer);
+          if (Layers != 0) {
+            size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Layers);
           }
           if (position_ != null) {
             size += 1 + pb::CodedOutputStream.ComputeMessageSize(Position);
@@ -749,8 +749,8 @@ namespace DCL.ECSComponents {
           if (other.Entity != 0) {
             Entity = other.Entity;
           }
-          if (other.Layer != 0) {
-            Layer = other.Layer;
+          if (other.Layers != 0) {
+            Layers = other.Layers;
           }
           if (other.position_ != null) {
             if (position_ == null) {
@@ -790,7 +790,7 @@ namespace DCL.ECSComponents {
                 break;
               }
               case 16: {
-                Layer = input.ReadUInt32();
+                Layers = input.ReadUInt32();
                 break;
               }
               case 26: {
@@ -834,7 +834,7 @@ namespace DCL.ECSComponents {
                 break;
               }
               case 16: {
-                Layer = input.ReadUInt32();
+                Layers = input.ReadUInt32();
                 break;
               }
               case 26: {

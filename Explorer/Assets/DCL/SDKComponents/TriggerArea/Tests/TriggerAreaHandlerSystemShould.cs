@@ -140,7 +140,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             Assert.NotNull(capturedResult);
             Assert.AreEqual((uint)crdtEntity.Id, capturedResult.TriggeredEntity);
             Assert.AreEqual(TriggerAreaEventType.TaetEnter, capturedResult.EventType);
-            Assert.AreEqual((uint)ColliderLayer.ClCustom1, capturedResult.Trigger.Layer);
+            Assert.AreEqual((uint)ColliderLayer.ClCustom1, capturedResult.Trigger.Layers);
 
             Object.DestroyImmediate(colliderGO);
         }
@@ -175,7 +175,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             Assert.NotNull(capturedResult);
             Assert.AreEqual(TriggerAreaEventType.TaetStay, capturedResult.EventType);
-            Assert.AreEqual((uint)ColliderLayer.ClCustom2, capturedResult.Trigger.Layer);
+            Assert.AreEqual((uint)ColliderLayer.ClCustom2, capturedResult.Trigger.Layers);
 
             Object.DestroyImmediate(colliderGO);
         }
@@ -211,7 +211,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             Assert.NotNull(capturedResult);
             Assert.AreEqual(TriggerAreaEventType.TaetExit, capturedResult.EventType);
-            Assert.AreEqual((uint)ColliderLayer.ClCustom3, capturedResult.Trigger.Layer);
+            Assert.AreEqual((uint)ColliderLayer.ClCustom3, capturedResult.Trigger.Layers);
 
             Object.DestroyImmediate(colliderGO);
         }
