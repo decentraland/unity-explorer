@@ -144,11 +144,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
                 await waitForReconnectionRequiredTask;
             }
-            catch (Exception e) when (e is not OperationCanceledException)
+            catch (UnityWebRequestException e) when (e.ResponseCode == WebRequestUtils.FORBIDDEN_ACCESS)
             {
-                if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
-                    CurrentSceneRoomForbiddenAccess?.Invoke();
-
+                CurrentSceneRoomForbiddenAccess?.Invoke();
+            }
+            catch (Exception e) when (e is not OperationCanceledException &&
+                                      e is not UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
+            {
                 // if we don't catch an exception, any failure leads to the loop being stopped
                 ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Exception occured in {nameof(CycleStepAsync)} when {meta} was being processed: {e}");
 
