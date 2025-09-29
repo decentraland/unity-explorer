@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.Profiles.Helpers;
@@ -18,12 +19,14 @@ namespace DCL.VoiceChat
     {
         private readonly VoiceChatPanelView view;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly ChatCoordinationEventBus coordinationEventBus;
 
         private readonly PrivateVoiceChatController? privateVoiceChatController;
         private readonly CommunityVoiceChatController? communitiesVoiceChatController;
         private readonly VoiceChatPanelResizeController? voiceChatPanelResizeController;
         private readonly SceneVoiceChatController? sceneVoiceChatController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
+        private readonly List<IDisposable> eventSubscriptions = new();
 
         public VoiceChatPanelController(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
@@ -33,10 +36,12 @@ namespace DCL.VoiceChat
             VoiceChatMicrophoneHandler voiceChatHandler,
             VoiceChatRoomManager roomManager,
             IRoomHub roomHub,
-            PlayerEntryView playerEntry)
+            PlayerEntryView playerEntry,
+            ChatCoordinationEventBus coordinationEventBus)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.coordinationEventBus = coordinationEventBus;
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(view.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
@@ -50,6 +55,10 @@ namespace DCL.VoiceChat
             view.PointerExitChatArea += OnPointerExitChatArea;
             view.PointerClick += OnPointerClick;
             view.PointerClickChatArea += OnPointerClickChatArea;
+
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerEnterEvent>(_ => OnPointerEnterChatArea()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerExitEvent>(_ => OnPointerExitChatArea()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerClickEvent>(_ => OnPointerClickChatArea()));
         }
 
         private void OnPointerClickChatArea()
@@ -119,6 +128,7 @@ namespace DCL.VoiceChat
 
             return Vector2.zero;
         }
+
         public void Dispose()
         {
             privateVoiceChatController?.Dispose();
@@ -130,6 +140,11 @@ namespace DCL.VoiceChat
             view.PointerExitChatArea -= OnPointerExitChatArea;
             view.PointerClick -= OnPointerClick;
             view.PointerClickChatArea -= OnPointerClickChatArea;
+
+            // Dispose event subscriptions
+            foreach (var subscription in eventSubscriptions)
+                subscription.Dispose();
+            eventSubscriptions.Clear();
         }
     }
 }

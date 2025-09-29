@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -30,6 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
+        private readonly ChatCoordinationEventBus coordinationEventBus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -50,7 +52,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            ChatCoordinationEventBus coordinationEventBus)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -61,6 +64,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.webRequestController = webRequestController;
             this.assetsProvisioner = assetsProvisioner;
+            this.coordinationEventBus = coordinationEventBus;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -112,7 +116,7 @@ namespace DCL.PluginSystem.Global
             var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
-            voiceChatPanelController = new VoiceChatPanelController(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry);
+            voiceChatPanelController = new VoiceChatPanelController(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, coordinationEventBus);
         }
 
         [Serializable]

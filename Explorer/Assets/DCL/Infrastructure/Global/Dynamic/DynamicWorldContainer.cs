@@ -17,6 +17,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
@@ -292,6 +293,8 @@ namespace Global.Dynamic
             ISystemClipboard clipboard = new UnityClipboard();
             NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
+
+            ChatCoordinationEventBus chatCoordinationEventBus = new ChatCoordinationEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -759,7 +762,8 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    eventBus),
+                    eventBus,
+                    chatCoordinationEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -920,7 +924,8 @@ namespace Global.Dynamic
                         playerEntity,
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
-                        assetsProvisioner)
+                        assetsProvisioner,
+                        chatCoordinationEventBus)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

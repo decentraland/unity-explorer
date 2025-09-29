@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
-using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Communities;
 using DCL.Diagnostics;
@@ -13,7 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.AvatarRendering.Emotes;
-using UnityEngine;
+using DCL.ChatArea;
 using UnityEngine.InputSystem;
 using Utility;
 

@@ -34,7 +34,7 @@ namespace DCL.VoiceChat
         private bool isDisposed;
         private VoiceChatStatus currentStatus;
         private ConnectionUpdate connectionState = ConnectionUpdate.Disconnected;
-        private bool isClientInitiatedDisconnection = false;
+        private bool isClientInitiatedDisconnection;
 
         public event Action ConnectionEstablished;
         public event Action ConnectionLost;

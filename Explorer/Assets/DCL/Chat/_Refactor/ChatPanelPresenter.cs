@@ -6,14 +6,17 @@ using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatStates;
+using DCL.Chat;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
+using DCL.ChatArea;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
 using Utility;
@@ -26,6 +29,7 @@ namespace DCL.Chat
         public event Action? PointerExited;
 
         private readonly ChatPanelView view;
+        private readonly ChatCoordinationEventBus coordinationEventBus;
 
         private readonly CommandRegistry commandRegistry;
         private readonly ChatMemberListService chatMemberListService;
@@ -34,15 +38,16 @@ namespace DCL.Chat
         private readonly CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
 
         private CancellationTokenSource initCts = new ();
-
         public bool IsVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
+        private readonly List<IDisposable> eventSubscriptions = new();
 
         public ChatPanelPresenter(ChatPanelView view, ITextFormatter textFormatter, IVoiceChatOrchestrator voiceChatOrchestrator, CurrentChannelService currentChannelService, CommunitiesDataProvider communityDataProvider,
             ChatConfig.ChatConfig chatConfig, IChatEventBus chatEventBus, IChatHistory chatHistory, CommunityDataService communityDataService, ChatMemberListService chatMemberListService,
             ProfileRepositoryWrapper profileRepositoryWrapper, CommandRegistry commandRegistry, ChatInputBlockingService chatInputBlockingService, IEventBus eventBus, ChatContextMenuService chatContextMenuService,
-            ChatClickDetectionService chatClickDetectionService)
+            ChatClickDetectionService chatClickDetectionService, ChatCoordinationEventBus coordinationEventBus)
         {
             this.view = view;
+            this.coordinationEventBus = coordinationEventBus;
             this.chatMemberListService = chatMemberListService;
             this.commandRegistry = commandRegistry;
 
@@ -138,6 +143,9 @@ namespace DCL.Chat
                 this);
 
             uiScope.Add(chatStateMachine);
+
+            // Subscribe to coordination events
+            SubscribeToCoordinationEvents();
         }
 
         internal void HandlePointerEnter() => PointerEntered?.Invoke();
@@ -169,6 +177,11 @@ namespace DCL.Chat
 
             chatMemberListService.Dispose();
             communityVoiceChatSubTitleButtonPresenter.Dispose();
+
+            // Dispose event subscriptions
+            foreach (var subscription in eventSubscriptions)
+                subscription.Dispose();
+            eventSubscriptions.Clear();
         }
 
         public void OnViewShow()
@@ -211,6 +224,21 @@ namespace DCL.Chat
         public void OnHiddenInSharedSpace()
         {
             chatStateMachine.Minimize();
+        }
+
+        private void SubscribeToCoordinationEvents()
+        {
+
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerEnterEvent>(_ => HandlePointerEnter()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerExitEvent>(_ => HandlePointerExit()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelFocusEvent>(_ => SetFocusState()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelVisibilityEvent>(evt => SetVisibility(evt.IsVisible)));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelToggleEvent>(_ => ToggleState()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelViewShowEvent>(_ => OnViewShow()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelShownInSharedSpaceEvent>(evt => OnShownInSharedSpaceAsync(evt.Focus)));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelHiddenInSharedSpaceEvent>(_ => OnHiddenInSharedSpace()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelMvcViewShowedEvent>(_ => OnMvcViewShowed()));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelMvcViewClosedEvent>(_ => OnMvcViewClosed()));
         }
     }
 }

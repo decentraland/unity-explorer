@@ -1,10 +1,11 @@
+using DCL.Chat;
 using DCL.VoiceChat;
 using System;
 using MVC;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DCL.Chat
+namespace DCL.ChatArea
 {
     public class ChatMainView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IDisposable
     {

@@ -1,4 +1,4 @@
-using DCL.Chat;
+using DCL.ChatArea;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.MarketplaceCredits;

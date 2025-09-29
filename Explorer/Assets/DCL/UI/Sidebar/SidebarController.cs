@@ -21,6 +21,7 @@ using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using DCL.Chat.ChatStates;
+using DCL.ChatArea;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.NotificationsBus;
@@ -33,6 +34,8 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
+        private static readonly int IDLE_ICON_HASH = Animator.StringToHash(IDLE_ICON_ANIMATOR);
+        private static readonly int HIGHLIGHTED_ICON_HASH = Animator.StringToHash(HIGHLIGHTED_ICON_ANIMATOR);
         private const string IDLE_ICON_ANIMATOR = "Empty";
         private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
 
@@ -55,9 +58,9 @@ namespace DCL.UI.Sidebar
 
         private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
-        private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
-        private CancellationTokenSource? referralNotificationCts;
-        private CancellationTokenSource checkForCommunitiesFeatureCts;
+        private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
+        private CancellationTokenSource? referralNotificationCts = new ();
+        private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
 
         public event Action? HelpOpened;
 
@@ -215,18 +218,18 @@ namespace DCL.UI.Sidebar
         {
             // Panels that are controllers and can be opened using shortcuts
             if (closedController is EmotesWheelController)
-                viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                viewInstance?.emotesWheelButton.animator.SetTrigger(IDLE_ICON_HASH);
             else if (closedController is FriendsPanelController)
-                viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                viewInstance?.friendsButton.animator.SetTrigger(IDLE_ICON_HASH);
         }
 
         private void OnMvcManagerViewShowed(IController showedController)
         {
             // Panels that are controllers and can be opened using shortcuts
             if (showedController is EmotesWheelController)
-                viewInstance?.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+                viewInstance?.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_HASH);
             else if (showedController is FriendsPanelController)
-                viewInstance?.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+                viewInstance?.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_HASH);
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
@@ -338,11 +341,13 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSidebarSettingsAsync()
         {
+            if (viewInstance == null) return;
+
             viewInstance.BlockSidebar();
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
             viewInstance.UnblockSidebar();
 
-            viewInstance!.sidebarSettingsButton.OnDeselect(null);
+            viewInstance.sidebarSettingsButton.OnDeselect(null);
         }
 
         private async void OpenProfileMenuAsync()
@@ -361,19 +366,23 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSkyboxSettingsAsync()
         {
+            if (viewInstance == null) return;
+
             viewInstance.BlockSidebar();
-            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_HASH);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_HASH);
             viewInstance.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
+            if (viewInstance == null) return;
+
             viewInstance.BlockSidebar();
-            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_HASH);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_HASH);
             viewInstance.UnblockSidebar();
         }
 

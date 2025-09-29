@@ -36,6 +36,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.ChatArea;
 using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -86,8 +87,10 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
+        private readonly ChatCoordinationEventBus coordinationEventBus;
 
         private CommandRegistry commandRegistry;
+        private ChatPanelPresenter? chatPanelPresenter;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -120,7 +123,8 @@ namespace DCL.PluginSystem.Global
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             Transform chatViewRectTransform,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            ChatCoordinationEventBus coordinationEventBus)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -157,6 +161,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
             this.eventBus = eventBus;
+            this.coordinationEventBus = coordinationEventBus;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -167,6 +172,7 @@ namespace DCL.PluginSystem.Global
             chatBusListenerService?.Dispose();
             chatUserStateService?.Dispose();
             communityUserStateService?.Dispose();
+            chatPanelPresenter?.Dispose();
             pluginScope.Dispose();
 
             pluginCts.Cancel();
@@ -267,6 +273,27 @@ namespace DCL.PluginSystem.Global
 
             pluginScope.Add(commandRegistry);
 
+            // Create ChatPanelPresenter
+            chatPanelPresenter = new ChatPanelPresenter(
+                mainUIView.ChatMainView.ChatPanelView,
+                hyperlinkTextFormatter,
+                voiceChatOrchestrator,
+                currentChannelService,
+                communityDataProvider,
+                chatConfig,
+                chatEventBus,
+                chatHistory,
+                communityDataService,
+                chatMemberService,
+                profileRepositoryWrapper,
+                commandRegistry,
+                chatInputBlockingService,
+                eventBus,
+                chatContextMenuService,
+                chatClickDetectionService,
+                coordinationEventBus
+            );
+
             chatMainController = new ChatMainController(
                 () =>
                 {
@@ -274,22 +301,8 @@ namespace DCL.PluginSystem.Global
                     view.gameObject.SetActive(false);
                     return view;
                 },
-                chatConfig,
-                eventBus,
                 mvcManager,
-                chatEventBus,
-                currentChannelService,
-                chatInputBlockingService,
-                commandRegistry,
-                chatHistory,
-                profileRepositoryWrapper,
-                chatMemberService,
-                chatContextMenuService,
-                communityDataService,
-                chatClickDetectionService,
-                voiceChatOrchestrator,
-                communityDataProvider,
-                hyperlinkTextFormatter
+                coordinationEventBus
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);
