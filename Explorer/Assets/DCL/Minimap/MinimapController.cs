@@ -50,7 +50,7 @@ namespace DCL.Minimap
         };
         private const float ANIMATION_TIME = 0.2f;
         private const string RELOAD_SCENE_COMMAND_ORIGIN = "minimap";
-        private const int HIDE_TIME_MS = 5000;
+        private const int SHOW_BANNED_TOOLTIP_DELAY_SEC = 5;
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
@@ -77,6 +77,7 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool bannedMarkIsVisible;
+        private CancellationTokenSource showBannedTooltipCts;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -121,13 +122,6 @@ namespace DCL.Minimap
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
-
-            if (includeBannedUsersFromScene)
-            {
-                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowBannedMark;
-                roomHub.SceneRoom().CurrentSceneRoomConnected += HideBannedMark;
-                roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideBannedMark;
-            }
         }
 
         public override void Dispose()
@@ -142,6 +136,7 @@ namespace DCL.Minimap
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomConnected -= HideBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideBannedMark;
+                showBannedTooltipCts.SafeCancelAndDispose();
             }
 
             sceneRestrictionsController?.Dispose();
@@ -189,6 +184,13 @@ namespace DCL.Minimap
                          .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
+
+            if (includeBannedUsersFromScene)
+            {
+                roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomConnected += HideBannedMark;
+                roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideBannedMark;
+            }
         }
 
         private void ShowContextMenu()
@@ -425,10 +427,21 @@ namespace DCL.Minimap
 
             viewInstance!.nonBannedContainer.SetActive(false);
             viewInstance!.bannedContainer.SetActive(true);
-        }
+
+            showBannedTooltipCts = showBannedTooltipCts.SafeRestart();
+            ShowBannedTooltipAsync(showBannedTooltipCts.Token).Forget();
+
+            async UniTaskVoid ShowBannedTooltipAsync(CancellationToken ct)
+            {
+                viewInstance!.bannedTooltip.SetActive(true);
+                await UniTask.Delay(TimeSpan.FromSeconds(SHOW_BANNED_TOOLTIP_DELAY_SEC), cancellationToken: ct);
+                viewInstance!.bannedTooltip.SetActive(false);
+            }
+    }
 
         private void HideBannedMark()
         {
+            showBannedTooltipCts.SafeCancelAndDispose();
             viewInstance!.nonBannedContainer.SetActive(true);
             viewInstance!.bannedContainer.SetActive(false);
             bannedMarkIsVisible = false;

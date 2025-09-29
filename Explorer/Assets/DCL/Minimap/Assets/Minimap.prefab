@@ -3497,7 +3497,7 @@ MonoBehaviour:
   <destinationPinMarker>k__BackingField: {fileID: 8445240332872895182}
   <nonBannedContainer>k__BackingField: {fileID: 2020863288329931910}
   <bannedContainer>k__BackingField: {fileID: 5361915150257950748}
-  <bannedTooltipWarning>k__BackingField: {fileID: 5910030510190866709}
+  <bannedTooltip>k__BackingField: {fileID: 8622470448799416373}
   contextMenuConfig:
     copyLinkIcon: {fileID: 21300000, guid: 3bffb1589fb814c70b23fbce43ba6736, type: 3}
     button: {fileID: 6933064213982824976}

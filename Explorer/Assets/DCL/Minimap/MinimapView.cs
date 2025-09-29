@@ -84,7 +84,7 @@ namespace DCL.Minimap
         internal GameObject bannedContainer { get; private set; }
 
         [field: SerializeField]
-        internal ShowTooltipOnHoverElement bannedTooltipWarning { get; private set; }
+        internal GameObject bannedTooltip { get; private set; }
 
         [SerializeField] internal ContextMenuConfig contextMenuConfig;
 
