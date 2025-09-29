@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.SmartWearables;
+using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -34,6 +35,10 @@ namespace Runtime.Wearables
         {
             this.webRequestController = webRequestController;
         }
+
+        public bool CurrentSceneAllowsSmartWearables { get; set; }
+
+        public List<string> RunningSmartWearables { get; } = new ();
 
         /// <summary>
         ///     Whether the wearable is a smart wearable.

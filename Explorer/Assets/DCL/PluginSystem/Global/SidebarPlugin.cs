@@ -29,6 +29,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using MVC;
+using Runtime.Wearables;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -64,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IPassportBridge passportBridge;
         private readonly IEventBus eventBus;
+        private readonly SmartWearableCache smartWearableCache;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -91,7 +93,8 @@ namespace DCL.PluginSystem.Global
             ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            SmartWearableCache smartWearableCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -119,6 +122,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrls = decentralandUrls;
             this.eventBus = eventBus;
             this.passportBridge = passportBridge;
+            this.smartWearableCache = smartWearableCache;
         }
 
         public void Dispose() { }
@@ -147,18 +151,19 @@ namespace DCL.PluginSystem.Global
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController),
                 new ControlsPanelController(() => controlsPanelView),
-                new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView),
+                new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache),
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
-                mainUIView.ChatView2,
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus));
+                eventBus,
+                smartWearableCache
+                ));
         }
 
         public class SidebarSettings : IDCLPluginSettings

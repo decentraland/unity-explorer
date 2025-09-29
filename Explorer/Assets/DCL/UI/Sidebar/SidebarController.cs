@@ -26,7 +26,7 @@ using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
-using UnityEngine;
+using Runtime.Wearables;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -46,13 +46,13 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
-        private readonly ChatMainView chatView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
+        private readonly SmartWearableCache smartWearablesCache;
 
         private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
@@ -77,13 +77,13 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            ChatMainView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            SmartWearableCache smartWearableCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -95,7 +95,6 @@ namespace DCL.UI.Sidebar
             this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
-            this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
@@ -103,6 +102,7 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.smartWearablesCache = smartWearableCache;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }

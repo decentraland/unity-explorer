@@ -47,11 +47,6 @@ namespace DCL.SmartWearables
         /// </summary>
         private readonly Dictionary<string, ScenePromise> pendingScenes = new ();
 
-        /// <summary>
-        /// IDs of the currently loaded scenes.
-        /// </summary>
-        private readonly HashSet<string> runningScenes = new ();
-
         public SmartWearableSystem(World world, WearableStorage wearableStorage, SmartWearableCache smartWearableCache, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache) : base(world)
         {
             this.wearableStorage = wearableStorage;
@@ -83,10 +78,10 @@ namespace DCL.SmartWearables
         private async UniTask TryRunSmartWearableSceneAsync(IWearable wearable)
         {
             bool isSmart = await smartWearableCache.IsSmartAsync(wearable, CancellationToken.None);
-            if (!isSmart || !SceneAllowsSmartWearables()) return;
+            if (!isSmart || !smartWearableCache.CurrentSceneAllowsSmartWearables) return;
 
             string id = wearable.DTO.Metadata.id;
-            if (pendingScenes.ContainsKey(id) || runningScenes.Contains(id)) return;
+            if (pendingScenes.ContainsKey(id) || smartWearableCache.RunningSmartWearables.Contains(id)) return;
 
             AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
             ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{metadata.name}'. Loading scene...");
@@ -116,7 +111,7 @@ namespace DCL.SmartWearables
                 return;
             }
 
-            if (!runningScenes.Remove(id)) return;
+            if (!smartWearableCache.RunningSmartWearables.Remove(id)) return;
 
             AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
             ReportHub.Log(GetReportCategory(), $"Unequipped Smart Wearable '{metadata.name}'. Unloading scene...");
@@ -127,12 +122,26 @@ namespace DCL.SmartWearables
 
         protected override void Update(float t)
         {
+            smartWearableCache.CurrentSceneAllowsSmartWearables = CurrentSceneAllowsSmartWearables();
+
             ResolveScenePromises();
+        }
+
+        private bool CurrentSceneAllowsSmartWearables()
+        {
+            var scene = scenesCache.CurrentScene.Value;
+
+            // If we aren't in a scene we just allow Smart Wearables.
+            if (scene == null) return true;
+
+            // Otherwise we check the feature toggles.
+            SceneMetadata.FeatureToggles featureToggles = scene.SceneData.SceneEntityDefinition.metadata.featureToggles;
+            return featureToggles.PortableExperiencesEnabled;
         }
 
         private void ResolveScenePromises()
         {
-            if (!SceneAllowsSmartWearables())
+            if (!smartWearableCache.CurrentSceneAllowsSmartWearables)
             {
                 foreach ((string _, ScenePromise promise) in pendingScenes) promise.ForgetLoading(World);
                 pendingScenes.Clear();
@@ -162,7 +171,7 @@ namespace DCL.SmartWearables
 
                 AddPortableExperience(promise.LoadingIntention.SmartWearable, scene);
 
-                runningScenes.Add(id);
+                smartWearableCache.RunningSmartWearables.Add(id);
             }
 
             foreach (string id in resolved) pendingScenes.Remove(id);
@@ -187,16 +196,16 @@ namespace DCL.SmartWearables
 
         private void OnPortableExperienceUnloaded(string id)
         {
-            runningScenes.Remove(id);
+            smartWearableCache.RunningSmartWearables.Remove(id);
         }
 
         private void OnCurrentSceneChanged(ISceneFacade scene)
         {
-            bool allowsSmartWearables = SceneAllowsSmartWearables();
+            bool smartWearablesAllowed = smartWearableCache.CurrentSceneAllowsSmartWearables;
 
-            ReportHub.Log(GetReportCategory(), "Current Scene allows Smart Wearables: " + allowsSmartWearables);
+            ReportHub.Log(GetReportCategory(), "Current Scene allows Smart Wearables: " + smartWearablesAllowed);
 
-            if (allowsSmartWearables)
+            if (smartWearablesAllowed)
                 // Notice scenes that are already running won't run again, so we can call this safely.
                 RunScenesForEquippedWearablesAsync().Forget();
             else
@@ -204,26 +213,14 @@ namespace DCL.SmartWearables
                 foreach ((string _, ScenePromise promise) in pendingScenes) promise.ForgetLoading(World);
                 pendingScenes.Clear();
 
-                if (runningScenes.Count > 0)
+                if (smartWearableCache.RunningSmartWearables.Count > 0)
                 {
                     // The reason for the copy is that unloading a PX will also trigger an event that alters the loaded scenes set
                     using var tempScope = ListPool<string>.Get(out var temp);
-                    temp.AddRange(runningScenes);
+                    temp.AddRange(smartWearableCache.RunningSmartWearables);
                     foreach (string id in temp) portableExperiencesController.UnloadPortableExperienceById(id);
                 }
             }
-        }
-
-        private bool SceneAllowsSmartWearables()
-        {
-            var scene = scenesCache.CurrentScene.Value;
-
-            // If we aren't in a scene we just allow Smart Wearables.
-            if (scene == null) return true;
-
-            // Otherwise we check the feature toggles.
-            SceneMetadata.FeatureToggles featureToggles = scene.SceneData.SceneEntityDefinition.metadata.featureToggles;
-            return featureToggles.PortableExperiencesEnabled;
         }
 
         private async UniTask RunScenesForEquippedWearablesAsync()
