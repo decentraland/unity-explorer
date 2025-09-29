@@ -4,11 +4,13 @@ using System;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using Utility.Ownership;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using UnityEngine;
+using Result = RichTypes.Result;
 
 namespace DCL.VoiceChat
 {
@@ -29,23 +31,23 @@ namespace DCL.VoiceChat
             this.voiceChatConfiguration = voiceChatConfiguration;
             isMicrophoneEnabledProperty = new ReactiveProperty<bool>(false);
 
-            DCLInput.Instance.VoiceChat.Talk!.performed += OnPressed;
-            DCLInput.Instance.VoiceChat.Talk.canceled += OnReleased;
+            DCLInput.Instance.VoiceChat.Talk!.performed += OnTalkHotkeyPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled += OnTalkHotkeyReleased;
             VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
         }
 
         public void Dispose()
         {
             isMicrophoneEnabledProperty.ClearSubscriptionsList();
-            DCLInput.Instance.VoiceChat.Talk!.performed -= OnPressed;
-            DCLInput.Instance.VoiceChat.Talk.canceled -= OnReleased;
+            DCLInput.Instance.VoiceChat.Talk!.performed -= OnTalkHotkeyPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled -= OnTalkHotkeyReleased;
             VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
         }
 
         /// <summary>
-        /// Don't keep reference.
-        /// Must be consumed in place without async operation.
-        /// Source is not guaranteed to be alive after the scope.
+        ///     Don't keep reference.
+        ///     Must be consumed in place without async operation.
+        ///     Source is not guaranteed to be alive after the scope.
         /// </summary>
         private bool TryGetCurrentMicrophoneSourceIfInCall(out MicrophoneRtcAudioSource? microphoneRtcAudioSource)
         {
@@ -54,9 +56,9 @@ namespace DCL.VoiceChat
             return resource.Has;
         }
 
-        private void OnPressed(InputAction.CallbackContext obj)
+        private void OnTalkHotkeyPressed(InputAction.CallbackContext obj)
         {
-            if (TryGetCurrentMicrophoneSourceIfInCall(out var source))
+            if (TryGetCurrentMicrophoneSourceIfInCall(out MicrophoneRtcAudioSource? source))
             {
                 buttonPressStartTime = Time.time;
                 hasIntentionToDisable = source!.IsRecording; // Disable microphone on release if it was recording
@@ -64,7 +66,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnReleased(InputAction.CallbackContext obj)
+        private void OnTalkHotkeyReleased(InputAction.CallbackContext obj)
         {
             if (TryGetCurrentMicrophoneSourceIfInCall(out _))
             {
@@ -80,7 +82,7 @@ namespace DCL.VoiceChat
 
         public void ToggleMicrophone()
         {
-            var weakMicrophoneSource = microphoneSource.Resource;
+            Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
 
             if (weakMicrophoneSource.Has)
             {
@@ -97,7 +99,7 @@ namespace DCL.VoiceChat
 
         private void EnableMicrophone()
         {
-            var weakMicrophoneSource = microphoneSource.Resource;
+            Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
             if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Start();
             isMicrophoneEnabledProperty.Value = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
@@ -122,7 +124,7 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophoneInternal()
         {
-            var weakMicrophoneSource = microphoneSource.Resource;
+            Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
             if (weakMicrophoneSource.Has) weakMicrophoneSource.Value.Stop();
             isMicrophoneEnabledProperty.Value = false;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
@@ -133,35 +135,36 @@ namespace DCL.VoiceChat
             if (!PlayerLoopHelper.IsMainThread)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change dispatching to main thread (async)");
-                OnMicrophoneChangedAsync(microphoneName).Forget();
+                OnMicrophoneChangedAsync().Forget();
                 return;
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing on main thread (sync)");
-            TryHandleMicrophoneChange(microphoneName);
-        }
+            TryHandleMicrophoneChange();
+            return;
 
-        private async UniTaskVoid OnMicrophoneChangedAsync(MicrophoneSelection microphoneName)
-        {
-            await UniTask.SwitchToMainThread();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
-            TryHandleMicrophoneChange(microphoneName);
-        }
-
-        private void TryHandleMicrophoneChange(MicrophoneSelection microphoneName)
-        {
-            var weakMicrophoneSource = microphoneSource.Resource;
-
-            if (weakMicrophoneSource.Has == false)
+            async UniTaskVoid OnMicrophoneChangedAsync()
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName.name}");
-                return;
+                await UniTask.SwitchToMainThread();
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
+                TryHandleMicrophoneChange();
             }
 
-            var result = weakMicrophoneSource.Value.SwitchMicrophone(microphoneName);
+            void TryHandleMicrophoneChange()
+            {
+                Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
 
-            if (result.Success == false)
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}");
+                if (weakMicrophoneSource.Has == false)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName.name}");
+                    return;
+                }
+
+                Result result = weakMicrophoneSource.Value.SwitchMicrophone(microphoneName);
+
+                if (result.Success == false)
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}");
+            }
         }
 
         public void EnableMicrophoneForCall()

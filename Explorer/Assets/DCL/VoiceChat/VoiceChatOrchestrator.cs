@@ -31,6 +31,7 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<VoiceChatType> currentVoiceChatType = new (VoiceChatType.NONE);
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.COLLAPSED);
+        private readonly ReactiveProperty<VoiceChatPanelState> currentVoiceChatPanelState = new (VoiceChatPanelState.NONE);
         private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
 
         private IVoiceChatCallStatusServiceBase? activeCallStatusService;
@@ -39,6 +40,7 @@ namespace DCL.VoiceChat
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
+        public IReadonlyReactiveProperty<VoiceChatPanelState> CurrentVoiceChatPanelState => currentVoiceChatPanelState;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
         public IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneActiveCommunityVoiceChatData => currentActiveCommunityData;
         public IReadonlyReactiveProperty<string> CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
@@ -89,6 +91,8 @@ namespace DCL.VoiceChat
             currentCallStatus.ClearSubscriptionsList();
             currentVoiceChatPanelSize.ClearSubscriptionsList();
             currentActiveCommunityData.ClearSubscriptionsList();
+            currentVoiceChatPanelState.ClearSubscriptionsList();
+
             ParticipantsStateService.Dispose();
         }
 
@@ -218,11 +222,14 @@ namespace DCL.VoiceChat
             {
                 case VoiceChatType.NONE:
                     activeCallStatusService = null;
+                    ChangePanelState(VoiceChatPanelState.NONE);
                     break;
                 case VoiceChatType.PRIVATE:
+                    ChangePanelState(VoiceChatPanelState.SELECTED);
                     activeCallStatusService = privateVoiceChatCallStatusService;
                     break;
                 case VoiceChatType.COMMUNITY:
+                    ChangePanelState(VoiceChatPanelState.SELECTED);
                     activeCallStatusService = communityVoiceChatCallStatusService;
                     break;
             }
@@ -231,6 +238,12 @@ namespace DCL.VoiceChat
         public void ChangePanelSize(VoiceChatPanelSize panelSize)
         {
             currentVoiceChatPanelSize.Value = panelSize;
+        }
+
+        public void ChangePanelState(VoiceChatPanelState panelState, bool force = false)
+        {
+            if (force || currentVoiceChatPanelState.Value != VoiceChatPanelState.HIDDEN)
+                currentVoiceChatPanelState.Value = panelState;
         }
 
         public void JoinCommunityVoiceChat(string communityId, bool force = false)
