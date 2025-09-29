@@ -147,6 +147,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController),
                 new ControlsPanelController(() => controlsPanelView),
+                new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView),
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
@@ -157,8 +158,7 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus
-            ));
+                eventBus));
         }
 
         public class SidebarSettings : IDCLPluginSettings

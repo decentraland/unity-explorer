@@ -42,6 +42,7 @@ namespace DCL.UI.Sidebar
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
+        private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
@@ -71,6 +72,7 @@ namespace DCL.UI.Sidebar
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
+            SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             IWebBrowser webBrowser,
             bool includeCameraReel,
             bool includeFriends,
@@ -90,6 +92,7 @@ namespace DCL.UI.Sidebar
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
+            this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
             this.chatView = chatView;
@@ -146,6 +149,8 @@ namespace DCL.UI.Sidebar
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
+            viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
+            viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.CameraReel));
@@ -167,6 +172,7 @@ namespace DCL.UI.Sidebar
 
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(profileMenuController);
+            mvcManager.RegisterController(smartWearablesTooltipController);
             mvcManager.OnViewShowed += OnMvcManagerViewShowed;
             mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
@@ -175,6 +181,7 @@ namespace DCL.UI.Sidebar
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Controls, controlsPanelController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
@@ -381,6 +388,16 @@ namespace DCL.UI.Sidebar
         {
             // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection), PanelsSharingSpace.Chat);
+        }
+
+        private void OnSmartWearablesButtonHover()
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.SmartWearables).Forget();
+        }
+
+        private void OnSmartWearablesButtonUnhover()
+        {
+            smartWearablesTooltipController.Close();
         }
 #endregion
     }
