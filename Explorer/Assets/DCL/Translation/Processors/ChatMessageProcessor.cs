@@ -49,12 +49,22 @@ namespace DCL.Translation.Processors
 
             // 3. Translate
             string[] translated = Array.Empty<string>();
+            var detectedSourceLanguage = LanguageCode.EN;
+            
             if (cores.Length > 0)
             {
+                var detectedLanguages = new List<LanguageCode>();
+                
                 if (provider is IBatchTranslationProvider batchProvider)
                 {
                     var response = await batchProvider.TranslateBatchAsync(cores, targetLang, ct);
                     translated = response.translatedText;
+
+                    if (response.detectedLanguage != null)
+                    {
+                        foreach (var langDto in response.detectedLanguage)
+                            detectedLanguages.Add(ParseLanguageCode(langDto.language));
+                    }
                 }
                 else
                 {
@@ -64,8 +74,11 @@ namespace DCL.Translation.Processors
                     {
                         var result = await provider.TranslateAsync(cores[i], targetLang, ct);
                         translated[i] = result.TranslatedText;
+                        detectedLanguages.Add(result.DetectedSourceLanguage);
                     }
                 }
+
+                detectedSourceLanguage = GetMostFrequentLanguage(detectedLanguages);
             }
 
             // 4. Apply translations back
@@ -78,7 +91,7 @@ namespace DCL.Translation.Processors
 
             // Assuming source language detection is handled by provider, returning a placeholder.
             // A more advanced system could aggregate this from the provider's response.
-            return new TranslationResult(stitched, LanguageCode.EN, false);
+            return new TranslationResult(stitched, detectedSourceLanguage, false);
         }
 
         private (string[] cores, int[] idxs, string[] leading, string[] trailing)
@@ -129,5 +142,54 @@ namespace DCL.Translation.Processors
             foreach (var t in toks) sb.Append(t.Value);
             return sb.ToString();
         }
+
+        /// <summary>
+        ///     Determines the most frequently occurring language from a list of detected languages.
+        /// </summary>
+        /// <param name="languages">The list of detected languages from translated text segments.</param>
+        /// <returns>The most common LanguageCode, or LanguageCode.EN as a default.</returns>
+        private LanguageCode GetMostFrequentLanguage(List<LanguageCode> languages)
+        {
+            if (languages == null || languages.Count == 0)
+                return LanguageCode.EN; // Return default if there's nothing to process
+
+            // Use a dictionary to count occurrences of each language.
+            var languageCounts = new Dictionary<LanguageCode, int>();
+
+            foreach (var lang in languages)
+            {
+                if (languageCounts.ContainsKey(lang))
+                    languageCounts[lang]++;
+                else
+                    languageCounts[lang] = 1;
+            }
+
+            // Find the language with the highest count.
+            var mostFrequent = LanguageCode.EN;
+            int maxCount = 0;
+
+            foreach (var pair in languageCounts)
+            {
+                if (pair.Value > maxCount)
+                {
+                    maxCount = pair.Value;
+                    mostFrequent = pair.Key;
+                }
+            }
+
+            return mostFrequent;
+        }
+
+        /// <summary>
+        ///     Safely parses a language code string into a LanguageCode enum.
+        /// </summary>
+        private LanguageCode ParseLanguageCode(string code)
+        {
+            if (Enum.TryParse<LanguageCode>(code, true, out var languageCode))
+                return languageCode;
+
+            return LanguageCode.EN;
+        }
+
     }
 }

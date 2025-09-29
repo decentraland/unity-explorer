@@ -157,7 +157,7 @@ namespace DCL.Translation.Service
 
                 var result = RequiresProcessing(original)
                     ? await messageProcessor.ProcessAndTranslateAsync(original, targetLang, ct)
-                    : await UseRegularTranslation(original, targetLang, ct);
+                    : await UseRegularTranslationAsync(original, targetLang, ct);
 
                 if (result.DetectedSourceLanguage == targetLang)
                 {
@@ -193,7 +193,7 @@ namespace DCL.Translation.Service
             }
         }
 
-        private async UniTask<TranslationResult> UseRegularTranslation(
+        private async UniTask<TranslationResult> UseRegularTranslationAsync(
             string text, LanguageCode target, CancellationToken ct)
         {
             var single = await provider.TranslateAsync(text, target, ct);
