@@ -3,7 +3,7 @@ using UnityEngine.Audio;
 
 namespace DCL.VoiceChat
 {
-    [CreateAssetMenu(fileName = "VoiceChatConfiguration", menuName = "DCL/Voice Chat/Voice Chat Configuration")]
+    //[CreateAssetMenu(fileName = "VoiceChatConfiguration", menuName = "DCL/Voice Chat/Voice Chat Configuration")]
     public class VoiceChatConfiguration : ScriptableObject
     {
         [Header("Local Audio Feedback")]

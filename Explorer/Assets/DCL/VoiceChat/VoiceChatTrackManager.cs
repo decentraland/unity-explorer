@@ -133,13 +133,14 @@ namespace DCL.VoiceChat
 
         private void MuteLocalTrack(bool mute)
         {
-            if (microphoneTrack.HasValue && currentTrackPublication != null)
-                try
-                {
-                    voiceChatRoom.Participants.LocalParticipant().TrackPublication(currentTrackPublication.Sid).Track?.UpdateMuted(mute);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track muted: {mute}");
-                }
-                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to mute local track: {ex.Message}"); }
+            if (!microphoneTrack.HasValue || currentTrackPublication == null) return;
+
+            try
+            {
+                microphoneTrack.Value.Track.SetMute(mute);
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track muted: {mute}");
+            }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to mute local track: {ex.Message}"); }
         }
 
         public void UnpublishLocalTrack()
