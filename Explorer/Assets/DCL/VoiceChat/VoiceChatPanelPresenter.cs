@@ -6,7 +6,7 @@ using DCL.Utilities;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
 using System;
-using System.Collections.Generic;
+using Utility;
 
 namespace DCL.VoiceChat
 {
@@ -20,7 +20,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatPanelResizeController? voiceChatPanelResizeController;
         private readonly SceneVoiceChatController? sceneVoiceChatController;
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
-        private readonly List<IDisposable> eventSubscriptions = new();
+        private readonly EventSubscriptionScope eventSubscriptions = new();
 
         public VoiceChatPanelPresenter(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
@@ -31,7 +31,7 @@ namespace DCL.VoiceChat
             VoiceChatRoomManager roomManager,
             IRoomHub roomHub,
             PlayerEntryView playerEntry,
-            ChatCoordinationEventBus coordinationEventBus)
+            ChatAreaEventBus chatAreaEventBus)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -42,10 +42,10 @@ namespace DCL.VoiceChat
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 
-            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerEnterEvent>(_ => OnPointerEnterChatArea()));
-            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerExitEvent>(_ => OnPointerExitChatArea()));
-            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelClickInsideEvent>(HandleClickInside));
-            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
+            eventSubscriptions.Add(chatAreaEventBus.Subscribe<ChatAreaEvents.ChatPanelPointerEnterEvent>(_ => OnPointerEnterChatArea()));
+            eventSubscriptions.Add(chatAreaEventBus.Subscribe<ChatAreaEvents.ChatPanelPointerExitEvent>(_ => OnPointerExitChatArea()));
+            eventSubscriptions.Add(chatAreaEventBus.Subscribe<ChatAreaEvents.ChatPanelClickInsideEvent>(HandleClickInside));
+            eventSubscriptions.Add(chatAreaEventBus.Subscribe<ChatAreaEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
         }
 
         private void OnPointerExitChatArea()
@@ -60,14 +60,14 @@ namespace DCL.VoiceChat
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
         }
 
-        private void HandleClickInside(ChatCoordinationEvents.ChatPanelClickInsideEvent evt)
+        private void HandleClickInside(ChatAreaEvents.ChatPanelClickInsideEvent evt)
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.SELECTED) return;
 
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
         }
 
-        private void HandleClickOutside(ChatCoordinationEvents.ChatPanelClickOutsideEvent evt)
+        private void HandleClickOutside(ChatAreaEvents.ChatPanelClickOutsideEvent evt)
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED) return;
 
@@ -81,10 +81,7 @@ namespace DCL.VoiceChat
             sceneVoiceChatController?.Dispose();
             voiceChatPanelResizeController?.Dispose();
 
-            // Dispose event subscriptions
-            foreach (var subscription in eventSubscriptions)
-                subscription.Dispose();
-            eventSubscriptions.Clear();
+            eventSubscriptions.Dispose();
         }
     }
 }

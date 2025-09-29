@@ -3,7 +3,7 @@ using Utility;
 
 namespace DCL.ChatArea
 {
-    public class ChatCoordinationEventBus : IEventBus
+    public class ChatAreaEventBus : IEventBus
     {
         private readonly IEventBus eventBus = new EventBus(invokeSubscribersOnMainThread: true);
 

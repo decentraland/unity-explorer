@@ -27,18 +27,12 @@ using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
-        private static readonly int IDLE_ICON_HASH = Animator.StringToHash(IDLE_ICON_ANIMATOR);
-        private static readonly int HIGHLIGHTED_ICON_HASH = Animator.StringToHash(HIGHLIGHTED_ICON_ANIMATOR);
-        private const string IDLE_ICON_ANIMATOR = "Empty";
-        private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
-
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
         private readonly NotificationsMenuController notificationsMenuController;
@@ -218,18 +212,18 @@ namespace DCL.UI.Sidebar
         {
             // Panels that are controllers and can be opened using shortcuts
             if (closedController is EmotesWheelController)
-                viewInstance?.emotesWheelButton.animator.SetTrigger(IDLE_ICON_HASH);
+                viewInstance?.emotesWheelButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
             else if (closedController is FriendsPanelController)
-                viewInstance?.friendsButton.animator.SetTrigger(IDLE_ICON_HASH);
+                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
         }
 
         private void OnMvcManagerViewShowed(IController showedController)
         {
             // Panels that are controllers and can be opened using shortcuts
             if (showedController is EmotesWheelController)
-                viewInstance?.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_HASH);
+                viewInstance?.emotesWheelButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
             else if (showedController is FriendsPanelController)
-                viewInstance?.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_HASH);
+                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
@@ -239,8 +233,8 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
-            viewInstance?.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
-            viewInstance?.unreadMessagesButton.animator.SetTrigger(isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
+            viewInstance?.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
+            viewInstance?.unreadMessagesButton.animator.SetTrigger(isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -369,9 +363,9 @@ namespace DCL.UI.Sidebar
             if (viewInstance == null) return;
 
             viewInstance.BlockSidebar();
-            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_HASH);
+            viewInstance.skyboxButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_HASH);
+            viewInstance.skyboxButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
             viewInstance.UnblockSidebar();
         }
 
@@ -380,9 +374,9 @@ namespace DCL.UI.Sidebar
             if (viewInstance == null) return;
 
             viewInstance.BlockSidebar();
-            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_HASH);
+            viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_HASH);
+            viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
             viewInstance.UnblockSidebar();
         }
 

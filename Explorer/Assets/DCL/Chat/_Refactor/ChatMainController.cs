@@ -15,20 +15,20 @@ namespace DCL.ChatArea
                                   IControllerInSharedSpace<ChatMainView, ChatControllerShowParams>
     {
         private readonly IMVCManager mvcManager;
-        private readonly ChatCoordinationEventBus coordinationEventBus;
+        private readonly ChatAreaEventBus chatAreaEventBus;
 
         private readonly HashSet<IBlocksChat> chatBlockers = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public bool IsVisibleInSharedSpace => false; // This will need to be tracked differently if needed
+        public bool IsVisibleInSharedSpace => false;
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            ChatCoordinationEventBus coordinationEventBus) : base(viewFactory)
+            ChatAreaEventBus chatAreaEventBus) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
-            this.coordinationEventBus = coordinationEventBus;
+            this.chatAreaEventBus = chatAreaEventBus;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -42,28 +42,27 @@ namespace DCL.ChatArea
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
 
-            // Setup global click detection
             DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
         }
 
         protected override void OnViewShow()
         {
-            coordinationEventBus.RaiseViewShowEvent();
+            chatAreaEventBus.RaiseViewShowEvent();
         }
 
         public void SetVisibility(bool isVisible)
         {
-            coordinationEventBus.RaiseVisibilityEvent(isVisible);
+            chatAreaEventBus.RaiseVisibilityEvent(isVisible);
         }
 
         public void SetFocusState()
         {
-            coordinationEventBus.RaiseFocusEvent();
+            chatAreaEventBus.RaiseFocusEvent();
         }
 
         public void ToggleState()
         {
-            coordinationEventBus.RaiseToggleEvent();
+            chatAreaEventBus.RaiseToggleEvent();
         }
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
@@ -82,7 +81,7 @@ namespace DCL.ChatArea
             // If the chat was fully hidden (e.g., by the Friends panel), transition to Default.
             // If it was minimized, transition to Default or Focused based on the input.
             // The `showParams.Focus` will be true when toggling with Enter/shortcut, and false when returning from another panel.
-            coordinationEventBus.RaiseShownInSharedSpaceEvent(showParams.Focus);
+            chatAreaEventBus.RaiseShownInSharedSpaceEvent(showParams.Focus);
 
 
             ViewShowingComplete?.Invoke(this);
@@ -91,7 +90,7 @@ namespace DCL.ChatArea
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            coordinationEventBus.RaiseHiddenInSharedSpaceEvent();
+            chatAreaEventBus.RaiseHiddenInSharedSpaceEvent();
             await UniTask.CompletedTask;
         }
 
@@ -103,12 +102,12 @@ namespace DCL.ChatArea
 
         private void HandlePointerEnter()
         {
-            coordinationEventBus.RaisePointerEnter();
+            chatAreaEventBus.RaisePointerEnter();
         }
 
         private void HandlePointerExit()
         {
-            coordinationEventBus.RaisePointerExit();
+            chatAreaEventBus.RaisePointerExit();
         }
 
         private void HandleGlobalClick(InputAction.CallbackContext context)
@@ -136,9 +135,9 @@ namespace DCL.ChatArea
             }
 
             if (clickedInsideChat)
-                coordinationEventBus.RaiseClickInsideEvent(results);
+                chatAreaEventBus.RaiseClickInsideEvent(results);
             else
-                coordinationEventBus.RaiseClickOutsideEvent(results);
+                chatAreaEventBus.RaiseClickOutsideEvent(results);
         }
 
         private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
@@ -161,7 +160,6 @@ namespace DCL.ChatArea
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
             }
 
-            // Clean up global click detection
             DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
 
             base.Dispose();
@@ -174,7 +172,7 @@ namespace DCL.ChatArea
             if (controller is not IBlocksChat blocker) return;
 
             chatBlockers.Add(blocker);
-            coordinationEventBus.RaiseMvcViewShowedEvent();
+            chatAreaEventBus.RaiseMvcViewShowedEvent();
         }
 
         private void OnMvcViewClosed(IController controller)
@@ -183,7 +181,7 @@ namespace DCL.ChatArea
 
             chatBlockers.Remove(blocker);
              if (chatBlockers.Count == 0)
-                coordinationEventBus.RaiseMvcViewClosedEvent();
+                chatAreaEventBus.RaiseMvcViewClosedEvent();
         }
     }
 }

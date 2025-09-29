@@ -3,13 +3,11 @@ using UnityEngine.EventSystems;
 
 namespace DCL.ChatArea
 {
-    public static class ChatCoordinationEvents
+    public static class ChatAreaEvents
     {
         public struct ChatPanelPointerEnterEvent { }
         public struct ChatPanelPointerExitEvent { }
-        public struct ChatPanelPointerClickEvent { }
         public struct ChatPanelFocusEvent { }
-
         public struct ChatPanelVisibilityEvent
         {
             public bool IsVisible { get; }
@@ -46,7 +44,6 @@ namespace DCL.ChatArea
                 RaycastResults = raycastResults;
             }
         }
-
         public struct ChatPanelClickOutsideEvent
         {
             public IReadOnlyList<RaycastResult> RaycastResults { get; }

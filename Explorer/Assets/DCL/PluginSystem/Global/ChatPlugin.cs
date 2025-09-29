@@ -87,7 +87,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
-        private readonly ChatCoordinationEventBus coordinationEventBus;
+        private readonly ChatAreaEventBus chatAreaEventBus;
 
         private CommandRegistry commandRegistry;
         private ChatPanelPresenter? chatPanelPresenter;
@@ -124,7 +124,7 @@ namespace DCL.PluginSystem.Global
             IVoiceChatOrchestrator voiceChatOrchestrator,
             Transform chatViewRectTransform,
             IEventBus eventBus,
-            ChatCoordinationEventBus coordinationEventBus)
+            ChatAreaEventBus chatAreaEventBus)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -161,7 +161,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
             this.eventBus = eventBus;
-            this.coordinationEventBus = coordinationEventBus;
+            this.chatAreaEventBus = chatAreaEventBus;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -291,7 +291,7 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 chatContextMenuService,
                 chatClickDetectionService,
-                coordinationEventBus
+                chatAreaEventBus
             );
 
             chatMainController = new ChatMainController(
@@ -302,7 +302,7 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 mvcManager,
-                coordinationEventBus
+                chatAreaEventBus
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);

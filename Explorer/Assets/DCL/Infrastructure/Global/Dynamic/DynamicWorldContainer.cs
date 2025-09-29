@@ -294,7 +294,7 @@ namespace Global.Dynamic
             NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
-            ChatCoordinationEventBus chatCoordinationEventBus = new ChatCoordinationEventBus();
+            ChatAreaEventBus chatAreaEventBus = new ChatAreaEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -763,7 +763,7 @@ namespace Global.Dynamic
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
                     eventBus,
-                    chatCoordinationEventBus),
+                    chatAreaEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -925,7 +925,7 @@ namespace Global.Dynamic
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
                         assetsProvisioner,
-                        chatCoordinationEventBus)
+                        chatAreaEventBus)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
