@@ -6,6 +6,7 @@ using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
@@ -15,7 +16,6 @@ using System.Collections.Concurrent;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Ownership;
 
 namespace DCL.VoiceChat
 {
@@ -144,11 +144,11 @@ namespace DCL.VoiceChat
                     {
                         if (value.Kind == TrackKind.KindAudio)
                         {
-                            WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity.Key!, sid);
+                            Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(remoteParticipantIdentity.Key!, sid));
 
-                            if (stream != null)
+                            if (stream.Resource.Has)
                             {
-                                playbackSourcesHub.AddOrReplaceStream(new StreamKey(remoteParticipantIdentity.Key!), stream);
+                                playbackSourcesHub.AddOrReplaceStream(new StreamKey(remoteParticipantIdentity.Key!, sid), stream);
                                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity}");
                             }
                         }
@@ -192,11 +192,11 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio)
                 {
-                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
 
-                    if (stream != null)
+                    if (stream.Resource.Has)
                     {
-                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity), stream);
+                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New remote track subscribed from {participant.Identity}");
                     }
                 }
@@ -210,7 +210,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio)
                 {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity));
+                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscribed from {participant.Identity}");
                 }
             }
@@ -223,11 +223,11 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    WeakReference<IAudioStream>? stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
 
-                    if (stream != null)
+                    if (stream.Resource.Has)
                     {
-                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity), stream);
+                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
                     }
                 }
@@ -241,7 +241,7 @@ namespace DCL.VoiceChat
             {
                 if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity));
+                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, participant.Sid));
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
                 }
             }

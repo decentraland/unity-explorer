@@ -4,9 +4,9 @@ using System;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
-using Utility.Ownership;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
+using RichTypes;
 using UnityEngine;
 
 namespace DCL.VoiceChat
@@ -55,7 +55,7 @@ namespace DCL.VoiceChat
         /// </summary>
         private bool TryGetCurrentMicrophoneSourceIfInCall(out MicrophoneRtcAudioSource? microphoneRtcAudioSource)
         {
-            Utility.Types.Option<MicrophoneRtcAudioSource> resource = microphoneSource.Resource;
+            Option<MicrophoneRtcAudioSource> resource = microphoneSource.Resource;
             microphoneRtcAudioSource = resource.Has ? resource.Value : null;
             return resource.Has;
         }
