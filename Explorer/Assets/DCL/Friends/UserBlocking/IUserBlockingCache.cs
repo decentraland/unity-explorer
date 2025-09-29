@@ -1,4 +1,6 @@
 
+using DCL.Utility;
+
 namespace DCL.Friends.UserBlocking
 {
     public interface IUserBlockingCache

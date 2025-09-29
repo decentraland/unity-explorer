@@ -2,23 +2,20 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
-using DCL.Landscape.NoiseGeneration;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
-using StylizedGrass;
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
 using GPUInstancerPro;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
+using TerrainProto;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
@@ -27,56 +24,56 @@ using JobHandle = Unity.Jobs.JobHandle;
 
 namespace DCL.Landscape
 {
-    public class TerrainGenerator : IDisposable, IContainParcel
+    public class TerrainGenerator : IDisposable, ITerrain
     {
+        public const int MAX_HEIGHT = 16;
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
-        // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 15;
-
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
-        private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
-        private const float PROGRESS_COUNTER_DIG_HOLES = 0.5f;
-        private const float PROGRESS_SPAWN_TERRAIN = 0.25f;
-        private const float PROGRESS_SPAWN_RE_ENABLE_TERRAIN = 0.25f;
-        private readonly NoiseGeneratorCache noiseGenCache;
+        private const float PROGRESS_COUNTER_OCCUPANCY_MAP = 0.4f;
+        private const float PROGRESS_COUNTER_TERRAIN_COMPONENTS = 0.8f;
+
+        private const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
+        private const int TREE_INSTANCE_LIMIT = 262144; // 2^18 trees
+
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
         private readonly IMemoryProfiler profilingProvider;
-        public bool forceCacheRegen;
-        private readonly List<Terrain> terrains;
-        private readonly List<Collider> terrainChunkColliders;
 
         private TerrainGenerationData terrainGenData;
-        private TerrainGeneratorLocalCache localCache;
-        private TerrainChunkDataGenerator chunkDataGenerator;
         private TerrainBoundariesGenerator boundariesGenerator;
         private TerrainFactory factory;
+        private GPUIProfile treesProfile;
 
         private NativeList<int2> emptyParcels;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashSet<int2> ownedParcels;
-        public int MaxHeight;
-        private bool hideTrees;
-        private bool hideDetails;
-        private bool withHoles;
+
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
-        private float terrainDataCount;
-
-        private Transform rootGo;
-        private GrassColorMapRenderer grassRenderer;
         private bool isInitialized;
-        private int activeChunk = -1;
+
+        private NativeArray<byte> occupancyMapData;
+        private int occupancyMapSize;
+        private int2 treeMinParcel;
+        private int2 treeMaxParcel;
+        private NativeArray<int> treeIndices;
+        private NativeArray<TreeInstanceData> treeInstances;
+
+        private int[]? gpuInstancerRendererKeys;
+        private int[]? gpuInstancerInstanceCounts;
+
+        public Transform TerrainRoot { get; private set; }
 
         public int ParcelSize { get; private set; }
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
 
-        public IReadOnlyList<Terrain> Terrains => terrains;
+        [Obsolete]
+        public IReadOnlyList<Terrain> Terrains => Array.Empty<Terrain>();
 
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
@@ -85,73 +82,41 @@ namespace DCL.Landscape
         public Texture2D OccupancyMap { get; private set; }
         public int OccupancyFloor { get; private set; }
 
-        private ITerrainDetailSetter terrainDetailSetter;
-        private IGPUIWrapper gpuiWrapper;
-        private NativeArray<byte> occupancyMapData;
-        private int occupancyMapSize;
-        private float terrainHeight;
+        private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
 
-        public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
-            bool forceCacheRegen = false)
+        public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false)
         {
             this.profilingProvider = profilingProvider;
-            this.forceCacheRegen = forceCacheRegen;
 
-            noiseGenCache = new NoiseGeneratorCache();
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
-
-            // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
-            terrains = new List<Terrain>();
-            terrainChunkColliders = new List<Collider>();
         }
 
-        // TODO : pre-calculate once and re-use
-        public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
-        {
-            if (TerrainModel == null) return;
-
-            int offsetX = parcel.x - TerrainModel.MinParcel.x;
-            int offsetY = parcel.y - TerrainModel.MinParcel.y;
-
-            int chunkX = offsetX / TerrainModel.ChunkSizeInParcels;
-            int chunkY = offsetY / TerrainModel.ChunkSizeInParcels;
-
-            int chunkIndex = chunkX + (chunkY * TerrainModel.SizeInChunks);
-
-            if (chunkIndex < 0 || chunkIndex >= terrainChunkColliders.Count)
-                return;
-
-            if (chunkIndex != activeChunk && activeChunk >= 0)
-                terrainChunkColliders[activeChunk].enabled = false;
-
-            terrainChunkColliders[chunkIndex].enabled = isEnabled;
-            activeChunk = chunkIndex;
-        }
-
-        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter,
-            float terrainHeight)
+        public void Initialize(TerrainGenerationData terrainGenData, GPUIProfile treesProfile, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
-            this.terrainHeight = terrainHeight;
+            this.treesProfile = treesProfile;
 
             ParcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
-            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize,
-                CACHE_VERSION, parcelChecksum, isZone);
 
-            chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
-
-            this.terrainDetailSetter = terrainDetailSetter;
-            this.gpuiWrapper = gpuiWrapper;
-            gpuiWrapper.SetupLocalCache(localCache);
 
             isInitialized = true;
         }
+
+        public void Dispose()
+        {
+            if (!isInitialized) return;
+
+            if (TerrainRoot != null)
+                UnityObjectUtils.SafeDestroy(TerrainRoot);
+        }
+
+        [Obsolete]
+        public void SetTerrainCollider(Vector2Int parcel, bool isEnabled) { }
 
         public bool Contains(Vector2Int parcel)
         {
@@ -161,14 +126,6 @@ namespace DCL.Landscape
             return true;
         }
 
-        public void Dispose()
-        {
-            if (!isInitialized) return;
-
-            if (rootGo != null)
-                UnityObjectUtils.SafeDestroy(rootGo);
-        }
-
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
@@ -176,17 +133,14 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null)
-                rootGo.gameObject.SetActive(true);
+            if (TerrainRoot != null)
+                TerrainRoot.gameObject.SetActive(true);
 
-            UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+            // TODO is it necessary to yield?
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            ReEnableChunksDetails();
+            ShowGPUInstancerInstances();
 
-            if(grassRenderer)
-                grassRenderer.Render();
-
-            await ReEnableTerrainAsync(postRealmLoadReport);
             IsTerrainShown = true;
 
             postRealmLoadReport.SetProgress(1f);
@@ -196,30 +150,20 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null && rootGo.gameObject.activeSelf)
+            if (TerrainRoot != null && TerrainRoot.gameObject.activeSelf)
             {
-                rootGo.gameObject.SetActive(false);
+                TerrainRoot.gameObject.SetActive(false);
 
-                foreach (var collider in terrainChunkColliders)
-                    if (collider.enabled) collider.enabled = false;
+                HideGPUInstancerInstances();
 
                 IsTerrainShown = false;
             }
         }
 
-        public async UniTask GenerateGenesisTerrainAndShowAsync(
-            uint worldSeed = 1,
-            bool withHoles = true,
-            bool hideTrees = false,
-            bool hideDetails = false,
-            AsyncLoadProcessReport processReport = null,
+        public async UniTask GenerateGenesisTerrainAndShowAsync(AsyncLoadProcessReport? processReport = null,
             CancellationToken cancellationToken = default)
         {
             if (!isInitialized) return;
-
-            this.hideDetails = hideDetails;
-            this.hideTrees = hideTrees;
-            this.withHoles = withHoles;
 
             var worldModel = new WorldModel(ownedParcels);
             TerrainModel = new TerrainModel(ParcelSize, worldModel, terrainGenData.borderPadding);
@@ -230,82 +174,59 @@ namespace DCL.Landscape
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
                 {
+                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
+                    {
+                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel.MinParcel,
+                            TerrainModel.MaxParcel, ref emptyParcels, ref ownedParcels);
+
+                        await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
+                    }
+
+                    processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
+
+                    // The MinParcel, MaxParcel already has padding, so padding zero works here,
+                    // but in reality we should remove integrated padding and utilise padding parameter as it would make things more scalable and less confusing
+                    OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+                    OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+
+                    // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
+                    OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+
+                    occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                    occupancyMapSize = OccupancyMap.width; // width == height
+
+                    processReport?.SetProgress(PROGRESS_COUNTER_OCCUPANCY_MAP);
+
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Misc & Cliffs, Border Colliders")))
                     {
-                        rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
-                        rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
+                        TerrainRoot = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+                        TerrainRoot.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
-                        OccupancyMap = CreateOccupancyMap(emptyParcels.AsArray(), TerrainModel.MinParcel,
-                            TerrainModel.MaxParcel, TerrainModel.PaddingInParcels);
-
-                        OccupancyFloor = WriteInteriorChamferOnWhite(OccupancyMap);
-                        OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-
-                        occupancyMapData = OccupancyMap.GetRawTextureData<byte>();
-                        occupancyMapSize = OccupancyMap.width; // width == height
-
-                        if (LandscapeData.LOAD_TREES_FROM_STREAMINGASSETS)
-                            await LoadTreesAsync();
-
-                        Ocean = factory.CreateOcean(rootGo);
+                        Ocean = factory.CreateOcean(TerrainRoot);
                         Wind = factory.CreateWind();
 
                         Cliffs = boundariesGenerator.SpawnCliffs(TerrainModel.MinInUnits, TerrainModel.MaxInUnits);
                         boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
                     }
 
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Load Local Cache")))
-                        await localCache.LoadAsync(forceCacheRegen);
+                    processReport?.SetProgress(PROGRESS_COUNTER_TERRAIN_COMPONENTS);
 
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
-                    {
-                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel, ref emptyParcels, ref ownedParcels);
-                        await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
-                    }
+                    await LoadTreesAsync();
+                    InstantiateTrees();
 
-                    processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
-
-                    terrainDataCount = Mathf.Pow(Mathf.CeilToInt(terrainGenData.terrainSize / (float)terrainGenData.chunkSize), 2);
-                    processedTerrainDataCount = 0;
-
-                    /////////////////////////
-                    // GenerateTerrainDataAsync is Sequential on purpose [ Looks nicer at the loading screen ]
-                    // Each TerrainData generation uses 100% of the CPU anyway so it makes no difference running it in parallel
-                    /////////////////////////
-                    chunkDataGenerator.Prepare((int)worldSeed, ParcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
-
-                    foreach (ChunkModel chunkModel in TerrainModel.ChunkModels)
-                    {
-                        await GenerateTerrainDataAsync(chunkModel, TerrainModel, worldSeed, cancellationToken, processReport);
-                        await UniTask.Yield(cancellationToken);
-                        noiseGenCache.ResetNoiseNativeArrayProvider();
-                    }
-
-                    processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
-
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
-                        await SpawnTerrainObjectsAsync(TerrainModel, processReport, cancellationToken);
-
-                    grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
-
-                    await ReEnableTerrainAsync(processReport);
-
-                    if (processReport != null) processReport.SetProgress(1f);
+                    processReport?.SetProgress(1f);
                 }
             }
             catch (OperationCanceledException)
             {
-                if (rootGo != null)
-                    UnityObjectUtils.SafeDestroy(rootGo);
+                if (TerrainRoot != null)
+                    UnityObjectUtils.SafeDestroy(TerrainRoot);
             }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
             finally
             {
                 float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
                 FreeMemory();
-
-                if (!localCache.IsValid())
-                    localCache.Save();
 
                 IsTerrainGenerated = true;
                 IsTerrainShown = true;
@@ -314,406 +235,152 @@ namespace DCL.Landscape
                 ownedParcels.Dispose();
 
                 float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+
                 ReportHub.Log(ReportCategory.LANDSCAPE,
                     $"The landscape cleaning process cleaned {afterCleaning - beforeCleaning}MB of memory");
             }
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
-
-            gpuiWrapper.TerrainsInstantiatedAsync(TerrainModel.ChunkModels);
-        }
-
-        // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
-        private async UniTask ReEnableTerrainAsync(AsyncLoadProcessReport processReport, int batch = 1)
-        {
-            foreach (Terrain terrain in terrains)
-                terrain.enabled = false;
-
-            // we enable them one by batches to avoid a super hiccup
-            var i = 0;
-            while (i < terrains.Count)
-            {
-                await UniTask.Yield();
-
-                // Process batch
-                for (int j = i; j < Math.Min(i + batch, terrains.Count); j++)
-                {
-                    terrains[j].enabled = true;
-                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + j / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
-                }
-
-                i += batch;
-                if (i >= terrains.Count) break;
-            }
-        }
-
-        private void ReEnableChunksDetails()
-        {
-            foreach (Terrain terrain in terrains)
-            {
-                terrain.drawHeightmap = true;
-                terrain.drawTreesAndFoliage = true;
-            }
         }
 
         private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
         {
-            if (localCache.IsValid())
-                MaxHeight = localCache.GetMaxHeight();
-            else
-            {
-                JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
-                    ref emptyParcelsData, ref emptyParcelsNeighborData,
-                    emptyParcels.AsArray(), ref ownedParcels,
-                    terrainModel.MinParcel, terrainModel.MaxParcel,
-                    terrainGenData.heightScaleNerf);
+            JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
+                ref emptyParcelsData, ref emptyParcelsNeighborData,
+                emptyParcels.AsArray(), ref ownedParcels,
+                terrainModel.MinParcel, terrainModel.MaxParcel,
+                terrainGenData.heightScaleNerf);
 
-                await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-
-                // Calculate this outside the jobs since they are Parallel
-                foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelsData)
-                    if (emptyParcelHeight.Value > MaxHeight)
-                        MaxHeight = emptyParcelHeight.Value;
-
-                localCache.SetMaxHeight(MaxHeight);
-            }
-        }
-
-        private async UniTask SpawnTerrainObjectsAsync(TerrainModel terrainModel, AsyncLoadProcessReport processReport, CancellationToken cancellationToken)
-        {
-            foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * ParcelSize, terrainGenData.terrainMaterial);
-
-                chunkModel.terrain = terrain;
-                terrains.Add(terrain);
-                terrainChunkColliders.Add(terrainCollider);
-
-                await UniTask.Yield();
-                spawnedTerrainDataCount++;
-                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN);
-            }
-        }
-
-        private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken, AsyncLoadProcessReport processReport)
-        {
-            using (timeProfiler.Measure(t => ReportHub.Log(LogType.Log, reportData, $"[{t}ms] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})")))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, MaxHeight);
-
-                var tasks = new List<UniTask>
-                {
-                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, MaxHeight, ParcelSize,
-                        chunkModel.TerrainData, worldSeed, cancellationToken),
-                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * ParcelSize,
-                        chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
-                        worldSeed, cancellationToken),
-                    !hideDetails
-                        ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * ParcelSize,
-                            chunkModel.MinParcel.y * ParcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
-                            worldSeed, cancellationToken, true, chunkModel.MinParcel, terrainDetailSetter, chunkModel.OccupiedParcels)
-                        : UniTask.CompletedTask,
-                    !hideTrees
-                        ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits,
-                            chunkModel.TerrainData, worldSeed, cancellationToken)
-                        : UniTask.CompletedTask
-                };
-
-                if (withHoles)
-                {
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Holes")))
-                    {
-                        if (localCache.IsValid())
-                        {
-                            using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
-                            {
-                                if (chunkModel.OutOfTerrainParcels.Count != 0)
-                                {
-                                    chunkModel.TerrainData.SetHoles(0, 0,
-                                        await localCache.GetHolesAsync(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
-
-                                    await UniTask.Yield(cancellationToken);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (chunkModel.OutOfTerrainParcels.Count != 0)
-                            {
-                                bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, ParcelSize, withOwned: false);
-                                chunkModel.TerrainData.SetHoles(0, 0, holes);
-                                localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
-                            }
-                        }
-
-                        // await DigHolesAsync(terrainDataDictionary, cancellationToken);
-                    }
-                }
-
-                await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-
-                processedTerrainDataCount++;
-                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA + processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
-            }
-        }
-
-        /// <summary>
-        ///     This method digs holes on the terrain based on the ownedParcels array
-        /// </summary>
-        /// <param name="terrainDatas"></param>
-        /// <param name="cancellationToken"></param>
-        private async UniTask DigHolesAsync(Dictionary<int2, TerrainData> terrainDatas, CancellationToken cancellationToken)
-        {
-            if (localCache.IsValid())
-            {
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
-                {
-                    foreach ((int2 key, TerrainData value) in terrainDatas)
-                    {
-                        var holes = await localCache.GetHolesAsync(key.x, key.y);
-                        value.SetHoles(0, 0, holes);
-                        await UniTask.Yield(cancellationToken);
-                    }
-                }
-            }
-            else
-            {
-                int resolution = terrainGenData.chunkSize;
-                Dictionary<int2, NativeList<int2>> ownedParcelsByChunk = new ();
-                var nativeHoles = new Dictionary<int2, NativeArray<bool>>();
-                var originalHoles = new Dictionary<int2, bool[,]>();
-                List<GCHandle> usedHandles = new ();
-
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"   - [DigHoles] Allocation {t}ms")))
-                {
-                    // initialize the holes native arrays
-                    foreach (KeyValuePair<int2, TerrainData> valuePair in terrainDatas)
-                    {
-                        unsafe
-                        {
-                            var holes = new bool[resolution, resolution];
-
-                            var holeHandle = GCHandle.Alloc(holes, GCHandleType.Pinned);
-                            NativeArray<bool> nativeHole = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<bool>((void*)holeHandle.AddrOfPinnedObject(), resolution * resolution, Allocator.Persistent);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeHole, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
-#endif
-
-                            nativeHoles.Add(valuePair.Key, nativeHole);
-                            originalHoles.Add(valuePair.Key, holes);
-                            usedHandles.Add(holeHandle);
-                        }
-                    }
-                }
-
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"   - [DigHoles] Setup {t}ms")))
-                { // get the local coordinate of each parcel and setup the data for the parallel work
-                    // TODO: Can we move this into a job?
-                    foreach (int2 ownedParcel in ownedParcels)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-
-                        int parcelGlobalX = (150 + ownedParcel.x) * 16;
-                        int parcelGlobalY = (150 + ownedParcel.y) * 16;
-
-                        // Calculate the terrain chunk index for the parcel
-                        int chunkX = Mathf.FloorToInt((float)parcelGlobalX / resolution);
-                        int chunkY = Mathf.FloorToInt((float)parcelGlobalY / resolution);
-
-                        // Calculate the position within the terrain chunk
-                        int localX = parcelGlobalX - (chunkX * resolution);
-                        int localY = parcelGlobalY - (chunkY * resolution);
-
-                        var terrainDataKey = new int2(chunkX * resolution, chunkY * resolution);
-                        var holeCoordinate = new int2(localX, localY);
-
-                        if (terrainDatas.ContainsKey(terrainDataKey))
-                        {
-                            if (!ownedParcelsByChunk.ContainsKey(terrainDataKey))
-                                ownedParcelsByChunk.Add(terrainDataKey, new NativeList<int2>(resolution / 16 * resolution / 16, Allocator.Persistent));
-
-                            ownedParcelsByChunk[terrainDataKey].Add(holeCoordinate);
-                        }
-                    }
-                }
-
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"   - [DigHoles] Parallel Jobs {t}ms")))
-                {
-                    var tasks = new List<UniTask>();
-
-                    // Schedule Parallel jobs in Parallel :)
-                    foreach (KeyValuePair<int2, TerrainData> valuePair in terrainDatas)
-                    {
-                        NativeArray<int2> chunkOwnedParcels = ownedParcelsByChunk[valuePair.Key].AsArray();
-
-                        var setupJob = new SetupTerrainHolesDataJob(nativeHoles[valuePair.Key]);
-                        JobHandle setupJobHandle = setupJob.Schedule(resolution * resolution, 32);
-
-                        var job = new PrepareTerrainHolesDataJob(nativeHoles[valuePair.Key], chunkOwnedParcels.AsReadOnly(), resolution);
-                        JobHandle jobHandle = job.Schedule(chunkOwnedParcels.Length, 32, setupJobHandle);
-                        UniTask task = jobHandle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-                        tasks.Add(task);
-                    }
-
-                    await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-                }
-
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"   - [DigHoles] SetHoles {t}ms")))
-                    foreach (KeyValuePair<int2, bool[,]> valuePair in originalHoles)
-                    {
-                        terrainDatas[valuePair.Key].SetHoles(0, 0, valuePair.Value);
-                        localCache.SaveHoles(valuePair.Key.x, valuePair.Key.y, valuePair.Value);
-                    }
-
-                foreach ((int2 _, NativeList<int2> value) in ownedParcelsByChunk)
-                    value.Dispose();
-
-                foreach (GCHandle usedHandle in usedHandles)
-                    usedHandle.Free();
-            }
+            await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
         }
 
         // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
         private void FreeMemory()
         {
-            if (!localCache.IsValid())
-            {
-                emptyParcelsNeighborData.Dispose();
-                emptyParcelsData.Dispose();
-            }
-
-            noiseGenCache.Dispose();
+            emptyParcelsNeighborData.Dispose();
+            emptyParcelsData.Dispose();
         }
 
-        private static Texture2D CreateOccupancyMap(NativeArray<int2> emptyParcels, int2 minParcel,
+        private static Texture2D CreateOccupancyMap(NativeParallelHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
             int2 terrainSize = maxParcel - minParcel + 1;
-            int2 citySize = terrainSize - padding * 2;
+            int2 citySize = terrainSize - (padding * 2);
             int textureSize = ceilpow2(cmax(terrainSize) + 2);
             int textureHalfSize = textureSize / 2;
 
-            Texture2D occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false,
+            var occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false,
                 true);
 
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
 
-            // A square of black pixels surrounded by a border of red pixels totalPadding pixels wide
-            // surrounded by black pixels to fill out the power of two texture, but at least one. World
-            // origin (parcel 0,0) corresponds to uv of 0.5 plus half a pixel. The outer border is there
-            // so that terrain height blends to zero at its edges.
+            // 1) memset all to 0 (OCCUPIED)
+            unsafe
             {
-                int i = 0;
-
-                // First section: rows of black pixels from the top edge of the texture to minParcel.y.
-                int endY = (textureHalfSize + minParcel.y) * textureSize;
-
-                while (i < endY)
-                    data[i++] = 0;
-
-                // Second section: totalPadding rows of: one or more black pixels (enough to pad the
-                // texture out to a power of two), terrainSize.x red pixels, one or more black pixels
-                // again for padding.
-                endY = i + padding * textureSize;
-
-                while (i < endY)
-                {
-                    int endX = i + textureHalfSize + minParcel.x;
-
-                    while (i < endX)
-                        data[i++] = 0;
-
-                    endX = i + terrainSize.x;
-
-                    while (i < endX)
-                        data[i++] = 255;
-
-                    endX = i + textureHalfSize - maxParcel.x - 1;
-
-                    while (i < endX)
-                        data[i++] = 0;
-                }
-
-                // Third, innermost section: citySize.y rows of: one or more black pixels, totalPadding
-                // red pixels, citySize.x black pixels, totalPadding red pixels, one or more black
-                // pixels.
-                endY = i + citySize.y * textureSize;
-
-                while (i < endY)
-                {
-                    int endX = i + textureHalfSize + minParcel.x;
-
-                    while (i < endX)
-                        data[i++] = 0;
-
-                    endX = i + padding;
-
-                    while (i < endX)
-                        data[i++] = 255;
-
-                    endX = i + citySize.x;
-
-                    while (i < endX)
-                        data[i++] = 0;
-
-                    endX = i + padding;
-
-                    while (i < endX)
-                        data[i++] = 255;
-
-                    endX = i + textureHalfSize - maxParcel.x - 1;
-
-                    while (i < endX)
-                        data[i++] = 0;
-                }
-
-                // Fourth section, same as second section.
-                endY = i + padding * textureSize;
-
-                while (i < endY)
-                {
-                    int endX = i + textureHalfSize + minParcel.x;
-
-                    while (i < endX)
-                        data[i++] = 0;
-
-                    endX = i + terrainSize.x;
-
-                    while (i < endX)
-                        data[i++] = 255;
-
-                    endX = i + textureHalfSize - maxParcel.x - 1;
-
-                    while (i < endX)
-                        data[i++] = 0;
-                }
-
-                // Fifth section, same as first section.
-                endY = i + ((textureHalfSize - maxParcel.y - 1) * textureSize);
-
-                while (i < endY)
-                    data[i++] = 0;
+                void* ptr = NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
+                UnsafeUtility.MemSet(ptr, 0, data.Length);
             }
 
-            for (int i = 0; i < emptyParcels.Length; i++)
+            // 2) Fill wide horizontal WHITE stripe for FREE area rows (full width), then trim with vertical black stripes
             {
-                int2 parcel = emptyParcels[i] + textureHalfSize;
-                data[parcel.y * textureSize + parcel.x] = 255;
+                int freeMinX = minParcel.x - padding;
+                int freeMinY = minParcel.y - padding;
+                int freeMaxX = maxParcel.x + padding;
+                int freeMaxY = maxParcel.y + padding;
+
+                // Clamp logical coordinates to texture logical range [-textureHalfSize .. textureHalfSize-1]
+                freeMinX = Math.Max(freeMinX, -textureHalfSize);
+                freeMinY = Math.Max(freeMinY, -textureHalfSize);
+                freeMaxX = Math.Min(freeMaxX, textureHalfSize - 1);
+                freeMaxY = Math.Min(freeMaxY, textureHalfSize - 1);
+
+                int startRow = textureHalfSize + freeMinY;
+                int endRowInclusive = textureHalfSize + freeMaxY;
+                int rowCount = Math.Max(0, endRowInclusive - startRow + 1);
+
+                // Fill entire horizontal stripe WHITE in one MemSet call
+                if (rowCount > 0)
+                {
+                    unsafe
+                    {
+                        var basePtr = (byte*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
+                        int stripeStartByte = startRow * textureSize;
+                        int stripeSizeBytes = rowCount * textureSize;
+                        UnsafeUtility.MemSet(basePtr + stripeStartByte, 255, stripeSizeBytes);
+                    }
+                }
+
+                // 3) Trim with vertical BLACK stripes to define actual FREE area boundaries
+                if (rowCount > 0)
+                {
+                    int leftCol = textureHalfSize + freeMinX - 1;
+                    int rightCol = textureHalfSize + freeMaxX + 1;
+
+                    // Clamp columns to texture bounds
+                    leftCol = Math.Clamp(leftCol, 0, textureSize - 1);
+                    rightCol = Math.Clamp(rightCol, 0, textureSize - 1);
+
+                    unsafe
+                    {
+                        var basePtr = (byte*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
+
+                        // Left vertical stripe
+                        for (int row = startRow; row <= endRowInclusive; row++)
+                            *(basePtr + (row * textureSize) + leftCol) = 0;
+
+                        // Right vertical stripe
+                        for (int row = startRow; row <= endRowInclusive; row++)
+                            *(basePtr + (row * textureSize) + rightCol) = 0;
+                    }
+                }
+            }
+
+            // 4) mark owned parcels as BLACK (occupied)
+            foreach (int2 owned in ownedParcels)
+            {
+                int tx = owned.x + textureHalfSize;
+                int ty = owned.y + textureHalfSize;
+                int idx = (ty * textureSize) + tx;
+
+                if ((uint)idx < (uint)data.Length)
+                    data[idx] = 0;
             }
 
             return occupancyMap;
         }
 
-        private static int WriteInteriorChamferOnWhite(Texture2D r8)
+        private static int WriteInteriorChamferOnWhite(Texture2D r8, int2 minParcel, int2 maxParcel, int padding)
         {
             int w = r8.width, h = r8.height, n = w * h;
             NativeArray<byte> src = r8.GetRawTextureData<byte>();
             if (!src.IsCreated || src.Length != n) return 0;
+
+            int textureHalfSize = w / 2; // Assuming square texture
+
+            // Calculate working area bounds in texture coordinates (with padding)
+            int workMinX = minParcel.x - padding;
+            int workMinY = minParcel.y - padding;
+            int workMaxX = maxParcel.x + padding;
+            int workMaxY = maxParcel.y + padding;
+
+            // Clamp to texture logical range [-textureHalfSize .. textureHalfSize-1]
+            workMinX = Math.Max(workMinX, -textureHalfSize);
+            workMinY = Math.Max(workMinY, -textureHalfSize);
+            workMaxX = Math.Min(workMaxX, textureHalfSize - 1);
+            workMaxY = Math.Min(workMaxY, textureHalfSize - 1);
+
+            // Convert to texture pixel coordinates and expand by 1 to include border stripes
+            int texMinX = workMinX + textureHalfSize - 1;
+            int texMinY = workMinY + textureHalfSize - 1;
+            int texMaxX = workMaxX + textureHalfSize + 1;
+            int texMaxY = workMaxY + textureHalfSize + 1;
+
+            // Clamp to actual texture bounds
+            texMinX = Math.Max(texMinX, 0);
+            texMinY = Math.Max(texMinY, 0);
+            texMaxX = Math.Min(texMaxX, w - 1);
+            texMaxY = Math.Min(texMaxY, h - 1);
 
             const int INF = 1 << 28;
             const int ORTH = 3; // 3-4 chamfer (good Euclidean approx)
@@ -723,8 +390,12 @@ namespace DCL.Landscape
             var dist = new int[n];
             bool anyBlack = false, anyWhite = false;
 
-            for (var i = 0; i < n; i++)
+            // Initialize only working area pixels
+            for (int y = texMinY; y <= texMaxY; y++)
+            for (int x = texMinX; x <= texMaxX; x++)
             {
+                int i = (y * w) + x;
+
                 if (src[i] == 0)
                 {
                     dist[i] = 0;
@@ -740,54 +411,59 @@ namespace DCL.Landscape
             if (!anyBlack || !anyWhite)
                 return 0; // Nothing to do if no black or no white regions exist.
 
-            // Forward pass
-            for (var y = 0; y < h; y++)
+            // Forward pass - only within working area
+            for (int y = texMinY; y <= texMaxY; y++)
             {
                 int row = y * w;
 
-                for (var x = 0; x < w; x++)
+                for (int x = texMinX; x <= texMaxX; x++)
                 {
                     int i = row + x;
                     int d = dist[i];
 
                     if (d != 0) // skip black seeds
                     {
-                        if (x > 0) d = Mathf.Min(d, dist[i - 1] + ORTH);
-                        if (y > 0) d = Mathf.Min(d, dist[i - w] + ORTH);
-                        if (x > 0 && y > 0) d = Mathf.Min(d, dist[i - w - 1] + DIAG);
-                        if (x + 1 < w && y > 0) d = Mathf.Min(d, dist[i - w + 1] + DIAG);
+                        if (x > texMinX) d = Mathf.Min(d, dist[i - 1] + ORTH);
+                        if (y > texMinY) d = Mathf.Min(d, dist[i - w] + ORTH);
+                        if (x > texMinX && y > texMinY) d = Mathf.Min(d, dist[i - w - 1] + DIAG);
+                        if (x < texMaxX && y > texMinY) d = Mathf.Min(d, dist[i - w + 1] + DIAG);
                         dist[i] = d;
                     }
                 }
             }
 
-            // Backward pass
-            for (int y = h - 1; y >= 0; y--)
+            // Backward pass - only within working area
+            for (int y = texMaxY; y >= texMinY; y--)
             {
                 int row = y * w;
 
-                for (int x = w - 1; x >= 0; x--)
+                for (int x = texMaxX; x >= texMinX; x--)
                 {
                     int i = row + x;
                     int d = dist[i];
 
                     if (d != 0) // skip black seeds
                     {
-                        if (x + 1 < w) d = Mathf.Min(d, dist[i + 1] + ORTH);
-                        if (y + 1 < h) d = Mathf.Min(d, dist[i + w] + ORTH);
-                        if (x + 1 < w && y + 1 < h) d = Mathf.Min(d, dist[i + w + 1] + DIAG);
-                        if (x > 0 && y + 1 < h) d = Mathf.Min(d, dist[i + w - 1] + DIAG);
+                        if (x < texMaxX) d = Mathf.Min(d, dist[i + 1] + ORTH);
+                        if (y < texMaxY) d = Mathf.Min(d, dist[i + w] + ORTH);
+                        if (x < texMaxX && y < texMaxY) d = Mathf.Min(d, dist[i + w + 1] + DIAG);
+                        if (x > texMinX && y < texMaxY) d = Mathf.Min(d, dist[i + w - 1] + DIAG);
                         dist[i] = d;
                     }
                 }
             }
 
-            // Find maximum distance and convert to pixel distance
+            // Find maximum distance and convert to pixel distance - only within working area
             var maxD = 0;
 
-            for (var i = 0; i < n; i++)
+            for (int y = texMinY; y <= texMaxY; y++)
+            for (int x = texMinX; x <= texMaxX; x++)
+            {
+                int i = (y * w) + x;
+
                 if (src[i] != 0 && dist[i] < INF && dist[i] > maxD)
                     maxD = dist[i]; // Check white pixels
+            }
 
             if (maxD == 0)
                 return 0;
@@ -821,31 +497,36 @@ namespace DCL.Landscape
             int minValue = 255 - (stepSize * maxPixelDistance);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"Distance field: max chamfer={maxD}, max maxPixelDistance={maxPixelDistance}, stepSize={stepSize}, range=[{minValue}, 255]");
 
-            // Write back: keep black at 0, map distances to [minValue, 255] range
-            for (var i = 0; i < n; i++)
+            // Write back: keep black at 0, map distances to [minValue, 255] range - only within working area
+            for (int y = texMinY; y <= texMaxY; y++)
             {
-                if (src[i] == 0)
+                for (int x = texMinX; x <= texMaxX; x++)
                 {
-                    src[i] = 0;
-                    continue;
-                } // keep black pixels (occupied)
+                    int i = (y * w) + x;
 
-                // Convert chamfer distance to pixel distance
-                int pixelDist = dist[i] / ORTH;
-                pixelDist = Mathf.Min(pixelDist, maxPixelDistance); // Clamp to max
+                    if (src[i] == 0)
+                    {
+                        src[i] = 0;
+                        continue;
+                    } // keep black pixels (occupied)
 
-                // Map [1, maxPixelDistance] to [minValue, 255]
-                int value;
+                    // Convert chamfer distance to pixel distance
+                    int pixelDist = dist[i] / ORTH;
+                    pixelDist = Mathf.Min(pixelDist, maxPixelDistance); // Clamp to max
 
-                if (maxPixelDistance == 1)
-                    value = 255; // Only one distance level, use max value
-                else
-                {
-                    value = minValue + ((pixelDist - 1) * (255 - minValue) / (maxPixelDistance - 1));
-                    value = Mathf.Clamp(value, minValue, 255);
+                    // Map [1, maxPixelDistance] to [minValue, 255]
+                    int value;
+
+                    if (maxPixelDistance == 1)
+                        value = 255; // Only one distance level, use max value
+                    else
+                    {
+                        value = minValue + ((pixelDist - 1) * (255 - minValue) / (maxPixelDistance - 1));
+                        value = Mathf.Clamp(value, minValue, 255);
+                    }
+
+                    src[i] = (byte)value;
                 }
-
-                src[i] = (byte)value;
             }
 
             return minValue;
@@ -860,25 +541,111 @@ namespace DCL.Landscape
                 return false;
 
             parcel += occupancyMapSize / 2;
-            int index = parcel.y * occupancyMapSize + parcel.x;
+            int index = (parcel.y * occupancyMapSize) + parcel.x;
             return occupancyMapData[index] == 0;
         }
 
-        private float GetParcelBaseHeight(int2 parcel)
+        private static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
+            int occupancyMapSize, int parcelSize, int occupancyFloor)
         {
-            parcel += occupancyMapSize / 2;
-            int index = (parcel.y * occupancyMapSize) + parcel.x;
-            return (occupancyMapData[index] - OccupancyFloor) / (255f - OccupancyFloor) * terrainHeight;
+            float occupancy;
+
+            if (occupancyMapSize > 0)
+            {
+                // Take the bounds of the terrain, put a single pixel border around it, increase the
+                // size to the next power of two, map xz=0,0 to uv=0.5,0.5 and parcelSize to pixel size,
+                // and that's the occupancy map.
+                float2 uv = ((float2(x, z) / parcelSize) + (occupancyMapSize * 0.5f)) / occupancyMapSize;
+                occupancy = SampleBilinearClamp(occupancyMapData, int2(occupancyMapSize, occupancyMapSize), uv);
+            }
+            else
+                occupancy = 0f;
+
+            // float height = SAMPLE_TEXTURE2D_LOD(HeightMap, HeightMap.samplerstate, uv, 0.0).r;
+            float minValue = occupancyFloor / 255.0f; // 0.68
+
+            if (occupancy <= minValue) return 0f;
+
+            const float SATURATION_FACTOR = 20;
+            float normalizedHeight = (occupancy - minValue) / (1 - minValue);
+            return (normalizedHeight * MAX_HEIGHT) + (MountainsNoise.GetHeight(x, z) * saturate(normalizedHeight * SATURATION_FACTOR));
+        }
+
+        public float GetHeight(float x, float z) =>
+            GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor);
+
+        public static float GetHeight(float x, float z, int parcelSize,
+            NativeArray<byte> occupancyMapData, int occupancyMapSize, int occupancyFloor)
+        {
+            // var parcel = (int2)floor(float2(x, z) / parcelSize);
+            return GetParcelNoiseHeight(x, z, occupancyMapData, occupancyMapSize, parcelSize, occupancyFloor);
+        }
+
+        private static float SampleBilinearClamp(NativeArray<byte> texture, int2 textureSize, float2 uv)
+        {
+            uv = (uv * textureSize) - 0.5f;
+            var min = (int2)floor(uv);
+
+            // A quick prayer for Burst to SIMD this. 🙏
+            int4 index = (clamp(min.y + int4(1, 1, 0, 0), 0, textureSize.y - 1) * textureSize.x) +
+                         clamp(min.x + int4(0, 1, 1, 0), 0, textureSize.x - 1);
+
+            float2 t = frac(uv);
+            float top = lerp(texture[index.w], texture[index.z], t.x);
+            float bottom = lerp(texture[index.x], texture[index.y], t.x);
+            return lerp(top, bottom, t.y) * (1f / 255f);
+        }
+
+        public ReadOnlySpan<TreeInstanceData> GetTreeInstances(int2 parcel)
+        {
+            // If tree data has not been loaded, minParcel == maxParcel, and so this is false, and we
+            // don't need to check if treeInstances is empty or anything like that.
+            if (parcel.x < treeMinParcel.x || parcel.x >= treeMaxParcel.x
+                                           || parcel.y < treeMinParcel.y || parcel.y >= treeMaxParcel.y) { return ReadOnlySpan<TreeInstanceData>.Empty; }
+
+            int index = ((parcel.y - treeMinParcel.y) * (treeMaxParcel.x - treeMinParcel.x))
+                + parcel.x - treeMinParcel.x;
+
+            int start = treeIndices[index++];
+            int end = index < treeIndices.Length ? treeIndices[index] : treeInstances.Length;
+            return treeInstances.AsReadOnlySpan().Slice(start, end - start);
+        }
+
+        public bool GetTreeTransform(int2 parcel, TreeInstanceData instance, out Vector3 position,
+            out Quaternion rotation, out Vector3 scale)
+        {
+            position.x = (parcel.x + (instance.PositionX * (1f / 255f))) * ParcelSize;
+            position.z = (parcel.y + (instance.PositionZ * (1f / 255f))) * ParcelSize;
+
+            if (OverlapsOccupiedParcel(float2(position.x, position.z),
+                    terrainGenData.treeAssets[instance.PrototypeIndex].radius))
+            {
+                position.y = 0f;
+                rotation = default(Quaternion);
+                scale = default(Vector3);
+                return false;
+            }
+
+            position.y = GetParcelNoiseHeight(position.x, position.z, occupancyMapData, occupancyMapSize, ParcelSize, OccupancyFloor);
+
+            rotation = Quaternion.Euler(0f, instance.RotationY * (360f / 255f), 0f);
+
+            scale = terrainGenData.treeAssets[instance.PrototypeIndex]
+                                  .randomization
+                                  .LerpScale(float2(instance.ScaleXZ, instance.ScaleY) * (1f / 255f))
+                                  .xyx;
+
+            return true;
         }
 
         private bool OverlapsOccupiedParcel(float2 position, float radius)
         {
-            int2 parcel = (int2)floor(position * (1f / ParcelSize));
+            var parcel = (int2)floor(position * (1f / ParcelSize));
 
             if (IsParcelOccupied(parcel))
                 return true;
 
-            float2 localPosition = position - parcel * ParcelSize;
+            float2 localPosition = position - (parcel * ParcelSize);
 
             if (localPosition.x < radius)
             {
@@ -931,106 +698,66 @@ namespace DCL.Landscape
             return false;
         }
 
-        private static string treeFilePath => $"{Application.streamingAssetsPath}/Trees.bin";
-
-        private static void SaveTrees(ChunkModel[] chunks)
-        {
-            TreePrototype[] treePrototypes = chunks[0].TerrainData.treePrototypes;
-            var treeTransforms = new List<Matrix4x4>[treePrototypes.Length];
-
-            for (int i = 0; i < treeTransforms.Length; i++)
-                treeTransforms[i] = new List<Matrix4x4>();
-
-            foreach (ChunkModel chunk in chunks)
-            {
-                Vector3 terrainPosition = chunk.terrain.GetPosition();
-                Vector3 terrainSize = chunk.TerrainData.size;
-
-                foreach (TreeInstance tree in chunk.TerrainData.treeInstances)
-                {
-                    Vector3 position = Vector3.Scale(tree.position, terrainSize) + terrainPosition;
-                    Quaternion rotation = Quaternion.Euler(0f, tree.rotation * Mathf.Rad2Deg, 0f);
-                    Vector3 scale = new Vector3(tree.widthScale, tree.heightScale, tree.widthScale);
-                    treeTransforms[tree.prototypeIndex].Add(Matrix4x4.TRS(position, rotation, scale));
-                }
-            }
-
-            using var stream = new FileStream(treeFilePath, FileMode.Create, FileAccess.Write);
-            using var writer = new BinaryWriter(stream, new UTF8Encoding(false));
-
-            // To help us allocate the correct size buffer when loading.
-            writer.Write(treeTransforms.Max(i => i.Count));
-
-            foreach (List<Matrix4x4> transforms in treeTransforms)
-            {
-                writer.Write(transforms.Count);
-
-                foreach (Matrix4x4 transform in transforms)
-                    for (int i = 0; i < 16; i++)
-                        writer.Write(transform[i]);
-            }
-        }
-
-#if GPUI_PRO_PRESENT
         private async UniTask LoadTreesAsync()
         {
-            const int SIZE_OF_MATRIX = 64;
-
-            unsafe
+            try
             {
-                if (SIZE_OF_MATRIX != sizeof(Matrix4x4))
-                    throw new Exception("The size of the Matrix4x4 struct is wrong");
+                await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,
+                    FileShare.Read);
+
+                using var reader = new BinaryReader(stream, new UTF8Encoding(false), false);
+
+                treeMinParcel.x = reader.ReadInt32();
+                treeMinParcel.y = reader.ReadInt32();
+                treeMaxParcel.x = reader.ReadInt32();
+                treeMaxParcel.y = reader.ReadInt32();
+
+                int2 treeIndexSize = treeMaxParcel - treeMinParcel;
+
+                if (any(treeIndexSize > TERRAIN_SIZE_LIMIT))
+                    throw new IOException(
+                        $"Tree index size of ({treeIndexSize.x}, {treeIndexSize.y}) exceeds the limit of {TERRAIN_SIZE_LIMIT}");
+
+                treeIndices = new NativeArray<int>(treeIndexSize.x * treeIndexSize.y,
+                    Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+
+                ReadReliably(reader, treeIndices);
+
+                int treeInstanceCount = reader.ReadInt32();
+
+                if (treeInstanceCount > TREE_INSTANCE_LIMIT)
+                    throw new IOException(
+                        $"Tree instance count of {treeInstanceCount} exceeds the limit of {TREE_INSTANCE_LIMIT}");
+
+                treeInstances = new NativeArray<TreeInstanceData>(treeInstanceCount, Allocator.Persistent,
+                    NativeArrayOptions.UninitializedMemory);
+
+                ReadReliably(reader, treeInstances);
             }
-
-            LandscapeAsset[] treePrototypes = terrainGenData.treeAssets;
-            var rendererKeys = new int[treePrototypes.Length];
-
-            for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
-                GPUICoreAPI.RegisterRenderer(rootGo, treePrototypes[prototypeIndex].asset,
-                    out rendererKeys[prototypeIndex]);
-
-            await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,
-                FileShare.Read);
-
-            using var reader = new BinaryReader(stream, new UTF8Encoding(false));
-
-            int maxInstanceCount = reader.ReadInt32();
-            var buffer = new Matrix4x4[maxInstanceCount];
-
-            for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
+            catch (Exception ex)
             {
-                int instanceCount = reader.ReadInt32();
+                if (ex is FileNotFoundException)
+                    ReportHub.LogWarning(ReportCategory.LANDSCAPE,
+                        $"Tree instance data file not found, path: {treeFilePath}");
+                else
+                    ReportHub.LogException(ex, ReportCategory.LANDSCAPE);
 
-                unsafe
-                {
-                    fixed (Matrix4x4* bufferPtr = buffer)
-                        ReadReliably(reader, new Span<byte>(bufferPtr, instanceCount * SIZE_OF_MATRIX));
-                }
+                if (treeIndices.IsCreated)
+                    treeIndices.Dispose();
 
-                float treeRadius = treePrototypes[prototypeIndex].radius;
+                if (treeInstances.IsCreated)
+                    treeInstances.Dispose();
 
-                for (int instanceIndex = instanceCount - 1; instanceIndex >= 0; instanceIndex--)
-                {
-                    float3 position = buffer[instanceIndex].GetPosition();
-
-                    if (OverlapsOccupiedParcel(position.xz, treeRadius))
-                        buffer[instanceIndex] = buffer[--instanceCount];
-                    else
-                    {
-                        var parcel = (int2)floor(position.xz / ParcelSize);
-                        position.y = GetParcelBaseHeight(parcel); // + NoiseHeight
-                        Matrix4x4 originalMatrix = buffer[instanceIndex];
-                        buffer[instanceIndex] = Matrix4x4.TRS(position, originalMatrix.rotation, originalMatrix.lossyScale);
-                    }
-                }
-
-                GPUIRenderingSystem.SetTransformBufferData(rendererKeys[prototypeIndex], buffer, 0, 0,
-                    instanceCount);
+                treeIndices = new NativeArray<int>(0, Allocator.Persistent);
+                treeInstances = new NativeArray<TreeInstanceData>(0, Allocator.Persistent);
             }
         }
 
-        private static void ReadReliably(BinaryReader reader, Span<byte> buffer)
+        private static unsafe void ReadReliably<T>(BinaryReader reader, NativeArray<T> array)
+            where T: unmanaged
         {
+            var buffer = new Span<byte>(array.GetUnsafePtr(), array.Length * sizeof(T));
+
             while (buffer.Length > 0)
             {
                 int read = reader.Read(buffer);
@@ -1041,6 +768,68 @@ namespace DCL.Landscape
                 buffer = buffer.Slice(read);
             }
         }
-#endif
+
+        [Conditional("GPUI_PRO_PRESENT")]
+        private void ShowGPUInstancerInstances()
+        {
+            if (gpuInstancerRendererKeys == null || gpuInstancerInstanceCounts == null)
+                return;
+
+            for (var i = 0; i < gpuInstancerRendererKeys.Length; i++)
+                GPUICoreAPI.SetInstanceCount(gpuInstancerRendererKeys[i], gpuInstancerInstanceCounts[i]);
+        }
+
+        [Conditional("GPUI_PRO_PRESENT")]
+        private void HideGPUInstancerInstances()
+        {
+            if (gpuInstancerRendererKeys == null)
+                return;
+
+            for (var i = 0; i < gpuInstancerRendererKeys.Length; i++)
+                GPUICoreAPI.SetInstanceCount(gpuInstancerRendererKeys[i], 0);
+        }
+
+        [Conditional("GPUI_PRO_PRESENT")]
+        private void InstantiateTrees()
+        {
+            LandscapeAsset[] prototypes = terrainGenData.treeAssets;
+            int stride = treeMaxParcel.x - treeMinParcel.x;
+            var transforms = new List<Matrix4x4>[prototypes.Length];
+
+            for (var i = 0; i < transforms.Length; i++)
+                transforms[i] = new List<Matrix4x4>();
+
+            for (var i = 0; i < treeIndices.Length; i++)
+            {
+                int2 parcel = int2(i % stride, i / stride) + treeMinParcel;
+                ReadOnlySpan<TreeInstanceData> instances = GetTreeInstances(parcel);
+
+                foreach (TreeInstanceData instance in instances)
+                {
+                    if (GetTreeTransform(parcel, instance,
+                            out Vector3 position, out Quaternion rotation, out Vector3 scale))
+                    {
+                        transforms[instance.PrototypeIndex]
+                           .Add(Matrix4x4.TRS(position, rotation, scale));
+                    }
+                }
+            }
+
+            gpuInstancerRendererKeys = new int[terrainGenData.treeAssets.Length];
+            gpuInstancerInstanceCounts = new int[gpuInstancerRendererKeys.Length];
+
+            for (var prototypeIndex = 0; prototypeIndex < terrainGenData.treeAssets.Length;
+                 prototypeIndex++)
+            {
+                GPUICoreAPI.RegisterRenderer(TerrainRoot, terrainGenData.treeAssets[prototypeIndex].asset, treesProfile, out gpuInstancerRendererKeys[prototypeIndex]);
+
+                List<Matrix4x4> matrices = transforms[prototypeIndex];
+
+                gpuInstancerInstanceCounts[prototypeIndex] = matrices.Count;
+
+                GPUICoreAPI.SetTransformBufferData(gpuInstancerRendererKeys[prototypeIndex],
+                    matrices, 0, 0, matrices.Count);
+            }
+        }
     }
 }

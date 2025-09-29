@@ -6,14 +6,16 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Renderer;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
-using ECS.Unity.Groups;
+
 using ECS.Unity.Textures.Components;
 using UnityEngine;
+
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
 
 namespace DCL.SDKComponents.NFTShape.System
@@ -51,15 +53,14 @@ namespace DCL.SDKComponents.NFTShape.System
 
             INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
 
-            if (!result.Succeeded)
+            if (!result.Succeeded || result.Asset == null || result.Asset.Asset == null)
             {
                 nftRenderer.NotifyFailed();
                 return;
             }
 
             nftRenderer.Apply(result.Asset!);
-
-            if (result.Asset?.VideoURL != null) InitializeNftVideo(entity, result.Asset, nftRenderer);
+            if (result.Asset.VideoURL != null) InitializeNftVideo(entity, result.Asset, nftRenderer);
         }
 
         private void InitializeNftVideo(Entity entity, Texture2DData textureData, INftShapeRenderer nftRenderer)

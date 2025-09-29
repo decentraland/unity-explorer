@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.CharacterMotion.Systems;
@@ -10,8 +9,8 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
@@ -25,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly ILandscape landscape;
 
         private CharacterControllerSettings settings;
 
@@ -32,12 +32,14 @@ namespace DCL.PluginSystem.Global
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
-            ISceneReadinessReportQueue sceneReadinessReportQueue)
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            ILandscape landscape)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.landscape = landscape;
         }
 
         public void Dispose()
@@ -69,7 +71,7 @@ namespace DCL.PluginSystem.Global
                 new HeadIKComponent { IsEnabled = true });
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
-            TeleportPositionCalculationSystem.InjectToWorld(ref builder);
+            TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);

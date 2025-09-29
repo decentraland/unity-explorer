@@ -13,6 +13,7 @@ using DCL.Passport.Fields;
 using DCL.Profiles;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -176,7 +177,7 @@ namespace DCL.Passport.Modules
 
             foreach (IWearable wearable in gridWearables)
             {
-                if (wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
+                if (wearable.GetCategory() == WearableCategories.Categories.BODY_SHAPE)
                     continue;
 
                 string wearableCategory = wearable.GetCategory();

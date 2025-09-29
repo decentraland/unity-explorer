@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Landscape.Jobs;
 using StylizedGrass;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -11,6 +12,7 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
+        [Obsolete]
         public static async UniTask<GrassColorMapRenderer> AddColorMapRendererAsync(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
         {
             // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
@@ -29,13 +31,14 @@ namespace DCL.Landscape
             return colorMapRenderer;
         }
 
-        public static void ExtractEmptyParcels(TerrainModel terrainModel, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+        public static void ExtractEmptyParcels(int2 minParcel, int2 maxParcel,
+            ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             if (!emptyParcels.IsCreated)
                 emptyParcels = new NativeList<int2>(Allocator.Persistent);
 
-            for (int x = terrainModel.MinParcel.x; x <= terrainModel.MaxParcel.x; x++)
-            for (int y = terrainModel.MinParcel.y; y <= terrainModel.MaxParcel.y; y++)
+            for (int x = minParcel.x; x <= maxParcel.x; x++)
+            for (int y = minParcel.y; y <= maxParcel.y; y++)
             {
                 var currentParcel = new int2(x, y);
 

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
@@ -10,6 +11,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
+using DCL.SkyBox;
 using DCL.UI;
 using DCL.Utilities;
 using ECS.Prioritization;
@@ -18,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
@@ -40,17 +41,17 @@ namespace DCL.Settings
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly SkyboxSettingsAsset skyboxSettingsAsset;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
-        private readonly bool isVoiceChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
@@ -63,15 +64,15 @@ namespace DCL.Settings
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
             ChatSettingsAsset chatSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
             VoiceChatSettingsAsset voiceChatSettings,
-            WorldVolumeMacBus worldVolumeMacBus,
+            VolumeBus volumeBus,
             UpscalingController upscalingController,
-            bool isVoiceChatEnabled,
             IAssetsProvisioner assetsProvisioner)
         {
             this.view = view;
@@ -80,16 +81,16 @@ namespace DCL.Settings
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
+            this.skyboxSettingsAsset = skyboxSettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
-            this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -180,6 +181,7 @@ namespace DCL.Settings
                             landscapeData,
                             generalAudioMixer,
                             qualitySettingsAsset,
+                            skyboxSettingsAsset,
                             controlsSettingsAsset,
                             chatSettingsAsset,
                             memoryCap,
@@ -189,8 +191,7 @@ namespace DCL.Settings
                             voiceChatSettings,
                             upscalingController,
                             assetsProvisioner,
-                            worldVolumeMacBus,
-                            isVoiceChatEnabled));
+                            volumeBus));
             }
         }
 

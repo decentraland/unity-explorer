@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         int IEqualityComparer<Slice>.GetHashCode(Slice obj) =>
             HashCode.Combine(obj.StartIndex, obj.Length);
 
-        internal Slice Rent(int length)
+        public Slice Rent(int length)
         {
             if (length == 0) throw new ArgumentOutOfRangeException(nameof(length), "length must be greater than 0");
 

@@ -3,6 +3,7 @@ using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -13,7 +14,6 @@ using System;
 using System.Buffers;
 using System.Threading;
 using UnityEngine;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Common.Systems
 {

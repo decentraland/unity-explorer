@@ -15,11 +15,6 @@ MonoBehaviour:
   m_GroupName: Essentials
   m_GUID: 47f803e1e9c5079449bd106df98a0b7d
   m_SerializeEntries:
-  - m_GUID: 0009549658aa1be40bbed401477fbd48
-    m_Address: Assets/DCL/Infrastructure/ECS/Unity/Materials/MaterialReference/ShapeMaterial.mat
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 00657accebbe6c348b5208e385e5ec73
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
     m_ReadOnly: 0
@@ -125,11 +120,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 60d3d51407bdce5449781acd4ee86781
-    m_Address: Assets/DCL/Infrastructure/ECS/Unity/Materials/MaterialReference/BasicShapeMaterial.mat
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 62f68ba25f6c905428b36a081b072566
     m_Address: EmoteAudioSource
     m_ReadOnly: 0
@@ -217,6 +207,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bda7566751d4243fb842e1a272cb9f83
     m_Address: MapCategoryIconMapping
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be91903945b0c44fdb1908049ce868b1
+    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Textures/ArtWeek.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

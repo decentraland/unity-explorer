@@ -1,9 +1,9 @@
+using DCL.Utility.Types;
 using Global.AppArgs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {

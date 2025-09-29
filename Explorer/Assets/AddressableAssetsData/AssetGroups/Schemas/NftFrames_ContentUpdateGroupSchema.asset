@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: NftFrames_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
   m_Group: {fileID: 11400000, guid: 7e1132d3d598145dfa151599ee05dd96, type: 2}
-  m_StaticContent: 1
+  m_StaticContent: 0

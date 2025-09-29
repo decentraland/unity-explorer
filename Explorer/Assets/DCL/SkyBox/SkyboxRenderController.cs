@@ -1,6 +1,9 @@
 ﻿using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Cysharp.Threading.Tasks;
+using System.Threading;
+using Utility;
 
 public class SkyboxRenderController : MonoBehaviour
 {
@@ -56,7 +59,12 @@ public class SkyboxRenderController : MonoBehaviour
 
     private Material skyboxMaterial;
 
-    private float currentTimeOfDay = float.MinValue;
+    private float directionalLightTimeOfDay = float.MinValue;
+    private float targetTimeOfDay = float.MinValue;
+    private CancellationTokenSource transitionCancellationTokenSource;
+
+    [Header("Transition Settings")]
+    [SerializeField] private float transitionDuration;
 
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay)
     {
@@ -112,20 +120,49 @@ public class SkyboxRenderController : MonoBehaviour
             RenderSettings.fog = true;
 
         UpdateSkybox(initialTimeOfDay);
+
+        directionalLightTimeOfDay = initialTimeOfDay;
+        UpdateDirectionalLight(initialTimeOfDay);
     }
 
-    /// <summary>
+    /// <summary>,
     ///     Calls all the necessary methods to update the skybox and environment
     /// </summary>
     public void UpdateSkybox(float timeOfDay)
     {
-        if (Mathf.Approximately(currentTimeOfDay, timeOfDay)) return;
-        currentTimeOfDay = timeOfDay;
-
         UpdateIndirectLight(timeOfDay);
-        UpdateDirectionalLight(timeOfDay);
         UpdateSkyboxColor(timeOfDay);
         UpdateFog(timeOfDay);
+
+        // we update light in intervals to hide visible artifacts for moving shadows (anti-aliasing related, espescially on the benches)
+        if (!Mathf.Approximately(targetTimeOfDay, timeOfDay))
+        {
+            targetTimeOfDay = timeOfDay;
+            StartDirectionalLightTransitionAsync(timeOfDay, transitionDuration).Forget();
+        }
+    }
+
+    private async UniTaskVoid StartDirectionalLightTransitionAsync(float newTimeOfDay, float duration)
+    {
+        transitionCancellationTokenSource = transitionCancellationTokenSource.SafeRestart();
+
+        CancellationToken token = transitionCancellationTokenSource.Token;
+        float startTime = directionalLightTimeOfDay;
+        float startTimeStamp = Time.time;
+
+        while (Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
+        {
+            float progress = (Time.time - startTimeStamp) / duration;
+            float lerpedTimeOfDay = Mathf.Lerp(startTime, newTimeOfDay, progress);
+
+            directionalLightTimeOfDay = lerpedTimeOfDay;
+            UpdateDirectionalLight(lerpedTimeOfDay);
+
+            await UniTask.Yield(token);
+        }
+
+        directionalLightTimeOfDay = newTimeOfDay;
+        UpdateDirectionalLight(newTimeOfDay);
     }
 
     /// <summary>
@@ -195,6 +232,16 @@ public class SkyboxRenderController : MonoBehaviour
     {
         if (fog)
             RenderSettings.fogColor = fogColorRamp.Evaluate(timeOfDay);
+    }
+
+    private void OnDestroy()
+    {
+        transitionCancellationTokenSource.SafeCancelAndDispose();
+    }
+
+    private void OnDisable()
+    {
+        transitionCancellationTokenSource.SafeCancelAndDispose();
     }
 
 #if UNITY_EDITOR

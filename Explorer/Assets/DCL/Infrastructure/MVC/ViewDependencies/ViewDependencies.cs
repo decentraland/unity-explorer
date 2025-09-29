@@ -1,8 +1,8 @@
 ﻿using CodeLess.Attributes;
 using DCL.Clipboard;
 using DCL.Input;
+using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
-using DCL.UI.GenericContextMenu.Opener;
 using DCL.Web3.Identities;
 
 namespace MVC

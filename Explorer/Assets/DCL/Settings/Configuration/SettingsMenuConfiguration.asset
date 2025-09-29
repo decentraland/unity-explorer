@@ -47,8 +47,8 @@ MonoBehaviour:
       - rid: 5242998342527483920
       - rid: 5242998342527483919
       - rid: 3511243270148325474
-    - <GroupTitle>k__BackingField: Call
-      <FeatureFlagName>k__BackingField: 22
+    - <GroupTitle>k__BackingField: Voice Streams & Calls
+      <FeatureFlagName>k__BackingField: 21
       <Modules>k__BackingField:
       - rid: 3511243270148325473
   <ControlsSectionConfig>k__BackingField:
@@ -79,7 +79,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Send & Receive DMs From
+          <ModuleName>k__BackingField: Exchange DMs & Calls with
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
@@ -173,13 +173,13 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Voice Chat
+          <ModuleName>k__BackingField: Voice Streams & Calls
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 1
           minValue: 0
           maxValue: 100
-          wholeNumbers: 0
+          wholeNumbers: 1
           defaultValue: 100
         <Feature>k__BackingField: 9
     - rid: 4494877371389181952
@@ -348,7 +348,7 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 11
     - rid: 5242998342527483919
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

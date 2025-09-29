@@ -1,4 +1,5 @@
-﻿using DCL.Prefs;
+﻿using DCL.Audio;
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
@@ -11,13 +12,13 @@ namespace DCL.Settings.ModuleControllers
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
-        private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly VolumeBus volumeBus;
 
-        public MasterVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, WorldVolumeMacBus worldVolumeMacBus)
+        public MasterVolumeSettingsController(SettingsSliderModuleView view, AudioMixer generalAudioMixer, VolumeBus volumeBus)
         {
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
-            this.worldVolumeMacBus = worldVolumeMacBus;
+            this.volumeBus = volumeBus;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MASTER_VOLUME))
                 view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME);
@@ -30,10 +31,7 @@ namespace DCL.Settings.ModuleControllers
         {
             generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage, save: true);
-
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-            worldVolumeMacBus.SetMasterVolume(volumePercentage / 100);
-#endif
+            volumeBus.SetMasterVolume(volumePercentage / 100);
         }
 
         public override void Dispose()
