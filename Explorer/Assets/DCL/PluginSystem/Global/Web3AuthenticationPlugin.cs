@@ -59,8 +59,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioClipConfig backgroundMusic,
-            Arch.Core.World world,
-            SentryTransactionManager sentryTransactionManager
+            Arch.Core.World world
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -78,7 +77,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.backgroundMusic = backgroundMusic;
             this.world = world;
-            this.sentryTransactionManager = sentryTransactionManager;
+            this.sentryTransactionManager = SentryTransactionManager.Instance;
         }
 
         public void Dispose() { }

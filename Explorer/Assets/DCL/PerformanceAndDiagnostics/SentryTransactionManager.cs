@@ -1,3 +1,4 @@
+using CodeLess.Attributes;
 using DCL.Diagnostics;
 using DCL.Utility;
 using Sentry;
@@ -7,7 +8,8 @@ using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics
 {
-    public class SentryTransactionManager : IDisposable
+    [Singleton]
+    public partial class SentryTransactionManager
     {
         private readonly Dictionary<string, ITransactionTracer> sentryTransactions = new();
         private readonly Dictionary<string, Stack<ISpan>> transactionsSpans = new();
@@ -196,18 +198,6 @@ namespace DCL.PerformanceAndDiagnostics
                     ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transactionName}' during application quit: {ex.Message}");
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            if (isDisposed) return;
-
-            ExitUtils.BeforeApplicationQuitting -= OnApplicationQuitting;
-            Application.quitting -= OnApplicationQuitting;
-
-            FinishAllTransactions();
-
-            isDisposed = true;
         }
     }
 

@@ -21,12 +21,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public ReactiveProperty<string> AssetState => core.AssetState;
         private bool isFirstLoading;
 
-        public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics, SentryTransactionManager sentryTransactionManager)
+        public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics)
         {
             core = loadingStatus;
             isFirstLoading = true;
             this.analytics = analytics;
-            this.sentryTransactionManager = sentryTransactionManager;
+            this.sentryTransactionManager = SentryTransactionManager.Instance;;
         }
 
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
