@@ -31,7 +31,7 @@
       "url": "https://package.openupm.com"
     },
     "com.atteneder.gltfast": {
-      "version": "git@github.com:decentraland/unity-gltf.git",
+      "version": "https://github.com/decentraland/unity-gltf.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -78,7 +78,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "6b3433104849e77c622764d6e5d48b6140f7d61c"
+      "hash": "4bbcbde3b37cb33e89de8e21a65a88eb1223c9a6"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -133,7 +133,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "ae15a0351cbc1f15d955024802c2eb8f9c70cb9e"
+      "hash": "00cbf100acd16a024c6fb1acd2ba9a439dfa358b"
     },
     "com.olegknyazev.softmask": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask",

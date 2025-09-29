@@ -1,8 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CDPBridges;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiling;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
@@ -55,7 +58,16 @@ namespace DCL.WebRequests.Analytics
 
             DebugWidgetBuilder? widget = debugContainerBuilder
                                         .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS)
-                                       ?.AddSingleButton("Open Chrome DevTools", () => chromeDevtoolProtocolClient.StartAndOpen())
+                                       ?.AddSingleButton("Open Chrome DevTools", () =>
+                                         {
+                                             BridgeStartResult result = chromeDevtoolProtocolClient.StartAndOpen();
+                                             string? errorMessage = ErrorMessageFromBridgeResult(result);
+
+                                             if (errorMessage != null)
+                                                 NotificationsBusController
+                                                    .Instance
+                                                    .AddNotification(new ServerErrorNotification(errorMessage));
+                                         })
                                         .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
 
             foreach (RequestType requestType in requestTypes)
@@ -72,6 +84,22 @@ namespace DCL.WebRequests.Analytics
 
                 ongoingRequests[requestType.Type] = bindings;
             }
+        }
+
+        // ReSharper disable once ReturnTypeCanBeNotNullable
+        private static string? ErrorMessageFromBridgeResult(BridgeStartResult result)
+        {
+            string message = result.Match(
+                onSuccess: static () => null!,
+                onBridgeStartError: static e => e.Match(
+                    onWebSocketError: static e => $"Cannot start WebSocket server: {e.Exception.Message}",
+                    onBrowserOpenError: static e => e.Match(
+                        onErrorChromeNotInstalled: static () => "Chrome not installed",
+                        onException: static e => $"Cannot open DevTools: {e.Message}")
+                )
+            );
+
+            return message;
         }
 
         protected override void Update(float t)
