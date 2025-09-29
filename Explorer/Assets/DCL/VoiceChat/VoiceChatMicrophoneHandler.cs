@@ -4,10 +4,9 @@ using System;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
-using DCL.Utility.Types;
-using Utility.Ownership;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
+using RichTypes;
 using UnityEngine;
 using Result = RichTypes.Result;
 
@@ -15,7 +14,6 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
     {
-        private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly VoiceChatConfiguration voiceChatConfiguration;
 
         private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty;
@@ -24,22 +22,16 @@ namespace DCL.VoiceChat
 
         private Weak<MicrophoneRtcAudioSource> microphoneSource = Weak<MicrophoneRtcAudioSource>.Null;
 
-        public MicrophoneSelection? CurrentMicrophoneName => voiceChatSettings.SelectedMicrophone;
-
         public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
 
-        public VoiceChatMicrophoneHandler(
-            VoiceChatSettingsAsset voiceChatSettings,
-            VoiceChatConfiguration voiceChatConfiguration
-        )
+        public VoiceChatMicrophoneHandler(VoiceChatConfiguration voiceChatConfiguration)
         {
-            this.voiceChatSettings = voiceChatSettings;
             this.voiceChatConfiguration = voiceChatConfiguration;
             isMicrophoneEnabledProperty = new ReactiveProperty<bool>(false);
 
             DCLInput.Instance.VoiceChat.Talk!.performed += OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnTalkHotkeyReleased;
-            voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
+            VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
         }
 
         public void Dispose()
@@ -47,7 +39,7 @@ namespace DCL.VoiceChat
             isMicrophoneEnabledProperty.ClearSubscriptionsList();
             DCLInput.Instance.VoiceChat.Talk!.performed -= OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled -= OnTalkHotkeyReleased;
-            voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
+            VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
         }
 
         /// <summary>

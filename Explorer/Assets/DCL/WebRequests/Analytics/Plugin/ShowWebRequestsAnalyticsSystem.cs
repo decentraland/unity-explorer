@@ -4,7 +4,8 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CDPBridges;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiling;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
@@ -64,8 +65,6 @@ namespace DCL.WebRequests.Analytics
 
                                              if (errorMessage != null)
                                                  NotificationsBusController
-                                                    .NotificationsBus
-                                                    .NotificationsBusController
                                                     .Instance
                                                     .AddNotification(new ServerErrorNotification(errorMessage));
                                          })
