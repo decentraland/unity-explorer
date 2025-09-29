@@ -71,14 +71,14 @@
       "hash": "e2daa643b01fc072db3dd3276e584db705a3d9a9"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git#fix/audio-playback",
+      "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "8c0934d9a947417bef3381bd9c5cfff5b1c00216"
+      "hash": "4bbcbde3b37cb33e89de8e21a65a88eb1223c9a6"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
