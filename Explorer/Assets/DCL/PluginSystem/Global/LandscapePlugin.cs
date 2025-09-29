@@ -120,7 +120,7 @@ namespace DCL.PluginSystem.Global
             terrainGenerator.Initialize(landscapeData.Value.terrainData, treeRendererKeys,
                 ref emptyParcels, ref ownedParcels);
 
-            await worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, treeRendererKeys);
+            await worldTerrainGenerator.InitializeAsync(landscapeData.Value.worldsTerrainData, treeRendererKeys);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

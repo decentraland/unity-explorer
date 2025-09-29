@@ -51,7 +51,7 @@ namespace DCL.Landscape
             TerrainGenerator.GetParcelNoiseHeight(x, z, OccupancyMapData, OccupancyMapSize,
                 terrainGenData.parcelSize, OccupancyFloor, MaxHeight);
 
-        public async UniTask Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys)
+        public async UniTask InitializeAsync(TerrainGenerationData terrainGenData, int[] treeRendererKeys)
         {
             this.terrainGenData = terrainGenData;
 
