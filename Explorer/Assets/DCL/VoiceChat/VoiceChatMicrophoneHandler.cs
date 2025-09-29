@@ -4,8 +4,6 @@ using System;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
-using DCL.Utility.Types;
-using Utility.Ownership;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
