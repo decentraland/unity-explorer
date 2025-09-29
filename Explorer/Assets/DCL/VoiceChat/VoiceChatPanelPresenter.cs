@@ -7,7 +7,6 @@ using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
-using UnityEngine.EventSystems;
 
 namespace DCL.VoiceChat
 {
@@ -65,15 +64,7 @@ namespace DCL.VoiceChat
         {
             if (voiceChatPanelState.Value == VoiceChatPanelState.SELECTED) return;
 
-            // Check if the click is specifically inside the voice chat panel
-            foreach (RaycastResult result in evt.RaycastResults)
-            {
-                if (result.gameObject.transform.IsChildOf(view.transform))
-                {
-                    voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
-                    return;
-                }
-            }
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
         }
 
         private void HandleClickOutside(ChatCoordinationEvents.ChatPanelClickOutsideEvent evt)
