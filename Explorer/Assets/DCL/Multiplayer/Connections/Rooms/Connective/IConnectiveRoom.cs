@@ -82,7 +82,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 : UniTask.FromResult(true);
 
         public static UniTask StopIfNotAsync(this IConnectiveRoom room) =>
-            room.CurrentState() is IConnectiveRoom.State.Running
+            room.CurrentState() is IConnectiveRoom.State.Running or IConnectiveRoom.State.Starting
                 ? room.StopAsync()
                 : UniTask.CompletedTask;
 
