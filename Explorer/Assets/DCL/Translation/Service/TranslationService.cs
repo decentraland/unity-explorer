@@ -157,9 +157,15 @@ namespace DCL.Translation.Service
 
                 var result = RequiresProcessing(original)
                     ? await messageProcessor.ProcessAndTranslateAsync(original, targetLang, ct)
-                    // ? await UseBatchTranslation(original, targetLang, ct)
                     : await UseRegularTranslation(original, targetLang, ct);
 
+                if (result.DetectedSourceLanguage == targetLang)
+                {
+                    // Since TranslationResult is a struct, we create a new instance,
+                    // replacing the translated text with the original body.
+                    result = new TranslationResult(original, result.DetectedSourceLanguage, result.FromCache);
+                }
+                
                 cache.Set(messageId, targetLang, result);
                 translationMemory.SetTranslatedResult(messageId, result);
                 eventBus.Publish(new TranslationEvents.MessageTranslated
