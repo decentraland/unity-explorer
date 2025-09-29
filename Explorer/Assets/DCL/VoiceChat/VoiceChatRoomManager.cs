@@ -125,7 +125,7 @@ namespace DCL.VoiceChat
             if (isSpeaker && voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL && roomHub.VoiceChatRoom().Activated)
             {
                 voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
-                trackManager.PublishLocalTrack(CancellationToken.None).Forget();
+                trackManager.PublishLocalTrackAsync(CancellationToken.None).Forget();
             }
             else
             {
@@ -305,7 +305,7 @@ namespace DCL.VoiceChat
                 if (canSpeak)
                 {
                     voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
-                    trackManager.PublishLocalTrack(CancellationToken.None).Forget();
+                    trackManager.PublishLocalTrackAsync(CancellationToken.None).Forget();
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }

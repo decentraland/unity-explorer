@@ -155,12 +155,12 @@ namespace DCL.PluginSystem.Global
                           .AddMarker("Channels", channels, DebugLongMarkerDef.Unit.NoFormat)
                           .AddMarker("Remote Speakers", remoteSpeakers, DebugLongMarkerDef.Unit.NoFormat)
                           .AddList("Speakers Info", speakersInfo)
-                          .AddToggleField("Auto Update", v => AutoUpdateTrigger(v.newValue).Forget(), false)
+                          .AddToggleField("Auto Update", v => AutoUpdateTriggerAsync(v.newValue).Forget(), false)
                           .AddSingleButton("Update", UpdateWidget);
 
             return;
 
-            async UniTaskVoid AutoUpdateTrigger(bool enable)
+            async UniTaskVoid AutoUpdateTriggerAsync(bool enable)
             {
                 if (enable)
                 {

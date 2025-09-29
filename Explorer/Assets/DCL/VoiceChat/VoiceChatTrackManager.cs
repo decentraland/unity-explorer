@@ -80,7 +80,7 @@ namespace DCL.VoiceChat
         ///     Publishes the local microphone track to the room.
         ///     Creates and starts the OptimizedMonoRtcAudioSource if needed.
         /// </summary>
-        public async UniTaskVoid PublishLocalTrack(CancellationToken ct)
+        public async UniTaskVoid PublishLocalTrackAsync(CancellationToken ct)
         {
             if (microphoneTrack.HasValue)
             {
