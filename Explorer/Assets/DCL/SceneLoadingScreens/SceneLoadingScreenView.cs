@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
-using DCL.Utility.Types;
 using DG.Tweening;
 using MVC;
+using RichTypes;
 using System;
 using System.Collections.Generic;
 using System.Threading;

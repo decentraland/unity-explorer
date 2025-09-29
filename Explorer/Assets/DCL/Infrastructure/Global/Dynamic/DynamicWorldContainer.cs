@@ -920,7 +920,8 @@ namespace Global.Dynamic
                         playerEntity,
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
-                        assetsProvisioner)
+                        assetsProvisioner,
+                        debugBuilder)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

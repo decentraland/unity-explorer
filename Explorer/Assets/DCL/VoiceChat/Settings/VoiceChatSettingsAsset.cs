@@ -1,21 +1,53 @@
+using DCL.Diagnostics;
 using LiveKit.Runtime.Scripts.Audio;
-using UnityEngine;
+using RichTypes;
 
 namespace DCL.Settings.Settings
 {
-    //Commented creator as we only need one of these.
-    //    [CreateAssetMenu(fileName = "VoiceChatSettings", menuName = "DCL/Settings/Voice Chat Settings")]
-    public class VoiceChatSettingsAsset : ScriptableObject
+    /// <summary>
+    /// Exists as a single selection per time
+    /// </summary>
+    public static class VoiceChatSettings
     {
         public delegate void MicrophoneChangedDelegate(MicrophoneSelection newMicrophoneSelection);
-        public event MicrophoneChangedDelegate MicrophoneChanged;
 
-        public MicrophoneSelection? SelectedMicrophone;
+        public static event MicrophoneChangedDelegate? MicrophoneChanged;
 
-        public void OnMicrophoneChanged(MicrophoneSelection microphoneSelection)
+        public static MicrophoneSelection? SelectedMicrophone { get; private set; }
+
+        public static void OnMicrophoneChanged(MicrophoneSelection microphoneSelection)
         {
             SelectedMicrophone = microphoneSelection;
             MicrophoneChanged?.Invoke(microphoneSelection);
+        }
+
+        public static Result<MicrophoneSelection> ReachableSelection()
+        {
+            if (SelectedMicrophone == null)
+                return TrySelectDefault();
+
+            string current = SelectedMicrophone.Value.name;
+            Result<MicrophoneSelection> currentResult = MicrophoneSelection.FromName(current);
+
+            if (currentResult.Success == false)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Current microphone is unreachable, fallback to default: {current}");
+                return TrySelectDefault();
+            }
+
+            SelectedMicrophone = currentResult.Value;
+            return Result<MicrophoneSelection>.SuccessResult(SelectedMicrophone.Value);
+        }
+
+        private static Result<MicrophoneSelection> TrySelectDefault()
+        {
+            Result<MicrophoneSelection> result = MicrophoneSelection.Default();
+
+            if (result.Success == false)
+                return Result<MicrophoneSelection>.ErrorResult("No reachable microphone is available");
+
+            SelectedMicrophone = result.Value;
+            return Result<MicrophoneSelection>.SuccessResult(SelectedMicrophone.Value);
         }
     }
 }
