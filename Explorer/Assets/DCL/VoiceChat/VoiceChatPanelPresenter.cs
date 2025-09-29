@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -8,18 +7,14 @@ using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
-using UnityEngine.Pool;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatPanelController : IDisposable
+    public class VoiceChatPanelPresenter : IDisposable
     {
         private readonly VoiceChatPanelView view;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
-        private readonly ChatCoordinationEventBus coordinationEventBus;
 
         private readonly PrivateVoiceChatController? privateVoiceChatController;
         private readonly CommunityVoiceChatController? communitiesVoiceChatController;
@@ -28,7 +23,7 @@ namespace DCL.VoiceChat
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
         private readonly List<IDisposable> eventSubscriptions = new();
 
-        public VoiceChatPanelController(VoiceChatPanelView view,
+        public VoiceChatPanelPresenter(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
             CommunitiesDataProvider communityDataProvider,
             IWebRequestController webRequestController,
@@ -41,7 +36,6 @@ namespace DCL.VoiceChat
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            this.coordinationEventBus = coordinationEventBus;
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(view.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
@@ -49,27 +43,10 @@ namespace DCL.VoiceChat
             sceneVoiceChatController = new SceneVoiceChatController(view.SceneVoiceChatTitlebarView, voiceChatOrchestrator);
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
 
-            DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
-
-            view.PointerEnterChatArea += OnPointerEnterChatArea;
-            view.PointerExitChatArea += OnPointerExitChatArea;
-            view.PointerClick += OnPointerClick;
-            view.PointerClickChatArea += OnPointerClickChatArea;
-
             eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerEnterEvent>(_ => OnPointerEnterChatArea()));
             eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerExitEvent>(_ => OnPointerExitChatArea()));
-            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelPointerClickEvent>(_ => OnPointerClickChatArea()));
-        }
-
-        private void OnPointerClickChatArea()
-        {
-            if (voiceChatPanelState.Value is VoiceChatPanelState.UNFOCUSED or VoiceChatPanelState.FOCUSED)
-                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
-        }
-
-        private void OnPointerClick()
-        {
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelClickInsideEvent>(HandleClickInside));
+            eventSubscriptions.Add(coordinationEventBus.Subscribe<ChatCoordinationEvents.ChatPanelClickOutsideEvent>(HandleClickOutside));
         }
 
         private void OnPointerExitChatArea()
@@ -84,49 +61,26 @@ namespace DCL.VoiceChat
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED);
         }
 
-        private void HandleGlobalClick(InputAction.CallbackContext context)
+        private void HandleClickInside(ChatCoordinationEvents.ChatPanelClickInsideEvent evt)
         {
-            if (EventSystem.current == null) return;
-            if (voiceChatPanelState.Value != VoiceChatPanelState.SELECTED) return;
+            if (voiceChatPanelState.Value == VoiceChatPanelState.SELECTED) return;
 
-            var eventData = new PointerEventData(EventSystem.current)
-            {
-                position = GetPointerPosition(context)
-            };
-
-            using PooledObject<List<RaycastResult>> _ = ListPool<RaycastResult>.Get(out List<RaycastResult>? results);
-
-            EventSystem.current.RaycastAll(eventData, results);
-
-            foreach (RaycastResult result in results)
+            // Check if the click is specifically inside the voice chat panel
+            foreach (RaycastResult result in evt.RaycastResults)
             {
                 if (result.gameObject.transform.IsChildOf(view.transform))
                 {
+                    voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.SELECTED);
                     return;
                 }
             }
-
-            WaitAndChange().Forget();
-            return;
-
-            async UniTaskVoid WaitAndChange()
-            {
-                //We wait in case we clicked on the chat, so it has time to update the state before trying to unfocus
-                //await UniTask.Delay(5); COMMENTED FOR NOW AS IT DOESNT WORK xD
-                if (voiceChatPanelState.Value == VoiceChatPanelState.FOCUSED) return;
-
-                voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
-            }
         }
 
-        private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
+        private void HandleClickOutside(ChatCoordinationEvents.ChatPanelClickOutsideEvent evt)
         {
-            if (ctx.control is Pointer pointer) return pointer.position.ReadValue();
-            if (Pointer.current != null) return Pointer.current.position.ReadValue();
-            if (Mouse.current != null) return Mouse.current.position.ReadValue();
-            if (Touchscreen.current?.primaryTouch != null) return Touchscreen.current.primaryTouch.position.ReadValue();
+            if (voiceChatPanelState.Value == VoiceChatPanelState.UNFOCUSED) return;
 
-            return Vector2.zero;
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED);
         }
 
         public void Dispose()
@@ -135,11 +89,6 @@ namespace DCL.VoiceChat
             communitiesVoiceChatController?.Dispose();
             sceneVoiceChatController?.Dispose();
             voiceChatPanelResizeController?.Dispose();
-            DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
-            view.PointerEnterChatArea -= OnPointerEnterChatArea;
-            view.PointerExitChatArea -= OnPointerExitChatArea;
-            view.PointerClick -= OnPointerClick;
-            view.PointerClickChatArea -= OnPointerClickChatArea;
 
             // Dispose event subscriptions
             foreach (var subscription in eventSubscriptions)

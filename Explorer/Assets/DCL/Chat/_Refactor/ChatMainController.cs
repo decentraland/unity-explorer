@@ -4,6 +4,10 @@ using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.Pool;
 
 namespace DCL.ChatArea
 {
@@ -37,6 +41,9 @@ namespace DCL.ChatArea
             mvcManager.OnViewClosed += OnMvcViewClosed;
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
+
+            // Setup global click detection
+            DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
         }
 
         protected override void OnViewShow()
@@ -104,6 +111,46 @@ namespace DCL.ChatArea
             coordinationEventBus.RaisePointerExit();
         }
 
+        private void HandleGlobalClick(InputAction.CallbackContext context)
+        {
+            if (EventSystem.current == null) return;
+
+            var eventData = new PointerEventData(EventSystem.current)
+            {
+                position = GetPointerPosition(context)
+            };
+
+            using PooledObject<List<RaycastResult>> _ = ListPool<RaycastResult>.Get(out List<RaycastResult>? results);
+
+            EventSystem.current.RaycastAll(eventData, results);
+
+            // Check if click is inside any chat panel
+            var clickedInsideChat = false;
+            foreach (RaycastResult result in results)
+            {
+                if (result.gameObject.transform.IsChildOf(viewInstance!.transform))
+                {
+                    clickedInsideChat = true;
+                    break;
+                }
+            }
+
+            if (clickedInsideChat)
+                coordinationEventBus.RaiseClickInsideEvent(results);
+            else
+                coordinationEventBus.RaiseClickOutsideEvent(results);
+        }
+
+        private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
+        {
+            if (ctx.control is Pointer pointer) return pointer.position.ReadValue();
+            if (Pointer.current != null) return Pointer.current.position.ReadValue();
+            if (Mouse.current != null) return Mouse.current.position.ReadValue();
+            if (Touchscreen.current?.primaryTouch != null)
+                return Touchscreen.current.primaryTouch.position.ReadValue();
+            return Vector2.zero;
+        }
+
         public override void Dispose()
         {
             if (viewInstance != null)
@@ -113,6 +160,9 @@ namespace DCL.ChatArea
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
             }
+
+            // Clean up global click detection
+            DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
 
             base.Dispose();
 

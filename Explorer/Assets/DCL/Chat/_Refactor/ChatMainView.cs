@@ -17,19 +17,16 @@ namespace DCL.ChatArea
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            VoiceChatPanelView.ChatAreaOnPointerEnter();
             OnPointerEnterEvent?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            VoiceChatPanelView.ChatAreaOnPointerExit();
             OnPointerExitEvent?.Invoke();
         }
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            VoiceChatPanelView.ChatAreaOnPointerClick();
         }
 
         public void Dispose()

@@ -16,9 +16,6 @@ namespace DCL.ChatArea
         public void RaisePointerExit() =>
             Publish(new ChatCoordinationEvents.ChatPanelPointerExitEvent());
 
-        public void RaisePointerClick() =>
-            Publish(new ChatCoordinationEvents.ChatPanelPointerClickEvent());
-
         public void RaiseFocusEvent() =>
             Publish(new ChatCoordinationEvents.ChatPanelFocusEvent());
 
@@ -42,5 +39,11 @@ namespace DCL.ChatArea
 
         public void RaiseMvcViewClosedEvent() =>
             Publish(new ChatCoordinationEvents.ChatPanelMvcViewClosedEvent());
+
+        public void RaiseClickInsideEvent(System.Collections.Generic.IReadOnlyList<UnityEngine.EventSystems.RaycastResult> raycastResults) =>
+            Publish(new ChatCoordinationEvents.ChatPanelClickInsideEvent(raycastResults));
+
+        public void RaiseClickOutsideEvent(System.Collections.Generic.IReadOnlyList<UnityEngine.EventSystems.RaycastResult> raycastResults) =>
+            Publish(new ChatCoordinationEvents.ChatPanelClickOutsideEvent(raycastResults));
     }
 }

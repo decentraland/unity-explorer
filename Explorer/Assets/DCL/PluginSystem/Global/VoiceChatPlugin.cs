@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
         private MicrophoneAudioToggleController? microphoneAudioToggleController;
-        private VoiceChatPanelController? voiceChatPanelController;
+        private VoiceChatPanelPresenter? voiceChatPanelController;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -116,7 +116,7 @@ namespace DCL.PluginSystem.Global
             var unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleController = new MicrophoneAudioToggleController(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
 
-            voiceChatPanelController = new VoiceChatPanelController(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, coordinationEventBus);
+            voiceChatPanelController = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, coordinationEventBus);
         }
 
         [Serializable]

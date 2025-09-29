@@ -36,8 +36,8 @@ namespace DCL.VoiceChat
         private ConnectionUpdate connectionState = ConnectionUpdate.Disconnected;
         private bool isClientInitiatedDisconnection;
 
-        public event Action ConnectionEstablished;
-        public event Action ConnectionLost;
+        public event Action? ConnectionEstablished;
+        public event Action? ConnectionLost;
 
         public VoiceChatRoomManager(
             VoiceChatTrackManager trackManager,
@@ -86,9 +86,9 @@ namespace DCL.VoiceChat
             reconnectionManager.ReconnectionFailed -= OnReconnectionFailed;
 
             localParticipantIsSpeakerSubscription.Dispose();
-            callStatusSubscription?.Dispose();
-            reconnectionManager?.Dispose();
-            trackManager?.Dispose();
+            callStatusSubscription.Dispose();
+            reconnectionManager.Dispose();
+            trackManager.Dispose();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
@@ -290,8 +290,6 @@ namespace DCL.VoiceChat
         {
             try
             {
-                // If its a community chat but local participant is not a speaker, we dont publish the track.
-
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
                 trackManager.StartListeningToRemoteTracks();
@@ -299,6 +297,7 @@ namespace DCL.VoiceChat
                 ConnectionEstablished?.Invoke();
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection setup completed");
 
+                // If it's a community chat but local participant is not a speaker, we don't publish the track.
                 bool canSpeak = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value ||
                                 voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE;
 
