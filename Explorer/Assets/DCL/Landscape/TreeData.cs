@@ -130,6 +130,9 @@ namespace DCL.Landscape
 
                 GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex],
                     matrices, 0, 0, matrices.Count);
+
+                GPUICoreAPI.SetInstanceCount(rendererKeys[prototypeIndex],
+                    instanceCounts[prototypeIndex]);
             }
         }
 
@@ -291,8 +294,9 @@ namespace DCL.Landscape
         [Conditional("GPUI_PRO_PRESENT")]
         public void Show()
         {
-            for (int i = 0; i < rendererKeys.Length; i++)
-                GPUICoreAPI.SetInstanceCount(rendererKeys[i], instanceCounts[i]);
+            for (int prototypeIndex = 0; prototypeIndex < rendererKeys.Length; prototypeIndex++)
+                GPUICoreAPI.SetInstanceCount(rendererKeys[prototypeIndex],
+                    instanceCounts[prototypeIndex]);
         }
     }
 }
