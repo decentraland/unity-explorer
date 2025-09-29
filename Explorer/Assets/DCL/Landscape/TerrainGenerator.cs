@@ -29,7 +29,7 @@ namespace DCL.Landscape
         private const float PROGRESS_COUNTER_TERRAIN_COMPONENTS = 0.8f;
 
         internal const int TERRAIN_SIZE_LIMIT = 512; // 512x512 parcels
-        internal const int TREE_INSTANCE_LIMIT = 262144; // 2^18 trees
+        internal const int TREE_INSTANCE_LIMIT = 524288; // 2^19 trees
 
         private const int INF = 1 << 28;
         private const int ORTH = 3; // 3-4 chamfer (good Euclidean approx)

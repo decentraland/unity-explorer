@@ -59,7 +59,7 @@ namespace DCL.Landscape
             factory = new TerrainFactory(terrainGenData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
             Trees = new TreeData(treeRendererKeys, terrainGenData);
-            await Trees!.LoadAsync($"{Application.streamingAssetsPath}/WorldsTrees.bin");
+            await Trees.LoadAsync($"{Application.streamingAssetsPath}/WorldsTrees.bin");
             IsInitialized = true;
         }
 
