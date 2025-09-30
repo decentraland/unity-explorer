@@ -93,7 +93,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7776922303461873642
 RectTransform:
   m_ObjectHideFlags: 0
@@ -178,7 +178,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8517794174848120442}
   - component: {fileID: 1936038111498086452}
-  - component: {fileID: 4572849772150411585}
+  - component: {fileID: 3267160177796272504}
   - component: {fileID: 7257086224562224593}
   m_Layer: 5
   m_Name: ChatInputBox2
@@ -194,7 +194,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3490405566641370256}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 0}
   m_ConstrainProportionsScale: 0
@@ -215,7 +215,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3490405566641370256}
   m_CullTransparentMesh: 1
---- !u!114 &4572849772150411585
+--- !u!114 &3267160177796272504
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -224,25 +224,36 @@ MonoBehaviour:
   m_GameObject: {fileID: 3490405566641370256}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18b5dde3d1a0473dbcf0d7305ac86c38, type: 3}
+  m_Script: {fileID: 11500000, guid: 7750367aec7848feb11fdee6aed880f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputField: {fileID: 6095371177556059541}
-  characterCounter: {fileID: 3494020289637414838}
-  pastePopupPosition: {fileID: 5945738568212623925}
-  outlineObject: {fileID: 6872290420992879910}
+  <inputField>k__BackingField: {fileID: 6095371177556059541}
+  <pastePopupPosition>k__BackingField: {fileID: 5945738568212623925}
+  inputFieldContainer: {fileID: 3490405566641370256}
   layoutElement: {fileID: 7257086224562224593}
-  emojiPanelConfiguration: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
-  emojiButtonPrefab: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
-  emojiSectionViewPrefab: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
-  emojiPanelButton: {fileID: 2972067743100390441}
-  emojiPanel: {fileID: 1062488254353314167}
-  suggestionPanel: {fileID: 4730369702282686116}
-  addEmojiAudio: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
-  openEmojiPanelAudio: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
-  chatSendMessageAudio: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
-  chatInputTextAudio: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
-  enterInputAudio: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
+  <maskButton>k__BackingField: {fileID: 0}
+  maskContainer: {fileID: 0}
+  maskText: {fileID: 0}
+  <suggestionPanel>k__BackingField: {fileID: 4730369702282686116}
+  outlineObject: {fileID: 6872290420992879910}
+  characterCounterObject: {fileID: 513882281313289555}
+  characterCounter: {fileID: 3494020289637414838}
+  emojiButtonObject: {fileID: 7195687563835556431}
+  backgroundImage: {fileID: 5932479138351620065}
+  inputPlaceholderObject: {fileID: 5443551243198898368}
+  focusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.8784314}
+  unfocusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.57254905}
+  <emojiContainer>k__BackingField:
+    <emojiPanelConfiguration>k__BackingField: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
+    <emojiButtonPrefab>k__BackingField: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
+    <emojiSectionViewPrefab>k__BackingField: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+    <emojiPanelButton>k__BackingField: {fileID: 2972067743100390441}
+    <emojiPanel>k__BackingField: {fileID: 1062488254353314167}
+    <addEmojiAudio>k__BackingField: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
+    <openEmojiPanelAudio>k__BackingField: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
+  <chatInputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
+  <enterInputAudio>k__BackingField: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
+  <inputEventBus>k__BackingField: {fileID: 0}
 --- !u!114 &7257086224562224593
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -259,7 +270,7 @@ MonoBehaviour:
   m_MinWidth: -1
   m_MinHeight: 46
   m_PreferredWidth: -1
-  m_PreferredHeight: 46
+  m_PreferredHeight: 13
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -816,7 +827,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4806212629960702243
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1023,7 +1034,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Write a message
+  m_text: Press Enter to chat
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -1344,15 +1355,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 879671387160664398, guid: aae7d09bda1f84347800ad22fbe37d8d, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 879671387160664398, guid: aae7d09bda1f84347800ad22fbe37d8d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5783884414433577153, guid: aae7d09bda1f84347800ad22fbe37d8d, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: -34
       objectReference: {fileID: 0}
     - target: {fileID: 7089509983381319841, guid: aae7d09bda1f84347800ad22fbe37d8d, type: 3}
       propertyPath: m_Name
@@ -1533,15 +1544,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3652976034242486792, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3652976034242486792, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3652976034242486792, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 3821465347778324932, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
       propertyPath: m_Colors.m_NormalColor.b
@@ -1645,6 +1656,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4668373202569983110, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
       propertyPath: m_Color.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4689589829285642723, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5737962977412364931, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
@@ -1793,11 +1808,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8287295318826585892, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8287295318826585892, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8287295318826585892, guid: 543dff6efe38c4acb9118c149e6c6eca, type: 3}
       propertyPath: m_SizeDelta.x

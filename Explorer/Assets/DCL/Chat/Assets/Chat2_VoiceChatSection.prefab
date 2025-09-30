@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 337026671723665648}
   - component: {fileID: 2366412838070807825}
   m_Layer: 5
-  m_Name: VoiceChatTitlebarArea
+  m_Name: VoiceChatPanelArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -159,10 +159,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ffbfd2f78654ff0b50c376c422093d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <VoiceChatView>k__BackingField: {fileID: 4108728370946153984}
+  <PrivateVoiceChatView>k__BackingField: {fileID: 4108728370946153984}
   <VoiceChatPanelResizeView>k__BackingField: {fileID: 2366412838070807825}
   <CommunityVoiceChatView>k__BackingField: {fileID: 2312747137672543657}
-  <SceneVoiceChatTitlebarView>k__BackingField: {fileID: 1755767167493391818}
+  <SceneVoiceChatPanelView>k__BackingField: {fileID: 1755767167493391818}
 --- !u!114 &7689846064843135691
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -527,7 +527,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7245032890507791707, guid: c7f35dcce50884d818210cca5e1b04cc, type: 3}
       propertyPath: m_Name
-      value: CommunityVoiceChatTitleBarsContainer
+      value: CommunityVoiceChatPanelView
       objectReference: {fileID: 0}
     - target: {fileID: 7245032890507791707, guid: c7f35dcce50884d818210cca5e1b04cc, type: 3}
       propertyPath: m_IsActive
@@ -776,7 +776,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7245032890507791707, guid: 2094a6064a6222d46a90a318ff436ff3, type: 3}
       propertyPath: m_Name
-      value: SceneVoiceChatTitleBar_Container
+      value: SceneVoiceChatPanelView
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -889,7 +889,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5194753869922647235, guid: d863791227c6640739243f8c4cf57b56, type: 3}
       propertyPath: m_Name
-      value: VoiceChatTitleBarsContainer
+      value: PrivateVoiceChatView
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

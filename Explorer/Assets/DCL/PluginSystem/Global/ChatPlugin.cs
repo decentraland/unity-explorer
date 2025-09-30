@@ -77,19 +77,18 @@ namespace DCL.PluginSystem.Global
         private readonly CommunityDataService communityDataService;
         private readonly ISpriteCache thumbnailCache;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private ChatController_OBSOLETE_OLD_CHAT chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
-        private ChatSharedAreaController chatSharedAreaController;
-        private PrivateConversationUserStateService? chatUserStateService;
-        private ChatHistoryService? chatBusListenerService;
-        private CommunityUserStateService communityUserStateService;
         private readonly Transform chatViewRectTransform;
         private readonly IEventBus eventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
 
-        private CommandRegistry commandRegistry;
+        private ChatSharedAreaController? chatSharedAreaController;
+        private PrivateConversationUserStateService? chatUserStateService;
+        private ChatHistoryService? chatBusListenerService;
+        private CommunityUserStateService? communityUserStateService;
+        private CommandRegistry? commandRegistry;
         private ChatPanelPresenter? chatPanelPresenter;
 
         public ChatPlugin(
@@ -192,7 +191,7 @@ namespace DCL.PluginSystem.Global
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
-                string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
+                string walletAddress = web3IdentityCache.Identity?.Address ?? string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
@@ -329,9 +328,9 @@ namespace DCL.PluginSystem.Global
         private void OnIdentityCleared()
         {
             ReportHub.Log(ReportData.UNSPECIFIED, "ChatPlugin.OnIdentityCleared");
-            commandRegistry.ResetChat.Execute();
+            commandRegistry?.ResetChat.Execute();
 
-            if (chatSharedAreaController.IsVisibleInSharedSpace)
+            if (chatSharedAreaController != null && chatSharedAreaController.IsVisibleInSharedSpace)
                 chatSharedAreaController.HideViewAsync(CancellationToken.None).Forget();
         }
 
@@ -352,6 +351,8 @@ namespace DCL.PluginSystem.Global
                 chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.EnsuredIdentity().Address);
 
                 // STEP 2: RESTART BACKGROUND SERVICES
+                if (commandRegistry == null) return;
+
                 await commandRegistry.RestartChatServices.ExecuteAsync(ct);
                 ct.ThrowIfCancellationRequested();
 

@@ -2,14 +2,13 @@ using DCL.Audio;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DG.Tweening;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatView : MonoBehaviour
+    public class PrivateVoiceChatView : MonoBehaviour
     {
         private const float SHOW_HIDE_ANIMATION_DURATION = 0.5f;
 

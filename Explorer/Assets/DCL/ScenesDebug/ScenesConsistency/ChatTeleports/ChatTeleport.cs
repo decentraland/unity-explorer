@@ -9,9 +9,9 @@ namespace DCL.ScenesDebug.ScenesConsistency.ChatTeleports
 {
     public class ChatTeleport : IChatTeleport
     {
-        private readonly IDelayedResource<ChatView> chatViewResource;
+        private readonly IDelayedResource<ChatPanelView> chatViewResource;
 
-        public ChatTeleport(IDelayedResource<ChatView> chatViewResource)
+        public ChatTeleport(IDelayedResource<ChatPanelView> chatViewResource)
         {
             this.chatViewResource = chatViewResource;
         }
@@ -21,9 +21,8 @@ namespace DCL.ScenesDebug.ScenesConsistency.ChatTeleports
 
         public void GoTo(Vector2Int coordinate)
         {
-            ChatView view = chatViewResource.DangerousResource().EnsureNotNull();
-            view.InputBoxText = $"/{ChatCommandsUtils.COMMAND_GOTO} {coordinate.x},{coordinate.y}";
-            view.SubmitInput();
+            ChatPanelView view = chatViewResource.DangerousResource().EnsureNotNull();
+            view.InputView.DebugInsertTextAndSubmit($"/{ChatCommandsUtils.COMMAND_GOTO} {coordinate.x},{coordinate.y}");
         }
     }
 }

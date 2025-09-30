@@ -9,7 +9,7 @@ using Utility;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
-    public class CommunityVoiceChatTitlebarView : MonoBehaviour
+    public class CommunityVoiceChatPanelView : MonoBehaviour
     {
         private const float SHOW_HIDE_ANIMATION_DURATION = 0.5f;
 
