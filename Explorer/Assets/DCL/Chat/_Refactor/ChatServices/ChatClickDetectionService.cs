@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
-using UnityEngine.Pool;
 
 namespace DCL.Chat.ChatServices
 {
@@ -13,7 +11,6 @@ namespace DCL.Chat.ChatServices
         public event Action? OnClickOutside;
 
         private readonly RectTransform targetArea;
-        private readonly Canvas? rootCanvas;
         private readonly HashSet<Transform> ignoredElementsSet;
 
         private bool isPaused;
@@ -21,15 +18,7 @@ namespace DCL.Chat.ChatServices
         public ChatClickDetectionService(Transform targetArea, params Transform[] ignoredElements)
         {
             this.targetArea = (RectTransform)targetArea;
-            rootCanvas = this.targetArea.GetComponentInParent<Canvas>();
             ignoredElementsSet = new HashSet<Transform>(ignoredElements);
-
-            DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
-        }
-
-        public void Dispose()
-        {
-            DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
         }
 
         public void Pause() =>
@@ -38,25 +27,21 @@ namespace DCL.Chat.ChatServices
         public void Resume() =>
             isPaused = false;
 
-        private void HandleGlobalClick(InputAction.CallbackContext context)
+        public void ProcessRaycastResults(IReadOnlyList<RaycastResult> results)
         {
-            if (EventSystem.current == null) return;
             if (isPaused) return;
-        
-            var eventData = new PointerEventData(EventSystem.current)
+
+            if (results.Count == 0)
             {
-                position = GetPointerPosition(context)
-            };
-        
-            using PooledObject<List<RaycastResult>> _ = ListPool<RaycastResult>.Get(out List<RaycastResult>? results);
-        
-            EventSystem.current.RaycastAll(eventData, results);
-        
-            if (results.Count > 0 && IsIgnored(results[0].gameObject))
+                OnClickOutside?.Invoke();
                 return;
-        
+            }
+
+            if (IsIgnored(results[0].gameObject))
+                return;
+
             var clickedInside = false;
-        
+
             foreach (RaycastResult result in results)
             {
                 if (result.gameObject.transform.IsChildOf(targetArea))
@@ -65,39 +50,32 @@ namespace DCL.Chat.ChatServices
                     break;
                 }
             }
-        
+
             if (clickedInside) OnClickInside?.Invoke();
             else OnClickOutside?.Invoke();
         }
-        
+
         private bool IsIgnored(GameObject clickedObject)
         {
             if (clickedObject == null) return false;
-        
+
             Transform current = clickedObject.transform;
-        
+
             while (current != null)
             {
                 if (ignoredElementsSet.Contains(current))
                     return true;
-        
+
                 if (current == targetArea)
                     return false;
-        
+
                 current = current.parent;
             }
-        
+
             return false;
         }
-        
-        private static Vector2 GetPointerPosition(InputAction.CallbackContext ctx)
-        {
-            if (ctx.control is Pointer pCtrl) return pCtrl.position.ReadValue();
-            if (Pointer.current != null) return Pointer.current.position.ReadValue();
-            if (Mouse.current != null) return Mouse.current.position.ReadValue();
-            if (Touchscreen.current?.primaryTouch != null)
-                return Touchscreen.current.primaryTouch.position.ReadValue();
-            return Vector2.zero;
-        }
+
+        public void Dispose()
+        { }
     }
 }
