@@ -54,7 +54,6 @@ namespace DCL.Settings.Configuration
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
             VolumeBus volumeBus)
@@ -74,7 +73,7 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer, chatSettingsAsset),
                 DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
                 DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
-                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance, voiceChatSettings),
+                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

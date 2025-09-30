@@ -106,6 +106,7 @@ using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.NotificationsBus;
+using DCL.PerformanceAndDiagnostics;
 using Global.Versioning;
 using DCL.UI.ProfileElements;
 using UnityEngine;
@@ -925,7 +926,8 @@ namespace Global.Dynamic
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
                         assetsProvisioner,
-                        chatSharedAreaEventBus)
+                        chatSharedAreaEventBus,
+                        debugBuilder)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
