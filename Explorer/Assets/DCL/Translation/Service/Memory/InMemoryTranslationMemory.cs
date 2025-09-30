@@ -27,7 +27,8 @@ namespace DCL.Translation.Service
 
                     // And use that ID to remove the corresponding entry from the dictionary.
                     memory.Remove(oldestMessageId);
-                    ReportHub.Log(ReportCategory.TRANSLATE, $"Removed oldest translation with ID: {oldestMessageId} to maintain memory size.");
+                    ReportHub.Log(ReportCategory.TRANSLATE,
+                        $"Removed oldest translation with ID: {oldestMessageId} to maintain memory size.");
                 }
 
                 // Add the new message ID to the end of the queue.

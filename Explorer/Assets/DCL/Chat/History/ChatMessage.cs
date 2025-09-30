@@ -24,7 +24,6 @@ namespace DCL.Chat.History
         public readonly DateTime? SentTimestamp;
 
         public ChatMessage(
-            string messageId,
             string message,
             string senderValidatedName,
             string senderWalletAddress,
@@ -51,8 +50,7 @@ namespace DCL.Chat.History
         }
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
-            new (chatMessage.MessageId,
-                newMessage,
+            new ( newMessage,
                 chatMessage.SenderValidatedName,
                 chatMessage.SenderWalletAddress,
                 chatMessage.IsSentByOwnUser,
@@ -62,7 +60,7 @@ namespace DCL.Chat.History
                 false);
 
         public static ChatMessage NewFromSystem(string message) =>
-            new (Guid.NewGuid().ToString(),message, DCL_SYSTEM_SENDER, string.Empty, true,
+            new (message, DCL_SYSTEM_SENDER, string.Empty, true,
                 null, DateTime.UtcNow.ToOADate(), false, true);
 
         public bool Equals(ChatMessage other) => MessageId == other.MessageId;

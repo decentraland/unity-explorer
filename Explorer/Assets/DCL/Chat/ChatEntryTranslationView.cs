@@ -8,21 +8,21 @@ namespace DCL.Chat
 {
     public class ChatEntryTranslationView : MonoBehaviour
     {
-        public Button ButtonTranslate;
-        public Button ButtonSeeOriginal;
-        public RectTransform LoadingSpinnerContainer;
-        public Image LoadingSpinnerImage;
-        public GameObject TranslationFailedContainer;
+        public Button? buttonTranslate;
+        public Button? buttonSeeOriginal;
+        public RectTransform? loadingSpinnerContainer;
+        public Image? loadingSpinnerImage;
+        public GameObject? translationFailedContainer;
 
-        public event Action OnTranslateClicked;
-        public event Action OnSeeOriginalClicked;
+        public event Action? OnTranslateClicked;
+        public event Action? OnSeeOriginalClicked;
 
-        private Tween translatingAnimation;
+        private Tween? translatingAnimation;
 
         private void Awake()
         {
-            ButtonTranslate.onClick.AddListener(() => OnTranslateClicked?.Invoke());
-            ButtonSeeOriginal.onClick.AddListener(() => OnSeeOriginalClicked?.Invoke());
+            buttonTranslate?.onClick.AddListener(() => OnTranslateClicked?.Invoke());
+            buttonSeeOriginal?.onClick.AddListener(() => OnSeeOriginalClicked?.Invoke());
             translatingAnimation?.Kill();
         }
 
@@ -34,38 +34,41 @@ namespace DCL.Chat
         public void SetState(TranslationState state)
         {
             translatingAnimation?.Kill();
-            LoadingSpinnerImage.fillAmount = 0;
-            LoadingSpinnerImage.fillClockwise = true;
-            
-            // Reset all states first
-            ButtonTranslate.gameObject.SetActive(false);
-            ButtonSeeOriginal.gameObject.SetActive(false);
-            LoadingSpinnerContainer.gameObject.SetActive(false);
-            TranslationFailedContainer.SetActive(false);
-
-            switch (state)
+            if (loadingSpinnerImage != null)
             {
-                case TranslationState.Original:
-                    ButtonTranslate.gameObject.SetActive(true);
-                    break;
-                case TranslationState.Failed:
-                    ButtonTranslate.gameObject.SetActive(true);
-                    TranslationFailedContainer.SetActive(true);
-                    break;
+                loadingSpinnerImage.fillAmount = 0;
+                loadingSpinnerImage.fillClockwise = true;
 
-                case TranslationState.Pending:
-                    LoadingSpinnerContainer.gameObject.SetActive(true);
-                    translatingAnimation = DOTween.Sequence()
-                        .Append(LoadingSpinnerImage.DOFillAmount(1f, 0.8f).SetEase(Ease.InOutCubic))
-                        .AppendCallback(() => { LoadingSpinnerImage.fillClockwise = false; })
-                        .Append(LoadingSpinnerImage.DOFillAmount(0f, 0.8f).SetEase(Ease.InOutCubic))
-                        .AppendCallback(() => { LoadingSpinnerImage.fillClockwise = true; })
-                        .SetLoops(-1, LoopType.Restart);
-                    break;
+                // Reset all states first
+                buttonTranslate?.gameObject.SetActive(false);
+                buttonSeeOriginal?.gameObject.SetActive(false);
+                loadingSpinnerContainer?.gameObject.SetActive(false);
+                translationFailedContainer?.SetActive(false);
 
-                case TranslationState.Success:
-                    ButtonSeeOriginal.gameObject.SetActive(true);
-                    break;
+                switch (state)
+                {
+                    case TranslationState.Original:
+                        buttonTranslate?.gameObject.SetActive(true);
+                        break;
+                    case TranslationState.Failed:
+                        buttonTranslate?.gameObject.SetActive(true);
+                        translationFailedContainer?.SetActive(true);
+                        break;
+
+                    case TranslationState.Pending:
+                        loadingSpinnerContainer?.gameObject.SetActive(true);
+                        translatingAnimation = DOTween.Sequence()
+                            .Append(loadingSpinnerImage.DOFillAmount(1f, 0.8f).SetEase(Ease.InOutCubic))
+                            .AppendCallback(() => { loadingSpinnerImage.fillClockwise = false; })
+                            .Append(loadingSpinnerImage.DOFillAmount(0f, 0.8f).SetEase(Ease.InOutCubic))
+                            .AppendCallback(() => { loadingSpinnerImage.fillClockwise = true; })
+                            .SetLoops(-1, LoopType.Restart);
+                        break;
+
+                    case TranslationState.Success:
+                        buttonSeeOriginal?.gameObject.SetActive(true);
+                        break;
+                }
             }
         }
     }
