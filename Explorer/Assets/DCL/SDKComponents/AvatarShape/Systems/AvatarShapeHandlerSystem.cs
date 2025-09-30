@@ -129,7 +129,10 @@ namespace ECS.Unity.AvatarShape.Systems
                 // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
                 // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
                 if (!emoteId.ToLower().EndsWith(SCENE_EMOTE_NAMING))
+                {
+                    ReportHub.LogError(ReportCategory.EMOTE, $"'{emoteId}' scene emote cannot be played. It must follow the naming convention ending in '{SCENE_EMOTE_NAMING}'");
                     return;
+                }
 
                 if (sdkAvatarShapeComponent.LocalSceneEmotePromise.HasValue)
                     sdkAvatarShapeComponent.LocalSceneEmotePromise.Value.ForgetLoading(globalWorld);
