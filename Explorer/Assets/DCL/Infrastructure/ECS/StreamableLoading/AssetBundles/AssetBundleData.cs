@@ -82,17 +82,35 @@ namespace ECS.StreamableLoading.AssetBundles
             if(Asset && Asset != null) Asset.UnloadAsync(unloadAllLoadedObjects: true);
         }
 
-        public T GetSingleAsset<T>(string assetName = "") where T : Object
+        /// <summary>
+        /// Get an asset loaded from the asset bundle.
+        /// </summary>
+        /// <param name="assetName">Asset to be requested. If its empty, the first asset loaded will be returned</param>
+        /// <typeparam name="T">Type of the asset to load</typeparam>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">Describes the failling situation</exception>
+        public T GetAsset<T>(string assetName = "") where T : Object
         {
-            if(assets.Count > 1)
-                throw new ArgumentException($"Requested a single asset on a multiple asset Asset Bundle {AssetBundleName}");
+            AssetInfo assetInfo;
 
-            if(assets.Count == 0)
-                throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName}");;
+            if (string.IsNullOrEmpty(assetName))
+            {
+                if (assets.Count > 1)
+                    throw new ArgumentException($"Requested a single asset on a multiple asset Asset Bundle {AssetBundleName}");
 
-            AssetInfo assetInfo = assets.FirstValueOrDefaultNonAlloc();
+                if (assets.Count == 0)
+                    throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName}");
 
-            Assert.IsNotNull(assetInfo.AssetType, $"GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified for Asset Bundle {AssetBundleName}");
+                assetInfo = assets.FirstValueOrDefaultNonAlloc();
+            }
+            else
+            {
+                if (!assets.TryGetValue(assetName, out assetInfo))
+                    throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName} with name {assetName}");
+            }
+
+            Assert.IsNotNull(assetInfo.AssetType,
+                $"GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified for Asset Bundle {AssetBundleName}");
 
             if (assetInfo.AssetType != typeof(T))
                 throw new ArgumentException($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {AssetBundleName}");
@@ -114,19 +132,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 AssetInfo assetInfo = assets[assetName];
                 return assetInfo.Description;
             }
-        }
-
-        public T GetAsset<T>(string name) where T: Object
-        {
-            bool tryGetAsset = assets.TryGetValue(name, out AssetInfo assetInfo);
-
-            if(!tryGetAsset)
-                throw new ArgumentException("Requested an asset that is not part of the asset bundle for Asset Bundle {Asset.name}");;
-
-            if (assetInfo.AssetType != typeof(T))
-                throw new ArgumentException($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {Asset.name}");;
-
-            return (T)assetInfo.Asset!;
         }
 
     }

@@ -71,7 +71,7 @@ namespace DCL.LOD.Systems
             {
                 if (result.Succeeded)
                 {
-                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetSingleAsset<GameObject>(),
+                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetAsset<GameObject>(),
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
                     var newLod = new LODAsset(instantiatedLOD, result.Asset,
