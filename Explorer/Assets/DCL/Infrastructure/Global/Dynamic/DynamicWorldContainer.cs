@@ -17,6 +17,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard.Members;
@@ -105,6 +106,7 @@ using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.NotificationsBus;
+using DCL.PerformanceAndDiagnostics;
 using Global.Versioning;
 using DCL.UI.ProfileElements;
 using UnityEngine;
@@ -292,6 +294,8 @@ namespace Global.Dynamic
             ISystemClipboard clipboard = new UnityClipboard();
             NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
+
+            ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
 
@@ -764,7 +768,8 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     voiceChatContainer.VoiceChatOrchestrator,
                     mainUIView.SidebarView.unreadMessagesButton.transform,
-                    eventBus),
+                    eventBus,
+                    chatSharedAreaEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -927,6 +932,7 @@ namespace Global.Dynamic
                         communitiesDataProvider,
                         staticContainer.WebRequestsContainer.WebRequestController,
                         assetsProvisioner,
+                        chatSharedAreaEventBus,
                         debugBuilder)
                 );
 

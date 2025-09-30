@@ -36,6 +36,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
+using DCL.ChatArea;
 using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -78,7 +79,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesEventBus communitiesEventBus;
         private ChatController_OBSOLETE_OLD_CHAT chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
-        private ChatMainController chatMainController;
+        private ChatSharedAreaController chatSharedAreaController;
         private PrivateConversationUserStateService? chatUserStateService;
         private ChatHistoryService? chatBusListenerService;
         private CommunityUserStateService communityUserStateService;
@@ -86,8 +87,10 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
+        private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
 
         private CommandRegistry commandRegistry;
+        private ChatPanelPresenter? chatPanelPresenter;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -120,7 +123,8 @@ namespace DCL.PluginSystem.Global
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             Transform chatViewRectTransform,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            ChatSharedAreaEventBus chatSharedAreaEventBus)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -157,6 +161,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataService = communityDataService;
             this.chatViewRectTransform = chatViewRectTransform;
             this.eventBus = eventBus;
+            this.chatSharedAreaEventBus = chatSharedAreaEventBus;
 
             pluginCts = new CancellationTokenSource();
         }
@@ -167,6 +172,7 @@ namespace DCL.PluginSystem.Global
             chatBusListenerService?.Dispose();
             chatUserStateService?.Dispose();
             communityUserStateService?.Dispose();
+            chatPanelPresenter?.Dispose();
             pluginScope.Dispose();
 
             pluginCts.Cancel();
@@ -267,38 +273,45 @@ namespace DCL.PluginSystem.Global
 
             pluginScope.Add(commandRegistry);
 
-            chatMainController = new ChatMainController(
+            // Create ChatPanelPresenter
+            chatPanelPresenter = new ChatPanelPresenter(
+                mainUIView.ChatMainView.ChatPanelView,
+                hyperlinkTextFormatter,
+                voiceChatOrchestrator,
+                currentChannelService,
+                communityDataProvider,
+                chatConfig,
+                chatEventBus,
+                chatHistory,
+                communityDataService,
+                chatMemberService,
+                profileRepositoryWrapper,
+                commandRegistry,
+                chatInputBlockingService,
+                eventBus,
+                chatContextMenuService,
+                chatClickDetectionService,
+                chatSharedAreaEventBus
+            );
+
+            chatSharedAreaController = new ChatSharedAreaController(
                 () =>
                 {
-                    ChatMainView? view = mainUIView.ChatMainView;
+                    ChatSharedAreaView? view = mainUIView.ChatMainView;
                     view.gameObject.SetActive(false);
                     return view;
                 },
-                chatConfig,
-                eventBus,
                 mvcManager,
-                chatEventBus,
-                currentChannelService,
-                chatInputBlockingService,
-                commandRegistry,
-                chatHistory,
-                profileRepositoryWrapper,
-                chatMemberService,
-                chatContextMenuService,
-                communityDataService,
-                chatClickDetectionService,
-                voiceChatOrchestrator,
-                communityDataProvider,
-                hyperlinkTextFormatter
+                chatSharedAreaEventBus
             );
 
             chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig, settings.ChatSettingsAsset);
 
-            pluginScope.Add(chatMainController);
+            pluginScope.Add(chatSharedAreaController);
             pluginScope.Add(chatWorldBubbleService);
 
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
-            mvcManager.RegisterController(chatMainController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatSharedAreaController);
+            mvcManager.RegisterController(chatSharedAreaController);
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
@@ -318,8 +331,8 @@ namespace DCL.PluginSystem.Global
             ReportHub.Log(ReportData.UNSPECIFIED, "ChatPlugin.OnIdentityCleared");
             commandRegistry.ResetChat.Execute();
 
-            if (chatMainController.IsVisibleInSharedSpace)
-                chatMainController.HideViewAsync(CancellationToken.None).Forget();
+            if (chatSharedAreaController.IsVisibleInSharedSpace)
+                chatSharedAreaController.HideViewAsync(CancellationToken.None).Forget();
         }
 
         private void OnIdentityChanged()
