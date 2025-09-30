@@ -18,5 +18,7 @@ namespace DCL.UI
         public static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
         public static readonly int ACTIVE = Animator.StringToHash("Active");
         public static readonly int TO_OTHER = Animator.StringToHash("Different");
+        public static readonly int EMPTY = Animator.StringToHash( "Empty");
+
     }
 }
