@@ -141,24 +141,6 @@ MonoBehaviour:
   m_Active: 0
   m_Settings:
     settings: {fileID: 11400000, guid: fb981fee23899ef4eacd98e0c788b4e0, type: 2}
---- !u!114 &-898193905022782589
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7fec970849e34d64594738fe00927fa0, type: 3}
-  m_Name: SkyboxToCubemapRendererFeature
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  settings:
-    skyBoxShader: {fileID: -6465566751694194690, guid: de77f9af132836c4785b35f15d16e564, type: 3}
-    dimensions: 256
-    executeInEditMode: 0
-    assignAsReflectionProbe: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -188,13 +170,16 @@ MonoBehaviour:
   - {fileID: -2161158766388826272}
   - {fileID: -8887782192993502672}
   - {fileID: 6470208710530210403}
+  - {fileID: -3253943072471734078}
   - {fileID: 8547050541902374763}
-  - {fileID: -898193905022782589}
-  m_RendererFeatureMap: 6bc2d8d6ccc7f618602f2c628d0502e2307a94592f41a884639acaa58accca596ba766032f399d768333b2f766f988f3
+  m_RendererFeatureMap: 6bc2d8d6ccc7f618602f2c628d0502e2307a94592f41a884639acaa58accca59c2a8fa0504acd7d26ba766032f399d76
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
-  m_AssetVersion: 2
+  m_AssetVersion: 3
+  m_PrepassLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   m_OpaqueLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295

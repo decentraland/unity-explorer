@@ -384,6 +384,16 @@ MonoBehaviour:
       Severity: 1
     - Category: ASSET_BUNDLES
       Severity: 0
+    - Category: LIVEKIT
+      Severity: 0
+    - Category: VOICE_CHAT
+      Severity: 0
+    - Category: AUDIO
+      Severity: 0
+    - Category: COMMUNITY_VOICE_CHAT
+      Severity: 0
+    - Category: DEBUG
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
