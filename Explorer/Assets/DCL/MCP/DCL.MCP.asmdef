@@ -1,0 +1,24 @@
+{
+  "name": "DCL.MCP",
+  "rootNamespace": "DCL.MCP",
+  "references": [
+    "GUID:f51ebe6a0ceec4240a699833d6309b23",
+    "GUID:6055be8ebefd69e48b49212b09b47b2f",
+    "GUID:5f1f7a712cc83d449b798f89168f4fb7",
+    "GUID:593a5b492d29ac6448b1ebf7f035ef33",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Fleck.dll",
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+
