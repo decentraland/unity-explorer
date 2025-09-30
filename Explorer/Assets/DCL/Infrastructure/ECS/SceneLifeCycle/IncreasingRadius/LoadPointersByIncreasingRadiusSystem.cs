@@ -113,16 +113,25 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 // TODO REMOVE AFTER TESTS
                 // totalParcelsPreFilter++;
 
-                if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize
-                    && parcelFilteringService.ShouldIncludeParcel(parcelInfo.Parcel))
+                if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
-                    sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
-                    input.Add(parcelInfo.Parcel);
+                    if (parcelFilteringService.IsEmptyParcel(parcelInfo.Parcel))
+                    {
+                        processedScenePointers.Value.Add(parcelInfo.Parcel);
+                        World.Create(SceneUtils.CreateEmptyScene(parcelInfo.Parcel.ToVector2Int(), sceneReadinessReportQueue, scenesCache));
+                    }
+
+                    if (parcelFilteringService.ShouldIncludeParcel(parcelInfo.Parcel))
+                    {
+                        sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
+                        input.Add(parcelInfo.Parcel);
+
+                        // TODO REMOVE AFTER TESTS
+                        // totalParcelsFiltered++;
+                    }
+
                     parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
                     flatArray[i] = parcelInfo;
-
-                    // TODO REMOVE AFTER TESTS
-                    // totalParcelsFiltered++;
                 }
                 else
                 {
@@ -185,12 +194,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
 
                 // Empty parcels = parcels for which no scene pointers were retrieved
-                for (var i = 0; i < requestedList.Count; i++)
-                {
-                    int2 parcel = requestedList[i];
-                    if (!processedScenePointers.Value.Add(parcel)) continue;
-                    World.Create(SceneUtils.CreateEmptyScene(parcel.ToVector2Int(), sceneReadinessReportQueue, scenesCache));
-                }
+                // for (var i = 0; i < requestedList.Count; i++)
+                // {
+                //     int2 parcel = requestedList[i];
+                //     if (!processedScenePointers.Value.Add(parcel)) continue;
+                //     World.Create(SceneUtils.CreateEmptyScene(parcel.ToVector2Int(), sceneReadinessReportQueue, scenesCache));
+                // }
             }
             else
             {

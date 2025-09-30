@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enabled: 1
   excludeEmptyParcels: 1
-  excludeRoadParcels: 1
+  excludeRoadParcels: 0
   excludeOccupiedParcels: 0
