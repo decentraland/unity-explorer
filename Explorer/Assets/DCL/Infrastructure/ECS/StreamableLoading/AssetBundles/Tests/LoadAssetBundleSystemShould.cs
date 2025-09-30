@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             // Unload the bundle so we load it again, otherwise it throws an exception
             if (promise.Result is { Succeeded: true })
-                promise.Result.Value.Asset.AssetBundle.Unload(true);
+                ((AssetBundle)promise.Result.Value.Asset).Unload(true);
         }
 
         private string successPath => $"file://{Application.dataPath + "/../TestResources/AssetBundles/bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda"}";

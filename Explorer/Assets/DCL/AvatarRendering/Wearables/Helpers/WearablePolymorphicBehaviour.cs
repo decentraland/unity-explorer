@@ -276,7 +276,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             switch (wearable.Type)
             {
                 case WearableType.FacialFeature:
-                    return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetMainAsset<Texture>(), result.Asset));
+                    return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetSingleAsset<Texture>(), result.Asset));
                 default:
                     return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
             }
@@ -301,7 +301,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
         {
-            GameObject go = result.Asset!.GetMainAsset<GameObject>();
+            GameObject go = result.Asset!.GetSingleAsset<GameObject>();
 
             // collect all renderers
             List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();

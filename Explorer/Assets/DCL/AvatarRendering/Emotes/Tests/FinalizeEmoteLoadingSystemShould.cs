@@ -269,7 +269,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, bodyShape, out AssetBundlePromise promise);
 
             // Mocking promise result
-            var assetBundleData = new AssetBundleData(null, null, mockGameObject, null);
+            var assetBundleData = new AssetBundleData(null, null, new []{mockGameObject}, null);
             var promiseResult = new StreamableLoadingResult<AssetBundleData>(assetBundleData);
             world.Add(promise.Entity, promiseResult);
 
@@ -302,7 +302,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity emoteEntity = CreateEmoteEntityWithPromise<AssetBundleData, GetAssetBundleIntention>(mockEmote, intention, loadingBodyShape, out AssetBundlePromise promise);
             Entity resultHolderEntity = promise.Entity;
 
-            var assetBundleData = new AssetBundleData(null, null, mockGameObject, null);
+            var assetBundleData = new AssetBundleData(null, null, new []{mockGameObject}, null);
             world.Add(resultHolderEntity, new StreamableLoadingResult<AssetBundleData>(assetBundleData));
 
             system.Update(0);

@@ -148,7 +148,7 @@ namespace DCL.LOD.Tests
                 GetAssetBundleIntention.FromHash(typeof(GameObject), "Cube"),
                 new PartitionComponent());
 
-            var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
+            var fakeAssetBundleData = new AssetBundleData(null, null, new []{GameObject.CreatePrimitive(PrimitiveType.Cube)},
                 new AssetBundleData[]
                     { });
 

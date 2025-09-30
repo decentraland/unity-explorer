@@ -34,7 +34,7 @@ namespace ECS.Unity.GLTFContainer.Tests
     {
         private readonly GltfContainerTestResources resources = new ();
 
-        private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
+        private CreateGltfAssetFromAssetBundleSystemWorld createGltfAssetFromAssetBundleSystem;
         private EntityEventBuffer<GltfContainerComponent> eventBuffer;
 
         [SetUp]
@@ -53,7 +53,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystemWorld(world, budget, budget);
         }
 
         [TearDown]

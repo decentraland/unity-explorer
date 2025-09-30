@@ -73,7 +73,7 @@ namespace DCL.AvatarRendering.Loading.Assets
         public string GetInstanceName()
         {
             var assetBundleData = assetData as AssetBundleData;
-            return assetBundleData != null ? assetBundleData.GetInstanceName() : $"NOT_AB_{MainAsset.name}";
+            return assetBundleData != null ? assetBundleData.GetAssetDescription() : $"NOT_AB_{MainAsset.name}";
         }
     }
 

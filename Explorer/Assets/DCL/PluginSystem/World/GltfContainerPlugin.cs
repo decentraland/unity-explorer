@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.World
             if (localSceneDevelopment && !useRemoteAssetBundles)
                 CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
             else
-                CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
+                CreateGltfAssetFromAssetBundleSystemWorld.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
 
             // GLTF Node Modifier Systems
             SetupGltfNodeModifierSystem.InjectToWorld(ref builder);

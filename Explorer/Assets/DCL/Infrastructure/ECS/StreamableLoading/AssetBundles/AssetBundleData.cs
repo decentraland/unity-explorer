@@ -1,6 +1,8 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiling;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -14,30 +16,26 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
-        private readonly Object? mainAsset;
-        private readonly Type? assetType;
-
-        internal AssetBundle AssetBundle => Asset;
-
-        public readonly AssetBundleData[] Dependencies;
-
-        public readonly AssetBundleMetrics? Metrics;
-
-        private readonly string description;
-
+        private Dictionary<string, AssetInfo> assets;
+        private readonly string AssetBundleName;
 
         private bool unloaded;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+
+        public readonly AssetBundleData[] Dependencies;
+        public readonly AssetBundleMetrics? Metrics;
+
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object[] loadedAssets, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
 
-            this.mainAsset = mainAsset;
-            Dependencies = dependencies;
-            this.assetType = assetType;
+            assets = new Dictionary<string, AssetInfo>();
+            for (var i = 0; i < loadedAssets.Length; i++)
+                assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType, version, source);
 
-            description = $"AB:{AssetBundle?.name}_{version}_{source}";
+            Dependencies = dependencies;
+            AssetBundleName = assetBundle.name;
             UnloadAB();
         }
 
@@ -45,14 +43,11 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             //Dependencies cant be unloaded, since we dont know who will need them =(
             Metrics = metrics;
-
-            this.mainAsset = null;
-            this.assetType = null;
             Dependencies = dependencies;
         }
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
-        : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies)
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object[] loadedAssets, AssetBundleData[] dependencies)
+        : this(assetBundle, metrics, loadedAssets, typeof(GameObject), dependencies)
         {
         }
 
@@ -70,7 +65,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (unloaded)
                 return;
             unloaded = true;
-            AssetBundle?.UnloadAsync(false);
+            Asset?.UnloadAsync(false);
         }
 
         protected override void DestroyObject()
@@ -78,23 +73,86 @@ namespace ECS.StreamableLoading.AssetBundles
             foreach (AssetBundleData child in Dependencies)
                 child.Dereference();
 
-            if(mainAsset!=null)
-                Object.DestroyImmediate(mainAsset, true);
+            foreach (AssetInfo assetsValue in assets.Values)
+                Object.DestroyImmediate(assetsValue.Asset, true);
+
+            assets = null;
 
             if (unloaded) return;
-            if(AssetBundle && AssetBundle != null) AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
+            if(Asset && Asset != null) Asset.UnloadAsync(unloadAllLoadedObjects: true);
         }
 
-        public T GetMainAsset<T>() where T : Object
+        public T GetSingleAsset<T>(string assetName = "") where T : Object
         {
-            Assert.IsNotNull(assetType, "GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified");
+            if(assets.Count > 1)
+                throw new ArgumentException($"Requested a single asset on a multiple asset Asset Bundle {AssetBundleName}");
 
-            if (assetType != typeof(T))
-                throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
-            return (T)mainAsset!;
+            if(assets.Count == 0)
+                throw new ArgumentException($"No assets were loaded for Asset Bundle {AssetBundleName}");;
+
+            AssetInfo assetInfo = assets.FirstValueOrDefaultNonAlloc();
+
+            Assert.IsNotNull(assetInfo.AssetType, $"GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified for Asset Bundle {AssetBundleName}");
+
+            if (assetInfo.AssetType != typeof(T))
+                throw new ArgumentException($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {AssetBundleName}");
+
+            return (T)assetInfo.Asset!;
         }
 
-        public string GetInstanceName() => description;
+        public string GetAssetDescription(string assetName = "")
+        {
+            //validations where done when the asset was requested
 
+            if (string.IsNullOrEmpty(assetName))
+            {
+                AssetInfo assetInfo = assets.FirstValueOrDefaultNonAlloc();
+                return assetInfo.Description;
+            }
+            else
+            {
+                AssetInfo assetInfo = assets[assetName];
+                return assetInfo.Description;
+            }
+        }
+
+        public T GetAsset<T>(string name) where T: Object
+        {
+            bool tryGetAsset = assets.TryGetValue(name, out AssetInfo assetInfo);
+
+            if(!tryGetAsset)
+                throw new ArgumentException("Requested an asset that is not part of the asset bundle for Asset Bundle {Asset.name}");;
+
+            if (assetInfo.AssetType != typeof(T))
+                throw new ArgumentException($"Asset type mismatch: {typeof(T)} != {assetInfo.AssetType} for Asset Bundle {Asset.name}");;
+
+            return (T)assetInfo.Asset!;
+        }
+
+    }
+}
+
+public struct AssetInfo
+{
+    public Object Asset { get; }
+    public Type AssetType { get; }
+    public string Description { get; }
+
+    public AssetInfo(Object asset, Type assetType, string version, string source)
+    {
+        Asset = asset;
+        AssetType = assetType;
+        Description = $"AB:{Asset?.name}_{version}_{source}";
+    }
+}
+
+public static class DictionaryExtensions
+{
+    public static TValue FirstValueOrDefaultNonAlloc<TKey, TValue>(this Dictionary<TKey, TValue> dict)
+    {
+        foreach (var value in dict.Values)
+            return value;
+
+        return default;
     }
 }

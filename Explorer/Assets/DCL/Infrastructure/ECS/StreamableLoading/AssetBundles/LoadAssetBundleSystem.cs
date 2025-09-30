@@ -157,48 +157,29 @@ namespace ECS.StreamableLoading.AssetBundles
                     throw new AssetBundleContainsShaderException(assetBundle.name);
             }
 
-            Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, hasMultipleAssets, ct);
+            Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, hasMultipleAssets, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,
                 source: source));
         }
 
-        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
+        private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
             bool hasMultipleAssets, CancellationToken ct)
         {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
-
             AssetBundleRequest? asyncOp;
-            if (hasMultipleAssets)
-            {
+
+            if(objectType == null)
                 asyncOp = assetBundle.LoadAllAssetsAsync();
-            }
             else
-            {
-                asyncOp  = !string.IsNullOrEmpty(mainAsset)
-                    ? assetBundle.LoadAssetAsync(mainAsset)
-                    : assetBundle.LoadAllAssetsAsync(objectType);
-            }
-
-
+                asyncOp = assetBundle.LoadAllAssetsAsync(objectType);
 
             await asyncOp.WithCancellation(ct);
-
             Object[]? assets = asyncOp.allAssets;
 
-            switch (assets.Length)
-            {
-                case 0:
-                    throw new AssetBundleMissingMainAssetException(assetBundle.name, objectType);
-                case > 1:
-                    if (!hasMultipleAssets)
-                        ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
-                    break;
-            }
-
-            return assets[0];
+            return assets;
         }
 
         private async UniTask<AssetBundleData> WaitForDependencyAsync(
