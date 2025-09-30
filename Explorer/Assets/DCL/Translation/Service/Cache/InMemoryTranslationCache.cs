@@ -5,7 +5,9 @@ namespace DCL.Translation.Service
 {
     public class InMemoryTranslationCache : ITranslationCache
     {
+        private const int MAX_SIZE = 200;
         private readonly Dictionary<string, TranslationResult> cache = new ();
+        private readonly Queue<string> insertionOrder = new ();
 
         private string GetKey(string messageId, LanguageCode targetLang)
         {
@@ -19,7 +21,21 @@ namespace DCL.Translation.Service
 
         public void Set(string messageId, LanguageCode targetLang, TranslationResult result)
         {
-            cache[GetKey(messageId, targetLang)] = result;
+            string key = GetKey(messageId, targetLang);
+
+            if (!cache.ContainsKey(key))
+            {
+                if (insertionOrder.Count >= MAX_SIZE)
+                {
+                    string oldestKey = insertionOrder.Dequeue();
+
+                    cache.Remove(oldestKey);
+                }
+
+                insertionOrder.Enqueue(key);
+            }
+
+            cache[key] = result;
         }
     }
 }

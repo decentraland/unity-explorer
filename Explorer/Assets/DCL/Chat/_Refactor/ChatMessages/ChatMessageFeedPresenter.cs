@@ -35,7 +35,6 @@ namespace DCL.Chat.ChatMessages
         private readonly ITranslationSettings translationSettings;
         private readonly TranslateMessageCommand translateMessageCommand;
         private readonly RevertToOriginalCommand revertToOriginalCommand;
-        private readonly CopyMessageCommand copyMessageCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
@@ -72,8 +71,7 @@ namespace DCL.Chat.ChatMessages
             CreateMessageViewModelCommand createMessageViewModelCommand,
             MarkMessagesAsReadCommand markMessagesAsReadCommand,
             TranslateMessageCommand translateMessageCommand,
-            RevertToOriginalCommand revertToOriginalCommand,
-            CopyMessageCommand copyMessageCommand)
+            RevertToOriginalCommand revertToOriginalCommand)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -88,7 +86,6 @@ namespace DCL.Chat.ChatMessages
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
             this.translateMessageCommand = translateMessageCommand;
             this.revertToOriginalCommand = revertToOriginalCommand;
-            this.copyMessageCommand = copyMessageCommand;
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -285,8 +282,10 @@ namespace DCL.Chat.ChatMessages
             contextMenu.AddControl(new ButtonContextMenuControlSettings(
                 chatConfig.ChatContextMenuCopyText,
                 chatConfig.CopyChatMessageContextMenuIcon,
-                () => copyMessageCommand.Execute(this, textToCopy)
-            ));
+                () =>
+                {
+                    ViewDependencies.ClipboardManager.CopyAndSanitize(this, textToCopy);
+                }));
 
             if (translationSettings.IsTranslationFeatureActive())
             {

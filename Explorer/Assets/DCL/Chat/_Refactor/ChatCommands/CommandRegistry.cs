@@ -46,7 +46,6 @@ namespace DCL.Chat.ChatCommands
         public ToggleAutoTranslateCommand ToggleAutoTranslateCommand { get; }
         public TranslateMessageCommand TranslateMessageCommand { get; }
         public RevertToOriginalCommand RevertToOriginalCommand { get; }
-        public CopyMessageCommand CopyMessageCommand { get; }
 
         public CommandRegistry(
             ChatConfig.ChatConfig chatConfig,
@@ -167,7 +166,6 @@ namespace DCL.Chat.ChatCommands
 
             TranslateMessageCommand = new TranslateMessageCommand(translationService);
             RevertToOriginalCommand = new RevertToOriginalCommand(translationService);
-            CopyMessageCommand = new CopyMessageCommand(clipboardManager);
 
             GetUserCallStatusCommand = new GetUserCallStatusCommand(privateConversationUserStateService);
         }

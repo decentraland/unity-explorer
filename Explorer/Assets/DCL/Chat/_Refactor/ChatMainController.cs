@@ -168,8 +168,7 @@ namespace DCL.Chat
                 commandRegistry.CreateMessageViewModel,
                 commandRegistry.MarkMessagesAsRead,
                 commandRegistry.TranslateMessageCommand,
-                commandRegistry.RevertToOriginalCommand,
-                commandRegistry.CopyMessageCommand);
+                commandRegistry.RevertToOriginalCommand);
 
             var inputPresenter = new ChatInputPresenter(
                 viewInstance.InputView,
