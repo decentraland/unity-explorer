@@ -81,7 +81,12 @@ namespace DCL.SmartWearables
             if (!isSmart || !smartWearableCache.CurrentSceneAllowsSmartWearables) return;
 
             string id = wearable.DTO.Metadata.id;
-            if (pendingScenes.ContainsKey(id) || smartWearableCache.RunningSmartWearables.Contains(id)) return;
+            if (pendingScenes.ContainsKey(id) ||
+                smartWearableCache.RunningSmartWearables.Contains(id) ||
+                // Do not load scenes that were manually killed
+                // To re-enable a wearable, the user must unequip it and then equip it again
+                // NOTICE reloading can be triggered whenever moving between scenes too, that's why we need this
+                smartWearableCache.KilledPortableExperiences.Contains(id)) return;
 
             AvatarAttachmentDTO.MetadataBase metadata = wearable.DTO.Metadata;
             ReportHub.Log(GetReportCategory(), $"Equipped Smart Wearable '{metadata.name}'. Loading scene...");
@@ -104,6 +109,9 @@ namespace DCL.SmartWearables
             if (!isSmart) return;
 
             string id = wearable.DTO.Metadata.id;
+
+            // If the user removes the wearable, we can allow reloading its scene the next time it is equipped
+            smartWearableCache.ForgetPortableExperienceKilled(id);
 
             if (pendingScenes.Remove(id, out var promise))
             {

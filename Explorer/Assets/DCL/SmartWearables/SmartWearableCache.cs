@@ -38,7 +38,15 @@ namespace Runtime.Wearables
 
         public bool CurrentSceneAllowsSmartWearables { get; set; }
 
+        /// <summary>
+        ///     Contains the IDs of Smart Wearables equipped and that are currently running.
+        /// </summary>
         public List<string> RunningSmartWearables { get; } = new ();
+
+        /// <summary>
+        ///     Contains the IDs of Smart Wearables that were manually killed by the player.
+        /// </summary>
+        public List<string> KilledPortableExperiences { get; } = new ();
 
         /// <summary>
         ///     Whether the wearable is a smart wearable.
@@ -115,6 +123,16 @@ namespace Runtime.Wearables
             const string DEFAULT_CONTENT_URL = "https://peer.decentraland.org/content/contents/";
             string? dtoContentUrl = smartWearable.DTO.ContentDownloadUrl;
             return string.IsNullOrEmpty(dtoContentUrl) ? DEFAULT_CONTENT_URL : dtoContentUrl;
+        }
+
+        public void RememberPortableExperienceKilled(string portableExperienceId)
+        {
+            KilledPortableExperiences.Add(portableExperienceId);
+        }
+
+        public void ForgetPortableExperienceKilled(string portableExperienceId)
+        {
+            KilledPortableExperiences.Remove(portableExperienceId);
         }
 
         private class CacheItem

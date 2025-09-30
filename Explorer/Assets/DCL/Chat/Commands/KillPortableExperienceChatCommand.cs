@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using PortableExperiences.Controller;
+using Runtime.Wearables;
 using System;
 using System.Threading;
 
@@ -21,10 +22,12 @@ namespace DCL.Chat.Commands
         public bool DebugOnly => true;
 
         private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly SmartWearableCache smartWearableCache;
 
-        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController)
+        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController, SmartWearableCache smartWearableCache)
         {
             this.portableExperiencesController = portableExperiencesController;
+            this.smartWearableCache = smartWearableCache;
         }
 
         public bool ValidateParameters(string[] parameters) =>
@@ -50,6 +53,8 @@ namespace DCL.Chat.Commands
                 portableExperienceId += ENS_SUFFIX;
                 response = portableExperiencesController.UnloadPortableExperienceById(portableExperienceId);
             }
+
+            if (response.status) smartWearableCache.RememberPortableExperienceKilled(portableExperienceId);
 
             return response.status ? $"🟢 The Portable Experience {portableExperienceId} has been Killed" : $"🔴 Error. Could not Kill the Portable Experience {portableExperienceId}";
         }

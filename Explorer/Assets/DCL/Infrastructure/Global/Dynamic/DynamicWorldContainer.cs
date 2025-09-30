@@ -504,7 +504,7 @@ namespace Global.Dynamic
                 new ShowEntityChatCommand(worldInfoHub),
                 reloadSceneChatCommand,
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
-                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
+                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.SmartWearableCache),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
