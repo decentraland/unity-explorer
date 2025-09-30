@@ -19,6 +19,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private ListenersCountView listenersCountView = null!;
+        [SerializeField] private GameObject listeningTooltip = null!;
 
         private readonly StringBuilder stringBuilder = new ();
 
@@ -67,9 +68,17 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetTitle(string title) =>
             communityTitle.text = title;
 
+        public void ConfigureListeningTooltip()
+        {
+            listenersCountView.gameObject.SetActive(false);
+            listeningTooltip.SetActive(true);
+        }
+
         public void ConfigureListenersCount(bool isActive, int listenersCount)
         {
             listenersCountView.gameObject.SetActive(isActive);
+            listeningTooltip.SetActive(false);
+
             stringBuilder.Clear();
             stringBuilder.Append(listenersCount);
             listenersCountView.ParticipantCount.text = stringBuilder.ToString();
