@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
@@ -25,7 +26,10 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public abstract class SettingsModuleBindingBase
     {
-        public abstract UniTask<SettingsFeatureController> CreateModuleAsync(
+        [field: SerializeField]
+        public FeatureId FeatureId { get; set; } = FeatureId.NONE;
+
+        public abstract UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
