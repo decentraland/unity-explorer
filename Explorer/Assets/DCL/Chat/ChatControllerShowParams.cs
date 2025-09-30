@@ -1,6 +1,5 @@
 namespace DCL.Chat.ControllerShowParams
 {
-    // TODO: This struct must be moved to one of the Chat modules, or a new one
     public struct ChatControllerShowParams
     {
         /// <summary>

@@ -13,7 +13,7 @@ using Utility;
 
 namespace DCL.Chat.ChatFriends
 {
-    public class ChatMemberListPresenter : IDisposable
+    public class ChatMemberFeedPresenter : IDisposable
     {
         private readonly ChannelMemberFeedView view;
         private readonly IEventBus eventBus;
@@ -27,7 +27,7 @@ namespace DCL.Chat.ChatFriends
 
         private readonly List<ChatMemberListViewModel> currentMembers = new (PoolConstants.AVATARS_COUNT);
 
-        public ChatMemberListPresenter(
+        public ChatMemberFeedPresenter(
             ChannelMemberFeedView view,
             IEventBus eventBus,
             IChatEventBus chatEventBus,
@@ -67,7 +67,7 @@ namespace DCL.Chat.ChatFriends
             lifeCts.SafeCancelAndDispose();
         }
 
-        private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)
+        private void HandleLiveUpdate(IReadOnlyList<ChatMemberListData> freshMembers)
         {
             lifeCts = lifeCts.SafeRestart();
 
@@ -89,12 +89,12 @@ namespace DCL.Chat.ChatFriends
                .ShowUserProfileMenuAsync(data)
                .Forget();
         }
-        
+
         private void OnMemberSelectionRequested(string userId)
         {
             if (string.IsNullOrEmpty(userId))
                 return;
-            
+
             chatEventBus.OpenPrivateConversationUsingUserId(userId);
         }
 
@@ -102,7 +102,7 @@ namespace DCL.Chat.ChatFriends
         {
             Hide();
         }
-        
+
         public void Dispose()
         {
             lifeCts.SafeCancelAndDispose();

@@ -16,7 +16,7 @@ namespace DCL.Chat
         internal readonly ChatChannelsPresenter channelListPresenter;
         internal readonly ChatMessageFeedPresenter messageFeedPresenter;
         internal readonly ChatInputPresenter chatInputPresenter;
-        internal readonly ChatMemberListPresenter memberListPresenter;
+        internal readonly ChatMemberFeedPresenter memberFeedPresenter;
 
         public ChatUIMediator(
             ChatPanelView panelView,
@@ -25,7 +25,7 @@ namespace DCL.Chat
             ChatChannelsPresenter channelListPresenter,
             ChatMessageFeedPresenter messageFeedPresenter,
             ChatInputPresenter chatInputPresenter,
-            ChatMemberListPresenter memberListPresenter,
+            ChatMemberFeedPresenter memberFeedPresenter,
             CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter,
             IVoiceChatOrchestrator voiceChatOrchestrator
             )
@@ -36,7 +36,7 @@ namespace DCL.Chat
             this.channelListPresenter = channelListPresenter;
             this.messageFeedPresenter = messageFeedPresenter;
             this.chatInputPresenter = chatInputPresenter;
-            this.memberListPresenter = memberListPresenter;
+            this.memberFeedPresenter = memberFeedPresenter;
             this.subTitleButtonPresenter = subTitleButtonPresenter;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
@@ -49,7 +49,7 @@ namespace DCL.Chat
             channelListPresenter.Show();
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowUnfocused();
-            memberListPresenter.Hide();
+            memberFeedPresenter.Hide();
 
             subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
             subTitleButtonPresenter.Hide();
@@ -65,7 +65,7 @@ namespace DCL.Chat
             channelListPresenter.Show();
             messageFeedPresenter.TryActivate();
             chatInputPresenter.ShowFocusedAsync().Forget();
-            memberListPresenter.Hide();
+            memberFeedPresenter.Hide();
 
             subTitleButtonPresenter.Show();
             subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
@@ -82,7 +82,7 @@ namespace DCL.Chat
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();
             chatInputPresenter.Hide();
-            memberListPresenter.Show();
+            memberFeedPresenter.Show();
 
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED, true);
 
@@ -100,7 +100,7 @@ namespace DCL.Chat
 
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();
-            memberListPresenter.Hide();
+            memberFeedPresenter.Hide();
             chatInputPresenter.ShowUnfocused();
 
             SetPanelsFocus(isFocused: false, animate: true);
@@ -116,7 +116,7 @@ namespace DCL.Chat
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();
             chatInputPresenter.Hide();
-            memberListPresenter.Hide();
+            memberFeedPresenter.Hide();
 
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, true);
 
