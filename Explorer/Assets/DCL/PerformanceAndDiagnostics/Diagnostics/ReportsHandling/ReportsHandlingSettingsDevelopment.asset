@@ -560,6 +560,16 @@ MonoBehaviour:
       Severity: 0
     - Category: CHAT_TRANSLATE
       Severity: 4
+    - Category: TRANSLATE
+      Severity: 0
+    - Category: TRANSLATE
+      Severity: 4
+    - Category: TRANSLATE
+      Severity: 1
+    - Category: TRANSLATE
+      Severity: 2
+    - Category: TRANSLATE
+      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1
