@@ -175,7 +175,12 @@ namespace DCL.Settings
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
                     if (module != null)
-                        controllers.Add(await module.CreateModuleAsync
+                    {
+                        if (module.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(module.FeatureId))
+                            continue;
+
+                        var controller =
+                        (await module.CreateModuleAsync
                         (
                             generalGroupView.ModulesContainer,
                             realmPartitionSettingsAsset,
@@ -193,6 +198,10 @@ namespace DCL.Settings
                             upscalingController,
                             assetsProvisioner,
                             volumeBus));
+
+                        if (controller != null)
+                            controllers.Add(controller);
+                    }
             }
         }
 
