@@ -105,6 +105,7 @@ using System.Linq;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.NotificationsBus;
+using DCL.PerformanceAndDiagnostics;
 using Global.Versioning;
 using DCL.UI.ProfileElements;
 using UnityEngine;
