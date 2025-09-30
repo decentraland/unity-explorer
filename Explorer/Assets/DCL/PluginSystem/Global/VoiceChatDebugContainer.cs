@@ -11,6 +11,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+#if UNITY_STANDALONE_OSX
+using DCL.VoiceChat.Permissions;
+#endif
 
 namespace DCL.PluginSystem.Global
 {
