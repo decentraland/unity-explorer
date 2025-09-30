@@ -331,7 +331,6 @@ namespace DCL.Chat.ChatMessages
 
         private void UpdateViewModelAndRefreshView(string messageId)
         {
-            // Find the ViewModel in our current list
             var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
             if (viewModel == null) return;
 
@@ -340,7 +339,6 @@ namespace DCL.Chat.ChatMessages
             {
                 viewModel.TranslationState = translation.State;
                 viewModel.TranslatedText = translation.TranslatedBody;
-                // You could also add `viewModel.TranslationError = translation.Error;`
             }
 
             // Find the index of the ViewModel in the list

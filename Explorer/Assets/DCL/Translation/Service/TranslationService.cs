@@ -61,12 +61,9 @@ namespace DCL.Translation.Service
 
         private async UniTaskVoid ProcessQueuedTranslationRequestAsync(string messageId, string originalText)
         {
-            var newTranslation = new MessageTranslation(originalText, settings.PreferredLanguage)
-            {
-                State = TranslationState.Pending
-            };
-
+            var newTranslation = new MessageTranslation(originalText, settings.PreferredLanguage, TranslationState.Pending);
             translationMemory.Set(messageId, newTranslation);
+            
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
                 MessageId = messageId
@@ -116,7 +113,7 @@ namespace DCL.Translation.Service
             }
 
             // 2. Set state to Pending and start the translation.
-            translation.State = TranslationState.Pending;
+            translation.UpdateState(TranslationState.Pending);
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
                 MessageId = messageId

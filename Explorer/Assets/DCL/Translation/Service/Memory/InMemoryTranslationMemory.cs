@@ -20,8 +20,7 @@ namespace DCL.Translation.Service
         {
             if (memory.TryGetValue(messageId, out var translation))
             {
-                translation.State = newState;
-                // You could store the error message here if needed
+                translation.UpdateState(newState);
             }
         }
 
@@ -29,9 +28,8 @@ namespace DCL.Translation.Service
         {
             if (memory.TryGetValue(messageId, out var translation))
             {
-                translation.State = TranslationState.Success;
-                translation.TranslatedBody = result.TranslatedText;
-                translation.DetectedSourceLanguage = result.DetectedSourceLanguage;
+                translation.SetTranslatedResult(result.TranslatedText, result.DetectedSourceLanguage);
+                translation.UpdateState(TranslationState.Success);
             }
         }
     }
