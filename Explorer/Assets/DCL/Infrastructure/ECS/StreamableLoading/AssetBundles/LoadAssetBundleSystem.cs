@@ -157,24 +157,25 @@ namespace ECS.StreamableLoading.AssetBundles
                     throw new StreamableLoadingException(LogType.Warning, nameof(LoadAssetBundleSystem), new AssetBundleContainsShaderException(assetBundle.name));
             }
 
-            Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, hasMultipleAssets, ct);
+            Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,
                 source: source));
         }
 
-        private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
-            bool hasMultipleAssets, CancellationToken ct)
+        private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type? objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory, CancellationToken ct)
         {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
             AssetBundleRequest? asyncOp;
 
-            if(objectType == null)
-                asyncOp = assetBundle.LoadAllAssetsAsync();
-            else
+            if(!string.IsNullOrEmpty(mainAsset))
+                asyncOp = assetBundle.LoadAssetAsync(mainAsset);
+            else if(objectType != null)
                 asyncOp = assetBundle.LoadAllAssetsAsync(objectType);
+            else
+                asyncOp = assetBundle.LoadAllAssetsAsync();
 
             await asyncOp.WithCancellation(ct);
             Object[]? assets = asyncOp.allAssets;
