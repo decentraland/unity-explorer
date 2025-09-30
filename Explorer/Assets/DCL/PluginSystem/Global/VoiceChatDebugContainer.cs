@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             {
                 if (enable)
                 {
-                    autoUpdateCts = new CancellationTokenSource();
+                    autoUpdateCts = autoUpdateCts.SafeRestart();
                     CancellationToken current = autoUpdateCts.Token;
                     TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
 
@@ -77,6 +77,8 @@ namespace DCL.PluginSystem.Global
 
             void UpdateWidget()
             {
+                if (trackManager == null) return;
+
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
 
@@ -86,7 +88,7 @@ namespace DCL.PluginSystem.Global
                     ? currentMicrophoneOption.Value.MicrophoneInfo
                     : default(MicrophoneInfo);
 
-                isRecording.Value = (currentMicrophoneOption.Has && currentMicrophoneOption.Value.IsRecording).ToString();
+                isRecording.Value = (currentMicrophoneOption is { Has: true, Value: { IsRecording: true } }).ToString();
                 sampleRate.Value = info.sampleRate;
                 channels.Value = info.channels;
 
