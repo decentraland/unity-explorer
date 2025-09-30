@@ -481,11 +481,11 @@
       "hash": "ea6bb70b630aa55dc28a9d0c3fff64b3ea0ca8ba"
     },
     "decentraland.renderfeatures": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures#fix/environment_probes_renderfeature_setup",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "9e9eb04047aaadd1d022fada812c4c28e2db29d7"
+      "hash": "6ef8fb6682b50a89a5f136ab9dab9f09b7a3399a"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
