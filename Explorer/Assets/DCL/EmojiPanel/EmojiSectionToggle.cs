@@ -19,9 +19,6 @@ namespace DCL.Emoji
         public Color UnselectedColor { get; private set; }
 
         [field: SerializeField]
-        public EmojiSectionName SectionName { get; private set; }
-
-        [field: SerializeField]
         public float SectionPosition { get; private set; }
         [field: Header("Audio")]
         [field: SerializeField]
