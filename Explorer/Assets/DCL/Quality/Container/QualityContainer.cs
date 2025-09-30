@@ -66,7 +66,7 @@ namespace DCL.Quality
 
         public void AddDebugViews(IDebugContainerBuilder debugContainerBuilder)
         {
-            var widget = debugContainerBuilder.AddWidget("Quality");
+            var widget = debugContainerBuilder.AddWidget(IDebugContainerBuilder.Categories.QUALITY);
 
             if (widget.Success == false)
                 return;

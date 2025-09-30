@@ -33,6 +33,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 else
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
             }
+
+            entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
         }
     }
 }
