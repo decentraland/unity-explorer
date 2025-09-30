@@ -66,7 +66,7 @@ namespace DCL.Translation.Service
             
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
-                MessageId = messageId
+                MessageId = messageId, Translation = newTranslation
             });
 
             async UniTask PerformTranslationAsync()
@@ -116,7 +116,7 @@ namespace DCL.Translation.Service
             translation.UpdateState(TranslationState.Pending);
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
-                MessageId = messageId
+                MessageId = messageId, Translation = translation
             });
             return TranslateInternalAsync(messageId, ct);
         }
@@ -125,10 +125,16 @@ namespace DCL.Translation.Service
         
         public void RevertToOriginal(string messageId)
         {
-            translationMemory.UpdateState(messageId, TranslationState.Original);
+            if (!translationMemory.TryGet(messageId, out var translation))
+            {
+                return;
+            }
+
+            translation.RevertToOriginal();
+
             eventBus.Publish(new TranslationEvents.MessageTranslationReverted
             {
-                MessageId = messageId
+                MessageId = messageId, Translation = translation
             });
         }
 
@@ -143,7 +149,7 @@ namespace DCL.Translation.Service
                 translationMemory.SetTranslatedResult(messageId, cachedResult);
                 eventBus.Publish(new TranslationEvents.MessageTranslated
                 {
-                    MessageId = messageId
+                    MessageId = messageId, Translation = translation
                 });
                 return;
             }
@@ -151,7 +157,7 @@ namespace DCL.Translation.Service
             try
             {
                 string original = translation.OriginalBody ?? string.Empty;
-
+                
                 var result = RequiresProcessing(original)
                     ? await messageProcessor.ProcessAndTranslateAsync(original, targetLang, ct)
                     : await UseRegularTranslationAsync(original, targetLang, ct);
@@ -167,25 +173,25 @@ namespace DCL.Translation.Service
                 translationMemory.SetTranslatedResult(messageId, result);
                 eventBus.Publish(new TranslationEvents.MessageTranslated
                 {
-                    MessageId = messageId
+                    MessageId = messageId, Translation = translation
                 });
             }
             catch (OperationCanceledException)
             {
                 // This is now only caught if the calling context cancels the operation.
-                translationMemory.UpdateState(messageId, TranslationState.Failed);
+                translation.UpdateState(TranslationState.Failed);
                 eventBus.Publish(new TranslationEvents.MessageTranslationFailed
                 {
-                    MessageId = messageId, Error = "Translation was cancelled."
+                    MessageId = messageId, Error = "Translation was cancelled.", Translation = translation
                 });
             }
             catch (Exception ex)
             {
                 // This catches other provider errors.
-                translationMemory.UpdateState(messageId, TranslationState.Failed);
+                translation.UpdateState(TranslationState.Failed);
                 eventBus.Publish(new TranslationEvents.MessageTranslationFailed
                 {
-                    MessageId = messageId, Error = ex.Message
+                    MessageId = messageId, Error = ex.Message, Translation = translation
                 });
             }
         }

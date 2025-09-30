@@ -329,18 +329,17 @@ namespace DCL.Chat.ChatMessages
             UpdateChannelMessages();
         }
 
-        private void UpdateViewModelAndRefreshView(string messageId)
+        private void UpdateViewModelAndRefreshView(MessageTranslation? translation, string messageId)
         {
             var viewModel = viewModels.FirstOrDefault(vm => vm.Message.MessageId == messageId);
             if (viewModel == null) return;
 
-            // Get the latest state from the memory service
-            if (translationMemory.TryGet(messageId, out var translation))
+            if (translation != null)
             {
                 viewModel.TranslationState = translation.State;
-                viewModel.TranslatedText = translation.TranslatedBody;
+                viewModel.TranslatedText = translation.TranslatedBody;    
             }
-
+            
             // Find the index of the ViewModel in the list
             int itemIndex = viewModels.IndexOf(viewModel);
             if (itemIndex == -1) return;
@@ -351,24 +350,24 @@ namespace DCL.Chat.ChatMessages
 
         private void OnMessageTranslationRequested(TranslationEvents.MessageTranslationRequested evt)
         {
-            UpdateViewModelAndRefreshView(evt.MessageId);
+            UpdateViewModelAndRefreshView(evt.Translation, evt.MessageId);
         }
 
         private void OnMessageTranslated(TranslationEvents.MessageTranslated evt)
         {
-            UpdateViewModelAndRefreshView(evt.MessageId);
+            UpdateViewModelAndRefreshView(evt.Translation, evt.MessageId);
         }
 
         private void OnMessageTranslationFailed(TranslationEvents.MessageTranslationFailed evt)
         {
-            UpdateViewModelAndRefreshView(evt.MessageId);
+            UpdateViewModelAndRefreshView(evt.Translation, evt.MessageId);
         }
 
         private void OnMessageTranslationReverted(TranslationEvents.MessageTranslationReverted evt)
         {
-            UpdateViewModelAndRefreshView(evt.MessageId);
+            UpdateViewModelAndRefreshView(evt.Translation, evt.MessageId);
         }
-        
+
         private void UpdateChannelMessages()
         {
             if (currentChannelService.CurrentChannel == null ||
