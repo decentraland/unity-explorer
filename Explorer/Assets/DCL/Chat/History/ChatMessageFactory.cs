@@ -47,9 +47,7 @@ namespace DCL.Chat.History
 
                 // NOTE: we are adding a new GUID here because currently we don't get
                 // NOTE: unique message IDs from the backend for our own messages.
-                return new ChatMessage(
-                    Guid.NewGuid().ToString(),
-                    message,
+                return new ChatMessage(message,
                     usernameOverride,
                     senderWalletAddress,
                     true,
@@ -71,9 +69,7 @@ namespace DCL.Chat.History
             if (ownProfile != null)
                 isMention = IsMention(message, ownProfile.MentionName);
 
-            return new ChatMessage(
-                Guid.NewGuid().ToString(),
-                message,
+            return new ChatMessage(message,
                 usernameOverride,
                 senderWalletAddress,
                 false,

@@ -45,7 +45,7 @@ namespace DCL.Translation.Service
             this.translationMemory = translationMemory;
         }
 
-        public void ProcessIncomingMessage(string messageId, string originalText, string conversationId)
+        public void ProcessIncomingMessage(string messageId, string senderWalletId, string originalText, string conversationId)
         {
             if (!settings.IsTranslationFeatureActive()) return;
 
@@ -56,10 +56,10 @@ namespace DCL.Translation.Service
             }
 
             // NOTE: Start the translation process without blocking the caller.
-            ProcessQueuedTranslationRequestAsync(messageId, originalText).Forget();
+            ProcessQueuedTranslationRequestAsync(messageId, senderWalletId, originalText).Forget();
         }
 
-        private async UniTaskVoid ProcessQueuedTranslationRequestAsync(string messageId, string originalText)
+        private async UniTaskVoid ProcessQueuedTranslationRequestAsync(string messageId, string senderWalletId, string originalText)
         {
             var newTranslation = new MessageTranslation(originalText, settings.PreferredLanguage, TranslationState.Pending);
             translationMemory.Set(messageId, newTranslation);
@@ -75,9 +75,9 @@ namespace DCL.Translation.Service
                 await TranslateInternalAsync(messageId, cts.Token);
             }
 
-            if (TryGetWalletId(messageId, out string walletId))
+            if (!string.IsNullOrEmpty(senderWalletId))
             {
-                var userLock = userTranslationLocks.GetOrAdd(walletId, _ => new SemaphoreSlim(1, 1));
+                var userLock = userTranslationLocks.GetOrAdd(senderWalletId, _ => new SemaphoreSlim(1, 1));
 
                 // Wait for our turn
                 await userLock.WaitAsync();
@@ -231,27 +231,6 @@ namespace DCL.Translation.Service
 
             // Any commands with backslash? -> yes, batch
             if (ProtectedPatterns.InlineCommandRx.IsMatch(text)) return true;
-
-            return false;
-        }
-
-        /// <summary>
-        ///     Parses the wallet ID from the messageId string.
-        /// </summary>
-        /// <param name="messageId">The message identifier, e.g., "0xc81f875d23e9de99018fd109178a4856b1dd5e42:0"</param>
-        /// <param name="walletId">The extracted wallet ID.</param>
-        /// <returns>True if parsing was successful, otherwise false.</returns>
-        private bool TryGetWalletId(string messageId, out string walletId)
-        {
-            walletId = null;
-            if (string.IsNullOrEmpty(messageId)) return false;
-
-            string[]? parts = messageId.Split(':');
-            if (parts.Length > 0 && !string.IsNullOrEmpty(parts[0]))
-            {
-                walletId = parts[0];
-                return true;
-            }
 
             return false;
         }

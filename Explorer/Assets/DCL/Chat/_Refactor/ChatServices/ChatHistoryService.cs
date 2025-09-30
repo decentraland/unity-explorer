@@ -66,6 +66,7 @@ namespace DCL.Chat.ChatServices
             if (!messageToAdd.IsSystemMessage && !messageToAdd.IsSentByOwnUser)
             {
                 translationService.ProcessIncomingMessage(messageToAdd.MessageId,
+                    messageToAdd.SenderWalletAddress,
                     messageToAdd.Message,
                     channel.Id);
             }
