@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Translation.Processors;
 using DCL.Translation.Processors.DCL.Translation.Service.Processing;
 using DCL.Utilities;
@@ -22,10 +23,7 @@ namespace DCL.Translation.Service
         private readonly IEventBus eventBus;
         private readonly ITranslationMemory translationMemory;
 
-        // A thread-safe dictionary to
-        // hold a lock for each user's translation queue.
-        private readonly ConcurrentDictionary<string, SemaphoreSlim> userTranslationLocks = new ();
-        private readonly Dictionary<string, UniTask> ongoingTranslations = new ();
+        private readonly Dictionary<string, UniTaskCompletionSource> perSenderGates = new ();
         
         private static readonly Regex TagRx =
             new(@"<[^>]*>", RegexOptions.Compiled);
@@ -75,35 +73,78 @@ namespace DCL.Translation.Service
             await TranslateAsync(messageId, senderWalletId, cts.Token);
         }
 
-        public UniTask TranslateAsync(string messageId, string senderWalletId, CancellationToken ct)
+        private async UniTask TranslateAsync(string messageId, string senderWalletId, CancellationToken ct)
         {
-            // Check if a translation for this exact messageId is already in progress.
-            if (ongoingTranslations.TryGetValue(senderWalletId, out var existingTask))
+            while (true)
             {
-                // If yes, simply return the existing task. The caller can await it.
-                // This prevents a new, duplicate request from being started.
-                return existingTask.AttachExternalCancellation(ct);
-            }
+                if (perSenderGates.TryGetValue(senderWalletId, out var existingGate))
+                {
+                    // Wait until the current leader signals completion, then try again to become the leader.
+                    await existingGate.Task.AttachExternalCancellation(ct);
+                    continue;
+                }
 
-            // If no, start a new translation task and add it to the dictionary.
-            var newTranslationTask = TranslateInternalAsync(messageId, ct);
-            ongoingTranslations[messageId] = newTranslationTask;
-            return newTranslationTask;
+                // Try to become the leader for this sender.
+                var myGate = new UniTaskCompletionSource();
+
+                // NOTE: Since we're on the main thread, Dictionary is fine. If not guaranteed, use a lock.
+                if (perSenderGates.TryAdd(senderWalletId, myGate))
+                {
+                    try
+                    {
+                        // We are the leader: do the actual work for THIS messageId.
+                        await TranslateInternalAsync(messageId, senderWalletId, ct);
+                    }
+                    finally
+                    {
+                        // Signal followers and clean up the gate.
+                        perSenderGates.Remove(senderWalletId);
+                        myGate.TrySetResult();
+                    }
+
+                    return;
+                }
+            }
         }
+
+        // private readonly Dictionary<string, SemaphoreSlim> perSenderLocks = new();
+        // private async UniTask TranslateAsync(string messageId, string senderWalletId, CancellationToken ct)
+        // {
+        //     var gate = GetSenderLock(senderWalletId);
+        //
+        //     await gate.WaitAsync(ct);
+        //     try
+        //     {
+        //         await TranslateInternalAsync(messageId, senderWalletId, ct);
+        //     }
+        //     finally
+        //     {
+        //         gate.Release();
+        //     }
+        // }
+        //
+        // private SemaphoreSlim GetSenderLock(string senderId)
+        // {
+        //     if (!perSenderLocks.TryGetValue(senderId, out var sem))
+        //     {
+        //         sem = new SemaphoreSlim(1, 1);
+        //         perSenderLocks[senderId] = sem;
+        //     }
+        //     return sem;
+        // }
 
         public UniTask TranslateManualAsync(string messageId, string senderWalletId, string originalText, CancellationToken ct)
         {
             if (!settings.IsTranslationFeatureActive()) return UniTask.CompletedTask;
 
-            // The logic is now much cleaner.
-            // 1. Check if a record already exists. If not, create one from the provided text.
+            // Check if a record already exists. If not, create one from the provided text.
             if (!translationMemory.TryGet(messageId, out var translation))
             {
                 translation = new MessageTranslation(originalText, settings.PreferredLanguage);
                 translationMemory.Set(messageId, translation);
             }
 
-            // 2. Set state to Pending and start the translation.
+            // Set state to Pending and start the translation.
             translation.UpdateState(TranslationState.Pending);
             eventBus.Publish(new TranslationEvents.MessageTranslationRequested
             {
@@ -112,8 +153,6 @@ namespace DCL.Translation.Service
 
             return TranslateAsync(messageId, senderWalletId, ct);
         }
-
-        
         
         public void RevertToOriginal(string messageId)
         {
@@ -130,7 +169,7 @@ namespace DCL.Translation.Service
             });
         }
 
-        private async UniTask TranslateInternalAsync(string messageId, CancellationToken ct)
+        private async UniTask TranslateInternalAsync(string messageId, string senderWalletId, CancellationToken ct)
         {
             if (!translationMemory.TryGet(messageId, out var translation)) return;
 
@@ -190,7 +229,7 @@ namespace DCL.Translation.Service
             {
                 // No matter what happens (success, failure, or cancellation),
                 // remove the task from the dictionary so new requests can be made later.
-                ongoingTranslations.Remove(messageId);
+                perSenderGates.Remove(senderWalletId);
             }
         }
 
