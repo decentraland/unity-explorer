@@ -50,8 +50,8 @@ using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.Chat
 {
-    public class ChatController_OBSOLETE_OLD_CHAT : ControllerBase<ChatView, ChatControllerShowParams>,
-        IControllerInSharedSpace<ChatView, ChatControllerShowParams>
+    public class ChatController_OBSOLETE_OLD_CHAT : ControllerBase<ChatView_OBSOLETE, ChatControllerShowParams>,
+        IControllerInSharedSpace<ChatView_OBSOLETE, ChatControllerShowParams>
     {
         public delegate void ConversationOpenedDelegate(bool wasAlreadyOpen);
         public delegate void ConversationClosedDelegate();
@@ -794,8 +794,6 @@ namespace DCL.Chat
 
         private void OnViewMemberListVisibilityChanged(bool isVisible)
         {
-            communityVoiceChatSubTitleButtonPresenter?.OnMemberListVisibilityChanged(isVisible);
-
             if (isVisible && roomHub.HasAnyRoomConnected())
             {
                 memberListCts = memberListCts.SafeRestart();

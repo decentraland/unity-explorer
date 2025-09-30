@@ -7,9 +7,9 @@ namespace DCL.ScenesDebug.ScenesConsistency.Conditions
 {
     public class BySubmitNextSceneDelay : INextSceneDelay
     {
-        private readonly IDelayedResource<ChatView> chatViewResource;
+        private readonly IDelayedResource<ChatView_OBSOLETE> chatViewResource;
 
-        public BySubmitNextSceneDelay(IDelayedResource<ChatView> chatViewResource)
+        public BySubmitNextSceneDelay(IDelayedResource<ChatView_OBSOLETE> chatViewResource)
         {
             this.chatViewResource = chatViewResource;
         }
@@ -23,7 +23,7 @@ namespace DCL.ScenesDebug.ScenesConsistency.Conditions
                 ready = true;
             }
 
-            ChatView resource = await chatViewResource.ResourceAsync();
+            ChatView_OBSOLETE resource = await chatViewResource.ResourceAsync();
             resource.InputSubmitted += OnSubmit;
             await UniTask.WaitUntil(() => ready);
             resource.InputSubmitted -= OnSubmit;

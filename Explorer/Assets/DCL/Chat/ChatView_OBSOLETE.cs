@@ -30,7 +30,7 @@ namespace DCL.Chat
     public delegate UniTask GetChannelMembersDelegate(List<ChatUserData> outProfiles, CancellationToken ct);
 
     // Note: The view never changes any data (chatMessages), that's done by the controller
-    public class ChatView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class ChatView_OBSOLETE : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
