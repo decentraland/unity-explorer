@@ -594,11 +594,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4326caad92da8a144b27ce078ee2b9ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ButtonTranslate: {fileID: 2266443072011721709}
-  ButtonSeeOriginal: {fileID: 6580737112799310958}
-  LoadingSpinnerContainer: {fileID: 8073883418807193055}
-  LoadingSpinnerImage: {fileID: 3232924048670688530}
-  TranslationFailedContainer: {fileID: 3884412577265545760}
+  buttonTranslate: {fileID: 2266443072011721709}
+  buttonSeeOriginal: {fileID: 6580737112799310958}
+  loadingSpinnerContainer: {fileID: 8073883418807193055}
+  loadingSpinnerImage: {fileID: 3232924048670688530}
+  translationFailedContainer: {fileID: 3884412577265545760}
 --- !u!1 &3661519216692673464
 GameObject:
   m_ObjectHideFlags: 0

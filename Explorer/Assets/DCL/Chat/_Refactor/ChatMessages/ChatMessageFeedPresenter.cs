@@ -138,7 +138,10 @@ namespace DCL.Chat.ChatMessages
             if (viewModel == null || viewModel.TranslationState == TranslationState.Pending) return;
 
             // No need to check state here, the view already determined this is the correct action
-            translateMessageCommand.Execute(viewModel.Message.MessageId, viewModel.Message.Message, loadChannelCts.Token);
+            translateMessageCommand.Execute(viewModel.Message.MessageId,
+                viewModel.Message.SenderWalletId,
+                viewModel.Message.Message,
+                loadChannelCts.Token);
         }
 
         // NEW: Handler for the revert request
@@ -303,6 +306,7 @@ namespace DCL.Chat.ChatMessages
                         chatConfig.ChatContextMenuTranslateText,
                         chatConfig.TranslateChatMessageContextMenuIcon,
                         () => translateMessageCommand.Execute(viewModel.Message.MessageId,
+                            viewModel.Message.SenderWalletId,
                             viewModel.Message.Message, loadChannelCts.Token)
                     ));
                 }

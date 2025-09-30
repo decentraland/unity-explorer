@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -24,6 +25,7 @@ namespace DCL.Translation.Service
         // A thread-safe dictionary to
         // hold a lock for each user's translation queue.
         private readonly ConcurrentDictionary<string, SemaphoreSlim> userTranslationLocks = new ();
+        private readonly Dictionary<string, UniTask> ongoingTranslations = new ();
         
         private static readonly Regex TagRx =
             new(@"<[^>]*>", RegexOptions.Compiled);
@@ -69,38 +71,27 @@ namespace DCL.Translation.Service
                 MessageId = messageId, Translation = newTranslation
             });
 
-            async UniTask PerformTranslationAsync()
-            {
-                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.TranslationTimeoutSeconds));
-                await TranslateInternalAsync(messageId, cts.Token);
-            }
-
-            if (!string.IsNullOrEmpty(senderWalletId))
-            {
-                var userLock = userTranslationLocks.GetOrAdd(senderWalletId, _ => new SemaphoreSlim(1, 1));
-
-                // Wait for our turn
-                await userLock.WaitAsync();
-                try
-                {
-                    // We now await the entire translation process
-                    // The lock will be held until this is complete.
-                    await PerformTranslationAsync();
-                }
-                finally
-                {
-                    // This now runs only AFTER the translation has finished.
-                    userLock.Release();
-                }
-            }
-            else
-            {
-                // No wallet ID, so we don't queue. Translate immediately.
-                await PerformTranslationAsync();
-            }
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.TranslationTimeoutSeconds));
+            await TranslateAsync(messageId, senderWalletId, cts.Token);
         }
-        
-        public UniTask TranslateManualAsync(string messageId, string originalText, CancellationToken ct)
+
+        public UniTask TranslateAsync(string messageId, string senderWalletId, CancellationToken ct)
+        {
+            // Check if a translation for this exact messageId is already in progress.
+            if (ongoingTranslations.TryGetValue(senderWalletId, out var existingTask))
+            {
+                // If yes, simply return the existing task. The caller can await it.
+                // This prevents a new, duplicate request from being started.
+                return existingTask.AttachExternalCancellation(ct);
+            }
+
+            // If no, start a new translation task and add it to the dictionary.
+            var newTranslationTask = TranslateInternalAsync(messageId, ct);
+            ongoingTranslations[messageId] = newTranslationTask;
+            return newTranslationTask;
+        }
+
+        public UniTask TranslateManualAsync(string messageId, string senderWalletId, string originalText, CancellationToken ct)
         {
             if (!settings.IsTranslationFeatureActive()) return UniTask.CompletedTask;
 
@@ -118,7 +109,8 @@ namespace DCL.Translation.Service
             {
                 MessageId = messageId, Translation = translation
             });
-            return TranslateInternalAsync(messageId, ct);
+
+            return TranslateAsync(messageId, senderWalletId, ct);
         }
 
         
@@ -193,6 +185,12 @@ namespace DCL.Translation.Service
                 {
                     MessageId = messageId, Error = ex.Message, Translation = translation
                 });
+            }
+            finally
+            {
+                // No matter what happens (success, failure, or cancellation),
+                // remove the task from the dictionary so new requests can be made later.
+                ongoingTranslations.Remove(messageId);
             }
         }
 
