@@ -143,10 +143,23 @@ jobs:
     if: |
       (github.ref == 'refs/heads/dev') ||
       (github.ref == 'refs/heads/main') ||
-      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'force-build') ||
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'clean-build') ||
-      (github.event_name == 'workflow_dispatch')
+      (github.event_name == 'workflow_dispatch') ||
+      (
+        github.event_name == 'pull_request' &&
+        (
+          (
+            (github.event.action == 'opened' ||
+             github.event.action == 'reopened' ||
+             github.event.action == 'synchronize') &&
+            !github.event.pull_request.draft
+          ) ||
+          github.event.action == 'ready_for_review' ||
+          (
+            github.event.action == 'labeled' &&
+            (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build')
+          )
+        )
+      )
     outputs:
       commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
       options: ${{ steps.get_options.outputs.options }}
