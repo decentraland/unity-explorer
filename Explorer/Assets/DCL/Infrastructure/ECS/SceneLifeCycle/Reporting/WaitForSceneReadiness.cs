@@ -1,9 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using System;
 using UnityEngine;
-using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Reporting
 {

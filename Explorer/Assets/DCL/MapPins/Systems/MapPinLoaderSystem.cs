@@ -7,17 +7,19 @@ using DCL.MapPins.Bus;
 using DCL.MapPins.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using ECS.Unity.Groups;
+
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using UnityEngine;
+
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 

@@ -3,7 +3,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
@@ -11,7 +11,7 @@ using Decentraland.SocialService.V2;
 using System;
 using System.Threading;
 using Utility;
-using Notifications = DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBus;
 
 namespace DCL.VoiceChat
 {
@@ -30,7 +30,8 @@ namespace DCL.VoiceChat
 
         private readonly ReactiveProperty<VoiceChatType> currentVoiceChatType = new (VoiceChatType.NONE);
         private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new (VoiceChatStatus.DISCONNECTED);
-        private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.DEFAULT);
+        private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new (VoiceChatPanelSize.COLLAPSED);
+        private readonly ReactiveProperty<VoiceChatPanelState> currentVoiceChatPanelState = new (VoiceChatPanelState.NONE);
         private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentActiveCommunityData = new (null);
 
         private IVoiceChatCallStatusServiceBase? activeCallStatusService;
@@ -39,6 +40,7 @@ namespace DCL.VoiceChat
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
         public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
+        public IReadonlyReactiveProperty<VoiceChatPanelState> CurrentVoiceChatPanelState => currentVoiceChatPanelState;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
         public IReadonlyReactiveProperty<ActiveCommunityVoiceChat?> CurrentSceneActiveCommunityVoiceChatData => currentActiveCommunityData;
         public IReadonlyReactiveProperty<string> CurrentCommunityId => communityVoiceChatCallStatusService.CallId;
@@ -66,7 +68,7 @@ namespace DCL.VoiceChat
 
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
 
-            Notifications.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_VOICE_CHAT_STARTED, OnClickedNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_VOICE_CHAT_STARTED, OnClickedNotification);
 
             privateVoiceChatCallStatusService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene += OnActiveVoiceChatDetectedInScene;
@@ -89,6 +91,8 @@ namespace DCL.VoiceChat
             currentCallStatus.ClearSubscriptionsList();
             currentVoiceChatPanelSize.ClearSubscriptionsList();
             currentActiveCommunityData.ClearSubscriptionsList();
+            currentVoiceChatPanelState.ClearSubscriptionsList();
+
             ParticipantsStateService.Dispose();
         }
 
@@ -218,11 +222,14 @@ namespace DCL.VoiceChat
             {
                 case VoiceChatType.NONE:
                     activeCallStatusService = null;
+                    ChangePanelState(VoiceChatPanelState.NONE);
                     break;
                 case VoiceChatType.PRIVATE:
+                    ChangePanelState(VoiceChatPanelState.SELECTED);
                     activeCallStatusService = privateVoiceChatCallStatusService;
                     break;
                 case VoiceChatType.COMMUNITY:
+                    ChangePanelState(VoiceChatPanelState.SELECTED);
                     activeCallStatusService = communityVoiceChatCallStatusService;
                     break;
             }
@@ -231,6 +238,12 @@ namespace DCL.VoiceChat
         public void ChangePanelSize(VoiceChatPanelSize panelSize)
         {
             currentVoiceChatPanelSize.Value = panelSize;
+        }
+
+        public void ChangePanelState(VoiceChatPanelState panelState, bool force = false)
+        {
+            if (force || currentVoiceChatPanelState.Value != VoiceChatPanelState.HIDDEN)
+                currentVoiceChatPanelState.Value = panelState;
         }
 
         public void JoinCommunityVoiceChat(string communityId, bool force = false)

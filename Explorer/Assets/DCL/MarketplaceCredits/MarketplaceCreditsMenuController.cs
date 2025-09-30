@@ -3,10 +3,9 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
-using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.NotificationsBusController.NotificationsBus;
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
@@ -104,8 +103,8 @@ namespace DCL.MarketplaceCredits
             this.textFormatter = textFormatter;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
             CheckForSidebarButtonState();
         }

@@ -7,6 +7,7 @@ using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DG.Tweening;
 using MVC;
 using System;
@@ -17,7 +18,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Utility;
-using Utility.Types;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser

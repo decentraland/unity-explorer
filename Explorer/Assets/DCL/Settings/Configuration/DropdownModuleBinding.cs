@@ -15,6 +15,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using DCL.SkyBox;
 
 namespace DCL.Settings.Configuration
 {
@@ -46,13 +47,13 @@ namespace DCL.Settings.Configuration
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
             VolumeBus volumeBus)
@@ -62,7 +63,7 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset),
+                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset, skyboxSettingsAsset),
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                 DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
                 DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController),
@@ -72,7 +73,7 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.CHAT_NEARBY_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer, chatSettingsAsset),
                 DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance, chatSettingsAsset),
                 DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance, chatSettingsAsset, settingsEventListener),
-                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance, voiceChatSettings),
+                DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

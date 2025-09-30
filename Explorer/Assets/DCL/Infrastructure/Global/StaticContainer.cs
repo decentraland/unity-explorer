@@ -9,6 +9,7 @@ using DCL.Character;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
@@ -20,6 +21,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.PerformanceAndDiagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -110,7 +112,6 @@ namespace Global
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
         public GPUInstancingService GPUInstancingService { get; private set; }
-
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
 
@@ -153,6 +154,7 @@ namespace Global
             bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
+            SentryTransactionManager.Initialize(new SentryTransactionManager());
 
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
@@ -239,7 +241,6 @@ namespace Global
             else
                 ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
 
-
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
@@ -266,7 +267,7 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, volumeBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy),
-                new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
+                new SDKEntityTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider, componentsContainer.ComponentPoolsRegistry.AddComponentPool<PBTriggerAreaResult.Types.Trigger>()),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
                 new MultiplayerPlugin(),

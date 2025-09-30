@@ -9,6 +9,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using DCL.SkyBox;
 using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -36,13 +37,13 @@ namespace DCL.Settings.Configuration
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus)

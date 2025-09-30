@@ -325,8 +325,6 @@ namespace DCL.Diagnostics
 
         public const string CHAT_MESSAGES = nameof(CHAT_MESSAGES);
 
-        public const string ADAPTIVE_PERFORMANCE = nameof(ADAPTIVE_PERFORMANCE);
-
         public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
 
         public const string VOICE_CHAT = nameof(VOICE_CHAT);

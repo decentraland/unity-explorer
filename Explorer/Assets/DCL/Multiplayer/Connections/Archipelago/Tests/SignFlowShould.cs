@@ -2,6 +2,7 @@
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Pools;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.V3;
 using Google.Protobuf;
@@ -12,7 +13,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.TestTools;
-using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Tests
 {

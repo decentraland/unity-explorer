@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
+using DCL.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;

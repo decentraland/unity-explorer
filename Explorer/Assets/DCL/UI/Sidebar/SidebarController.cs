@@ -5,15 +5,11 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
-using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
-using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
-using DCL.SceneRestrictionBusController.SceneRestriction;
-using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -25,19 +21,18 @@ using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using DCL.Chat.ChatStates;
+using DCL.ChatArea;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
-        private const string IDLE_ICON_ANIMATOR = "Empty";
-        private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
-
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
         private readonly NotificationsMenuController notificationsMenuController;
@@ -47,7 +42,7 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
-        private readonly ChatMainView chatView;
+        private readonly ChatSharedAreaView chatView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
@@ -57,9 +52,9 @@ namespace DCL.UI.Sidebar
 
         private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
-        private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
-        private CancellationTokenSource? referralNotificationCts;
-        private CancellationTokenSource checkForCommunitiesFeatureCts;
+        private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
+        private CancellationTokenSource? referralNotificationCts = new ();
+        private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
 
         public event Action? HelpOpened;
 
@@ -77,7 +72,7 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            ChatMainView chatView,
+            ChatSharedAreaView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
@@ -139,9 +134,9 @@ namespace DCL.UI.Sidebar
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            NotificationsBusController.NotificationsBus.NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
             viewInstance.skyboxButton.interactable = true;
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
@@ -217,18 +212,18 @@ namespace DCL.UI.Sidebar
         {
             // Panels that are controllers and can be opened using shortcuts
             if (closedController is EmotesWheelController)
-                viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                viewInstance?.emotesWheelButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
             else if (closedController is FriendsPanelController)
-                viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
         }
 
         private void OnMvcManagerViewShowed(IController showedController)
         {
             // Panels that are controllers and can be opened using shortcuts
             if (showedController is EmotesWheelController)
-                viewInstance?.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+                viewInstance?.emotesWheelButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
             else if (showedController is FriendsPanelController)
-                viewInstance?.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+                viewInstance?.friendsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
         }
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
@@ -238,8 +233,8 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
-            viewInstance?.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
-            viewInstance?.unreadMessagesButton.animator.SetTrigger(isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
+            viewInstance?.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
+            viewInstance?.unreadMessagesButton.animator.SetTrigger(isUnfolded ? UIAnimationHashes.ACTIVE : UIAnimationHashes.EMPTY);
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -340,11 +335,13 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSidebarSettingsAsync()
         {
+            if (viewInstance == null) return;
+
             viewInstance.BlockSidebar();
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
             viewInstance.UnblockSidebar();
 
-            viewInstance!.sidebarSettingsButton.OnDeselect(null);
+            viewInstance.sidebarSettingsButton.OnDeselect(null);
         }
 
         private async void OpenProfileMenuAsync()
@@ -363,19 +360,23 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSkyboxSettingsAsync()
         {
+            if (viewInstance == null) return;
+
             viewInstance.BlockSidebar();
-            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance.skyboxButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.skyboxButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
             viewInstance.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
+            if (viewInstance == null) return;
+
             viewInstance.BlockSidebar();
-            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.ACTIVE);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance.notificationsButton.animator.SetTrigger(UIAnimationHashes.EMPTY);
             viewInstance.UnblockSidebar();
         }
 
