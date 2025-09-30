@@ -13,12 +13,12 @@ namespace DCL.Translation
 
     [Serializable]
     public class TranslationRequestBodyBatch
-        {
-            public string[] q;
-            public string source;
-            public string target;
-            public string format;
-        }
+    {
+        public string[] q;
+        public string source;
+        public string target;
+        public string format;
+    }
 
     [Serializable]
     public class TranslationApiResponse

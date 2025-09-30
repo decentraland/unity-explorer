@@ -13,10 +13,10 @@ namespace DCL.Translation
             this.translationService = translationService;
         }
 
-        public void Execute(string messageId, string originalText)
+        public void Execute(string messageId, string originalText, CancellationToken ct)
         {
             translationService
-                .TranslateManualAsync(messageId, originalText, CancellationToken.None)
+                .TranslateManualAsync(messageId, originalText, ct)
                 .Forget();
         }
     }

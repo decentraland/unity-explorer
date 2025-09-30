@@ -4,11 +4,6 @@ namespace DCL.Translation
 {
     public class TranslationEvents
     {
-        public struct PreferredLanguageChanged
-        {
-            public LanguageCode NewLanguage;
-        }
-
         public struct TranslationSettingsChangedEvent
         {
         }

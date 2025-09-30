@@ -7,12 +7,9 @@ using System.Text.RegularExpressions;
 namespace DCL.Translation.Processors
 {
     /// <summary>
-    ///     Identifies and protects self-mentions that are not wrapped in
-    ///     <link>
-    ///         tags.
-    ///         The pattern is a hex color tag immediately followed by text starting with '@'
-    ///         and a corresponding closing </color> tag.
-    ///         e.g., "<#00B2FF>@Mirko#5e42</color>"
+    ///     Identifies and protects self-mentions that are not wrapped in link tags.
+    ///     The pattern is a hex color tag immediately followed by text starting with '@'
+    ///     and a corresponding closing color tag.
     /// </summary>
     public class SelfMentionProtectionRule : ITokenizationRule
     {

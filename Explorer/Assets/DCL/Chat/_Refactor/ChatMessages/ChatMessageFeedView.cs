@@ -1,18 +1,12 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatViewModels;
+﻿using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
-using DCL.Diagnostics;
-using DCL.Friends.UserBlocking;
 using DCL.UI.Utilities;
-using DCL.Utilities.Extensions;
 using DG.Tweening;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
-using DCL.Translation;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -39,7 +33,6 @@ namespace DCL.Chat.ChatMessages
         // by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
         public ChatScrollToBottomView ChatScrollToBottomView => chatScrollToBottomView;
-        private ITranslationSettings translationSettings;
 
         public event Action<string> OnTranslateMessageRequested;
         public event Action<string> OnRevertMessageRequested;
@@ -52,9 +45,6 @@ namespace DCL.Chat.ChatMessages
 
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked -= ChatScrollToBottomToBottomClicked;
-
-            if (translationSettings != null)
-                translationSettings.OnAutoTranslationSettingsChanged -= HandleAutoTranslationSettingsChanged;
         }
 
         public event Action? OnFakeMessageRequested;
@@ -71,29 +61,19 @@ namespace DCL.Chat.ChatMessages
         private Sequence? _fadeSequenceTween;
 
         public void Initialize(IReadOnlyList<ChatMessageViewModel> viewModels,
-            ITranslationSettings translationSettings,
             Func<bool> IsTranslationActivated,
             Func<bool> IsAutoTranslationEnabled = null)
         {
             this.viewModels = viewModels;
-            this.translationSettings = translationSettings;
             this.IsTranslationActivated = IsTranslationActivated;
             this.IsAutoTranslationEnabled = IsAutoTranslationEnabled;
 
             if (chatScrollToBottomView != null)
                 chatScrollToBottomView.OnClicked += ChatScrollToBottomToBottomClicked;
-
-            if (this.translationSettings != null)
-                this.translationSettings.OnAutoTranslationSettingsChanged += HandleAutoTranslationSettingsChanged;
             
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             scrollRect.SetScrollSensitivityBasedOnPlatform();
-        }
-
-        private void HandleAutoTranslationSettingsChanged(string channelId)
-        {
-            loopList.RefreshAllShownItem();
         }
 
         public void SetUserConnectivityProvider(IReadOnlyCollection<string> onlineParticipants)
@@ -140,8 +120,7 @@ namespace DCL.Chat.ChatMessages
             int entriesCountWithPaddings = viewModels.Count + 2; // +2 for the padding at the top and bottom
 
             int newEntries = entriesCountWithPaddings - loopList.ItemTotalCount;
-
-            //
+            
             if (newEntries < 0)
                 newEntries = 0;
 

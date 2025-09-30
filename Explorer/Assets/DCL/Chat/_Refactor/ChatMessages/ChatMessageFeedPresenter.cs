@@ -95,11 +95,12 @@ namespace DCL.Chat.ChatMessages
 
             separatorViewModel = createMessageViewModelCommand.ExecuteForSeparator();
             view.Initialize(viewModels,
-                translationSettings,
                 translationSettings.IsTranslationFeatureActive,
                 IsAutoTranslationEnabled);
             view.OnTranslateMessageRequested += OnTranslateMessage;
             view.OnRevertMessageRequested += OnRevertMessage;
+
+            translationSettings.OnAutoTranslationSettingsChanged += OnAutoTranslationSettingsChanged;
         }
 
         private bool IsAutoTranslationEnabled()
@@ -124,44 +125,6 @@ namespace DCL.Chat.ChatMessages
             isFocused = false;
         }
 
-        private void OnTranslationSettingsChanged(string eventId)
-        {
-            
-        }
-
-        private void RevertAllTranslatedMessagesInView()
-        {
-            foreach (var viewModel in viewModels)
-            {
-                if (viewModel.IsTranslated)
-                {
-                    revertToOriginalCommand.Execute(viewModel.Message.MessageId);
-                }
-            }
-        }
-
-        private void RestoreAllAvailableTranslationsInView()
-        {
-            // Iterate through all the view models currently loaded in the feed
-            foreach (var viewModel in viewModels)
-            {
-                // Check the persistent memory for a successful translation
-                if (translationMemory.TryGet(viewModel.Message.MessageId, out var translation) && !string.IsNullOrEmpty(translation.TranslatedBody))
-                {
-                    // Update the persistent state in memory back to Success.
-                    // This is crucial for consistency if the user toggles again.
-                    translationMemory.UpdateState(viewModel.Message.MessageId, TranslationState.Success);
-
-                    // Now, trigger the UI update by publishing the standard "reverted" event's opposite.
-                    // We can reuse the MessageTranslated event to trigger the refresh.
-                    eventBus.Publish(new TranslationEvents.MessageTranslated
-                    {
-                        MessageId = viewModel.Message.MessageId
-                    });
-                }
-            }
-        }
-
         public void Dispose()
         {
             scrollToBottomPresenter.Dispose();
@@ -169,6 +132,7 @@ namespace DCL.Chat.ChatMessages
 
             view.OnTranslateMessageRequested -= OnTranslateMessage;
             view.OnRevertMessageRequested -= OnRevertMessage;
+            translationSettings.OnAutoTranslationSettingsChanged -= OnAutoTranslationSettingsChanged;
         }
 
         private void OnTranslateMessage(string messageId)
@@ -177,7 +141,7 @@ namespace DCL.Chat.ChatMessages
             if (viewModel == null || viewModel.TranslationState == TranslationState.Pending) return;
 
             // No need to check state here, the view already determined this is the correct action
-            translateMessageCommand.Execute(viewModel.Message.MessageId, viewModel.Message.Message);
+            translateMessageCommand.Execute(viewModel.Message.MessageId, viewModel.Message.Message, loadChannelCts.Token);
         }
 
         // NEW: Handler for the revert request
@@ -340,7 +304,7 @@ namespace DCL.Chat.ChatMessages
                         chatConfig.ChatContextMenuTranslateText,
                         chatConfig.TranslateChatMessageContextMenuIcon,
                         () => translateMessageCommand.Execute(viewModel.Message.MessageId,
-                            viewModel.Message.Message)
+                            viewModel.Message.Message, loadChannelCts.Token)
                     ));
                 }
             }
@@ -487,7 +451,6 @@ namespace DCL.Chat.ChatMessages
             scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationFailed>(OnMessageTranslationFailed));
             scope.Add(eventBus.Subscribe<TranslationEvents.MessageTranslationReverted>(OnMessageTranslationReverted));
             scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
-            scope.Add(eventBus.Subscribe<string>(OnTranslationSettingsChanged));
             
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
             chatHistory.MessageAdded += OnMessageAddedToChatHistory;
@@ -500,7 +463,7 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
-
+            
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
@@ -546,6 +509,11 @@ namespace DCL.Chat.ChatMessages
 
             RemoveNewMessagesSeparator();
             MarkCurrentChannelAsRead();
+        }
+
+        private void OnAutoTranslationSettingsChanged(string conversationId)
+        {
+            view.RefreshVisibleElements();
         }
 
         public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
