@@ -1,29 +1,34 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
+using System;
+using System.Threading;
 using TMPro;
-using UnityEngine;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class InputDeviceController : SettingsFeatureController
     {
+        private readonly ExtendedObjectPool<TMP_Dropdown.OptionData> optionsPool = new (static () => new TMP_Dropdown.OptionData());
         private readonly SettingsDropdownModuleView view;
-        private readonly VoiceChatSettingsAsset voiceChatSettings;
 
-        public InputDeviceController(SettingsDropdownModuleView view, VoiceChatSettingsAsset voiceChatSettings)
+        private CancellationTokenSource? requestDeviceStatusCancellationToken;
+
+        public InputDeviceController(SettingsDropdownModuleView view)
         {
             this.view = view;
-            this.voiceChatSettings = voiceChatSettings;
 
-            LoadInputDeviceOptions();
-            SetSelection();
+            string[] devices = MicrophoneSelection.Devices();
+            LoadInputDeviceOptions(devices);
+            SetSelection(devices);
 
-            AudioSettings.OnAudioConfigurationChanged += AudioConfigChanged;
             view.DropdownView.Dropdown.onValueChanged.AddListener(ApplySettings);
+            view.showStatusUpdated.AddListener(OnShowStatusUpdated);
         }
 
         private void ApplySettings(int pickedMicrophoneIndex)
@@ -39,23 +44,60 @@ namespace DCL.Settings.ModuleControllers
             MicrophoneSelection microphoneSelection = result.Value;
 
             DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME, microphoneSelection.name);
-            voiceChatSettings.OnMicrophoneChanged(microphoneSelection);
+            VoiceChatSettings.OnMicrophoneChanged(microphoneSelection);
         }
 
-        private void AudioConfigChanged(bool deviceWasChanged)
+        private void OnShowStatusUpdated(bool isShown)
         {
-            if (!deviceWasChanged) return;
+            if (isShown == false)
+            {
+                requestDeviceStatusCancellationToken?.Cancel();
+                requestDeviceStatusCancellationToken = null;
+                return;
+            }
 
-            LoadInputDeviceOptions();
-            SetSelection();
+            TimeSpan updatePoll = TimeSpan.FromMilliseconds(500);
+            requestDeviceStatusCancellationToken = new CancellationTokenSource();
+            BackgroundTaskAsync(requestDeviceStatusCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid BackgroundTaskAsync(CancellationToken token)
+            {
+                string[] lastDevices = Array.Empty<string>();
+
+                while (token.IsCancellationRequested == false)
+                {
+                    await UniTask.Delay(updatePoll, cancellationToken: token).SuppressCancellationThrow();
+                    string[] devices = MicrophoneSelection.Devices();
+
+                    bool same = AreEquals(devices, lastDevices);
+                    if (same) continue;
+
+                    lastDevices = devices;
+
+                    LoadInputDeviceOptions(devices);
+                    SetSelection(devices);
+                }
+
+                static bool AreEquals(string[] a, string[] b)
+                {
+                    if (a.Length != b.Length)
+                        return false;
+
+                    for (int i = 0; i < a.Length; i++)
+                        if (!string.Equals(a[i], b[i]))
+                            return false;
+
+                    return true;
+                }
+            }
         }
 
-        private void SetSelection()
+        private void SetSelection(string[] devices)
         {
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME))
             {
                 string microphoneName = DCLPlayerPrefs.GetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME);
-                string[] devices = MicrophoneSelection.Devices();
 
                 for (var i = 0; i < devices.Length; i++)
                 {
@@ -71,33 +113,49 @@ namespace DCL.Settings.ModuleControllers
 
         private void UpdateDropdownSelection(int index)
         {
-            Result<MicrophoneSelection> result = MicrophoneSelection.FromIndex(index);
+            BackgroundTaskAsync().Forget();
+            return;
 
-            if (result.Success == false)
+            async UniTaskVoid BackgroundTaskAsync()
             {
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Picked invalid selection from ui: {result.ErrorMessage}");
-                return;
+                await UniTask.SwitchToThreadPool();
+
+                Result<MicrophoneSelection> result = MicrophoneSelection.FromIndex(index);
+
+                if (result.Success == false)
+                {
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Picked invalid selection from ui: {result.ErrorMessage}");
+                    return;
+                }
+
+                MicrophoneSelection microphoneSelection = result.Value;
+
+                await UniTask.SwitchToMainThread();
+
+                view.DropdownView.Dropdown.value = index;
+                view.DropdownView.Dropdown.RefreshShownValue();
+                VoiceChatSettings.OnMicrophoneChanged(microphoneSelection);
             }
-
-            MicrophoneSelection microphoneSelection = result.Value;
-
-            view.DropdownView.Dropdown.value = index;
-            voiceChatSettings.OnMicrophoneChanged(microphoneSelection);
-            view.DropdownView.Dropdown.RefreshShownValue();
         }
 
-        private void LoadInputDeviceOptions()
+        private void LoadInputDeviceOptions(string[] devices)
         {
+            foreach (TMP_Dropdown.OptionData dropdownOption in view.DropdownView.Dropdown.options) optionsPool.Release(dropdownOption);
             view.DropdownView.Dropdown.options.Clear();
 
-            foreach (string option in MicrophoneSelection.Devices())
-                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = option });
+            foreach (string option in devices)
+            {
+                var data = optionsPool.Get();
+                data!.text = option;
+                view.DropdownView.Dropdown.options.Add(data);
+            }
         }
 
         public override void Dispose()
         {
-            AudioSettings.OnAudioConfigurationChanged -= AudioConfigChanged;
             view.DropdownView.Dropdown.onValueChanged.RemoveAllListeners();
+            view.showStatusUpdated.RemoveListener(OnShowStatusUpdated);
+            optionsPool.Dispose();
         }
     }
 }

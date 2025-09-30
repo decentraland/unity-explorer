@@ -24,7 +24,6 @@ namespace DCL.PluginSystem
 
             try
             {
-                await settings.EnsureValidAsync();
                 await InitializeInternalAsync(settings, ct);
             }
             catch (Exception e) { throw new Exception($"Cannot initialize container {typeof(TSettings).FullName}", e); }
