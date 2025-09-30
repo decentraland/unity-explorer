@@ -29,7 +29,7 @@ namespace DCL.Landscape.Config.Editor
             NativeList<int2> emptyParcels = default;
             NativeParallelHashMap<int2, int> emptyParcelsData = default;
             NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData = default;
-            NativeParallelHashSet<int2> ownedParcels = default;
+            NativeHashSet<int2> ownedParcels = default;
 
             try
             {
@@ -38,7 +38,7 @@ namespace DCL.Landscape.Config.Editor
 
                 int2 minParcel = terrainSize / -2;
                 int2 maxParcel = -minParcel - 1;
-                ownedParcels = new NativeParallelHashSet<int2>(0, Allocator.TempJob);
+                ownedParcels = new NativeHashSet<int2>(0, Allocator.TempJob);
 
                 TerrainGenerationUtils.ExtractEmptyParcels(minParcel, maxParcel, ref emptyParcels,
                     ref ownedParcels);

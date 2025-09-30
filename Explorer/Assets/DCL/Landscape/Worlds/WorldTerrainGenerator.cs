@@ -39,7 +39,7 @@ namespace DCL.Landscape
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeList<int2> emptyParcels;
-        private NativeParallelHashSet<int2> ownedParcels;
+        private NativeHashSet<int2> ownedParcels;
 
         private readonly List<Terrain> terrains = new ();
         private NoiseGeneratorCache noiseGenCache;
@@ -91,7 +91,7 @@ namespace DCL.Landscape
                 rootGo.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1,
+        public async UniTask GenerateTerrainAsync(NativeHashSet<int2> ownedParcels, uint worldSeed = 1,
             AsyncLoadProcessReport processReport = null, CancellationToken cancellationToken = default)
         {
             if (!IsInitialized) return;

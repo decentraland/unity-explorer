@@ -49,9 +49,9 @@ namespace DCL.Landscape.Utils
         public Vector2[] occupied;
         public Vector2[] empty;
 
-        public NativeParallelHashSet<int2> GetRoadParcels()
+        public NativeHashSet<int2> GetRoadParcels()
         {
-            var hashSet = new NativeParallelHashSet<int2>(roads.Length, Allocator.Persistent);
+            var hashSet = new NativeHashSet<int2>(roads.Length, Allocator.Persistent);
 
             foreach (Vector2 parcel in roads)
                 hashSet.Add(new int2(parcel));
@@ -59,9 +59,9 @@ namespace DCL.Landscape.Utils
             return hashSet;
         }
 
-        public NativeParallelHashSet<int2> GetOccupiedParcels()
+        public NativeHashSet<int2> GetOccupiedParcels()
         {
-            var hashSet = new NativeParallelHashSet<int2>(occupied.Length, Allocator.Persistent);
+            var hashSet = new NativeHashSet<int2>(occupied.Length, Allocator.Persistent);
 
             foreach (Vector2 parcel in occupied)
                 hashSet.Add(new int2(parcel));
@@ -69,9 +69,9 @@ namespace DCL.Landscape.Utils
             return hashSet;
         }
 
-        public NativeParallelHashSet<int2> GetEmptyParcels()
+        public NativeHashSet<int2> GetEmptyParcels()
         {
-            var hashSet = new NativeParallelHashSet<int2>(empty.Length, Allocator.Persistent);
+            var hashSet = new NativeHashSet<int2>(empty.Length, Allocator.Persistent);
 
             foreach (Vector2 emptyParcel in empty)
                 hashSet.Add(new int2(emptyParcel));

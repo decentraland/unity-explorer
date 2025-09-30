@@ -33,9 +33,9 @@ namespace ECS.SceneLifeCycle.Tests
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
 
             LandscapeParcelData landscapeParcelData = new();
-            var emptyParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
-            var roadParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
-            var occupiedParcels = new NativeParallelHashSet<int2>(100, Allocator.Persistent);
+            var emptyParcels = new NativeHashSet<int2>(100, Allocator.Persistent);
+            var roadParcels = new NativeHashSet<int2>(100, Allocator.Persistent);
+            var occupiedParcels = new NativeHashSet<int2>(100, Allocator.Persistent);
             landscapeParcelData.Reconfigure(roadParcels, occupiedParcels, emptyParcels);
 
             system = new LoadPointersByIncreasingRadiusSystem(world,
