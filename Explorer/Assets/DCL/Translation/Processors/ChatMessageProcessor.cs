@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using DCL.Diagnostics;
 
 namespace DCL.Translation.Processors
 {
@@ -27,7 +28,7 @@ namespace DCL.Translation.Processors
 
         public async UniTask<TranslationResult> ProcessAndTranslateAsync(string rawText, LanguageCode targetLang, CancellationToken ct)
         {
-            TranslationDebug.LogInfo($"[Seg] input: \"{rawText}\"");
+            ReportHub.Log(ReportCategory.TRANSLATE, $"[Seg] input: \"{rawText}\"");
 
             var tokens = new List<Tok>();
             if (!string.IsNullOrEmpty(rawText))
@@ -41,7 +42,7 @@ namespace DCL.Translation.Processors
                 tokens = rule.Process(tokens);
             }
 
-            TranslationDebug.LogTokens("after-all-rules", tokens);
+            ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatTokens("after-all-rules", tokens));
 
             // 2. Extract parts that need translation
             (string[] cores, int[] idxs, string[] leading, string[] trailing) =
@@ -83,11 +84,11 @@ namespace DCL.Translation.Processors
 
             // 4. Apply translations back
             tokens = ApplyTranslationsWithSpaces(tokens, idxs, leading, trailing, translated);
-            TranslationDebug.LogTokens("after-apply", tokens);
+            ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatTokens("after-apply", tokens));
 
             // 5. Stitch the final string
             string stitched = Stitch(tokens);
-            TranslationDebug.LogInfo($"[Seg] output: \"{stitched}\"");
+            ReportHub.Log(ReportCategory.TRANSLATE, $"[Seg] output: \"{stitched}\"");
 
             // Assuming source language detection is handled by provider, returning a placeholder.
             // A more advanced system could aggregate this from the provider's response.

@@ -67,21 +67,21 @@ namespace DCL.Translation.Service
                 q = texts, source = source, target = target, format = "text"
             };
 
-            TranslationDebug.LogRequest(translateUrl, "application/json;", requestBody);
+            ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatRequest(translateUrl, "application/json;", requestBody));
 
             try
             {
                 var response =  await webRequestController
-                    .PostAsync(translateUrl, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.CHAT_TRANSLATE)
+                    .PostAsync(translateUrl, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.TRANSLATE)
                     .CreateFromJson<TranslationApiResponseBatch>(WRJsonParser.Newtonsoft);
 
-                TranslationDebug.LogResponse(translateUrl, response);
+                ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatResponse(translateUrl, response));
 
                 return response;
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.CHAT_TRANSLATE);
+                ReportHub.LogException(e, ReportCategory.TRANSLATE);
                 throw;
             }
         }
@@ -96,7 +96,7 @@ namespace DCL.Translation.Service
                 q = text, source = source, target = target, format = "text"
             };
 
-            TranslationDebug.LogRequest(translateUrl, "application/json;", requestBody);
+            ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatRequest(translateUrl, "application/json;", requestBody));
 
             try
             {
@@ -107,16 +107,16 @@ namespace DCL.Translation.Service
                 );
 
                 var response = await webRequestController
-                    .PostAsync(commonArgs, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.CHAT_TRANSLATE)
+                    .PostAsync(commonArgs, GenericPostArguments.CreateJson(JsonUtility.ToJson(requestBody)), ct, ReportCategory.TRANSLATE)
                     .CreateFromJson<TranslationApiResponse>(WRJsonParser.Newtonsoft);
 
-                TranslationDebug.LogResponse(translateUrl, response);
+                ReportHub.Log(ReportCategory.TRANSLATE, TranslationDebug.FormatResponse(translateUrl, response));
 
                 return response;
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.CHAT_TRANSLATE);
+                ReportHub.LogException(e, ReportCategory.TRANSLATE);
                 throw;
             }
         }

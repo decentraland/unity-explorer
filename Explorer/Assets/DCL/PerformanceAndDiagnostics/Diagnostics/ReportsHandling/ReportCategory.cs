@@ -337,7 +337,7 @@ namespace DCL.Diagnostics
 
         public const string COMMUNITIES = nameof(COMMUNITIES);
 
-        public const string CHAT_TRANSLATE = nameof(CHAT_TRANSLATE);
+        public const string TRANSLATE = nameof(TRANSLATE);
 
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
     }

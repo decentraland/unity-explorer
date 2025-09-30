@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using DCL.Translation.Processors;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -9,40 +8,25 @@ namespace DCL.Translation
 {
     public static class TranslationDebug
     {
-        public static bool Enabled = true;
+        private const int MAX_LOG_CHARS = 8000;
 
-        public static int MaxLogChars = 8000;
-
-        public static void LogInfo(string msg)
+        public static string FormatRequest(string url, string contentType, object payload)
         {
-            if (!Enabled) return;
-            ReportHub.Log(ReportCategory.CHAT_TRANSLATE, msg);
+            return $"[MT] → {url}\nContent-Type: {contentType}\nBody:\n{Trunc(PrettyJson(payload))}";
         }
 
-        public static void LogRequest(string url, string contentType, object payload)
+        public static string FormatResponse(string url, object payload)
         {
-            if (!Enabled) return;
-            ReportHub.Log(ReportCategory.CHAT_TRANSLATE,
-                $"[MT] → {url}\nContent-Type: {contentType}\nBody:\n{Trunc(PrettyJson(payload))}");
+            return $"[MT] ← {url}\nResponse:\n{Trunc(PrettyJson(payload))}";
         }
 
-        public static void LogResponse(string url, object payload)
+        public static string FormatRetry(int attempt, int max, int delayMs, long httpCode)
         {
-            if (!Enabled) return;
-            ReportHub.Log(ReportCategory.CHAT_TRANSLATE,
-                $"[MT] ← {url}\nResponse:\n{Trunc(PrettyJson(payload))}");
+            return $"[MT] retry {attempt}/{max} after {delayMs} ms (HTTP {httpCode})";
         }
 
-        public static void LogRetry(int attempt, int max, int delayMs, long httpCode)
+        public static string FormatTokens(string label, List<Tok> toks)
         {
-            if (!Enabled) return;
-            ReportHub.Log(ReportCategory.CHAT_TRANSLATE,
-                $"[MT] retry {attempt}/{max} after {delayMs} ms (HTTP {httpCode})");
-        }
-
-        public static void LogTokens(string label, List<Tok> toks)
-        {
-            if (!Enabled) return;
             var sb = new StringBuilder();
             sb.AppendLine($"[Seg] {label} (count={toks.Count})");
             for (int i = 0; i < toks.Count; i++)
@@ -53,14 +37,12 @@ namespace DCL.Translation
                 sb.AppendLine($"{i,3}: {t.Type,-7} \"{v}\"");
             }
 
-            ReportHub.Log(ReportCategory.CHAT_TRANSLATE, sb.ToString());
+            return sb.ToString();
         }
 
-        public static void LogPieces(string label, string[] pieces)
+        public static string FormatPieces(string label, string[] pieces)
         {
-            if (!Enabled) return;
-            ReportHub.Log(ReportCategory.CHAT_TRANSLATE,
-                $"[Seg] {label} pieces:\n{Trunc(PrettyJson(pieces))}");
+            return $"[Seg] {label} pieces:\n{Trunc(PrettyJson(pieces))}";
         }
 
         private static string PrettyJson(object o)
@@ -81,7 +63,7 @@ namespace DCL.Translation
         private static string Trunc(string s)
         {
             if (s == null) return "null";
-            return s.Length <= MaxLogChars ? s : s.Substring(0, MaxLogChars) + "… [truncated]";
+            return s.Length <= MAX_LOG_CHARS ? s : s.Substring(0, MAX_LOG_CHARS) + "… [truncated]";
         }
 
         private static string Escape(string s)
