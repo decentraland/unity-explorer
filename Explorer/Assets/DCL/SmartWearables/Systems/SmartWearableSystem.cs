@@ -21,7 +21,6 @@ using ECS.SceneLifeCycle.Systems;
 using PortableExperiences.Controller;
 using Runtime.Wearables;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
@@ -43,9 +42,11 @@ namespace DCL.SmartWearables
         private readonly IScenesCache scenesCache;
 
         /// <summary>
-        /// Promises waiting on the loading flow of a smart wearable scene.
+        ///     Promises waiting on the loading flow of a smart wearable scene.
         /// </summary>
         private readonly Dictionary<string, ScenePromise> pendingScenes = new ();
+
+        private bool currentSceneDirty;
 
         public SmartWearableSystem(World world, WearableStorage wearableStorage, SmartWearableCache smartWearableCache, IBackpackEventBus backpackEventBus, IPortableExperiencesController portableExperiencesController, IScenesCache scenesCache) : base(world)
         {
@@ -133,6 +134,12 @@ namespace DCL.SmartWearables
             smartWearableCache.CurrentSceneAllowsSmartWearables = CurrentSceneAllowsSmartWearables();
 
             ResolveScenePromises();
+
+            if (currentSceneDirty)
+            {
+                HandleSceneChange();
+                currentSceneDirty = false;
+            }
         }
 
         private bool CurrentSceneAllowsSmartWearables()
@@ -208,6 +215,11 @@ namespace DCL.SmartWearables
         }
 
         private void OnCurrentSceneChanged(ISceneFacade scene)
+        {
+            currentSceneDirty = true;
+        }
+
+        private void HandleSceneChange()
         {
             bool smartWearablesAllowed = smartWearableCache.CurrentSceneAllowsSmartWearables;
 
