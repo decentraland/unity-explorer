@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using System.Threading;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using TMPro;
 using UnityEngine.AddressableAssets;
 
@@ -10,7 +11,7 @@ namespace DCL.Chat.ChatServices
 {
     public class FallbackFontsProvider : IDisposable
     {
-        private List<ProvidedAsset<TMP_FontAsset>> providedAssets;
+        private readonly List<ProvidedAsset<TMP_FontAsset>> providedAssets = new();
 
         public FallbackFontsProvider(IAssetsProvisioner assetsProvisioner, List<AssetReferenceT<TMP_FontAsset>> fallbackFonts, CancellationToken ct)
         {
@@ -21,8 +22,6 @@ namespace DCL.Chat.ChatServices
         {
             try
             {
-                providedAssets = new List<ProvidedAsset<TMP_FontAsset>>();
-
                 foreach (AssetReferenceT<TMP_FontAsset>? fallbackFont in fallbackFonts)
                     providedAssets.Add(await assetsProvisioner.ProvideMainAssetAsync(fallbackFont, ct));
 
@@ -36,9 +35,11 @@ namespace DCL.Chat.ChatServices
 
                 TMP_Settings.fallbackFontAssets = fallbackList;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ignore: fallback fonts are optional, avoid crashing chat on load errors
+                ReportHub.LogWarning(ReportCategory.TRANSLATE,
+                    $"Fallback fonts could not be loaded, some characters may not display correctly. Details: {ex.Message}");
             }
         }
 
