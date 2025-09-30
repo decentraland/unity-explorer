@@ -12,11 +12,11 @@ namespace DCL.Chat
         private readonly ChatConfig.ChatConfig config;
         private readonly CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
-        internal readonly ChatTitlebarPresenter titleBarPresenter;
-        internal readonly ChatChannelsPresenter channelListPresenter;
-        internal readonly ChatMessageFeedPresenter messageFeedPresenter;
+        private readonly ChatTitlebarPresenter titleBarPresenter;
+        private readonly ChatChannelsPresenter channelListPresenter;
+        private readonly ChatMessageFeedPresenter messageFeedPresenter;
         internal readonly ChatInputPresenter chatInputPresenter;
-        internal readonly ChatMemberListPresenter memberListPresenter;
+        private readonly ChatMemberListPresenter memberListPresenter;
 
         public ChatUIMediator(
             ChatPanelView panelView,
@@ -51,10 +51,9 @@ namespace DCL.Chat
             chatInputPresenter.ShowUnfocused();
             memberListPresenter.Hide();
 
-            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
-            subTitleButtonPresenter.Hide();
-
             SetPanelsFocus(isFocused: false, animate);
+
+            subTitleButtonPresenter.Show();
         }
 
         public void SetupForFocusedState()
@@ -67,10 +66,9 @@ namespace DCL.Chat
             chatInputPresenter.ShowFocusedAsync().Forget();
             memberListPresenter.Hide();
 
-            subTitleButtonPresenter.Show();
-            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
-
             SetPanelsFocus(isFocused: true, animate: false);
+
+            subTitleButtonPresenter.Show();
         }
 
         public void SetupForMembersState()
@@ -78,25 +76,20 @@ namespace DCL.Chat
             titleBarPresenter.Show();
             titleBarPresenter.ShowMembersView(isMemberListVisible:true);
 
-            subTitleButtonPresenter.OnMemberListVisibilityChanged(true);
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();
             chatInputPresenter.Hide();
             memberListPresenter.Show();
 
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED, true);
-
             SetPanelsFocus(isFocused: false, animate: false);
+
+            subTitleButtonPresenter.Hide();
         }
 
         public void SetupForMinimizedState()
         {
             titleBarPresenter.Hide();
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
-            subTitleButtonPresenter.OnMemberListVisibilityChanged(false);
-
-            subTitleButtonPresenter.Hide();
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED, true);
 
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();
@@ -104,6 +97,8 @@ namespace DCL.Chat
             chatInputPresenter.ShowUnfocused();
 
             SetPanelsFocus(isFocused: false, animate: true);
+
+            subTitleButtonPresenter.Hide();
         }
 
         public void SetupForHiddenState()
@@ -111,16 +106,15 @@ namespace DCL.Chat
             titleBarPresenter.Hide();
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
 
-            subTitleButtonPresenter.Hide();
-
             channelListPresenter.Hide();
             messageFeedPresenter.TryDeactivate();
             chatInputPresenter.Hide();
             memberListPresenter.Hide();
 
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, true);
-
             SetPanelsFocus(isFocused: false, animate: false);
+
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, true);
+            subTitleButtonPresenter.Hide();
         }
 
         internal void SetPanelsFocus(bool isFocused, bool animate)
@@ -132,6 +126,7 @@ namespace DCL.Chat
             messageFeedPresenter.SetFocusState(isFocused, animate, duration, ease);
             channelListPresenter.SetFocusState(isFocused, animate, duration, ease);
             titleBarPresenter.SetFocusState(isFocused, animate, duration, ease);
+            subTitleButtonPresenter.SetFocusState(isFocused, animate, duration);
         }
     }
 }

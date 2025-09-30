@@ -355,8 +355,8 @@ namespace DCL.VoiceChat
                 isMember = communityUpdate.IsMember,
                 positions = new List<string>(communityUpdate.Positions),
                 worlds = new List<string>(communityUpdate.Worlds),
-                participantCount = 0, // This would need to be populated from other sources
-                moderatorCount = 0, // This would need to be populated from other sources
+                participantCount = 0,
+                moderatorCount = 0,
             };
 
             // Update the active community voice chats dictionary

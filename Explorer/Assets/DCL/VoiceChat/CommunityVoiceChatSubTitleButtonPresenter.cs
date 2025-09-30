@@ -19,11 +19,11 @@ namespace DCL.VoiceChat
         private readonly JoinCommunityLiveStreamChatSubTitleButtonView view;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
+        private readonly bool disabled;
 
         private CancellationTokenSource communityCts = new ();
         private IDisposable? currentCommunityCallStatusSubscription;
 
-        private bool isMemberListVisible;
         private bool canBeVisible;
 
         public CommunityVoiceChatSubTitleButtonPresenter(
@@ -42,20 +42,24 @@ namespace DCL.VoiceChat
                 currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
                 statusSubscription = communityCallOrchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
                 view.JoinStreamButton.onClick.AddListener(OnJoinStreamButtonClicked);
+                disabled = false;
+                canBeVisible = true;
             }
+            else
+                disabled = true;
 
-            canBeVisible = true;
             view.gameObject.SetActive(false);
         }
 
         public void Dispose()
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
+            communityCts.SafeCancelAndDispose();
+
+            if (disabled) return;
 
             statusSubscription?.Dispose();
             currentChannelSubscription?.Dispose();
             currentCommunityCallStatusSubscription?.Dispose();
-            communityCts.SafeCancelAndDispose();
             view.JoinStreamButton.onClick.RemoveListener(OnJoinStreamButtonClicked);
         }
 
@@ -76,7 +80,6 @@ namespace DCL.VoiceChat
         private void Reset()
         {
             view.gameObject.SetActive(false);
-            isMemberListVisible = false;
             currentCommunityCallStatusSubscription?.Dispose();
             currentCommunityCallStatusSubscription = null;
         }
@@ -84,6 +87,9 @@ namespace DCL.VoiceChat
         private async UniTaskVoid HandleChangeToCommunityChannelAsync(string communityId)
         {
             currentCommunityCallStatusSubscription = communityCallOrchestrator.SubscribeToCommunityUpdates(communityId)?.Subscribe(OnCurrentCommunityCallStatusChanged);
+
+            //We subscribe to the call events but if the button cant be visible we dont need to check further.
+            if (!canBeVisible) return;
 
             bool isOurCurrentConversation = communityCallOrchestrator.CurrentCommunityId.Value.Equals(communityId, StringComparison.InvariantCultureIgnoreCase);
             if (isOurCurrentConversation) return;
@@ -103,15 +109,16 @@ namespace DCL.VoiceChat
 
         private void OnCurrentCommunityCallStatusChanged(bool hasActiveCall)
         {
-            if (isMemberListVisible) return;
-
-            if (communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase) || !hasActiveCall)
+            if (!hasActiveCall ||
+                communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase))
             {
                 view.gameObject.SetActive(false);
                 return;
             }
 
-            //We need to check if it can be visible.
+            //If the panel can't be visible, we dont activate it.
+            if (!canBeVisible) return;
+
             view.gameObject.SetActive(true);
             int participantsCount = communityCallOrchestrator.ParticipantsStateService.ConnectedParticipants.Count + 1;
             view.ParticipantsAmount.SetText(participantsCount.ToString());
@@ -119,9 +126,6 @@ namespace DCL.VoiceChat
 
         private void OnCommunityCallStatusChanged(VoiceChatStatus status)
         {
-            if (isMemberListVisible) return;
-            if (!canBeVisible) return;
-
             switch (status)
             {
                 // If we just ended a call, we need to re-check the call status, etc., in case we need to show the button
@@ -129,7 +133,7 @@ namespace DCL.VoiceChat
                     OnCallEndedAsync().Forget();
                     break;
 
-                // When we join a call, if it is for THIS community, we need to hide the button. If it's another call, we keep it.
+                // When we join a call, if it is for THIS community, we need to hide the button. If it's another community's call, we keep it.
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL when
                     communityCallOrchestrator.CurrentCommunityId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), StringComparison.InvariantCultureIgnoreCase):
                     view.gameObject.SetActive(false);
@@ -145,30 +149,27 @@ namespace DCL.VoiceChat
             HandleChangeToCommunityChannelAsync(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id)).Forget();
         }
 
-        public void OnMemberListVisibilityChanged(bool isVisible)
-        {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
-
-            isMemberListVisible = isVisible;
-
-            if (isVisible) { view.gameObject.SetActive(false); }
-            else
-            {
-                // Re-setup subtitle bar when member list becomes hidden
-                // This will trigger the normal flow to determine if it should be shown or not
-                OnCurrentChannelChanged(currentChannel.Value);
-            }
-        }
-
         public void Hide()
         {
+            if (disabled) return;
+            if (!canBeVisible) return;
+
             canBeVisible = false;
             view.gameObject.SetActive(false);
         }
 
         public void Show()
         {
+            if (disabled) return;
+            if (canBeVisible) return;
+
             canBeVisible = true;
+            OnCurrentChannelChanged(currentChannel.Value);
+        }
+
+        public void SetFocusState(bool isFocused, bool animate, float duration)
+        {
+            view.SetFocusedState(isFocused, animate, duration);
         }
     }
 }
