@@ -241,7 +241,7 @@ Shader "DCL_UberPost"
 
             // Color grading is always enabled when post-processing/uber is active
             {
-                color = ApplyColorGrading(color, PostExposure, TEXTURE2D_ARGS(_InternalLut, sampler_LinearClamp), LutParams, TEXTURE2D_ARGS(_UserLut, sampler_LinearClamp), UserLutParams, UserLutContribution);
+                color = ApplyColorGrading(color, PostExposure, TEXTURE2D_ARGS(_InternalLut, sampler_LinearClamp), LutParams, TEXTURE2D_ARGS(_UserLut, sampler_LinearClamp), UserLutParams, UserLutContribution, PaperWhite, OneOverPaperWhite);
             }
 
             #if _FILM_GRAIN

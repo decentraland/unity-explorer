@@ -1,8 +1,8 @@
 using System;
-using UnityEngine.Assertions;
 using System.Threading;
+using UnityEngine.Assertions;
 
-namespace Utility.Types
+namespace DCL.Utility.Types
 {
     public readonly struct Result
     {

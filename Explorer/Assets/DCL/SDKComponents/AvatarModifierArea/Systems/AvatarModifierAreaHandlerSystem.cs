@@ -1,8 +1,9 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.CharacterTriggerArea.Components;
+using DCL.SDKEntityTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
@@ -10,7 +11,6 @@ using DCL.Profiles;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Components;
-using DCL.SDKComponents.Utils;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -57,10 +57,12 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         }
 
         [Query]
-        private void ResetAffectedEntities(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        [All(typeof(AvatarModifierAreaComponent))]
+        private void ResetAffectedEntities(in Entity entity, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+            foreach (Collider avatarCollider in triggerAreaComponent.CurrentEntitiesInside)
             {
+                Transform avatarTransform = avatarCollider.transform;
                 if (!TryGetAvatarEntity(avatarTransform, out Entity avatarEntity)) continue;
 
                 ShowAvatar(avatarEntity, avatarTransform);
@@ -71,12 +73,12 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         }
 
         [Query]
-        [None(typeof(CharacterTriggerAreaComponent), typeof(AvatarModifierAreaComponent))]
+        [None(typeof(SDKEntityTriggerAreaComponent), typeof(AvatarModifierAreaComponent))]
         [All(typeof(TransformComponent))]
         private void SetupAvatarModifierArea(in Entity entity, ref PBAvatarModifierArea pbAvatarModifierArea)
         {
             World!.Add(entity,
-                new CharacterTriggerAreaComponent(areaSize: pbAvatarModifierArea.Area, targetOnlyMainPlayer: false),
+                new SDKEntityTriggerAreaComponent(areaSize: pbAvatarModifierArea.Area, targetOnlyMainPlayer: false),
                 new AvatarModifierAreaComponent(pbAvatarModifierArea.ExcludeIds!)
             );
         }
@@ -85,7 +87,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         [All(typeof(TransformComponent))]
         private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea,
             ref AvatarModifierAreaComponent modifierAreaComponent,
-            ref CharacterTriggerAreaComponent triggerAreaComponent)
+            ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             bool isHideAvatarsType = pbAvatarModifierArea.Modifiers.Contains(AvatarModifierType.AmtHideAvatars);
             bool isHidePassportsType = pbAvatarModifierArea.Modifiers.Contains(AvatarModifierType.AmtDisablePassports);
@@ -97,8 +99,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 modifierAreaComponent.SetExcludedIds(pbAvatarModifierArea.ExcludeIds!);
 
                 // Update effect on now excluded/non-excluded avatars
-                foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+                foreach (Collider avatarCollider in triggerAreaComponent.CurrentEntitiesInside)
                 {
+                    Transform avatarTransform = avatarCollider.transform;
                     if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
 
                     if (isHideAvatarsType)
@@ -109,8 +112,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
                 }
             }
 
-            foreach (Transform avatarTransform in triggerAreaComponent.ExitedAvatarsToBeProcessed)
+            foreach (Collider avatarCollider in triggerAreaComponent.ExitedEntitiesToBeProcessed)
             {
+                Transform avatarTransform = avatarCollider.transform;
                 if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
 
                 ShowAvatar(entity, avatarTransform);
@@ -119,8 +123,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
 
-            foreach (Transform avatarTransform in triggerAreaComponent.EnteredAvatarsToBeProcessed)
+            foreach (Collider avatarCollider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
             {
+                Transform avatarTransform = avatarCollider.transform;
                 if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
 
                 if (isHideAvatarsType)
@@ -135,12 +140,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleEntityDestruction(ref CharacterTriggerAreaComponent triggerAreaComponent,
+        private void HandleEntityDestruction(ref SDKEntityTriggerAreaComponent triggerAreaComponent,
             ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+            foreach (Collider avatarCollider in triggerAreaComponent.CurrentEntitiesInside)
             {
+                Transform avatarTransform = avatarCollider.transform;
                 if (!TryGetAvatarEntity(avatarTransform, out var entity)) continue;
 
                 ShowAvatar(entity, avatarTransform);
@@ -152,12 +158,13 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleComponentRemoval(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent,
+        private void HandleComponentRemoval(in Entity entity, ref SDKEntityTriggerAreaComponent triggerAreaComponent,
             ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+            foreach (Collider avatarCollider in triggerAreaComponent.CurrentEntitiesInside)
             {
+                Transform avatarTransform = avatarCollider.transform;
                 if (!TryGetAvatarEntity(avatarTransform, out var avatarEntity)) continue;
 
                 ShowAvatar(avatarEntity, avatarTransform);

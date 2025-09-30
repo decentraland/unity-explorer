@@ -2,7 +2,6 @@
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
-using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
 using DG.Tweening;
 using MVC;
@@ -23,7 +22,6 @@ namespace DCL.UI.MainUI
 
         private readonly IMVCManager mvcManager;
         private readonly bool isFriendsEnabled;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private bool waitingToShowSidebar;
         private bool waitingToHideSidebar;
@@ -38,12 +36,10 @@ namespace DCL.UI.MainUI
         public MainUIController(
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            bool isFriendsEnabled,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            bool isFriendsEnabled) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.isFriendsEnabled = isFriendsEnabled;
-            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         protected override void OnViewInstantiated()

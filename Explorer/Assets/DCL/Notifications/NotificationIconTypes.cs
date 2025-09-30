@@ -1,4 +1,4 @@
-using DCL.NotificationsBusController.NotificationTypes;
+using DCL.NotificationsBus.NotificationTypes;
 using UnityEngine;
 using Utility;
 

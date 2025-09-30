@@ -176,7 +176,9 @@ namespace DCL.Landscape
                 {
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
                     {
-                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel, ref emptyParcels, ref ownedParcels);
+                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel.MinParcel,
+                            TerrainModel.MaxParcel, ref emptyParcels, ref ownedParcels);
+
                         await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
                     }
 
@@ -694,18 +696,6 @@ namespace DCL.Landscape
             }
 
             return false;
-        }
-
-        // TODO where is it called from?
-        private static void SaveTrees(ChunkModel[] chunks, TerrainGenerationData terrainData)
-        {
-            var writer = new TreeInstanceWriter(terrainData.parcelSize, terrainData.treeAssets);
-
-            foreach (ChunkModel chunk in chunks)
-                writer.AddTerrain(chunk.terrain);
-
-            using var stream = new FileStream(treeFilePath, FileMode.Create, FileAccess.Write);
-            writer.Write(stream);
         }
 
         private async UniTask LoadTreesAsync()

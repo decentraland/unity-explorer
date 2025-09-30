@@ -11,6 +11,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
+using DCL.SkyBox;
 using DCL.UI;
 using DCL.Utilities;
 using ECS.Prioritization;
@@ -19,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
@@ -41,7 +41,7 @@ namespace DCL.Settings
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
-        private readonly VoiceChatSettingsAsset voiceChatSettings;
+        private readonly SkyboxSettingsAsset skyboxSettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly VolumeBus volumeBus;
@@ -51,8 +51,9 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
-        private readonly bool isVoiceChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
+
+        private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
@@ -64,15 +65,14 @@ namespace DCL.Settings
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             QualitySettingsAsset qualitySettingsAsset,
+            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
             ChatSettingsAsset chatSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
-            VoiceChatSettingsAsset voiceChatSettings,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
-            bool isVoiceChatEnabled,
             IAssetsProvisioner assetsProvisioner)
         {
             this.view = view;
@@ -81,6 +81,7 @@ namespace DCL.Settings
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
+            this.skyboxSettingsAsset = skyboxSettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
             this.volumeBus = volumeBus;
@@ -88,18 +89,22 @@ namespace DCL.Settings
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
-            this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
-            this.isVoiceChatEnabled = isVoiceChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
-            view.GeneralSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.GENERAL, settingsMenuConfiguration.GeneralSectionConfig.SettingsGroups.Count));
-            view.GraphicsSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.GRAPHICS, settingsMenuConfiguration.GraphicsSectionConfig.SettingsGroups.Count));
-            view.SoundSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.SOUND, settingsMenuConfiguration.SoundSectionConfig.SettingsGroups.Count));
-            view.ControlsSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.CONTROLS, settingsMenuConfiguration.ControlsSectionConfig.SettingsGroups.Count));
-            view.ChatSectionButton.Button.onClick.AddListener(() => OpenSection(SettingsSection.CHAT, settingsMenuConfiguration.ChatSectionConfig.SettingsGroups.Count));
+            sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
+            {
+                [SettingsSection.GENERAL] = (view.GeneralSectionContainer, view.GeneralSectionButton, view.GeneralSectionBackground, settingsMenuConfiguration.GeneralSectionConfig),
+                [SettingsSection.GRAPHICS] = (view.GraphicsSectionContainer, view.GraphicsSectionButton, view.GraphicsSectionBackground, settingsMenuConfiguration.GraphicsSectionConfig),
+                [SettingsSection.SOUND] = (view.SoundSectionContainer, view.SoundSectionButton, view.SoundSectionBackground, settingsMenuConfiguration.SoundSectionConfig),
+                [SettingsSection.CONTROLS] = (view.ControlsSectionContainer, view.ControlsSectionButton, view.ControlsSectionBackground, settingsMenuConfiguration.ControlsSectionConfig),
+                [SettingsSection.CHAT] = (view.ChatSectionContainer, view.ChatSectionButton, view.ChatSectionBackground, settingsMenuConfiguration.ChatSectionConfig),
+            };
+
+            foreach (var pair in sections)
+                pair.Value.button!.Button.onClick!.AddListener(() => OpenSection(pair.Key, pair.Value.config!.SettingsGroups.Count));
         }
 
         public UniTask InitializeAsync() =>
@@ -145,11 +150,8 @@ namespace DCL.Settings
                 return;
             }
 
-            await GenerateSettingsSectionAsync(settingsMenuConfiguration.GeneralSectionConfig, view.GeneralSectionContainer);
-            await GenerateSettingsSectionAsync(settingsMenuConfiguration.GraphicsSectionConfig, view.GraphicsSectionContainer);
-            await GenerateSettingsSectionAsync(settingsMenuConfiguration.SoundSectionConfig, view.SoundSectionContainer);
-            await GenerateSettingsSectionAsync(settingsMenuConfiguration.ControlsSectionConfig, view.ControlsSectionContainer);
-            await GenerateSettingsSectionAsync(settingsMenuConfiguration.ChatSectionConfig, view.ChatSectionContainer);
+            foreach (var pair in sections)
+                await GenerateSettingsSectionAsync(pair.Value.config!, pair.Value.container!);
 
             foreach (var controller in controllers)
                 controller.OnAllControllersInstantiated(controllers);
@@ -173,7 +175,12 @@ namespace DCL.Settings
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
                     if (module != null)
-                        controllers.Add(await module.CreateModuleAsync
+                    {
+                        if (module.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(module.FeatureId))
+                            continue;
+
+                        var controller =
+                        (await module.CreateModuleAsync
                         (
                             generalGroupView.ModulesContainer,
                             realmPartitionSettingsAsset,
@@ -181,69 +188,46 @@ namespace DCL.Settings
                             landscapeData,
                             generalAudioMixer,
                             qualitySettingsAsset,
+                            skyboxSettingsAsset,
                             controlsSettingsAsset,
                             chatSettingsAsset,
                             memoryCap,
                             sceneLoadingLimit,
                             userBlockingCacheProxy,
                             this,
-                            voiceChatSettings,
                             upscalingController,
                             assetsProvisioner,
-                            volumeBus,
-                            isVoiceChatEnabled));
+                            volumeBus));
+
+                        if (controller != null)
+                            controllers.Add(controller);
+                    }
             }
         }
 
         private void SetInitialSectionsVisibility()
         {
-            view.GeneralSectionButton.gameObject.SetActive(settingsMenuConfiguration.GeneralSectionConfig.SettingsGroups.Count > 0);
-            view.GraphicsSectionButton.gameObject.SetActive(settingsMenuConfiguration.GraphicsSectionConfig.SettingsGroups.Count > 0);
-            view.SoundSectionButton.gameObject.SetActive(settingsMenuConfiguration.SoundSectionConfig.SettingsGroups.Count > 0);
-            view.ControlsSectionButton.gameObject.SetActive(settingsMenuConfiguration.ControlsSectionConfig.SettingsGroups.Count > 0);
-            view.ChatSectionButton.gameObject.SetActive(settingsMenuConfiguration.ChatSectionConfig.SettingsGroups.Count > 0);
+            foreach (var pair in sections)
+                pair.Value.button!.gameObject.SetActive(pair.Value.config!.SettingsGroups.Count > 0);
 
-            if (settingsMenuConfiguration.GeneralSectionConfig.SettingsGroups.Count > 0)
-                OpenSection(SettingsSection.GENERAL, settingsMenuConfiguration.GeneralSectionConfig.SettingsGroups.Count);
-            else if (settingsMenuConfiguration.GraphicsSectionConfig.SettingsGroups.Count > 0)
-                OpenSection(SettingsSection.GRAPHICS, settingsMenuConfiguration.GraphicsSectionConfig.SettingsGroups.Count);
-            else if (settingsMenuConfiguration.SoundSectionConfig.SettingsGroups.Count > 0)
-                OpenSection(SettingsSection.SOUND, settingsMenuConfiguration.SoundSectionConfig.SettingsGroups.Count);
-            else if (settingsMenuConfiguration.ControlsSectionConfig.SettingsGroups.Count > 0)
-                OpenSection(SettingsSection.CONTROLS, settingsMenuConfiguration.ControlsSectionConfig.SettingsGroups.Count);
-            else if (settingsMenuConfiguration.ChatSectionConfig.SettingsGroups.Count > 0)
-                OpenSection(SettingsSection.CHAT, settingsMenuConfiguration.ChatSectionConfig.SettingsGroups.Count);
+            foreach (var pair in sections)
+                if (pair.Value.config!.SettingsGroups.Count > 0)
+                {
+                    OpenSection(pair.Key, pair.Value.config.SettingsGroups.Count);
+                    break;
+                }
         }
 
         private void OpenSection(SettingsSection section, int settingsGroupCount)
         {
-            bool isGeneralSection = section == SettingsSection.GENERAL;
-            bool isGraphicsSection = section == SettingsSection.GRAPHICS;
-            bool isSoundSection = section == SettingsSection.SOUND;
-            bool isControlsSection = section == SettingsSection.CONTROLS;
-            bool isChatSection = section == SettingsSection.CHAT;
+            foreach ((SettingsSection current, (Transform container, ButtonWithSelectableStateView button, Sprite _, SettingsSectionConfig _)) in sections)
+            {
+                bool opened = section == current;
+                container.gameObject.SetActive(opened && settingsGroupCount > 0);
+                button.SetSelected(opened);
+            }
 
-            view.GeneralSectionContainer.gameObject.SetActive(isGeneralSection && settingsGroupCount > 0);
-            view.GraphicsSectionContainer.gameObject.SetActive(isGraphicsSection && settingsGroupCount > 0);
-            view.SoundSectionContainer.gameObject.SetActive(isSoundSection && settingsGroupCount > 0);
-            view.ControlsSectionContainer.gameObject.SetActive(isControlsSection && settingsGroupCount > 0);
-            view.ChatSectionContainer.gameObject.SetActive(isChatSection && settingsGroupCount > 0);
-
-            view.GeneralSectionButton.SetSelected(isGeneralSection);
-            view.GraphicsSectionButton.SetSelected(isGraphicsSection);
-            view.SoundSectionButton.SetSelected(isSoundSection);
-            view.ControlsSectionButton.SetSelected(isControlsSection);
-            view.ChatSectionButton.SetSelected(isChatSection);
-
-            view.BackgroundImage.sprite = section switch
-              {
-                    SettingsSection.GENERAL => view.GeneralSectionBackground,
-                    SettingsSection.GRAPHICS => view.GraphicsSectionBackground,
-                    SettingsSection.SOUND => view.SoundSectionBackground,
-                    SettingsSection.CONTROLS => view.ControlsSectionBackground,
-                    SettingsSection.CHAT => view.ChatSectionBackground,
-                    _ => throw new ArgumentOutOfRangeException(nameof(section), section, null),
-              };
+            view.BackgroundImage.sprite = sections[section].background!;
             view.ContentScrollRect.verticalNormalizedPosition = 1;
         }
 
@@ -252,11 +236,8 @@ namespace DCL.Settings
             foreach (SettingsFeatureController controller in controllers)
                 controller.Dispose();
 
-            view.GeneralSectionButton.Button.onClick.RemoveAllListeners();
-            view.GraphicsSectionButton.Button.onClick.RemoveAllListeners();
-            view.SoundSectionButton.Button.onClick.RemoveAllListeners();
-            view.ControlsSectionButton.Button.onClick.RemoveAllListeners();
-            view.ChatSectionButton.Button.onClick.RemoveAllListeners();
+            foreach (var pair in sections)
+                pair.Value.button!.Button.onClick!.RemoveAllListeners();
         }
     }
 }

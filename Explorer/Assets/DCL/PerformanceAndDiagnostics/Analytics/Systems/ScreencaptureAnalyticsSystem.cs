@@ -11,6 +11,7 @@ using ECS.Abstract;
 using Segment.Serialization;
 using System;
 using System.Text;
+using UnityEngine.Pool;
 
 namespace DCL.Analytics.Systems
 {
@@ -20,7 +21,10 @@ namespace DCL.Analytics.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class ScreencaptureAnalyticsSystem : BaseUnityLoopSystem
     {
-        private static readonly StringBuilder ADDRESS_BUILDER = new (64);
+        private static readonly JsonArray ADDRESS_BUILDER = new ();
+        private static readonly ObjectPool<JsonObject> JSON_OBJECT_POOL = new (
+            createFunc: () => new JsonObject(),
+            actionOnRelease: obj => obj.Clear());
 
         private readonly IAnalyticsController analytics;
         private readonly ICameraReelStorageService storage;
@@ -50,24 +54,27 @@ namespace DCL.Analytics.Systems
             analytics.Track(AnalyticsEvents.CameraReel.TAKE_PHOTO, new JsonObject
             {
                 { "Photo UUID", response.id },
-                { "Profiles", GetVisiblePeopleAddresses(response.metadata.visiblePeople) },
+                { "Profiles Enhanced", GetVisiblePeopleAddresses(response.metadata.visiblePeople) },
                 { "source", source },
             });
         }
 
-        private string GetVisiblePeopleAddresses(ReadOnlySpan<VisiblePerson> persons)
+        private JsonArray GetVisiblePeopleAddresses(ReadOnlySpan<VisiblePerson> persons)
         {
+            foreach (JsonObject element in ADDRESS_BUILDER)
+                JSON_OBJECT_POOL.Release(element);
             ADDRESS_BUILDER.Clear();
 
-            for (var i = 0; i < persons.Length; i++)
+            foreach (var visiblePerson in persons)
             {
-                ADDRESS_BUILDER.Append(persons[i].userAddress);
+                JsonObject jsonObject = JSON_OBJECT_POOL.Get();
+                jsonObject.Add("address", visiblePerson.userAddress);
+                jsonObject.Add("isEmoting", visiblePerson.isEmoting);
 
-                if (i < persons.Length - 1)
-                    ADDRESS_BUILDER.Append(',');
+                ADDRESS_BUILDER.Add(jsonObject);
             }
 
-            return ADDRESS_BUILDER.ToString();
+            return ADDRESS_BUILDER;
         }
 
         protected override void Update(float t)

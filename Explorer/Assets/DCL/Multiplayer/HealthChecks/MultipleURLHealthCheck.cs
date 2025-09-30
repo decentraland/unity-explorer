@@ -1,10 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.HealthChecks.Struct;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using System.Linq;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks
 {

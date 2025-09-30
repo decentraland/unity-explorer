@@ -164,8 +164,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d52b8ae7e003f4dac8bc233a9bec4eff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <lowCountColor>k__BackingField: {r: 0.4509804, g: 1, b: 0.6862745, a: 1}
-  <halfCountColor>k__BackingField: {r: 1, g: 0.7882353, b: 0.35686275, a: 1}
+  <lowCountColor>k__BackingField: {r: 0.1882353, g: 0.8039216, b: 0, a: 1}
+  <halfCountColor>k__BackingField: {r: 1, g: 0.7372549, b: 0.35686275, a: 1}
   <fullCountColor>k__BackingField: {r: 1, g: 0.1764706, b: 0.33333334, a: 1}
   <fillerImage>k__BackingField: {fileID: 5391516001147085296}
 --- !u!1 &3490405566641370256
@@ -1198,7 +1198,7 @@ MonoBehaviour:
     bottomLeft: {r: 1, g: 1, b: 1, a: 1}
     bottomRight: {r: 1, g: 1, b: 1, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
+  m_spriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
   m_TextStyleHashCode: -1183493901

@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
+            public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 
             public string inviteOrRequestId;
             public InviteRequestAction pendingActionType;

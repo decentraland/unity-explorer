@@ -24,7 +24,7 @@ using UnityEngine.Pool;
 using Utility;
 using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.AvatarShape
 {
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarLoaderSystem))]
@@ -218,7 +218,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 foreach (var renderer in cachedAttachment.Renderers)
                     renderer.enabled = false;
 
-            skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
+            skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.VertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);
             avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds, wearableIntention); // Update cached head wearable offset for nametag positioning
 

@@ -2191,19 +2191,10 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "OpenChat",
-                    "type": "Button",
-                    "id": "430e31be-9d28-4c75-a904-851e595a70c1",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "OpenChatCommandLine",
                     "type": "Button",
                     "id": "df66082b-5afe-4795-a9eb-e5d25d40111e",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2382,17 +2373,6 @@
                 },
                 {
                     "name": "",
-                    "id": "936aa25d-52b8-4067-ab14-76c9c847d3f5",
-                    "path": "<Keyboard>/t",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "OpenChat",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "978158e8-1961-43a6-98e4-754ab341d611",
                     "path": "<Keyboard>/slash",
                     "interactions": "",
@@ -2445,7 +2425,7 @@
                     "name": "Slot 1",
                     "type": "Button",
                     "id": "3f73f314-6df3-499a-97a9-cc7a8f53da15",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2873,7 +2853,7 @@
                     "name": "Customize",
                     "type": "Button",
                     "id": "309cfaf7-2700-4db1-8e05-41175ff3ad09",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -3230,6 +3210,15 @@
                     "type": "Button",
                     "id": "35bcdb9a-cdac-4391-a47e-6f6a134f694d",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Walk",
+                    "type": "Button",
+                    "id": "7e9e5ae9-8eb6-4cec-9b81-98717cdc5729",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -3695,6 +3684,39 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleNametags",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "38e2c487-bb88-42d9-93a0-5e899e648477",
+                    "path": "<Keyboard>/leftCtrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Walk",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d0a8f602-c633-4015-867e-b32c53fbe6a5",
+                    "path": "<Gamepad>/rightStickPress",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Walk",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "943f8268-3c6e-4068-a150-73dee1f4fd24",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Walk",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -6,7 +6,6 @@ using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.MediaStream;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;

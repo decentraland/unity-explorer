@@ -14,7 +14,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
-using DCL.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.VoiceChat;
 using System;
 using UnityEngine;
@@ -219,9 +219,9 @@ namespace DCL.Nametags
             Color usernameColor;
 
             if (profile != null)
-                usernameColor = profile.UserNameColor != Color.white ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                usernameColor = profile.UserNameColor != Color.white ? profile.UserNameColor : NameColorHelper.GetNameColor(profile.DisplayName);
             else
-                usernameColor = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
+                usernameColor = NameColorHelper.GetNameColor(avatarShape.Name);
 
             string? walletId = profile?.WalletId ?? (avatarShape.ID.Length >= 4
                 ? avatarShape.ID.AsSpan(avatarShape.ID.Length - 4).ToString()
