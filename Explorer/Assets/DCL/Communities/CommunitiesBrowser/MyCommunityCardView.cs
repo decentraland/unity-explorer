@@ -59,6 +59,8 @@ namespace DCL.Communities.CommunitiesBrowser
             listeningTooltip.gameObject.SetActive(false);
             listenersCountView.gameObject.SetActive(isActive);
 
+            if (!isActive) return;
+
             stringBuilder.Clear();
             stringBuilder.Append(listenersCount);
             listenersCountView.ParticipantCount.text = stringBuilder.ToString();
